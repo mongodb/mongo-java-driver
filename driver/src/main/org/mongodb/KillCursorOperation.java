@@ -21,6 +21,7 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.protocol.MongoKillCursorsMessage;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 
@@ -32,9 +33,8 @@ public class KillCursorOperation extends Operation {
         this.killCursor = killCursor;
     }
 
-    public void execute(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(killCursor.getServerCursor().getAddress());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public void execute(final Session session) {
+        MongoSyncConnection connection = session.getConnection();
         try {
             execute(connection);
         } finally {
@@ -52,9 +52,5 @@ public class KillCursorOperation extends Operation {
         } finally {
             buffer.close();
         }
-    }
-
-    public MongoKillCursor getKillCursor() {
-        return killCursor;
     }
 }

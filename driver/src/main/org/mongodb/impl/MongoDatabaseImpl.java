@@ -16,18 +16,18 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Codec;
+import org.mongodb.CollectibleCodec;
 import org.mongodb.CommandOperation;
-import org.mongodb.Document;
 import org.mongodb.DatabaseAdmin;
+import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.command.MongoCommand;
-import org.mongodb.result.CommandResult;
-import org.mongodb.CollectibleCodec;
-import org.mongodb.Codec;
 import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
+import org.mongodb.command.MongoCommand;
+import org.mongodb.result.CommandResult;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
@@ -85,7 +85,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandOperation(getName(), commandOperation, documentCodec, client.getBufferPool()).execute(client.getBinding());
+        return new CommandOperation(getName(), commandOperation, documentCodec, client.getBufferPool()).execute(client.getSession());
     }
 
 //    @Override

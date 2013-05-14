@@ -33,6 +33,7 @@ import org.mongodb.result.ServerCursor;
 
 import java.nio.ByteBuffer;
 
+// TODO: kill cursor on early breakout
 public class MongoAsyncQueryCursor<T> {
     private final MongoNamespace namespace;
     private final MongoFind find;

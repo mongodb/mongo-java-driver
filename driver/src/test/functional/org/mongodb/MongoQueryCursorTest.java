@@ -37,12 +37,12 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getSession;
 
 public class MongoQueryCursorTest extends DatabaseTestCase {
     private MongoQueryCursor<Document> cursor;
@@ -66,14 +66,14 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testServerCursor() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertNotNull(cursor.getServerCursor());
     }
 
     @Test
     public void testServerAddress() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertNull(cursor.getServerCursor());
         assertNotNull(cursor.getServerAddress());
     }
@@ -82,14 +82,14 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void testGetCriteria() {
         final MongoFind find = new MongoFind().batchSize(2);
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find ,
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertEquals(find, cursor.getCriteria());
     }
 
     @Test
     public void testClosedState() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         cursor.close();
         cursor.close();
         try {
@@ -117,7 +117,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testGoingPastTheEnd() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         cursor.next();
         cursor.next();
         try {
@@ -131,7 +131,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testNormalExhaustion() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         int i = 0;
         while (cursor.hasNext()) {
             cursor.next();
@@ -143,7 +143,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testLimitExhaustion() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         int i = 0;
         while (cursor.hasNext()) {
             cursor.next();
@@ -155,7 +155,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testRemove() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         try {
             cursor.remove();
             fail();
@@ -167,14 +167,14 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testToString() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertTrue(cursor.toString().startsWith("MongoQueryCursor"));
     }
 
     @Test
     public void testSizesAndNumGetMores() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertEquals(0, cursor.getNumGetMores());
         assertEquals(1, cursor.getSizes().size());
         assertEquals(2, (int) cursor.getSizes().get(0));
@@ -203,7 +203,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
                 .filter(new Document("ts", new Document("$gte", new BSONTimestamp(5, 0))))
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertTrue(cursor.hasNext());
         assertEquals(1, cursor.next().get("_id"));
         assertTrue(cursor.hasNext());
@@ -235,7 +235,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
 
         final CountDownLatch latch = new CountDownLatch(1);
         final List<Boolean> success = new ArrayList<Boolean>();
@@ -264,7 +264,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
         int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertEquals(openCursors, getTotalOpenCursors());
     }
 
@@ -273,7 +273,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void shouldKillCursorIfLimitIsReachedOnGetMore() {
         int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(3).limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         cursor.next();
         cursor.next();
         cursor.next();
@@ -308,7 +308,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void testNormalLoopWithGetMore() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
                 .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         try {
             int i = 0;
             while (cursor.hasNext()) {
@@ -326,7 +326,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void testNextWithoutHasNextWithGetMore() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind()
                 .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         for (int i = 0; i < 10; i++) {
             final Document cur = cursor.next();
             assertEquals(i, cur.get("_id"));
@@ -339,8 +339,8 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void shouldThrowCursorNotFoundException() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
-        new KillCursorOperation(new MongoKillCursor(cursor.getServerCursor()), getBufferPool()).execute(getBinding());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
+        new KillCursorOperation(new MongoKillCursor(cursor.getServerCursor()), getBufferPool()).execute(getSession());
         cursor.next();
         cursor.next();
         try {

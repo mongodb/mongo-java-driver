@@ -84,13 +84,13 @@ public class CollectionAdminImpl implements CollectionAdmin {
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
         new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferPool())
-                .execute(client.getBinding());
+                .execute(client.getSession());
     }
 
     @Override
     public List<Document> getIndexes() {
         final QueryResult<Document> systemCollection = new QueryOperation<Document>(indexesNamespace, queryForCollectionNamespace,
-                documentCodec, documentCodec, client.getBufferPool()).execute(client.getBinding());
+                documentCodec, documentCodec, client.getBufferPool()).execute(client.getSession());
         return systemCollection.getResults();
     }
 

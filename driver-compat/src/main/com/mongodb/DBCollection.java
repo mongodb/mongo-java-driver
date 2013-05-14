@@ -28,7 +28,6 @@ import org.mongodb.Get;
 import org.mongodb.Index;
 import org.mongodb.InsertOperation;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.OrderBy;
 import org.mongodb.QueryOperation;
 import org.mongodb.RemoveOperation;
@@ -65,6 +64,7 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.QueryResult;
 import org.mongodb.util.FieldHelpers;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -290,7 +290,7 @@ public class DBCollection implements IDBCollection {
     private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
             mongoInsert.writeConcernIfAbsent(getWriteConcern().toNew());
-            return new InsertOperation<DBObject>(getNamespace(), mongoInsert, encoder, getBufferPool()).execute(getBinding());
+            return new InsertOperation<DBObject>(getNamespace(), mongoInsert, encoder, getBufferPool()).execute(getSession());
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -346,7 +346,7 @@ public class DBCollection implements IDBCollection {
                 .writeConcern(wc.toNew());
 
         return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), 
-                getBufferPool()).execute(getBinding()), wc, getDB());
+                getBufferPool()).execute(getSession()), wc, getDB());
     }
 
     /**
@@ -381,7 +381,7 @@ public class DBCollection implements IDBCollection {
 
     private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
-            return new UpdateOperation(getNamespace(), mongoUpdate, documentCodec, getBufferPool()).execute(getBinding());
+            return new UpdateOperation(getNamespace(), mongoUpdate, documentCodec, getBufferPool()).execute(getSession());
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -487,7 +487,7 @@ public class DBCollection implements IDBCollection {
                 .writeConcern(writeConcern.toNew());
 
         final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, documentCodec, 
-                getBufferPool()).execute(getBinding());
+                getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -507,7 +507,7 @@ public class DBCollection implements IDBCollection {
                 .writeConcern(writeConcern.toNew());
 
         final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, getDocumentCodec(), 
-                getBufferPool()).execute(getBinding());
+                getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
     }
@@ -660,7 +660,7 @@ public class DBCollection implements IDBCollection {
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = new QueryOperation<DBObject>(getNamespace(), mongoFind, documentCodec, codec,
-                getBufferPool()).execute(getBinding());
+                getBufferPool()).execute(getSession());
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -902,7 +902,7 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            new CommandOperation("admin", renameCommand, getDocumentCodec(), getBufferPool()).execute(getBinding());
+            new CommandOperation("admin", renameCommand, getDocumentCodec(), getBufferPool()).execute(getSession());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1291,7 +1291,7 @@ public class DBCollection implements IDBCollection {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
             new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
-                    getBufferPool()).execute(getBinding());
+                    getBufferPool()).execute(getSession());
         } catch (MongoDuplicateKeyException exception) {
             throw new MongoException.DuplicateKey(exception);
         }
@@ -1412,7 +1412,7 @@ public class DBCollection implements IDBCollection {
 
         final FindAndModifyCommandResult<DBObject> commandResult =
                 new FindAndModifyCommandResult<DBObject>(new CommandOperation(getDB().getName(), mongoCommand,
-                        findAndModifyCommandResultCodec, getBufferPool()).execute(getBinding()));
+                        findAndModifyCommandResultCodec, getBufferPool()).execute(getSession()));
 
         return commandResult.getValue();
     }
@@ -1557,7 +1557,7 @@ public class DBCollection implements IDBCollection {
                 .readPreference(org.mongodb.ReadPreference.primary());
 
         final QueryResult<Document> systemCollection = new QueryOperation<Document>(new MongoNamespace(database.getName(), "system.indexes"),
-                queryForCollectionNamespace, documentCodec, documentCodec, getBufferPool()).execute(getBinding());
+                queryForCollectionNamespace, documentCodec, documentCodec, getBufferPool()).execute(getSession());
 
         final List<Document> indexes = systemCollection.getResults();
         for (final Document curIndex : indexes) {
@@ -1676,8 +1676,8 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    MongoServerBinding getBinding() {
-        return getDB().getBinding();
+    public Session getSession() {
+        return getDB().getSession();
     }
 
     CollectibleCodec<DBObject> getCodec() {

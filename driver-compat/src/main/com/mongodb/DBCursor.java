@@ -20,12 +20,12 @@ import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.QueryOperation;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
+import org.mongodb.util.Session;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -249,7 +249,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.limit(0);
         }
     QueryResult<DBObject> queryResult = new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                new DBObjectCodec(), getCollection().getBufferPool()).execute(getBinding());
+                new DBObjectCodec(), getCollection().getBufferPool()).execute(getSession());
         return queryResult.getResults().get(0);
     }
 
@@ -588,12 +588,12 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
    private void query() {
         cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getBinding(), getCollection().getBufferPool());
+                getSession());
 //        sizes.add(results.size());
     }
 
-    private MongoServerBinding getBinding() {
-        return getCollection().getBinding();
+    public Session getSession() {
+        return getCollection().getSession();
     }
 
     /**

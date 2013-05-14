@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
+import org.mongodb.ClusterSession;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabase;
@@ -25,6 +26,7 @@ import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.BufferPool;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
@@ -33,14 +35,14 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoServerBinding binding;
+    private final MongoServerBinding cluster;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
-    private final ThreadLocal<MongoServerBinding> pinnedBinding = new ThreadLocal<MongoServerBinding>();
+    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoServerBinding binding) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoServerBinding cluster) {
         this.clientOptions = clientOptions;
-        this.binding = binding;
+        this.cluster = cluster;
     }
 
     @Override
@@ -77,7 +79,7 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
-        binding.close();
+        cluster.close();
     }
 
     @Override
@@ -92,30 +94,34 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public Set<ServerAddress> getServerAddresses() {
-        return binding.getAllServerAddresses();
+        return cluster.getAllServerAddresses();
+    }
+
+    public Session getSession() {
+        if (pinnedSession.get() != null) {
+            return pinnedSession.get();
+        }
+        return new ClusterSession(cluster);
     }
 
     public MongoServerBinding getBinding() {
-        if (pinnedBinding.get() != null) {
-            return pinnedBinding.get();
-        }
-        return binding;
+        return cluster;
     }
 
     public BufferPool<ByteBuffer> getBufferPool() {
-        return binding.getBufferPool();
+        return cluster.getBufferPool();
     }
 
     private void pinBinding() {
-        if (pinnedBinding.get() != null) {
+        if (pinnedSession.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedBinding.set(new MonotonicallyConsistentMongoServerBinding(binding));
+        pinnedSession.set(new MonotonicSession(cluster));
     }
 
     private void unpinBinding() {
-        MongoServerBinding bindingToUnpin = this.pinnedBinding.get();
-        this.pinnedBinding.remove();
-        bindingToUnpin.close();
+        Session sessionToUnpin = this.pinnedSession.get();
+        this.pinnedSession.remove();
+        sessionToUnpin.close();
     }
 }

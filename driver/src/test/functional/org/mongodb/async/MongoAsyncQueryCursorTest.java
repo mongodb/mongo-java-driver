@@ -24,6 +24,8 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoQueryCursor;
+import org.mongodb.ReadPreference;
+import org.mongodb.SingleConnectionSession;
 import org.mongodb.impl.SingleConnectionMongoServerBinding;
 import org.mongodb.operation.MongoFind;
 
@@ -111,6 +113,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithDiscard() throws InterruptedException {
         SingleConnectionMongoServerBinding binding = new SingleConnectionMongoServerBinding(getBinding());
+        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(binding.getConnectionManagerForRead(ReadPreference
+                .primary()).getConnection(), getBinding());
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
@@ -122,7 +126,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), binding, getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
         assertEquals(new Document("_id", 999), cursor.next());
 
     }

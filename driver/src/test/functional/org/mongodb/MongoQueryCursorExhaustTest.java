@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.impl.SingleConnectionMongoServerBinding;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 
@@ -26,7 +25,7 @@ import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getSession;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
@@ -43,7 +42,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -55,18 +54,18 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        SingleConnectionMongoServerBinding binding = new SingleConnectionMongoServerBinding(getBinding());
+        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(getSession().getConnection(), getBinding());
 
         MongoQueryCursor cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), binding, getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
 
         cursor.next();
         cursor.close();
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), binding, getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
         assertEquals(new Document("_id", 999), cursor.next());
     }
 }

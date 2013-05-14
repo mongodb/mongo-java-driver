@@ -24,6 +24,7 @@ import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoCommandMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.CommandResult;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 
@@ -38,10 +39,8 @@ public class CommandOperation extends Operation {
         this.codec = codec;
     }
 
-    public CommandResult execute(final MongoServerBinding binding) {
-        MongoServer connectionManager =
-                binding.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public CommandResult execute(final Session session) {
+        MongoSyncConnection connection = session.getConnection(commandOperation.getReadPreference());
         try {
             return execute(connection);
         } finally {

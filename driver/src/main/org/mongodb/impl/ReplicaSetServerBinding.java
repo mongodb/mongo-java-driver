@@ -135,7 +135,7 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
             mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, isMasterCommandResult,
                     LATENCY_SMOOTH_FACTOR, mostRecentStateMap.get(serverAddress)));
 
-            addToHolder();
+            setHolder();
         }
 
         @Override
@@ -152,7 +152,7 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
 
             ReplicaSetMemberDescription description = mostRecentStateMap.remove(serverAddress);
 
-            addToHolder();
+            setHolder();
 
             if (description.primary()) {
                 invalidateAll();
@@ -164,21 +164,6 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
             if (activeMemberNotifications.containsKey(serverAddress)) {
                 activeMemberNotifications.put(serverAddress, true);
             }
-        }
-
-        private void addToHolder() {
-            if (holder.peek() != null || allActiveMembersHaveNotified()) {
-                setHolder();
-            }
-        }
-
-        private boolean allActiveMembersHaveNotified() {
-            for (boolean notified : activeMemberNotifications.values()) {
-                if (!notified) {
-                    return false;
-                }
-            }
-            return true;
         }
 
         private void setHolder() {

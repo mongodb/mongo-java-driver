@@ -25,6 +25,7 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.QueryResult;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 
@@ -41,9 +42,8 @@ public class QueryOperation<T> extends Operation {
         this.resultDecoder = resultDecoder;
     }
 
-    public QueryResult<T> execute(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForRead(find.getReadPreference());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public QueryResult<T> execute(final Session session) {
+        MongoSyncConnection connection = session.getConnection(find.getReadPreference());
         try {
             return execute(connection);
         } finally {

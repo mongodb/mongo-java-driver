@@ -22,6 +22,7 @@ import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.util.Session;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -65,6 +66,11 @@ public final class Fixture {
     public static MongoServerBinding getBinding() {
         getMongoClient();
         return mongoClient.getBinding();
+    }
+
+    public static Session getSession() {
+        getMongoClient();
+        return mongoClient.getSession();
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,

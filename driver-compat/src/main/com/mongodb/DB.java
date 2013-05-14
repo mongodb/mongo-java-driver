@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.mongodb.ClusterSession;
 import org.mongodb.Codec;
 import org.mongodb.CommandOperation;
 import org.mongodb.CreateCollectionOptions;
@@ -29,11 +30,12 @@ import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.MonotonicallyConsistentMongoServerBinding;
+import org.mongodb.impl.MonotonicSession;
 import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -41,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBObjects.toDocument;
+import static org.mongodb.assertions.Assertions.isTrue;
 
 
 @ThreadSafe
@@ -52,7 +55,7 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private final ThreadLocal<MongoServerBinding> pinnedBinding = new ThreadLocal<MongoServerBinding>();
+    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -99,10 +102,8 @@ public class DB implements IDB {
      */
     @Override
     public void requestStart() {
-        if (pinnedBinding.get() != null) {
-            throw new IllegalStateException();
-        }
-        pinnedBinding.set(new MonotonicallyConsistentMongoServerBinding(getMongo().getBinding()));
+        isTrue("request not already started", pinnedSession.get() == null);
+        pinnedSession.set(new MonotonicSession(getMongo().getBinding()));
     }
 
     /**
@@ -110,12 +111,10 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        MongoServerBinding binding = pinnedBinding.get();
-        if (binding == null) {
-            throw new IllegalStateException();
-        }
-        pinnedBinding.remove();
-        binding.close();
+        isTrue("request started", pinnedSession.get() != null);
+        Session session = pinnedSession.get();
+        pinnedSession.remove();
+        session.close();
     }
 
     /**
@@ -176,7 +175,7 @@ public class DB implements IDB {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
         final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
-                getBufferPool()).execute(getBinding());
+                getBufferPool()).execute(getSession());
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = getName().length();
@@ -448,15 +447,19 @@ public class DB implements IDB {
     }
 
     MongoServerBinding getBinding() {
-        if (pinnedBinding.get() != null) {
-            return pinnedBinding.get();
-        }
         return getMongo().getBinding();
+    }
+
+    Session getSession() {
+        if (pinnedSession.get() != null) {
+            return pinnedSession.get();
+        }
+        return new ClusterSession(getBinding());
     }
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getBinding());
+        return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getSession());
     }
 
     org.mongodb.result.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {

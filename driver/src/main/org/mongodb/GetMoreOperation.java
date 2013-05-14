@@ -25,6 +25,7 @@ import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 
@@ -40,9 +41,8 @@ public class GetMoreOperation<T> extends Operation {
     }
 
 
-    public QueryResult<T> execute(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public QueryResult<T> execute(final Session session) {
+        MongoSyncConnection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
@@ -50,9 +50,8 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public QueryResult<T> executeReceive(final Session session) {
+        MongoSyncConnection connection = session.getConnection();
         try {
             return executeReceive(connection);
         } finally {
@@ -60,9 +59,8 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public void executeDiscard(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public void executeDiscard(final Session session) {
+        MongoSyncConnection connection = session.getConnection();
         try {
             executeDiscard(connection);
         } finally {

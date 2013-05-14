@@ -23,11 +23,12 @@ import org.mongodb.io.ResponseBuffers;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
+// TODO: should not be public
 @NotThreadSafe
-class DelayedCloseMongoSyncConnection extends DelayedCloseMongoConnection implements MongoSyncConnection {
+public class DelayedCloseMongoSyncConnection extends DelayedCloseMongoConnection implements MongoSyncConnection {
     private MongoSyncConnection wrapped;
 
-    DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
+    public DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

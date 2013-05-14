@@ -28,6 +28,7 @@ import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.WriteResult;
+import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 
@@ -37,9 +38,8 @@ public abstract class WriteOperation extends Operation {
         super(namespace, bufferPool);
     }
 
-    public WriteResult execute(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForWrite();
-        MongoSyncConnection connection = connectionManager.getConnection();
+    public WriteResult execute(final Session session) {
+        MongoSyncConnection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
