@@ -40,7 +40,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustReadAllDocuments() {
-        MongoQueryCursor cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
 
@@ -56,7 +56,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustCloseBeforeReadingAllDocuments() {
         SingleConnectionSession singleConnectionSession = new SingleConnectionSession(getSession().getConnection(), getCluster());
 
-        MongoQueryCursor cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
 

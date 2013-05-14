@@ -16,7 +16,12 @@
 
 package org.mongodb;
 
+/**
+ * Exception thrown when a server that is requested by its address is no longer available.
+ */
 public class MongoServerNotFoundException extends MongoException {
+    private static final long serialVersionUID = -687415750911049827L;
+
     public MongoServerNotFoundException(final String message) {
         super(message);
     }

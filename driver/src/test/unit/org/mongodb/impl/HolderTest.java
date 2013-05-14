@@ -25,7 +25,7 @@ public class HolderTest {
 
     @Test(expected = MongoTimeoutException.class)
     public void testHolderTimeout() {
-        Holder holder = new Holder(1, TimeUnit.MILLISECONDS);
+        Holder<Integer> holder = new Holder<Integer>(1, TimeUnit.MILLISECONDS);
         holder.get();
     }
 }
