@@ -108,8 +108,9 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     }
 
     private synchronized MongoSyncConnection getConnectionForReads(final ReadPreference readPreference) {
+        MongoSyncConnection connectionToUse;
         if (connectionForWrites != null) {
-            return connectionForWrites;
+            connectionToUse = connectionForWrites;
         }
         else if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
             lastRequestedReadPreference = readPreference;
@@ -118,8 +119,12 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
             }
             connectionManagerForReads = wrapped.getConnectionManagerForRead(readPreference);
             connectionForReads = connectionManagerForReads.getConnection();
+            connectionToUse = connectionForReads;
         }
-        return new DelayedCloseMongoSyncConnection(connectionForReads);
+        else {
+            connectionToUse = connectionForReads;
+        }
+        return new DelayedCloseMongoSyncConnection(connectionToUse);
     }
 
 
