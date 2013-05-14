@@ -24,8 +24,8 @@ import org.mongodb.MongoTimeoutException;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerDescription;
 import org.mongodb.ServerFactory;
-import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
 import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
@@ -128,20 +128,20 @@ public class ReplicaSetCluster extends MultiServerCluster {
         }
 
         @Override
-        public synchronized void notify(final IsMasterCommandResult isMasterCommandResult) {
+        public synchronized void notify(final ServerDescription serverDescription) {
             if (isClosed()) {
                 return;
             }
 
             markAsNotified();
 
-            addNewHosts(isMasterCommandResult.getHosts(), true);
-            addNewHosts(isMasterCommandResult.getPassives(), false);
-            if (isMasterCommandResult.isPrimary()) {
-                removeExtras(isMasterCommandResult);
+            addNewHosts(serverDescription.getHosts(), true);
+            addNewHosts(serverDescription.getPassives(), false);
+            if (serverDescription.isPrimary()) {
+                removeExtras(serverDescription);
             }
 
-            mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, isMasterCommandResult,
+            mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, serverDescription,
                     LATENCY_SMOOTH_FACTOR, mostRecentStateMap.get(serverAddress)));
 
             updateDescription();
@@ -159,7 +159,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
 
             updateDescription();
 
-            if (memberDescription.primary()) {
+            if (memberDescription.getServerDescription().isPrimary()) {
                 invalidateAll();
             }
 
@@ -195,8 +195,8 @@ public class ReplicaSetCluster extends MultiServerCluster {
             }
         }
 
-        private void removeExtras(final IsMasterCommandResult isMasterCommandResult) {
-            Set<ServerAddress> allServerAddresses = getAllServerAddresses(isMasterCommandResult);
+        private void removeExtras(final ServerDescription serverDescription) {
+            Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
             for (ServerAddress curServerAddress : ReplicaSetCluster.this.getAllServerAddresses()) {
                 if (!allServerAddresses.contains(curServerAddress)) {
                     removeNode(curServerAddress);
@@ -206,11 +206,11 @@ public class ReplicaSetCluster extends MultiServerCluster {
             }
         }
 
-        // TODO: move these next two methods
-        private Set<ServerAddress> getAllServerAddresses(final IsMasterCommandResult masterCommandResult) {
+        // TODO: move these next two methods to ServerDescription
+        private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
             Set<ServerAddress> retVal = new HashSet<ServerAddress>();
-            addHostsToSet(masterCommandResult.getHosts(), retVal);
-            addHostsToSet(masterCommandResult.getPassives(), retVal);
+            addHostsToSet(serverDescription.getHosts(), retVal);
+            addHostsToSet(serverDescription.getPassives(), retVal);
             return retVal;
         }
 

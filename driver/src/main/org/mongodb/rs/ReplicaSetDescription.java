@@ -17,7 +17,6 @@
 package org.mongodb.rs;
 
 import org.mongodb.MongoException;
-import org.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
@@ -65,20 +64,6 @@ public class ReplicaSetDescription {
         checkStatus();
 
         return all;
-    }
-
-    public ReplicaSetMemberDescription getMember(final ServerAddress serverAddress) {
-        checkStatus();
-        for (ReplicaSetMemberDescription cur : all) {
-            if (cur.getServerAddress().equals(serverAddress)) {
-                return cur;
-            }
-        }
-        return null;
-    }
-
-    public boolean hasPrimary() {
-        return getPrimary() != null;
     }
 
     public ReplicaSetMemberDescription getPrimary() {
@@ -197,7 +182,7 @@ public class ReplicaSetDescription {
 
     private ReplicaSetMemberDescription findPrimary() {
         for (final ReplicaSetMemberDescription node : all) {
-            if (node.primary()) {
+            if (node.getServerDescription().isPrimary()) {
                 return node;
             }
         }
@@ -206,7 +191,7 @@ public class ReplicaSetDescription {
 
     private String determineSetName() {
         for (final ReplicaSetMemberDescription node : all) {
-            final String nodeSetName = node.getSetName();
+            final String nodeSetName = node.getServerDescription().getSetName();
 
             if (nodeSetName != null && !nodeSetName.equals("")) {
                 return nodeSetName;
@@ -221,7 +206,7 @@ public class ReplicaSetDescription {
         final HashSet<String> nodeNames = new HashSet<String>();
 
         for (final ReplicaSetMemberDescription node : all) {
-            final String nodeSetName = node.getSetName();
+            final String nodeSetName = node.getServerDescription().getSetName();
 
             if (nodeSetName != null && !nodeSetName.equals("")) {
                 nodeNames.add(nodeSetName);
@@ -239,7 +224,7 @@ public class ReplicaSetDescription {
     static float calculateBestPingTime(final List<ReplicaSetMemberDescription> members) {
         float bestPingTime = Float.MAX_VALUE;
         for (final ReplicaSetMemberDescription cur : members) {
-            if (!cur.secondary()) {
+            if (!cur.getServerDescription().isSecondary()) {
                 continue;
             }
             if (cur.getNormalizedPingTime() < bestPingTime) {
@@ -253,7 +238,7 @@ public class ReplicaSetDescription {
                                                      final int acceptableLatencyMS) {
         final List<ReplicaSetMemberDescription> goodSecondaries = new ArrayList<ReplicaSetMemberDescription>(members.size());
         for (final ReplicaSetMemberDescription cur : members) {
-            if (!cur.isOk()) {
+            if (!cur.getServerDescription().isOk()) {
                 continue;
             }
             if (cur.getNormalizedPingTime() - acceptableLatencyMS <= bestPingTime) {
@@ -267,7 +252,7 @@ public class ReplicaSetDescription {
                                                                       final float bestPingTime, final int acceptableLatencyMS) {
         final List<ReplicaSetMemberDescription> goodSecondaries = new ArrayList<ReplicaSetMemberDescription>(members.size());
         for (final ReplicaSetMemberDescription cur : members) {
-            if (!cur.secondary()) {
+            if (!cur.getServerDescription().isSecondary()) {
                 continue;
             }
             if (cur.getNormalizedPingTime() - acceptableLatencyMS <= bestPingTime) {
@@ -282,7 +267,7 @@ public class ReplicaSetDescription {
         final List<ReplicaSetMemberDescription> membersByTag = new ArrayList<ReplicaSetMemberDescription>();
 
         for (final ReplicaSetMemberDescription cur : members) {
-            if (tags != null && cur.getTags() != null && cur.getTags().containsAll(tags)) {
+            if (tags != null && cur.getServerDescription().getTags() != null && cur.getServerDescription().getTags().containsAll(tags)) {
                 membersByTag.add(cur);
             }
         }

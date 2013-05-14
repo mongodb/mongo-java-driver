@@ -21,9 +21,9 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoSyncConnectionFactory;
+import org.mongodb.ServerDescription;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.MongoSocketException;
@@ -53,9 +53,9 @@ public class MongoIsMasterServerStateNotifier implements MongoServerStateNotifie
                 connection = connectionFactory.create();
             }
             try {
-                IsMasterCommandResult isMasterCommandResult = new IsMasterCommandResult(new CommandOperation("admin",
+                ServerDescription serverDescription = new ServerDescription(new CommandOperation("admin",
                         new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection));
-                serverStateListener.notify(isMasterCommandResult);
+                serverStateListener.notify(serverDescription);
             } catch (MongoSocketException e) {
                 connection.close();
                 connection = null;

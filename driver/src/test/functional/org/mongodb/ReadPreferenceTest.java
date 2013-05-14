@@ -66,14 +66,17 @@ public class ReadPreferenceTest {
         final float acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
         final float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27017), "", acceptablePingTime, true, true,
-                                     false, tagSet1, FOUR_MEG, 0, null);
+        primary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27017),
+                ServerDescription.builder().elapsedMillis(acceptablePingTime).ok(true).primary(true).secondary(false).tags(tagSet1)
+                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
 
-        secondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27018), "", bestPingTime, true, false,
-                                       true, tagSet2, FOUR_MEG, 0, null);
+        secondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27018),
+                ServerDescription.builder().elapsedMillis(bestPingTime).ok(true).primary(false).secondary(true).tags(tagSet2)
+                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
 
-        otherSecondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27019), "", unacceptablePingTime,
-                                            true, false, true, tagSet3, FOUR_MEG, 0, null);
+        otherSecondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27019),
+                ServerDescription.builder().elapsedMillis(unacceptablePingTime).ok(true).primary(false).secondary(true).tags(tagSet3)
+                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
 
         final List<ReplicaSetMemberDescription> nodeList = new ArrayList<ReplicaSetMemberDescription>();
         nodeList.add(primary);
@@ -107,7 +110,7 @@ public class ReadPreferenceTest {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
         ReplicaSetMemberDescription candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
-        assertTrue(!candidate.primary());
+        assertTrue(!candidate.getServerDescription().isPrimary());
 
         candidate = ReadPreference.secondary().chooseReplicaSetMember(setNoSecondary);
         assertNull(candidate);

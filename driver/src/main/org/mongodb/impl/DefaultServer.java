@@ -22,8 +22,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerDescription;
 import org.mongodb.async.SingleResultCallback;
-import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
@@ -47,7 +47,7 @@ public class DefaultServer implements Server {
     private final MongoIsMasterServerStateNotifier stateNotifier;
     private Set<MongoServerStateListener> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<MongoServerStateListener, Boolean>());
-    private volatile IsMasterCommandResult description;
+    private volatile ServerDescription description;
 
     public DefaultServer(final ServerAddress serverAddress, final MongoSyncConnectionFactory connectionFactory,
                          final MongoAsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
@@ -83,7 +83,7 @@ public class DefaultServer implements Server {
         return serverAddress;
     }
 
-    public IsMasterCommandResult getDescription() {
+    public ServerDescription getDescription() {
         return description;
     }
 
@@ -113,7 +113,7 @@ public class DefaultServer implements Server {
 
     private final class DefaultMongoServerStateListener implements MongoServerStateListener {
         @Override
-        public void notify(final IsMasterCommandResult masterCommandResult) {
+        public void notify(final ServerDescription masterCommandResult) {
             description = masterCommandResult;
             for (MongoServerStateListener listener : changeListeners) {
                 listener.notify(masterCommandResult);

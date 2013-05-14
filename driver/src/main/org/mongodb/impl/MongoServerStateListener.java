@@ -17,10 +17,10 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoException;
-import org.mongodb.command.IsMasterCommandResult;
+import org.mongodb.ServerDescription;
 
 public interface MongoServerStateListener {
-    void notify(final IsMasterCommandResult masterCommandResult);
+    void notify(final ServerDescription masterCommandResult);
 
     void notify(MongoException e);
 }

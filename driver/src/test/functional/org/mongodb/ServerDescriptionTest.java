@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb.command;
+package org.mongodb;
 
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
-import org.mongodb.Document;
-import org.mongodb.Fixture;
-import org.mongodb.MongoDatabase;
+import org.mongodb.command.MongoCommand;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class IsMasterCommandResultTest extends DatabaseTestCase {
+public class ServerDescriptionTest extends DatabaseTestCase {
 
     private final MongoDatabase adminDatabase = Fixture.getMongoClient().getDatabase("admin");
     private final Document isMasterCommandDocument = new Document("ismaster", 1);
@@ -33,15 +30,15 @@ public class IsMasterCommandResultTest extends DatabaseTestCase {
 
     @Test
     public void testIsPrimary() {
-        IsMasterCommandResult result =
-        new IsMasterCommandResult(adminDatabase.executeCommand(command));
+        ServerDescription result =
+        new ServerDescription(adminDatabase.executeCommand(command));
         assertTrue(result.isPrimary());
     }
 
     @Test
     public void testIsSecondary() {
-        IsMasterCommandResult result =
-        new IsMasterCommandResult(adminDatabase.executeCommand(command));
+        ServerDescription result =
+        new ServerDescription(adminDatabase.executeCommand(command));
         assertFalse(result.isSecondary());
     }
 }

@@ -20,13 +20,9 @@ import org.mongodb.Document;
 import org.mongodb.ServerAddress;
 import org.mongodb.ServerDescription;
 import org.mongodb.annotations.Immutable;
-import org.mongodb.command.IsMasterCommandResult;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents the state of a node in the replica set.  Instances of this class are immutable.
@@ -34,65 +30,45 @@ import java.util.Set;
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
-public class ReplicaSetMemberDescription extends ServerDescription {
-    private final Set<Tag> tags;
-    private final boolean isPrimary;
-    private final boolean isSecondary;
-    private final String setName;
+public class ReplicaSetMemberDescription {
+    private final ServerAddress serverAddress;
+    private final ServerDescription serverDescription;
+    private final float normalizedPingTime;
 
-    public ReplicaSetMemberDescription(final ServerAddress serverAddress, final String setName, final float pingTime,
-                                       final boolean ok, final boolean isPrimary, final boolean isSecondary,
-                                       final Set<Tag> tags, final int maxBSONObjectSize, final float latencySmoothFactor,
-                                       final ReplicaSetMemberDescription previous) {
-        super(pingTime, serverAddress, maxBSONObjectSize, ok, latencySmoothFactor, previous);
-        this.setName = setName;
-        this.isPrimary = isPrimary;
-        this.isSecondary = isSecondary;
-        this.tags = Collections.unmodifiableSet(new HashSet<Tag>(tags));
-    }
-
-    public ReplicaSetMemberDescription(final ServerAddress serverAddress, final IsMasterCommandResult isMasterCommandResult,
+    public ReplicaSetMemberDescription(final ServerAddress serverAddress, final ServerDescription serverDescription,
                                        final float latencySmoothFactor, final ReplicaSetMemberDescription previous) {
-        super(isMasterCommandResult.getElapsedNanoseconds(), serverAddress, isMasterCommandResult.getMaxBSONObjectSize(),
-                isMasterCommandResult.isOk(), latencySmoothFactor, previous);
-        this.setName = isMasterCommandResult.getSetName();
-        this.isPrimary = isMasterCommandResult.isPrimary();
-        this.isSecondary = isMasterCommandResult.isSecondary();
-        this.tags = Collections.unmodifiableSet(new HashSet<Tag>(isMasterCommandResult.getTags()));
+        this.serverAddress = serverAddress;
+        this.serverDescription = serverDescription;
+        this.normalizedPingTime = previous == null || !previous.getServerDescription().isOk()
+                ? serverDescription.getElapsedMillis()
+                : previous.getNormalizedPingTime()
+                + ((serverDescription.getElapsedMillis() - previous.getNormalizedPingTime()) / latencySmoothFactor);
     }
 
-    public ReplicaSetMemberDescription(final ServerAddress serverAddress) {
-        this(serverAddress, null, 0, false, false, false, new HashSet<Tag>(), 0, 0, null);
+    public ServerDescription getServerDescription() {
+        return serverDescription;
     }
 
-    public boolean primary() {
-        return isOk() && isPrimary;
+    public ServerAddress getServerAddress() {
+        return serverAddress;
     }
 
-    public boolean secondary() {
-        return isOk() && isSecondary;
-    }
-
-    public String getSetName() {
-        return setName;
-    }
-
-    public Set<Tag> getTags() {
-        return tags;
+    public float getNormalizedPingTime() {
+        return normalizedPingTime;
     }
 
     public String toJSON() {
         final StringBuilder buf = new StringBuilder();
-        buf.append("{ address:'").append(getAddress()).append("', ");
-        buf.append("ok:").append(isOk()).append(", ");
-        buf.append("ping:").append(super.getNormalizedPingTime()).append(", ");
-        buf.append("isPrimary:").append(isPrimary).append(", ");
-        buf.append("isSecondary:").append(isSecondary).append(", ");
-        buf.append("setName:").append(setName).append(", ");
-        buf.append("maxBSONObjectSize:").append(getMaxBSONObjectSize()).append(", ");
-        if (tags != null && tags.size() > 0) {
+        buf.append("{ address:'").append(getServerAddress()).append("', ");
+        buf.append("ok:").append(getServerDescription().isOk()).append(", ");
+        buf.append("ping:").append(getNormalizedPingTime()).append(", ");
+        buf.append("isPrimary:").append(getServerDescription().isPrimary()).append(", ");
+        buf.append("isSecondary:").append(getServerDescription().isSecondary()).append(", ");
+        buf.append("setName:").append(getServerDescription().getSetName()).append(", ");
+        buf.append("maxBSONObjectSize:").append(getServerDescription().getMaxBSONObjectSize()).append(", ");
+        if (!serverDescription.getTags().isEmpty()) {
             final List<Document> tagObjects = new ArrayList<Document>();
-            for (final Tag tag : tags) {
+            for (final Tag tag : serverDescription.getTags()) {
                 tagObjects.add(tag.toDBObject());
             }
 
@@ -112,22 +88,16 @@ public class ReplicaSetMemberDescription extends ServerDescription {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
 
         final ReplicaSetMemberDescription that = (ReplicaSetMemberDescription) o;
 
-        if (isPrimary != that.isPrimary) {
+        if (Float.compare(that.normalizedPingTime, normalizedPingTime) != 0) {
             return false;
         }
-        if (isSecondary != that.isSecondary) {
+        if (!serverAddress.equals(that.serverAddress)) {
             return false;
         }
-        if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
-            return false;
-        }
-        if (!tags.equals(that.tags)) {
+        if (!serverDescription.equals(that.serverDescription)) {
             return false;
         }
 
@@ -136,25 +106,18 @@ public class ReplicaSetMemberDescription extends ServerDescription {
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + tags.hashCode();
-        result = 31 * result + (isPrimary ? 1 : 0);
-        result = 31 * result + (isSecondary ? 1 : 0);
-        result = 31 * result + (setName != null ? setName.hashCode() : 0);
+        int result = serverAddress.hashCode();
+        result = 31 * result + serverDescription.hashCode();
+        result = 31 * result + (normalizedPingTime != +0.0f ? Float.floatToIntBits(normalizedPingTime) : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "ReplicaSetMemberDescription{"
-                + "tags=" + tags
-                + ", isPrimary=" + isPrimary
-                + ", isSecondary=" + isSecondary
-                + ", setName='" + setName + '\''
-                + "address=" + getServerAddress()
-                + ", pingTime=" + getNormalizedPingTime()
-                + ", ok=" + isOk()
-                + ", maxBSONObjectSize=" + getMaxBSONObjectSize()
-                + "} ";
+                + "serverAddress=" + serverAddress
+                + ", serverDescription=" + serverDescription
+                + ", normalizedPingTime=" + normalizedPingTime
+                + '}';
     }
 }
