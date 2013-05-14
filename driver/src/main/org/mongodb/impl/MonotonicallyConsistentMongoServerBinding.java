@@ -24,7 +24,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Set;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
@@ -61,7 +61,7 @@ public class MonotonicallyConsistentMongoServerBinding implements MongoServerBin
     }
 
     @Override
-    public List<ServerAddress> getAllServerAddresses() {
+    public Set<ServerAddress> getAllServerAddresses() {
         isTrue("open", !isClosed);
         return wrapped.getAllServerAddresses();
     }

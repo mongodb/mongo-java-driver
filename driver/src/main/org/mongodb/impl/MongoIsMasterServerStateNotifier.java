@@ -55,16 +55,16 @@ public class MongoIsMasterServerStateNotifier implements MongoServerStateNotifie
             try {
                 IsMasterCommandResult isMasterCommandResult = new IsMasterCommandResult(new CommandOperation("admin",
                         new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection));
-                serverStateListener.notify(connectionFactory.getServerAddress(), isMasterCommandResult);
+                serverStateListener.notify(isMasterCommandResult);
             } catch (MongoSocketException e) {
                 connection.close();
                 connection = null;
                 throw e;
             }
         } catch (MongoException e) {
-            serverStateListener.notify(connectionFactory.getServerAddress(), e);
+            serverStateListener.notify(e);
         } catch (Throwable t) {
-            serverStateListener.notify(connectionFactory.getServerAddress(), new MongoInternalException("Unexpected exception", t));
+            serverStateListener.notify(new MongoInternalException("Unexpected exception", t));
         }
     }
 

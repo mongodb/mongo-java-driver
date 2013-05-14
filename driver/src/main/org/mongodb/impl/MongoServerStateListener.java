@@ -17,11 +17,10 @@
 package org.mongodb.impl;
 
 import org.mongodb.MongoException;
-import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 
 public interface MongoServerStateListener {
-    void notify(final ServerAddress serverAddress, final IsMasterCommandResult masterCommandResult);
+    void notify(final IsMasterCommandResult masterCommandResult);
 
-    void notify(ServerAddress serverAddress, MongoException e);
+    void notify(MongoException e);
 }

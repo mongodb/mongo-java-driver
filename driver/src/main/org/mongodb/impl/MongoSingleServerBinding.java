@@ -16,6 +16,8 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoServer;
 import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
@@ -23,47 +25,58 @@ import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
 public class MongoSingleServerBinding implements MongoServerBinding {
-    private final MongoServer connectionManager;
+    private final MongoServer server;
     private final BufferPool<ByteBuffer> bufferPool;
+    private final ScheduledExecutorService scheduledExecutorService;
     private volatile boolean isClosed;
 
-    public MongoSingleServerBinding(final MongoServer connectionManager, final BufferPool<ByteBuffer> bufferPool) {
-        this.connectionManager = connectionManager;
+    public MongoSingleServerBinding(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                    final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+        notNull("serverAddres", serverAddress);
+        notNull("options", options);
+        notNull("bufferPool", bufferPool);
+
         this.bufferPool = bufferPool;
+        scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
+        this.server = MongoServers.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
     }
 
     @Override
     public MongoServer getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
 
-        return connectionManager;
+        return server;
     }
 
     @Override
     public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
-        return connectionManager;
+        return server;
     }
 
     @Override
     public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        return connectionManager;
+        return server;
     }
 
     @Override
-    public List<ServerAddress> getAllServerAddresses() {
+    public Set<ServerAddress> getAllServerAddresses() {
         isTrue("open", !isClosed());
 
-        return Arrays.asList(connectionManager.getServerAddress());
+        return Collections.singleton(server.getServerAddress());
     }
 
     @Override
@@ -77,7 +90,8 @@ public class MongoSingleServerBinding implements MongoServerBinding {
     public void close() {
         if (!isClosed()) {
             isClosed = true;
-            connectionManager.close();
+            server.close();
+            scheduledExecutorService.shutdownNow();
         }
     }
 

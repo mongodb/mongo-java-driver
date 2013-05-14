@@ -27,7 +27,7 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -91,7 +91,7 @@ public class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public List<ServerAddress> getServerAddressList() {
+    public Set<ServerAddress> getServerAddresses() {
         return binding.getAllServerAddresses();
     }
 

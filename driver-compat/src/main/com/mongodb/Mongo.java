@@ -150,7 +150,7 @@ public class Mongo {
      */
     public ServerAddress getAddress() {
         //TODO this needs to return a master. Currently not.
-        return new ServerAddress(getBinding().getAllServerAddresses().get(0));
+        return new ServerAddress(getBinding().getAllServerAddresses().iterator().next());
     }
 
     /**

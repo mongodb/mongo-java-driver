@@ -36,8 +36,7 @@ public final class MongoServerBindings {
 
     public static MongoServerBinding create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new MongoSingleServerBinding(MongoConnectionManagers.createConnectionManager(serverAddress, credentialList, options,
-                bufferPool), bufferPool);
+        return new MongoSingleServerBinding(serverAddress, credentialList, options, bufferPool);
     }
 
     public static MongoServerBinding create(final List<ServerAddress> seedList, final MongoClientOptions options,

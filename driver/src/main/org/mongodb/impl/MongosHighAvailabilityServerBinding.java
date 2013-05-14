@@ -24,8 +24,9 @@ import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding {
 
@@ -33,7 +34,7 @@ public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding
 
     public MongosHighAvailabilityServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                                final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        super(credentialList, options, bufferPool);
+        super(seedList, credentialList, options, bufferPool);
         mongosSetMonitor = new MongosSetMonitor(seedList, options);
     }
 
@@ -48,14 +49,19 @@ public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding
     }
 
     @Override
-    public List<ServerAddress> getAllServerAddresses() {
-        return Arrays.asList(getPreferred());
+    public Set<ServerAddress> getAllServerAddresses() {
+        return Collections.singleton(getPreferred());
     }
 
     @Override
     public void close() {
         mongosSetMonitor.close();
         super.close();
+    }
+
+    @Override
+    protected MongoServerStateListener createServerStateListener(final ServerAddress serverAddress) {
+        throw new UnsupportedOperationException();
     }
 
     private ServerAddress getPreferred() {

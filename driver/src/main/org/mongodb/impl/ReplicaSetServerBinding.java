@@ -18,37 +18,49 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
+import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
 import org.mongodb.rs.ReplicaSetDescription;
 import org.mongodb.rs.ReplicaSetMemberDescription;
 
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.impl.MonitorDefaults.CLIENT_OPTIONS_DEFAULTS;
+import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
+import static org.mongodb.impl.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 public class ReplicaSetServerBinding extends MongoMultiServerBinding {
-    private final ReplicaSetMonitor replicaSetMonitor;
+
+    private final Holder<ReplicaSetDescription> holder = new Holder<ReplicaSetDescription>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(),
+            TimeUnit.MILLISECONDS);
+    private final Map<ServerAddress, ReplicaSetMemberDescription> mostRecentStateMap =
+            new HashMap<ServerAddress, ReplicaSetMemberDescription>();
+    private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
+    private final Random random = new Random();
 
     public ReplicaSetServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                    final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        super(credentialList, options, bufferPool);
+        super(seedList, credentialList, options, bufferPool);
         notNull("seedList", seedList);
         notNull("options", options);
         notNull("bufferPool", bufferPool);
-
-        replicaSetMonitor = new ReplicaSetMonitor(seedList);
-
-        replicaSetMonitor.start(new DefaultMongoServerStateNotifierFactory(bufferPool, options, replicaSetMonitor),
-                Executors.newScheduledThreadPool(seedList.size()));
     }
 
     @Override
@@ -66,25 +78,17 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     }
 
     @Override
-    public List<ServerAddress> getAllServerAddresses() {
-        isTrue("open", !isClosed());
-
-        List<ServerAddress> addressList = new ArrayList<ServerAddress>();
-        ReplicaSetDescription currentReplicaSetDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
-        for (ReplicaSetMemberDescription cur : currentReplicaSetDescription.getAll()) {
-            addressList.add(cur.getAddress());
-        }
-        return addressList;
-    }
-
-    @Override
     public void close() {
-        replicaSetMonitor.shutdownNow();
+        holder.close();
         super.close();
     }
 
+    protected MongoServerStateListener createServerStateListener(final ServerAddress serverAddress) {
+        return new ReplicaSetServerStateListener(serverAddress);
+    }
+
     private ServerAddress getAddressOfPrimary() {
-        ReplicaSetDescription currentDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
+        ReplicaSetDescription currentDescription = holder.get();
         ReplicaSetMemberDescription primary = currentDescription.getPrimary();
         if (primary == null) {
             throw new MongoNoPrimaryException(currentDescription);
@@ -95,11 +99,139 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     private ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
         // TODO: this is hiding potential bugs.  ReadPreference should not be null
         ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-        final ReplicaSetDescription replicaSetDescription = replicaSetMonitor.getCurrentReplicaSetDescription();
+        final ReplicaSetDescription replicaSetDescription = holder.get();
         final ReplicaSetMemberDescription replicaSetMemberDescription = appliedReadPreference.chooseReplicaSetMember(replicaSetDescription);
         if (replicaSetMemberDescription == null) {
             throw new MongoReadPreferenceException(readPreference, replicaSetDescription);
         }
         return replicaSetMemberDescription.getServerAddress();
+    }
+
+    private final class ReplicaSetServerStateListener implements MongoServerStateListener {
+        private ServerAddress serverAddress;
+
+        private ReplicaSetServerStateListener(final ServerAddress serverAddress) {
+            this.serverAddress = serverAddress;
+        }
+
+        @Override
+        public synchronized void notify(final IsMasterCommandResult isMasterCommandResult) {
+            if (isClosed()) {
+                return;
+            }
+
+            if (getConnectionManagerForServer(serverAddress) == null) {
+                return;
+            }
+
+            markAsNotified();
+
+            addNewHosts(isMasterCommandResult.getHosts(), true);
+            addNewHosts(isMasterCommandResult.getPassives(), false);
+            if (isMasterCommandResult.isPrimary()) {
+                removeExtras(isMasterCommandResult);
+            }
+
+            mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, isMasterCommandResult,
+                    LATENCY_SMOOTH_FACTOR, mostRecentStateMap.get(serverAddress)));
+
+            addToHolder();
+        }
+
+        @Override
+        public synchronized void notify(final MongoException e) {
+            if (isClosed()) {
+                return;
+            }
+
+            if (getConnectionManagerForServer(serverAddress) == null) {
+                return;
+            }
+
+            markAsNotified();
+
+            ReplicaSetMemberDescription description = mostRecentStateMap.remove(serverAddress);
+
+            addToHolder();
+
+            if (description.primary()) {
+                invalidateAll();
+            }
+
+        }
+
+        private void markAsNotified() {
+            if (activeMemberNotifications.containsKey(serverAddress)) {
+                activeMemberNotifications.put(serverAddress, true);
+            }
+        }
+
+        private void addToHolder() {
+            if (holder.peek() != null || allActiveMembersHaveNotified()) {
+                setHolder();
+            }
+        }
+
+        private boolean allActiveMembersHaveNotified() {
+            for (boolean notified : activeMemberNotifications.values()) {
+                if (!notified) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void setHolder() {
+            holder.set(new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
+                    SLAVE_ACCEPTABLE_LATENCY_MS));
+        }
+
+        private void addNewHosts(final List<String> hosts, final boolean active) {
+            for (String cur : hosts) {
+                ServerAddress curServerAddress = getServerAddress(cur);
+                if (curServerAddress != null) {
+                    if (active && !activeMemberNotifications.containsKey(curServerAddress)) {
+                        activeMemberNotifications.put(curServerAddress, false);
+                    }
+                    addNode(curServerAddress);
+                }
+            }
+        }
+
+        private void removeExtras(final IsMasterCommandResult isMasterCommandResult) {
+            Set<ServerAddress> allServerAddresses = getAllServerAddresses(isMasterCommandResult);
+            for (ServerAddress curServerAddress : ReplicaSetServerBinding.this.getAllServerAddresses()) {
+                if (!allServerAddresses.contains(curServerAddress)) {
+                    removeNode(curServerAddress);
+                    activeMemberNotifications.remove(curServerAddress);
+                    mostRecentStateMap.remove(curServerAddress);
+                }
+            }
+        }
+
+        // TODO: move these next two methods
+        private Set<ServerAddress> getAllServerAddresses(final IsMasterCommandResult masterCommandResult) {
+            Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+            addHostsToSet(masterCommandResult.getHosts(), retVal);
+            addHostsToSet(masterCommandResult.getPassives(), retVal);
+            return retVal;
+        }
+
+        private void addHostsToSet(final List<String> hosts, final Set<ServerAddress> retVal) {
+            for (String host : hosts) {
+                ServerAddress curServerAddress = getServerAddress(host);
+                if (curServerAddress != null) {
+                    retVal.add(curServerAddress);
+                }
+            }
+        }
+
+        private ServerAddress getServerAddress(final String serverAddressString) {
+            try {
+                return new ServerAddress(serverAddressString);
+            } catch (UnknownHostException e) {
+                return null;
+            }
+        }
     }
 }

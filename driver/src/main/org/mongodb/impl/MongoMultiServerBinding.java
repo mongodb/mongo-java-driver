@@ -24,9 +24,13 @@ import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
@@ -34,15 +38,30 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final Map<ServerAddress, MongoServer> mongoClientMap = new HashMap<ServerAddress, MongoServer>();
+    private final ConcurrentMap<ServerAddress, DefaultMongoServer> addressToServerMap = new ConcurrentHashMap<ServerAddress,
+            DefaultMongoServer>();
     private boolean isClosed;
+    private final ScheduledExecutorService scheduledExecutorService;
 
-    protected MongoMultiServerBinding(final List<MongoCredential> credentialList,
-                                      final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+    protected MongoMultiServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                      final MongoClientOptions options,
+                                      final BufferPool<ByteBuffer> bufferPool) {
         this.credentialList = credentialList;
         this.options = options;
         this.bufferPool = bufferPool;
+        this.scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
+        for (ServerAddress serverAddress : seedList) {
+            addNode(serverAddress);
+        }
     }
+
+    @Override
+    public Set<ServerAddress> getAllServerAddresses() {
+        isTrue("open", !isClosed());
+
+        return new HashSet<ServerAddress>(addressToServerMap.keySet());
+    }
+
 
     @Override
     public BufferPool<ByteBuffer> getBufferPool() {
@@ -52,24 +71,25 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     }
 
     @Override
-    public synchronized MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        MongoServer connection = mongoClientMap.get(serverAddress);
+        MongoServer connection = addressToServerMap.get(serverAddress);
         if (connection == null) {
-            connection = MongoConnectionManagers.createConnectionManager(serverAddress, credentialList, options, bufferPool);
-            mongoClientMap.put(serverAddress, connection);
+            return null;  // TODO: is this going to be a problem for getMore on a node that's no longer in the replica set?
+            // throw new MongoServerNotFoundException();
         }
         return connection;
     }
 
     @Override
     public void close() {
-        if (!isClosed()) {
+        if (!isClosed) {
             isClosed = true;
-            for (MongoServer cur : mongoClientMap.values()) {
-                cur.close();
+            for (MongoServer server : addressToServerMap.values()) {
+                server.close();
             }
+            scheduledExecutorService.shutdownNow();
         }
     }
 
@@ -77,4 +97,29 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     public boolean isClosed() {
         return isClosed;
     }
+
+    protected abstract MongoServerStateListener createServerStateListener(final ServerAddress serverAddress);
+
+
+    protected synchronized void addNode(final ServerAddress serverAddress) {
+        if (!addressToServerMap.containsKey(serverAddress)) {
+            DefaultMongoServer mongoServer = MongoServers.create(serverAddress, credentialList, options, scheduledExecutorService,
+                    bufferPool);
+            mongoServer.addChangeListener(createServerStateListener(serverAddress));
+            addressToServerMap.put(serverAddress, mongoServer);
+        }
+    }
+
+    protected synchronized void removeNode(final ServerAddress serverAddress) {
+        MongoServer server = addressToServerMap.remove(serverAddress);
+        server.close();
+    }
+
+
+    protected void invalidateAll() {
+        for (DefaultMongoServer server : addressToServerMap.values()) {
+            server.invalidate();
+        }
+    }
+
 }

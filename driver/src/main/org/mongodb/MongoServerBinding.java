@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Set;
 
 public interface MongoServerBinding {
     MongoServer getConnectionManagerForWrite();
@@ -28,7 +28,7 @@ public interface MongoServerBinding {
 
     MongoServer getConnectionManagerForServer(final ServerAddress serverAddress);
 
-    List<ServerAddress> getAllServerAddresses();
+    Set<ServerAddress> getAllServerAddresses();
 
     BufferPool<ByteBuffer> getBufferPool();
 
