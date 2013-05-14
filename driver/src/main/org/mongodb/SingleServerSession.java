@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -36,13 +36,13 @@ public class SingleServerSession extends AbstractSession {
      * @return a connection from the bound server
      */
     @Override
-    public MongoSyncConnection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
         return server.getConnection();
     }
 
     @Override
-    public MongoSyncConnection getConnection() {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
         return server.getConnection();
     }

@@ -42,8 +42,8 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultServer implements Server {
     private final ScheduledExecutorService scheduledExecutorService;
     private ServerAddress serverAddress;
-    private final Pool<MongoSyncConnection> connectionPool;
-    private Pool<MongoAsyncConnection> asyncConnectionPool;
+    private final Pool<Connection> connectionPool;
+    private Pool<AsyncConnection> asyncConnectionPool;
     private final MongoIsMasterServerStateNotifier stateNotifier;
     private Set<MongoServerStateListener> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<MongoServerStateListener, Boolean>());
@@ -66,12 +66,12 @@ public class DefaultServer implements Server {
     }
 
     @Override
-    public MongoSyncConnection getConnection() {
+    public Connection getConnection() {
         return new DefaultServerSyncConnection(connectionPool.get());
     }
 
     @Override
-    public MongoAsyncConnection getAsyncConnection() {
+    public AsyncConnection getAsyncConnection() {
         if (asyncConnectionPool == null) {
             throw new UnsupportedOperationException("Asynchronous connections not supported in this version of Java");
         }
@@ -129,10 +129,10 @@ public class DefaultServer implements Server {
         }
     }
 
-    private class DefaultServerSyncConnection implements MongoSyncConnection {
-        private MongoSyncConnection wrapped;
+    private class DefaultServerSyncConnection implements Connection {
+        private Connection wrapped;
 
-        public DefaultServerSyncConnection(final MongoSyncConnection wrapped) {
+        public DefaultServerSyncConnection(final Connection wrapped) {
             this.wrapped = wrapped;
         }
 
@@ -190,10 +190,10 @@ public class DefaultServer implements Server {
     }
 
     // TODO: chain callbacks in order to be notified of exceptions
-    private class DefaultServerAsyncConnection implements MongoAsyncConnection {
-        private MongoAsyncConnection wrapped;
+    private class DefaultServerAsyncConnection implements AsyncConnection {
+        private AsyncConnection wrapped;
 
-        public DefaultServerAsyncConnection(final MongoAsyncConnection wrapped) {
+        public DefaultServerAsyncConnection(final AsyncConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 

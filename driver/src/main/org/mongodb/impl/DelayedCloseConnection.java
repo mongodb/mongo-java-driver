@@ -16,39 +16,42 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.async.SingleResultCallback;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
-class DelayedCloseMongoAsyncConnection extends DelayedCloseMongoConnection implements MongoAsyncConnection {
-    private MongoAsyncConnection wrapped;
+// TODO: should not be public
+@NotThreadSafe
+public class DelayedCloseConnection extends DelayedCloseBaseConnection implements Connection {
+    private Connection wrapped;
 
-    public DelayedCloseMongoAsyncConnection(final MongoAsyncConnection asyncConnection) {
-        wrapped = asyncConnection;
+    public DelayedCloseConnection(final Connection wrapped) {
+        this.wrapped = notNull("wrapped", wrapped);
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
         isTrue("open", !isClosed());
-        wrapped.sendMessage(buffer, callback);
+        wrapped.sendAndReceiveMessage(buffer);
     }
 
     @Override
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer, callback);
+        return wrapped.sendAndReceiveMessage(buffer);
     }
 
     @Override
-    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+    public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
-        wrapped.receiveMessage(callback);
+        return wrapped.receiveMessage();
     }
 
     @Override
-    protected MongoConnection getWrapped() {
+    protected BaseConnection getWrapped() {
         return wrapped;
     }
 }

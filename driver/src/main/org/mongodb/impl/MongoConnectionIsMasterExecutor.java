@@ -31,7 +31,7 @@ import java.nio.ByteBuffer;
 class MongoConnectionIsMasterExecutor implements IsMasterExecutor {
     private final MongoSyncConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
-    private MongoSyncConnection connection;
+    private Connection connection;
 
     MongoConnectionIsMasterExecutor(final MongoSyncConnectionFactory connectionFactory, final BufferPool<ByteBuffer> bufferPool) {
         this.connectionFactory = connectionFactory;

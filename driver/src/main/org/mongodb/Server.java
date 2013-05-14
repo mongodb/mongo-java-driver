@@ -16,14 +16,14 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.impl.MongoServerStateListener;
-import org.mongodb.impl.MongoSyncConnection;
 
 public interface Server {
-    MongoSyncConnection getConnection();
+    Connection getConnection();
 
-    MongoAsyncConnection getAsyncConnection();
+    AsyncConnection getAsyncConnection();
 
     ServerAddress getServerAddress();
 

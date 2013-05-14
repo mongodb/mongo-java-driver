@@ -40,13 +40,13 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 // TODO: Take this class private
-public class DefaultMongoAsyncConnection implements MongoAsyncConnection {
+public class DefaultAsyncConnection implements AsyncConnection {
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile AsynchronousSocketChannel channel;
     private volatile boolean isClosed;
 
-    public DefaultMongoAsyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
+    public DefaultAsyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
         this.bufferPool = bufferPool;
     }

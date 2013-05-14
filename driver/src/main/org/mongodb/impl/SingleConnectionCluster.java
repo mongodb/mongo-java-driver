@@ -31,8 +31,8 @@ import static org.mongodb.assertions.Assertions.isTrue;
 @NotThreadSafe
 public class SingleConnectionCluster implements Cluster {
     private Cluster wrapped;
-    private MongoSyncConnection cachedConnection;
-    private MongoAsyncConnection cachedAsyncConnection;
+    private Connection cachedConnection;
+    private AsyncConnection cachedAsyncConnection;
     private boolean isClosed;
 
     public SingleConnectionCluster(final Cluster wrapped) {
@@ -93,23 +93,23 @@ public class SingleConnectionCluster implements Cluster {
         }
 
         @Override
-        public MongoSyncConnection getConnection() {
+        public Connection getConnection() {
             isTrue("open", !isClosed());
 
             if (cachedConnection == null) {
                 cachedConnection = wrapped.getConnection();
             }
-            return new DelayedCloseMongoSyncConnection(cachedConnection);
+            return new DelayedCloseConnection(cachedConnection);
         }
 
         @Override
-        public MongoAsyncConnection getAsyncConnection() {
+        public AsyncConnection getAsyncConnection() {
             isTrue("open", !isClosed());
 
             if (cachedAsyncConnection == null) {
                 cachedAsyncConnection = wrapped.getAsyncConnection();
             }
-            return new DelayedCloseMongoAsyncConnection(cachedAsyncConnection);
+            return new DelayedCloseAsyncConnection(cachedAsyncConnection);
         }
 
         @Override

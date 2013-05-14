@@ -22,7 +22,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.Server;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
@@ -45,7 +45,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     public MongoFuture<QueryResult<T>> execute(final Cluster cluster) {
         Server server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoAsyncConnection connection = server.getAsyncConnection();
+        AsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
@@ -56,7 +56,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     public MongoFuture<QueryResult<T>> executeReceive(final Cluster cluster) {
         Server connectionManager = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+        AsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
@@ -70,7 +70,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         }
         else {
             Server server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-            MongoAsyncConnection connection = server.getAsyncConnection();
+            AsyncConnection connection = server.getAsyncConnection();
 
             MongoFuture<Void> wrapped = executeDiscard(connection);
             SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
@@ -80,7 +80,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
 
-    public MongoFuture<QueryResult<T>> execute(final MongoAsyncConnection connection) {
+    public MongoFuture<QueryResult<T>> execute(final AsyncConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
@@ -92,7 +92,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<QueryResult<T>> executeReceive(final MongoAsyncConnection connection) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessage(new MongoGetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
@@ -100,7 +100,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<Void> executeDiscard(final MongoAsyncConnection connection) {
+    public MongoFuture<Void> executeDiscard(final AsyncConnection connection) {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (getMore.getServerCursor() == null) {
@@ -115,10 +115,10 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     private static class DiscardCallback implements SingleResultCallback<ResponseBuffers> {
 
-        private MongoAsyncConnection connection;
+        private AsyncConnection connection;
         private SingleResultFuture<Void> future;
 
-        public DiscardCallback(final MongoAsyncConnection connection, final SingleResultFuture<Void> future) {
+        public DiscardCallback(final AsyncConnection connection, final SingleResultFuture<Void> future) {
             this.connection = connection;
             this.future = future;
         }

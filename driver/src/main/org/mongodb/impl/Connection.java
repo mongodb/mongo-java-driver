@@ -16,28 +16,14 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.ServerAddress;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+public interface Connection extends BaseConnection {
 
-public abstract class DelayedCloseMongoConnection implements MongoConnection {
-    private boolean isClosed;
+    void sendMessage(ChannelAwareOutputBuffer buffer);
 
-    @Override
-    public void close() {
-        isClosed = true;
-    }
+    ResponseBuffers sendAndReceiveMessage(ChannelAwareOutputBuffer buffer);
 
-    @Override
-    public boolean isClosed() {
-        return isClosed;
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        isTrue("open", !isClosed());
-        return getWrapped().getServerAddress();
-    }
-
-    protected abstract MongoConnection getWrapped();
+    ResponseBuffers receiveMessage();
 }

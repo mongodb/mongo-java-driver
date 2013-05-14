@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
@@ -42,7 +42,7 @@ public class GetMoreOperation<T> extends Operation {
 
 
     public QueryResult<T> execute(final Session session) {
-        MongoSyncConnection connection = session.getConnection();
+        Connection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
@@ -51,7 +51,7 @@ public class GetMoreOperation<T> extends Operation {
     }
 
     public QueryResult<T> executeReceive(final Session session) {
-        MongoSyncConnection connection = session.getConnection();
+        Connection connection = session.getConnection();
         try {
             return executeReceive(connection);
         } finally {
@@ -60,7 +60,7 @@ public class GetMoreOperation<T> extends Operation {
     }
 
     public void executeDiscard(final Session session) {
-        MongoSyncConnection connection = session.getConnection();
+        Connection connection = session.getConnection();
         try {
             executeDiscard(connection);
         } finally {
@@ -68,7 +68,7 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> execute(final MongoSyncConnection connection) {
+    public QueryResult<T> execute(final Connection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
@@ -88,7 +88,7 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final MongoSyncConnection connection) {
+    public QueryResult<T> executeReceive(final Connection connection) {
         final ResponseBuffers responseBuffers = connection.receiveMessage();
         try {
             return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder), connection.getServerAddress());
@@ -97,7 +97,7 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public void executeDiscard(final MongoSyncConnection connection) {
+    public void executeDiscard(final Connection connection) {
         long cursorId = getMore.getServerCursor().getId();
         while (cursorId != 0) {
             final ResponseBuffers responseBuffers = connection.receiveMessage();

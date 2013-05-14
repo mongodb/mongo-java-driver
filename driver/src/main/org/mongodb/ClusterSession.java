@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 
 public class ClusterSession extends AbstractSession {
     public ClusterSession(final Cluster cluster) {
@@ -24,13 +24,13 @@ public class ClusterSession extends AbstractSession {
     }
 
     @Override
-    public MongoSyncConnection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ReadPreference readPreference) {
 //        notNull("readPreference", readPreference);
         return getCluster().getConnectionManagerForRead(readPreference).getConnection();
     }
 
     @Override
-    public MongoSyncConnection getConnection() {
+    public Connection getConnection() {
         return getConnection(ReadPreference.primary());
     }
 }

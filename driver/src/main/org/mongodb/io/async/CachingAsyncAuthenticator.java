@@ -19,7 +19,7 @@ package org.mongodb.io.async;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.async.SingleResultCallback;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.impl.MongoCredentialsStore;
 import org.mongodb.io.BufferPool;
 import org.mongodb.result.CommandResult;
@@ -32,12 +32,12 @@ import java.util.Set;
 
 public class CachingAsyncAuthenticator {
     private final MongoCredentialsStore credentialsStore;
-    private final MongoAsyncConnection connection;
+    private final AsyncConnection connection;
     private BufferPool<ByteBuffer> bufferPool;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    public CachingAsyncAuthenticator(final MongoCredentialsStore credentialsStore, final MongoAsyncConnection connection,
+    public CachingAsyncAuthenticator(final MongoCredentialsStore credentialsStore, final AsyncConnection connection,
                                      final BufferPool<ByteBuffer> bufferPool) {
         this.credentialsStore = credentialsStore;
         this.connection = connection;

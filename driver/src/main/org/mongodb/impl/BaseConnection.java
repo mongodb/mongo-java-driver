@@ -16,15 +16,23 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.async.SingleResultCallback;
-import org.mongodb.io.ChannelAwareOutputBuffer;
-import org.mongodb.io.ResponseBuffers;
+import org.mongodb.ServerAddress;
 
-public interface MongoAsyncConnection extends MongoConnection {
+public interface BaseConnection {
+    /**
+     * Closes the connection.
+     */
+    void close();
 
-    void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
+    /**
+     * Returns the closed state of the connection
+     *
+     * @return true if connection is closed
+     */
+    boolean isClosed();
 
-    void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
-
-    void receiveMessage(SingleResultCallback<ResponseBuffers> callback);
+    /**
+     * Gets the server address of this connection
+     */
+    ServerAddress getServerAddress();
 }

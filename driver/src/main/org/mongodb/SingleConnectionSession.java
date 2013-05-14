@@ -16,29 +16,29 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.DelayedCloseMongoSyncConnection;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
+import org.mongodb.impl.DelayedCloseConnection;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class SingleConnectionSession extends AbstractSession {
-    private MongoSyncConnection connection;
+    private Connection connection;
 
-    public SingleConnectionSession(final MongoSyncConnection connection, final Cluster cluster) {
+    public SingleConnectionSession(final Connection connection, final Cluster cluster) {
         super(cluster);
         this.connection = connection;
     }
 
     @Override
-    public MongoSyncConnection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
-        return new DelayedCloseMongoSyncConnection(connection);
+        return new DelayedCloseConnection(connection);
     }
 
     @Override
-    public MongoSyncConnection getConnection() {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
-        return new DelayedCloseMongoSyncConnection(connection);
+        return new DelayedCloseConnection(connection);
     }
 
     /**

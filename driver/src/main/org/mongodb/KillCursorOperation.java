@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.MongoKillCursor;
@@ -34,7 +34,7 @@ public class KillCursorOperation extends Operation {
     }
 
     public void execute(final Session session) {
-        MongoSyncConnection connection = session.getConnection();
+        Connection connection = session.getConnection();
         try {
             execute(connection);
         } finally {
@@ -43,7 +43,7 @@ public class KillCursorOperation extends Operation {
 
     }
 
-    public void execute(final MongoSyncConnection connection) {
+    public void execute(final Connection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);

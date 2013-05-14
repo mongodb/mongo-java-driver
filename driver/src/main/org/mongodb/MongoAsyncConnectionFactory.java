@@ -16,9 +16,9 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 
 public interface MongoAsyncConnectionFactory {
     ServerAddress getServerAddress();
-    MongoAsyncConnection create();
+    AsyncConnection create();
 }

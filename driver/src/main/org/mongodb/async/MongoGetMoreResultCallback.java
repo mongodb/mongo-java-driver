@@ -20,7 +20,7 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.QueryResult;
@@ -32,7 +32,7 @@ public class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
     private final long cursorId;
 
     public MongoGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                                      final long cursorId, final MongoAsyncConnection connection) {
+                                      final long cursorId, final AsyncConnection connection) {
         super(connection);
         this.callback = callback;
         this.decoder = decoder;

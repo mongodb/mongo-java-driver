@@ -16,9 +16,9 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 
 public interface MongoSyncConnectionFactory {
     ServerAddress getServerAddress();
-    MongoSyncConnection create();
+    Connection create();
 }

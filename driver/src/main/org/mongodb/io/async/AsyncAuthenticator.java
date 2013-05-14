@@ -18,14 +18,14 @@ package org.mongodb.io.async;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.async.SingleResultCallback;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.result.CommandResult;
 
 public abstract class AsyncAuthenticator {
     private final MongoCredential credential;
-    private final MongoAsyncConnection connection;
+    private final AsyncConnection connection;
 
-    AsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection) {
+    AsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection) {
         this.credential = credential;
         this.connection = connection;
     }
@@ -34,7 +34,7 @@ public abstract class AsyncAuthenticator {
         return credential;
     }
 
-    public MongoAsyncConnection getConnection() {
+    public AsyncConnection getConnection() {
         return connection;
     }
 

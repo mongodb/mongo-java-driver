@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
@@ -40,7 +40,7 @@ public class CommandOperation extends Operation {
     }
 
     public CommandResult execute(final Session session) {
-        MongoSyncConnection connection = session.getConnection(commandOperation.getReadPreference());
+        Connection connection = session.getConnection(commandOperation.getReadPreference());
         try {
             return execute(connection);
         } finally {
@@ -48,7 +48,7 @@ public class CommandOperation extends Operation {
         }
     }
 
-    public CommandResult execute(final MongoSyncConnection connection) {
+    public CommandResult execute(final Connection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);

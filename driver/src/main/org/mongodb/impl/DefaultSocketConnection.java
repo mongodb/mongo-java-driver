@@ -23,23 +23,27 @@ import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.io.MongoSocketWriteException;
 
+import javax.net.SocketFactory;
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 // TODO: migrate all the DBPort configuration
-class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
-    private volatile SocketChannel socketChannel;
+class DefaultSocketConnection extends DefaultSyncConnection {
+    private final SocketFactory socketFactory;
+    private volatile Socket socket;
 
-    public DefaultMongoSocketChannelConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool) {
+    public DefaultSocketConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool,
+                                   final SocketFactory socketFactory) {
         super(address, bufferPool);
+        this.socketFactory = socketFactory;
     }
 
     protected void ensureOpen() {
         try {
-            if (socketChannel == null) {
-                socketChannel = SocketChannel.open(getServerAddress().getSocketAddress());
-                socketChannel.socket().setTcpNoDelay(true);
+            if (socket == null) {
+                socket = socketFactory.createSocket(getServerAddress().getSocketAddress().getAddress(), getServerAddress().getPort());
+                socket.setTcpNoDelay(true);
             }
         } catch (IOException e) {
             close();
@@ -50,7 +54,7 @@ class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
     @Override
     protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) {
         try {
-            buffer.pipeAndClose(socketChannel);
+            buffer.pipeAndClose(socket);
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -59,28 +63,32 @@ class DefaultMongoSocketChannelConnection extends DefaultMongoSyncConnection {
 
     protected void fillAndFlipBuffer(final ByteBuffer buffer) {
         try {
+            if (buffer.isDirect()) {
+                throw new IllegalArgumentException("Only works with non-direct buffers, so something must be misconfigured");
+            }
             int totalBytesRead = 0;
+            byte[] bytes = buffer.array();
             while (totalBytesRead < buffer.limit()) {
-                final int bytesRead = socketChannel.read(buffer);
+                final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                 if (bytesRead == -1) {
                     throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
                 }
                 totalBytesRead += bytesRead;
             }
-            buffer.flip();
         } catch (IOException e) {
             handleIOException(e);
         }
     }
 
+    //CHECKSTYLE:OFF
     public void close() {
         try {
-            if (socketChannel != null) {
-                socketChannel.close();
-                socketChannel = null;
-                super.close();
+            super.close();
+            if (socket != null) {
+                socket.close();
+                socket = null;
             }
-        } catch (IOException e) {  //NOPMD
+        } catch (IOException e) { // NOPMD
             // ignore
         }
     }

@@ -21,7 +21,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.result.CommandResult;
 
 import java.nio.ByteBuffer;
@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 public class NativeAuthenticator extends Authenticator {
     private final BufferPool<ByteBuffer> bufferPool;
 
-    NativeAuthenticator(final MongoCredential credential, final MongoSyncConnection connection, final BufferPool<ByteBuffer> bufferPool) {
+    NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
         this.bufferPool = bufferPool;
     }

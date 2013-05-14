@@ -17,7 +17,7 @@
 package org.mongodb.io.async;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.GSSAPIAuthenticationHelper;
 
@@ -25,7 +25,7 @@ import javax.security.sasl.SaslClient;
 import java.nio.ByteBuffer;
 
 public class GSSAPIAsyncAuthenticator extends SaslAsyncAuthenticator {
-    public GSSAPIAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection,
+    public GSSAPIAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection, bufferPool);
     }

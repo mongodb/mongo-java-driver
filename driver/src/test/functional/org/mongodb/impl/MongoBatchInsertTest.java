@@ -40,7 +40,7 @@ import static org.mongodb.Fixture.getOptions;
 import static org.mongodb.Fixture.getPrimary;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
-    private MongoSyncConnection connection;
+    private Connection connection;
 
     @Before
     public void setUp() throws Exception {

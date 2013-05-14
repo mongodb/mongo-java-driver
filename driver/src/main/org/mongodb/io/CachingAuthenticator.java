@@ -17,8 +17,8 @@
 package org.mongodb.io;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.impl.Connection;
 import org.mongodb.impl.MongoCredentialsStore;
-import org.mongodb.impl.MongoSyncConnection;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -30,12 +30,12 @@ import java.util.Set;
  */
 public class CachingAuthenticator {
     private final MongoCredentialsStore credentialsStore;
-    private final MongoSyncConnection connection;
+    private final Connection connection;
     private BufferPool<ByteBuffer> bufferPool;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final MongoSyncConnection connection,
+    public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final Connection connection,
                                 final BufferPool<ByteBuffer> bufferPool) {
         this.credentialsStore = credentialsStore;
         this.connection = connection;

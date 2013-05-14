@@ -36,7 +36,7 @@ public class MongoIsMasterServerStateNotifier implements MongoServerStateNotifie
     private final MongoServerStateListener serverStateListener;
     private final MongoSyncConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
-    private MongoSyncConnection connection;
+    private Connection connection;
 
     MongoIsMasterServerStateNotifier(final MongoServerStateListener serverStateListener, final MongoSyncConnectionFactory connectionFactory,
                                      final BufferPool<ByteBuffer> bufferPool) {

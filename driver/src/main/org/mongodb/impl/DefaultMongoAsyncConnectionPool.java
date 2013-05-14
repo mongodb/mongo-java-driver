@@ -30,21 +30,21 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class DefaultMongoAsyncConnectionPool implements Pool<MongoAsyncConnection> {
+public class DefaultMongoAsyncConnectionPool implements Pool<AsyncConnection> {
 
-    private final SimplePool<MongoAsyncConnection> wrappedPool;
+    private final SimplePool<AsyncConnection> wrappedPool;
 
     DefaultMongoAsyncConnectionPool(final MongoAsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
         wrappedPool = new SimpleMongoAsyncConnectionPool(connectionFactory, options);
     }
 
     @Override
-    public MongoAsyncConnection get() {
+    public AsyncConnection get() {
         return wrap(wrappedPool.get());
     }
 
     @Override
-    public MongoAsyncConnection get(final long timeout, final TimeUnit timeUnit) {
+    public AsyncConnection get(final long timeout, final TimeUnit timeUnit) {
         return wrap(wrappedPool.get(timeout, timeUnit));
     }
 
@@ -53,14 +53,14 @@ public class DefaultMongoAsyncConnectionPool implements Pool<MongoAsyncConnectio
         wrappedPool.close();
     }
 
-    private MongoAsyncConnection wrap(final MongoAsyncConnection connection) {
+    private AsyncConnection wrap(final AsyncConnection connection) {
         if (connection == null) {
             return null;
         }
-        return new PooledMongoAsyncConnection(connection);
+        return new PooledAsyncConnection(connection);
     }
 
-    static class SimpleMongoAsyncConnectionPool extends SimplePool<MongoAsyncConnection> {
+    static class SimpleMongoAsyncConnectionPool extends SimplePool<AsyncConnection> {
 
         private final MongoAsyncConnectionFactory connectionFactory;
 
@@ -70,20 +70,20 @@ public class DefaultMongoAsyncConnectionPool implements Pool<MongoAsyncConnectio
         }
 
         @Override
-        protected MongoAsyncConnection createNew() {
+        protected AsyncConnection createNew() {
             return connectionFactory.create();
         }
 
         @Override
-        protected void cleanup(final MongoAsyncConnection connection) {
+        protected void cleanup(final AsyncConnection connection) {
             connection.close();
         }
     }
 
-    private class PooledMongoAsyncConnection implements MongoAsyncConnection {
-        private volatile MongoAsyncConnection wrapped;
+    private class PooledAsyncConnection implements AsyncConnection {
+        private volatile AsyncConnection wrapped;
 
-        public PooledMongoAsyncConnection(final MongoAsyncConnection wrapped) {
+        public PooledAsyncConnection(final AsyncConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 

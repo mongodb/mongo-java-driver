@@ -25,7 +25,7 @@ import org.mongodb.async.AsyncCommandOperation;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.result.CommandResult;
 
@@ -36,7 +36,7 @@ import java.nio.ByteBuffer;
 public abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
     private final BufferPool<ByteBuffer> bufferPool;
 
-    SaslAsyncAuthenticator(final MongoCredential credential, final MongoAsyncConnection connection,
+    SaslAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
                            final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
         this.bufferPool = bufferPool;

@@ -16,14 +16,15 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 
-public interface MongoSyncConnection extends MongoConnection {
+public interface AsyncConnection extends BaseConnection {
 
-    void sendMessage(ChannelAwareOutputBuffer buffer);
+    void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
-    ResponseBuffers sendAndReceiveMessage(ChannelAwareOutputBuffer buffer);
+    void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
-    ResponseBuffers receiveMessage();
+    void receiveMessage(SingleResultCallback<ResponseBuffers> callback);
 }

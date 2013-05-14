@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
@@ -56,7 +56,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        final MongoSyncConnection connection = initialSession.getConnection(find.getReadPreference());
+        final Connection connection = initialSession.getConnection(find.getReadPreference());
         final Server server = initialSession.getCluster().getConnectionManagerForServer(connection.getServerAddress());
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             this.session = new SingleConnectionSession(connection, initialSession.getCluster());

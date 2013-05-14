@@ -38,7 +38,7 @@ import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
-    private MongoAsyncConnection connection;
+    private AsyncConnection connection;
 
     @Before
     public void setUp() throws Exception {

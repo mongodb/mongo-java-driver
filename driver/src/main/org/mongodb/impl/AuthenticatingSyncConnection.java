@@ -29,12 +29,12 @@ import java.util.List;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class AuthenticatingMongoSyncConnection implements MongoSyncConnection {
-    private volatile MongoSyncConnection wrapped;
+class AuthenticatingSyncConnection implements Connection {
+    private volatile Connection wrapped;
     private final CachingAuthenticator authenticator;
 
-    public AuthenticatingMongoSyncConnection(final MongoSyncConnection wrapped, final List<MongoCredential> credentialList,
-                                             final BufferPool<ByteBuffer> bufferPool) {
+    public AuthenticatingSyncConnection(final Connection wrapped, final List<MongoCredential> credentialList,
+                                        final BufferPool<ByteBuffer> bufferPool) {
         this.wrapped = notNull("wrapped", wrapped);
         this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferPool);
     }

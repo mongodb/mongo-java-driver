@@ -23,7 +23,7 @@ import org.mongodb.Server;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.MongoWrite;
@@ -40,7 +40,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
 
     public MongoFuture<WriteResult> execute(final Cluster cluster) {
         Server server = cluster.getConnectionManagerForWrite();
-        MongoAsyncConnection connection = server.getAsyncConnection();
+        AsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<WriteResult> wrapped = execute(connection);
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
@@ -48,14 +48,14 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<WriteResult> execute(final MongoAsyncConnection connection) {
+    public MongoFuture<WriteResult> execute(final AsyncConnection connection) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
         execute(connection, new SingleResultFutureCallback<WriteResult>(retVal));
         return retVal;
     }
 
 
-    public void execute(final MongoAsyncConnection connection, final SingleResultCallback<WriteResult> callback) {
+    public void execute(final AsyncConnection connection, final SingleResultCallback<WriteResult> callback) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(), buffer);
         if (getWriteConcern().callGetLastError()) {

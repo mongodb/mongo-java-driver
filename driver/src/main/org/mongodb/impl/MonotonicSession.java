@@ -27,19 +27,19 @@ import static org.mongodb.assertions.Assertions.notNull;
 @NotThreadSafe
 public class MonotonicSession extends AbstractSession {
     private ReadPreference lastRequestedReadPreference;
-    private MongoSyncConnection connectionForReads;
-    private MongoSyncConnection connectionForWrites;
+    private Connection connectionForReads;
+    private Connection connectionForWrites;
 
     public MonotonicSession(final Cluster cluster) {
         super(cluster);
     }
 
     @Override
-    public MongoSyncConnection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
         notNull("readPreference", readPreference);
         synchronized (this) {
-            MongoSyncConnection connectionToUse;
+            Connection connectionToUse;
             if (connectionForWrites != null) {
                 connectionToUse = connectionForWrites;
             }
@@ -55,12 +55,12 @@ public class MonotonicSession extends AbstractSession {
             else {
                 connectionToUse = connectionForReads;
             }
-            return new DelayedCloseMongoSyncConnection(connectionToUse);
+            return new DelayedCloseConnection(connectionToUse);
         }
     }
 
     @Override
-    public MongoSyncConnection getConnection() {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
@@ -70,7 +70,7 @@ public class MonotonicSession extends AbstractSession {
                     connectionForReads = null;
                 }
             }
-            return new DelayedCloseMongoSyncConnection(connectionForWrites);
+            return new DelayedCloseConnection(connectionForWrites);
         }
     }
 

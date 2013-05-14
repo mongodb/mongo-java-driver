@@ -23,7 +23,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.Server;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.protocol.MongoCommandMessage;
@@ -46,7 +46,7 @@ public class AsyncCommandOperation extends AsyncOperation {
 
     public MongoFuture<CommandResult> execute(final Cluster cluster) {
         Server server = cluster.getConnectionManagerForRead(commandOperation.getReadPreference());
-        MongoAsyncConnection connection = server.getAsyncConnection();
+        AsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<CommandResult> wrapped = execute(connection);
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
@@ -54,7 +54,7 @@ public class AsyncCommandOperation extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<CommandResult> execute(final MongoAsyncConnection connection) {
+    public MongoFuture<CommandResult> execute(final AsyncConnection connection) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());

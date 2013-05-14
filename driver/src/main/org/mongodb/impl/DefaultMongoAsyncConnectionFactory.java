@@ -43,8 +43,8 @@ public class DefaultMongoAsyncConnectionFactory implements MongoAsyncConnectionF
     }
 
     @Override
-    public MongoAsyncConnection create() {
-        return new AuthenticatingMongoAsyncConnection(new DefaultMongoAsyncConnection(serverAddress, bufferPool), credentialList,
+    public AsyncConnection create() {
+        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferPool), credentialList,
                 bufferPool);
     }
 }

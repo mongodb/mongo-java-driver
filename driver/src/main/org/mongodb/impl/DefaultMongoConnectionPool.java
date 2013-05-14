@@ -32,20 +32,20 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultMongoConnectionPool implements Pool<MongoSyncConnection> {
-    private final SimplePool<MongoSyncConnection> wrappedPool;
+class DefaultMongoConnectionPool implements Pool<Connection> {
+    private final SimplePool<Connection> wrappedPool;
 
     DefaultMongoConnectionPool(final MongoSyncConnectionFactory connectionFactory, final MongoClientOptions options) {
         wrappedPool = new SimpleMongoConnectionPool(connectionFactory, options);
     }
 
     @Override
-    public MongoSyncConnection get() {
+    public Connection get() {
         return wrap(wrappedPool.get());
     }
 
     @Override
-    public MongoSyncConnection get(final long timeout, final TimeUnit timeUnit) {
+    public Connection get(final long timeout, final TimeUnit timeUnit) {
         return wrap(wrappedPool.get(timeout, timeUnit));
     }
 
@@ -54,14 +54,14 @@ class DefaultMongoConnectionPool implements Pool<MongoSyncConnection> {
         wrappedPool.close();
     }
 
-    private MongoSyncConnection wrap(final MongoSyncConnection connection) {
+    private Connection wrap(final Connection connection) {
         if (connection == null) {
             return null;
         }
-        return new PooledMongoSyncConnection(connection);
+        return new PooledSyncConnection(connection);
     }
 
-    static class SimpleMongoConnectionPool extends SimplePool<MongoSyncConnection> {
+    static class SimpleMongoConnectionPool extends SimplePool<Connection> {
 
         private final MongoSyncConnectionFactory connectionFactory;
 
@@ -71,20 +71,20 @@ class DefaultMongoConnectionPool implements Pool<MongoSyncConnection> {
         }
 
         @Override
-        protected MongoSyncConnection createNew() {
+        protected Connection createNew() {
             return connectionFactory.create();
         }
 
         @Override
-        protected void cleanup(final MongoSyncConnection connection) {
+        protected void cleanup(final Connection connection) {
             connection.close();
         }
     }
 
-    private class PooledMongoSyncConnection implements MongoSyncConnection {
-        private volatile MongoSyncConnection wrapped;
+    private class PooledSyncConnection implements Connection {
+        private volatile Connection wrapped;
 
-        public PooledMongoSyncConnection(final MongoSyncConnection wrapped) {
+        public PooledSyncConnection(final Connection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 

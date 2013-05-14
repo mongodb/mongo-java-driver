@@ -30,13 +30,13 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class AuthenticatingMongoAsyncConnection implements MongoAsyncConnection {
+public class AuthenticatingAsyncConnection implements AsyncConnection {
 
     private final CachingAsyncAuthenticator authenticator;
-    private volatile MongoAsyncConnection wrapped;
+    private volatile AsyncConnection wrapped;
 
-    public AuthenticatingMongoAsyncConnection(final MongoAsyncConnection wrapped, final List<MongoCredential> credentialList,
-                                              final BufferPool<ByteBuffer> bufferPool) {
+    public AuthenticatingAsyncConnection(final AsyncConnection wrapped, final List<MongoCredential> credentialList,
+                                         final BufferPool<ByteBuffer> bufferPool) {
         this.wrapped = wrapped;
         authenticator = new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferPool);
     }

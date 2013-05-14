@@ -18,14 +18,14 @@ package org.mongodb.util;
 
 import org.mongodb.Cluster;
 import org.mongodb.ReadPreference;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 
 public interface Session {
     Cluster getCluster();
 
-    MongoSyncConnection getConnection(ReadPreference readPreference);
+    Connection getConnection(ReadPreference readPreference);
 
-    MongoSyncConnection getConnection();
+    Connection getConnection();
 
     void close();
 

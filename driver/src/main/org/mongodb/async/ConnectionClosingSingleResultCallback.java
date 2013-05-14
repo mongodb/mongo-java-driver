@@ -17,13 +17,13 @@
 package org.mongodb.async;
 
 import org.mongodb.MongoException;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 
 class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
-    private final MongoAsyncConnection connection;
+    private final AsyncConnection connection;
     private final SingleResultFuture<T> retVal;
 
-    public ConnectionClosingSingleResultCallback(final MongoAsyncConnection connection, final SingleResultFuture<T> retVal) {
+    public ConnectionClosingSingleResultCallback(final AsyncConnection connection, final SingleResultFuture<T> retVal) {
         this.connection = connection;
         this.retVal = retVal;
     }

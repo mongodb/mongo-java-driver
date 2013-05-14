@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
-import org.mongodb.impl.MongoSyncConnection;
+import org.mongodb.impl.Connection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
@@ -39,7 +39,7 @@ public abstract class WriteOperation extends Operation {
     }
 
     public WriteResult execute(final Session session) {
-        MongoSyncConnection connection = session.getConnection();
+        Connection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
@@ -47,7 +47,7 @@ public abstract class WriteOperation extends Operation {
         }
     }
 
-    public WriteResult execute(final MongoSyncConnection connection) {
+    public WriteResult execute(final Connection connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             CommandResult getLastErrorResult = null;

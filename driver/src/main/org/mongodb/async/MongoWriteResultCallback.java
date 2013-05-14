@@ -22,7 +22,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.protocol.MongoRequestMessage;
@@ -43,7 +43,7 @@ public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
                                     final MongoWrite writeOperation, final GetLastError getLastError,
                                     final Decoder<Document> decoder, final MongoNamespace namespace,
                                     final MongoRequestMessage nextMessage,
-                                    final MongoAsyncConnection connection,
+                                    final AsyncConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool) {
         super(getLastError, decoder, connection);
         this.callback = callback;

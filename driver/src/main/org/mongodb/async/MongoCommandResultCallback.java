@@ -21,7 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.result.CommandResult;
 
 public class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
@@ -29,7 +29,7 @@ public class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
 
     public MongoCommandResultCallback(final SingleResultCallback<CommandResult> callback,
                                       final MongoCommand commandOperation, final Decoder<Document> decoder,
-                                      final MongoAsyncConnection connection) {
+                                      final AsyncConnection connection) {
         super(commandOperation, decoder, connection);
         this.callback = callback;
     }

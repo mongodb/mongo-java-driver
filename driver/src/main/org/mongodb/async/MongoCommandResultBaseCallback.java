@@ -20,7 +20,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.impl.MongoAsyncConnection;
+import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.CommandResult;
@@ -30,7 +30,7 @@ public abstract class MongoCommandResultBaseCallback extends MongoResponseCallba
     private final Decoder<Document> decoder;
 
     public MongoCommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder,
-                                          final MongoAsyncConnection connection) {
+                                          final AsyncConnection connection) {
         super(connection);
         this.commandOperation = commandOperation;
         this.decoder = decoder;

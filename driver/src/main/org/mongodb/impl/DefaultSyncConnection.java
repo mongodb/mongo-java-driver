@@ -36,12 +36,12 @@ import java.nio.channels.ClosedByInterruptException;
 
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
-abstract class DefaultMongoSyncConnection implements MongoSyncConnection {
+abstract class DefaultSyncConnection implements Connection {
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile boolean isClosed;
 
-    DefaultMongoSyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
+    DefaultSyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
         this.bufferPool = bufferPool;
     }

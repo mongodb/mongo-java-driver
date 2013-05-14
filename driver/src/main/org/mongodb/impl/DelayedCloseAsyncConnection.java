@@ -16,42 +16,39 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.ResponseBuffers;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
-// TODO: should not be public
-@NotThreadSafe
-public class DelayedCloseMongoSyncConnection extends DelayedCloseMongoConnection implements MongoSyncConnection {
-    private MongoSyncConnection wrapped;
+class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncConnection {
+    private AsyncConnection wrapped;
 
-    public DelayedCloseMongoSyncConnection(final MongoSyncConnection wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
+        wrapped = asyncConnection;
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer);
+        wrapped.sendMessage(buffer, callback);
     }
 
     @Override
-    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
+    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        return wrapped.sendAndReceiveMessage(buffer);
+        wrapped.sendAndReceiveMessage(buffer, callback);
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        return wrapped.receiveMessage();
+        wrapped.receiveMessage(callback);
     }
 
     @Override
-    protected MongoConnection getWrapped() {
+    protected BaseConnection getWrapped() {
         return wrapped;
     }
 }
