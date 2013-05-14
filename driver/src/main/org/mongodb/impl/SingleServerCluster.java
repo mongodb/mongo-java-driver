@@ -22,6 +22,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerFactory;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
@@ -41,14 +42,16 @@ public class SingleServerCluster implements Cluster {
     private volatile boolean isClosed;
 
     public SingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                               final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+                               final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
+                               final ServerFactory serverFactory) {
         notNull("serverAddres", serverAddress);
         notNull("options", options);
         notNull("bufferPool", bufferPool);
+        notNull("serverFactory", serverFactory);
 
         this.bufferPool = bufferPool;
         scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
-        this.server = Servers.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
+        this.server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
     }
 
     @Override

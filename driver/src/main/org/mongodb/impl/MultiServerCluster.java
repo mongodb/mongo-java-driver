@@ -21,6 +21,7 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerFactory;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
@@ -38,17 +39,18 @@ public abstract class MultiServerCluster implements Cluster {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final ConcurrentMap<ServerAddress, DefaultServer> addressToServerMap = new ConcurrentHashMap<ServerAddress,
-            DefaultServer>();
+    private final ServerFactory serverFactory;
+    private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
     private boolean isClosed;
     private final ScheduledExecutorService scheduledExecutorService;
 
     protected MultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                 final MongoClientOptions options,
-                                 final BufferPool<ByteBuffer> bufferPool) {
+                                 final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
+                                 final ServerFactory serverFactory) {
         this.credentialList = credentialList;
         this.options = options;
         this.bufferPool = bufferPool;
+        this.serverFactory = serverFactory;
         this.scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
         for (ServerAddress serverAddress : seedList) {
             addNode(serverAddress);
@@ -103,8 +105,7 @@ public abstract class MultiServerCluster implements Cluster {
 
     protected synchronized void addNode(final ServerAddress serverAddress) {
         if (!addressToServerMap.containsKey(serverAddress)) {
-            DefaultServer mongoServer = Servers.create(serverAddress, credentialList, options, scheduledExecutorService,
-                    bufferPool);
+            Server mongoServer = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
             mongoServer.addChangeListener(createServerStateListener(serverAddress));
             addressToServerMap.put(serverAddress, mongoServer);
         }
@@ -117,7 +118,7 @@ public abstract class MultiServerCluster implements Cluster {
 
 
     protected void invalidateAll() {
-        for (DefaultServer server : addressToServerMap.values()) {
+        for (Server server : addressToServerMap.values()) {
             server.invalidate();
         }
     }

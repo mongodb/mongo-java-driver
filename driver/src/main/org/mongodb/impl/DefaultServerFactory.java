@@ -20,31 +20,28 @@ import org.mongodb.MongoAsyncConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoSyncConnectionFactory;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerFactory;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-public final class Servers {
-    // TODO: this is exposing the implementation class.  But I didn't want to make some of the methods in Server public, so
-    // leaving this way for now.
-    static DefaultServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                              final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
-                              final BufferPool<ByteBuffer> bufferPool) {
+public final class DefaultServerFactory implements ServerFactory {
+
+    @Override
+    public Server create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                         final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
+                         final BufferPool<ByteBuffer> bufferPool) {
         MongoSyncConnectionFactory connectionFactory = new DefaultMongoSyncConnectionFactory(options,
                 serverAddress, bufferPool, credentialList);
         MongoAsyncConnectionFactory asyncConnectionFactory = null;
 
         if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            asyncConnectionFactory = new DefaultMongoAsyncConnectionFactory(options, serverAddress,
-                    bufferPool, credentialList);
+            asyncConnectionFactory = new DefaultMongoAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
         }
-        return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService,
-                bufferPool);
-    }
-
-    private Servers() {
+        return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService, bufferPool);
     }
 }

@@ -24,6 +24,7 @@ import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerFactory;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
 import org.mongodb.rs.ReplicaSetDescription;
@@ -56,8 +57,9 @@ public class ReplicaSetCluster extends MultiServerCluster {
     private final Random random = new Random();
 
     public ReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        super(seedList, credentialList, options, bufferPool);
+                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
+                             final ServerFactory serverFactory) {
+        super(seedList, credentialList, options, bufferPool, serverFactory);
         notNull("seedList", seedList);
         notNull("options", options);
         notNull("bufferPool", bufferPool);

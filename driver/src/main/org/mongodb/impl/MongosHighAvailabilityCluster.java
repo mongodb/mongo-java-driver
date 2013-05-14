@@ -21,6 +21,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
+import org.mongodb.ServerFactory;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
@@ -33,8 +34,9 @@ public class MongosHighAvailabilityCluster extends MultiServerCluster {
     private final MongosSetMonitor mongosSetMonitor;
 
     public MongosHighAvailabilityCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                         final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        super(seedList, credentialList, options, bufferPool);
+                                         final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
+                                         final ServerFactory serverFactory) {
+        super(seedList, credentialList, options, bufferPool, serverFactory);
         mongosSetMonitor = new MongosSetMonitor(seedList, options);
     }
 
