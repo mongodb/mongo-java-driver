@@ -29,11 +29,12 @@ public class MongoFind extends MongoQuery {
     private boolean explain;
 
     public MongoFind() {
-        this.filter = new Document();
+        this(new Document());
     }
 
     public MongoFind(final Document filter) {
         this.filter = filter;
+        readPreference(ReadPreference.primary());
     }
 
     public MongoFind(final MongoFind from) {
