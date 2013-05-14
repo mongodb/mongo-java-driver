@@ -22,8 +22,11 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoServer;
 import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.ServerAddress;
+import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
+import org.mongodb.io.ChannelAwareOutputBuffer;
+import org.mongodb.io.ResponseBuffers;
 import org.mongodb.pool.Pool;
 
 import java.nio.ByteBuffer;
@@ -33,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class DefaultMongoServer implements MongoServer {
@@ -63,7 +67,7 @@ public class DefaultMongoServer implements MongoServer {
 
     @Override
     public MongoSyncConnection getConnection() {
-        return connectionPool.get();
+        return new DefaultServerSyncConnection(connectionPool.get());
     }
 
     @Override
@@ -71,7 +75,7 @@ public class DefaultMongoServer implements MongoServer {
         if (asyncConnectionPool == null) {
             throw new UnsupportedOperationException("Asynchronous connections not supported in this version of Java");
         }
-        return asyncConnectionPool.get();
+        return new DefaultServerAsyncConnection(asyncConnectionPool.get());
     }
 
     @Override
@@ -101,6 +105,10 @@ public class DefaultMongoServer implements MongoServer {
         stateNotifier.close();
     }
 
+    private void handleException() {
+        invalidate();  // TODO: handle different exceptions sub-classes differently
+    }
+
     private final class DefaultMongoServerStateListener implements MongoServerStateListener {
         @Override
         public void notify(final IsMasterCommandResult masterCommandResult) {
@@ -115,6 +123,129 @@ public class DefaultMongoServer implements MongoServer {
             description = null;
             for (MongoServerStateListener listener : changeListeners) {
                 listener.notify(e);
+            }
+        }
+    }
+
+    private class DefaultServerSyncConnection implements MongoSyncConnection {
+        private MongoSyncConnection wrapped;
+
+        public DefaultServerSyncConnection(final MongoSyncConnection wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public ServerAddress getServerAddress() {
+            isTrue("open", !isClosed());
+            return wrapped.getServerAddress();
+        }
+
+        @Override
+        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            try {
+                wrapped.sendMessage(buffer);
+            } catch (MongoException e) {
+                handleException();
+                throw e;
+            }
+        }
+
+        @Override
+        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            try {
+                return wrapped.sendAndReceiveMessage(buffer);
+            } catch (MongoException e) {
+                handleException();
+                throw e;
+            }
+        }
+
+        @Override
+        public ResponseBuffers receiveMessage() {
+            isTrue("open", !isClosed());
+            try {
+                return wrapped.receiveMessage();
+            } catch (MongoException e) {
+                handleException();
+                throw e;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (wrapped != null) {
+                wrapped.close();
+                wrapped = null;
+            }
+        }
+
+        @Override
+        public boolean isClosed() {
+            return wrapped == null;
+        }
+    }
+
+    // TODO: chain callbacks in order to be notified of exceptions
+    private class DefaultServerAsyncConnection implements MongoAsyncConnection {
+        private MongoAsyncConnection wrapped;
+
+        public DefaultServerAsyncConnection(final MongoAsyncConnection wrapped) {
+            this.wrapped = notNull("wrapped", wrapped);
+        }
+
+        @Override
+        public ServerAddress getServerAddress() {
+            isTrue("open", !isClosed());
+            return wrapped.getServerAddress();
+        }
+
+        @Override
+        public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.sendAndReceiveMessage(buffer, new InvalidatingSingleResultCallback(callback));
+        }
+
+        @Override
+        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.sendAndReceiveMessage(buffer, new InvalidatingSingleResultCallback(callback));
+        }
+
+        @Override
+        public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.receiveMessage(new InvalidatingSingleResultCallback(callback));
+        }
+
+        @Override
+        public void close() {
+            if (wrapped != null) {
+                wrapped.close();
+                wrapped = null;
+            }
+        }
+
+        @Override
+        public boolean isClosed() {
+            return wrapped == null;
+        }
+
+
+        private final class InvalidatingSingleResultCallback implements SingleResultCallback<ResponseBuffers> {
+            private final SingleResultCallback<ResponseBuffers> callback;
+
+            public InvalidatingSingleResultCallback(final SingleResultCallback<ResponseBuffers> callback) {
+                this.callback = callback;
+            }
+
+            @Override
+            public void onResult(final ResponseBuffers result, final MongoException e) {
+                if (e != null) {
+                    invalidate();
+                }
+                callback.onResult(result, e);
             }
         }
     }
