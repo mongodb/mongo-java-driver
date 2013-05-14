@@ -16,16 +16,17 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.AbstractSession;
+import org.mongodb.AbstractBaseSession;
 import org.mongodb.Cluster;
 import org.mongodb.ReadPreference;
+import org.mongodb.Session;
 import org.mongodb.annotations.NotThreadSafe;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
-public class MonotonicSession extends AbstractSession {
+public class MonotonicSession extends AbstractBaseSession implements Session {
     private ReadPreference lastRequestedReadPreference;
     private Connection connectionForReads;
     private Connection connectionForWrites;

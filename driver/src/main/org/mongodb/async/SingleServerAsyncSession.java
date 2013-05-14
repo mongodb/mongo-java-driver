@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
-import org.mongodb.impl.Connection;
-import org.mongodb.impl.DelayedCloseConnection;
+
+import org.mongodb.AbstractBaseSession;
+import org.mongodb.Cluster;
+import org.mongodb.ReadPreference;
+import org.mongodb.Server;
+import org.mongodb.impl.AsyncConnection;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleConnectionSession extends AbstractBaseSession implements Session {
-    private Connection connection;
+public class SingleServerAsyncSession extends AbstractBaseSession implements AsyncSession {
+    private final Server server;
 
-    public SingleConnectionSession(final Connection connection, final Cluster cluster) {
+    public SingleServerAsyncSession(final Server server, final Cluster cluster) {
         super(cluster);
-        this.connection = connection;
+        this.server = server;
     }
 
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
+    public AsyncConnection getConnection(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
-        return new DelayedCloseConnection(connection);
+        return server.getAsyncConnection();
     }
 
     @Override
-    public Connection getConnection() {
+    public AsyncConnection getConnection() {
         isTrue("open", !isClosed());
-        return new DelayedCloseConnection(connection);
-    }
-
-    /**
-     * Closes the session and the connection bound to this session.
-     */
-    @Override
-    public void close() {
-        connection.close();
-        super.close();
+        return server.getAsyncConnection();
     }
 }

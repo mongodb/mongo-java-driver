@@ -23,13 +23,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoQueryCursor;
-import org.mongodb.ReadPreference;
-import org.mongodb.SingleConnectionSession;
-import org.mongodb.impl.SingleConnectionCluster;
 import org.mongodb.operation.MongoFind;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -37,7 +34,7 @@ import java.util.concurrent.CountDownLatch;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.operation.QueryOption.Exhaust;
 
@@ -70,8 +67,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testBlockRun() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
-                getBufferPool(),
+                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(),
                 new TestBlock()).start();
         latch.await();
         assertEquals(documentList, documentResultList);
@@ -81,8 +77,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(100).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
-                getBufferPool(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 100)));
@@ -92,8 +87,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
-                getBufferPool(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList));
@@ -103,8 +97,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
-                getBufferPool(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 5)));
@@ -112,36 +105,42 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException {
-        SingleConnectionCluster cluster = new SingleConnectionCluster(getCluster());
-        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(cluster.getConnectionManagerForRead(ReadPreference
-                .primary()).getConnection(), getCluster());
+        SingleConnectionAsyncSession session = new SingleConnectionAsyncSession(getAsyncSession().getConnection(), getCluster());
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), cluster,
-                getBufferPool(), new TestBlock(1)).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), session, new TestBlock(1)).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 1)));
 
-        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
-        assertEquals(new Document("_id", 999), cursor.next());
+        documentResultList.clear();
+        CountDownLatch nextLatch = new CountDownLatch(1);
 
+        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                new MongoFind().limit(1).order(new Document("_id", -1)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), session, new TestBlock(1, nextLatch)).start();
+        nextLatch.await();
+        assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
     }
 
 
     private final class TestBlock implements AsyncBlock<Document> {
         private int count;
         private int iterations;
+        private CountDownLatch latch;
 
         private TestBlock() {
            this(Integer.MAX_VALUE);
         }
 
         private TestBlock(final int count) {
+            this(count, MongoAsyncQueryCursorTest.this.latch);
+        }
+
+        private TestBlock(final int count, final CountDownLatch latch) {
             this.count = count;
+            this.latch = latch;
         }
 
         @Override

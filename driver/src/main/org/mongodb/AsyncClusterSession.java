@@ -16,21 +16,26 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.Connection;
+import org.mongodb.async.AsyncSession;
+import org.mongodb.impl.AsyncConnection;
 
-public class ClusterSession extends AbstractBaseSession implements Session {
-    public ClusterSession(final Cluster cluster) {
+import static org.mongodb.assertions.Assertions.isTrue;
+
+public class AsyncClusterSession extends AbstractBaseSession implements AsyncSession {
+
+    public AsyncClusterSession(final Cluster cluster) {
         super(cluster);
     }
 
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
-//        notNull("readPreference", readPreference);
-        return getCluster().getConnectionManagerForRead(readPreference).getConnection();
+    public AsyncConnection getConnection(final ReadPreference readPreference) {
+        isTrue("open", !isClosed());
+        return getCluster().getConnectionManagerForRead(readPreference).getAsyncConnection();
     }
 
     @Override
-    public Connection getConnection() {
+    public AsyncConnection getConnection() {
+        isTrue("open", !isClosed());
         return getConnection(ReadPreference.primary());
     }
 }

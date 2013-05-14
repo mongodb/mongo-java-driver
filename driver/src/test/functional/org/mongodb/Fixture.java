@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.mongodb.async.AsyncSession;
 import org.mongodb.impl.DefaultMongoAsyncConnectionFactory;
 import org.mongodb.impl.DefaultMongoSyncConnectionFactory;
 import org.mongodb.impl.MongoClientImpl;
@@ -70,6 +71,11 @@ public final class Fixture {
     public static Session getSession() {
         getMongoClient();
         return mongoClient.getSession();
+    }
+
+    public static AsyncSession getAsyncSession() {
+        getMongoClient();
+        return mongoClient.getAsyncSession();
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,

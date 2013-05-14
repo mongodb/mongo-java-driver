@@ -21,7 +21,7 @@ import org.mongodb.impl.Connection;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class SingleServerSession extends AbstractSession {
+public class SingleServerSession extends AbstractBaseSession implements Session {
     private Server server;
 
     public SingleServerSession(final Server server, final Cluster cluster) {

@@ -16,16 +16,29 @@
 
 package org.mongodb;
 
-import org.mongodb.impl.Connection;
+import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
-public interface Session extends BaseSession {
-    Cluster getCluster();
+public abstract class AbstractBaseSession implements BaseSession {
+    private Cluster cluster;
 
-    Connection getConnection(ReadPreference readPreference);
+    protected AbstractBaseSession(final Cluster cluster) {
+        this.cluster = notNull("cluster", cluster);
+    }
 
-    Connection getConnection();
+    @Override
+    public Cluster getCluster() {
+        isTrue("open", !isClosed());
+        return cluster;
+    }
 
-    void close();
+    @Override
+    public void close() {
+        cluster = null;
+    }
 
-    boolean isClosed();
+    @Override
+    public boolean isClosed() {
+        return cluster == null;
+    }
 }

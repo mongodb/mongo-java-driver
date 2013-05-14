@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
-import org.mongodb.impl.Connection;
+import org.mongodb.Cluster;
+import org.mongodb.ReadPreference;
+import org.mongodb.impl.AsyncConnection;
 
-public interface Session extends BaseSession {
+public interface AsyncSession {
     Cluster getCluster();
 
-    Connection getConnection(ReadPreference readPreference);
+    AsyncConnection getConnection(ReadPreference readPreference);
 
-    Connection getConnection();
+    AsyncConnection getConnection();
 
     void close();
 

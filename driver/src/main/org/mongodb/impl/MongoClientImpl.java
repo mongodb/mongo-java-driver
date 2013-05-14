@@ -16,6 +16,7 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.AsyncClusterSession;
 import org.mongodb.ClientAdmin;
 import org.mongodb.Cluster;
 import org.mongodb.ClusterSession;
@@ -25,6 +26,7 @@ import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.Session;
+import org.mongodb.async.AsyncSession;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.BufferPool;
 
@@ -95,6 +97,10 @@ public class MongoClientImpl implements MongoClient {
     @Override
     public Set<ServerAddress> getServerAddresses() {
         return cluster.getAllServerAddresses();
+    }
+
+    public AsyncSession getAsyncSession() {
+        return new AsyncClusterSession(cluster);
     }
 
     public Session getSession() {

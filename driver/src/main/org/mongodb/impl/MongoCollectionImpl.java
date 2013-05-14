@@ -699,7 +699,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final MongoReplace<T> replace = new MongoReplace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
             return new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(),
-                    client.getBufferPool()).execute(client.getCluster());
+                    client.getBufferPool()).execute(client.getAsyncSession());
         }
 
         boolean asBoolean(final Get get) {
@@ -710,7 +710,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<T> asyncOne() {
             final MongoFuture<QueryResult<T>> queryResultFuture =
                     new AsyncQueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                            client.getBufferPool()).execute(client.getCluster());
+                            client.getBufferPool()).execute(client.getAsyncSession());
             return new MongoFuture<T>() {
                 @Override
                 public boolean cancel(final boolean mayInterruptIfRunning) {
@@ -772,7 +772,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> asyncCount() {
             final MongoFuture<CommandResult> commandResultFuture = new AsyncCommandOperation(getDatabase().getName(), new Count(findOp,
-                    getName()), getDocumentCodec(), client.getBufferPool()).execute(client.getCluster());
+                    getName()), getDocumentCodec(), client.getBufferPool()).execute(client.getAsyncSession());
             return new MongoFuture<Long>() {
                 @Override
                 public boolean cancel(final boolean mayInterruptIfRunning) {
@@ -835,8 +835,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getCluster(),
-                    client.getBufferPool(), block).start();
+            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getAsyncSession(), block).start();
         }
 
         @Override

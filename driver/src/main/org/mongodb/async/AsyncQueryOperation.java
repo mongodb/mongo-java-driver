@@ -16,13 +16,11 @@
 
 package org.mongodb.async;
 
-import org.mongodb.Cluster;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.Server;
 import org.mongodb.impl.AsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
@@ -45,9 +43,8 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
         this.resultDecoder = resultDecoder;
     }
 
-    public MongoFuture<QueryResult<T>> execute(final Cluster cluster) {
-        Server connectionManager = cluster.getConnectionManagerForRead(find.getReadPreference());
-        AsyncConnection connection = connectionManager.getAsyncConnection();
+    public MongoFuture<QueryResult<T>> execute(final AsyncSession session) {
+        AsyncConnection connection = session.getConnection(find.getReadPreference());
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();

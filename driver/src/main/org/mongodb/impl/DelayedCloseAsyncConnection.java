@@ -22,7 +22,7 @@ import org.mongodb.io.ResponseBuffers;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncConnection {
+public class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncConnection {
     private AsyncConnection wrapped;
 
     public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
