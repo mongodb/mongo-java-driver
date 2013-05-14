@@ -24,9 +24,9 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.ServerAddress;
+import org.mongodb.Session;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.BufferPool;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.Set;

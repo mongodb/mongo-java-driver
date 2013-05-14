@@ -32,6 +32,7 @@ import org.mongodb.OrderBy;
 import org.mongodb.QueryOperation;
 import org.mongodb.RemoveOperation;
 import org.mongodb.ReplaceOperation;
+import org.mongodb.Session;
 import org.mongodb.UpdateOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
@@ -64,7 +65,6 @@ import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.result.QueryResult;
 import org.mongodb.util.FieldHelpers;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

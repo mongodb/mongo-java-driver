@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.util.Session;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 

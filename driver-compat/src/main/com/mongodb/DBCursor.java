@@ -21,11 +21,11 @@ import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.QueryOperation;
+import org.mongodb.Session;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
-import org.mongodb.util.Session;
 
 import java.io.Closeable;
 import java.util.ArrayList;

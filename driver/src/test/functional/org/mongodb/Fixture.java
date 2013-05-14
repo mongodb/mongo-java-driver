@@ -22,7 +22,6 @@ import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
-import org.mongodb.util.Session;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;

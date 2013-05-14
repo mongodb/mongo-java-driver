@@ -28,7 +28,6 @@ import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.protocol.MongoRequestMessage;
 import org.mongodb.result.CommandResult;
 import org.mongodb.result.WriteResult;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 

@@ -25,7 +25,6 @@ import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

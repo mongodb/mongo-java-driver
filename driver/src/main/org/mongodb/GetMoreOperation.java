@@ -25,7 +25,6 @@ import org.mongodb.protocol.MongoGetMoreMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.QueryResult;
 import org.mongodb.result.ServerCursor;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 

@@ -25,7 +25,6 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.protocol.MongoQueryMessage;
 import org.mongodb.protocol.MongoReplyMessage;
 import org.mongodb.result.QueryResult;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 

@@ -24,6 +24,7 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.QueryOperation;
+import org.mongodb.Session;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
@@ -35,7 +36,6 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.result.QueryResult;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;

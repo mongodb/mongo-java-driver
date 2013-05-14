@@ -21,7 +21,6 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.protocol.MongoKillCursorsMessage;
-import org.mongodb.util.Session;
 
 import java.nio.ByteBuffer;
 

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.util;
+package org.mongodb;
 
-import org.mongodb.Cluster;
-import org.mongodb.ReadPreference;
 import org.mongodb.impl.Connection;
 
 public interface Session {
