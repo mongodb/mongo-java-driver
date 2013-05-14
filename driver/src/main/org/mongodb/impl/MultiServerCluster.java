@@ -73,7 +73,7 @@ public abstract class MultiServerCluster implements Cluster {
     }
 
     @Override
-    public Server getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public Server getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         Server connection = addressToServerMap.get(serverAddress);

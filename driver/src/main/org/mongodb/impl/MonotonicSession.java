@@ -49,7 +49,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
                 if (connectionForReads != null) {
                     connectionForReads.close();
                 }
-                connectionForReads = getCluster().getConnectionManagerForRead(readPreference).getConnection();
+                connectionForReads = getCluster().getServer(readPreference).getConnection();
 
                 connectionToUse = connectionForReads;
             }
@@ -65,7 +65,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
-                connectionForWrites = getCluster().getConnectionManagerForWrite().getConnection();
+                connectionForWrites = getCluster().getServer(ReadPreference.primary()).getConnection();
                 if (connectionForReads != null) {
                     connectionForReads.close();
                     connectionForReads = null;

@@ -26,7 +26,7 @@ public class ClusterSession extends AbstractBaseSession implements Session {
     @Override
     public Connection getConnection(final ReadPreference readPreference) {
 //        notNull("readPreference", readPreference);
-        return getCluster().getConnectionManagerForRead(readPreference).getConnection();
+        return getCluster().getServer(readPreference).getConnection();
     }
 
     @Override

@@ -41,13 +41,8 @@ public class MongosHighAvailabilityCluster extends MultiServerCluster {
     }
 
     @Override
-    public Server getConnectionManagerForWrite() {
-        return getConnectionManagerForServer(getPreferred());
-    }
-
-    @Override
-    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
-        return getConnectionManagerForServer(getPreferred());
+    public Server getServer(final ReadPreference readPreference) {
+        return getServer(getPreferred());
     }
 
     @Override

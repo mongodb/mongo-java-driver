@@ -56,7 +56,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.decoder = decoder;
         this.find = find;
         final Connection connection = initialSession.getConnection(find.getReadPreference());
-        final Server server = initialSession.getCluster().getConnectionManagerForServer(connection.getServerAddress());
+        final Server server = initialSession.getCluster().getServer(connection.getServerAddress());
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             this.session = new SingleConnectionSession(connection, initialSession.getCluster());
         }

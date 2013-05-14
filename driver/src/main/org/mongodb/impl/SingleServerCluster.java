@@ -55,21 +55,14 @@ public class SingleServerCluster implements Cluster {
     }
 
     @Override
-    public Server getConnectionManagerForWrite() {
+    public Server getServer(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
         return server;
     }
 
     @Override
-    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
-        isTrue("open", !isClosed());
-
-        return server;
-    }
-
-    @Override
-    public Server getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public Server getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         return server;

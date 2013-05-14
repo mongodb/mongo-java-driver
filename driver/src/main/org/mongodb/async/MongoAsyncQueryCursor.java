@@ -53,7 +53,7 @@ public class MongoAsyncQueryCursor<T> {
         this.decoder = decoder;
         this.block = block;
         final AsyncConnection connection = initialSession.getConnection(find.getReadPreference());
-        final Server server = initialSession.getCluster().getConnectionManagerForServer(connection.getServerAddress());
+        final Server server = initialSession.getCluster().getServer(connection.getServerAddress());
 
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             this.session = new SingleConnectionAsyncSession(connection, initialSession.getCluster());

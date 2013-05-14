@@ -19,7 +19,6 @@ package org.mongodb.impl;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
@@ -66,17 +65,10 @@ public class ReplicaSetCluster extends MultiServerCluster {
     }
 
     @Override
-    public Server getConnectionManagerForWrite() {
+    public Server getServer(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
-        return getConnectionManagerForServer(getAddressOfPrimary());
-    }
-
-    @Override
-    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
-        isTrue("open", !isClosed());
-
-        return getConnectionManagerForServer(getAddressForReadPreference(readPreference));
+        return getServer(getAddressForReadPreference(readPreference));
     }
 
     @Override
@@ -87,15 +79,6 @@ public class ReplicaSetCluster extends MultiServerCluster {
 
     protected MongoServerStateListener createServerStateListener(final ServerAddress serverAddress) {
         return new ReplicaSetServerStateListener(serverAddress);
-    }
-
-    private ServerAddress getAddressOfPrimary() {
-        ReplicaSetDescription currentDescription = holder.get();
-        ReplicaSetMemberDescription primary = currentDescription.getPrimary();
-        if (primary == null) {
-            throw new MongoNoPrimaryException(currentDescription);
-        }
-        return primary.getServerAddress();
     }
 
     private ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
@@ -122,7 +105,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
                 return;
             }
 
-            if (getConnectionManagerForServer(serverAddress) == null) {
+            if (getServer(serverAddress) == null) {
                 return;
             }
 
@@ -146,7 +129,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
                 return;
             }
 
-            if (getConnectionManagerForServer(serverAddress) == null) {
+            if (getServer(serverAddress) == null) {
                 return;
             }
 

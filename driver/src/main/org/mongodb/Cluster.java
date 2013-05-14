@@ -22,11 +22,10 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 public interface Cluster {
-    Server getConnectionManagerForWrite();
 
-    Server getConnectionManagerForRead(ReadPreference readPreference);
+    Server getServer(ReadPreference readPreference);
 
-    Server getConnectionManagerForServer(final ServerAddress serverAddress);
+    Server getServer(final ServerAddress serverAddress);
 
     Set<ServerAddress> getAllServerAddresses();
 

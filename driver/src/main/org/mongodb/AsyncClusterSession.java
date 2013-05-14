@@ -30,7 +30,7 @@ public class AsyncClusterSession extends AbstractBaseSession implements AsyncSes
     @Override
     public AsyncConnection getConnection(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
-        return getCluster().getConnectionManagerForRead(readPreference).getAsyncConnection();
+        return getCluster().getServer(readPreference).getAsyncConnection();
     }
 
     @Override
