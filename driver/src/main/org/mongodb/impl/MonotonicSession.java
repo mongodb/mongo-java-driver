@@ -17,7 +17,7 @@
 package org.mongodb.impl;
 
 import org.mongodb.AbstractSession;
-import org.mongodb.MongoServerBinding;
+import org.mongodb.Cluster;
 import org.mongodb.ReadPreference;
 import org.mongodb.annotations.NotThreadSafe;
 
@@ -30,7 +30,7 @@ public class MonotonicSession extends AbstractSession {
     private MongoSyncConnection connectionForReads;
     private MongoSyncConnection connectionForWrites;
 
-    public MonotonicSession(final MongoServerBinding cluster) {
+    public MonotonicSession(final Cluster cluster) {
         super(cluster);
     }
 

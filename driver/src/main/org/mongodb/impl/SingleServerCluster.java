@@ -16,10 +16,10 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoServer;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
@@ -34,14 +34,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class MongoSingleServerBinding implements MongoServerBinding {
+public class SingleServerCluster implements Cluster {
     private final MongoServer server;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ScheduledExecutorService scheduledExecutorService;
     private volatile boolean isClosed;
 
-    public MongoSingleServerBinding(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                    final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+    public SingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                               final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         notNull("serverAddres", serverAddress);
         notNull("options", options);
         notNull("bufferPool", bufferPool);

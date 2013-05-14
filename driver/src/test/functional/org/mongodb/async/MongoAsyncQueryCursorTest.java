@@ -26,7 +26,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.ReadPreference;
 import org.mongodb.SingleConnectionSession;
-import org.mongodb.impl.SingleConnectionMongoServerBinding;
+import org.mongodb.impl.SingleConnectionCluster;
 import org.mongodb.operation.MongoFind;
 
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import java.util.concurrent.CountDownLatch;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.operation.QueryOption.Exhaust;
 
 @Category(Async.class)
@@ -70,7 +70,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testBlockRun() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(),
+                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
                 getBufferPool(),
                 new TestBlock()).start();
         latch.await();
@@ -81,7 +81,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(100).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
                 getBufferPool(), new TestBlock()).start();
 
         latch.await();
@@ -92,7 +92,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
                 getBufferPool(), new TestBlock()).start();
 
         latch.await();
@@ -103,7 +103,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBinding(),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getCluster(),
                 getBufferPool(), new TestBlock()).start();
 
         latch.await();
@@ -112,13 +112,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException {
-        SingleConnectionMongoServerBinding binding = new SingleConnectionMongoServerBinding(getBinding());
-        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(binding.getConnectionManagerForRead(ReadPreference
-                .primary()).getConnection(), getBinding());
+        SingleConnectionCluster cluster = new SingleConnectionCluster(getCluster());
+        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(cluster.getConnectionManagerForRead(ReadPreference
+                .primary()).getConnection(), getCluster());
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), binding,
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), cluster,
                 getBufferPool(), new TestBlock(1)).start();
 
         latch.await();

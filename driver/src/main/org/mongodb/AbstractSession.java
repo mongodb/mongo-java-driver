@@ -22,14 +22,14 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class AbstractSession implements Session {
-    private MongoServerBinding cluster;
+    private Cluster cluster;
 
-    protected AbstractSession(final MongoServerBinding cluster) {
+    protected AbstractSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
     }
 
     @Override
-    public MongoServerBinding getCluster() {
+    public Cluster getCluster() {
         isTrue("open", !isClosed());
         return cluster;
     }

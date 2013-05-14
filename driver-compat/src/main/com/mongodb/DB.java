@@ -16,13 +16,13 @@
 
 package com.mongodb;
 
+import org.mongodb.Cluster;
 import org.mongodb.ClusterSession;
 import org.mongodb.Codec;
 import org.mongodb.CommandOperation;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.QueryOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
@@ -103,7 +103,7 @@ public class DB implements IDB {
     @Override
     public void requestStart() {
         isTrue("request not already started", pinnedSession.get() == null);
-        pinnedSession.set(new MonotonicSession(getMongo().getBinding()));
+        pinnedSession.set(new MonotonicSession(getMongo().getCluster()));
     }
 
     /**
@@ -446,15 +446,15 @@ public class DB implements IDB {
         return optionHolder.get();
     }
 
-    MongoServerBinding getBinding() {
-        return getMongo().getBinding();
+    Cluster getCluster() {
+        return getMongo().getCluster();
     }
 
     Session getSession() {
         if (pinnedSession.get() != null) {
             return pinnedSession.get();
         }
-        return new ClusterSession(getBinding());
+        return new ClusterSession(getCluster());
     }
 
     org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
@@ -475,6 +475,6 @@ public class DB implements IDB {
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
-        return getBinding().getBufferPool();
+        return getCluster().getBufferPool();
     }
 }

@@ -37,11 +37,11 @@ public final class MongoClientsImpl {
     }
 
     public static MongoClientImpl create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, MongoServerBindings.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
+        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
     }
 
     public static MongoClientImpl create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, MongoServerBindings.create(seedList, null, options, new PowerOfTwoByteBufferPool()));
+        return new MongoClientImpl(options, Clusters.create(seedList, null, options, new PowerOfTwoByteBufferPool()));
     }
 
     public static MongoClientImpl create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -51,7 +51,7 @@ public final class MongoClientsImpl {
     public static MongoClientImpl create(final MongoClientURI mongoURI, final MongoClientOptions options)
             throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, MongoServerBindings.create(new ServerAddress(mongoURI.getHosts().get(0)),
+            return new MongoClientImpl(options, Clusters.create(new ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), options, new PowerOfTwoByteBufferPool()));
         }
         else {
@@ -59,7 +59,7 @@ public final class MongoClientsImpl {
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options,  MongoServerBindings.create(seedList, mongoURI.getCredentials(), options,
+            return new MongoClientImpl(options,  Clusters.create(seedList, mongoURI.getCredentials(), options,
                     new PowerOfTwoByteBufferPool()));
         }
     }

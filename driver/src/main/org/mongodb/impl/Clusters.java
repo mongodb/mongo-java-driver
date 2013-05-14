@@ -16,37 +16,37 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public final class MongoServerBindings {
-    private MongoServerBindings() {
+public final class Clusters {
+    private Clusters() {
     }
 
-    public static MongoServerBinding create(final ServerAddress serverAddress, final MongoClientOptions options,
+    public static Cluster create(final ServerAddress serverAddress, final MongoClientOptions options,
                                             final BufferPool<ByteBuffer> bufferPool) {
         return create(serverAddress, null, options, bufferPool);
     }
 
-    public static MongoServerBinding create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    public static Cluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new MongoSingleServerBinding(serverAddress, credentialList, options, bufferPool);
+        return new SingleServerCluster(serverAddress, credentialList, options, bufferPool);
     }
 
-    public static MongoServerBinding create(final List<ServerAddress> seedList, final MongoClientOptions options,
+    public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
                                             final BufferPool<ByteBuffer> bufferPool) {
         return create(seedList, null, options, bufferPool);
     }
 
-    public static MongoServerBinding create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+    public static Cluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new ReplicaSetServerBinding(seedList, credentialList, options, bufferPool);
+        return new ReplicaSetCluster(seedList, credentialList, options, bufferPool);
     }
 }
 

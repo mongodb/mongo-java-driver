@@ -16,12 +16,12 @@
 
 package org.mongodb.util;
 
-import org.mongodb.MongoServerBinding;
+import org.mongodb.Cluster;
 import org.mongodb.ReadPreference;
 import org.mongodb.impl.MongoSyncConnection;
 
 public interface Session {
-    MongoServerBinding getCluster();
+    Cluster getCluster();
 
     MongoSyncConnection getConnection(ReadPreference readPreference);
 

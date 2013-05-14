@@ -21,7 +21,7 @@ import org.mongodb.io.BufferPool;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-public interface MongoServerBinding {
+public interface Cluster {
     MongoServer getConnectionManagerForWrite();
 
     MongoServer getConnectionManagerForRead(ReadPreference readPreference);

@@ -28,12 +28,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class MongosHighAvailabilityServerBinding extends MongoMultiServerBinding {
+public class MongosHighAvailabilityCluster extends MultiServerCluster {
 
     private final MongosSetMonitor mongosSetMonitor;
 
-    public MongosHighAvailabilityServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                               final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+    public MongosHighAvailabilityCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                         final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         super(seedList, credentialList, options, bufferPool);
         mongosSetMonitor = new MongosSetMonitor(seedList, options);
     }

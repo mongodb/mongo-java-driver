@@ -24,7 +24,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 public class SingleConnectionSession extends AbstractSession {
     private MongoSyncConnection connection;
 
-    public SingleConnectionSession(final MongoSyncConnection connection, final MongoServerBinding cluster) {
+    public SingleConnectionSession(final MongoSyncConnection connection, final Cluster cluster) {
         super(cluster);
         this.connection = connection;
     }

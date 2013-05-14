@@ -24,7 +24,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class SingleServerSession extends AbstractSession {
     private MongoServer server;
 
-    public SingleServerSession(final MongoServer server, final MongoServerBinding cluster) {
+    public SingleServerSession(final MongoServer server, final Cluster cluster) {
         super(cluster);
         this.server = notNull("server", server);
     }

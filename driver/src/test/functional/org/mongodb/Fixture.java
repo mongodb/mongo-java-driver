@@ -63,9 +63,9 @@ public final class Fixture {
         return mongoClientURI;
     }
 
-    public static MongoServerBinding getBinding() {
+    public static Cluster getCluster() {
         getMongoClient();
-        return mongoClient.getBinding();
+        return mongoClient.getCluster();
     }
 
     public static Session getSession() {

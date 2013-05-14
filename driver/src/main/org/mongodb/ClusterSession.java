@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.impl.MongoSyncConnection;
 
 public class ClusterSession extends AbstractSession {
-    public ClusterSession(final MongoServerBinding cluster) {
+    public ClusterSession(final Cluster cluster) {
         super(cluster);
     }
 

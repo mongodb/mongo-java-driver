@@ -16,8 +16,8 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Cluster;
 import org.mongodb.MongoServer;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.ReadPreference;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.NotThreadSafe;
@@ -29,13 +29,13 @@ import java.util.Set;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 @NotThreadSafe
-public class SingleConnectionMongoServerBinding implements MongoServerBinding {
-    private MongoServerBinding wrapped;
+public class SingleConnectionCluster implements Cluster {
+    private Cluster wrapped;
     private MongoSyncConnection cachedConnection;
     private MongoAsyncConnection cachedAsyncConnection;
     private boolean isClosed;
 
-    public SingleConnectionMongoServerBinding(final MongoServerBinding wrapped) {
+    public SingleConnectionCluster(final Cluster wrapped) {
         this.wrapped = wrapped;
     }
 

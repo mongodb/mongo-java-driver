@@ -24,7 +24,7 @@ import org.mongodb.operation.QueryOption;
 import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBinding;
+import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
@@ -54,7 +54,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(getSession().getConnection(), getBinding());
+        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(getSession().getConnection(), getCluster());
 
         MongoQueryCursor cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),

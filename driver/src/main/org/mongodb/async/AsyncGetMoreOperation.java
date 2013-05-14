@@ -16,12 +16,12 @@
 
 package org.mongodb.async;
 
+import org.mongodb.Cluster;
 import org.mongodb.Decoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoServer;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
@@ -43,9 +43,9 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         this.resultDecoder = resultDecoder;
     }
 
-    public MongoFuture<QueryResult<T>> execute(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-        MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+    public MongoFuture<QueryResult<T>> execute(final Cluster cluster) {
+        MongoServer server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        MongoAsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
@@ -54,8 +54,8 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
 
-    public MongoFuture<QueryResult<T>> executeReceive(final MongoServerBinding binding) {
-        MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+    public MongoFuture<QueryResult<T>> executeReceive(final Cluster cluster) {
+        MongoServer connectionManager = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
@@ -64,13 +64,13 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<Void> executeDiscard(final MongoServerBinding binding) {
+    public MongoFuture<Void> executeDiscard(final Cluster cluster) {
         if (getMore.getServerCursor() == null) {
             return new SingleResultFuture<Void>(null, null);
         }
         else {
-            MongoServer connectionManager = binding.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
-            MongoAsyncConnection connection = connectionManager.getAsyncConnection();
+            MongoServer server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+            MongoAsyncConnection connection = server.getAsyncConnection();
 
             MongoFuture<Void> wrapped = executeDiscard(connection);
             SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();

@@ -16,10 +16,10 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoServer;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -34,7 +34,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public abstract class MongoMultiServerBinding implements MongoServerBinding {
+public abstract class MultiServerCluster implements Cluster {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
@@ -43,9 +43,9 @@ public abstract class MongoMultiServerBinding implements MongoServerBinding {
     private boolean isClosed;
     private final ScheduledExecutorService scheduledExecutorService;
 
-    protected MongoMultiServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                      final MongoClientOptions options,
-                                      final BufferPool<ByteBuffer> bufferPool) {
+    protected MultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                 final MongoClientOptions options,
+                                 final BufferPool<ByteBuffer> bufferPool) {
         this.credentialList = credentialList;
         this.options = options;
         this.bufferPool = bufferPool;

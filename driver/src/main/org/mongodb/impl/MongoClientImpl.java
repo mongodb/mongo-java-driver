@@ -17,12 +17,12 @@
 package org.mongodb.impl;
 
 import org.mongodb.ClientAdmin;
+import org.mongodb.Cluster;
 import org.mongodb.ClusterSession;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.ServerAddress;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.io.BufferPool;
@@ -35,12 +35,12 @@ import java.util.concurrent.ExecutionException;
 
 public class MongoClientImpl implements MongoClient {
 
-    private final MongoServerBinding cluster;
+    private final Cluster cluster;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
     private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final MongoServerBinding cluster) {
+    public MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
         this.clientOptions = clientOptions;
         this.cluster = cluster;
     }
@@ -57,23 +57,23 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public void withConnection(final Runnable runnable) {
-        pinBinding();
+        pinSession();
         try {
             runnable.run();
         } finally {
-            unpinBinding();
+            unpinSession();
         }
     }
 
     @Override
     public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
-        pinBinding();
+        pinSession();
         try {
             return callable.call();
         } catch (Exception e) {
             throw new ExecutionException(e);
         } finally {
-            unpinBinding();
+            unpinSession();
         }
     }
 
@@ -104,7 +104,7 @@ public class MongoClientImpl implements MongoClient {
         return new ClusterSession(cluster);
     }
 
-    public MongoServerBinding getBinding() {
+    public Cluster getCluster() {
         return cluster;
     }
 
@@ -112,14 +112,14 @@ public class MongoClientImpl implements MongoClient {
         return cluster.getBufferPool();
     }
 
-    private void pinBinding() {
+    private void pinSession() {
         if (pinnedSession.get() != null) {
             throw new IllegalStateException();
         }
         pinnedSession.set(new MonotonicSession(cluster));
     }
 
-    private void unpinBinding() {
+    private void unpinSession() {
         Session sessionToUnpin = this.pinnedSession.get();
         this.pinnedSession.remove();
         sessionToUnpin.close();

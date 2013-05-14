@@ -16,14 +16,14 @@
 
 package org.mongodb.async;
 
+import org.mongodb.Cluster;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServerBinding;
-import org.mongodb.impl.SingleConnectionMongoServerBinding;
+import org.mongodb.impl.SingleConnectionCluster;
 import org.mongodb.io.BufferPool;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
@@ -41,12 +41,12 @@ public class MongoAsyncQueryCursor<T> {
     private final Decoder<T> decoder;
     private final BufferPool<ByteBuffer> bufferPool;
     private final AsyncBlock<? super T> block;
-    private final MongoServerBinding binding;
+    private final Cluster cluster;
     private long numFetchedSoFar;
     private ServerCursor cursor;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final MongoServerBinding defaultBinding, final BufferPool<ByteBuffer> bufferPool,
+                                 final Decoder<T> decoder, final Cluster defaultCluster, final BufferPool<ByteBuffer> bufferPool,
                                  final AsyncBlock<? super T> block) {
         this.namespace = namespace;
         this.find = find;
@@ -55,15 +55,15 @@ public class MongoAsyncQueryCursor<T> {
         this.bufferPool = bufferPool;
         this.block = block;
         if (find.getOptions().contains(QueryOption.Exhaust)) {
-            this.binding = new SingleConnectionMongoServerBinding(defaultBinding);
+            this.cluster = new SingleConnectionCluster(defaultCluster);
         }
         else {
-            this.binding = defaultBinding;
+            this.cluster = defaultCluster;
         }
     }
 
     public void start() {
-        new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(binding)
+        new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(cluster)
                 .register(new QueryResultSingleResultCallback());
 
     }
@@ -104,10 +104,10 @@ public class MongoAsyncQueryCursor<T> {
                         new MongoGetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder,
                         bufferPool);
                 if (find.getOptions().contains(QueryOption.Exhaust)) {
-                    getMoreOperation.executeReceive(binding).register(this);
+                    getMoreOperation.executeReceive(cluster).register(this);
                 }
                 else {
-                    getMoreOperation.execute(binding).register(this);
+                    getMoreOperation.execute(cluster).register(this);
                 }
             }
         }
@@ -116,11 +116,11 @@ public class MongoAsyncQueryCursor<T> {
             if (find.getOptions().contains(QueryOption.Exhaust)) {
                 MongoFuture<Void> future =  new AsyncGetMoreOperation<T>(namespace, new MongoGetMore(cursor, find.getLimit(),
                         find.getBatchSize(),
-                        numFetchedSoFar), null, bufferPool).executeDiscard(binding);
+                        numFetchedSoFar), null, bufferPool).executeDiscard(cluster);
                 future.register(new SingleResultCallback<Void>() {
                     @Override
                     public void onResult(final Void result, final MongoException e) {
-                        binding.close();
+                        cluster.close();
                     }
                 });
             }

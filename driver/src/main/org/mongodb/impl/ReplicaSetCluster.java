@@ -46,7 +46,7 @@ import static org.mongodb.impl.MonitorDefaults.CLIENT_OPTIONS_DEFAULTS;
 import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
 import static org.mongodb.impl.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
-public class ReplicaSetServerBinding extends MongoMultiServerBinding {
+public class ReplicaSetCluster extends MultiServerCluster {
 
     private final Holder<ReplicaSetDescription> holder = new Holder<ReplicaSetDescription>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(),
             TimeUnit.MILLISECONDS);
@@ -55,8 +55,8 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
     private final Random random = new Random();
 
-    public ReplicaSetServerBinding(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                   final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+    public ReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                             final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         super(seedList, credentialList, options, bufferPool);
         notNull("seedList", seedList);
         notNull("options", options);
@@ -185,7 +185,7 @@ public class ReplicaSetServerBinding extends MongoMultiServerBinding {
 
         private void removeExtras(final IsMasterCommandResult isMasterCommandResult) {
             Set<ServerAddress> allServerAddresses = getAllServerAddresses(isMasterCommandResult);
-            for (ServerAddress curServerAddress : ReplicaSetServerBinding.this.getAllServerAddresses()) {
+            for (ServerAddress curServerAddress : ReplicaSetCluster.this.getAllServerAddresses()) {
                 if (!allServerAddresses.contains(curServerAddress)) {
                     removeNode(curServerAddress);
                     activeMemberNotifications.remove(curServerAddress);

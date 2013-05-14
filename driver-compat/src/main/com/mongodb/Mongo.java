@@ -16,14 +16,14 @@
 
 package com.mongodb;
 
+import org.mongodb.Cluster;
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoServerBinding;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
-import org.mongodb.impl.MongoServerBindings;
+import org.mongodb.impl.Clusters;
 import org.mongodb.io.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
@@ -47,22 +47,22 @@ public class Mongo {
     private final Bytes.OptionHolder optionHolder;
 
     private final Codec<Document> documentCodec;
-    private final MongoServerBinding binding;
+    private final Cluster cluster;
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(MongoServerBindings.create(createNewSeedList(seedList), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
+        this(Clusters.create(createNewSeedList(seedList), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
-        this(createBinding(mongoURI.toNew()), mongoURI.getOptions());
+        this(createCluster(mongoURI.toNew()), mongoURI.getOptions());
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(MongoServerBindings.create(serverAddress.toNew(), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
+        this(Clusters.create(serverAddress.toNew(), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
     }
 
-    Mongo(final MongoServerBinding binding, final MongoClientOptions options) {
-        this.binding = binding;
+    Mongo(final Cluster cluster, final MongoClientOptions options) {
+        this.cluster = cluster;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.readPreference = options.getReadPreference() != null ?
                 options.getReadPreference() : ReadPreference.primary();
@@ -138,7 +138,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> retVal = new ArrayList<ServerAddress>();
-        for (org.mongodb.ServerAddress serverAddress : getBinding().getAllServerAddresses()) {
+        for (org.mongodb.ServerAddress serverAddress : getCluster().getAllServerAddresses()) {
             retVal.add(new ServerAddress(serverAddress));
         }
         return retVal;
@@ -150,7 +150,7 @@ public class Mongo {
      */
     public ServerAddress getAddress() {
         //TODO this needs to return a master. Currently not.
-        return new ServerAddress(getBinding().getAllServerAddresses().iterator().next());
+        return new ServerAddress(getCluster().getAllServerAddresses().iterator().next());
     }
 
     /**
@@ -232,7 +232,7 @@ public class Mongo {
      * instance and any databases obtained from it can no longer be used.
      */
     public void close() {
-        binding.close();
+        cluster.close();
     }
 
     /**
@@ -281,21 +281,21 @@ public class Mongo {
         return retVal;
     }
 
-    private static MongoServerBinding createBinding(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static Cluster createCluster(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return MongoServerBindings.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
+            return Clusters.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         } else {
             List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.ServerAddress(cur));
             }
-            return MongoServerBindings.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
+            return Clusters.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         }
     }
 
-    MongoServerBinding getBinding() {
-        return binding;
+    Cluster getCluster() {
+        return cluster;
     }
 
     Bytes.OptionHolder getOptionHolder() {
