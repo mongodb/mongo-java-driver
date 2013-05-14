@@ -27,10 +27,10 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-public final class MongoServers {
-    // TODO: this is exposing the implementation class.  But I didn't want to make some of the methods in DefaultMongoServer public, so
+public final class Servers {
+    // TODO: this is exposing the implementation class.  But I didn't want to make some of the methods in Server public, so
     // leaving this way for now.
-    static DefaultMongoServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    static DefaultServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                               final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
                               final BufferPool<ByteBuffer> bufferPool) {
         MongoSyncConnectionFactory connectionFactory = new DefaultMongoSyncConnectionFactory(options,
@@ -41,10 +41,10 @@ public final class MongoServers {
             asyncConnectionFactory = new DefaultMongoAsyncConnectionFactory(options, serverAddress,
                     bufferPool, credentialList);
         }
-        return new DefaultMongoServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService,
+        return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService,
                 bufferPool);
     }
 
-    private MongoServers() {
+    private Servers() {
     }
 }

@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import org.mongodb.Cluster;
-import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.io.BufferPool;
@@ -40,19 +40,19 @@ public class SingleConnectionCluster implements Cluster {
     }
 
     @Override
-    public MongoServer getConnectionManagerForWrite() {
+    public Server getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
         return new SingleConnectionServer(wrapped.getConnectionManagerForWrite());
     }
 
     @Override
-    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
+    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
         return new SingleConnectionServer(wrapped.getConnectionManagerForRead(readPreference));
     }
 
     @Override
-    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public Server getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
         return new SingleConnectionServer(wrapped.getConnectionManagerForServer(serverAddress));
     }
@@ -85,10 +85,10 @@ public class SingleConnectionCluster implements Cluster {
         return isClosed;
     }
 
-    private class SingleConnectionServer implements MongoServer {
-        private final MongoServer wrapped;
+    private class SingleConnectionServer implements Server {
+        private final Server wrapped;
 
-        public SingleConnectionServer(final MongoServer connectionManager) {
+        public SingleConnectionServer(final Server connectionManager) {
             wrapped = connectionManager;
         }
 
@@ -122,6 +122,16 @@ public class SingleConnectionCluster implements Cluster {
         @Override
         public void close() {
 
+        }
+
+        @Override
+        public void addChangeListener(final MongoServerStateListener changeListener) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void invalidate() {
+            throw new UnsupportedOperationException();
         }
 
     }

@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoServer;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -38,8 +38,8 @@ public abstract class MultiServerCluster implements Cluster {
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final ConcurrentMap<ServerAddress, DefaultMongoServer> addressToServerMap = new ConcurrentHashMap<ServerAddress,
-            DefaultMongoServer>();
+    private final ConcurrentMap<ServerAddress, DefaultServer> addressToServerMap = new ConcurrentHashMap<ServerAddress,
+            DefaultServer>();
     private boolean isClosed;
     private final ScheduledExecutorService scheduledExecutorService;
 
@@ -71,10 +71,10 @@ public abstract class MultiServerCluster implements Cluster {
     }
 
     @Override
-    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public Server getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        MongoServer connection = addressToServerMap.get(serverAddress);
+        Server connection = addressToServerMap.get(serverAddress);
         if (connection == null) {
             return null;  // TODO: is this going to be a problem for getMore on a node that's no longer in the replica set?
             // throw new MongoServerNotFoundException();
@@ -86,7 +86,7 @@ public abstract class MultiServerCluster implements Cluster {
     public void close() {
         if (!isClosed) {
             isClosed = true;
-            for (MongoServer server : addressToServerMap.values()) {
+            for (Server server : addressToServerMap.values()) {
                 server.close();
             }
             scheduledExecutorService.shutdownNow();
@@ -103,7 +103,7 @@ public abstract class MultiServerCluster implements Cluster {
 
     protected synchronized void addNode(final ServerAddress serverAddress) {
         if (!addressToServerMap.containsKey(serverAddress)) {
-            DefaultMongoServer mongoServer = MongoServers.create(serverAddress, credentialList, options, scheduledExecutorService,
+            DefaultServer mongoServer = Servers.create(serverAddress, credentialList, options, scheduledExecutorService,
                     bufferPool);
             mongoServer.addChangeListener(createServerStateListener(serverAddress));
             addressToServerMap.put(serverAddress, mongoServer);
@@ -111,13 +111,13 @@ public abstract class MultiServerCluster implements Cluster {
     }
 
     protected synchronized void removeNode(final ServerAddress serverAddress) {
-        MongoServer server = addressToServerMap.remove(serverAddress);
+        Server server = addressToServerMap.remove(serverAddress);
         server.close();
     }
 
 
     protected void invalidateAll() {
-        for (DefaultMongoServer server : addressToServerMap.values()) {
+        for (DefaultServer server : addressToServerMap.values()) {
             server.invalidate();
         }
     }

@@ -22,11 +22,11 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 public interface Cluster {
-    MongoServer getConnectionManagerForWrite();
+    Server getConnectionManagerForWrite();
 
-    MongoServer getConnectionManagerForRead(ReadPreference readPreference);
+    Server getConnectionManagerForRead(ReadPreference readPreference);
 
-    MongoServer getConnectionManagerForServer(final ServerAddress serverAddress);
+    Server getConnectionManagerForServer(final ServerAddress serverAddress);
 
     Set<ServerAddress> getAllServerAddresses();
 

@@ -19,7 +19,7 @@ package org.mongodb.async;
 import org.mongodb.Cluster;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServer;
+import org.mongodb.Server;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
@@ -39,7 +39,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     }
 
     public MongoFuture<WriteResult> execute(final Cluster cluster) {
-        MongoServer server = cluster.getConnectionManagerForWrite();
+        Server server = cluster.getConnectionManagerForWrite();
         MongoAsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<WriteResult> wrapped = execute(connection);

@@ -19,8 +19,8 @@ package org.mongodb.impl;
 import org.mongodb.MongoAsyncConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoException;
-import org.mongodb.MongoServer;
 import org.mongodb.MongoSyncConnectionFactory;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.command.IsMasterCommandResult;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class DefaultMongoServer implements MongoServer {
+public class DefaultServer implements Server {
     private final ScheduledExecutorService scheduledExecutorService;
     private ServerAddress serverAddress;
     private final Pool<MongoSyncConnection> connectionPool;
@@ -49,9 +49,9 @@ public class DefaultMongoServer implements MongoServer {
             Collections.newSetFromMap(new ConcurrentHashMap<MongoServerStateListener, Boolean>());
     private volatile IsMasterCommandResult description;
 
-    public DefaultMongoServer(final ServerAddress serverAddress, final MongoSyncConnectionFactory connectionFactory,
-                              final MongoAsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
-                              final ScheduledExecutorService scheduledExecutorService, final BufferPool<ByteBuffer> bufferPool) {
+    public DefaultServer(final ServerAddress serverAddress, final MongoSyncConnectionFactory connectionFactory,
+                         final MongoAsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
+                         final ScheduledExecutorService scheduledExecutorService, final BufferPool<ByteBuffer> bufferPool) {
         notNull("connectionFactor", connectionFactory);
         notNull("options", options);
 
@@ -87,10 +87,12 @@ public class DefaultMongoServer implements MongoServer {
         return description;
     }
 
+    @Override
     public void addChangeListener(final MongoServerStateListener changeListener) {
         changeListeners.add(changeListener);
     }
 
+    @Override
     public void invalidate() {
         description = null;
         scheduledExecutorService.submit(stateNotifier);

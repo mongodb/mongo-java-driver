@@ -19,8 +19,8 @@ package org.mongodb.impl;
 import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -35,7 +35,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class SingleServerCluster implements Cluster {
-    private final MongoServer server;
+    private final Server server;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ScheduledExecutorService scheduledExecutorService;
     private volatile boolean isClosed;
@@ -48,25 +48,25 @@ public class SingleServerCluster implements Cluster {
 
         this.bufferPool = bufferPool;
         scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
-        this.server = MongoServers.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
+        this.server = Servers.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
     }
 
     @Override
-    public MongoServer getConnectionManagerForWrite() {
+    public Server getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
 
         return server;
     }
 
     @Override
-    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
+    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
         return server;
     }
 
     @Override
-    public MongoServer getConnectionManagerForServer(final ServerAddress serverAddress) {
+    public Server getConnectionManagerForServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         return server;

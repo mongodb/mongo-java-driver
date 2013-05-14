@@ -18,8 +18,8 @@ package org.mongodb.impl;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -39,12 +39,12 @@ public class MongosHighAvailabilityCluster extends MultiServerCluster {
     }
 
     @Override
-    public MongoServer getConnectionManagerForWrite() {
+    public Server getConnectionManagerForWrite() {
         return getConnectionManagerForServer(getPreferred());
     }
 
     @Override
-    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
+    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
         return getConnectionManagerForServer(getPreferred());
     }
 

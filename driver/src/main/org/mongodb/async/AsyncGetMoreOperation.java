@@ -21,7 +21,7 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServer;
+import org.mongodb.Server;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.PooledByteBufferOutputBuffer;
@@ -44,7 +44,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
     public MongoFuture<QueryResult<T>> execute(final Cluster cluster) {
-        MongoServer server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        Server server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoAsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = execute(connection);
@@ -55,7 +55,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
 
     public MongoFuture<QueryResult<T>> executeReceive(final Cluster cluster) {
-        MongoServer connectionManager = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+        Server connectionManager = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
         MongoAsyncConnection connection = connectionManager.getAsyncConnection();
 
         MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
@@ -69,7 +69,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
             return new SingleResultFuture<Void>(null, null);
         }
         else {
-            MongoServer server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
+            Server server = cluster.getConnectionManagerForServer(getMore.getServerCursor().getAddress());
             MongoAsyncConnection connection = server.getAsyncConnection();
 
             MongoFuture<Void> wrapped = executeDiscard(connection);

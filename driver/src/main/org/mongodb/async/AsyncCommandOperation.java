@@ -21,7 +21,7 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServer;
+import org.mongodb.Server;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.impl.MongoAsyncConnection;
 import org.mongodb.io.BufferPool;
@@ -45,7 +45,7 @@ public class AsyncCommandOperation extends AsyncOperation {
 
 
     public MongoFuture<CommandResult> execute(final Cluster cluster) {
-        MongoServer server = cluster.getConnectionManagerForRead(commandOperation.getReadPreference());
+        Server server = cluster.getConnectionManagerForRead(commandOperation.getReadPreference());
         MongoAsyncConnection connection = server.getAsyncConnection();
 
         MongoFuture<CommandResult> wrapped = execute(connection);

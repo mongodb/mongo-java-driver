@@ -21,8 +21,8 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNoPrimaryException;
 import org.mongodb.MongoReadPreferenceException;
-import org.mongodb.MongoServer;
 import org.mongodb.ReadPreference;
+import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.command.IsMasterCommandResult;
 import org.mongodb.io.BufferPool;
@@ -64,14 +64,14 @@ public class ReplicaSetCluster extends MultiServerCluster {
     }
 
     @Override
-    public MongoServer getConnectionManagerForWrite() {
+    public Server getConnectionManagerForWrite() {
         isTrue("open", !isClosed());
 
         return getConnectionManagerForServer(getAddressOfPrimary());
     }
 
     @Override
-    public MongoServer getConnectionManagerForRead(final ReadPreference readPreference) {
+    public Server getConnectionManagerForRead(final ReadPreference readPreference) {
         isTrue("open", !isClosed());
 
         return getConnectionManagerForServer(getAddressForReadPreference(readPreference));
