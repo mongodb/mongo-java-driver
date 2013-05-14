@@ -29,6 +29,7 @@ import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
 import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_MS;
 import static org.mongodb.impl.MonitorDefaults.UPDATER_INTERVAL_NO_PRIMARY_MS;
 
+// TODO: ditch this class
 public class MongosSetMonitor extends Thread {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.MongosSetMonitor");

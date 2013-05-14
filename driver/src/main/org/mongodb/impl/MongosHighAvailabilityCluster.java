@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+// TODO: test this
+// TODO: Bring MongosSetMonitor in, but use Server notification mechanism
 public class MongosHighAvailabilityCluster extends MultiServerCluster {
 
     private final MongosSetMonitor mongosSetMonitor;
