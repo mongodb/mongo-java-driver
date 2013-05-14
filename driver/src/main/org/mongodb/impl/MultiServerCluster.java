@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.Cluster;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServerNotFoundException;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.ServerFactory;
@@ -78,8 +79,7 @@ public abstract class MultiServerCluster implements Cluster {
 
         Server connection = addressToServerMap.get(serverAddress);
         if (connection == null) {
-            return null;  // TODO: is this going to be a problem for getMore on a node that's no longer in the replica set?
-            // throw new MongoServerNotFoundException();
+            throw new MongoServerNotFoundException("The requested server is no longer available: " + serverAddress);
         }
         return connection;
     }

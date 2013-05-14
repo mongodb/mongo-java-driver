@@ -19,7 +19,7 @@ package org.mongodb.impl;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.MongoReadPreferenceException;
+import org.mongodb.MongoTimeoutException;
 import org.mongodb.ReadPreference;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
@@ -32,28 +32,33 @@ import org.mongodb.rs.ReplicaSetMemberDescription;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.impl.MonitorDefaults.CLIENT_OPTIONS_DEFAULTS;
 import static org.mongodb.impl.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
 import static org.mongodb.impl.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 public class ReplicaSetCluster extends MultiServerCluster {
 
-    private final Holder<ReplicaSetDescription> holder = new Holder<ReplicaSetDescription>(CLIENT_OPTIONS_DEFAULTS.getConnectTimeout(),
-            TimeUnit.MILLISECONDS);
     private final Map<ServerAddress, ReplicaSetMemberDescription> mostRecentStateMap =
             new HashMap<ServerAddress, ReplicaSetMemberDescription>();
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
     private final Random random = new Random();
+    private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ReplicaSetMemberDescription>emptyList(),
+            random, SLAVE_ACCEPTABLE_LATENCY_MS);
+    private ConcurrentMap<ReadPreference, CountDownLatch> readPreferenceLatches = new ConcurrentHashMap<ReadPreference, CountDownLatch>();
 
     public ReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
@@ -73,21 +78,36 @@ public class ReplicaSetCluster extends MultiServerCluster {
 
     @Override
     public void close() {
-        holder.close();
         super.close();
+        for (CountDownLatch latch : readPreferenceLatches.values()) {
+            latch.countDown();
+        }
     }
 
     protected MongoServerStateListener createServerStateListener(final ServerAddress serverAddress) {
         return new ReplicaSetServerStateListener(serverAddress);
     }
 
-    private ServerAddress getAddressForReadPreference(final ReadPreference readPreference) {
+    // CHECKSTYLE:OFF  Until we fix the underlying bug
+    private ServerAddress getAddressForReadPreference(ReadPreference readPreference) {
+        // CHECKSTYLE:ON
+
         // TODO: this is hiding potential bugs.  ReadPreference should not be null
-        ReadPreference appliedReadPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-        final ReplicaSetDescription replicaSetDescription = holder.get();
-        final ReplicaSetMemberDescription replicaSetMemberDescription = appliedReadPreference.chooseReplicaSetMember(replicaSetDescription);
+        readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
+
+        ReplicaSetMemberDescription replicaSetMemberDescription = readPreference.chooseReplicaSetMember(description);
         if (replicaSetMemberDescription == null) {
-            throw new MongoReadPreferenceException(readPreference, replicaSetDescription);
+            try {
+                CountDownLatch newLatch = new CountDownLatch(1);
+                CountDownLatch existingLatch = readPreferenceLatches.putIfAbsent(readPreference, newLatch);
+                (existingLatch != null ? existingLatch : newLatch).await(1, TimeUnit.SECONDS);  // TODO: configurable
+            } catch (InterruptedException e) {
+                // fall through
+            }
+        }
+        replicaSetMemberDescription = readPreference.chooseReplicaSetMember(description);
+        if (replicaSetMemberDescription == null) {
+            throw new MongoTimeoutException("Timed out waiting for a server that satisfies the read preference: " + readPreference);
         }
         return replicaSetMemberDescription.getServerAddress();
     }
@@ -120,7 +140,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
             mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, isMasterCommandResult,
                     LATENCY_SMOOTH_FACTOR, mostRecentStateMap.get(serverAddress)));
 
-            setHolder();
+            updateDescription();
         }
 
         @Override
@@ -135,11 +155,11 @@ public class ReplicaSetCluster extends MultiServerCluster {
 
             markAsNotified();
 
-            ReplicaSetMemberDescription description = mostRecentStateMap.remove(serverAddress);
+            ReplicaSetMemberDescription memberDescription = mostRecentStateMap.remove(serverAddress);
 
-            setHolder();
+            updateDescription();
 
-            if (description.primary()) {
+            if (memberDescription.primary()) {
                 invalidateAll();
             }
 
@@ -151,9 +171,16 @@ public class ReplicaSetCluster extends MultiServerCluster {
             }
         }
 
-        private void setHolder() {
-            holder.set(new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
-                    SLAVE_ACCEPTABLE_LATENCY_MS));
+        private void updateDescription() {
+            description = new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
+                    SLAVE_ACCEPTABLE_LATENCY_MS);
+            for (Iterator<Map.Entry<ReadPreference, CountDownLatch>> iter = readPreferenceLatches.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry<ReadPreference, CountDownLatch> readPreferenceLatch = iter.next();
+                if (readPreferenceLatch.getKey().chooseReplicaSetMember(description) != null) {
+                    readPreferenceLatch.getValue().countDown();
+                    iter.remove();
+                }
+            }
         }
 
         private void addNewHosts(final List<String> hosts, final boolean active) {
