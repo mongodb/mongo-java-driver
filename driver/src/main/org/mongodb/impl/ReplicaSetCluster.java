@@ -105,7 +105,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
                 CountDownLatch newLatch = new CountDownLatch(1);
                 CountDownLatch existingLatch = readPreferenceLatches.putIfAbsent(readPreference, newLatch);
                 final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
-                if (latch.await(1, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
+                if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
                    replicaSetMemberDescription = readPreference.chooseReplicaSetMember(description);
                 }
                 if (replicaSetMemberDescription == null) {
