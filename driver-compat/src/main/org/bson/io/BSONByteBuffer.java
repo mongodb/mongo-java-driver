@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 
 /**
  * Pseudo byte buffer, delegates as it is too hard to properly override / extend the ByteBuffer API
@@ -126,7 +127,7 @@ public class BSONByteBuffer {
             ++end;
         }
         int len = end - offset;
-        return new String(array(), offset, len);
+        return new String(array(), offset, len, Charset.forName("UT8-8"));
     }
 
     public String getUTF8String(final int valueOffset) {

@@ -81,6 +81,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
+    @Deprecated
     public boolean containsKey(final String s) {
         return containsField(s);
     }
@@ -247,6 +248,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public void putAll(final Map m) {
         throw new UnsupportedOperationException("Object is read only");
     }
@@ -257,6 +259,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public Map toMap() {
         throw new UnsupportedOperationException("Operation is not supported by lazy loading object");
     }

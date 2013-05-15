@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("rawtypes")
 public class LazyBSONListTest {
     private LazyBSONList encodeAndExtractList(List<?> list) {
         final BSONObject document = new BasicBSONObject("l", list);

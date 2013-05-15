@@ -26,6 +26,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+@SuppressWarnings("rawtypes")
 public class LazyBSONList extends LazyBSONObject implements List {
 
     public LazyBSONList(final byte[] bytes, final LazyBSONCallback callback) {

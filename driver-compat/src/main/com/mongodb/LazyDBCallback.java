@@ -40,6 +40,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public List createArray(final byte[] bytes, final int offset) {
         return new LazyDBList(bytes, offset, this);
     }
