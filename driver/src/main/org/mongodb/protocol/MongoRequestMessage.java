@@ -17,8 +17,8 @@
 package org.mongodb.protocol;
 
 import org.bson.BSONBinaryWriter;
-import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.Encoder;
+import org.mongodb.io.ChannelAwareOutputBuffer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,6 +94,8 @@ public abstract class MongoRequestMessage {
     }
 
     enum OpCode {
+        OP_REPLY(1),
+        OP_MSG(1000),
         OP_UPDATE(2001),
         OP_INSERT(2002),
         OP_QUERY(2004),

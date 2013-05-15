@@ -46,4 +46,25 @@ public class MongoReplyMessageTest {
         final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
         new MongoReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
     }
+
+    @Test(expected = MongoInternalException.class)
+    public void shouldThrowExceptionIfOpCodeIsIncorrect() {
+        int badOpCode = 2;
+
+        ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
+        headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        headerByteBuffer.putInt(36);
+        headerByteBuffer.putInt(2456);
+        headerByteBuffer.putInt(5);
+        headerByteBuffer.putInt(badOpCode);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putLong(0);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.flip();
+
+        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
+        final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+        new MongoReplyMessage<Document>(replyHeader, 5, 100);
+    }
 }
