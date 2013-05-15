@@ -16,20 +16,27 @@
 
 package org.mongodb.acceptancetest.core;
 
-import org.mongodb.Document;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoServerException;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.RenameCollectionOptions;
+import org.mongodb.impl.Connection;
+import org.mongodb.io.NativeAuthenticator;
+import org.mongodb.result.CommandResult;
 
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getSession;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.
@@ -166,6 +173,29 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         final MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
         assertThat(replacedCollection.one().get(keyInExistingCollection), is(nullValue()));
         assertThat(replacedCollection.one().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+    }
+
+    @Test
+    public void shouldBeAbleToAuthenticateAfterAddingUser() {
+        MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
+        database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
+        final Connection connection = getSession().getConnection();
+        CommandResult result = new NativeAuthenticator(credential, connection , getBufferPool()).authenticate();
+        assertThat(result.isOk(), is(true));
+        connection.close();
+    }
+
+    @Test
+    public void shouldNotBeAbleToAuthenticateAfterAddingUser() {
+        MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
+        database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
+        database.tools().removeUser(credential.getUserName());
+        try {
+            new NativeAuthenticator(credential, getSession().getConnection(), getBufferPool()).authenticate();
+        } catch (MongoCommandFailureException e) { // NOPMD
+            // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
+            // the addUser to setUp, but that would require its own test class.
+        }
     }
 
     @Test

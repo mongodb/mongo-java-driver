@@ -29,11 +29,11 @@ public final class NativeAuthenticationHelper {
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
     public static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
-        return getAuthCommand(userName, createHash(userName, password), nonce);
+        return getAuthCommand(userName, createAuthenticationHash(userName, password), nonce);
     }
 
-    static Document getAuthCommand(final String userName, final byte[] authHash, final String nonce) {
-        String key = nonce + userName + new String(authHash, UTF_8_CHARSET);
+    static Document getAuthCommand(final String userName, final String authHash, final String nonce) {
+        String key = nonce + userName + authHash;
 
         Document cmd = new Document();
 
@@ -49,7 +49,7 @@ public final class NativeAuthenticationHelper {
         return new Document("getnonce", 1);
     }
 
-    static byte[] createHash(final String userName, final char[] password) {
+    public static String createAuthenticationHash(final String userName, final char[] password) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);
         try {
             bout.write(userName.getBytes(UTF_8_CHARSET));
@@ -63,7 +63,7 @@ public final class NativeAuthenticationHelper {
         } catch (IOException ioe) {
             throw new RuntimeException("impossible", ioe);
         }
-        return hexMD5(bout.toByteArray()).getBytes(UTF_8_CHARSET);
+        return hexMD5(bout.toByteArray());
     }
 
     /**

@@ -21,6 +21,7 @@ import org.mongodb.CommandOperation;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseAdmin;
 import org.mongodb.Document;
+import org.mongodb.MongoCollection;
 import org.mongodb.MongoNamespace;
 import org.mongodb.QueryOperation;
 import org.mongodb.ReadPreference;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.mongodb.impl.ErrorHandling.handleErrors;
+import static org.mongodb.io.NativeAuthenticationHelper.createAuthenticationHash;
 
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are
@@ -103,5 +105,19 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
         final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec,
                 client.getBufferPool()).execute(client.getSession());
         handleErrors(commandResult);
+    }
+
+    @Override
+    public void addUser(final String userName, final char[] password, final boolean readOnly) {
+        MongoCollection<Document> collection = client.getDatabase(databaseName).getCollection("system.users");
+        Document doc = new Document("user", userName).append("pwd", createAuthenticationHash(userName, password))
+                .append("readOnly", readOnly);
+        collection.save(doc);
+    }
+
+    @Override
+    public void removeUser(final String userName) {
+        MongoCollection<Document> collection = client.getDatabase(databaseName).getCollection("system.users");
+        collection.filter(new Document("user", userName)).remove();
     }
 }

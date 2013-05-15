@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 public class NativeAuthenticator extends Authenticator {
     private final BufferPool<ByteBuffer> bufferPool;
 
-    NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferPool<ByteBuffer> bufferPool) {
+    public NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferPool<ByteBuffer> bufferPool) {
         super(credential, connection);
         this.bufferPool = bufferPool;
     }
