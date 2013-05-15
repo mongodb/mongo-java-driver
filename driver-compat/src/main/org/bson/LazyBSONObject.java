@@ -187,6 +187,10 @@ public class LazyBSONObject implements BSONObject {
         return keySet().size() == 0;
     }
 
+    public int getBSONSize() {
+        return getBufferForInternalBytes().getInt();
+    }
+
     public int pipe(final OutputStream os) throws IOException {
         final WritableByteChannel channel = Channels.newChannel(os);
         return channel.write(getBufferForInternalBytes());

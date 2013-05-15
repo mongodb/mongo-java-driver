@@ -173,4 +173,11 @@ public class LazyBSONObjectTest {
         final BSONObject nested = (BSONObject) lazy.get("o");
         assertEquals(0.1, nested.get("z"));
     }
+
+    @Test
+    public void testGetBSONSize() {
+        final byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        final LazyBSONObject document = new LazyBSONObject(bytes, new LazyBSONCallback());
+        assertEquals(12, document.getBSONSize());
+    }
 }
