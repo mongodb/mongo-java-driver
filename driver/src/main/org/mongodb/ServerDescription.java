@@ -27,6 +27,8 @@ import java.util.Set;
 
 // TODO: Better unit test for this class
 public class ServerDescription {
+    private static final int DEFAULT_MAX_MESSAGE_SIZE = 2 * 0x2000000;  // 32MB
+
     private final boolean isPrimary;
     private final boolean isSecondary;
     private final List<String> hosts;
@@ -129,7 +131,7 @@ public class ServerDescription {
                 .passives((List<String>) commandResult.getResponse().get("passives"))
                 .primary((String) commandResult.getResponse().get("primary"))
                 .maxBSONObjectSize((Integer) commandResult.getResponse().get("maxBsonObjectSize"))
-                .maxMessageSize((Integer) commandResult.getResponse().get("maxMessageSizeBytes"))
+                .maxMessageSize(getMaxMessageSize((Integer) commandResult.getResponse().get("maxMessageSizeBytes")))
                 .tags(getTagsFromMap((Document) commandResult.getResponse().get("tags")))
                 .elapsedMillis(commandResult.getElapsedNanoseconds() / 1000000F)
                 .ok(commandResult.isOk()));
@@ -262,4 +264,9 @@ public class ServerDescription {
         }
         return tagSet;
     }
+
+    private static int getMaxMessageSize(final Integer maxMessageSize) {
+        return (maxMessageSize != null) ? maxMessageSize : DEFAULT_MAX_MESSAGE_SIZE;
+    }
+
 }
