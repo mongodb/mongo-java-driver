@@ -21,7 +21,6 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.MongoSocketReadException;
-import org.mongodb.io.MongoSocketWriteException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -48,29 +47,20 @@ class DefaultSocketChannelConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) {
-        try {
-            buffer.pipeAndClose(socketChannel);
-        } catch (IOException e) {
-            close();
-            throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
-        }
+    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException {
+        buffer.pipeAndClose(socketChannel);
     }
 
-    protected void fillAndFlipBuffer(final ByteBuffer buffer) {
-        try {
-            int totalBytesRead = 0;
-            while (totalBytesRead < buffer.limit()) {
-                final int bytesRead = socketChannel.read(buffer);
-                if (bytesRead == -1) {
-                    throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
-                }
-                totalBytesRead += bytesRead;
+    protected void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
+        int totalBytesRead = 0;
+        while (totalBytesRead < buffer.limit()) {
+            final int bytesRead = socketChannel.read(buffer);
+            if (bytesRead == -1) {
+                throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
             }
-            buffer.flip();
-        } catch (IOException e) {
-            handleIOException(e);
+            totalBytesRead += bytesRead;
         }
+        buffer.flip();
     }
 
     public void close() {

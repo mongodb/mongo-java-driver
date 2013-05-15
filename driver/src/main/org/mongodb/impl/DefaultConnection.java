@@ -18,12 +18,15 @@ package org.mongodb.impl;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketReadException;
 import org.mongodb.io.MongoSocketReadTimeoutException;
+import org.mongodb.io.MongoSocketWriteException;
 import org.mongodb.io.PooledInputBuffer;
 import org.mongodb.io.ResponseBuffers;
 import org.mongodb.protocol.MongoReplyHeader;
@@ -37,6 +40,8 @@ import java.nio.channels.ClosedByInterruptException;
 import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
+    private static final int MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH = 48000000;
+
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile boolean isClosed;
@@ -62,42 +67,57 @@ abstract class DefaultConnection implements Connection {
 
     public void sendMessage(final ChannelAwareOutputBuffer buffer) {
         check();
-        sendOneWayMessage(buffer);
+        try {
+            sendOneWayMessage(buffer);
+        } catch (IOException e) {
+            close();
+            throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
+        }
     }
 
     public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         check();
-        long start = System.nanoTime();
-        sendOneWayMessage(buffer);
-        return receiveMessage(start);
+        sendMessage(buffer);
+        return receiveMessage();
     }
 
     @Override
     public ResponseBuffers receiveMessage() {
         check();
-        return receiveMessage(System.nanoTime());
+        try {
+            return receiveMessage(System.nanoTime());
+        } catch (IOException e) {
+            close();
+            throw translateReadException(e);
+        } catch (MongoException e) {
+            close();
+            throw e;
+        } catch (RuntimeException e) {
+            close();
+            throw new MongoInternalException("Unexpected runtime exception", e);
+        }
     }
 
     protected abstract void ensureOpen();
 
-    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer);
+    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException;
 
-    protected abstract void fillAndFlipBuffer(final ByteBuffer buffer);
+    protected abstract void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException;
 
-    protected void handleIOException(final IOException e) {
+    private MongoException translateReadException(final IOException e) {
         close();
         if (e instanceof SocketTimeoutException) {
-            throw new MongoSocketReadTimeoutException("Exception receiving message", serverAddress, (SocketTimeoutException) e);
+            throw new MongoSocketReadTimeoutException("Timeout while receiving message", serverAddress, (SocketTimeoutException) e);
         }
         else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
-            throw new MongoInterruptedException("Exception receiving message", e);
+            throw new MongoInterruptedException("Interrupted while receiving message", e);
         }
         else {
             throw new MongoSocketReadException("Exception receiving message", serverAddress, e);
         }
     }
 
-    private ResponseBuffers receiveMessage(final long start) {
+    private ResponseBuffers receiveMessage(final long start) throws IOException {
         ByteBuffer headerByteBuffer = bufferPool.get(REPLY_HEADER_LENGTH);
 
         final MongoReplyHeader replyHeader;
@@ -108,6 +128,12 @@ abstract class DefaultConnection implements Connection {
             replyHeader = new MongoReplyHeader(headerInputBuffer);
         } finally {
             bufferPool.done(headerByteBuffer);
+        }
+
+        // TODO: make max message length dynamic
+        if (replyHeader.getMessageLength() > MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH) {
+            throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
+                    replyHeader.getMessageLength(), MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH));
         }
 
         PooledInputBuffer bodyInputBuffer = null;

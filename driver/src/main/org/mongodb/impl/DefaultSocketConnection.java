@@ -21,7 +21,6 @@ import org.mongodb.io.BufferPool;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketOpenException;
 import org.mongodb.io.MongoSocketReadException;
-import org.mongodb.io.MongoSocketWriteException;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -52,31 +51,22 @@ class DefaultSocketConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) {
-        try {
-            buffer.pipeAndClose(socket);
-        } catch (IOException e) {
-            close();
-            throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
-        }
+    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException {
+        buffer.pipeAndClose(socket);
     }
 
-    protected void fillAndFlipBuffer(final ByteBuffer buffer) {
-        try {
-            if (buffer.isDirect()) {
-                throw new IllegalArgumentException("Only works with non-direct buffers, so something must be misconfigured");
+    protected void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
+        if (buffer.isDirect()) {
+            throw new IllegalArgumentException("Only works with non-direct buffers, so something must be misconfigured");
+        }
+        int totalBytesRead = 0;
+        byte[] bytes = buffer.array();
+        while (totalBytesRead < buffer.limit()) {
+            final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+            if (bytesRead == -1) {
+                throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
             }
-            int totalBytesRead = 0;
-            byte[] bytes = buffer.array();
-            while (totalBytesRead < buffer.limit()) {
-                final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
-                if (bytesRead == -1) {
-                    throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
-                }
-                totalBytesRead += bytesRead;
-            }
-        } catch (IOException e) {
-            handleIOException(e);
+            totalBytesRead += bytesRead;
         }
     }
 
