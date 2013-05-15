@@ -24,13 +24,19 @@ import org.mongodb.io.ResponseBuffers;
 public abstract class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
     private AsyncConnection connection;
+    private long requestId;
 
-    public MongoResponseCallback(final AsyncConnection connection) {
+    public MongoResponseCallback(final AsyncConnection connection, final long requestId) {
         this.connection = connection;
+        this.requestId = requestId;
     }
 
     protected AsyncConnection getConnection() {
         return connection;
+    }
+
+    protected long getRequestId() {
+        return requestId;
     }
 
     @Override

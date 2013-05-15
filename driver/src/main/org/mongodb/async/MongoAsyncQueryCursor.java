@@ -109,7 +109,7 @@ public class MongoAsyncQueryCursor<T> {
                         new MongoGetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder,
                         getBufferPool());
                 if (find.getOptions().contains(QueryOption.Exhaust)) {
-                    getMoreOperation.executeReceive(session).register(this);
+                    getMoreOperation.executeReceive(session, result.getRequestId()).register(this);
                 }
                 else {
                     getMoreOperation.execute(session).register(this);

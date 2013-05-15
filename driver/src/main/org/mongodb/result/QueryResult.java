@@ -25,6 +25,7 @@ public class QueryResult<T> {
     private final List<T> results;
     private final ServerCursor serverCursor;
     private final ServerAddress serverAddress;
+    private final int requestId;
 
     public QueryResult(final MongoReplyMessage<T> replyMessage, final ServerAddress address) {
         if (replyMessage.getReplyHeader().getCursorId() != 0) {
@@ -35,6 +36,7 @@ public class QueryResult<T> {
         }
         serverAddress = address;
         results = replyMessage.getDocuments();
+        requestId = replyMessage.getReplyHeader().getRequestId();
     }
 
     public ServerCursor getCursor() {
@@ -48,4 +50,9 @@ public class QueryResult<T> {
     public ServerAddress getAddress() {
         return serverAddress;
     }
+
+    public int getRequestId() {
+        return requestId;
+    }
+
 }

@@ -176,7 +176,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         final GetMoreOperation<T> getMoreOperation = new GetMoreOperation<T>(namespace,
                 new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, getBufferPool());
         if (find.getOptions().contains(QueryOption.Exhaust)) {
-            currentResult = getMoreOperation.executeReceive(session);
+            currentResult = getMoreOperation.executeReceive(session, currentResult.getRequestId());
         }
         else {
             currentResult = getMoreOperation.execute(session);

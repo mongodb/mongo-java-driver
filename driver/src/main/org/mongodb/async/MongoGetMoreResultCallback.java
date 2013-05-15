@@ -32,8 +32,8 @@ public class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
     private final long cursorId;
 
     public MongoGetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                                      final long cursorId, final AsyncConnection connection) {
-        super(connection);
+                                      final long cursorId, final AsyncConnection connection, final long requestId) {
+        super(connection, requestId);
         this.callback = callback;
         this.decoder = decoder;
         this.cursorId = cursorId;
@@ -51,7 +51,7 @@ public class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
                 throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getServerAddress()));
             }
             else {
-                result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder),
+                result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                         getConnection().getServerAddress());
             }
         } catch (MongoException me) {

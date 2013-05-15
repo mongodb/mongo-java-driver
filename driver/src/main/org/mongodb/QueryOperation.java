@@ -60,10 +60,11 @@ public class QueryOperation<T> extends Operation {
             try {
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =
-                            new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec()).getDocuments().get(0);
+                            new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
                     throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
                 }
-                final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder);
+                final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
+
                 return new QueryResult<T>(replyMessage, connection.getServerAddress());
             } finally {
                 responseBuffers.close();

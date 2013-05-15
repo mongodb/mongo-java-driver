@@ -39,7 +39,7 @@ public class MongoReplyHeader {
     public MongoReplyHeader(final InputBuffer headerInputBuffer) {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
-        responseTo = headerInputBuffer.readInt32();  // TODO: validate that this is a response to the expected message
+        responseTo = headerInputBuffer.readInt32();
         opCode = headerInputBuffer.readInt32();  // TODO: check for validity
         responseFlags = headerInputBuffer.readInt32();
         cursorId = headerInputBuffer.readInt64();

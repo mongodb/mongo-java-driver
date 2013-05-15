@@ -31,4 +31,12 @@ public class MongoInternalException extends MongoException {
     public MongoInternalException(final String msg, final Throwable t) {
         super(msg, t);
     }
+
+    /**
+     * Construct a new instance with the given message
+     * @param msg the message
+     */
+    public MongoInternalException(final String msg) {
+        super(msg);
+    }
 }

@@ -51,10 +51,10 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
 
-    public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session, final int requestId) {
         AsyncConnection connection = session.getConnection();
 
-        MongoFuture<QueryResult<T>> wrapped = executeReceive(connection);
+        MongoFuture<QueryResult<T>> wrapped = executeReceive(connection, requestId);
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
         return retVal;
@@ -82,15 +82,17 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
         encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(
-                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
+                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
+                message.getId()));
 
         return retVal;
     }
 
-    public MongoFuture<QueryResult<T>> executeReceive(final AsyncConnection connection) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncConnection connection, final int requestId) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessage(new MongoGetMoreResultCallback<T>(
-                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection));
+                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
+                requestId));
 
         return retVal;
     }

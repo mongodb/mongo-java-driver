@@ -58,7 +58,7 @@ public class AsyncCommandOperation extends AsyncOperation {
         final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
         encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(
-                new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection));
+                new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
 
         return retVal;
     }

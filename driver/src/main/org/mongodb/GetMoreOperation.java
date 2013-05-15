@@ -49,10 +49,10 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final Session session) {
+    public QueryResult<T> executeReceive(final Session session, final long requestId) {
         Connection connection = session.getConnection();
         try {
-            return executeReceive(connection);
+            return executeReceive(connection, requestId);
         } finally {
             connection.close();
         }
@@ -78,7 +78,8 @@ public class GetMoreOperation<T> extends Operation {
                     throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
                 }
 
-                return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder), connection.getServerAddress());
+                return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
+                        connection.getServerAddress());
             } finally {
                 responseBuffers.close();
             }
@@ -87,10 +88,10 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final Connection connection) {
+    public QueryResult<T> executeReceive(final Connection connection, final long requestId) {
         final ResponseBuffers responseBuffers = connection.receiveMessage();
         try {
-            return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder), connection.getServerAddress());
+            return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder, requestId), connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

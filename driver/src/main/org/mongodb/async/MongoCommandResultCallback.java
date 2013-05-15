@@ -29,8 +29,8 @@ public class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
 
     public MongoCommandResultCallback(final SingleResultCallback<CommandResult> callback,
                                       final MongoCommand commandOperation, final Decoder<Document> decoder,
-                                      final AsyncConnection connection) {
-        super(commandOperation, decoder, connection);
+                                      final AsyncConnection connection, final long requestId) {
+        super(commandOperation, decoder, connection, requestId);
         this.callback = callback;
     }
 

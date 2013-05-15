@@ -20,8 +20,9 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.io.InputBuffer;
-import org.mongodb.io.ResponseBuffers;
 import org.mongodb.Decoder;
+import org.mongodb.MongoInternalException;
+import org.mongodb.io.ResponseBuffers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,8 @@ public class MongoReplyMessage<T> {
     private final List<T> documents;
 
     public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
-                             final Decoder<T> decoder, final long elapsedNanoseconds) {
-        this(replyHeader, elapsedNanoseconds);
+                             final Decoder<T> decoder, final long requestId, final long elapsedNanoseconds) {
+        this(replyHeader, requestId, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
             final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer);
@@ -43,15 +44,22 @@ public class MongoReplyMessage<T> {
         }
     }
 
-    public MongoReplyMessage(final MongoReplyHeader replyHeader, final long elapsedNanoseconds) {
+    public MongoReplyMessage(final MongoReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
+        if (requestId != replyHeader.getResponseTo()) {
+            throw new MongoInternalException(
+                    String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
+                    replyHeader.getResponseTo(), requestId));
+        }
+
         this.replyHeader = replyHeader;
         this.elapsedNanoseconds = elapsedNanoseconds;
 
         documents = new ArrayList<T>(replyHeader.getNumberReturned());
     }
 
-    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder) {
-        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), decoder, responseBuffers.getElapsedNanoseconds());
+    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
+        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), decoder, requestId,
+                responseBuffers.getElapsedNanoseconds());
     }
 
     public MongoReplyHeader getReplyHeader() {

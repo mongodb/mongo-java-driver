@@ -62,7 +62,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
                             .getFullName(), getLastError, new DocumentCodec());
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, getWrite(), getLastError,
-                    new DocumentCodec(), getNamespace(), nextMessage, connection, getBufferPool()));
+                    new DocumentCodec(), getNamespace(), nextMessage, connection, getBufferPool(), getLastErrorMessage.getId()));
         }
         else {
             connection.sendMessage(buffer, new MongoWriteResultCallback(callback, getWrite(), null, new DocumentCodec(),

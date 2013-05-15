@@ -30,8 +30,8 @@ public abstract class MongoCommandResultBaseCallback extends MongoResponseCallba
     private final Decoder<Document> decoder;
 
     public MongoCommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder,
-                                          final AsyncConnection connection) {
-        super(connection);
+                                          final AsyncConnection connection, final long requestId) {
+        super(connection, requestId);
         this.commandOperation = commandOperation;
         this.decoder = decoder;
     }
@@ -42,7 +42,7 @@ public abstract class MongoCommandResultBaseCallback extends MongoResponseCallba
                 callCallback((CommandResult) null, e);
             }
             else {
-                MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder);
+                MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder, getRequestId());
                 callCallback(new CommandResult(commandOperation.toDocument(), getConnection().getServerAddress(),
                         replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), null);
             }

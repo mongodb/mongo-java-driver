@@ -39,13 +39,18 @@ public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final MongoRequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferPool<ByteBuffer> bufferPool;
 
-    public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback,
-                                    final MongoWrite writeOperation, final GetLastError getLastError,
-                                    final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final MongoRequestMessage nextMessage,
-                                    final AsyncConnection connection,
+    public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+                                    final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
+                                    final MongoRequestMessage nextMessage, final AsyncConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool) {
-        super(getLastError, decoder, connection);
+        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
+    }
+
+    public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+                                    final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
+                                    final MongoRequestMessage nextMessage, final AsyncConnection connection,
+                                    final BufferPool<ByteBuffer> bufferPool, final long requestId) {
+        super(getLastError, decoder, connection, requestId);
         this.callback = callback;
         this.writeOperation = writeOperation;
         this.getLastError = getLastError;

@@ -64,7 +64,7 @@ public abstract class WriteOperation extends Operation {
                 ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
                 try {
                     getLastErrorResult = getLastError.parseGetLastErrorResponse(createCommandResult(getLastError,
-                            new MongoReplyMessage<Document>(responseBuffers, codec), connection));
+                            new MongoReplyMessage<Document>(responseBuffers, codec, getLastErrorMessage.getId()), connection));
                 } finally {
                     responseBuffers.close();
                 }
