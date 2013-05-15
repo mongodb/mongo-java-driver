@@ -85,7 +85,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
         }
     }
 
-    protected MongoServerStateListener createServerStateListener(final ServerAddress serverAddress) {
+    protected ServerStateListener createServerStateListener(final ServerAddress serverAddress) {
         return new ReplicaSetServerStateListener(serverAddress);
     }
 
@@ -120,7 +120,7 @@ public class ReplicaSetCluster extends MultiServerCluster {
     }
 
 
-    private final class ReplicaSetServerStateListener implements MongoServerStateListener {
+    private final class ReplicaSetServerStateListener implements ServerStateListener {
         private ServerAddress serverAddress;
 
         private ReplicaSetServerStateListener(final ServerAddress serverAddress) {

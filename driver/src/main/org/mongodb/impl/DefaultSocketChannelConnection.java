@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 // TODO: migrate all the DBPort configuration
-class DefaultSocketChannelConnection extends DefaultSyncConnection {
+class DefaultSocketChannelConnection extends DefaultConnection {
     private volatile SocketChannel socketChannel;
 
     public DefaultSocketChannelConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool) {

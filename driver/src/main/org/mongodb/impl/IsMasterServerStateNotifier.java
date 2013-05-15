@@ -17,10 +17,10 @@
 package org.mongodb.impl;
 
 import org.mongodb.CommandOperation;
+import org.mongodb.ConnectionFactory;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.ServerDescription;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
@@ -31,15 +31,15 @@ import org.mongodb.io.MongoSocketException;
 import java.nio.ByteBuffer;
 
 @ThreadSafe
-public class MongoIsMasterServerStateNotifier implements MongoServerStateNotifier {
+public class IsMasterServerStateNotifier implements ServerStateNotifier {
 
-    private final MongoServerStateListener serverStateListener;
-    private final MongoSyncConnectionFactory connectionFactory;
+    private final ServerStateListener serverStateListener;
+    private final ConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
     private Connection connection;
 
-    MongoIsMasterServerStateNotifier(final MongoServerStateListener serverStateListener, final MongoSyncConnectionFactory connectionFactory,
-                                     final BufferPool<ByteBuffer> bufferPool) {
+    IsMasterServerStateNotifier(final ServerStateListener serverStateListener, final ConnectionFactory connectionFactory,
+                                final BufferPool<ByteBuffer> bufferPool) {
         this.serverStateListener = serverStateListener;
         this.connectionFactory = connectionFactory;
         this.bufferPool = bufferPool;

@@ -16,10 +16,10 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoAsyncConnectionFactory;
+import org.mongodb.AsyncConnectionFactory;
+import org.mongodb.ConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.ServerFactory;
@@ -35,12 +35,12 @@ public final class DefaultServerFactory implements ServerFactory {
     public Server create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                          final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
                          final BufferPool<ByteBuffer> bufferPool) {
-        MongoSyncConnectionFactory connectionFactory = new DefaultMongoSyncConnectionFactory(options,
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(options,
                 serverAddress, bufferPool, credentialList);
-        MongoAsyncConnectionFactory asyncConnectionFactory = null;
+        AsyncConnectionFactory asyncConnectionFactory = null;
 
         if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            asyncConnectionFactory = new DefaultMongoAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
+            asyncConnectionFactory = new DefaultAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
         }
         return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService, bufferPool);
     }

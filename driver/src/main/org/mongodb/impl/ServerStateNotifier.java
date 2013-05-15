@@ -16,11 +16,6 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoException;
-import org.mongodb.ServerDescription;
-
-public interface MongoServerStateListener {
-    void notify(final ServerDescription masterCommandResult);
-
-    void notify(MongoException e);
+public interface ServerStateNotifier extends Runnable {
+    void close();
 }

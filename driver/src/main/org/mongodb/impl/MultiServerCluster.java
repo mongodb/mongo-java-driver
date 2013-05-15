@@ -79,7 +79,7 @@ public abstract class MultiServerCluster implements Cluster {
 
         Server connection = addressToServerMap.get(serverAddress);
         if (connection == null) {
-            throw new MongoServerNotFoundException("The requested server is no longer available: " + serverAddress);
+            throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
         }
         return connection;
     }
@@ -100,7 +100,7 @@ public abstract class MultiServerCluster implements Cluster {
         return isClosed;
     }
 
-    protected abstract MongoServerStateListener createServerStateListener(final ServerAddress serverAddress);
+    protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
 
 
     protected synchronized void addNode(final ServerAddress serverAddress) {

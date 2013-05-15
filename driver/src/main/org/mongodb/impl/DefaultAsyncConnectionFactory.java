@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoAsyncConnectionFactory;
+import org.mongodb.AsyncConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.ServerAddress;
@@ -25,13 +25,13 @@ import org.mongodb.io.BufferPool;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class DefaultMongoAsyncConnectionFactory implements MongoAsyncConnectionFactory {
+public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
     private ServerAddress serverAddress;
     private BufferPool<ByteBuffer> bufferPool;
     private List<MongoCredential> credentialList;
 
-    public DefaultMongoAsyncConnectionFactory(final MongoClientOptions options, final ServerAddress serverAddress,
-                                              final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
+    public DefaultAsyncConnectionFactory(final MongoClientOptions options, final ServerAddress serverAddress,
+                                         final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
         this.serverAddress = serverAddress;
         this.bufferPool = bufferPool;
         this.credentialList = credentialList;
@@ -44,7 +44,6 @@ public class DefaultMongoAsyncConnectionFactory implements MongoAsyncConnectionF
 
     @Override
     public AsyncConnection create() {
-        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferPool), credentialList,
-                bufferPool);
+        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferPool), credentialList, bufferPool);
     }
 }

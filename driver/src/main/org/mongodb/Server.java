@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.impl.AsyncConnection;
 import org.mongodb.impl.Connection;
-import org.mongodb.impl.MongoServerStateListener;
+import org.mongodb.impl.ServerStateListener;
 
 public interface Server {
     Connection getConnection();
@@ -29,7 +29,7 @@ public interface Server {
 
     void close();
 
-    void addChangeListener(MongoServerStateListener changeListener);
+    void addChangeListener(ServerStateListener changeListener);
 
     void invalidate();
 }

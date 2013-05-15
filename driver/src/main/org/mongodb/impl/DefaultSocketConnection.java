@@ -29,7 +29,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 
 // TODO: migrate all the DBPort configuration
-class DefaultSocketConnection extends DefaultSyncConnection {
+class DefaultSocketConnection extends DefaultConnection {
     private final SocketFactory socketFactory;
     private volatile Socket socket;
 

@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import org.mongodb.async.AsyncSession;
-import org.mongodb.impl.DefaultMongoAsyncConnectionFactory;
-import org.mongodb.impl.DefaultMongoSyncConnectionFactory;
+import org.mongodb.impl.DefaultAsyncConnectionFactory;
+import org.mongodb.impl.DefaultConnectionFactory;
 import org.mongodb.impl.MongoClientImpl;
 import org.mongodb.impl.MongoClientsImpl;
 import org.mongodb.io.BufferPool;
@@ -103,11 +103,11 @@ public final class Fixture {
         return getMongoClientURI().getCredentials();
     }
 
-    public static MongoSyncConnectionFactory getSyncConnectionFactory() throws UnknownHostException {
-        return new DefaultMongoSyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
+    public static ConnectionFactory getConnectionFactory() throws UnknownHostException {
+        return new DefaultConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
     }
 
-    public static MongoAsyncConnectionFactory getAsyncConnectionFactory() throws UnknownHostException {
-        return new DefaultMongoAsyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
+    public static AsyncConnectionFactory getAsyncConnectionFactory() throws UnknownHostException {
+        return new DefaultAsyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
     }
 }

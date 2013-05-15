@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.impl;
 
-import org.mongodb.impl.AsyncConnection;
+import org.mongodb.MongoException;
+import org.mongodb.ServerDescription;
 
-public interface MongoAsyncConnectionFactory {
-    ServerAddress getServerAddress();
-    AsyncConnection create();
+public interface ServerStateListener {
+    void notify(final ServerDescription serverDescription);
+
+    void notify(MongoException e);
 }

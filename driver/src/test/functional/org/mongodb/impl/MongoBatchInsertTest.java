@@ -45,8 +45,7 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultMongoSyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(),
-                getCredentialList()).create();
+        connection = new DefaultConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList()).create();
     }
 
     @After

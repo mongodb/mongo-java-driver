@@ -16,10 +16,10 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoAsyncConnectionFactory;
+import org.mongodb.AsyncConnectionFactory;
+import org.mongodb.ConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoException;
-import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.Server;
 import org.mongodb.ServerAddress;
 import org.mongodb.ServerDescription;
@@ -44,30 +44,30 @@ public class DefaultServer implements Server {
     private ServerAddress serverAddress;
     private final Pool<Connection> connectionPool;
     private Pool<AsyncConnection> asyncConnectionPool;
-    private final MongoIsMasterServerStateNotifier stateNotifier;
-    private Set<MongoServerStateListener> changeListeners =
-            Collections.newSetFromMap(new ConcurrentHashMap<MongoServerStateListener, Boolean>());
+    private final IsMasterServerStateNotifier stateNotifier;
+    private Set<ServerStateListener> changeListeners =
+            Collections.newSetFromMap(new ConcurrentHashMap<ServerStateListener, Boolean>());
     private volatile ServerDescription description;
 
-    public DefaultServer(final ServerAddress serverAddress, final MongoSyncConnectionFactory connectionFactory,
-                         final MongoAsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
+    public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
+                         final AsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
                          final ScheduledExecutorService scheduledExecutorService, final BufferPool<ByteBuffer> bufferPool) {
         notNull("connectionFactor", connectionFactory);
         notNull("options", options);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionPool = new DefaultMongoConnectionPool(connectionFactory, options);
+        this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
         if (asyncConnectionFactory != null) {
-            this.asyncConnectionPool = new DefaultMongoAsyncConnectionPool(asyncConnectionFactory, options);
+            this.asyncConnectionPool = new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
         }
-        stateNotifier = new MongoIsMasterServerStateNotifier(new DefaultMongoServerStateListener(), connectionFactory, bufferPool);
+        stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
         scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS); // TODO: configurable
     }
 
     @Override
     public Connection getConnection() {
-        return new DefaultServerSyncConnection(connectionPool.get());
+        return new DefaultServerConnection(connectionPool.get());
     }
 
     @Override
@@ -88,7 +88,7 @@ public class DefaultServer implements Server {
     }
 
     @Override
-    public void addChangeListener(final MongoServerStateListener changeListener) {
+    public void addChangeListener(final ServerStateListener changeListener) {
         changeListeners.add(changeListener);
     }
 
@@ -111,28 +111,28 @@ public class DefaultServer implements Server {
         invalidate();  // TODO: handle different exceptions sub-classes differently
     }
 
-    private final class DefaultMongoServerStateListener implements MongoServerStateListener {
+    private final class DefaultServerStateListener implements ServerStateListener {
         @Override
-        public void notify(final ServerDescription masterCommandResult) {
-            description = masterCommandResult;
-            for (MongoServerStateListener listener : changeListeners) {
-                listener.notify(masterCommandResult);
+        public void notify(final ServerDescription serverDescription) {
+            description = serverDescription;
+            for (ServerStateListener listener : changeListeners) {
+                listener.notify(serverDescription);
             }
         }
 
         @Override
         public void notify(final MongoException e) {
             description = null;
-            for (MongoServerStateListener listener : changeListeners) {
+            for (ServerStateListener listener : changeListeners) {
                 listener.notify(e);
             }
         }
     }
 
-    private class DefaultServerSyncConnection implements Connection {
+    private class DefaultServerConnection implements Connection {
         private Connection wrapped;
 
-        public DefaultServerSyncConnection(final Connection wrapped) {
+        public DefaultServerConnection(final Connection wrapped) {
             this.wrapped = wrapped;
         }
 

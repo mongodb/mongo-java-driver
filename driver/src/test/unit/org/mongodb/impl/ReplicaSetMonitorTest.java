@@ -162,13 +162,13 @@ public class ReplicaSetMonitorTest {
 
 //    private class PredicableMongoServerStateNotifierFactory implements MongoServerStateNotifierFactory {
 //        @Override
-//        public MongoServerStateNotifier create(final ServerAddress serverAddress) {
+//        public ServerStateNotifier create(final ServerAddress serverAddress) {
 //            isTrue("exists", stateNotifierMap.get(serverAddress) != null);
 //            return stateNotifierMap.get(serverAddress);
 //        }
 //    }
 //
-//    private final class PredictableMongoServerStateNotifier implements MongoServerStateNotifier {
+//    private final class PredictableMongoServerStateNotifier implements ServerStateNotifier {
 //        private ServerAddress serverAddress;
 //        private boolean isClosed;
 //        private IsMasterCommandResult isMasterCommandResult;

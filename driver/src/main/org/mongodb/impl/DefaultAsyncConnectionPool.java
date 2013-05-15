@@ -16,7 +16,7 @@
 
 package org.mongodb.impl;
 
-import org.mongodb.MongoAsyncConnectionFactory;
+import org.mongodb.AsyncConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
@@ -30,12 +30,12 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class DefaultMongoAsyncConnectionPool implements Pool<AsyncConnection> {
+public class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
 
     private final SimplePool<AsyncConnection> wrappedPool;
 
-    DefaultMongoAsyncConnectionPool(final MongoAsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
-        wrappedPool = new SimpleMongoAsyncConnectionPool(connectionFactory, options);
+    DefaultAsyncConnectionPool(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
+        wrappedPool = new SimpleAsyncConnectionPool(connectionFactory, options);
     }
 
     @Override
@@ -60,11 +60,11 @@ public class DefaultMongoAsyncConnectionPool implements Pool<AsyncConnection> {
         return new PooledAsyncConnection(connection);
     }
 
-    static class SimpleMongoAsyncConnectionPool extends SimplePool<AsyncConnection> {
+    static class SimpleAsyncConnectionPool extends SimplePool<AsyncConnection> {
 
-        private final MongoAsyncConnectionFactory connectionFactory;
+        private final AsyncConnectionFactory connectionFactory;
 
-        public SimpleMongoAsyncConnectionPool(final MongoAsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
+        public SimpleAsyncConnectionPool(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
             super(connectionFactory.getServerAddress().toString(), options.getConnectionsPerHost());
             this.connectionFactory = connectionFactory;
         }
@@ -90,7 +90,7 @@ public class DefaultMongoAsyncConnectionPool implements Pool<AsyncConnection> {
         @Override
         public void close() {
             try {
-                DefaultMongoAsyncConnectionPool.this.wrappedPool.done(wrapped);
+                DefaultAsyncConnectionPool.this.wrappedPool.done(wrapped);
             } finally {
                 wrapped = null;
             }

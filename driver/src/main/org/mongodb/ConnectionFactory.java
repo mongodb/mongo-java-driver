@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package org.mongodb;
 
-public interface MongoServerStateNotifier extends Runnable {
-    void close();
+import org.mongodb.impl.Connection;
+
+public interface ConnectionFactory {
+    ServerAddress getServerAddress();
+    Connection create();
 }

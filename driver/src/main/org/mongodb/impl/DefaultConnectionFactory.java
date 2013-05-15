@@ -16,9 +16,9 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.ConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.BufferPool;
 
@@ -27,14 +27,14 @@ import javax.net.ssl.SSLSocketFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class DefaultMongoSyncConnectionFactory implements MongoSyncConnectionFactory {
+public class DefaultConnectionFactory implements ConnectionFactory {
     private MongoClientOptions options;
     private ServerAddress serverAddress;
     private BufferPool<ByteBuffer> bufferPool;
     private List<MongoCredential> credentialList;
 
-    public DefaultMongoSyncConnectionFactory(final MongoClientOptions options, final ServerAddress serverAddress,
-                                             final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
+    public DefaultConnectionFactory(final MongoClientOptions options, final ServerAddress serverAddress,
+                                    final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
         this.options = options;
         this.serverAddress = serverAddress;
         this.bufferPool = bufferPool;
@@ -58,6 +58,6 @@ public class DefaultMongoSyncConnectionFactory implements MongoSyncConnectionFac
         else {
             socketConnection = new DefaultSocketChannelConnection(serverAddress, bufferPool);
         }
-        return new AuthenticatingSyncConnection(socketConnection, credentialList, bufferPool);
+        return new AuthenticatingConnection(socketConnection, credentialList, bufferPool);
     }
 }

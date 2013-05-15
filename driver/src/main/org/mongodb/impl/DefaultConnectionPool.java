@@ -16,9 +16,9 @@
 
 package org.mongodb.impl;
 
+import org.mongodb.ConnectionFactory;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoException;
-import org.mongodb.MongoSyncConnectionFactory;
 import org.mongodb.ServerAddress;
 import org.mongodb.io.ChannelAwareOutputBuffer;
 import org.mongodb.io.MongoSocketException;
@@ -32,11 +32,11 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultMongoConnectionPool implements Pool<Connection> {
+class DefaultConnectionPool implements Pool<Connection> {
     private final SimplePool<Connection> wrappedPool;
 
-    DefaultMongoConnectionPool(final MongoSyncConnectionFactory connectionFactory, final MongoClientOptions options) {
-        wrappedPool = new SimpleMongoConnectionPool(connectionFactory, options);
+    DefaultConnectionPool(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
+        wrappedPool = new SimpleConnectionPool(connectionFactory, options);
     }
 
     @Override
@@ -58,14 +58,14 @@ class DefaultMongoConnectionPool implements Pool<Connection> {
         if (connection == null) {
             return null;
         }
-        return new PooledSyncConnection(connection);
+        return new PooledConnection(connection);
     }
 
-    static class SimpleMongoConnectionPool extends SimplePool<Connection> {
+    static class SimpleConnectionPool extends SimplePool<Connection> {
 
-        private final MongoSyncConnectionFactory connectionFactory;
+        private final ConnectionFactory connectionFactory;
 
-        public SimpleMongoConnectionPool(final MongoSyncConnectionFactory connectionFactory, final MongoClientOptions options) {
+        public SimpleConnectionPool(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
             super(connectionFactory.getServerAddress().toString(), options.getConnectionsPerHost());
             this.connectionFactory = connectionFactory;
         }
@@ -81,17 +81,17 @@ class DefaultMongoConnectionPool implements Pool<Connection> {
         }
     }
 
-    private class PooledSyncConnection implements Connection {
+    private class PooledConnection implements Connection {
         private volatile Connection wrapped;
 
-        public PooledSyncConnection(final Connection wrapped) {
+        public PooledConnection(final Connection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
         @Override
         public void close() {
             if (wrapped != null) {
-                DefaultMongoConnectionPool.this.wrappedPool.done(wrapped, wrapped.isClosed());
+                DefaultConnectionPool.this.wrappedPool.done(wrapped, wrapped.isClosed());
                 wrapped = null;
             }
         }
@@ -146,7 +146,7 @@ class DefaultMongoConnectionPool implements Pool<Connection> {
          */
         private void handleException(final MongoException e) {
             if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-               DefaultMongoConnectionPool.this.wrappedPool.clear();
+               DefaultConnectionPool.this.wrappedPool.clear();
             }
         }
     }
