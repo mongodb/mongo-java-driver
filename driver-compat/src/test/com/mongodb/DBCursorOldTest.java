@@ -153,7 +153,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         }).start();
 
 
-        Thread.sleep(5000);
+        Thread.sleep(500);
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10));
         latch.await();
