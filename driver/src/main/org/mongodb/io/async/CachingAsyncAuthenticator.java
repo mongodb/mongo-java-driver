@@ -48,15 +48,8 @@ public class CachingAsyncAuthenticator {
         new IteratingAuthenticator(callback).start();
     }
 
-    /**
-     * Clears the cache of authenticated databases.
-     */
-    public void reset() {
-        authenticatedDatabases.clear();
-    }
-
     // get the difference between the set of credentialed databases and the set of authenticated databases on this connection
-    private Set<String> getUnauthenticatedDatabases() {
+    public Set<String> getUnauthenticatedDatabases() {
         Set<String> unauthenticatedDatabases = new HashSet<String>(credentialsStore.getDatabases());
         unauthenticatedDatabases.removeAll(authenticatedDatabases);
         return unauthenticatedDatabases;
@@ -92,6 +85,7 @@ public class CachingAsyncAuthenticator {
                 callback.onResult(null, e);
             }
             else {
+                authenticatedDatabases.add(curDatabaseName);
                 next();
             }
         }
