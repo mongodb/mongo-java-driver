@@ -51,13 +51,6 @@ public class CachingAuthenticator {
         }
     }
 
-    /**
-     * Clears the cache of authenticated databases.
-     */
-    public void reset() {
-        authenticatedDatabases.clear();
-    }
-
     private void authenticate(final MongoCredential credential) {
         Authenticator authenticator = createAuthenticator(credential);
         authenticator.authenticate();
