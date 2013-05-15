@@ -37,12 +37,18 @@ import java.util.concurrent.CountDownLatch;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mongodb.Fixture.getAsyncConnectionFactory;
 import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
+
+    private static final String USER = "asyncAuthUser";
+    private static final char[] PASSWORD = "123".toCharArray();
+    private MongoCredential credential = MongoCredential.createMongoCRCredential(USER, getDatabaseName(), PASSWORD);
 
     private CountDownLatch latch;
     private AsyncConnection connection;
@@ -52,13 +58,33 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
         super.setUp();
         latch = new CountDownLatch(1);
         connection =  getAsyncConnectionFactory().create();
+        database.tools().addUser(USER, PASSWORD, true);
     }
 
     @After
     public void tearDown() {
         super.tearDown();
         connection.close();
+        database.tools().removeUser(USER);
     }
+
+    @Test
+    public void testAuthenticationIsCached() throws InterruptedException {
+        MongoCredentialsStore credentialsStore = new MongoCredentialsStore(credential);
+        CachingAsyncAuthenticator cachingAuthenticator = new CachingAsyncAuthenticator(credentialsStore, connection, getBufferPool());
+
+        assertFalse(cachingAuthenticator.getUnauthenticatedDatabases().isEmpty());
+        cachingAuthenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+        assertTrue(cachingAuthenticator.getUnauthenticatedDatabases().isEmpty());
+    }
+
 
     @Test
     public void testEmpty() throws InterruptedException {
@@ -78,7 +104,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
         assertThat(exceptionList.get(0), is(nullValue()));
     }
 
-    @Test
+        @Test
     public void testException() throws InterruptedException {
         MongoCredentialsStore credentialsStore =
                 new MongoCredentialsStore(MongoCredential.createMongoCRCredential("noone", "nowhere", "nothing".toCharArray()));
