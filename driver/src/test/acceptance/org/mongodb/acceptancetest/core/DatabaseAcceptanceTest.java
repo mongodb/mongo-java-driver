@@ -89,7 +89,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         final Document collectionStatistics = collection.tools().getStatistics();
 
         assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"),
-                  is(maxDocuments));
+                is(maxDocuments));
     }
 
     @Test
@@ -121,7 +121,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         final MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
-                  renamedCollection.count(), is(1L));
+                renamedCollection.count(), is(1L));
     }
 
     @Test(expected = MongoServerException.class)
@@ -164,7 +164,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         //when
         database.tools().renameCollection(new RenameCollectionOptions(originalCollectionName,
-                                                                     existingCollectionName, true));
+                existingCollectionName, true));
 
         //then
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
@@ -178,23 +178,32 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToAuthenticateAfterAddingUser() {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
         final Connection connection = getSession().getConnection();
-        CommandResult result = new NativeAuthenticator(credential, connection , getBufferPool()).authenticate();
-        assertThat(result.isOk(), is(true));
-        connection.close();
+        try {
+            database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
+            CommandResult result = new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
+            assertThat(result.isOk(), is(true));
+        } finally {
+            database.tools().removeUser(credential.getUserName());
+            connection.close();
+        }
     }
 
     @Test
     public void shouldNotBeAbleToAuthenticateAfterAddingUser() {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
-        database.tools().removeUser(credential.getUserName());
+        final Connection connection = getSession().getConnection();
         try {
-            new NativeAuthenticator(credential, getSession().getConnection(), getBufferPool()).authenticate();
-        } catch (MongoCommandFailureException e) { // NOPMD
-            // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
-            // the addUser to setUp, but that would require its own test class.
+            database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
+            database.tools().removeUser(credential.getUserName());
+            try {
+                new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
+            } catch (MongoCommandFailureException e) { // NOPMD
+                // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
+                // the addUser to setUp, but that would require its own test class.
+            }
+        } finally {
+            connection.close();
         }
     }
 
