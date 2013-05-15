@@ -35,6 +35,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -261,6 +262,10 @@ public class LazyBSONObject implements BSONObject {
     @Override
     @SuppressWarnings("rawtypes")
     public Map toMap() {
-        throw new UnsupportedOperationException("Operation is not supported by lazy loading object");
+        final Map<String, Object> map = new HashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : entrySet()) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+        return map;
     }
 }

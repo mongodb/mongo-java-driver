@@ -16,38 +16,21 @@
 
 package com.mongodb;
 
-import org.bson.LazyBSONCallback;
-import org.bson.types.ObjectId;
-
 import java.util.Arrays;
-import java.util.List;
 
-public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
+public class LazyWriteableDBCallback extends LazyDBCallback {
 
-    //not private, because required by LazyWriteableDBCallback.
-    final DB db;
-
-    public LazyDBCallback(final DBCollection collection) {
-        this.db = collection.getDB();
+    public LazyWriteableDBCallback(final DBCollection collection) {
+        super(collection);
     }
 
     @Override
     public Object createObject(final byte[] bytes, final int offset) {
+        LazyWriteableDBObject o = new LazyWriteableDBObject(bytes, offset, this);
         final LazyDBObject document = new LazyDBObject(bytes, offset, this);
         if (document.keySet().containsAll(Arrays.asList("$id", "$ref"))) {
             return new DBRef(db, document);
         }
         return document;
-    }
-
-    @Override
-    @SuppressWarnings("rawtypes")
-    public List createArray(final byte[] bytes, final int offset) {
-        return new LazyDBList(bytes, offset, this);
-    }
-
-    @Override
-    public Object createDBRef(final String ns, final ObjectId id) {
-        return new DBRef(db, ns, id);
     }
 }
