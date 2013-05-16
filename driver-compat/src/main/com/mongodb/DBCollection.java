@@ -21,19 +21,12 @@ import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.CommandOperation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Get;
 import org.mongodb.Index;
-import org.mongodb.InsertOperation;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
-import org.mongodb.QueryOperation;
-import org.mongodb.RemoveOperation;
-import org.mongodb.ReplaceOperation;
-import org.mongodb.Session;
-import org.mongodb.UpdateOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -54,7 +47,10 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.io.BufferPool;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.Session;
+import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFindAndRemove;
 import org.mongodb.operation.MongoFindAndReplace;
@@ -63,7 +59,11 @@ import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.MongoRemove;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdate;
-import org.mongodb.result.QueryResult;
+import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.RemoveOperation;
+import org.mongodb.operation.ReplaceOperation;
+import org.mongodb.operation.UpdateOperation;
 import org.mongodb.util.FieldHelpers;
 
 import java.nio.ByteBuffer;
@@ -287,7 +287,7 @@ public class DBCollection implements IDBCollection {
         return encoder;
     }
 
-    private org.mongodb.result.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
+    private org.mongodb.operation.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
         try {
             mongoInsert.writeConcernIfAbsent(getWriteConcern().toNew());
             return new InsertOperation<DBObject>(getNamespace(), mongoInsert, encoder, getBufferPool()).execute(getSession());
@@ -379,7 +379,7 @@ public class DBCollection implements IDBCollection {
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
     }
 
-    private org.mongodb.result.WriteResult updateInternal(MongoUpdate mongoUpdate) {
+    private org.mongodb.operation.WriteResult updateInternal(MongoUpdate mongoUpdate) {
         try {
             return new UpdateOperation(getNamespace(), mongoUpdate, documentCodec, getBufferPool()).execute(getSession());
         } catch (org.mongodb.MongoException e) {
@@ -486,7 +486,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, documentCodec, 
+        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, documentCodec,
                 getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
@@ -506,7 +506,7 @@ public class DBCollection implements IDBCollection {
         final MongoRemove mongoRemove = new MongoRemove(filter)
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.result.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, getDocumentCodec(), 
+        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, getDocumentCodec(),
                 getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
@@ -1514,7 +1514,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void drop() {
         try {
-            org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new Drop(getName()));
+            org.mongodb.operation.CommandResult commandResult = getDB().executeCommand(new Drop(getName()));
         } catch (MongoCommandFailureException ex) {
             if (!"ns not found".equals(ex.getErrorMessage())) {
                 throw new MongoException(ex);
@@ -1592,7 +1592,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public CommandResult getStats() {
-        final org.mongodb.result.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
+        final org.mongodb.operation.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
         return new CommandResult(commandResult);
     }
 

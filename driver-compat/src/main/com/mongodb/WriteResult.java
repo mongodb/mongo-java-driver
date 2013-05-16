@@ -25,7 +25,7 @@ public class WriteResult {
     private final DB db;
     private CommandResult getLastErrorResult;
 
-    WriteResult(final org.mongodb.result.WriteResult result, final WriteConcern writeConcern, final DB db) {
+    WriteResult(final org.mongodb.operation.WriteResult result, final WriteConcern writeConcern, final DB db) {
         this.writeConcern = writeConcern;
         this.db = db;
         if (result.getGetLastErrorResult() != null) {
@@ -36,7 +36,7 @@ public class WriteResult {
 
     public com.mongodb.CommandResult getLastError() {
         if (getLastErrorResult == null) {
-            org.mongodb.result.CommandResult commandResult
+            org.mongodb.operation.CommandResult commandResult
                     = db.executeCommand(new GetLastError(writeConcern.toNew()));
             getLastErrorResult = toGetLastErrorResult(commandResult);
         }
@@ -44,7 +44,7 @@ public class WriteResult {
         return getLastErrorResult;
     }
 
-    private CommandResult toGetLastErrorResult(final org.mongodb.result.CommandResult commandResult) {
+    private CommandResult toGetLastErrorResult(final org.mongodb.operation.CommandResult commandResult) {
         // TODO: need command and server address fer realz
         return DBObjects
                 .toCommandResult(DBObjects.toDBObject(commandResult.getCommand()),

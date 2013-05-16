@@ -18,7 +18,7 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.result.ServerCursor;
+import org.mongodb.operation.ServerCursor;
 
 import java.io.Closeable;
 import java.util.Iterator;

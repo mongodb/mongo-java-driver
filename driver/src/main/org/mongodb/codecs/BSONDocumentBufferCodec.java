@@ -25,8 +25,8 @@ import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.MongoInternalException;
-import org.mongodb.io.BufferPool;
-import org.mongodb.io.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.PooledByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

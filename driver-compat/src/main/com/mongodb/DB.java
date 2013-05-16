@@ -16,26 +16,26 @@
 
 package com.mongodb;
 
-import org.mongodb.Cluster;
-import org.mongodb.ClusterSession;
 import org.mongodb.Codec;
-import org.mongodb.CommandOperation;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.QueryOperation;
-import org.mongodb.Session;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.impl.MonotonicSession;
-import org.mongodb.io.BufferPool;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterSession;
+import org.mongodb.connection.MonotonicSession;
+import org.mongodb.connection.Session;
+import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
-import org.mongodb.result.QueryResult;
+import org.mongodb.operation.QueryResult;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -330,7 +330,7 @@ public class DB implements IDB {
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
         final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
-        org.mongodb.result.CommandResult commandResult = executeCommand(getLastErrorCommand);
+        org.mongodb.operation.CommandResult commandResult = executeCommand(getLastErrorCommand);
         return new CommandResult(commandResult);
     }
 
@@ -457,12 +457,12 @@ public class DB implements IDB {
         return new ClusterSession(getCluster());
     }
 
-    org.mongodb.result.CommandResult executeCommand(final MongoCommand commandOperation) {
+    org.mongodb.operation.CommandResult executeCommand(final MongoCommand commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
         return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getSession());
     }
 
-    org.mongodb.result.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {
+    org.mongodb.operation.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {
         try {
             return executeCommand(mongoCommand);
         } catch (MongoCommandFailureException ex) {

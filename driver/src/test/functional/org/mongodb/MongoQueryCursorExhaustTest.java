@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.connection.SingleConnectionSession;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 

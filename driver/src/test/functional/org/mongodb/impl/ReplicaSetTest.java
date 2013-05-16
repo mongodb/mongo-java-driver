@@ -20,8 +20,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoReadPreferenceException;
 import org.mongodb.ReadPreference;
+import org.mongodb.connection.MongoReadPreferenceException;
 
 @Ignore
 public class ReplicaSetTest extends DatabaseTestCase {

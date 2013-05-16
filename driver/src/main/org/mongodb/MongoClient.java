@@ -18,6 +18,7 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.ServerAddress;
 
 import java.io.Closeable;
 import java.util.Set;

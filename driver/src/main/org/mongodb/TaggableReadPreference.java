@@ -17,9 +17,9 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.rs.ReplicaSetDescription;
-import org.mongodb.rs.ReplicaSetMemberDescription;
-import org.mongodb.rs.Tag;
+import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.Tag;
 
 import java.util.ArrayList;
 import java.util.Collections;

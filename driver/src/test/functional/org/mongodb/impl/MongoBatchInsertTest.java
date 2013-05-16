@@ -19,14 +19,14 @@ package org.mongodb.impl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.CommandOperation;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.InsertOperation;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
+import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoInsert;
 
@@ -35,23 +35,18 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferPool;
-import static org.mongodb.Fixture.getCredentialList;
-import static org.mongodb.Fixture.getOptions;
-import static org.mongodb.Fixture.getPrimary;
+import static org.mongodb.Fixture.getSession;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
-    private Connection connection;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = new DefaultConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList()).create();
     }
 
     @After
     public void tearDown() {
         super.tearDown();
-        connection.close();
     }
 
 
@@ -66,9 +61,9 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(connection);
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(getSession());
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
-                new Count(new MongoFind(), collectionName), new DocumentCodec(), getBufferPool()).execute(connection))
+                new Count(new MongoFind(), collectionName), new DocumentCodec(), getBufferPool()).execute(getSession()))
                 .getCount());
     }
 

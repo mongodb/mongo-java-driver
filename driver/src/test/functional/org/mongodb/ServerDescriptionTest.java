@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.junit.Test;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.connection.ServerDescription;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

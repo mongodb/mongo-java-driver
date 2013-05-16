@@ -17,14 +17,22 @@
 package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.impl.Connection;
-import org.mongodb.io.BufferPool;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.Session;
+import org.mongodb.connection.SingleConnectionSession;
+import org.mongodb.connection.SingleServerSession;
+import org.mongodb.operation.GetMoreOperation;
+import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
-import org.mongodb.result.QueryResult;
-import org.mongodb.result.ServerCursor;
+import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.ServerCursor;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

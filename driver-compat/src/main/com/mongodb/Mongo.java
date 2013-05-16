@@ -16,15 +16,15 @@
 
 package com.mongodb;
 
-import org.mongodb.Cluster;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
-import org.mongodb.impl.Clusters;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Clusters;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> retVal = new ArrayList<ServerAddress>();
-        for (org.mongodb.ServerAddress serverAddress : getCluster().getAllServerAddresses()) {
+        for (org.mongodb.connection.ServerAddress serverAddress : getCluster().getAllServerAddresses()) {
             retVal.add(new ServerAddress(serverAddress));
         }
         return retVal;
@@ -169,7 +169,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        final org.mongodb.result.CommandResult listDatabasesResult;
+        final org.mongodb.operation.CommandResult listDatabasesResult;
         try {
             listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
         } catch (org.mongodb.MongoException e) {
@@ -273,8 +273,8 @@ public class Mongo {
         return optionHolder.get();
     }
 
-    private static List<org.mongodb.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        List<org.mongodb.ServerAddress> retVal = new ArrayList<org.mongodb.ServerAddress>(seedList.size());
+    private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
+        List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (ServerAddress cur : seedList) {
             retVal.add(cur.toNew());
         }
@@ -283,12 +283,12 @@ public class Mongo {
 
     private static Cluster createCluster(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return Clusters.create(new org.mongodb.ServerAddress(mongoURI.getHosts().get(0)),
+            return Clusters.create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         } else {
-            List<org.mongodb.ServerAddress> seedList = new ArrayList<org.mongodb.ServerAddress>();
+            List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
-                seedList.add(new org.mongodb.ServerAddress(cur));
+                seedList.add(new org.mongodb.connection.ServerAddress(cur));
             }
             return Clusters.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
         }

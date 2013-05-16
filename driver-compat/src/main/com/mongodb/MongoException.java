@@ -17,8 +17,8 @@
 package com.mongodb;
 
 import org.bson.BSONObject;
-import org.mongodb.MongoServerException;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.operation.MongoServerException;
 
 /**
  * A general exception raised in Mongo

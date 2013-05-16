@@ -23,10 +23,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.operation.CommandResult;
+import org.mongodb.operation.KillCursorOperation;
+import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.QueryOption;
-import org.mongodb.result.CommandResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;

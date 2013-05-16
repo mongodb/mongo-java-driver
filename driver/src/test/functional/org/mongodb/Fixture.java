@@ -16,13 +16,12 @@
 
 package org.mongodb;
 
-import org.mongodb.async.AsyncSession;
-import org.mongodb.impl.DefaultAsyncConnectionFactory;
-import org.mongodb.impl.DefaultConnectionFactory;
-import org.mongodb.impl.MongoClientImpl;
-import org.mongodb.impl.MongoClientsImpl;
-import org.mongodb.io.BufferPool;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.AsyncSession;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.Session;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -101,13 +100,5 @@ public final class Fixture {
 
     public static List<MongoCredential> getCredentialList() {
         return getMongoClientURI().getCredentials();
-    }
-
-    public static ConnectionFactory getConnectionFactory() throws UnknownHostException {
-        return new DefaultConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
-    }
-
-    public static AsyncConnectionFactory getAsyncConnectionFactory() throws UnknownHostException {
-        return new DefaultAsyncConnectionFactory(getOptions(), getPrimary(), getBufferPool(), getCredentialList());
     }
 }

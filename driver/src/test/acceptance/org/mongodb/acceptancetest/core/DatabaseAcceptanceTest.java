@@ -23,12 +23,11 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoServerException;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.impl.Connection;
-import org.mongodb.io.NativeAuthenticator;
-import org.mongodb.result.CommandResult;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.NativeAuthenticator;
+import org.mongodb.operation.MongoServerException;
 
 import java.util.Set;
 
@@ -181,8 +180,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         final Connection connection = getSession().getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
-            CommandResult result = new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
-            assertThat(result.isOk(), is(true));
+            new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
+            // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
             connection.close();
@@ -190,7 +189,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldNotBeAbleToAuthenticateAfterAddingUser() {
+    public void shouldNotBeAbleToAuthenticateAfterRemovingUser() {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
         final Connection connection = getSession().getConnection();
         try {

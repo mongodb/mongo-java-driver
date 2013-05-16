@@ -24,32 +24,29 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.WriteConcern;
-import org.mongodb.async.AsyncInsertOperation;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.async.AsyncInsertOperation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getAsyncConnectionFactory;
+import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferPool;
 
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
-    private AsyncConnection connection;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        connection = getAsyncConnectionFactory().create();
     }
 
     @After
     public void tearDown() {
         super.tearDown();
-        connection.close();
     }
 
     @Test
@@ -64,7 +61,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
         final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
-                getBufferPool()).execute(connection).get();
+                getBufferPool()).execute(getAsyncSession()).get();
         assertEquals(documents.size(), collection.count());
     }
 }

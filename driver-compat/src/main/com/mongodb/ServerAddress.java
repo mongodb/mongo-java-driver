@@ -24,33 +24,33 @@ import java.net.UnknownHostException;
 
 @Immutable
 public class ServerAddress {
-    private final org.mongodb.ServerAddress proxied;
+    private final org.mongodb.connection.ServerAddress proxied;
 
     public ServerAddress() throws UnknownHostException {
-        proxied = new org.mongodb.ServerAddress();
+        proxied = new org.mongodb.connection.ServerAddress();
     }
 
     public ServerAddress(final String host) throws UnknownHostException {
-        proxied = new org.mongodb.ServerAddress(host);
+        proxied = new org.mongodb.connection.ServerAddress(host);
     }
 
     public ServerAddress(final String host, final int port) throws UnknownHostException {
-        proxied = new org.mongodb.ServerAddress(host, port);
+        proxied = new org.mongodb.connection.ServerAddress(host, port);
     }
 
     public ServerAddress(final InetAddress addr) {
-        proxied = new org.mongodb.ServerAddress(addr);
+        proxied = new org.mongodb.connection.ServerAddress(addr);
     }
 
     public ServerAddress(final InetAddress addr, final int port) {
-        proxied = new org.mongodb.ServerAddress(addr, port);
+        proxied = new org.mongodb.connection.ServerAddress(addr, port);
     }
 
     public ServerAddress(final InetSocketAddress addr) {
-        proxied = new org.mongodb.ServerAddress(addr);
+        proxied = new org.mongodb.connection.ServerAddress(addr);
     }
 
-    public ServerAddress(final org.mongodb.ServerAddress address) {
+    public ServerAddress(final org.mongodb.connection.ServerAddress address) {
         proxied = address;
     }
 
@@ -109,7 +109,7 @@ public class ServerAddress {
         return proxied.toString();
     }
 
-    org.mongodb.ServerAddress toNew() {
+    org.mongodb.connection.ServerAddress toNew() {
         return proxied;
     }
 

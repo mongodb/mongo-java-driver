@@ -17,6 +17,8 @@
 package org.mongodb.io;
 
 import org.junit.Test;
+import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

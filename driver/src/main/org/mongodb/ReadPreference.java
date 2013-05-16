@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.rs.ReplicaSetDescription;
-import org.mongodb.rs.ReplicaSetMemberDescription;
+import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ReplicaSetMemberDescription;
 
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.

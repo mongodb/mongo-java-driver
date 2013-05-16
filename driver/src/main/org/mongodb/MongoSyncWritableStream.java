@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.result.WriteResult;
+import org.mongodb.operation.WriteResult;
 
 import java.util.List;
 

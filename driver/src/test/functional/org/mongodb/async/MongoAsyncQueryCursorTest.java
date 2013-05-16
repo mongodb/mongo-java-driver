@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.connection.SingleConnectionAsyncSession;
 import org.mongodb.operation.MongoFind;
 
 import java.util.ArrayList;

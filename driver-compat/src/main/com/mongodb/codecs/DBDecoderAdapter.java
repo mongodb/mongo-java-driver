@@ -23,8 +23,8 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.mongodb.Decoder;
 import org.mongodb.MongoInternalException;
-import org.mongodb.io.BufferPool;
-import org.mongodb.io.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.PooledByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

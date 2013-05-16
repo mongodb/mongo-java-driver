@@ -23,7 +23,7 @@ import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
-import org.mongodb.io.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -16,8 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.result.ServerCursor;
-
 public class MongoKillCursor {
     private final ServerCursor serverCursor;
 

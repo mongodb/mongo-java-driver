@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.result.CommandResult;
+import org.mongodb.operation.CommandResult;
 
 /**
  * Exception indicating a failure to successfully complete a write operation according to the WriteConcern

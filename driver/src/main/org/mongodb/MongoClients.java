@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.impl.MongoClientsImpl;
+import org.mongodb.connection.ServerAddress;
 
 import java.net.UnknownHostException;
 import java.util.List;

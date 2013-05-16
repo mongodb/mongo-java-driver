@@ -30,7 +30,7 @@ import org.mongodb.MongoStream;
 import org.mongodb.ReadPreference;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
-import org.mongodb.result.WriteResult;
+import org.mongodb.operation.WriteResult;
 
 import java.util.ArrayList;
 import java.util.EnumSet;

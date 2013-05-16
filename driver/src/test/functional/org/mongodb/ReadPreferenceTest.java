@@ -18,9 +18,11 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.rs.ReplicaSetDescription;
-import org.mongodb.rs.ReplicaSetMemberDescription;
-import org.mongodb.rs.Tag;
+import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.Tag;
 
 import java.io.IOException;
 import java.util.ArrayList;

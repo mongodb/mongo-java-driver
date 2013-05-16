@@ -16,8 +16,8 @@
 
 package org.mongodb.command;
 
-import org.mongodb.MongoServerException;
-import org.mongodb.result.CommandResult;
+import org.mongodb.operation.CommandResult;
+import org.mongodb.operation.MongoServerException;
 
 /**
  * Exception thrown when a command fails.
