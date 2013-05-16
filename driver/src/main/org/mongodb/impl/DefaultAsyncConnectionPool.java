@@ -90,7 +90,7 @@ public class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
         @Override
         public void close() {
             try {
-                DefaultAsyncConnectionPool.this.wrappedPool.done(wrapped);
+                DefaultAsyncConnectionPool.this.wrappedPool.done(wrapped, wrapped.isClosed());
             } finally {
                 wrapped = null;
             }
