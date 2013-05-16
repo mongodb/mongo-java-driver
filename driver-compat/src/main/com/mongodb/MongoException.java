@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// MongoException.java
-
 package com.mongodb;
 
 import org.bson.BSONObject;

@@ -377,8 +377,8 @@ public class DB implements IDB {
 
     @Override
     public void forceError() {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("forceError", 1));
-        executeCommand(mongoCommand);
+        final MongoCommand mongoCommand = new MongoCommand(new Document("forceerror", 1));
+        executeCommandWithoutException(mongoCommand);
     }
 
     @Override
