@@ -126,12 +126,10 @@ public class BSONOldTest {
 
     @Test
     public void testUTF8() {
-        for (int i = 1; i <= Character.MAX_CODE_POINT; i++) {
-
-            if (!Character.isValidCodePoint(i)) {
+        for (int i = 0; i <= Character.MAX_CODE_POINT; i++) {
+            if (!Character.isLetterOrDigit(i)) {
                 continue;
             }
-
             String orig = new String(Character.toChars(i));
             BSONObject a = new BasicBSONObject(orig, orig);
             BSONObject b = BSON.decode(BSON.encode(a));
