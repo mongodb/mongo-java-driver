@@ -22,7 +22,6 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -44,9 +43,9 @@ final class GSSAPIAuthenticationHelper {
             return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(), SaslAuthenticator.MONGODB_PROTOCOL,
                     host, props, null);
         } catch (SaslException e) {
-            throw new MongoException("Exception initializing SASL client", e);
+            throw new MongoSecurityException(credential, "Exception initializing SASL client", e);
         } catch (GSSException e) {
-            throw new MongoException("Exception initializing GSSAPI credentials", e);
+            throw new MongoSecurityException(credential, "Exception initializing GSSAPI credentials", e);
         }
     }
 

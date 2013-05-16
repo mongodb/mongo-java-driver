@@ -19,8 +19,6 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientException;
 import org.mongodb.MongoCredential;
 
-import javax.security.sasl.SaslException;
-
 /**
  * This exception is thrown when there is an error reported by the underlying client authentication mechanism.
  */
@@ -34,7 +32,7 @@ public class MongoSecurityException extends MongoClientException {
      * @param message the message
      * @param cause the cause
      */
-    public MongoSecurityException(final MongoCredential credential, final String message, final SaslException cause) {
+    public MongoSecurityException(final MongoCredential credential, final String message, final Throwable cause) {
         super(message, cause);
         this.credential = credential;
     }

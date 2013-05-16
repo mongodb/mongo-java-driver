@@ -20,6 +20,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.MongoCommand;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
@@ -35,12 +36,16 @@ public class NativeAuthenticator extends Authenticator {
 
     @Override
     public void authenticate() {
-        CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
-                new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
-        new CommandOperation(getCredential().getSource(),
-                new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                        getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
+        try {
+            CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
+                    new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
+            new CommandOperation(getCredential().getSource(),
+                    new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
+                            getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
+        } catch (MongoCommandFailureException e) {
+            throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
+        }
     }
 }

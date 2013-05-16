@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.Document;
+import org.mongodb.MongoInternalException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public final class NativeAuthenticationHelper {
 
             return toHex(digest);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error - this implementation of Java doesn't support MD5.");
+            throw new MongoInternalException("Error - this implementation of Java doesn't support MD5.", e);
         }
     }
 

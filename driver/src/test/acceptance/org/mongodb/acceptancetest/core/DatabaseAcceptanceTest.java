@@ -23,9 +23,9 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
-import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.NativeAuthenticator;
 import org.mongodb.operation.MongoServerException;
 
@@ -197,7 +197,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             database.tools().removeUser(credential.getUserName());
             try {
                 new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
-            } catch (MongoCommandFailureException e) { // NOPMD
+            } catch (MongoSecurityException e) { // NOPMD
                 // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
                 // the addUser to setUp, but that would require its own test class.
             }

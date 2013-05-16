@@ -34,7 +34,7 @@ public class ReplicaSetTest extends DatabaseTestCase {
     }
 
     @Test(expected = MongoTimeoutException.class)
-    public void shouldThrowReadPreferenceException() {
+    public void shouldThrowTimeoutException() {
         collection.readPreference(ReadPreference.nearest(new Document("fakeTag", "fakeValue"))).count();
     }
 }
