@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
 import org.mongodb.ServerAddress;
 import org.mongodb.async.SingleResultCallback;
 import org.mongodb.io.BufferPool;
@@ -41,6 +42,8 @@ import static org.mongodb.protocol.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 // TODO: Take this class private
 public class DefaultAsyncConnection implements AsyncConnection {
+    private static final int MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH = 48000000;
+
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile AsynchronousSocketChannel channel;
@@ -85,7 +88,7 @@ public class DefaultAsyncConnection implements AsyncConnection {
 
             @Override
             public void failed(final Throwable t) {
-                callback.onResult(null, new MongoException("", t));  // TODO
+                callback.onResult(null, new MongoInternalException("", t));  // TODO
             }
         });
     }
@@ -237,6 +240,12 @@ public class DefaultAsyncConnection implements AsyncConnection {
                     callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
                 }
                 else {
+                    if (replyHeader.getMessageLength() > MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH) {
+                        callback.onResult(null,
+                                new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
+                                replyHeader.getMessageLength(), MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH)));
+                    }
+
                     fillAndFlipBuffer(bufferPool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
                             new ResponseBodyCallback(replyHeader));
                 }
