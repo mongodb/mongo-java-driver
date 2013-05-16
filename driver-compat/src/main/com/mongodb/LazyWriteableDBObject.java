@@ -58,7 +58,7 @@ public class LazyWriteableDBObject extends LazyDBObject {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void putAll(final Map m) {
         writable.putAll(m);
     }

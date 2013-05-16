@@ -18,8 +18,10 @@ package org.bson;
 
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.CodeWScope;
 import org.bson.types.Symbol;
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
 import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.lang.reflect.Array;
@@ -66,8 +68,14 @@ class BSONObjectEncoder implements Encoder<BSONObject> {
             encodeArray(bsonWriter, value);
         } else if (value instanceof Symbol) {
             bsonWriter.writeSymbol(((Symbol) initialValue).getSymbol());
+        } else if (value instanceof CodeWScope) {
+            encodeCodeWScope(bsonWriter, (CodeWScope) value);
         } else {
-            primitiveCodecs.encode(bsonWriter, value);
+            try {
+                primitiveCodecs.encode(bsonWriter, value);
+            } catch (MongoException ex) {
+                throw new IllegalArgumentException("Can't serialize " + value.getClass(), ex);
+            }
         }
     }
 
@@ -98,5 +106,11 @@ class BSONObjectEncoder implements Encoder<BSONObject> {
             writeValue(bsonWriter, cur);
         }
         bsonWriter.writeEndArray();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void encodeCodeWScope(final BSONWriter bsonWriter, final CodeWScope codeWScope) {
+        bsonWriter.writeJavaScriptWithScope(codeWScope.getCode());
+        encodeEmbeddedObject(bsonWriter, codeWScope.getScope().toMap());
     }
 }

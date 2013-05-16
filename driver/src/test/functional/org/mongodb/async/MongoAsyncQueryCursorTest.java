@@ -131,7 +131,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         private CountDownLatch latch;
 
         private TestBlock() {
-           this(Integer.MAX_VALUE);
+            this(Integer.MAX_VALUE);
         }
 
         private TestBlock(final int count) {
