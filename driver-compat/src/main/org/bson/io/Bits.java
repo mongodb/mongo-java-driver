@@ -16,99 +16,106 @@
 
 package org.bson.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class Bits {
-    public static void readFully(final InputStream in, final byte[] b)
+
+    public static void readFully(final InputStream in, final byte[] buffer)
             throws IOException {
-        readFully(in, b, b.length);
+        readFully(in, buffer, buffer.length);
     }
 
-    public static void readFully(final InputStream in, final byte[] b, final int length)
+    public static void readFully(final InputStream in, final byte[] buffer, final int length)
             throws IOException {
-        readFully(in, b, 0, length);
+        readFully(in, buffer, 0, length);
     }
 
-    public static void readFully(final InputStream in, final byte[] b, final int startOffset, final int length)
+    public static void readFully(final InputStream in, final byte[] buffer, final int offset, final int length)
             throws IOException {
-
-        if (b.length - startOffset > length) {
+        if (buffer.length < length) {
             throw new IllegalArgumentException("Buffer is too small");
         }
 
-        int offset = startOffset;
-        int toRead = length;
-        while (toRead > 0) {
-            int bytesRead = in.read(b, offset, toRead);
+        int arrayOffset = offset;
+        int bytesToRead = length;
+        while (bytesToRead > 0) {
+            int bytesRead = in.read(buffer, arrayOffset, bytesToRead);
             if (bytesRead < 0) {
                 throw new EOFException();
             }
-            toRead -= bytesRead;
-            offset += bytesRead;
+            bytesToRead -= bytesRead;
+            arrayOffset += bytesRead;
         }
     }
 
-    public static int readInt(final InputStream in)
-            throws IOException {
+    public static int readInt(final InputStream in) throws IOException {
         return readInt(in, new byte[4]);
     }
 
-    public static int readInt(final InputStream in, byte[] data)
-            throws IOException {
-        readFully(in, data, 4);
-        return readInt(data);
+    public static int readInt(final InputStream in, byte[] buffer)  throws IOException {
+        readFully(in, buffer, 4);
+        return readInt(buffer);
     }
 
-    public static int readInt(final byte[] data) {
-        return readInt(data, 0);
+    public static int readInt(final byte[] buffer) {
+        return readInt(buffer, 0);
     }
 
-    public static int readInt(final byte[] data, final int offset) {
+    public static int readInt(final byte[] buffer, final int offset) {
         int x = 0;
-        x |= (0xFF & data[offset + 0]) << 0;
-        x |= (0xFF & data[offset + 1]) << 8;
-        x |= (0xFF & data[offset + 2]) << 16;
-        x |= (0xFF & data[offset + 3]) << 24;
+        x |= (0xFF & buffer[offset + 0]) << 0;
+        x |= (0xFF & buffer[offset + 1]) << 8;
+        x |= (0xFF & buffer[offset + 2]) << 16;
+        x |= (0xFF & buffer[offset + 3]) << 24;
         return x;
     }
 
-    public static int readIntBE(final byte[] data, final int offset) {
+    public static int readIntBE(final byte[] buffer, final int offset) {
         int x = 0;
-        x |= (0xFF & data[offset + 0]) << 24;
-        x |= (0xFF & data[offset + 1]) << 16;
-        x |= (0xFF & data[offset + 2]) << 8;
-        x |= (0xFF & data[offset + 3]) << 0;
+        x |= (0xFF & buffer[offset + 0]) << 24;
+        x |= (0xFF & buffer[offset + 1]) << 16;
+        x |= (0xFF & buffer[offset + 2]) << 8;
+        x |= (0xFF & buffer[offset + 3]) << 0;
         return x;
     }
 
-    public static long readLong(final InputStream in)
-            throws IOException {
+    public static long readLong(final InputStream in) throws IOException {
         return readLong(in, new byte[8]);
     }
 
 
-    public static long readLong(final InputStream in, final byte[] data)
-            throws IOException {
-        readFully(in, data, 8);
-        return readLong(data);
+    public static long readLong(final InputStream in, final byte[] buffer) throws IOException {
+        readFully(in, buffer, 8);
+        return readLong(buffer);
     }
 
-    public static long readLong(final byte[] data) {
-        return readLong(data, 0);
+    public static long readLong(final byte[] bytes) {
+        return readLong(bytes, 0);
     }
 
-    public static long readLong(final byte[] data, final int offset) {
+    public static long readLong(final byte[] buffer, final int offset) {
         long x = 0;
-        x |= (0xFFL & data[offset + 0]) << 0;
-        x |= (0xFFL & data[offset + 1]) << 8;
-        x |= (0xFFL & data[offset + 2]) << 16;
-        x |= (0xFFL & data[offset + 3]) << 24;
-        x |= (0xFFL & data[offset + 4]) << 32;
-        x |= (0xFFL & data[offset + 5]) << 40;
-        x |= (0xFFL & data[offset + 6]) << 48;
-        x |= (0xFFL & data[offset + 7]) << 56;
+        x |= (0xFFL & buffer[offset + 0]) << 0;
+        x |= (0xFFL & buffer[offset + 1]) << 8;
+        x |= (0xFFL & buffer[offset + 2]) << 16;
+        x |= (0xFFL & buffer[offset + 3]) << 24;
+        x |= (0xFFL & buffer[offset + 4]) << 32;
+        x |= (0xFFL & buffer[offset + 5]) << 40;
+        x |= (0xFFL & buffer[offset + 6]) << 48;
+        x |= (0xFFL & buffer[offset + 7]) << 56;
         return x;
+    }
+
+    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+        BufferExposingByteArrayOutputStream(final int size) {
+            super(size);
+        }
+
+        byte[] getInternalBytes() {
+            return buf;
+        }
     }
 }
