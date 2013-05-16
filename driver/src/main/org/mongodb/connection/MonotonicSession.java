@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
 import org.mongodb.annotations.NotThreadSafe;
 
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -24,7 +23,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
 public class MonotonicSession extends AbstractBaseSession implements Session {
-    private ReadPreference lastRequestedReadPreference;
+    private ServerPreference lastRequestedServerPreference;
     private Connection connectionForReads;
     private Connection connectionForWrites;
 
@@ -33,20 +32,20 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
     }
 
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
-        notNull("readPreference", readPreference);
+        notNull("serverPreference", serverPreference);
         synchronized (this) {
             Connection connectionToUse;
             if (connectionForWrites != null) {
                 connectionToUse = connectionForWrites;
             }
-            else if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
-                lastRequestedReadPreference = readPreference;
+            else if (connectionForReads == null || !serverPreference.equals(lastRequestedServerPreference)) {
+                lastRequestedServerPreference = serverPreference;
                 if (connectionForReads != null) {
                     connectionForReads.close();
                 }
-                connectionForReads = getCluster().getServer(readPreference).getConnection();
+                connectionForReads = getCluster().getServer(serverPreference).getConnection();
 
                 connectionToUse = connectionForReads;
             }
@@ -62,7 +61,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
-                connectionForWrites = getCluster().getServer(ReadPreference.primary()).getConnection();
+                connectionForWrites = getCluster().getServer(PrimaryServerPreference.get()).getConnection();
                 if (connectionForReads != null) {
                     connectionForReads.close();
                     connectionForReads = null;

@@ -16,12 +16,10 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 public interface AsyncSession {
     Cluster getCluster();
 
-    AsyncConnection getConnection(ReadPreference readPreference);
+    AsyncConnection getConnection(ServerPreference serverPreference);
 
     AsyncConnection getConnection();
 

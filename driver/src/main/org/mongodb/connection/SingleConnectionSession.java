@@ -16,8 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class SingleConnectionSession extends AbstractBaseSession implements Session {
@@ -29,7 +27,7 @@ public class SingleConnectionSession extends AbstractBaseSession implements Sess
     }
 
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
         return new DelayedCloseConnection(connection);
     }

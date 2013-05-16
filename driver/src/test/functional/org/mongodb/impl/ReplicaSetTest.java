@@ -16,14 +16,15 @@
 
 package org.mongodb.impl;
 
-import org.junit.Ignore;
+import category.ReplicaSet;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
-import org.mongodb.connection.MongoReadPreferenceException;
+import org.mongodb.connection.MongoTimeoutException;
 
-@Ignore
+@Category(ReplicaSet.class)
 public class ReplicaSetTest extends DatabaseTestCase {
     @Test
     public void shouldFindPrimary() {
@@ -32,7 +33,7 @@ public class ReplicaSetTest extends DatabaseTestCase {
         collection.count();
     }
 
-    @Test(expected = MongoReadPreferenceException.class)
+    @Test(expected = MongoTimeoutException.class)
     public void shouldThrowReadPreferenceException() {
         collection.readPreference(ReadPreference.nearest(new Document("fakeTag", "fakeValue"))).count();
     }

@@ -16,20 +16,19 @@
 
 package org.mongodb.connection;
 
-import java.nio.ByteBuffer;
-import java.util.Set;
+final class PrimaryServerPreference implements ServerPreference {
 
-public interface Cluster {
+    private static PrimaryServerPreference singleton = new PrimaryServerPreference();
 
-    Server getServer(ServerPreference serverPreference);
+    public static PrimaryServerPreference get() {
+        return singleton;
+    }
 
-    Server getServer(final ServerAddress serverAddress);
+    @Override
+    public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+        return replicaSetDescription.getPrimary();
+    }
 
-    Set<ServerAddress> getAllServerAddresses();
-
-    BufferPool<ByteBuffer> getBufferPool();
-
-    void close();
-
-    boolean isClosed();
+    private PrimaryServerPreference() {
+    }
 }

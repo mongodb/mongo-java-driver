@@ -16,20 +16,18 @@
 
 package org.mongodb.connection;
 
-import java.nio.ByteBuffer;
-import java.util.Set;
+import org.mongodb.annotations.ThreadSafe;
 
-public interface Cluster {
-
-    Server getServer(ServerPreference serverPreference);
-
-    Server getServer(final ServerAddress serverAddress);
-
-    Set<ServerAddress> getAllServerAddresses();
-
-    BufferPool<ByteBuffer> getBufferPool();
-
-    void close();
-
-    boolean isClosed();
+/**
+ * An interface for selecting a server from a cluster according some preference.
+ *
+ * Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal,
+ * as users of this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that
+ * can satisfy the preference.
+ *
+ * @since 3.0.0
+ */
+@ThreadSafe
+public interface ServerPreference {
+    ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSetDescription replicaSetDescription);
 }

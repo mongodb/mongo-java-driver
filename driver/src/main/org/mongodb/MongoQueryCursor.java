@@ -19,7 +19,6 @@ package org.mongodb;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.Session;
 import org.mongodb.connection.SingleConnectionSession;
@@ -64,12 +63,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.decoder = decoder;
         this.find = find;
         final Connection connection = initialSession.getConnection(find.getReadPreference());
-        final Server server = initialSession.getCluster().getServer(connection.getServerAddress());
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             this.session = new SingleConnectionSession(connection, initialSession.getCluster());
         }
         else {
-            this.session = new SingleServerSession(server, initialSession.getCluster());
+            this.session = new SingleServerSession(initialSession.getCluster().getServer(connection.getServerAddress()),
+                    initialSession.getCluster());
         }
         currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, getBufferPool()).execute(session);
         currentIterator = currentResult.getResults().iterator();

@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.ReadPreference;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -50,7 +49,7 @@ class SingleServerCluster implements Cluster {
     }
 
     @Override
-    public Server getServer(final ReadPreference readPreference) {
+    public Server getServer(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
 
         return server;

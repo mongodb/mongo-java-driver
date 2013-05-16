@@ -16,8 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -31,12 +29,13 @@ public class SingleServerSession extends AbstractBaseSession implements Session 
 
     /**
      * Get a connection from the server bound to this session
-     * @param readPreference in this implementation, read preference is ignored.  It's assumed that the server bound to this session was
+     *
+     * @param serverPreference in this implementation, read preference is ignored.  It's assumed that the server bound to this session was
      *                       already checked to ensure it satisfies the read preference.
      * @return a connection from the bound server
      */
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
+    public Connection getConnection(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
         return server.getConnection();
     }

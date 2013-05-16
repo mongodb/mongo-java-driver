@@ -16,8 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class AsyncClusterSession extends AbstractBaseSession implements AsyncSession {
@@ -27,14 +25,14 @@ public class AsyncClusterSession extends AbstractBaseSession implements AsyncSes
     }
 
     @Override
-    public AsyncConnection getConnection(final ReadPreference readPreference) {
+    public AsyncConnection getConnection(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
-        return getCluster().getServer(readPreference).getAsyncConnection();
+        return getCluster().getServer(serverPreference).getAsyncConnection();
     }
 
     @Override
     public AsyncConnection getConnection() {
         isTrue("open", !isClosed());
-        return getConnection(ReadPreference.primary());
+        return getConnection(PrimaryServerPreference.get());
     }
 }

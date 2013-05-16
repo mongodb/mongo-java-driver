@@ -17,8 +17,6 @@
 package org.mongodb.connection;
 
 
-import org.mongodb.ReadPreference;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class SingleServerAsyncSession extends AbstractBaseSession implements AsyncSession {
@@ -30,7 +28,7 @@ public class SingleServerAsyncSession extends AbstractBaseSession implements Asy
     }
 
     @Override
-    public AsyncConnection getConnection(final ReadPreference readPreference) {
+    public AsyncConnection getConnection(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
         return server.getAsyncConnection();
     }

@@ -20,7 +20,6 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInterruptedException;
-import org.mongodb.ReadPreference;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -51,7 +50,8 @@ class ReplicaSetCluster extends MultiServerCluster {
     private final Random random = new Random();
     private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ReplicaSetMemberDescription>emptyList(),
             random, SLAVE_ACCEPTABLE_LATENCY_MS);
-    private ConcurrentMap<ReadPreference, CountDownLatch> readPreferenceLatches = new ConcurrentHashMap<ReadPreference, CountDownLatch>();
+    private ConcurrentMap<ServerPreference, CountDownLatch> serverPreferenceLatches =
+            new ConcurrentHashMap<ServerPreference, CountDownLatch>();
 
     public ReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                              final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
@@ -63,16 +63,16 @@ class ReplicaSetCluster extends MultiServerCluster {
     }
 
     @Override
-    public Server getServer(final ReadPreference readPreference) {
+    public Server getServer(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
 
-        return getServer(getAddressForReadPreference(readPreference));
+        return getServer(getAddressForServerPreference(serverPreference));
     }
 
     @Override
     public void close() {
         super.close();
-        for (CountDownLatch latch : readPreferenceLatches.values()) {
+        for (CountDownLatch latch : serverPreferenceLatches.values()) {
             latch.countDown();
         }
     }
@@ -82,31 +82,32 @@ class ReplicaSetCluster extends MultiServerCluster {
     }
 
     // CHECKSTYLE:OFF  Until we fix the underlying bug
-    private ServerAddress getAddressForReadPreference(ReadPreference readPreference) {
+    private ServerAddress getAddressForServerPreference(ServerPreference serverPreference) {
         // CHECKSTYLE:ON
 
-        // TODO: this is hiding potential bugs.  ReadPreference should not be null
-        readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
+        // TODO: this is hiding potential bugs.  ServerPreference should not be null
+        serverPreference = serverPreference == null ? PrimaryServerPreference.get() : serverPreference;
 
-        ReplicaSetMemberDescription replicaSetMemberDescription = readPreference.chooseReplicaSetMember(description);
+        ReplicaSetMemberDescription replicaSetMemberDescription = serverPreference.chooseReplicaSetMember(description);
         if (replicaSetMemberDescription != null) {
             return replicaSetMemberDescription.getServerAddress();
         }
         else {
             try {
                 CountDownLatch newLatch = new CountDownLatch(1);
-                CountDownLatch existingLatch = readPreferenceLatches.putIfAbsent(readPreference, newLatch);
+                CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverPreference, newLatch);
                 final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
                 if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
-                   replicaSetMemberDescription = readPreference.chooseReplicaSetMember(description);
+                    replicaSetMemberDescription = serverPreference.chooseReplicaSetMember(description);
                 }
                 if (replicaSetMemberDescription == null) {
-                    throw new MongoTimeoutException("Timed out waiting for a server that satisfies the read preference: " + readPreference);
+                    throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
+                            + serverPreference);
                 }
                 return replicaSetMemberDescription.getServerAddress();
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisified read preference: "
-                        + readPreference, e);
+                throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
+                        + serverPreference, e);
             }
         }
     }
@@ -166,10 +167,11 @@ class ReplicaSetCluster extends MultiServerCluster {
         private void updateDescription() {
             description = new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
                     SLAVE_ACCEPTABLE_LATENCY_MS);
-            for (Iterator<Map.Entry<ReadPreference, CountDownLatch>> iter = readPreferenceLatches.entrySet().iterator(); iter.hasNext();) {
-                Map.Entry<ReadPreference, CountDownLatch> readPreferenceLatch = iter.next();
-                if (readPreferenceLatch.getKey().chooseReplicaSetMember(description) != null) {
-                    readPreferenceLatch.getValue().countDown();
+            for (Iterator<Map.Entry<ServerPreference, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
+                 iter.hasNext();) {
+                Map.Entry<ServerPreference, CountDownLatch> serverPreferenceLatch = iter.next();
+                if (serverPreferenceLatch.getKey().chooseReplicaSetMember(description) != null) {
+                    serverPreferenceLatch.getValue().countDown();
                     iter.remove();
                 }
             }

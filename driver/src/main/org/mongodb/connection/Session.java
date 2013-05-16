@@ -16,12 +16,8 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 public interface Session extends BaseSession {
-    Cluster getCluster();
-
-    Connection getConnection(ReadPreference readPreference);
+    Connection getConnection(ServerPreference serverPreference);
 
     Connection getConnection();
 

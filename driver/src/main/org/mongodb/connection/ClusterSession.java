@@ -16,21 +16,19 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.ReadPreference;
-
 public class ClusterSession extends AbstractBaseSession implements Session {
     public ClusterSession(final Cluster cluster) {
         super(cluster);
     }
 
     @Override
-    public Connection getConnection(final ReadPreference readPreference) {
-//        notNull("readPreference", readPreference);
-        return getCluster().getServer(readPreference).getConnection();
+    public Connection getConnection(final ServerPreference serverPreference) {
+//        notNull("serverPreference", serverPreference);
+        return getCluster().getServer(serverPreference).getConnection();
     }
 
     @Override
     public Connection getConnection() {
-        return getConnection(ReadPreference.primary());
+        return getConnection(PrimaryServerPreference.get());
     }
 }

@@ -19,6 +19,7 @@ package org.mongodb;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ReplicaSetDescription;
 import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.ServerPreference;
 
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.
@@ -26,7 +27,7 @@ import org.mongodb.connection.ReplicaSetMemberDescription;
  * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
 @Immutable
-public abstract class ReadPreference implements ConvertibleToDocument {
+public abstract class ReadPreference implements ConvertibleToDocument, ServerPreference {
 
     ReadPreference() {
     }
@@ -48,8 +49,6 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return the name
      */
     public abstract String getName();
-
-    public abstract ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSetDescription replicaSetDescription);
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
