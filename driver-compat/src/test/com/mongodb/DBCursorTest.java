@@ -88,6 +88,14 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testMarkPartialForEmptyObjects() {
+        final DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 0));
+        for (DBObject document : cursor) {
+            assertTrue(document.isPartialObject());
+        }
+    }
+
+    @Test
     public void testIterator() {
         cursor.sort(new BasicDBObject("_id", 1));
         final Iterator<DBObject> iter = cursor.iterator();
