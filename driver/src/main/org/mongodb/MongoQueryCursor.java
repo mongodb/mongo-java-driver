@@ -56,6 +56,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private long nextCount;
     private final List<Integer> sizes = new ArrayList<Integer>();
     private boolean closed;
+    private static int i = 0;
 
     public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
                             final Decoder<T> decoder, final Session initialSession) {
@@ -63,17 +64,24 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.decoder = decoder;
         this.find = find;
         final Connection connection = initialSession.getConnection(find.getReadPreference());
-        if (find.getOptions().contains(QueryOption.Exhaust)) {
-            this.session = new SingleConnectionSession(connection, initialSession.getCluster());
+        try {
+            if (find.getOptions().contains(QueryOption.Exhaust)) {
+                this.session = new SingleConnectionSession(connection, initialSession.getCluster());
+            }
+            else {
+                this.session = new SingleServerSession(initialSession.getCluster().getServer(connection.getServerAddress()),
+                        initialSession.getCluster());
+            }
+
+            currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, getBufferPool()).execute(session);
+            currentIterator = currentResult.getResults().iterator();
+            sizes.add(currentResult.getResults().size());
+            killCursorIfLimitReached();
+        } finally {
+            if (!find.getOptions().contains(QueryOption.Exhaust)) {
+                connection.close();
+            }
         }
-        else {
-            this.session = new SingleServerSession(initialSession.getCluster().getServer(connection.getServerAddress()),
-                    initialSession.getCluster());
-        }
-        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, getBufferPool()).execute(session);
-        currentIterator = currentResult.getResults().iterator();
-        sizes.add(currentResult.getResults().size());
-        killCursorIfLimitReached();
     }
 
     @Override
@@ -194,7 +202,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void discardRemainingGetMoreResponses() {
-        new GetMoreOperation<T>(namespace,  new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
+        new GetMoreOperation<T>(namespace, new MongoGetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
                 decoder, getBufferPool()).executeDiscard(session);
     }
 
