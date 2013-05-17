@@ -22,13 +22,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.command.MongoCommand;
-import org.mongodb.operation.CommandResult;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.operation.GetMoreOperation;
 import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.ServerCursor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +85,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testGetCriteria() {
         final MongoFind find = new MongoFind().batchSize(2);
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find ,
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find,
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
         assertEquals(find, cursor.getCriteria());
     }
@@ -261,27 +263,31 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         assertFalse(success.isEmpty());
     }
 
-    @Test
-//    @Ignore("Won't work with replica sets or when tests are run in parallel")
+    @Test(expected = MongoCursorNotFoundException.class)
+    //@Ignore("Won't work with replica sets or when tests are run in parallel")
     public void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
-        int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
-        assertEquals(openCursors, getTotalOpenCursors());
+
+        final ServerCursor serverCursor = cursor.getServerCursor();
+
+        makeAdditionalGetMoreCall(serverCursor);
     }
 
-    @Test
-//    @Ignore("Won't work with replica sets or when tests are run in parallel")
+    @Test(expected = MongoCursorNotFoundException.class)
+    //@Ignore("Won't work with replica sets or when tests are run in parallel")
     public void shouldKillCursorIfLimitIsReachedOnGetMore() {
-        int openCursors = getTotalOpenCursors();
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(3).limit(5),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
+
+        final ServerCursor serverCursor = cursor.getServerCursor();
+
         cursor.next();
         cursor.next();
         cursor.next();
         cursor.next();
 
-        assertEquals(openCursors, getTotalOpenCursors());
+        makeAdditionalGetMoreCall(serverCursor);
     }
 
     @Test
@@ -355,9 +361,11 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     }
 
 
-    private int getTotalOpenCursors() {
-        CommandResult commandResult = Fixture.getMongoClient().getDatabase("admin").executeCommand(new MongoCommand(
-                new Document("serverStatus", 1)));
-        return (Integer) ((Document) commandResult.getResponse().get("cursors")).get("totalOpen");
+    private void makeAdditionalGetMoreCall(final ServerCursor serverCursor) {
+        new GetMoreOperation<Document>(
+                collection.getNamespace(),
+                new MongoGetMore(serverCursor, 1, 1, 1), collection.getOptions().getDocumentCodec(),
+                new PowerOfTwoByteBufferPool()
+        ).execute(getSession());
     }
 }
