@@ -25,6 +25,8 @@ import org.mongodb.command.ListDatabases;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Clusters;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.ReplicaSetCluster;
+
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -158,7 +160,9 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        throw new UnsupportedOperationException("Not implemented.");
+        return cluster instanceof ReplicaSetCluster
+                ? new ReplicaSetStatus((ReplicaSetCluster) cluster)
+                : null; // this is intended behavior in 2.x
     }
 
 

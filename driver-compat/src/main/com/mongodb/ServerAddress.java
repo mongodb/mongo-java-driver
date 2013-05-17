@@ -82,15 +82,15 @@ public class ServerAddress {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
+    public boolean equals(final Object other) {
+        if (this == other) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (other == null || getClass() != other.getClass()) {
             return false;
         }
 
-        final ServerAddress that = (ServerAddress) o;
+        final ServerAddress that = (ServerAddress) other;
 
         if (!proxied.equals(that.proxied)) {
             return false;

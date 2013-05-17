@@ -16,9 +16,20 @@
 
 package com.mongodb;
 
+
+import org.mongodb.connection.ReplicaSetCluster;
+import org.mongodb.connection.ReplicaSetMemberDescription;
+
 public class ReplicaSetStatus {
+
+    final ReplicaSetCluster cluster;
+
+    ReplicaSetStatus(final ReplicaSetCluster cluster) {
+        this.cluster = cluster;
+    }
+
     public String getName() {
-        throw new UnsupportedOperationException("Not implemented.");
+        return cluster.getDescription().getSetName();
     }
 
     /**
@@ -26,16 +37,17 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public ServerAddress getMaster() {
-        throw new UnsupportedOperationException("Not implemented.");
+        final ReplicaSetMemberDescription primaryDescription = cluster.getDescription().getPrimary();
+        return primaryDescription != null ? new ServerAddress(primaryDescription.getServerAddress()) : null;
     }
 
     /**
-     * @param srv the server to compare
+     * @param serverAddress the server to compare
      * @return indication if the ServerAddress is the current Master/Primary
      * @throws MongoException
      */
-    public boolean isMaster(ServerAddress srv) {
-        throw new UnsupportedOperationException("Not implemented.");
+    public boolean isMaster(final ServerAddress serverAddress) {
+        return getMaster().equals(serverAddress);
     }
 
     /**
@@ -46,6 +58,7 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        throw new UnsupportedOperationException("Not implemented.");
+        final ReplicaSetMemberDescription primaryDescription = cluster.getDescription().getPrimary();
+        return primaryDescription != null ? primaryDescription.getServerDescription().getMaxBSONObjectSize() : 0;
     }
 }
