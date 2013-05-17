@@ -26,14 +26,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class ServerDescription {
-    private static final int DEFAULT_MAX_MESSAGE_SIZE = 2 * 0x2000000;  // 32MB
+    private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
     private final boolean isPrimary;
     private final boolean isSecondary;
     private final List<String> hosts;
     private final List<String> passives;
     private final String primary;
-    private final int maxBSONObjectSize;
+    private final int maxDocumentSize;
 
     private final int maxMessageSize;
     private final Set<Tag> tags;
@@ -48,8 +49,8 @@ public class ServerDescription {
         private List<String> hosts = Collections.emptyList();
         private List<String> passives = Collections.emptyList();
         private String primary;
-        private int maxBSONObjectSize;
-        private int maxMessageSize;
+        private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
+        private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private Set<Tag> tags = Collections.emptySet();
         private String setName;
         private float elapsedMillis;
@@ -81,8 +82,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder maxBSONObjectSize(final int maxBSONObjectSize) {
-            this.maxBSONObjectSize = maxBSONObjectSize;
+        public Builder maxDocumentSize(final int maxBSONObjectSize) {
+            this.maxDocumentSize = maxBSONObjectSize;
             return this;
         }
 
@@ -129,7 +130,7 @@ public class ServerDescription {
                 .hosts((List<String>) commandResult.getResponse().get("hosts"))
                 .passives((List<String>) commandResult.getResponse().get("passives"))
                 .primary((String) commandResult.getResponse().get("primary"))
-                .maxBSONObjectSize((Integer) commandResult.getResponse().get("maxBsonObjectSize"))
+                .maxDocumentSize((Integer) commandResult.getResponse().get("maxBsonObjectSize"))
                 .maxMessageSize(getMaxMessageSize((Integer) commandResult.getResponse().get("maxMessageSizeBytes")))
                 .tags(getTagsFromMap((Document) commandResult.getResponse().get("tags")))
                 .elapsedMillis(commandResult.getElapsedNanoseconds() / 1000000F)
@@ -156,8 +157,8 @@ public class ServerDescription {
         return primary;
     }
 
-    public int getMaxBSONObjectSize() {
-        return maxBSONObjectSize;
+    public int getMaxDocumentSize() {
+        return maxDocumentSize;
     }
 
     public int getMaxMessageSize() {
@@ -190,7 +191,7 @@ public class ServerDescription {
         if (Float.compare(that.elapsedMillis, elapsedMillis) != 0) return false;
         if (isPrimary != that.isPrimary) return false;
         if (isSecondary != that.isSecondary) return false;
-        if (maxBSONObjectSize != that.maxBSONObjectSize) return false;
+        if (maxDocumentSize != that.maxDocumentSize) return false;
         if (maxMessageSize != that.maxMessageSize) return false;
         if (ok != that.ok) return false;
         if (hosts != null ? !hosts.equals(that.hosts) : that.hosts != null) return false;
@@ -209,7 +210,7 @@ public class ServerDescription {
         result = 31 * result + (hosts != null ? hosts.hashCode() : 0);
         result = 31 * result + (passives != null ? passives.hashCode() : 0);
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
-        result = 31 * result + maxBSONObjectSize;
+        result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + (tags != null ? tags.hashCode() : 0);
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
@@ -226,7 +227,7 @@ public class ServerDescription {
                 + ", hosts=" + hosts
                 + ", passives=" + passives
                 + ", primary='" + primary + '\''
-                + ", maxBSONObjectSize=" + maxBSONObjectSize
+                + ", maxDocumentSize=" + maxDocumentSize
                 + ", maxMessageSize=" + maxMessageSize
                 + ", tags=" + tags
                 + ", setName='" + setName + '\''
@@ -241,7 +242,7 @@ public class ServerDescription {
         hosts = builder.hosts;
         passives = builder.passives;
         primary = builder.primary;
-        maxBSONObjectSize = builder.maxBSONObjectSize;
+        maxDocumentSize = builder.maxDocumentSize;
         maxMessageSize = builder.maxMessageSize;
         tags = builder.tags;
         setName = builder.setName;

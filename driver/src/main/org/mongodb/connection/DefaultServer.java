@@ -37,7 +37,7 @@ class DefaultServer implements Server {
     private final IsMasterServerStateNotifier stateNotifier;
     private Set<ServerStateListener> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ServerStateListener, Boolean>());
-    private volatile ServerDescription description;
+    private volatile ServerDescription description = ServerDescription.builder().build();
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                          final AsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
@@ -73,6 +73,7 @@ class DefaultServer implements Server {
         return serverAddress;
     }
 
+    @Override
     public ServerDescription getDescription() {
         return description;
     }
@@ -112,7 +113,7 @@ class DefaultServer implements Server {
 
         @Override
         public void notify(final MongoException e) {
-            description = null;
+            description = ServerDescription.builder().build();
             for (ServerStateListener listener : changeListeners) {
                 listener.notify(e);
             }

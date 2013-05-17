@@ -70,15 +70,15 @@ public class ReadPreferenceTest {
 
         primary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27017),
                 ServerDescription.builder().elapsedMillis(acceptablePingTime).ok(true).primary(true).secondary(false).tags(tagSet1)
-                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
+                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
 
         secondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27018),
                 ServerDescription.builder().elapsedMillis(bestPingTime).ok(true).primary(false).secondary(true).tags(tagSet2)
-                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
+                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
 
         otherSecondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27019),
                 ServerDescription.builder().elapsedMillis(unacceptablePingTime).ok(true).primary(false).secondary(true).tags(tagSet3)
-                        .maxBSONObjectSize(FOUR_MEG).build(), 0, null);
+                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
 
         final List<ReplicaSetMemberDescription> nodeList = new ArrayList<ReplicaSetMemberDescription>();
         nodeList.add(primary);

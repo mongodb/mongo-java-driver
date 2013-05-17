@@ -16,18 +16,6 @@
 
 package org.mongodb.connection;
 
-public interface Server {
-    Connection getConnection();
-
-    AsyncConnection getAsyncConnection();
-
-    ServerAddress getServerAddress();
-
-    void close();
-
-    void addChangeListener(ServerStateListener changeListener);
-
-    void invalidate();
-
+public interface SingleServerCluster extends Cluster {
     ServerDescription getDescription();
 }

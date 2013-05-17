@@ -29,7 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultSingleServerCluster implements Cluster {
+class DefaultSingleServerCluster implements SingleServerCluster {
     private final Server server;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ScheduledExecutorService scheduledExecutorService;
@@ -38,7 +38,7 @@ class DefaultSingleServerCluster implements Cluster {
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
                                       final ServerFactory serverFactory) {
-        notNull("serverAddres", serverAddress);
+        notNull("serverAddress", serverAddress);
         notNull("options", options);
         notNull("bufferPool", bufferPool);
         notNull("serverFactory", serverFactory);
@@ -88,5 +88,10 @@ class DefaultSingleServerCluster implements Cluster {
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    @Override
+    public ServerDescription getDescription() {
+        return server.getDescription();
     }
 }

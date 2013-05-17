@@ -63,7 +63,7 @@ public class ReplicaSetMemberDescription {
         buf.append("isPrimary:").append(getServerDescription().isPrimary()).append(", ");
         buf.append("isSecondary:").append(getServerDescription().isSecondary()).append(", ");
         buf.append("setName:").append(getServerDescription().getSetName()).append(", ");
-        buf.append("maxBSONObjectSize:").append(getServerDescription().getMaxBSONObjectSize()).append(", ");
+        buf.append("maxBSONObjectSize:").append(getServerDescription().getMaxDocumentSize()).append(", ");
         if (!serverDescription.getTags().isEmpty()) {
             final List<Document> tagObjects = new ArrayList<Document>();
             for (final Tag tag : serverDescription.getTags()) {
