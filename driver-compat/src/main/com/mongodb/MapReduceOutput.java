@@ -25,36 +25,24 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
+    private final CommandResult commandResult;
+    private final Iterable<DBObject> results;
+    private final DBCollection collection;
+    private final DBObject command;
+
     @SuppressWarnings("unchecked")
-    public MapReduceOutput(final DBCollection from, final DBObject cmd, final CommandResult raw) {
-        _commandResult = raw;
-        _cmd = cmd;
-
-        if (raw.containsField("results")) {
-            _coll = null;
-            _collname = null;
-            _resultSet = (Iterable<DBObject>) raw.get("results");
+    public MapReduceOutput(final DBCollection inputCollection, final DBObject command, final CommandResult commandResult) {
+        this.commandResult = commandResult;
+        this.command = command;
+        if (commandResult.containsField("results")) {
+            // means we called command with OutputType.INLINE
+            collection = null;
+            results = (Iterable<DBObject>) commandResult.get("results");
+        } else {
+            this.collection = determineOutputCollection(inputCollection, commandResult);
+            this.collection.setReadPreference(ReadPreference.primary());
+            this.results = collection.find();
         }
-        else {
-            final Object res = raw.get("result");
-            if (res instanceof String) {
-                _collname = (String) res;
-            }
-            else {
-                final BasicDBObject output = (BasicDBObject) res;
-                _collname = output.getString("collection");
-                _dbname = output.getString("db");
-            }
-
-            DB db = from.getDB();
-            if (_dbname != null) {
-                db = db.getSisterDB(_dbname);
-            }
-            _coll = db.getCollection(_collname);
-            _coll.setReadPreference(ReadPreference.primary());
-            _resultSet = _coll.find();
-        }
-        _counts = (BasicDBObject) raw.get("counts");
     }
 
     /**
@@ -63,7 +51,7 @@ public class MapReduceOutput {
      * @return
      */
     public Iterable<DBObject> results() {
-        return _resultSet;
+        return results;
     }
 
     /**
@@ -72,47 +60,58 @@ public class MapReduceOutput {
      * @throws MongoException
      */
     public void drop() {
-        if (_coll != null) {
-            _coll.drop();
+        if (collection != null) {
+            collection.drop();
         }
     }
 
     /**
-     * gets the collection that holds the results (Will return null if results are Inline)
+     * Gets the collection that holds the results (Will return null if results are Inline)
      *
      * @return
      */
     public DBCollection getOutputCollection() {
-        return _coll;
+        return collection;
     }
 
     @Deprecated
     public BasicDBObject getRaw() {
-        return _commandResult;
+        return commandResult;
     }
 
     public CommandResult getCommandResult() {
-        return _commandResult;
+        return commandResult;
     }
 
     public DBObject getCommand() {
-        return _cmd;
+        return command;
     }
 
     public ServerAddress getServerUsed() {
-        return _commandResult.getServerUsed();
+        return commandResult.getServerUsed();
     }
 
     public String toString() {
-        return _commandResult.toString();
+        return commandResult.toString();
     }
 
-    final CommandResult _commandResult;
-
-    final String _collname;
-    String _dbname = null;
-    final Iterable<DBObject> _resultSet;
-    final DBCollection _coll;
-    final BasicDBObject _counts;
-    final DBObject _cmd;
+    private DBCollection determineOutputCollection(final DBCollection inputCollection, final CommandResult commandResult) {
+        final Object result = commandResult.get("result");
+        if (result instanceof String) {
+            // we have only infomation about collection name,
+            // that means that outputCollection in the same database with inputCollection
+            final String collectionName = (String) result;
+            return inputCollection.getDB().getCollection(collectionName);
+        } else if (result instanceof BasicDBObject) {
+            // we have complex object,
+            // if specified we will use another database for output collection
+            final BasicDBObject output = (BasicDBObject) result;
+            final DB db = output.containsField("db")
+                    ? inputCollection.getDB().getSisterDB(output.getString("db"))
+                    : inputCollection.getDB();
+            return db.getCollection(output.getString("collection"));
+        } else {
+            throw new IllegalStateException("Unexpected output target for Map-Reduce command");
+        }
+    }
 }

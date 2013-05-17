@@ -25,6 +25,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -102,8 +103,17 @@ public class DBObjects {
 
     private static void fill(final Document document, final DBObject obj) {
         for (final Map.Entry<String, Object> cur : document.entrySet()) {
-            if (cur.getValue() instanceof List) {
-                obj.put(cur.getKey(), cur.getValue());
+            if (cur.getValue() instanceof List<?>) {
+                final List<?> source = (List) cur.getValue();
+                final List<Object> destination = new ArrayList<Object>(source.size());
+                for (Object o : source) {
+                    if (o instanceof Document) {
+                        destination.add(toDBObject((Document) o));
+                    } else {
+                        destination.add(o);
+                    }
+                }
+                obj.put(cur.getKey(), destination);
             }
             else if (cur.getValue() instanceof Document) {
                 final DBObject nestedObj = new BasicDBObject();

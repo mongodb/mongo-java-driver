@@ -1110,18 +1110,20 @@ public class DBCollection implements IDBCollection {
     @Override
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         //TODO Check that implementation is correct.
-        final DBObject cmd = command.toDBObject();
+        final DBObject commandDocument = command.toDBObject();
         // if type in inline, then query options like slaveOk is fine
         final CommandResult res;
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
-            res = database.command(cmd, getOptions(),
-                    command.getReadPreference() != null ? command.getReadPreference()
-                            : getReadPreference());
+            res = database.command(
+                    commandDocument,
+                    getOptions(),
+                    command.getReadPreference() != null ? command.getReadPreference() : getReadPreference()
+            );
         } else {
-            res = database.command(cmd);
+            res = database.command(commandDocument);
         }
         res.throwOnError();
-        return new MapReduceOutput(this, cmd, res);
+        return new MapReduceOutput(this, commandDocument, res);
     }
 
     /**
