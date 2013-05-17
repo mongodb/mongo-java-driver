@@ -36,14 +36,14 @@ public final class Clusters {
         return new SingleServerCluster(serverAddress, credentialList, options, bufferPool, new DefaultServerFactory());
     }
 
-    public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
-                                 final BufferPool<ByteBuffer> bufferPool) {
+    public static ReplicaSetCluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
+                                           final BufferPool<ByteBuffer> bufferPool) {
         return create(seedList, null, options, bufferPool);
     }
 
-    public static Cluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                 final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new ReplicaSetCluster(seedList, credentialList, options, bufferPool, new DefaultServerFactory());
+    public static ReplicaSetCluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                           final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
+        return new DefaultReplicaSetCluster(seedList, credentialList, options, bufferPool, new DefaultServerFactory());
     }
 }
 
