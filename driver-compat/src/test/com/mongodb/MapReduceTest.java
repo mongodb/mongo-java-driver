@@ -24,9 +24,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
+import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.isA;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -37,16 +40,22 @@ public class MapReduceTest extends DatabaseTestCase {
     private static final String MR_DATABASE = "output-" + System.nanoTime();
     public static final String MR_COLLECTION = "jmr1_out";
 
+    @Override
+    public void setUp() {
+        super.setUp();
+        collection.save(new BasicDBObject("x", new String[]{"a", "b"}));
+        collection.save(new BasicDBObject("x", new String[]{"b", "c"}));
+        collection.save(new BasicDBObject("x", new String[]{"c", "d"}));
+    }
+
     @AfterClass
     public static void teardownTestSuite() {
-       Fixture.getMongoClient().dropDatabase(MR_DATABASE);
+        Fixture.getMongoClient().dropDatabase(MR_DATABASE);
     }
 
 
     @Test
     public void testMapReduceInline() {
-        insertTestData();
-
         final MapReduceOutput mapReduceOutput = collection.mapReduce(
                 "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
                 "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
@@ -64,8 +73,6 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduce() {
-        insertTestData();
-
         final MapReduceOutput mapReduceOutput = collection.mapReduce(
                 "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
                 "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
@@ -88,7 +95,6 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceWithOutputToAnotherDatabase() {
-        insertTestData();
         final MapReduceCommand mapReduceCommand = new MapReduceCommand(
                 collection,
                 "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
@@ -105,10 +111,26 @@ public class MapReduceTest extends DatabaseTestCase {
         assertEquals(toList(mapReduceOutput.results()), toList(db.getCollection(MR_COLLECTION).find()));
     }
 
-    private void insertTestData() {
-        collection.save(new BasicDBObject("x", new String[]{"a", "b"}));
-        collection.save(new BasicDBObject("x", new String[]{"b", "c"}));
-        collection.save(new BasicDBObject("x", new String[]{"c", "d"}));
+
+    @Test
+    public void testMapReduceInlineWScope() {
+        final MapReduceCommand mapReduceCommand = new MapReduceCommand(
+                collection,
+                "function(){ for ( var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }",
+                "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
+                null,
+                MapReduceCommand.OutputType.INLINE,
+                null
+        );
+
+        final Map<String, Object> scope = new HashMap<String, Object>();
+        scope.put("exclude", "a");
+        mapReduceCommand.setScope(scope);
+
+        MapReduceOutput mapReduceOutput = collection.mapReduce(mapReduceCommand);
+
+        assertThat(mapReduceOutput.results(), not(hasItem(hasSubdocument(new BasicDBObject("_id", "a")))));
+        assertThat(mapReduceOutput.results(), hasItem(hasSubdocument(new BasicDBObject("_id", "b"))));
     }
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
