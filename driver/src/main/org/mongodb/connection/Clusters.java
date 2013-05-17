@@ -33,7 +33,7 @@ public final class Clusters {
 
     public static Cluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                  final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new SingleServerCluster(serverAddress, credentialList, options, bufferPool, new DefaultServerFactory());
+        return new DefaultSingleServerCluster(serverAddress, credentialList, options, bufferPool, new DefaultServerFactory());
     }
 
     public static ReplicaSetCluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
