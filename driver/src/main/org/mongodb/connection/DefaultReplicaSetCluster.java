@@ -46,7 +46,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
     private final Map<ServerAddress, ServerDescription> mostRecentStateMap = new HashMap<ServerAddress, ServerDescription>();
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
     private final Random random = new Random();
-    private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ServerDescription>emptyList(),
+    private volatile ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(),
             random, SLAVE_ACCEPTABLE_LATENCY_MS);
     private ConcurrentMap<ServerSelector, CountDownLatch> serverPreferenceLatches =
             new ConcurrentHashMap<ServerSelector, CountDownLatch>();
@@ -61,7 +61,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
     }
 
     @Override
-    public ReplicaSetDescription getDescription() {
+    public ClusterDescription getDescription() {
         return description;
     }
 
@@ -160,7 +160,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         }
 
         private void updateDescription() {
-            description = new ReplicaSetDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), random,
+            description = new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), random,
                     SLAVE_ACCEPTABLE_LATENCY_MS);
             for (Iterator<Map.Entry<ServerSelector, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
                  iter.hasNext();) {

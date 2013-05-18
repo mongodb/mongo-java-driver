@@ -17,7 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
-import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
@@ -31,7 +31,7 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     }
 
     @Override
-    public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
-        return readPreference.choose(replicaSetDescription);
+    public ServerDescription choose(final ClusterDescription clusterDescription) {
+        return readPreference.choose(clusterDescription);
     }
 }

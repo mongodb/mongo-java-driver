@@ -17,5 +17,5 @@
 package org.mongodb.connection;
 
 public interface ReplicaSetCluster extends Cluster {
-    ReplicaSetDescription getDescription();
+    ClusterDescription getDescription();
 }

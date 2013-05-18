@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.Tag;
@@ -41,9 +41,9 @@ public class ReadPreferenceTest {
     private static final String HOST = "localhost";
 
     private ServerDescription primary, secondary, otherSecondary;
-    private ReplicaSetDescription set;
-    private ReplicaSetDescription setNoSecondary;
-    private ReplicaSetDescription setNoPrimary;
+    private ClusterDescription set;
+    private ClusterDescription setNoSecondary;
+    private ClusterDescription setNoPrimary;
 
     @Before
     public void setUp() throws IOException {
@@ -96,10 +96,10 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ReplicaSetDescription(nodeList, (new Random()), (int) acceptableLatencyMS);
-        setNoPrimary = new ReplicaSetDescription(Arrays.asList(secondary, otherSecondary), (new Random()),
+        set = new ClusterDescription(nodeList, (new Random()), (int) acceptableLatencyMS);
+        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (new Random()),
                 (int) acceptableLatencyMS);
-        setNoSecondary = new ReplicaSetDescription(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
+        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
     }
 
 

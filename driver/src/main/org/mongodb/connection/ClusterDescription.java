@@ -33,7 +33,7 @@ import java.util.Random;
  * NOT PART OF PUBLIC API YET
  */
 @Immutable
-public class ReplicaSetDescription {
+public class ClusterDescription {
     private final List<ServerDescription> all;
     private final Random random;
     private final List<ServerDescription> goodSecondaries;
@@ -44,7 +44,7 @@ public class ReplicaSetDescription {
 
     private final int acceptableLatencyMS;
 
-    public ReplicaSetDescription(final List<ServerDescription> nodeList, final Random random, final int acceptableLatencyMS) {
+    public ClusterDescription(final List<ServerDescription> nodeList, final Random random, final int acceptableLatencyMS) {
 
         this.random = random;
         this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(nodeList));

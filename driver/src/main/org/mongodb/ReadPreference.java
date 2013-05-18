@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 
 /**
@@ -49,7 +49,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      */
     public abstract String getName();
 
-    public abstract ServerDescription choose(final ReplicaSetDescription clusterDescription);
+    public abstract ServerDescription choose(final ClusterDescription clusterDescription);
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
@@ -78,8 +78,8 @@ public abstract class ReadPreference implements ConvertibleToDocument {
             return getName().hashCode();
         }
 
-        public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
-            return replicaSetDescription.getPrimary();
+        public ServerDescription choose(final ClusterDescription clusterDescription) {
+            return clusterDescription.getPrimary();
         }
 
         @Override

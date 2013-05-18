@@ -25,8 +25,8 @@ final class PrimaryServerSelector implements ServerSelector {
     }
 
     @Override
-    public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
-        return replicaSetDescription.getPrimary();
+    public ServerDescription choose(final ClusterDescription clusterDescription) {
+        return clusterDescription.getPrimary();
     }
 
     private PrimaryServerSelector() {
