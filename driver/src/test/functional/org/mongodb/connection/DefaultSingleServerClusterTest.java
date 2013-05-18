@@ -24,6 +24,7 @@ import org.mongodb.MongoClientOptions;
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mongodb.Fixture.getPrimary;
 
 public class DefaultSingleServerClusterTest {
@@ -44,4 +45,12 @@ public class DefaultSingleServerClusterTest {
     public void shouldGetDescription() {
          assertNotNull(cluster.getDescription());
     }
+
+    @Test
+    public void shouldGetServerWithOkDescription() throws InterruptedException {
+        Server server = cluster.getServer(PrimaryServerPreference.get());
+        assertTrue(server.getDescription().isOk());
+     }
+
+
 }

@@ -18,6 +18,8 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInterruptedException;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -25,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -33,6 +37,7 @@ class DefaultSingleServerCluster implements SingleServerCluster {
     private final Server server;
     private final BufferPool<ByteBuffer> bufferPool;
     private final ScheduledExecutorService scheduledExecutorService;
+    private final Phaser serverAvailable = new Phaser(1);
     private volatile boolean isClosed;
 
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
@@ -46,11 +51,33 @@ class DefaultSingleServerCluster implements SingleServerCluster {
         this.bufferPool = bufferPool;
         scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
         this.server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
+        server.addChangeListener(new ServerStateListener() {
+            @Override
+            public void notify(final ServerDescription serverDescription) {
+                serverAvailable.arrive();
+            }
+
+            @Override
+            public void notify(final MongoException e) {
+            }
+        });
     }
 
     @Override
     public Server getServer(final ServerPreference serverPreference) {
         isTrue("open", !isClosed());
+
+        if (server.getDescription().isOk()) {
+            return server;
+        }
+
+        try {
+            serverAvailable.awaitAdvanceInterruptibly(serverAvailable.getPhase(), 20, TimeUnit.SECONDS); // TODO: configurable
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted while waiting for server to become available", e);
+        } catch (TimeoutException e) {
+            throw new MongoTimeoutException("Interrupted while waiting for server to become available", e);
+        }
 
         return server;
     }
@@ -82,6 +109,7 @@ class DefaultSingleServerCluster implements SingleServerCluster {
             isClosed = true;
             server.close();
             scheduledExecutorService.shutdownNow();
+            serverAvailable.forceTermination();
         }
     }
 
