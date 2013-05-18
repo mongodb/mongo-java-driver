@@ -22,7 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.operation.GetMoreOperation;
 import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.MongoCursorNotFoundException;
@@ -366,7 +365,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         new GetMoreOperation<Document>(
                 collection.getNamespace(),
                 new MongoGetMore(serverCursor, 1, 1, 1), collection.getOptions().getDocumentCodec(),
-                new PowerOfTwoByteBufferPool()
+                getBufferPool()
         ).execute(getSession());
     }
 }
