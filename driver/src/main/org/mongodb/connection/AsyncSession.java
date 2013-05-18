@@ -19,7 +19,7 @@ package org.mongodb.connection;
 public interface AsyncSession {
     Cluster getCluster();
 
-    AsyncConnection getConnection(ServerPreference serverPreference);
+    AsyncConnection getConnection(ServerSelector serverSelector);
 
     AsyncConnection getConnection();
 

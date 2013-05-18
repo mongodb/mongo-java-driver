@@ -30,12 +30,12 @@ public class SingleServerSession extends AbstractBaseSession implements Session 
     /**
      * Get a connection from the server bound to this session
      *
-     * @param serverPreference in this implementation, read preference is ignored.  It's assumed that the server bound to this session was
+     * @param serverSelector in this implementation, read preference is ignored.  It's assumed that the server bound to this session was
      *                       already checked to ensure it satisfies the read preference.
      * @return a connection from the bound server
      */
     @Override
-    public Connection getConnection(final ServerPreference serverPreference) {
+    public Connection getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
         return server.getConnection();
     }

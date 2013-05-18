@@ -31,6 +31,7 @@ import org.mongodb.operation.MongoKillCursor;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
 
 import java.nio.ByteBuffer;
@@ -63,7 +64,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        final Connection connection = initialSession.getConnection(find.getReadPreference());
+        final Connection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
         try {
             if (find.getOptions().contains(QueryOption.Exhaust)) {
                 this.session = new SingleConnectionSession(connection, initialSession.getCluster());

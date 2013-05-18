@@ -26,6 +26,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 
 import java.nio.ByteBuffer;
@@ -44,7 +45,7 @@ public class AsyncCommandOperation extends AsyncOperation {
 
 
     public MongoFuture<CommandResult> execute(final AsyncSession session) {
-        AsyncConnection connection = session.getConnection(commandOperation.getReadPreference());
+        AsyncConnection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
 
         MongoFuture<CommandResult> wrapped = execute(connection);
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();

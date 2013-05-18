@@ -23,7 +23,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
 public class MonotonicSession extends AbstractBaseSession implements Session {
-    private ServerPreference lastRequestedServerPreference;
+    private ServerSelector lastRequestedServerSelector;
     private Connection connectionForReads;
     private Connection connectionForWrites;
 
@@ -32,20 +32,20 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
     }
 
     @Override
-    public Connection getConnection(final ServerPreference serverPreference) {
+    public Connection getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
-        notNull("serverPreference", serverPreference);
+        notNull("serverSelector", serverSelector);
         synchronized (this) {
             Connection connectionToUse;
             if (connectionForWrites != null) {
                 connectionToUse = connectionForWrites;
             }
-            else if (connectionForReads == null || !serverPreference.equals(lastRequestedServerPreference)) {
-                lastRequestedServerPreference = serverPreference;
+            else if (connectionForReads == null || !serverSelector.equals(lastRequestedServerSelector)) {
+                lastRequestedServerSelector = serverSelector;
                 if (connectionForReads != null) {
                     connectionForReads.close();
                 }
-                connectionForReads = getCluster().getServer(serverPreference).getConnection();
+                connectionForReads = getCluster().getServer(serverSelector).getConnection();
 
                 connectionToUse = connectionForReads;
             }
@@ -61,7 +61,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
-                connectionForWrites = getCluster().getServer(PrimaryServerPreference.get()).getConnection();
+                connectionForWrites = getCluster().getServer(PrimaryServerSelector.get()).getConnection();
                 if (connectionForReads != null) {
                     connectionForReads.close();
                     connectionForReads = null;

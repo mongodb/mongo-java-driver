@@ -27,7 +27,7 @@ public class SingleConnectionAsyncSession extends AbstractBaseSession implements
     }
 
     @Override
-    public AsyncConnection getConnection(final ServerPreference serverPreference) {
+    public AsyncConnection getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
         return new DelayedCloseAsyncConnection(connection);
     }

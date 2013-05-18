@@ -17,7 +17,7 @@
 package org.mongodb.connection;
 
 public interface Session extends BaseSession {
-    Connection getConnection(ServerPreference serverPreference);
+    Connection getConnection(ServerSelector serverSelector);
 
     Connection getConnection();
 

@@ -21,7 +21,7 @@ import java.util.Set;
 
 public interface Cluster {
 
-    Server getServer(ServerPreference serverPreference);
+    Server getServer(ServerSelector serverSelector);
 
     Server getServer(final ServerAddress serverAddress);
 

@@ -27,7 +27,7 @@ public class SingleConnectionSession extends AbstractBaseSession implements Sess
     }
 
     @Override
-    public Connection getConnection(final ServerPreference serverPreference) {
+    public Connection getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
         return new DelayedCloseConnection(connection);
     }

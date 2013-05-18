@@ -48,7 +48,7 @@ public class DefaultSingleServerClusterTest {
 
     @Test
     public void shouldGetServerWithOkDescription() throws InterruptedException {
-        Server server = cluster.getServer(PrimaryServerPreference.get());
+        Server server = cluster.getServer(PrimaryServerSelector.get());
         assertTrue(server.getDescription().isOk());
      }
 

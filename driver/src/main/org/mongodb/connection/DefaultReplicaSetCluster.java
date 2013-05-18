@@ -50,8 +50,8 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
     private final Random random = new Random();
     private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ReplicaSetMemberDescription>emptyList(),
             random, SLAVE_ACCEPTABLE_LATENCY_MS);
-    private ConcurrentMap<ServerPreference, CountDownLatch> serverPreferenceLatches =
-            new ConcurrentHashMap<ServerPreference, CountDownLatch>();
+    private ConcurrentMap<ServerSelector, CountDownLatch> serverPreferenceLatches =
+            new ConcurrentHashMap<ServerSelector, CountDownLatch>();
 
     public DefaultReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                     final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
@@ -68,10 +68,34 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
     }
 
     @Override
-    public Server getServer(final ServerPreference serverPreference) {
+    public Server getServer(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
-        return getServer(getAddressForServerPreference(serverPreference));
+        final ServerAddress result;
+
+        ReplicaSetMemberDescription replicaSetMemberDescription = serverSelector.chooseReplicaSetMember(description);
+        if (replicaSetMemberDescription != null) {
+            result = replicaSetMemberDescription.getServerAddress();
+        }
+        else {
+            try {
+                CountDownLatch newLatch = new CountDownLatch(1);
+                CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverSelector, newLatch);
+                final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
+                if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
+                    replicaSetMemberDescription = serverSelector.chooseReplicaSetMember(description);
+                }
+                if (replicaSetMemberDescription == null) {
+                    throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
+                            + serverSelector);
+                }
+                result = replicaSetMemberDescription.getServerAddress();
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
+                        + serverSelector, e);
+            }
+        }
+        return getServer(result);
     }
 
     @Override
@@ -84,37 +108,6 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
 
     protected ServerStateListener createServerStateListener(final ServerAddress serverAddress) {
         return new ReplicaSetServerStateListener(serverAddress);
-    }
-
-    // CHECKSTYLE:OFF  Until we fix the underlying bug
-    private ServerAddress getAddressForServerPreference(ServerPreference serverPreference) {
-        // CHECKSTYLE:ON
-
-        // TODO: this is hiding potential bugs.  ServerPreference should not be null
-        serverPreference = serverPreference == null ? PrimaryServerPreference.get() : serverPreference;
-
-        ReplicaSetMemberDescription replicaSetMemberDescription = serverPreference.chooseReplicaSetMember(description);
-        if (replicaSetMemberDescription != null) {
-            return replicaSetMemberDescription.getServerAddress();
-        }
-        else {
-            try {
-                CountDownLatch newLatch = new CountDownLatch(1);
-                CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverPreference, newLatch);
-                final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
-                if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
-                    replicaSetMemberDescription = serverPreference.chooseReplicaSetMember(description);
-                }
-                if (replicaSetMemberDescription == null) {
-                    throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
-                            + serverPreference);
-                }
-                return replicaSetMemberDescription.getServerAddress();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
-                        + serverPreference, e);
-            }
-        }
     }
 
 
@@ -172,9 +165,9 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         private void updateDescription() {
             description = new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
                     SLAVE_ACCEPTABLE_LATENCY_MS);
-            for (Iterator<Map.Entry<ServerPreference, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
+            for (Iterator<Map.Entry<ServerSelector, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
                  iter.hasNext();) {
-                Map.Entry<ServerPreference, CountDownLatch> serverPreferenceLatch = iter.next();
+                Map.Entry<ServerSelector, CountDownLatch> serverPreferenceLatch = iter.next();
                 if (serverPreferenceLatch.getKey().chooseReplicaSetMember(description) != null) {
                     serverPreferenceLatch.getValue().countDown();
                     iter.remove();

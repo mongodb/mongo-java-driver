@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.operation;
 
-final class PrimaryServerPreference implements ServerPreference {
+import org.mongodb.ReadPreference;
+import org.mongodb.connection.ReplicaSetDescription;
+import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.ServerSelector;
 
-    private static PrimaryServerPreference singleton = new PrimaryServerPreference();
+public class ReadPreferenceServerSelector implements ServerSelector {
+    private final ReadPreference readPreference;
 
-    public static PrimaryServerPreference get() {
-        return singleton;
+    public ReadPreferenceServerSelector(final ReadPreference readPreference) {
+        // TODO: this is hiding bugs:
+        // notNull("readPreference", readPreference);
+        this.readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
     }
 
     @Override
     public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
-        return replicaSetDescription.getPrimary();
-    }
-
-    private PrimaryServerPreference() {
+        return readPreference.chooseReplicaSetMember(replicaSetDescription);
     }
 }

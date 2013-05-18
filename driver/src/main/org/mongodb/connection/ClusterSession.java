@@ -22,13 +22,13 @@ public class ClusterSession extends AbstractBaseSession implements Session {
     }
 
     @Override
-    public Connection getConnection(final ServerPreference serverPreference) {
-//        notNull("serverPreference", serverPreference);
-        return getCluster().getServer(serverPreference).getConnection();
+    public Connection getConnection(final ServerSelector serverSelector) {
+//        notNull("serverSelector", serverSelector);
+        return getCluster().getServer(serverSelector).getConnection();
     }
 
     @Override
     public Connection getConnection() {
-        return getConnection(PrimaryServerPreference.get());
+        return getConnection(PrimaryServerSelector.get());
     }
 }

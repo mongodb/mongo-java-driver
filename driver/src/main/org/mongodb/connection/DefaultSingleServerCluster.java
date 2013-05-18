@@ -64,7 +64,7 @@ class DefaultSingleServerCluster implements SingleServerCluster {
     }
 
     @Override
-    public Server getServer(final ServerPreference serverPreference) {
+    public Server getServer(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
         if (server.getDescription().isOk()) {

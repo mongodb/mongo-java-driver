@@ -42,7 +42,7 @@ public class CommandOperation extends Operation {
     }
 
     public CommandResult execute(final Session session) {
-        Connection connection = session.getConnection(commandOperation.getReadPreference());
+        Connection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
         try {
             return execute(connection);
         } finally {

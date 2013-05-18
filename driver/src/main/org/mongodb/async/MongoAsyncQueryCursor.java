@@ -33,6 +33,7 @@ import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.operation.async.AsyncGetMoreOperation;
 import org.mongodb.operation.async.AsyncQueryOperation;
@@ -58,7 +59,7 @@ public class MongoAsyncQueryCursor<T> {
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
         this.block = block;
-        final AsyncConnection connection = initialSession.getConnection(find.getReadPreference());
+        final AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
         final Server server = initialSession.getCluster().getServer(connection.getServerAddress());
 
         if (find.getOptions().contains(QueryOption.Exhaust)) {

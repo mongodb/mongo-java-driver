@@ -16,18 +16,19 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.annotations.ThreadSafe;
+final class PrimaryServerSelector implements ServerSelector {
 
-/**
- * An interface for selecting a server from a cluster according some preference.
- *
- * Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal,
- * as users of this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that
- * can satisfy the preference.
- *
- * @since 3.0.0
- */
-@ThreadSafe
-public interface ServerPreference {
-    ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSetDescription replicaSetDescription);
+    private static PrimaryServerSelector singleton = new PrimaryServerSelector();
+
+    public static PrimaryServerSelector get() {
+        return singleton;
+    }
+
+    @Override
+    public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+        return replicaSetDescription.getPrimary();
+    }
+
+    private PrimaryServerSelector() {
+    }
 }
