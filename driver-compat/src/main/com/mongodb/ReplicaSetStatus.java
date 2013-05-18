@@ -59,6 +59,6 @@ public class ReplicaSetStatus {
      */
     public int getMaxBsonObjectSize() {
         final ReplicaSetMemberDescription primaryDescription = cluster.getDescription().getPrimary();
-        return primaryDescription != null ? primaryDescription.getServerDescription().getMaxBSONObjectSize() : 0;
+        return primaryDescription != null ? primaryDescription.getServerDescription().getMaxDocumentSize() : 0;
     }
 }
