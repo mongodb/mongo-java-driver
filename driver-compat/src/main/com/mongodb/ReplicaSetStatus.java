@@ -18,7 +18,7 @@ package com.mongodb;
 
 
 import org.mongodb.connection.ReplicaSetCluster;
-import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.ServerDescription;
 
 public class ReplicaSetStatus {
 
@@ -37,8 +37,8 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public ServerAddress getMaster() {
-        final ReplicaSetMemberDescription primaryDescription = cluster.getDescription().getPrimary();
-        return primaryDescription != null ? new ServerAddress(primaryDescription.getServerAddress()) : null;
+        final ServerDescription primaryDescription = cluster.getDescription().getPrimary();
+        return primaryDescription != null ? new ServerAddress(primaryDescription.getAddress()) : null;
     }
 
     /**
@@ -58,7 +58,7 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        final ReplicaSetMemberDescription primaryDescription = cluster.getDescription().getPrimary();
-        return primaryDescription != null ? primaryDescription.getServerDescription().getMaxDocumentSize() : 0;
+        final ServerDescription primaryDescription = cluster.getDescription().getPrimary();
+        return primaryDescription != null ? primaryDescription.getMaxDocumentSize() : 0;
     }
 }

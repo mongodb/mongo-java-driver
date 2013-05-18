@@ -39,16 +39,14 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.MonitorDefaults.LATENCY_SMOOTH_FACTOR;
 import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetCluster {
 
-    private final Map<ServerAddress, ReplicaSetMemberDescription> mostRecentStateMap =
-            new HashMap<ServerAddress, ReplicaSetMemberDescription>();
+    private final Map<ServerAddress, ServerDescription> mostRecentStateMap = new HashMap<ServerAddress, ServerDescription>();
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
     private final Random random = new Random();
-    private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ReplicaSetMemberDescription>emptyList(),
+    private volatile ReplicaSetDescription description = new ReplicaSetDescription(Collections.<ServerDescription>emptyList(),
             random, SLAVE_ACCEPTABLE_LATENCY_MS);
     private ConcurrentMap<ServerSelector, CountDownLatch> serverPreferenceLatches =
             new ConcurrentHashMap<ServerSelector, CountDownLatch>();
@@ -73,9 +71,9 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
 
         final ServerAddress result;
 
-        ReplicaSetMemberDescription replicaSetMemberDescription = serverSelector.chooseReplicaSetMember(description);
-        if (replicaSetMemberDescription != null) {
-            result = replicaSetMemberDescription.getServerAddress();
+        ServerDescription serverDescription = serverSelector.choose(description);
+        if (serverDescription != null) {
+            result = serverDescription.getAddress();
         }
         else {
             try {
@@ -83,13 +81,13 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
                 CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverSelector, newLatch);
                 final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
                 if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
-                    replicaSetMemberDescription = serverSelector.chooseReplicaSetMember(description);
+                    serverDescription = serverSelector.choose(description);
                 }
-                if (replicaSetMemberDescription == null) {
+                if (serverDescription == null) {
                     throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
                             + serverSelector);
                 }
-                result = replicaSetMemberDescription.getServerAddress();
+                result = serverDescription.getAddress();
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
                         + serverSelector, e);
@@ -132,8 +130,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
                 removeExtras(serverDescription);
             }
 
-            mostRecentStateMap.put(serverAddress, new ReplicaSetMemberDescription(serverAddress, serverDescription,
-                    LATENCY_SMOOTH_FACTOR, mostRecentStateMap.get(serverAddress)));
+            mostRecentStateMap.put(serverAddress, serverDescription);
 
             updateDescription();
         }
@@ -146,11 +143,11 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
 
             markAsNotified();
 
-            ReplicaSetMemberDescription memberDescription = mostRecentStateMap.remove(serverAddress);
+            ServerDescription serverDescription = mostRecentStateMap.remove(serverAddress);
 
             updateDescription();
 
-            if (memberDescription.getServerDescription().isPrimary()) {
+            if (serverDescription.isPrimary()) {
                 invalidateAll();
             }
 
@@ -163,12 +160,12 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         }
 
         private void updateDescription() {
-            description = new ReplicaSetDescription(new ArrayList<ReplicaSetMemberDescription>(mostRecentStateMap.values()), random,
+            description = new ReplicaSetDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), random,
                     SLAVE_ACCEPTABLE_LATENCY_MS);
             for (Iterator<Map.Entry<ServerSelector, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
                  iter.hasNext();) {
                 Map.Entry<ServerSelector, CountDownLatch> serverPreferenceLatch = iter.next();
-                if (serverPreferenceLatch.getKey().chooseReplicaSetMember(description) != null) {
+                if (serverPreferenceLatch.getKey().choose(description) != null) {
                     serverPreferenceLatch.getValue().countDown();
                     iter.remove();
                 }

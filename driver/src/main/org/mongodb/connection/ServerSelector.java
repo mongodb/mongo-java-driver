@@ -29,5 +29,5 @@ import org.mongodb.annotations.ThreadSafe;
  */
 @ThreadSafe
 public interface ServerSelector {
-    ReplicaSetMemberDescription chooseReplicaSetMember(ReplicaSetDescription replicaSetDescription);
+    ServerDescription choose(ReplicaSetDescription replicaSetDescription);
 }

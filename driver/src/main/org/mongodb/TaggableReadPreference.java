@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ReplicaSetDescription;
-import org.mongodb.connection.ReplicaSetMemberDescription;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.Tag;
 
 import java.util.ArrayList;
@@ -133,7 +133,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+        public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
 
             if (getTags().isEmpty()) {
                 return replicaSetDescription.getASecondary();
@@ -141,7 +141,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetMemberDescription node = replicaSetDescription.getASecondary(tagList);
+                final ServerDescription node = replicaSetDescription.getASecondary(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -170,8 +170,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
-            final ReplicaSetMemberDescription node = super.chooseReplicaSetMember(replicaSetDescription);
+        public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
+            final ServerDescription node = super.choose(replicaSetDescription);
             return (node != null) ? node : replicaSetDescription.getPrimary();
         }
     }
@@ -196,7 +196,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
+        public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
 
             if (getTags().isEmpty()) {
                 return replicaSetDescription.getAMember();
@@ -204,7 +204,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
             for (final Document curTagSet : getTags()) {
                 final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ReplicaSetMemberDescription node = replicaSetDescription.getAMember(tagList);
+                final ServerDescription node = replicaSetDescription.getAMember(tagList);
                 if (node != null) {
                     return node;
                 }
@@ -231,9 +231,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ReplicaSetMemberDescription chooseReplicaSetMember(final ReplicaSetDescription replicaSetDescription) {
-            final ReplicaSetMemberDescription node = replicaSetDescription.getPrimary();
-            return (node != null) ? node : super.chooseReplicaSetMember(replicaSetDescription);
+        public ServerDescription choose(final ReplicaSetDescription replicaSetDescription) {
+            final ServerDescription node = replicaSetDescription.getPrimary();
+            return (node != null) ? node : super.choose(replicaSetDescription);
         }
     }
 }

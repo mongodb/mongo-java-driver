@@ -25,9 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 public class ServerDescription {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+
+    private final ServerAddress address;
 
     private final boolean isPrimary;
     private final boolean isSecondary;
@@ -39,11 +43,11 @@ public class ServerDescription {
     private final int maxMessageSize;
     private final Set<Tag> tags;
     private final String setName;
-    private final float elapsedMillis;
+    private final long averagePingTime;
     private final boolean ok;
 
-
     public static class Builder {
+        private ServerAddress address;
         private boolean isPrimary;
         private boolean isSecondary;
         private List<String> hosts = Collections.emptyList();
@@ -53,10 +57,16 @@ public class ServerDescription {
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private Set<Tag> tags = Collections.emptySet();
         private String setName;
-        private float elapsedMillis;
+        private long averagePingTime;
         private boolean ok;
+        private ServerDescription previous;
 
         // CHECKSTYLE:OFF
+        public Builder address(final ServerAddress address) {
+            this.address = address;
+            return this;
+        }
+
         public Builder primary(final boolean isPrimary) {
             this.isPrimary = isPrimary;
             return this;
@@ -97,13 +107,13 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder setName(final String setName) {
-            this.setName = setName;
+        public Builder averagePingTime(final long averagePingTime) {
+            this.averagePingTime = averagePingTime;
             return this;
         }
 
-        public Builder elapsedMillis(final float elapsedMillis) {
-            this.elapsedMillis = elapsedMillis;
+        public Builder setName(final String setName) {
+            this.setName = setName;
             return this;
         }
 
@@ -123,8 +133,9 @@ public class ServerDescription {
     }
 
     @SuppressWarnings("unchecked")
-    public ServerDescription(final CommandResult commandResult) {
+    public ServerDescription(final CommandResult commandResult, final long averagePingTime) {
         this(ServerDescription.builder()
+                .address(commandResult.getAddress())
                 .primary((Boolean) commandResult.getResponse().get("ismaster"))
                 .secondary(getIsSecondary((Boolean) commandResult.getResponse().get("secondary")))
                 .hosts((List<String>) commandResult.getResponse().get("hosts"))
@@ -133,8 +144,12 @@ public class ServerDescription {
                 .maxDocumentSize((Integer) commandResult.getResponse().get("maxBsonObjectSize"))
                 .maxMessageSize(getMaxMessageSize((Integer) commandResult.getResponse().get("maxMessageSizeBytes")))
                 .tags(getTagsFromMap((Document) commandResult.getResponse().get("tags")))
-                .elapsedMillis(commandResult.getElapsedNanoseconds() / 1000000F)
+                .averagePingTime(averagePingTime)
                 .ok(commandResult.isOk()));
+    }
+
+    public ServerAddress getAddress() {
+        return address;
     }
 
     public boolean isPrimary() {
@@ -173,12 +188,16 @@ public class ServerDescription {
         return setName;
     }
 
-    public float getElapsedMillis() {
-        return elapsedMillis;
-    }
-
     public boolean isOk() {
         return ok;
+    }
+
+    public long getAveragePingTime() {
+        return averagePingTime;
+    }
+
+    public float getAveragePingTimeMillis() {
+        return averagePingTime / 1000000F;
     }
 
     @Override
@@ -188,33 +207,35 @@ public class ServerDescription {
 
         final ServerDescription that = (ServerDescription) o;
 
-        if (Float.compare(that.elapsedMillis, elapsedMillis) != 0) return false;
+        if (Long.compare(that.averagePingTime, averagePingTime) != 0) return false;
         if (isPrimary != that.isPrimary) return false;
         if (isSecondary != that.isSecondary) return false;
         if (maxDocumentSize != that.maxDocumentSize) return false;
         if (maxMessageSize != that.maxMessageSize) return false;
         if (ok != that.ok) return false;
-        if (hosts != null ? !hosts.equals(that.hosts) : that.hosts != null) return false;
-        if (passives != null ? !passives.equals(that.passives) : that.passives != null) return false;
+        if (!hosts.equals(that.hosts)) return false;
+        if (!passives.equals(that.passives)) return false;
         if (primary != null ? !primary.equals(that.primary) : that.primary != null) return false;
+        if (!address.equals(that.address)) return false;
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) return false;
-        if (tags != null ? !tags.equals(that.tags) : that.tags != null) return false;
+        if (!tags.equals(that.tags)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = (isPrimary ? 1 : 0);
+        int result = address.hashCode();
+        result = 31 * result + (isPrimary ? 1 : 0);
         result = 31 * result + (isSecondary ? 1 : 0);
-        result = 31 * result + (hosts != null ? hosts.hashCode() : 0);
-        result = 31 * result + (passives != null ? passives.hashCode() : 0);
+        result = 31 * result + hosts.hashCode();
+        result = 31 * result + passives.hashCode();
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
-        result = 31 * result + (tags != null ? tags.hashCode() : 0);
+        result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (elapsedMillis != +0.0f ? Float.floatToIntBits(elapsedMillis) : 0);
+        result = 31 * result + (int) (averagePingTime ^ (averagePingTime >>> 32));
         result = 31 * result + (ok ? 1 : 0);
         return result;
     }
@@ -222,7 +243,8 @@ public class ServerDescription {
     @Override
     public String toString() {
         return "ServerDescription{"
-                + "isPrimary=" + isPrimary
+                + "address=" + address
+                + ", isPrimary=" + isPrimary
                 + ", isSecondary=" + isSecondary
                 + ", hosts=" + hosts
                 + ", passives=" + passives
@@ -231,12 +253,15 @@ public class ServerDescription {
                 + ", maxMessageSize=" + maxMessageSize
                 + ", tags=" + tags
                 + ", setName='" + setName + '\''
-                + ", elapsedMillis=" + elapsedMillis
+                + ", averagePingTime=" + averagePingTime
                 + ", ok=" + ok
                 + '}';
     }
 
     ServerDescription(final Builder builder) {
+        notNull("address", builder.address);
+
+        address = builder.address;
         isPrimary = builder.isPrimary;
         isSecondary = builder.isSecondary;
         hosts = builder.hosts;
@@ -246,7 +271,7 @@ public class ServerDescription {
         maxMessageSize = builder.maxMessageSize;
         tags = builder.tags;
         setName = builder.setName;
-        elapsedMillis = builder.elapsedMillis;
+        averagePingTime = builder.averagePingTime;
         ok = builder.ok;
     }
 

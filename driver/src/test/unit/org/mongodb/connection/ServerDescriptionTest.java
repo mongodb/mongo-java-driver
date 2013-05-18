@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import org.junit.Test;
 
+import java.net.UnknownHostException;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -27,12 +28,14 @@ import static org.junit.Assert.assertNull;
 public class ServerDescriptionTest {
 
     @Test
-    public void testDefaults() {
-        ServerDescription serverDescription = ServerDescription.builder().build();
+    public void testDefaults() throws UnknownHostException {
+        ServerDescription serverDescription = ServerDescription.builder().address(new ServerAddress()).build();
+        assertEquals(new ServerAddress(), serverDescription.getAddress());
         assertFalse(serverDescription.isOk());
         assertFalse(serverDescription.isPrimary());
         assertFalse(serverDescription.isSecondary());
-        assertEquals(0F, serverDescription.getElapsedMillis(), 0F);
+        assertEquals(0F, serverDescription.getAveragePingTime(), 0L);
+        assertEquals(0F, serverDescription.getAveragePingTimeMillis(), 0F);
         assertEquals(0x1000000, serverDescription.getMaxDocumentSize());
         assertEquals(0x2000000, serverDescription.getMaxMessageSize());
         assertNull(serverDescription.getPrimary());

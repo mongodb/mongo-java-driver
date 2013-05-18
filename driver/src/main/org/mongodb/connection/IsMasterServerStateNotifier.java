@@ -23,6 +23,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandResult;
 
 import java.nio.ByteBuffer;
 
@@ -33,6 +34,8 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private final ConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
     private Connection connection;
+    private int count;
+    private long elapsedNanosSum;
 
     IsMasterServerStateNotifier(final ServerStateListener serverStateListener, final ConnectionFactory connectionFactory,
                                 final BufferPool<ByteBuffer> bufferPool) {
@@ -49,12 +52,18 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 connection = connectionFactory.create();
             }
             try {
-                ServerDescription serverDescription = new ServerDescription(new CommandOperation("admin",
-                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection));
+                final CommandResult commandResult = new CommandOperation("admin",
+                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection);
+                count++;
+                elapsedNanosSum += commandResult.getElapsedNanoseconds();
+
+                ServerDescription serverDescription = new ServerDescription(commandResult, elapsedNanosSum / count);
                 serverStateListener.notify(serverDescription);
             } catch (MongoSocketException e) {
                 connection.close();
                 connection = null;
+                count = 0;
+                elapsedNanosSum = 0;
                 throw e;
             }
         } catch (MongoException e) {

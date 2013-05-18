@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.ServerDescription;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -31,15 +32,20 @@ public class ServerDescriptionTest extends DatabaseTestCase {
 
     @Test
     public void testIsPrimary() {
-        ServerDescription result =
-        new ServerDescription(adminDatabase.executeCommand(command));
+        ServerDescription result = new ServerDescription(adminDatabase.executeCommand(command), 5000000);
         assertTrue(result.isPrimary());
     }
 
     @Test
     public void testIsSecondary() {
-        ServerDescription result =
-        new ServerDescription(adminDatabase.executeCommand(command));
+        ServerDescription result = new ServerDescription(adminDatabase.executeCommand(command), 5000000);
         assertFalse(result.isSecondary());
+    }
+
+    @Test
+    public void testGetAverageTime() {
+        ServerDescription result = new ServerDescription(adminDatabase.executeCommand(command), 5000000);
+        assertEquals(5000000, result.getAveragePingTime());
+        assertEquals(5.0F, result.getAveragePingTimeMillis(), 0);
     }
 }

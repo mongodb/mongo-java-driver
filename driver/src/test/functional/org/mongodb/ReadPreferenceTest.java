@@ -19,7 +19,6 @@ package org.mongodb;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.ReplicaSetDescription;
-import org.mongodb.connection.ReplicaSetMemberDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.Tag;
@@ -41,7 +40,7 @@ public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
     private static final String HOST = "localhost";
 
-    private ReplicaSetMemberDescription primary, secondary, otherSecondary;
+    private ServerDescription primary, secondary, otherSecondary;
     private ReplicaSetDescription set;
     private ReplicaSetDescription setNoSecondary;
     private ReplicaSetDescription setNoPrimary;
@@ -63,31 +62,43 @@ public class ReadPreferenceTest {
         tagSet3.add(new Tag("bar", "2"));
         tagSet3.add(new Tag("baz", "3"));
 
-        final float acceptableLatencyMS = 15;
-        final float bestPingTime = 50f;
-        final float acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
-        final float unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
+        final long acceptableLatencyMS = 15;
+        final long bestPingTime = 50;
+        final long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
+        final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27017),
-                ServerDescription.builder().elapsedMillis(acceptablePingTime).ok(true).primary(true).secondary(false).tags(tagSet1)
-                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
+        primary = ServerDescription.builder().address(new ServerAddress(HOST, 27017))
+                .averagePingTime(acceptablePingTime * 1000000L)
+                .ok(true)
+                .primary(true)
+                .secondary(false)
+                .tags(tagSet1)
+                .maxDocumentSize(FOUR_MEG).build();
 
-        secondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27018),
-                ServerDescription.builder().elapsedMillis(bestPingTime).ok(true).primary(false).secondary(true).tags(tagSet2)
-                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
+        secondary = ServerDescription.builder().address(new ServerAddress(HOST, 27018))
+                .averagePingTime(bestPingTime * 1000000L)
+                .ok(true)
+                .primary(false)
+                .secondary(true).tags(tagSet2)
+                .maxDocumentSize(FOUR_MEG).build();
 
-        otherSecondary = new ReplicaSetMemberDescription(new ServerAddress(HOST, 27019),
-                ServerDescription.builder().elapsedMillis(unacceptablePingTime).ok(true).primary(false).secondary(true).tags(tagSet3)
-                        .maxDocumentSize(FOUR_MEG).build(), 0, null);
+        otherSecondary = ServerDescription.builder().address(new ServerAddress(HOST, 27019))
+                .averagePingTime(unacceptablePingTime * 1000000L)
+                .ok(true)
+                .primary(false)
+                .secondary(true)
+                .tags(tagSet3)
+                .maxDocumentSize(FOUR_MEG)
+                .build();
 
-        final List<ReplicaSetMemberDescription> nodeList = new ArrayList<ReplicaSetMemberDescription>();
+        final List<ServerDescription> nodeList = new ArrayList<ServerDescription>();
         nodeList.add(primary);
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
         set = new ReplicaSetDescription(nodeList, (new Random()), (int) acceptableLatencyMS);
         setNoPrimary = new ReplicaSetDescription(Arrays.asList(secondary, otherSecondary), (new Random()),
-                                      (int) acceptableLatencyMS);
+                (int) acceptableLatencyMS);
         setNoSecondary = new ReplicaSetDescription(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
     }
 
@@ -103,83 +114,83 @@ public class ReadPreferenceTest {
 
     @Test
     public void testPrimaryReadPreference() {
-        assertEquals(primary, ReadPreference.primary().chooseReplicaSetMember(set));
-        assertNull(ReadPreference.primary().chooseReplicaSetMember(setNoPrimary));
+        assertEquals(primary, ReadPreference.primary().choose(set));
+        assertNull(ReadPreference.primary().choose(setNoPrimary));
     }
 
     @Test
     public void testSecondaryReadPreference() {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
-        ReplicaSetMemberDescription candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
-        assertTrue(!candidate.getServerDescription().isPrimary());
+        ServerDescription candidate = ReadPreference.secondary().choose(set);
+        assertTrue(!candidate.isPrimary());
 
-        candidate = ReadPreference.secondary().chooseReplicaSetMember(setNoSecondary);
+        candidate = ReadPreference.secondary().choose(setNoSecondary);
         assertNull(candidate);
 
         // Test secondary mode, with tags
         ReadPreference pref = ReadPreference.secondary(new Document("foo", "1"), new Document("bar", "2"));
         assertTrue(pref.toString().startsWith("secondary"));
 
-        candidate = ReadPreference.secondary().chooseReplicaSetMember(set);
+        candidate = ReadPreference.secondary().choose(set);
         assertTrue((candidate.equals(secondary) || candidate.equals(otherSecondary)) && !candidate.equals(primary));
 
         pref = ReadPreference.secondary(new Document("baz", "1"));
-        assertTrue(pref.chooseReplicaSetMember(set) == null);
+        assertTrue(pref.choose(set) == null);
 
         pref = ReadPreference.secondary(new Document("baz", "2"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(secondary));
+        assertTrue(pref.choose(set).equals(secondary));
 
         pref = ReadPreference.secondary(new Document("madeup", "1"));
         assertEquals(new Document("mode", "secondary").append("tags", Arrays.asList(new Document("madeup", "1"))),
-                    pref.toDocument());
-        assertTrue(pref.chooseReplicaSetMember(set) == null);
+                pref.toDocument());
+        assertTrue(pref.choose(set) == null);
     }
 
     @Test
     public void testPrimaryPreferredMode() {
         ReadPreference pref = ReadPreference.primaryPreferred();
-        final ReplicaSetMemberDescription candidate = pref.chooseReplicaSetMember(set);
+        final ServerDescription candidate = pref.choose(set);
         assertEquals(primary, candidate);
 
-        assertNotNull(ReadPreference.primaryPreferred().chooseReplicaSetMember(setNoPrimary));
+        assertNotNull(ReadPreference.primaryPreferred().choose(setNoPrimary));
 
         pref = ReadPreference.primaryPreferred(new Document("baz", "2"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(primary));
-        assertTrue(pref.chooseReplicaSetMember(setNoPrimary).equals(secondary));
+        assertTrue(pref.choose(set).equals(primary));
+        assertTrue(pref.choose(setNoPrimary).equals(secondary));
     }
 
     @Test
     public void testSecondaryPreferredMode() {
         ReadPreference pref = ReadPreference.secondary(new Document("baz", "2"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(secondary));
+        assertTrue(pref.choose(set).equals(secondary));
 
         // test that the primary is returned if no secondaries match the tag
         pref = ReadPreference.secondaryPreferred(new Document("madeup", "1"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(primary));
+        assertTrue(pref.choose(set).equals(primary));
 
         pref = ReadPreference.secondaryPreferred();
-        final ReplicaSetMemberDescription candidate = pref.chooseReplicaSetMember(set);
+        final ServerDescription candidate = pref.choose(set);
         assertTrue((candidate.equals(secondary) || candidate.equals(otherSecondary)) && !candidate.equals(primary));
 
-        assertEquals(primary, ReadPreference.secondaryPreferred().chooseReplicaSetMember(setNoSecondary));
+        assertEquals(primary, ReadPreference.secondaryPreferred().choose(setNoSecondary));
     }
 
     @Test
     public void testNearestMode() {
         ReadPreference pref = ReadPreference.nearest();
-        assertTrue(pref.chooseReplicaSetMember(set) != null);
+        assertTrue(pref.choose(set) != null);
 
         pref = ReadPreference.nearest(new Document("baz", "1"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(primary));
+        assertTrue(pref.choose(set).equals(primary));
 
         pref = ReadPreference.nearest(new Document("baz", "2"));
-        assertTrue(pref.chooseReplicaSetMember(set).equals(secondary));
+        assertTrue(pref.choose(set).equals(secondary));
 
         pref = ReadPreference.nearest(new Document("madeup", "1"));
         assertEquals(new Document("mode", "nearest").append("tags", Arrays.asList(new Document("madeup", "1"))),
-                    pref.toDocument());
-        assertTrue(pref.chooseReplicaSetMember(set) == null);
+                pref.toDocument());
+        assertTrue(pref.choose(set) == null);
     }
 
     @Test
@@ -194,9 +205,9 @@ public class ReadPreferenceTest {
         final Document remaining = new Document();
         assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
         assertEquals(ReadPreference.primaryPreferred(first, remaining),
-                    ReadPreference.valueOf("primaryPreferred", first, remaining));
+                ReadPreference.valueOf("primaryPreferred", first, remaining));
         assertEquals(ReadPreference.secondaryPreferred(first, remaining),
-                    ReadPreference.valueOf("secondaryPreferred", first, remaining));
+                ReadPreference.valueOf("secondaryPreferred", first, remaining));
         assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
     }
 
@@ -212,9 +223,9 @@ public class ReadPreferenceTest {
         final Document remaining = new Document();
         assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
         assertEquals(ReadPreference.primaryPreferred(first, remaining),
-                    ReadPreference.valueOf("primaryPreferred", first, remaining));
+                ReadPreference.valueOf("primaryPreferred", first, remaining));
         assertEquals(ReadPreference.secondaryPreferred(first, remaining),
-                    ReadPreference.valueOf("secondaryPreferred", first, remaining));
+                ReadPreference.valueOf("secondaryPreferred", first, remaining));
         assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
     }
 }

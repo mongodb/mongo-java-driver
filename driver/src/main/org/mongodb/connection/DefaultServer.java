@@ -31,13 +31,13 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 class DefaultServer implements Server {
     private final ScheduledExecutorService scheduledExecutorService;
-    private ServerAddress serverAddress;
+    private final ServerAddress serverAddress;
     private final Pool<Connection> connectionPool;
-    private Pool<AsyncConnection> asyncConnectionPool;
+    private final Pool<AsyncConnection> asyncConnectionPool;
     private final IsMasterServerStateNotifier stateNotifier;
-    private Set<ServerStateListener> changeListeners =
+    private final Set<ServerStateListener> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ServerStateListener, Boolean>());
-    private volatile ServerDescription description = ServerDescription.builder().build();
+    private volatile ServerDescription description;
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                          final AsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
@@ -48,10 +48,9 @@ class DefaultServer implements Server {
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
-        if (asyncConnectionFactory != null) {
-            this.asyncConnectionPool = new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
-        }
-        stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
+        this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
+        this.description = ServerDescription.builder().address(serverAddress).build();
+        this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
         scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS); // TODO: configurable
     }
 
