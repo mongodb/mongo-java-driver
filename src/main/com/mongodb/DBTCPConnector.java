@@ -621,6 +621,10 @@ public class DBTCPConnector implements DBConnector {
             CommandResult result = port.authenticate(_mongo, credentials);
             _mongo.getAuthority().getCredentialsStore().add(credentials);
             return result;
+        }
+        catch(Exception e){
+            close();
+            throw new MongoException(e.getMessage(), e);
        } finally {
             _myPort.done(port);
         }
