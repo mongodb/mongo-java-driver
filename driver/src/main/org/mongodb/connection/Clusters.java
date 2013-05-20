@@ -26,22 +26,22 @@ public final class Clusters {
     private Clusters() {
     }
 
-    public static SingleServerCluster create(final ServerAddress serverAddress, final MongoClientOptions options,
+    public static Cluster create(final ServerAddress serverAddress, final MongoClientOptions options,
                                  final BufferPool<ByteBuffer> bufferPool) {
         return create(serverAddress, null, options, bufferPool);
     }
 
-    public static SingleServerCluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+    public static Cluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                  final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         return new DefaultSingleServerCluster(serverAddress, credentialList, options, bufferPool, new DefaultServerFactory());
     }
 
-    public static ReplicaSetCluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
+    public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
                                            final BufferPool<ByteBuffer> bufferPool) {
         return create(seedList, null, options, bufferPool);
     }
 
-    public static ReplicaSetCluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+    public static Cluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                            final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
         return new DefaultReplicaSetCluster(seedList, credentialList, options, bufferPool, new DefaultServerFactory());
     }

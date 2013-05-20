@@ -27,7 +27,6 @@ import org.mongodb.connection.Clusters;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ReplicaSetCluster;
 
-
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -161,7 +160,7 @@ public class Mongo {
      */
     public ReplicaSetStatus getReplicaSetStatus() {
         return cluster instanceof ReplicaSetCluster
-                ? new ReplicaSetStatus((ReplicaSetCluster) cluster)
+                ? new ReplicaSetStatus(cluster)
                 : null; // this is intended behavior in 2.x
     }
 

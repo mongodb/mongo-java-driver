@@ -19,95 +19,30 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.MongoInterruptedException;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
-class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetCluster {
+class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements ReplicaSetCluster {
 
     private final Map<ServerAddress, ServerDescription> mostRecentStateMap = new HashMap<ServerAddress, ServerDescription>();
-    private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
-    private volatile ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(),
-            SLAVE_ACCEPTABLE_LATENCY_MS);
-    private ConcurrentMap<ServerSelector, CountDownLatch> serverPreferenceLatches =
-            new ConcurrentHashMap<ServerSelector, CountDownLatch>();
 
     public DefaultReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                     final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
                                     final ServerFactory serverFactory) {
         super(seedList, credentialList, options, bufferPool, serverFactory);
-        notNull("seedList", seedList);
-        notNull("options", options);
-        notNull("bufferPool", bufferPool);
-    }
-
-    @Override
-    public ClusterDescription getDescription() {
-        return description;
-    }
-
-    @Override
-    public Server getServer(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-
-        final ServerAddress result;
-
-        List<ServerDescription> serverDescriptions = serverSelector.choose(description);
-        if (!serverDescriptions.isEmpty()) {
-            result = getRandomServer(serverDescriptions).getAddress();
-        }
-        else {
-            try {
-                CountDownLatch newLatch = new CountDownLatch(1);
-                CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverSelector, newLatch);
-                final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
-                if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
-                    serverDescriptions = serverSelector.choose(description);
-                }
-                if (serverDescriptions.isEmpty()) {
-                    throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
-                            + serverSelector);
-                }
-                result = getRandomServer(serverDescriptions).getAddress();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
-                        + serverSelector, e);
-            }
-        }
-        return getServer(result);
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        for (CountDownLatch latch : serverPreferenceLatches.values()) {
-            latch.countDown();
-        }
     }
 
     protected ServerStateListener createServerStateListener(final ServerAddress serverAddress) {
         return new ReplicaSetServerStateListener(serverAddress);
-    }
-
-    private ServerDescription getRandomServer(final List<ServerDescription> serverDescriptions) {
-        return serverDescriptions.get(getRandom().nextInt(serverDescriptions.size()));
     }
 
     private final class ReplicaSetServerStateListener implements ServerStateListener {
@@ -118,69 +53,53 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         }
 
         @Override
-        public synchronized void notify(final ServerDescription serverDescription) {
+        public void notify(final ServerDescription serverDescription) {
             if (isClosed()) {
                 return;
             }
 
-            markAsNotified();
+            synchronized (DefaultReplicaSetCluster.this) {
 
-            addNewHosts(serverDescription.getHosts(), true);
-            addNewHosts(serverDescription.getPassives(), false);
-            if (serverDescription.isPrimary()) {
-                removeExtras(serverDescription);
+                addNewHosts(serverDescription.getHosts(), true);
+                addNewHosts(serverDescription.getPassives(), false);
+                if (serverDescription.isPrimary()) {
+                    removeExtras(serverDescription);
+                }
+
+                mostRecentStateMap.put(serverAddress, serverDescription);
+
+                updateDescription();
             }
-
-            mostRecentStateMap.put(serverAddress, serverDescription);
-
-            updateDescription();
         }
 
         @Override
-        public synchronized void notify(final MongoException e) {
+        public void notify(final MongoException e) {
             if (isClosed()) {
                 return;
             }
 
-            markAsNotified();
+            synchronized (DefaultReplicaSetCluster.this) {
 
-            ServerDescription serverDescription = mostRecentStateMap.remove(serverAddress);
+                ServerDescription serverDescription = mostRecentStateMap.remove(serverAddress);
 
-            updateDescription();
+                updateDescription();
 
-            if (serverDescription.isPrimary()) {
-                invalidateAll();
-            }
-
-        }
-
-        private void markAsNotified() {
-            if (activeMemberNotifications.containsKey(serverAddress)) {
-                activeMemberNotifications.put(serverAddress, true);
+                if (serverDescription.isPrimary()) {
+                    invalidateAll();
+                }
             }
         }
 
         private void updateDescription() {
-            description = new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()),
-                    SLAVE_ACCEPTABLE_LATENCY_MS);
-            for (Iterator<Map.Entry<ServerSelector, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
-                 iter.hasNext();) {
-                Map.Entry<ServerSelector, CountDownLatch> serverPreferenceLatch = iter.next();
-                if (serverPreferenceLatch.getKey().choose(description) != null) {
-                    serverPreferenceLatch.getValue().countDown();
-                    iter.remove();
-                }
-            }
+            DefaultReplicaSetCluster.this.updateDescription(
+                    new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), SLAVE_ACCEPTABLE_LATENCY_MS));
         }
 
         private void addNewHosts(final List<String> hosts, final boolean active) {
             for (String cur : hosts) {
                 ServerAddress curServerAddress = getServerAddress(cur);
                 if (curServerAddress != null) {
-                    if (active && !activeMemberNotifications.containsKey(curServerAddress)) {
-                        activeMemberNotifications.put(curServerAddress, false);
-                    }
-                    addNode(curServerAddress);
+                    addServer(curServerAddress);
                 }
             }
         }
@@ -189,8 +108,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
             Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
             for (ServerAddress curServerAddress : DefaultReplicaSetCluster.this.getAllServerAddresses()) {
                 if (!allServerAddresses.contains(curServerAddress)) {
-                    removeNode(curServerAddress);
-                    activeMemberNotifications.remove(curServerAddress);
+                    removeServer(curServerAddress);
                     mostRecentStateMap.remove(curServerAddress);
                 }
             }

@@ -22,40 +22,24 @@ import org.mongodb.MongoCredential;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
-abstract class MultiServerCluster implements Cluster {
-    private final List<MongoCredential> credentialList;
-    private final MongoClientOptions options;
-    private final BufferPool<ByteBuffer> bufferPool;
-    private final ServerFactory serverFactory;
+abstract class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
-    private boolean isClosed;
-    private final ScheduledExecutorService scheduledExecutorService;
-    private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
-        @Override
-        protected Random initialValue() {
-            return new Random();
-        }
-    };
 
-    protected MultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                 final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
-                                 final ServerFactory serverFactory) {
-        this.credentialList = credentialList;
-        this.options = options;
-        this.bufferPool = bufferPool;
-        this.serverFactory = serverFactory;
-        this.scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
+    protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
+                                        final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
+                                        final ServerFactory serverFactory) {
+        super(bufferPool, credentialList, options, serverFactory);
+
+        notNull("seedList", seedList);
         for (ServerAddress serverAddress : seedList) {
-            addNode(serverAddress);
+            addServer(serverAddress);
         }
     }
 
@@ -64,14 +48,6 @@ abstract class MultiServerCluster implements Cluster {
         isTrue("open", !isClosed());
 
         return new HashSet<ServerAddress>(addressToServerMap.keySet());
-    }
-
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        isTrue("open", !isClosed());
-
-        return bufferPool;
     }
 
     @Override
@@ -87,44 +63,36 @@ abstract class MultiServerCluster implements Cluster {
 
     @Override
     public void close() {
-        if (!isClosed) {
-            isClosed = true;
+        if (!isClosed()) {
             for (Server server : addressToServerMap.values()) {
                 server.close();
             }
-            scheduledExecutorService.shutdownNow();
+            super.close();
         }
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
     }
 
     protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
 
-    protected Random getRandom() {
-        return random.get();
-    }
-
-    protected synchronized void addNode(final ServerAddress serverAddress) {
+    protected synchronized void addServer(final ServerAddress serverAddress) {
         if (!addressToServerMap.containsKey(serverAddress)) {
-            Server mongoServer = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
-            mongoServer.addChangeListener(createServerStateListener(serverAddress));
+            Server mongoServer = createServer(serverAddress, createServerStateListener(serverAddress));
             addressToServerMap.put(serverAddress, mongoServer);
         }
     }
 
-    protected synchronized void removeNode(final ServerAddress serverAddress) {
+    protected synchronized void removeServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
+
         Server server = addressToServerMap.remove(serverAddress);
         server.close();
     }
 
 
     protected void invalidateAll() {
+        isTrue("open", !isClosed());
+
         for (Server server : addressToServerMap.values()) {
             server.invalidate();
         }
     }
-
 }

@@ -21,11 +21,13 @@ import java.util.Set;
 
 public interface Cluster {
 
+    ClusterDescription getDescription();
+
     Server getServer(ServerSelector serverSelector);
 
     Server getServer(final ServerAddress serverAddress);
 
-    Set<ServerAddress> getAllServerAddresses();
+    Set<ServerAddress> getAllServerAddresses();    // TODO: remove this method, in favor of getDescription
 
     BufferPool<ByteBuffer> getBufferPool();
 
