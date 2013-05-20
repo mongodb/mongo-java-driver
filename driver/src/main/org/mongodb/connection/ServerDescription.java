@@ -16,23 +16,24 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.Document;
-import org.mongodb.operation.CommandResult;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
+import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
+import static org.mongodb.connection.ServerType.ShardRouter;
+import static org.mongodb.connection.ServerType.StandAlone;
+import static org.mongodb.connection.ServerType.Unknown;
 
 public class ServerDescription {
-    public static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
-    public static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
     private final ServerAddress address;
 
-    private final boolean isPrimary;
-    private final boolean isSecondary;
+    private final ServerType type;
     private final List<String> hosts;
     private final List<String> passives;
     private final String primary;
@@ -44,10 +45,10 @@ public class ServerDescription {
     private final long averagePingTime;
     private final boolean ok;
 
+
     public static class Builder {
         private ServerAddress address;
-        private boolean isPrimary;
-        private boolean isSecondary;
+        private ServerType type = Unknown;
         private List<String> hosts = Collections.emptyList();
         private List<String> passives = Collections.emptyList();
         private String primary;
@@ -64,13 +65,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder primary(final boolean isPrimary) {
-            this.isPrimary = isPrimary;
-            return this;
-        }
-
-        public Builder secondary(final boolean isSecondary) {
-            this.isSecondary = isSecondary;
+        public Builder type(final ServerType type) {
+            this.type = notNull("type", type);
             return this;
         }
 
@@ -125,25 +121,16 @@ public class ServerDescription {
         // CHECKSTYLE:OFF
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static int getDefaultMaxDocumentSize() {
+        return DEFAULT_MAX_DOCUMENT_SIZE;
     }
 
-    @SuppressWarnings("unchecked")
-    public ServerDescription(final CommandResult commandResult, final long averagePingTime) {
-        this(ServerDescription.builder()
-                .address(commandResult.getAddress())
-                .primary(commandResult.getResponse().getBoolean("ismaster"))
-                .secondary(getIsSecondary(commandResult.getResponse().getBoolean("secondary")))
-                .hosts((List<String>) commandResult.getResponse().get("hosts"))
-                .passives((List<String>) commandResult.getResponse().get("passives"))
-                .primary(commandResult.getResponse().getString("primary"))
-                .maxDocumentSize(commandResult.getResponse().getInteger("maxBsonObjectSize"))
-                .maxMessageSize(getMaxMessageSize(commandResult.getResponse().getInteger("maxMessageSizeBytes")))
-                .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
-                .setName(commandResult.getResponse().getString("setName"))
-                .averagePingTime(averagePingTime)
-                .ok(commandResult.isOk()));
+    public static int getDefaultMaxMessageSize() {
+        return DEFAULT_MAX_MESSAGE_SIZE;
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public ServerAddress getAddress() {
@@ -151,11 +138,11 @@ public class ServerDescription {
     }
 
     public boolean isPrimary() {
-        return ok && isPrimary;
+        return ok && (type == ReplicaSetPrimary || type == ShardRouter || type == StandAlone);
     }
 
     public boolean isSecondary() {
-        return ok && isSecondary;
+        return ok && (type == ReplicaSetSecondary || type == ShardRouter || type == StandAlone);
     }
 
     public List<String> getHosts() {
@@ -182,7 +169,23 @@ public class ServerDescription {
         return tags;
     }
 
+    /**
+     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone}
+     * or @code{ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
+     * those types.
+     *
+     * @param tags the tags
+     * @return true if this server has the given tags
+     */
     public boolean hasTags(final Tags tags) {
+        if (!ok) {
+            return false;
+        }
+
+        if (type == StandAlone || type == ShardRouter) {
+            return true;
+        }
+
         for (Map.Entry<String, String> tag : tags.entrySet()) {
             if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
                 return false;
@@ -216,8 +219,7 @@ public class ServerDescription {
         final ServerDescription that = (ServerDescription) o;
 
         if (Long.compare(that.averagePingTime, averagePingTime) != 0) return false;
-        if (isPrimary != that.isPrimary) return false;
-        if (isSecondary != that.isSecondary) return false;
+        if (type != that.type) return false;
         if (maxDocumentSize != that.maxDocumentSize) return false;
         if (maxMessageSize != that.maxMessageSize) return false;
         if (ok != that.ok) return false;
@@ -234,8 +236,7 @@ public class ServerDescription {
     @Override
     public int hashCode() {
         int result = address.hashCode();
-        result = 31 * result + (isPrimary ? 1 : 0);
-        result = 31 * result + (isSecondary ? 1 : 0);
+        result = 31 * result + type.hashCode();
         result = 31 * result + hosts.hashCode();
         result = 31 * result + passives.hashCode();
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
@@ -252,8 +253,7 @@ public class ServerDescription {
     public String toString() {
         return "ServerDescription{"
                 + "address=" + address
-                + ", isPrimary=" + isPrimary
-                + ", isSecondary=" + isSecondary
+                + ", type=" + type
                 + ", hosts=" + hosts
                 + ", passives=" + passives
                 + ", primary='" + primary + '\''
@@ -267,11 +267,8 @@ public class ServerDescription {
     }
 
     ServerDescription(final Builder builder) {
-        notNull("address", builder.address);
-
-        address = builder.address;
-        isPrimary = builder.isPrimary;
-        isSecondary = builder.isSecondary;
+        address = notNull("address", builder.address);
+        type = notNull("type", builder.type);
         hosts = builder.hosts;
         passives = builder.passives;
         primary = builder.primary;
@@ -281,25 +278,6 @@ public class ServerDescription {
         setName = builder.setName;
         averagePingTime = builder.averagePingTime;
         ok = builder.ok;
-    }
-
-    private static boolean getIsSecondary(final Boolean isSecondary) {
-        return isSecondary == null ? false : isSecondary;
-    }
-
-    private static Tags getTagsFromDocument(final Document tagsDocuments) {
-        if (tagsDocuments == null) {
-            return new Tags();
-        }
-        final Tags tags = new Tags();
-        for (final Map.Entry<String, Object> curEntry : tagsDocuments.entrySet()) {
-            tags.put(curEntry.getKey(), curEntry.getValue().toString());
-        }
-        return tags;
-    }
-
-    private static int getMaxMessageSize(final Integer maxMessageSize) {
-        return (maxMessageSize != null) ? maxMessageSize : DEFAULT_MAX_MESSAGE_SIZE;
     }
 
 }

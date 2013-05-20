@@ -17,16 +17,16 @@
 package com.mongodb;
 
 
-import org.mongodb.connection.ReplicaSetCluster;
+import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
 public class ReplicaSetStatus {
 
-    final ReplicaSetCluster cluster;
+    final Cluster cluster;
 
-    ReplicaSetStatus(final ReplicaSetCluster cluster) {
+    ReplicaSetStatus(final Cluster cluster) {
         this.cluster = cluster;
     }
 
@@ -62,6 +62,6 @@ public class ReplicaSetStatus {
      */
     public int getMaxBsonObjectSize() {
         final List<ServerDescription> primaries = cluster.getDescription().getPrimaries();
-        return primaries.isEmpty() ? ServerDescription.DEFAULT_MAX_DOCUMENT_SIZE : primaries.get(0).getMaxDocumentSize();
+        return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
     }
 }

@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerType;
 import org.mongodb.connection.Tags;
 
 import java.io.IOException;
@@ -54,23 +55,21 @@ public class ReadPreferenceTest {
         primary = ServerDescription.builder().address(new ServerAddress(HOST, 27017))
                 .averagePingTime(acceptablePingTime * 1000000L)
                 .ok(true)
-                .primary(true)
-                .secondary(false)
+                .type(ServerType.ReplicaSetPrimary)
                 .tags(tags1)
                 .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().address(new ServerAddress(HOST, 27018))
                 .averagePingTime(bestPingTime * 1000000L)
                 .ok(true)
-                .primary(false)
-                .secondary(true).tags(tags2)
+                .type(ServerType.ReplicaSetSecondary)
+                .tags(tags2)
                 .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().address(new ServerAddress(HOST, 27019))
                 .averagePingTime(unacceptablePingTime * 1000000L)
                 .ok(true)
-                .primary(false)
-                .secondary(true)
+                .type(ServerType.ReplicaSetSecondary)
                 .tags(tags3)
                 .maxDocumentSize(FOUR_MEG)
                 .build();
