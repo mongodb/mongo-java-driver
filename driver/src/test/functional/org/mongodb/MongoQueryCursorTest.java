@@ -265,18 +265,18 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
     @Test(expected = MongoCursorNotFoundException.class)
     //@Ignore("Won't work with replica sets or when tests are run in parallel")
-    public void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
+    public void shouldKillCursorIfLimitIsReachedOnInitialQuery() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().limit(5),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
 
         final ServerCursor serverCursor = cursor.getServerCursor();
-
+        Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
         makeAdditionalGetMoreCall(serverCursor);
     }
 
     @Test(expected = MongoCursorNotFoundException.class)
     //@Ignore("Won't work with replica sets or when tests are run in parallel")
-    public void shouldKillCursorIfLimitIsReachedOnGetMore() {
+    public void shouldKillCursorIfLimitIsReachedOnGetMore() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new MongoFind().batchSize(3).limit(5),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
 
@@ -287,6 +287,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         cursor.next();
         cursor.next();
 
+        Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
         makeAdditionalGetMoreCall(serverCursor);
     }
 
