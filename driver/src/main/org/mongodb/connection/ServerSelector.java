@@ -18,6 +18,8 @@ package org.mongodb.connection;
 
 import org.mongodb.annotations.ThreadSafe;
 
+import java.util.List;
+
 /**
  * An interface for selecting a server from a cluster according some preference.
  *
@@ -29,5 +31,5 @@ import org.mongodb.annotations.ThreadSafe;
  */
 @ThreadSafe
 public interface ServerSelector {
-    ServerDescription choose(ClusterDescription clusterDescription);
+    List<ServerDescription> choose(ClusterDescription clusterDescription);
 }

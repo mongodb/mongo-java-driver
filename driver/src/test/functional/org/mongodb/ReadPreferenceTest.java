@@ -21,19 +21,14 @@ import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.Tag;
+import org.mongodb.connection.Tags;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ReadPreferenceTest {
@@ -47,20 +42,9 @@ public class ReadPreferenceTest {
 
     @Before
     public void setUp() throws IOException {
-        final Set<Tag> tagSet1 = new HashSet<Tag>();
-        tagSet1.add(new Tag("foo", "1"));
-        tagSet1.add(new Tag("bar", "2"));
-        tagSet1.add(new Tag("baz", "1"));
-
-        final Set<Tag> tagSet2 = new HashSet<Tag>();
-        tagSet2.add(new Tag("foo", "1"));
-        tagSet2.add(new Tag("bar", "2"));
-        tagSet2.add(new Tag("baz", "2"));
-
-        final Set<Tag> tagSet3 = new HashSet<Tag>();
-        tagSet3.add(new Tag("foo", "1"));
-        tagSet3.add(new Tag("bar", "2"));
-        tagSet3.add(new Tag("baz", "3"));
+        final Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
+        final Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");
+        final Tags tags3 = new Tags("foo", "1").append("bar", "2").append("baz", "3");
 
         final long acceptableLatencyMS = 15;
         final long bestPingTime = 50;
@@ -72,14 +56,14 @@ public class ReadPreferenceTest {
                 .ok(true)
                 .primary(true)
                 .secondary(false)
-                .tags(tagSet1)
+                .tags(tags1)
                 .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().address(new ServerAddress(HOST, 27018))
                 .averagePingTime(bestPingTime * 1000000L)
                 .ok(true)
                 .primary(false)
-                .secondary(true).tags(tagSet2)
+                .secondary(true).tags(tags2)
                 .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().address(new ServerAddress(HOST, 27019))
@@ -87,7 +71,7 @@ public class ReadPreferenceTest {
                 .ok(true)
                 .primary(false)
                 .secondary(true)
-                .tags(tagSet3)
+                .tags(tags3)
                 .maxDocumentSize(FOUR_MEG)
                 .build();
 
@@ -96,10 +80,9 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ClusterDescription(nodeList, (new Random()), (int) acceptableLatencyMS);
-        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (new Random()),
-                (int) acceptableLatencyMS);
-        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (new Random()), (int) acceptableLatencyMS);
+        set = new ClusterDescription(nodeList, (int) acceptableLatencyMS);
+        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (int) acceptableLatencyMS);
+        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (int) acceptableLatencyMS);
     }
 
 
@@ -114,66 +97,81 @@ public class ReadPreferenceTest {
 
     @Test
     public void testPrimaryReadPreference() {
-        assertEquals(primary, ReadPreference.primary().choose(set));
-        assertNull(ReadPreference.primary().choose(setNoPrimary));
+        assertEquals(1, ReadPreference.primary().choose(set).size());
+        assertEquals(primary, ReadPreference.primary().choose(set).get(0));
+        assertTrue(ReadPreference.primary().choose(setNoPrimary).isEmpty());
     }
 
     @Test
     public void testSecondaryReadPreference() {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
-        ServerDescription candidate = ReadPreference.secondary().choose(set);
-        assertTrue(!candidate.isPrimary());
+        List<ServerDescription> candidates = ReadPreference.secondary().choose(set);
+        assertEquals(1, candidates.size());
+        assertTrue(candidates.get(0).isSecondary());
 
-        candidate = ReadPreference.secondary().choose(setNoSecondary);
-        assertNull(candidate);
+        candidates = ReadPreference.secondary().choose(setNoSecondary);
+        assertTrue(candidates.isEmpty());
 
         // Test secondary mode, with tags
-        ReadPreference pref = ReadPreference.secondary(new Document("foo", "1"), new Document("bar", "2"));
+//        List<String> stringList = Arrays.asList("foo", "bar");
+//        List<TagMap> tagsList2 = Arrays.asList(TagMap.singleton("foo", "bar"), TagMap.singleton("bar", "baz"));
+//        List<Map<String, String>> tagsList3 = Arrays.asList(Collections.singletonMap("foo", "1"));
+//        List<Map<String, String>> tagsList4 = Arrays.asList(Collections.<String, String>singletonMap("foo", "1"));
+
+        List<Tags> tagsList = Arrays.asList(new Tags("foo", "1"),  new Tags("bar", "2"));
+        ReadPreference pref = ReadPreference.secondary(tagsList);
         assertTrue(pref.toString().startsWith("secondary"));
 
-        candidate = ReadPreference.secondary().choose(set);
-        assertTrue((candidate.equals(secondary) || candidate.equals(otherSecondary)) && !candidate.equals(primary));
+        candidates = ReadPreference.secondary().choose(set);
+        assertTrue((candidates.get(0).equals(secondary) || candidates.get(0).equals(otherSecondary)) && !candidates.get(0).equals(primary));
 
-        pref = ReadPreference.secondary(new Document("baz", "1"));
-        assertTrue(pref.choose(set) == null);
+        pref = ReadPreference.secondary(new Tags("baz", "1"));
+        assertTrue(pref.choose(set).isEmpty());
 
-        pref = ReadPreference.secondary(new Document("baz", "2"));
-        assertTrue(pref.choose(set).equals(secondary));
+        pref = ReadPreference.secondary(new Tags("baz", "2"));
+        assertTrue(pref.choose(set).get(0).equals(secondary));
 
-        pref = ReadPreference.secondary(new Document("madeup", "1"));
-        assertEquals(new Document("mode", "secondary").append("tags", Arrays.asList(new Document("madeup", "1"))),
-                pref.toDocument());
-        assertTrue(pref.choose(set) == null);
+        pref = ReadPreference.secondary(new Tags("madeup", "1"));
+//        assertEquals(Collections.<String, String>singletonMap("mode", "secondary")
+//                .append("tags", Arrays.asList(Collections.<String, String>singletonMap("madeup", "1"))),
+//                pref.toDocument());
+        assertTrue(pref.choose(set).isEmpty());
     }
 
     @Test
     public void testPrimaryPreferredMode() {
         ReadPreference pref = ReadPreference.primaryPreferred();
-        final ServerDescription candidate = pref.choose(set);
-        assertEquals(primary, candidate);
+        List<ServerDescription> candidates = pref.choose(set);
+        assertEquals(1, candidates.size());
+        assertEquals(primary, candidates.get(0));
 
-        assertNotNull(ReadPreference.primaryPreferred().choose(setNoPrimary));
+        candidates = pref.choose(setNoPrimary);
+        assertEquals(1, candidates.size());
+        assertEquals(secondary, candidates.get(0));
 
-        pref = ReadPreference.primaryPreferred(new Document("baz", "2"));
-        assertTrue(pref.choose(set).equals(primary));
-        assertTrue(pref.choose(setNoPrimary).equals(secondary));
+        pref = ReadPreference.primaryPreferred(new Tags("baz", "2"));
+        assertEquals(1, pref.choose(set).size());
+        assertEquals(primary, pref.choose(set).get(0));
+        assertEquals(1, pref.choose(setNoPrimary).size());
+        assertEquals(secondary, pref.choose(setNoPrimary).get(0));
     }
 
     @Test
     public void testSecondaryPreferredMode() {
-        ReadPreference pref = ReadPreference.secondary(new Document("baz", "2"));
-        assertTrue(pref.choose(set).equals(secondary));
+        ReadPreference pref = ReadPreference.secondary(new Tags("baz", "2"));
+        assertTrue(pref.choose(set).get(0).equals(secondary));
 
         // test that the primary is returned if no secondaries match the tag
-        pref = ReadPreference.secondaryPreferred(new Document("madeup", "1"));
-        assertTrue(pref.choose(set).equals(primary));
+        pref = ReadPreference.secondaryPreferred(new Tags("madeup", "1"));
+        assertTrue(pref.choose(set).get(0).equals(primary));
 
         pref = ReadPreference.secondaryPreferred();
-        final ServerDescription candidate = pref.choose(set);
-        assertTrue((candidate.equals(secondary) || candidate.equals(otherSecondary)) && !candidate.equals(primary));
+        final List<ServerDescription> candidates = pref.choose(set);
+        assertEquals(1, candidates.size());
+        assertTrue(candidates.contains(secondary));
 
-        assertEquals(primary, ReadPreference.secondaryPreferred().choose(setNoSecondary));
+        assertTrue(ReadPreference.secondaryPreferred().choose(setNoSecondary).contains(primary));
     }
 
     @Test
@@ -181,16 +179,17 @@ public class ReadPreferenceTest {
         ReadPreference pref = ReadPreference.nearest();
         assertTrue(pref.choose(set) != null);
 
-        pref = ReadPreference.nearest(new Document("baz", "1"));
-        assertTrue(pref.choose(set).equals(primary));
+        pref = ReadPreference.nearest(new Tags("baz", "1"));
+        assertTrue(pref.choose(set).get(0).equals(primary));
 
-        pref = ReadPreference.nearest(new Document("baz", "2"));
-        assertTrue(pref.choose(set).equals(secondary));
+        pref = ReadPreference.nearest(new Tags("baz", "2"));
+        assertTrue(pref.choose(set).get(0).equals(secondary));
 
-        pref = ReadPreference.nearest(new Document("madeup", "1"));
-        assertEquals(new Document("mode", "nearest").append("tags", Arrays.asList(new Document("madeup", "1"))),
-                pref.toDocument());
-        assertTrue(pref.choose(set) == null);
+        pref = ReadPreference.nearest(new Tags("madeup", "1"));
+//        assertEquals(new Tags("mode", "nearest")
+//         .append("tags", Arrays.asList(new Tags("madeup", "1"))),
+//                pref.toDocument());
+        assertTrue(pref.choose(set).isEmpty());
     }
 
     @Test
@@ -201,14 +200,13 @@ public class ReadPreferenceTest {
         assertEquals(ReadPreference.secondaryPreferred(), ReadPreference.valueOf("secondaryPreferred"));
         assertEquals(ReadPreference.nearest(), ReadPreference.valueOf("nearest"));
 
-        final Document first = new Document("dy", "ny");
-        final Document remaining = new Document();
-        assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
-        assertEquals(ReadPreference.primaryPreferred(first, remaining),
-                ReadPreference.valueOf("primaryPreferred", first, remaining));
-        assertEquals(ReadPreference.secondaryPreferred(first, remaining),
-                ReadPreference.valueOf("secondaryPreferred", first, remaining));
-        assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
+        final Tags first = new Tags("dy", "ny");
+        assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
+        assertEquals(ReadPreference.primaryPreferred(first),
+                ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
+        assertEquals(ReadPreference.secondaryPreferred(Arrays.asList(first)),
+                ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
+        assertEquals(ReadPreference.nearest(first), ReadPreference.valueOf("nearest", Arrays.asList(first)));
     }
 
     @Test
@@ -219,13 +217,10 @@ public class ReadPreferenceTest {
         assertEquals("secondaryPreferred", ReadPreference.secondaryPreferred().getName());
         assertEquals("nearest", ReadPreference.nearest().getName());
 
-        final Document first = new Document("dy", "ny");
-        final Document remaining = new Document();
-        assertEquals(ReadPreference.secondary(first, remaining), ReadPreference.valueOf("secondary", first, remaining));
-        assertEquals(ReadPreference.primaryPreferred(first, remaining),
-                ReadPreference.valueOf("primaryPreferred", first, remaining));
-        assertEquals(ReadPreference.secondaryPreferred(first, remaining),
-                ReadPreference.valueOf("secondaryPreferred", first, remaining));
-        assertEquals(ReadPreference.nearest(first, remaining), ReadPreference.valueOf("nearest", first, remaining));
+        final Tags first = new Tags("dy", "ny");
+        assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
+        assertEquals(ReadPreference.primaryPreferred(first), ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
+        assertEquals(ReadPreference.secondaryPreferred(first), ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
+        assertEquals(ReadPreference.nearest(first), ReadPreference.valueOf("nearest", Arrays.asList(first)));
     }
 }

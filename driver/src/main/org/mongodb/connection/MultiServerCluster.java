@@ -22,6 +22,7 @@ import org.mongodb.MongoCredential;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +39,12 @@ abstract class MultiServerCluster implements Cluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
     private boolean isClosed;
     private final ScheduledExecutorService scheduledExecutorService;
+    private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
+        @Override
+        protected Random initialValue() {
+            return new Random();
+        }
+    };
 
     protected MultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                  final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
@@ -96,6 +103,9 @@ abstract class MultiServerCluster implements Cluster {
 
     protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
 
+    protected Random getRandom() {
+        return random.get();
+    }
 
     protected synchronized void addNode(final ServerAddress serverAddress) {
         if (!addressToServerMap.containsKey(serverAddress)) {

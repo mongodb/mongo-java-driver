@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import java.util.List;
+
 final class PrimaryServerSelector implements ServerSelector {
 
     private static PrimaryServerSelector singleton = new PrimaryServerSelector();
@@ -25,8 +27,8 @@ final class PrimaryServerSelector implements ServerSelector {
     }
 
     @Override
-    public ServerDescription choose(final ClusterDescription clusterDescription) {
-        return clusterDescription.getPrimary();
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+        return clusterDescription.getPrimaries();
     }
 
     private PrimaryServerSelector() {

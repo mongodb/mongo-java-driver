@@ -19,6 +19,9 @@ package org.mongodb;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.Tags;
+
+import java.util.List;
 
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.
@@ -49,7 +52,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      */
     public abstract String getName();
 
-    public abstract ServerDescription choose(final ClusterDescription clusterDescription);
+    public abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
 
     /**
      * Preference to read from primary only. Cannot be combined with tags.
@@ -78,8 +81,8 @@ public abstract class ReadPreference implements ConvertibleToDocument {
             return getName().hashCode();
         }
 
-        public ServerDescription choose(final ClusterDescription clusterDescription) {
-            return clusterDescription.getPrimary();
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            return clusterDescription.getPrimaries();
         }
 
         @Override
@@ -111,8 +114,15 @@ public abstract class ReadPreference implements ConvertibleToDocument {
     /**
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      */
-    public static TaggableReadPreference primaryPreferred(final Document firstTagSet, final Document... remainingTagSets) {
-        return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
+    public static TaggableReadPreference primaryPreferred(final Tags tags) {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference(tags);
+    }
+
+    /**
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     */
+    public static TaggableReadPreference primaryPreferred(final List<Tags> tagsList) {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference(tagsList);
     }
 
     /**
@@ -125,8 +135,15 @@ public abstract class ReadPreference implements ConvertibleToDocument {
     /**
      * @return ReadPreference which reads secondary respective of tags.
      */
-    public static TaggableReadPreference secondary(final Document firstTagSet, final Document... remainingTagSets) {
-        return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
+    public static TaggableReadPreference secondary(final Tags tags) {
+        return new TaggableReadPreference.SecondaryReadPreference(tags);
+    }
+
+    /**
+     * @return ReadPreference which reads secondary respective of tags.
+     */
+    public static TaggableReadPreference secondary(final List<Tags> tagsList) {
+        return new TaggableReadPreference.SecondaryReadPreference(tagsList);
     }
 
     /**
@@ -140,8 +157,16 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
      *         of tags.
      */
-    public static TaggableReadPreference secondaryPreferred(final Document firstTagSet, final Document... remainingTagSets) {
-        return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
+    public static TaggableReadPreference secondaryPreferred(final Tags tags) {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference(tags);
+    }
+
+    /**
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
+     *         of tags.
+     */
+    public static TaggableReadPreference secondaryPreferred(final List<Tags> tagsList) {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference(tagsList);
     }
 
     /**
@@ -149,6 +174,20 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      */
     public static ReadPreference nearest() {
         return NEAREST;
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node respective of tags.
+     */
+    public static TaggableReadPreference nearest(final Tags tags) {
+        return new TaggableReadPreference.NearestReadPreference(tags);
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node respective of tags.
+     */
+    public static TaggableReadPreference nearest(final List<Tags> tagsList) {
+        return new TaggableReadPreference.NearestReadPreference(tagsList);
     }
 
     public static ReadPreference valueOf(final String name) {
@@ -177,8 +216,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
-    public static TaggableReadPreference valueOf(final String name, final Document firstTagSet,
-                                                 final Document... remainingTagSets) {
+    public static TaggableReadPreference valueOf(final String name, final List<Tags> tagsList) {
         if (name == null) {
             throw new IllegalArgumentException("Name cannot be null");
         }
@@ -186,27 +224,19 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         final String nameToCheck = name.toLowerCase();
 
         if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
+            return new TaggableReadPreference.SecondaryReadPreference(tagsList);
         }
         if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
+            return new TaggableReadPreference.SecondaryPreferredReadPreference(tagsList);
         }
         if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
+            return new TaggableReadPreference.PrimaryPreferredReadPreference(tagsList);
         }
         if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
-            return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
+            return new TaggableReadPreference.NearestReadPreference(tagsList);
         }
 
         throw new IllegalArgumentException("No match for read preference of " + name);
-    }
-
-    /**
-     * @return ReadPreference which reads nearest node respective of tags.
-     */
-    public static TaggableReadPreference nearest(final Document firstTagSet,
-                                                 final Document... remainingTagSets) {
-        return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
     }
 
     private static final ReadPreference PRIMARY;

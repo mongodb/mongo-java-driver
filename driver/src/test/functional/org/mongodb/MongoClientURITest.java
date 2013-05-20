@@ -17,6 +17,9 @@
 package org.mongodb;
 
 import org.junit.Test;
+import org.mongodb.connection.Tags;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class MongoClientURITest {
     @Test(expected = IllegalArgumentException.class)
     public void testOptionsWithoutTrailingSlash() {
-            new MongoClientURI("mongodb://localhost?wTimeout=5");
+        new MongoClientURI("mongodb://localhost?wTimeout=5");
     }
 
     @Test()
@@ -128,21 +131,21 @@ public class MongoClientURITest {
     @Test()
     public void testOptions() {
         final MongoClientURI uAmp = new MongoClientURI("mongodb://localhost/?"
-                                                 + "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&"
-                                                 + "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&"
-                                                 + "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
+                + "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&"
+                + "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&"
+                + "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
         assertOnOptions(uAmp.getOptions());
         final MongoClientURI uSemi = new MongoClientURI("mongodb://localhost/?"
-                                                        + "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;"
-                                                        + "connectTimeoutMS=2500;socketTimeoutMS=5500;"
-                                                        + "autoConnectRetry=true;"
-                                                        + "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
+                + "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;"
+                + "connectTimeoutMS=2500;socketTimeoutMS=5500;"
+                + "autoConnectRetry=true;"
+                + "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uSemi.getOptions());
         final MongoClientURI uMixed = new MongoClientURI("mongodb://localhost/test?"
-                                                         + "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;"
-                                                         + "connectTimeoutMS=2500;"
-                                                         + "socketTimeoutMS=5500&autoConnectRetry=true;"
-                                                         + "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
+                + "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;"
+                + "connectTimeoutMS=2500;"
+                + "socketTimeoutMS=5500&autoConnectRetry=true;"
+                + "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uMixed.getOptions());
     }
 
@@ -169,11 +172,10 @@ public class MongoClientURITest {
         assertEquals(ReadPreference.secondaryPreferred(), uri.getOptions().getReadPreference());
 
         uri = new MongoClientURI("mongodb://localhost/?readPreference=secondaryPreferred&"
-                                 + "readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny&readPreferenceTags=");
-        assertEquals(ReadPreference.secondaryPreferred(new Document("dc", "ny").append("rack", "1"),
-                                                      new Document("dc", "ny"),
-                                                      new Document()),
-                    uri.getOptions().getReadPreference());
+                + "readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny&readPreferenceTags=");
+        final Tags firstTags = new Tags("dc", "ny").append("rack", "1");
+        assertEquals(ReadPreference.secondaryPreferred(Arrays.asList(firstTags, new Tags("dc", "ny"), new Tags())),
+                uri.getOptions().getReadPreference());
     }
 
     @SuppressWarnings("deprecation")

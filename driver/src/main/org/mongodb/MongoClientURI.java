@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.mongodb.connection.Tags;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -140,9 +142,9 @@ import java.util.logging.Logger;
  * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
  * </p>
  *
+ * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
  * @since 3.0.0
- * @mongodb.driver.manual reference/connection-string Connection String URI Format
  */
 public class MongoClientURI {
 
@@ -383,8 +385,7 @@ public class MongoClientURI {
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         Boolean slaveOk = null;
         String readPreferenceType = null;
-        Document firstTagSet = null;
-        List<Document> remainingTagSets = new ArrayList<Document>();
+        List<Tags> tagsList = new ArrayList<Tags>();
 
         for (String key : readPreferenceKeys) {
             String value = getLastValue(optionsMap, key);
@@ -400,17 +401,12 @@ public class MongoClientURI {
             }
             else if (key.equals("readpreferencetags")) {
                 for (String cur : optionsMap.get(key)) {
-                    Document tagSet = getTagSet(cur.trim());
-                    if (firstTagSet == null) {
-                        firstTagSet = tagSet;
-                    }
-                    else {
-                        remainingTagSets.add(tagSet);
-                    }
+                    Tags tags = getTags(cur.trim());
+                    tagsList.add(tags);
                 }
             }
         }
-        return buildReadPreference(readPreferenceType, firstTagSet, remainingTagSets, slaveOk);
+        return buildReadPreference(readPreferenceType, tagsList, slaveOk);
     }
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
@@ -476,16 +472,10 @@ public class MongoClientURI {
         return optionsMap;
     }
 
-    private ReadPreference buildReadPreference(final String readPreferenceType, final Document firstTagSet,
-                                               final List<Document> remainingTagSets, final Boolean slaveOk) {
+    private ReadPreference buildReadPreference(final String readPreferenceType,
+                                               final List<Tags> tagsList, final Boolean slaveOk) {
         if (readPreferenceType != null) {
-            if (firstTagSet == null) {
-                return ReadPreference.valueOf(readPreferenceType);
-            }
-            else {
-                return ReadPreference.valueOf(readPreferenceType, firstTagSet,
-                        remainingTagSets.toArray(new Document[remainingTagSets.size()]));
-            }
+            return ReadPreference.valueOf(readPreferenceType, tagsList);
         }
         else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
             return ReadPreference.secondaryPreferred();
@@ -518,18 +508,18 @@ public class MongoClientURI {
         return null;
     }
 
-    private Document getTagSet(final String tagSetString) {
-        Document tagSet = new Document();
+    private Tags getTags(final String tagSetString) {
+        Tags tags = new Tags();
         if (tagSetString.length() > 0) {
             for (String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
                     throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
                 }
-                tagSet.put(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim());
+                tags.put(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim());
             }
         }
-        return tagSet;
+        return tags;
     }
 
     boolean parseBoolean(final String input) {

@@ -21,6 +21,8 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
+import java.util.List;
+
 public class ReadPreferenceServerSelector implements ServerSelector {
     private final ReadPreference readPreference;
 
@@ -31,7 +33,7 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     }
 
     @Override
-    public ServerDescription choose(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
         return readPreference.choose(clusterDescription);
     }
 }

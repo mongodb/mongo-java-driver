@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,9 +44,8 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
 
     private final Map<ServerAddress, ServerDescription> mostRecentStateMap = new HashMap<ServerAddress, ServerDescription>();
     private final Map<ServerAddress, Boolean> activeMemberNotifications = new HashMap<ServerAddress, Boolean>();
-    private final Random random = new Random();
     private volatile ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(),
-            random, SLAVE_ACCEPTABLE_LATENCY_MS);
+            SLAVE_ACCEPTABLE_LATENCY_MS);
     private ConcurrentMap<ServerSelector, CountDownLatch> serverPreferenceLatches =
             new ConcurrentHashMap<ServerSelector, CountDownLatch>();
 
@@ -71,9 +69,9 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
 
         final ServerAddress result;
 
-        ServerDescription serverDescription = serverSelector.choose(description);
-        if (serverDescription != null) {
-            result = serverDescription.getAddress();
+        List<ServerDescription> serverDescriptions = serverSelector.choose(description);
+        if (!serverDescriptions.isEmpty()) {
+            result = getRandomServer(serverDescriptions).getAddress();
         }
         else {
             try {
@@ -81,13 +79,13 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
                 CountDownLatch existingLatch = serverPreferenceLatches.putIfAbsent(serverSelector, newLatch);
                 final CountDownLatch latch = existingLatch != null ? existingLatch : newLatch;
                 if (latch.await(5, TimeUnit.SECONDS)) {  // TODO: make timeout configurable
-                    serverDescription = serverSelector.choose(description);
+                    serverDescriptions = serverSelector.choose(description);
                 }
-                if (serverDescription == null) {
+                if (serverDescriptions.isEmpty()) {
                     throw new MongoTimeoutException("Timed out waiting for a server that satisfies the server preference: "
                             + serverSelector);
                 }
-                result = serverDescription.getAddress();
+                result = getRandomServer(serverDescriptions).getAddress();
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Thread was interrupted while waiting for a server that satisfied server preference: "
                         + serverSelector, e);
@@ -108,6 +106,9 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         return new ReplicaSetServerStateListener(serverAddress);
     }
 
+    private ServerDescription getRandomServer(final List<ServerDescription> serverDescriptions) {
+        return serverDescriptions.get(getRandom().nextInt(serverDescriptions.size()));
+    }
 
     private final class ReplicaSetServerStateListener implements ServerStateListener {
         private ServerAddress serverAddress;
@@ -160,7 +161,7 @@ class DefaultReplicaSetCluster extends MultiServerCluster implements ReplicaSetC
         }
 
         private void updateDescription() {
-            description = new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), random,
+            description = new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()),
                     SLAVE_ACCEPTABLE_LATENCY_MS);
             for (Iterator<Map.Entry<ServerSelector, CountDownLatch>> iter = serverPreferenceLatches.entrySet().iterator();
                  iter.hasNext();) {

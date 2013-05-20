@@ -20,16 +20,14 @@ import org.mongodb.Document;
 import org.mongodb.operation.CommandResult;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class ServerDescription {
-    private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
-    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    public static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+    public static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
     private final ServerAddress address;
 
@@ -41,7 +39,7 @@ public class ServerDescription {
     private final int maxDocumentSize;
 
     private final int maxMessageSize;
-    private final Set<Tag> tags;
+    private final Tags tags;
     private final String setName;
     private final long averagePingTime;
     private final boolean ok;
@@ -55,11 +53,10 @@ public class ServerDescription {
         private String primary;
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
-        private Set<Tag> tags = Collections.emptySet();
+        private Tags tags = Tags.freeze(new Tags());
         private String setName;
         private long averagePingTime;
         private boolean ok;
-        private ServerDescription previous;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -78,12 +75,12 @@ public class ServerDescription {
         }
 
         public Builder hosts(final List<String> hosts) {
-            this.hosts = hosts == null ? Collections.<String>emptyList() : hosts;
+            this.hosts = hosts == null ? Collections.<String>emptyList() : Collections.unmodifiableList(hosts);
             return this;
         }
 
         public Builder passives(final List<String> passives) {
-            this.passives = passives == null ? Collections.<String>emptyList() : passives;
+            this.passives = passives == null ? Collections.<String>emptyList() : Collections.unmodifiableList(passives);
             return this;
         }
 
@@ -102,8 +99,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder tags(final Set<Tag> tags) {
-            this.tags = tags == null ? Collections.<Tag>emptySet() : tags;
+        public Builder tags(final Tags tags) {
+            this.tags = tags == null ? Tags.freeze(new Tags()) : Tags.freeze(tags);
             return this;
         }
 
@@ -136,14 +133,15 @@ public class ServerDescription {
     public ServerDescription(final CommandResult commandResult, final long averagePingTime) {
         this(ServerDescription.builder()
                 .address(commandResult.getAddress())
-                .primary((Boolean) commandResult.getResponse().get("ismaster"))
-                .secondary(getIsSecondary((Boolean) commandResult.getResponse().get("secondary")))
+                .primary(commandResult.getResponse().getBoolean("ismaster"))
+                .secondary(getIsSecondary(commandResult.getResponse().getBoolean("secondary")))
                 .hosts((List<String>) commandResult.getResponse().get("hosts"))
                 .passives((List<String>) commandResult.getResponse().get("passives"))
-                .primary((String) commandResult.getResponse().get("primary"))
-                .maxDocumentSize((Integer) commandResult.getResponse().get("maxBsonObjectSize"))
-                .maxMessageSize(getMaxMessageSize((Integer) commandResult.getResponse().get("maxMessageSizeBytes")))
-                .tags(getTagsFromMap((Document) commandResult.getResponse().get("tags")))
+                .primary(commandResult.getResponse().getString("primary"))
+                .maxDocumentSize(commandResult.getResponse().getInteger("maxBsonObjectSize"))
+                .maxMessageSize(getMaxMessageSize(commandResult.getResponse().getInteger("maxMessageSizeBytes")))
+                .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
+                .setName(commandResult.getResponse().getString("setName"))
                 .averagePingTime(averagePingTime)
                 .ok(commandResult.isOk()));
     }
@@ -180,9 +178,19 @@ public class ServerDescription {
         return maxMessageSize;
     }
 
-    public Set<Tag> getTags() {
+    public Tags getTags() {
         return tags;
     }
+
+    public boolean hasTags(final Tags tags) {
+        for (Map.Entry<String, String> tag : tags.entrySet()) {
+            if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     public String getSetName() {
         return setName;
@@ -279,15 +287,15 @@ public class ServerDescription {
         return isSecondary == null ? false : isSecondary;
     }
 
-    private static Set<Tag> getTagsFromMap(final Document tagsDocuments) {
+    private static Tags getTagsFromDocument(final Document tagsDocuments) {
         if (tagsDocuments == null) {
-            return Collections.emptySet();
+            return new Tags();
         }
-        final Set<Tag> tagSet = new HashSet<Tag>();
+        final Tags tags = new Tags();
         for (final Map.Entry<String, Object> curEntry : tagsDocuments.entrySet()) {
-            tagSet.add(new Tag(curEntry.getKey(), curEntry.getValue().toString()));
+            tags.put(curEntry.getKey(), curEntry.getValue().toString());
         }
-        return tagSet;
+        return tags;
     }
 
     private static int getMaxMessageSize(final Integer maxMessageSize) {

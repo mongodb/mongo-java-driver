@@ -19,32 +19,30 @@ package org.mongodb;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.Tag;
+import org.mongodb.connection.Tags;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Abstract class for all preference which can be combined with tags
  */
 @Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
-    private static final List<Document> EMPTY = new ArrayList<Document>();
-    private final List<Document> tags;
+    private final List<Tags> tagsList = new ArrayList<Tags>();
 
     TaggableReadPreference() {
-        tags = EMPTY;
     }
 
-    TaggableReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
-        if (firstTagSet == null) {
-            throw new IllegalArgumentException("Must have at least one tag set");
+    TaggableReadPreference(final Tags tags) {
+        tagsList.add(Tags.freeze(tags));
+    }
+
+    TaggableReadPreference(final List<Tags> tagsList) {
+        for (Tags tags : tagsList) {
+            this.tagsList.add(Tags.freeze(tags));
         }
-        tags = new ArrayList<Document>();
-        tags.add(firstTagSet);
-        Collections.addAll(tags, remainingTagSets);
     }
 
     @Override
@@ -56,26 +54,20 @@ public abstract class TaggableReadPreference extends ReadPreference {
     public Document toDocument() {
         final Document readPrefObject = new Document("mode", getName());
 
-        if (!tags.isEmpty()) {
-            readPrefObject.put("tags", tags);
+        if (!tagsList.isEmpty()) {
+            readPrefObject.put("tags", tagsList);
         }
 
         return readPrefObject;
     }
 
-    //CHECKSTYLE:OFF
-    public List<Document> getTagSets() {
-        final List<Document> tags = new ArrayList<Document>();
-        for (final Document tagSet : this.tags) {
-            tags.add(tagSet);
-        }
-        return tags;
+    public List<Tags> getTagsList() {
+        return Collections.unmodifiableList(tagsList);
     }
-    //CHECKSTYLE:ON
 
     @Override
     public String toString() {
-        return getName() + printTags();
+        return getName() + (tagsList.isEmpty() ? "" : ": " + tagsList);
     }
 
     @Override
@@ -89,30 +81,14 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         final TaggableReadPreference that = (TaggableReadPreference) o;
 
-        return tags.equals(that.tags);
+        return tagsList.equals(that.tagsList);
     }
 
     @Override
     public int hashCode() {
-        int result = tags.hashCode();
+        int result = tagsList.hashCode();
         result = 31 * result + getName().hashCode();
         return result;
-    }
-
-    String printTags() {
-        return (tags.isEmpty() ? "" : " : " + new Document("tags", tags));
-    }
-
-    private static List<Tag> getTagListFromMongoDocument(final Document curTagSet) {
-        final List<Tag> tagList = new ArrayList<Tag>();
-        for (final Map.Entry<String, Object> entry : curTagSet.entrySet()) {
-            tagList.add(new Tag(entry.getKey(), entry.getValue().toString()));
-        }
-        return tagList;
-    }
-
-    List<Document> getTags() {
-        return tags;
     }
 
     /**
@@ -123,8 +99,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        SecondaryReadPreference(final Tags tags) {
+            super(tags);
+        }
+
+        SecondaryReadPreference(final List<Tags> tagsList) {
+            super(tagsList);
         }
 
         @Override
@@ -133,20 +113,19 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ServerDescription choose(final ClusterDescription clusterDescription) {
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
-            if (getTags().isEmpty()) {
-                return clusterDescription.getASecondary();
+            if (getTagsList().isEmpty()) {
+                return clusterDescription.getSecondaries();
             }
 
-            for (final Document curTagSet : getTags()) {
-                final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ServerDescription node = clusterDescription.getASecondary(tagList);
-                if (node != null) {
-                    return node;
+            for (final Tags tags : getTagsList()) {
+                final List<ServerDescription> servers = clusterDescription.getSecondaries(tags);
+                if (!servers.isEmpty()) {
+                    return servers;
                 }
             }
-            return null;
+            return Collections.emptyList();
         }
 
     }
@@ -160,8 +139,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        SecondaryPreferredReadPreference(final Tags tags) {
+            super(tags);
+        }
+
+        SecondaryPreferredReadPreference(final List<Tags> tagsList) {
+            super(tagsList);
         }
 
         @Override
@@ -170,9 +153,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ServerDescription choose(final ClusterDescription clusterDescription) {
-            final ServerDescription node = super.choose(clusterDescription);
-            return (node != null) ? node : clusterDescription.getPrimary();
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            final List<ServerDescription> servers = super.choose(clusterDescription);
+            return (!servers.isEmpty()) ? servers : clusterDescription.getPrimaries();
         }
     }
 
@@ -184,8 +167,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        NearestReadPreference(final Tags tags) {
+            super(tags);
+        }
+
+        NearestReadPreference(final List<Tags> tagsList) {
+            super(tagsList);
         }
 
 
@@ -196,20 +183,19 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        public ServerDescription choose(final ClusterDescription clusterDescription) {
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
-            if (getTags().isEmpty()) {
-                return clusterDescription.getAMember();
+            if (getTagsList().isEmpty()) {
+                return clusterDescription.getAny();
             }
 
-            for (final Document curTagSet : getTags()) {
-                final List<Tag> tagList = getTagListFromMongoDocument(curTagSet);
-                final ServerDescription node = clusterDescription.getAMember(tagList);
-                if (node != null) {
-                    return node;
+            for (final Tags tags : getTagsList()) {
+                final List<ServerDescription> servers = clusterDescription.getAny(tags);
+                if (!servers.isEmpty()) {
+                    return servers;
                 }
             }
-            return null;
+            return Collections.emptyList();
         }
     }
 
@@ -221,8 +207,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         PrimaryPreferredReadPreference() {
         }
 
-        PrimaryPreferredReadPreference(final Document firstTagSet, final Document... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        PrimaryPreferredReadPreference(final Tags tags) {
+            super(tags);
+        }
+
+        PrimaryPreferredReadPreference(final List<Tags> tagsList) {
+            super(tagsList);
         }
 
         @Override
@@ -231,9 +221,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        public ServerDescription choose(final ClusterDescription clusterDescription) {
-            final ServerDescription node = clusterDescription.getPrimary();
-            return (node != null) ? node : super.choose(clusterDescription);
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            final List<ServerDescription> servers = clusterDescription.getPrimaries();
+            return (!servers.isEmpty()) ? servers : super.choose(clusterDescription);
         }
     }
 }

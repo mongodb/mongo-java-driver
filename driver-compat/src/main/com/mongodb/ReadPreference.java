@@ -17,6 +17,10 @@
 package com.mongodb;
 
 import org.mongodb.annotations.Immutable;
+import org.mongodb.connection.Tags;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class that represents preferred replica set members to which a query or command can be sent.
@@ -94,10 +98,25 @@ public class ReadPreference {
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      */
     public static TaggableReadPreference primaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
-        return new TaggableReadPreference(org.mongodb.ReadPreference.primaryPreferred(
-                DBObjects.toDocument(firstTagSet),
-                DBObjects.toDocumentArray(remainingTagSets))
-        );
+
+        return new TaggableReadPreference(org.mongodb.ReadPreference.primaryPreferred(toTagsList(firstTagSet, remainingTagSets)));
+    }
+
+    private static List<Tags> toTagsList(final DBObject firstTagSet, final DBObject[] remainingTagSets) {
+        List<Tags> tagsList = new ArrayList<Tags>();
+        tagsList.add(toTagMap(firstTagSet));
+        for (DBObject cur : remainingTagSets) {
+            tagsList.add(toTagMap(cur));
+        }
+        return tagsList;
+    }
+
+    private static Tags toTagMap(final DBObject tagSet) {
+        Tags tags = new Tags();
+        for (String key : tagSet.keySet()) {
+            tags.put(key, tagSet.get(key).toString());
+        }
+        return tags;
     }
 
     /**
@@ -111,10 +130,7 @@ public class ReadPreference {
      * @return ReadPreference which reads secondary respective of tags.
      */
     public static TaggableReadPreference secondary(final DBObject firstTagSet, final DBObject... remainingTagSets) {
-        return new TaggableReadPreference(org.mongodb.ReadPreference.secondary(
-                DBObjects.toDocument(firstTagSet),
-                DBObjects.toDocumentArray(remainingTagSets))
-        );
+        return new TaggableReadPreference(org.mongodb.ReadPreference.secondary(toTagsList(firstTagSet, remainingTagSets)));
     }
 
     /**
@@ -129,10 +145,7 @@ public class ReadPreference {
      *         of tags.
      */
     public static TaggableReadPreference secondaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
-        return new TaggableReadPreference(org.mongodb.ReadPreference.secondaryPreferred(
-                DBObjects.toDocument(firstTagSet),
-                DBObjects.toDocumentArray(remainingTagSets))
-        );
+        return new TaggableReadPreference(org.mongodb.ReadPreference.secondaryPreferred(toTagsList(firstTagSet, remainingTagSets)));
     }
 
     /**
@@ -146,10 +159,7 @@ public class ReadPreference {
      * @return ReadPreference which reads nearest node respective of tags.
      */
     public static TaggableReadPreference nearest(final DBObject firstTagSet, final DBObject... remainingTagSets) {
-        return new TaggableReadPreference(org.mongodb.ReadPreference.nearest(
-                DBObjects.toDocument(firstTagSet),
-                DBObjects.toDocumentArray(remainingTagSets))
-        );
+        return new TaggableReadPreference(org.mongodb.ReadPreference.nearest(toTagsList(firstTagSet, remainingTagSets)));
     }
 
     public static ReadPreference valueOf(final String name) {
@@ -158,17 +168,14 @@ public class ReadPreference {
 
     public static TaggableReadPreference valueOf(final String name, final DBObject firstTagSet,
                                                  final DBObject... remainingTagSets) {
-        return (TaggableReadPreference) fromNew(org.mongodb.ReadPreference.valueOf(
-                name,
-                DBObjects.toDocument(firstTagSet),
-                DBObjects.toDocumentArray(remainingTagSets))
-        );
+        return (TaggableReadPreference) fromNew(org.mongodb.ReadPreference.valueOf(name, toTagsList(firstTagSet, remainingTagSets)));
     }
 
     public static ReadPreference fromNew(final org.mongodb.ReadPreference readPreference) {
         if (readPreference instanceof org.mongodb.TaggableReadPreference) {
             return new TaggableReadPreference((org.mongodb.TaggableReadPreference) readPreference);
-        } else {
+        }
+        else {
             return new ReadPreference(readPreference);
         }
     }

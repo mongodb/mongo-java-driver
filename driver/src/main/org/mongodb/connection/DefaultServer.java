@@ -84,7 +84,7 @@ class DefaultServer implements Server {
 
     @Override
     public void invalidate() {
-        description = null;
+        description = ServerDescription.builder().address(serverAddress).build();
         scheduledExecutorService.submit(stateNotifier);
     }
 

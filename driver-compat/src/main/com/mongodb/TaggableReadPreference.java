@@ -16,11 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.Document;
 import org.mongodb.annotations.Immutable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Immutable
 public class TaggableReadPreference extends ReadPreference {
@@ -29,14 +25,6 @@ public class TaggableReadPreference extends ReadPreference {
     TaggableReadPreference(final org.mongodb.TaggableReadPreference proxied) {
         super(proxied);
         this.proxiedTaggable = proxied;
-    }
-
-    public List<DBObject> getTagSets() {
-        final List<DBObject> tagSets = new ArrayList<DBObject>();
-        for (final Document cur : proxiedTaggable.getTagSets()) {
-            tagSets.add(DBObjects.toDBObject(cur));
-        }
-        return tagSets;
     }
 
     @Override

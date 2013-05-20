@@ -17,6 +17,9 @@
 package com.mongodb;
 
 import org.junit.Test;
+import org.mongodb.connection.Tags;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
@@ -26,5 +29,20 @@ public class ReadPreferenceTest {
     public void testFromNew() {
         assertEquals(ReadPreference.primary(), ReadPreference.fromNew(org.mongodb.ReadPreference.primary()));
         assertEquals(ReadPreference.secondary(), ReadPreference.fromNew(org.mongodb.ReadPreference.secondary()));
+    }
+
+    @Test
+    public void testTags() {
+        ReadPreference secondary = ReadPreference.secondary(new BasicDBObject("dc", "ny"));
+        assertEquals(Arrays.asList(new Tags("dc", "ny")), ((org.mongodb.TaggableReadPreference) secondary.toNew()).getTagsList());
+    }
+
+    @Test
+    public void testTagsList() {
+        ReadPreference secondary = ReadPreference.secondary(new BasicDBObject("dc", "ny").append("rack", "1"),
+                new BasicDBObject("dc", "ca").append("rack", "1"));
+        Tags tags1 = new Tags("dc", "ny").append("rack", "1");
+        Tags tags2 = new Tags("dc", "ca").append("rack", "1");
+        assertEquals(Arrays.asList(tags1, tags2), ((org.mongodb.TaggableReadPreference) secondary.toNew()).getTagsList());
     }
 }

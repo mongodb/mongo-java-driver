@@ -40,7 +40,7 @@ public class ServerDescriptionTest {
         assertEquals(0x2000000, serverDescription.getMaxMessageSize());
         assertNull(serverDescription.getPrimary());
         assertEquals(Collections.<String>emptyList(), serverDescription.getHosts());
-        assertEquals(Collections.<Tag>emptySet(), serverDescription.getTags());
+        assertEquals(Tags.freeze(new Tags()), serverDescription.getTags());
         assertEquals(Collections.<String>emptyList(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptyList(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());

@@ -60,10 +60,10 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
     @After
     public void tearDown() {
-        super.tearDown();
         if (cursor != null) {
             cursor.close();
         }
+        super.tearDown();
     }
 
     @Test

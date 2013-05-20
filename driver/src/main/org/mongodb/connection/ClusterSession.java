@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 public class ClusterSession extends AbstractBaseSession implements Session {
     public ClusterSession(final Cluster cluster) {
         super(cluster);
@@ -23,7 +25,7 @@ public class ClusterSession extends AbstractBaseSession implements Session {
 
     @Override
     public Connection getConnection(final ServerSelector serverSelector) {
-//        notNull("serverSelector", serverSelector);
+        notNull("serverSelector", serverSelector);
         return getCluster().getServer(serverSelector).getConnection();
     }
 
