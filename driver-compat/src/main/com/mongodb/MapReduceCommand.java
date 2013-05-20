@@ -25,36 +25,41 @@ import java.util.Map;
  */
 public class MapReduceCommand {
 
-    /**
-     * INLINE - Return results inline, no result is written to the DB server REPLACE - Save the job output to a
-     * collection, replacing its previous content MERGE - Merge the job output with the existing contents of
-     * outputTarget collection REDUCE - Reduce the job output with the existing contents of outputTarget collection
-     */
-    public static enum OutputType {
-        REPLACE,
-        MERGE,
-        REDUCE,
-        INLINE
-    }
+    private final String mapReduce;
+    private final String map;
+    private final String reduce;
+    private String finalize;
+    private ReadPreference readPreference;
+    private final OutputType outputType;
+    private final String outputCollection;
+    private String outputDB;
+    private final DBObject query;
+    private DBObject sort;
+    private int limit;
+    private Map<String, Object> scope;
+    private Boolean verbose;
+    private DBObject extraOptions;
 
     /**
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
      *
-     * @param inputCollection  the collection to read from
-     * @param map              map function in javascript code
-     * @param reduce           reduce function in javascript code
+     * @param inputCollection  collection to use as the source documents to perform the map reduce operation.
+     * @param map              a JavaScript function that associates or “maps” a value with a key and emits the key and value pair.
+     * @param reduce           a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      * @param outputCollection optional - leave null if want to get the result inline
      * @param type             the type of output
-     * @param query            the query to use on input
+     * @param query            specifies the selection criteria using query operators for determining the documents input to the map function.
      */
     public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce, final String outputCollection,
                             final OutputType type, final DBObject query) {
-        _input = inputCollection.getName();
-        _map = map;
-        _reduce = reduce;
-        _outputTarget = outputCollection;
-        _outputType = type;
-        _query = query;
+        this.mapReduce = inputCollection.getName();
+        this.map = map;
+        this.reduce = reduce;
+        this.outputCollection = outputCollection;
+        this.outputType = type;
+        this.query = query;
+        this.outputDB = null;
+        this.verbose = true;
     }
 
     /**
@@ -63,7 +68,7 @@ public class MapReduceCommand {
      * @param verbose The verbosity level.
      */
     public void setVerbose(final Boolean verbose) {
-        _verbose = verbose;
+        this.verbose = verbose;
     }
 
     /**
@@ -72,7 +77,7 @@ public class MapReduceCommand {
      * @return the verbosity level.
      */
     public Boolean isVerbose() {
-        return _verbose;
+        return verbose;
     }
 
     /**
@@ -81,7 +86,7 @@ public class MapReduceCommand {
      * @return name of the collection the MapReduce will read from
      */
     public String getInput() {
-        return _input;
+        return mapReduce;
     }
 
 
@@ -91,7 +96,7 @@ public class MapReduceCommand {
      * @return the map function (as a JS String)
      */
     public String getMap() {
-        return _map;
+        return map;
     }
 
     /**
@@ -100,17 +105,17 @@ public class MapReduceCommand {
      * @return the reduce function (as a JS String)
      */
     public String getReduce() {
-        return _reduce;
+        return reduce;
     }
 
     /**
      * Gets the output target (name of collection to save to) This value is nullable only if OutputType is set to
      * INLINE
      *
-     * @return The outputTarget
+     * @return The outputCollection
      */
     public String getOutputTarget() {
-        return _outputTarget;
+        return outputCollection;
     }
 
 
@@ -120,7 +125,7 @@ public class MapReduceCommand {
      * @return The outputType.
      */
     public OutputType getOutputType() {
-        return _outputType;
+        return outputType;
     }
 
 
@@ -130,7 +135,7 @@ public class MapReduceCommand {
      * @return The finalize function (as a JS String).
      */
     public String getFinalize() {
-        return _finalize;
+        return finalize;
     }
 
     /**
@@ -139,7 +144,7 @@ public class MapReduceCommand {
      * @param finalize The finalize function (as a JS String)
      */
     public void setFinalize(final String finalize) {
-        _finalize = finalize;
+        this.finalize = finalize;
     }
 
     /**
@@ -148,7 +153,7 @@ public class MapReduceCommand {
      * @return The query object
      */
     public DBObject getQuery() {
-        return _query;
+        return query;
     }
 
     /**
@@ -157,7 +162,7 @@ public class MapReduceCommand {
      * @return the Sort DBObject
      */
     public DBObject getSort() {
-        return _sort;
+        return sort;
     }
 
     /**
@@ -166,7 +171,7 @@ public class MapReduceCommand {
      * @param sort The sort specification object
      */
     public void setSort(final DBObject sort) {
-        _sort = sort;
+        this.sort = sort;
     }
 
     /**
@@ -175,7 +180,7 @@ public class MapReduceCommand {
      * @return The limit specification object
      */
     public int getLimit() {
-        return _limit;
+        return limit;
     }
 
     /**
@@ -184,7 +189,7 @@ public class MapReduceCommand {
      * @param limit The limit specification object
      */
     public void setLimit(final int limit) {
-        _limit = limit;
+        this.limit = limit;
     }
 
     /**
@@ -193,7 +198,7 @@ public class MapReduceCommand {
      * @return The JavaScript scope
      */
     public Map<String, Object> getScope() {
-        return _scope;
+        return scope;
     }
 
     /**
@@ -202,7 +207,7 @@ public class MapReduceCommand {
      * @param scope The JavaScript scope
      */
     public void setScope(final Map<String, Object> scope) {
-        _scope = scope;
+        this.scope = scope;
     }
 
     /**
@@ -211,75 +216,75 @@ public class MapReduceCommand {
      * @param outputDB
      */
     public void setOutputDB(final String outputDB) {
-        this._outputDB = outputDB;
+        this.outputDB = outputDB;
     }
 
-    //CHECKSTYLE:OFF
     public DBObject toDBObject() {
         final BasicDBObject cmd = new BasicDBObject();
 
-        cmd.put("mapreduce", _input);
-        cmd.put("map", _map);
-        cmd.put("reduce", _reduce);
-        cmd.put("verbose", _verbose);
+        cmd.put("mapreduce", mapReduce);
+        cmd.put("map", map);
+        cmd.put("reduce", reduce);
+        cmd.put("verbose", verbose);
 
         final BasicDBObject out = new BasicDBObject();
-        switch (_outputType) {
+        switch (outputType) {
             case INLINE:
                 out.put("inline", 1);
                 break;
             case REPLACE:
-                out.put("replace", _outputTarget);
+                out.put("replace", outputCollection);
                 break;
             case MERGE:
-                out.put("merge", _outputTarget);
+                out.put("merge", outputCollection);
                 break;
             case REDUCE:
-                out.put("reduce", _outputTarget);
+                out.put("reduce", outputCollection);
                 break;
+            default:
+                throw new IllegalArgumentException("Unexpected output type");
         }
-        if (_outputDB != null) {
-            out.put("db", _outputDB);
+        if (outputDB != null) {
+            out.put("db", outputDB);
         }
         cmd.put("out", out);
 
-        if (_query != null) {
-            cmd.put("query", _query);
+        if (query != null) {
+            cmd.put("query", query);
         }
 
-        if (_finalize != null) {
-            cmd.put("finalize", _finalize);
+        if (finalize != null) {
+            cmd.put("finalize", finalize);
         }
 
-        if (_sort != null) {
-            cmd.put("sort", _sort);
+        if (sort != null) {
+            cmd.put("sort", sort);
         }
 
-        if (_limit > 0) {
-            cmd.put("limit", _limit);
+        if (limit > 0) {
+            cmd.put("limit", limit);
         }
 
-        if (_scope != null) {
-            cmd.put("scope", _scope);
+        if (scope != null) {
+            cmd.put("scope", scope);
         }
 
-        if (_extra != null) {
-            cmd.putAll(_extra);
+        if (extraOptions != null) {
+            cmd.putAll(extraOptions);
         }
 
         return cmd;
     }
-    //CHECKSTYLE:ON
 
     public void addExtraOption(final String name, final Object value) {
-        if (_extra == null) {
-            _extra = new BasicDBObject();
+        if (extraOptions == null) {
+            extraOptions = new BasicDBObject();
         }
-        _extra.put(name, value);
+        extraOptions.put(name, value);
     }
 
     public DBObject getExtraOptions() {
-        return _extra;
+        return extraOptions;
     }
 
     /**
@@ -289,7 +294,7 @@ public class MapReduceCommand {
      * @param preference Read Preference to use
      */
     public void setReadPreference(final ReadPreference preference) {
-        _readPref = preference;
+        this.readPreference = preference;
     }
 
     /**
@@ -298,7 +303,7 @@ public class MapReduceCommand {
      * @return
      */
     public ReadPreference getReadPreference() {
-        return _readPref;
+        return readPreference;
     }
 
 
@@ -306,18 +311,19 @@ public class MapReduceCommand {
         return toDBObject().toString();
     }
 
-    final String _input;
-    final String _map;
-    final String _reduce;
-    final String _outputTarget;
-    ReadPreference _readPref;
-    String _outputDB = null;
-    final OutputType _outputType;
-    final DBObject _query;
-    String _finalize;
-    DBObject _sort;
-    int _limit;
-    Map<String, Object> _scope;
-    Boolean _verbose = true;
-    DBObject _extra;
+    /**
+     * Type of the output:
+     * <ul>
+     * <li>INLINE - Return results inline, no result is written to the DB server</li>
+     * <li>REPLACE - Save the job output to a collection, replacing its previous content</li>
+     * <li>MERGE - Merge the job output with the existing contents of outputCollection collection</li>
+     * <li>REDUCE - Reduce the job output with the existing contents of outputCollection collection</li>
+     * </ul>
+     */
+    public static enum OutputType {
+        REPLACE,
+        MERGE,
+        REDUCE,
+        INLINE
+    }
 }

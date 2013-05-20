@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -38,14 +40,17 @@ import static org.junit.Assert.assertTrue;
 public class MapReduceTest extends DatabaseTestCase {
 
     private static final String MR_DATABASE = "output-" + System.nanoTime();
-    public static final String MR_COLLECTION = "jmr1_out";
+    private static final String DEFAULT_COLLECTION = "jmr1_out";
+    private static final String DEFAULT_MAP = "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }";
+    private static final String DEFAULT_REDUCE = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
 
     @Override
     public void setUp() {
         super.setUp();
-        collection.save(new BasicDBObject("x", new String[]{"a", "b"}));
-        collection.save(new BasicDBObject("x", new String[]{"b", "c"}));
-        collection.save(new BasicDBObject("x", new String[]{"c", "d"}));
+        collection.save(new BasicDBObject("x", new String[]{"a", "b"}).append("s", 1));
+        collection.save(new BasicDBObject("x", new String[]{"b", "c"}).append("s", 2));
+        collection.save(new BasicDBObject("x", new String[]{"c", "d"}).append("s", 3));
+        database.getCollection(DEFAULT_COLLECTION).drop();
     }
 
     @AfterClass
@@ -56,33 +61,34 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceInline() {
-        final MapReduceOutput mapReduceOutput = collection.mapReduce(
-                "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
-                "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
+        final MapReduceOutput output = collection.mapReduce(
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
                 null,
                 MapReduceCommand.OutputType.INLINE,
                 null,
                 ReadPreference.primaryPreferred()
         );
 
-        assertNotNull(mapReduceOutput.results());
-        assertThat(mapReduceOutput.results(), everyItem(
+        assertNotNull(output.results());
+        assertThat(output.results(), everyItem(
                 allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))
         ));
     }
 
     @Test
     public void testMapReduce() {
-        final MapReduceOutput mapReduceOutput = collection.mapReduce(
-                "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
-                "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
-                MR_COLLECTION, null
+        final MapReduceOutput output = collection.mapReduce(
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                null
         );
 
-        assertNotNull(mapReduceOutput.results());
+        assertNotNull(output.results());
 
         final Map<String, Integer> map = new HashMap<String, Integer>();
-        for (DBObject r : mapReduceOutput.results()) {
+        for (DBObject r : output.results()) {
             map.put(r.get("_id").toString(), ((Number) (r.get("value"))).intValue());
         }
 
@@ -95,29 +101,29 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceWithOutputToAnotherDatabase() {
-        final MapReduceCommand mapReduceCommand = new MapReduceCommand(
+        final MapReduceCommand command = new MapReduceCommand(
                 collection,
-                "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
-                "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
-                MR_COLLECTION,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
                 MapReduceCommand.OutputType.REPLACE,
                 new BasicDBObject()
         );
-        mapReduceCommand.setOutputDB(MR_DATABASE);
-        final MapReduceOutput mapReduceOutput = collection.mapReduce(mapReduceCommand);
+        command.setOutputDB(MR_DATABASE);
+        final MapReduceOutput output = collection.mapReduce(command);
 
         final DB db = database.getMongo().getDB(MR_DATABASE);
-        assertTrue(db.collectionExists(MR_COLLECTION));
-        assertEquals(toList(mapReduceOutput.results()), toList(db.getCollection(MR_COLLECTION).find()));
+        assertTrue(db.collectionExists(DEFAULT_COLLECTION));
+        assertEquals(toList(output.results()), toList(db.getCollection(DEFAULT_COLLECTION).find()));
     }
 
 
     @Test
     public void testMapReduceInlineWScope() {
-        final MapReduceCommand mapReduceCommand = new MapReduceCommand(
+        final MapReduceCommand command = new MapReduceCommand(
                 collection,
-                "function(){ for ( var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }",
-                "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}",
+                "function(){ for (var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }",
+                DEFAULT_REDUCE,
                 null,
                 MapReduceCommand.OutputType.INLINE,
                 null
@@ -125,15 +131,209 @@ public class MapReduceTest extends DatabaseTestCase {
 
         final Map<String, Object> scope = new HashMap<String, Object>();
         scope.put("exclude", "a");
-        mapReduceCommand.setScope(scope);
+        command.setScope(scope);
 
-        MapReduceOutput mapReduceOutput = collection.mapReduce(mapReduceCommand);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        assertThat(mapReduceOutput.results(), not(hasItem(hasSubdocument(new BasicDBObject("_id", "a")))));
-        assertThat(mapReduceOutput.results(), hasItem(hasSubdocument(new BasicDBObject("_id", "b"))));
+        assertThat(output.results(), not(hasItem(hasSubdocument(new BasicDBObject("_id", "a")))));
+        assertThat(output.results(), hasItem(hasSubdocument(new BasicDBObject("_id", "b"))));
+    }
+
+    @Test
+    public void testDropOutputCollection() {
+        final String anotherCollectionName = "anotherCollection" + System.nanoTime();
+        final MapReduceOutput output = collection.mapReduce(
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                anotherCollectionName, null
+        );
+
+        assertTrue(database.collectionExists(anotherCollectionName));
+
+        output.drop();
+
+        assertFalse(database.collectionExists(anotherCollectionName));
+    }
+
+
+    @Test
+    public void testOutputTypeMerge() {
+
+        database.getCollection(DEFAULT_COLLECTION).insert(new BasicDBObject("z", 10));
+
+        final MapReduceOutput output = collection.mapReduce(
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.MERGE,
+                null
+        );
+
+        List<DBObject> documents = toList(output.results());
+
+        assertThat(documents, hasItem(hasSubdocument(new BasicDBObject("z", 10))));
+        assertThat(documents, hasItem(hasSubdocument(new BasicDBObject("_id", "a").append("value", 1.0))));
+    }
+
+    @Test
+    public void testOutputTypeReduce() {
+        final MapReduceOutput output = collection.mapReduce(
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REDUCE,
+                null
+        );
+    }
+
+    @Test
+    public void testMapReduceWithFinalize() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject()
+        );
+        command.setFinalize("function(key,reducedValue){ return reducedValue*5; }");
+
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        assertThat(
+                output.results(),
+                hasItem(hasSubdocument(new BasicDBObject("_id", "b").append("value", 10.0)))
+        );
+
+    }
+
+    @Test
+    public void testMapReduceWithQuery() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject("x", "a")
+        );
+
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        final Map<String, Object> map = toMap(output.results());
+        assertEquals(2, map.size());
+        assertEquals(1.0, map.get("a"));
+        assertEquals(1.0, map.get("b"));
+    }
+
+    @Test
+    @Ignore("Not sure about the behavior of sort")
+    public void testMapReduceWithSort() {
+        collection.ensureIndex(new BasicDBObject("s", 1));
+
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject("x", "a")
+        );
+
+        command.setSort(new BasicDBObject("s", -1));
+        command.setLimit(1);
+
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        final Map<String, Object> map = toMap(output.results());
+        assertEquals(2, map.size());
+        assertEquals(1.0, map.get("c"));
+        assertEquals(1.0, map.get("d"));
+    }
+
+    @Test
+    public void testMapReduceWithLimit() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.INLINE,
+                new BasicDBObject()
+        );
+
+        command.setLimit(1);
+
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        final Map<String, Object> map = toMap(output.results());
+        assertEquals(2, map.size());
+        assertEquals(1.0, map.get("a"));
+        assertEquals(1.0, map.get("b"));
+    }
+
+    @Test
+    public void testServerUsed() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject()
+        );
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        assertNotNull(output.getServerUsed());
+    }
+
+
+    @Test
+    public void testWithDefaultVerboseValue() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject()
+        );
+        final MapReduceOutput output = collection.mapReduce(command);
+        assertThat(
+                output.getCommandResult(),
+                hasFields(new String[]{"timing"})
+        );
+    }
+
+    @Test
+    public void testWithVerboseFalse() {
+        final MapReduceCommand command = new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject()
+        );
+        command.setVerbose(false);
+
+        final MapReduceOutput output = collection.mapReduce(command);
+
+        assertThat(
+                output.getCommandResult(),
+                not(hasFields(new String[]{"timing"}))
+        );
     }
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
         return results instanceof DBCursor ? ((DBCursor) results).toArray() : (List<DBObject>) results;
+    }
+
+    private Map<String, Object> toMap(final Iterable<DBObject> result) {
+        final Map<String, Object> map = new HashMap<String, Object>();
+        for (DBObject document : result) {
+            map.put((String) document.get("_id"), document.get("value"));
+        }
+        return map;
     }
 }
