@@ -29,20 +29,12 @@ import java.util.List;
 @Immutable
 public class ClusterDescription {
     private final List<ServerDescription> all;
-    private final List<ServerDescription> goodPrimaries;
-    private final List<ServerDescription> goodSecondaries;
-    private final List<ServerDescription> goodMembers;
 
     private final int acceptableLatencyMS;
 
-    public ClusterDescription(final List<ServerDescription> serverDescriptions, final int acceptableLatencyMS) {
-
-        this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(serverDescriptions));
+    public ClusterDescription(final List<ServerDescription> all, final int acceptableLatencyMS) {
+        this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(all));
         this.acceptableLatencyMS = acceptableLatencyMS;
-
-        this.goodPrimaries = Collections.unmodifiableList(calculateGoodPrimaries(all, calculateBestPingTime(all), acceptableLatencyMS));
-        this.goodSecondaries = Collections.unmodifiableList(calculateGoodSecondaries(all, calculateBestPingTime(all), acceptableLatencyMS));
-        this.goodMembers = Collections.unmodifiableList(calculateGoodMembers(all, calculateBestPingTime(all), acceptableLatencyMS));
     }
 
     public List<ServerDescription> getAll() {
@@ -56,25 +48,30 @@ public class ClusterDescription {
      * @return a list of servers that can act as primaries\
      */
     public List<ServerDescription> getPrimaries() {
-        return goodPrimaries;
+        List<ServerDescription> primaries = getAllGoodPrimaries(all);
+        return getAllServersWithAcceptableLatency(primaries, calculateBestPingTime(primaries), acceptableLatencyMS);
     }
 
     public List<ServerDescription> getSecondaries() {
-        return goodSecondaries;
+        List<ServerDescription> secondaries = getAllGoodSecondaries(all);
+        return getAllServersWithAcceptableLatency(secondaries, calculateBestPingTime(secondaries), acceptableLatencyMS);
     }
 
     public List<ServerDescription> getSecondaries(final Tags tags) {
-        List<ServerDescription> taggedSecondaries = getMembersByTags(all, tags);
-        return calculateGoodSecondaries(taggedSecondaries, calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
+        List<ServerDescription> taggedServers = getServersByTags(all, tags);
+        List<ServerDescription> taggedSecondaries = getAllGoodSecondaries(taggedServers);
+        return getAllServersWithAcceptableLatency(taggedSecondaries, calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
     }
 
     public List<ServerDescription> getAny() {
-        return goodMembers;
+        List<ServerDescription> any = getAllGoodServers(all);
+        return getAllServersWithAcceptableLatency(any, calculateBestPingTime(any), acceptableLatencyMS);
     }
 
     public List<ServerDescription> getAny(final Tags tags) {
-        List<ServerDescription> taggedMembers = getMembersByTags(all, tags);
-        return calculateGoodMembers(taggedMembers, calculateBestPingTime(taggedMembers), acceptableLatencyMS);
+        List<ServerDescription> taggedServers = getServersByTags(all, tags);
+        List<ServerDescription> taggedAny = getAllGoodServers(taggedServers);
+        return getAllServersWithAcceptableLatency(taggedAny, calculateBestPingTime(taggedAny), acceptableLatencyMS);
     }
 
     @Override
@@ -102,27 +99,40 @@ public class ClusterDescription {
         return bestPingTime;
     }
 
-    static List<ServerDescription> calculateGoodPrimaries(final List<ServerDescription> members,
-                                                            final float bestPingTime, final int acceptableLatencyMS) {
-        final List<ServerDescription> goodPrimaries = new ArrayList<ServerDescription>(members.size());
-        for (final ServerDescription cur : members) {
-            if (!cur.isPrimary()) {
-                continue;
-            }
-            if (cur.getAveragePingTimeMillis() - acceptableLatencyMS <= bestPingTime) {
+    static List<ServerDescription> getAllGoodPrimaries(final List<ServerDescription> servers) {
+        final List<ServerDescription> goodPrimaries = new ArrayList<ServerDescription>(servers.size());
+        for (final ServerDescription cur : servers) {
+            if (cur.isPrimary()) {
                 goodPrimaries.add(cur);
             }
         }
         return goodPrimaries;
     }
 
-    static List<ServerDescription> calculateGoodMembers(final List<ServerDescription> members, final float bestPingTime,
-                                                        final int acceptableLatencyMS) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(members.size());
-        for (final ServerDescription cur : members) {
-            if (!cur.isOk()) {
-                continue;
+    static List<ServerDescription> getAllGoodServers(final List<ServerDescription> servers) {
+        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
+        for (final ServerDescription cur : servers) {
+            if (cur.isOk()) {
+                goodSecondaries.add(cur);
             }
+        }
+        return goodSecondaries;
+    }
+
+    static List<ServerDescription> getAllGoodSecondaries(final List<ServerDescription> server) {
+        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(server.size());
+        for (final ServerDescription cur : server) {
+            if (cur.isSecondary()) {
+                goodSecondaries.add(cur);
+            }
+        }
+        return goodSecondaries;
+    }
+
+    static List<ServerDescription> getAllServersWithAcceptableLatency(final List<ServerDescription> servers,
+                                                                      final float bestPingTime, final int acceptableLatencyMS) {
+        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
+        for (final ServerDescription cur : servers) {
             if (cur.getAveragePingTimeMillis() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
@@ -130,25 +140,11 @@ public class ClusterDescription {
         return goodSecondaries;
     }
 
-    static List<ServerDescription> calculateGoodSecondaries(final List<ServerDescription> members,
-                                                            final float bestPingTime, final int acceptableLatencyMS) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(members.size());
-        for (final ServerDescription cur : members) {
-            if (!cur.isSecondary()) {
-                continue;
-            }
-            if (cur.getAveragePingTimeMillis() - acceptableLatencyMS <= bestPingTime) {
-                goodSecondaries.add(cur);
-            }
-        }
-        return goodSecondaries;
-    }
-
-    static List<ServerDescription> getMembersByTags(final List<ServerDescription> members, final Tags tags) {
+    static List<ServerDescription> getServersByTags(final List<ServerDescription> servers, final Tags tags) {
 
         final List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
 
-        for (final ServerDescription cur : members) {
+        for (final ServerDescription cur : servers) {
             if (cur.hasTags(tags)) {
                 membersByTag.add(cur);
             }
