@@ -32,8 +32,42 @@ public class ReadPreferenceServerSelector implements ServerSelector {
         this.readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
     }
 
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
     @Override
     public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
         return readPreference.choose(clusterDescription);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ReadPreferenceServerSelector that = (ReadPreferenceServerSelector) o;
+
+        if (!readPreference.equals(that.readPreference)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return readPreference.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ReadPreferenceServerSelector{"
+                + "readPreference=" + readPreference
+                + '}';
     }
 }
