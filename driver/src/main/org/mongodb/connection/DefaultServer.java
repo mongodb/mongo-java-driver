@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -35,6 +36,7 @@ class DefaultServer implements Server {
     private final Pool<Connection> connectionPool;
     private final Pool<AsyncConnection> asyncConnectionPool;
     private final IsMasterServerStateNotifier stateNotifier;
+    private final ScheduledFuture<?> scheduledFuture;
     private final Set<ServerStateListener> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ServerStateListener, Boolean>());
     private volatile ServerDescription description;
@@ -51,7 +53,8 @@ class DefaultServer implements Server {
         this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
         this.description = ServerDescription.builder().address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
-        scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS); // TODO: configurable
+        // TODO: configurable
+        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -94,6 +97,7 @@ class DefaultServer implements Server {
         if (asyncConnectionPool != null) {
             asyncConnectionPool.close();
         }
+        scheduledFuture.cancel(true);
         stateNotifier.close();
     }
 
@@ -112,7 +116,7 @@ class DefaultServer implements Server {
 
         @Override
         public void notify(final MongoException e) {
-            description = ServerDescription.builder().build();
+            description = ServerDescription.builder().address(serverAddress).build();
             for (ServerStateListener listener : changeListeners) {
                 listener.notify(e);
             }
