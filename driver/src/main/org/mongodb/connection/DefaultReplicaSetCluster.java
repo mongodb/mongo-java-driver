@@ -33,79 +33,67 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
         super(seedList, credentialList, options, bufferPool, serverFactory);
     }
 
-    protected ChangeListener<ServerDescription> createServerStateListener(final ServerAddress serverAddress) {
-        return new ReplicaSetServerStateListener();
+    protected void onChange(final ChangeEvent<ServerDescription> event) {
+        if (isClosed()) {
+            return;
+        }
+
+        synchronized (DefaultReplicaSetCluster.this) {
+            if (event.getNewValue().isOk()) {
+                addNewHosts(event.getNewValue().getHosts());
+                addNewHosts(event.getNewValue().getPassives());
+                if (event.getNewValue().isPrimary()) {
+                    removeExtras(event.getNewValue());
+                }
+            }
+            else {
+                if (event.getOldValue() != null && event.getOldValue().isPrimary()) {
+                    invalidateAll();
+                }
+            }
+        }
     }
 
-    private final class ReplicaSetServerStateListener implements ChangeListener<ServerDescription> {
-
-        private ReplicaSetServerStateListener() {
-        }
-
-        @Override
-        public void stateChanged(final ChangeEvent<ServerDescription> event) {
-            if (isClosed()) {
-                return;
-            }
-
-            synchronized (DefaultReplicaSetCluster.this) {
-                if (event.getNewValue().isOk()) {
-                    addNewHosts(event.getNewValue().getHosts());
-                    addNewHosts(event.getNewValue().getPassives());
-                    if (event.getNewValue().isPrimary()) {
-                        removeExtras(event.getNewValue());
-                    }
-                }
-                else {
-                    if (event.getOldValue() != null && event.getOldValue().isPrimary()) {
-                        invalidateAll();
-                    }
-                }
-                updateDescription();
+    private void addNewHosts(final List<String> hosts) {
+        for (String cur : hosts) {
+            ServerAddress curServerAddress = getServerAddress(cur);
+            if (curServerAddress != null) {
+                addServer(curServerAddress);
             }
         }
+    }
 
-        private void addNewHosts(final List<String> hosts) {
-            for (String cur : hosts) {
-                ServerAddress curServerAddress = getServerAddress(cur);
-                if (curServerAddress != null) {
-                    addServer(curServerAddress);
-                }
+    private void removeExtras(final ServerDescription serverDescription) {
+        Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
+        for (ServerDescription cur : getDescription().getAll()) {
+            if (!allServerAddresses.contains(cur.getAddress())) {
+                removeServer(cur.getAddress());
             }
         }
+    }
 
-        private void removeExtras(final ServerDescription serverDescription) {
-            Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-            for (ServerDescription cur : getDescription().getAll()) {
-                if (!allServerAddresses.contains(cur.getAddress())) {
-                    removeServer(cur.getAddress());
-                }
+    // TODO: move these next two methods to ServerDescription
+    private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
+        Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+        addHostsToSet(serverDescription.getHosts(), retVal);
+        addHostsToSet(serverDescription.getPassives(), retVal);
+        return retVal;
+    }
+
+    private void addHostsToSet(final List<String> hosts, final Set<ServerAddress> retVal) {
+        for (String host : hosts) {
+            ServerAddress curServerAddress = getServerAddress(host);
+            if (curServerAddress != null) {
+                retVal.add(curServerAddress);
             }
         }
+    }
 
-        // TODO: move these next two methods to ServerDescription
-        private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
-            Set<ServerAddress> retVal = new HashSet<ServerAddress>();
-            addHostsToSet(serverDescription.getHosts(), retVal);
-            addHostsToSet(serverDescription.getPassives(), retVal);
-            return retVal;
-        }
-
-        private void addHostsToSet(final List<String> hosts, final Set<ServerAddress> retVal) {
-            for (String host : hosts) {
-                ServerAddress curServerAddress = getServerAddress(host);
-                if (curServerAddress != null) {
-                    retVal.add(curServerAddress);
-                }
-            }
-        }
-
-        private ServerAddress getServerAddress(final String serverAddressString) {
-            try {
-                return new ServerAddress(serverAddressString);
-            } catch (UnknownHostException e) {
-                return null;
-            }
+    private ServerAddress getServerAddress(final String serverAddressString) {
+        try {
+            return new ServerAddress(serverAddressString);
+        } catch (UnknownHostException e) {
+            return null;
         }
     }
 }

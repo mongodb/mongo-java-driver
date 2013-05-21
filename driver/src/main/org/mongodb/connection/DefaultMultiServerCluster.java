@@ -53,7 +53,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    protected abstract ChangeListener<ServerDescription> createServerStateListener(final ServerAddress serverAddress);
+    protected abstract void onChange(final ChangeEvent<ServerDescription> event);
 
     @Override
     protected Server getServer(final ServerAddress serverAddress) {
@@ -70,7 +70,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         isTrue("open", !isClosed());
 
         if (!addressToServerMap.containsKey(serverAddress)) {
-            Server mongoServer = createServer(serverAddress, createServerStateListener(serverAddress));
+            Server mongoServer = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerMap.put(serverAddress, mongoServer);
         }
     }
@@ -103,5 +103,13 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
            serverDescriptions.add(server.getDescription());
         }
         return serverDescriptions;
+    }
+
+    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
+        @Override
+        public void stateChanged(final ChangeEvent<ServerDescription> event) {
+            onChange(event);
+            updateDescription();
+        }
     }
 }
