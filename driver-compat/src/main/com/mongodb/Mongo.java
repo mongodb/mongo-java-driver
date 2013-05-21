@@ -23,9 +23,11 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.Clusters;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ReplicaSetCluster;
+import org.mongodb.connection.ServerDescription;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -138,11 +140,11 @@ public class Mongo {
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
-        List<ServerAddress> retVal = new ArrayList<ServerAddress>();
-        for (org.mongodb.connection.ServerAddress serverAddress : getCluster().getAllServerAddresses()) {
-            retVal.add(new ServerAddress(serverAddress));
+        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
+        for (ServerDescription cur : cluster.getDescription().getAll()) {
+            serverAddresses.add(new ServerAddress(cur.getAddress()));
         }
-        return retVal;
+        return serverAddresses;
     }
 
     /**
@@ -150,8 +152,11 @@ public class Mongo {
      * @return the address
      */
     public ServerAddress getAddress() {
-        //TODO this needs to return a master. Currently not.
-        return new ServerAddress(getCluster().getAllServerAddresses().iterator().next());
+        final ClusterDescription description = cluster.getDescription();
+        if (description.getPrimaries().isEmpty()) {
+            return null;
+        }
+        return new ServerAddress(description.getPrimaries().get(0).getAddress());
     }
 
     /**

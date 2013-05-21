@@ -22,9 +22,7 @@ import org.mongodb.MongoException;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -55,13 +53,6 @@ class DefaultSingleServerCluster extends DefaultCluster {
         isTrue("open", !isClosed());
 
         return server;
-    }
-
-    @Override
-    public Set<ServerAddress> getAllServerAddresses() {
-        isTrue("open", !isClosed());
-
-        return Collections.singleton(server.getServerAddress());
     }
 
     @Override

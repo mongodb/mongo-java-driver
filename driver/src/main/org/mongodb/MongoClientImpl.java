@@ -24,9 +24,11 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSession;
 import org.mongodb.connection.MonotonicSession;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.Session;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -92,7 +94,11 @@ public class MongoClientImpl implements MongoClient {
 
     @Override
     public Set<ServerAddress> getServerAddresses() {
-        return cluster.getAllServerAddresses();
+        Set<ServerAddress> serverAddresses = new HashSet<ServerAddress>();
+        for (ServerDescription cur : cluster.getDescription().getAll()) {
+            serverAddresses.add(cur.getAddress());
+        }
+        return serverAddresses;
     }
 
     public AsyncSession getAsyncSession() {

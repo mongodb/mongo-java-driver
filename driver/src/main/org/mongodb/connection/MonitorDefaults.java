@@ -19,10 +19,7 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 
 
-// TODO: this is a lousy base class (at least it's not public)
-/**
- * Base class for classes that manage connections to mongo instances as background tasks.
- */
+// TODO: this is lousy
 final class MonitorDefaults  {
 
     static final int SLAVE_ACCEPTABLE_LATENCY_MS;

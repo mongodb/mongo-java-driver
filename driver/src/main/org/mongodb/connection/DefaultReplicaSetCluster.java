@@ -22,18 +22,11 @@ import org.mongodb.MongoException;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
-
 class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements ReplicaSetCluster {
-
-    private final Map<ServerAddress, ServerDescription> mostRecentStateMap = new HashMap<ServerAddress, ServerDescription>();
 
     public DefaultReplicaSetCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                     final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
@@ -60,13 +53,13 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
 
             synchronized (DefaultReplicaSetCluster.this) {
 
-                addNewHosts(serverDescription.getHosts(), true);
-                addNewHosts(serverDescription.getPassives(), false);
+                addNewHosts(serverDescription.getHosts());
+                addNewHosts(serverDescription.getPassives());
                 if (serverDescription.isPrimary()) {
                     removeExtras(serverDescription);
                 }
 
-                mostRecentStateMap.put(serverAddress, serverDescription);
+                mapDescriptionToServerAddress(serverDescription);
 
                 updateDescription();
             }
@@ -80,7 +73,7 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
 
             synchronized (DefaultReplicaSetCluster.this) {
 
-                ServerDescription serverDescription = mostRecentStateMap.remove(serverAddress);
+                ServerDescription serverDescription = unmapDescriptionFromServerAddress(serverAddress);
 
                 updateDescription();
 
@@ -90,12 +83,7 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
             }
         }
 
-        private void updateDescription() {
-            DefaultReplicaSetCluster.this.updateDescription(
-                    new ClusterDescription(new ArrayList<ServerDescription>(mostRecentStateMap.values()), SLAVE_ACCEPTABLE_LATENCY_MS));
-        }
-
-        private void addNewHosts(final List<String> hosts, final boolean active) {
+        private void addNewHosts(final List<String> hosts) {
             for (String cur : hosts) {
                 ServerAddress curServerAddress = getServerAddress(cur);
                 if (curServerAddress != null) {
@@ -106,10 +94,9 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
 
         private void removeExtras(final ServerDescription serverDescription) {
             Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-            for (ServerAddress curServerAddress : DefaultReplicaSetCluster.this.getAllServerAddresses()) {
-                if (!allServerAddresses.contains(curServerAddress)) {
-                    removeServer(curServerAddress);
-                    mostRecentStateMap.remove(curServerAddress);
+            for (ServerDescription cur : getDescription().getAll()) {
+                if (!allServerAddresses.contains(cur.getAddress())) {
+                    removeServer(cur.getAddress());
                 }
             }
         }

@@ -17,7 +17,6 @@
 package org.mongodb.connection;
 
 import java.nio.ByteBuffer;
-import java.util.Set;
 
 public interface Cluster {
 
@@ -26,8 +25,6 @@ public interface Cluster {
     Server getServer(ServerSelector serverSelector);
 
     Server getServer(final ServerAddress serverAddress);
-
-    Set<ServerAddress> getAllServerAddresses();    // TODO: remove this method, in favor of getDescription
 
     BufferPool<ByteBuffer> getBufferPool();
 
