@@ -24,10 +24,11 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -35,7 +36,7 @@ import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS
 
 public abstract class DefaultCluster implements Cluster {
 
-    private final Phaser clusterPhaser = new Phaser(1);
+    private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final BufferPool<ByteBuffer> bufferPool;
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
@@ -66,21 +67,21 @@ public abstract class DefaultCluster implements Cluster {
         isTrue("open", !isClosed());
 
         try {
-            int phaseNumber = clusterPhaser.getPhase();
+            CountDownLatch currentPhase = phase.get();
             List<ServerDescription> serverDescriptions = serverSelector.choose(description);
             long endTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(20, TimeUnit.SECONDS); // TODO: configurable
             while (serverDescriptions.isEmpty()) {
-                clusterPhaser.awaitAdvanceInterruptibly(phaseNumber, endTime - System.nanoTime(), TimeUnit.NANOSECONDS);
+                if (!currentPhase.await(endTime - System.nanoTime(), TimeUnit.NANOSECONDS)) {
+                    throw new MongoTimeoutException(
+                            "Thread timed out while waiting for a server that satisfied server selector: " + serverSelector);
+                }
                 serverDescriptions = serverSelector.choose(description);
-                phaseNumber = clusterPhaser.getPhase();
+                currentPhase = phase.get();
             }
             return getServer(getRandomServer(serverDescriptions).getAddress());
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(
                     "Thread was interrupted while waiting for a server that satisfied server selector: " + serverSelector, e);
-        } catch (TimeoutException e) {
-            throw new MongoTimeoutException(
-                    "Thread timed out while waiting for a server that satisfied server selector: " + serverSelector);
         }
     }
 
@@ -101,7 +102,7 @@ public abstract class DefaultCluster implements Cluster {
         if (!isClosed()) {
             isClosed = true;
             scheduledExecutorService.shutdownNow();
-            clusterPhaser.forceTermination();
+            phase.get().countDown();
         }
     }
 
@@ -114,7 +115,8 @@ public abstract class DefaultCluster implements Cluster {
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         description = newDescription;
-        clusterPhaser.arrive();
+        CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
+        current.countDown();
     }
 
     private ServerDescription getRandomServer(final List<ServerDescription> serverDescriptions) {
