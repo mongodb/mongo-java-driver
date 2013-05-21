@@ -17,7 +17,9 @@
 package org.mongodb.operation;
 
 import org.mongodb.Decoder;
+import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
@@ -76,6 +78,12 @@ public class GetMoreOperation<T> extends Operation {
             try {
                 if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                     throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
+                }
+
+                if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                    final Document errorDocument =
+                            new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                    throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
                 }
 
                 return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
