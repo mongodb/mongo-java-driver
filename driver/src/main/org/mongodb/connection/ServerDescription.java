@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
+import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
 import static org.mongodb.connection.ServerType.ShardRouter;
@@ -135,6 +137,10 @@ public class ServerDescription {
 
     public ServerAddress getAddress() {
         return address;
+    }
+
+    public boolean isReplicaSetMember() {
+        return (type == ReplicaSetPrimary || type == ReplicaSetSecondary || type == ReplicaSetArbiter || type == ReplicaSetOther);
     }
 
     public boolean isPrimary() {

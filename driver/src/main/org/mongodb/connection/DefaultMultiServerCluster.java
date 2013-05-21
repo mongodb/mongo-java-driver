@@ -19,9 +19,12 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -29,7 +32,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
-abstract class DefaultMultiServerCluster extends DefaultCluster {
+class DefaultMultiServerCluster extends DefaultCluster implements ReplicaSetCluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
 
     protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
@@ -53,8 +56,6 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    protected abstract void onChange(final ChangeEvent<ServerDescription> event);
-
     @Override
     protected Server getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
@@ -66,7 +67,37 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         return connection;
     }
 
-    protected synchronized void addServer(final ServerAddress serverAddress) {
+
+    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
+        @Override
+        public void stateChanged(final ChangeEvent<ServerDescription> event) {
+            onChange(event);
+            updateDescription();
+        }
+    }
+
+    private synchronized void onChange(final ChangeEvent<ServerDescription> event) {
+        if (isClosed()) {
+            return;
+        }
+
+        if (event.getNewValue().isReplicaSetMember()) {
+            if (event.getNewValue().isOk()) {
+                addNewHosts(event.getNewValue().getHosts());
+                addNewHosts(event.getNewValue().getPassives());
+                if (event.getNewValue().isPrimary()) {
+                    removeExtras(event.getNewValue());
+                }
+            }
+            else {
+                if (event.getOldValue() != null && event.getOldValue().isPrimary()) {
+                    invalidateAll();
+                }
+            }
+        }
+    }
+
+    private void addServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         if (!addressToServerMap.containsKey(serverAddress)) {
@@ -75,7 +106,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    protected synchronized void removeServer(final ServerAddress serverAddress) {
+    private void removeServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         Server server = addressToServerMap.remove(serverAddress);
@@ -83,7 +114,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     }
 
 
-    protected void invalidateAll() {
+    private void invalidateAll() {
         isTrue("open", !isClosed());
 
         for (Server server : addressToServerMap.values()) {
@@ -91,7 +122,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    protected void updateDescription() {
+    private void updateDescription() {
         isTrue("open", !isClosed());
 
         updateDescription(new ClusterDescription(getNewServerDescriptionList(), SLAVE_ACCEPTABLE_LATENCY_MS));
@@ -100,16 +131,51 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     private List<ServerDescription> getNewServerDescriptionList() {
         List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
         for (Server server : addressToServerMap.values()) {
-           serverDescriptions.add(server.getDescription());
+            serverDescriptions.add(server.getDescription());
         }
         return serverDescriptions;
     }
 
-    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
-        @Override
-        public void stateChanged(final ChangeEvent<ServerDescription> event) {
-            onChange(event);
-            updateDescription();
+    private void addNewHosts(final List<String> hosts) {
+        for (String cur : hosts) {
+            ServerAddress curServerAddress = getServerAddress(cur);
+            if (curServerAddress != null) {
+                addServer(curServerAddress);
+            }
+        }
+    }
+
+    private void removeExtras(final ServerDescription serverDescription) {
+        Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
+        for (ServerDescription cur : getDescription().getAll()) {
+            if (!allServerAddresses.contains(cur.getAddress())) {
+                removeServer(cur.getAddress());
+            }
+        }
+    }
+
+    // TODO: move these next two methods to ServerDescription
+    private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
+        Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+        addHostsToSet(serverDescription.getHosts(), retVal);
+        addHostsToSet(serverDescription.getPassives(), retVal);
+        return retVal;
+    }
+
+    private void addHostsToSet(final List<String> hosts, final Set<ServerAddress> retVal) {
+        for (String host : hosts) {
+            ServerAddress curServerAddress = getServerAddress(host);
+            if (curServerAddress != null) {
+                retVal.add(curServerAddress);
+            }
+        }
+    }
+
+    private ServerAddress getServerAddress(final String serverAddressString) {
+        try {
+            return new ServerAddress(serverAddressString);
+        } catch (UnknownHostException e) {
+            return null;
         }
     }
 }
