@@ -59,8 +59,6 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
                     removeExtras(serverDescription);
                 }
 
-                mapDescriptionToServerAddress(serverDescription);
-
                 updateDescription();
             }
         }
@@ -73,7 +71,7 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
 
             synchronized (DefaultReplicaSetCluster.this) {
 
-                ServerDescription serverDescription = unmapDescriptionFromServerAddress(serverAddress);
+                ServerDescription serverDescription = getDescription().getByServerAddress(serverAddress);
 
                 updateDescription();
 

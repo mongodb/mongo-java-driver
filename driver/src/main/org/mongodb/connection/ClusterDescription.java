@@ -41,6 +41,16 @@ public class ClusterDescription {
         return all;
     }
 
+
+    public ServerDescription getByServerAddress(final ServerAddress serverAddress) {
+        for (ServerDescription cur : getAll()) {
+            if (cur.getAddress().equals(serverAddress)) {
+                return cur;
+            }
+        }
+        return null;
+    }
+
     /**
      * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary,
      * it can in the case where the client's view of the cluster is a set of mongos servers, any of which can serve as the primary.

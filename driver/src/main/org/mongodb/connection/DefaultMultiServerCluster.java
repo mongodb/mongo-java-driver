@@ -21,9 +21,7 @@ import org.mongodb.MongoCredential;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -32,7 +30,6 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 abstract class DefaultMultiServerCluster extends DefaultCluster {
-    private final Map<ServerAddress, ServerDescription> serverAddressToDescriptionMap = new HashMap<ServerAddress, ServerDescription>();
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
 
     protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
@@ -69,10 +66,6 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
 
     protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
 
-    protected Map<ServerAddress, ServerDescription> getServerAddressToDescriptionMap() {
-        return serverAddressToDescriptionMap;
-    }
-
     protected synchronized void addServer(final ServerAddress serverAddress) {
         if (!addressToServerMap.containsKey(serverAddress)) {
             Server mongoServer = createServer(serverAddress, createServerStateListener(serverAddress));
@@ -85,7 +78,6 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
 
         Server server = addressToServerMap.remove(serverAddress);
         server.close();
-        unmapDescriptionFromServerAddress(serverAddress);
     }
 
 
@@ -98,15 +90,14 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     }
 
     protected void updateDescription() {
-        updateDescription(new ClusterDescription(new ArrayList<ServerDescription>(getServerAddressToDescriptionMap().values()),
-                SLAVE_ACCEPTABLE_LATENCY_MS));
+        updateDescription(new ClusterDescription(getNewServerDescriptions(), SLAVE_ACCEPTABLE_LATENCY_MS));
     }
 
-    protected void mapDescriptionToServerAddress(final ServerDescription serverDescription) {
-        getServerAddressToDescriptionMap().put(serverDescription.getAddress(), serverDescription);
-    }
-
-    protected ServerDescription unmapDescriptionFromServerAddress(final ServerAddress key) {
-        return getServerAddressToDescriptionMap().remove(key);
+    private List<ServerDescription> getNewServerDescriptions() {
+        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        for (Server server : addressToServerMap.values()) {
+           serverDescriptions.add(server.getDescription());
+        }
+        return serverDescriptions;
     }
 }
