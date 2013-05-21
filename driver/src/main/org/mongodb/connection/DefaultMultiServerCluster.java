@@ -30,9 +30,10 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
 import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
-class DefaultMultiServerCluster extends DefaultCluster implements ReplicaSetCluster {
+class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
 
     protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
@@ -44,6 +45,7 @@ class DefaultMultiServerCluster extends DefaultCluster implements ReplicaSetClus
         for (ServerAddress serverAddress : seedList) {
             addServer(serverAddress);
         }
+        updateDescription();
     }
 
     @Override
@@ -125,7 +127,8 @@ class DefaultMultiServerCluster extends DefaultCluster implements ReplicaSetClus
     private void updateDescription() {
         isTrue("open", !isClosed());
 
-        updateDescription(new ClusterDescription(getNewServerDescriptionList(), SLAVE_ACCEPTABLE_LATENCY_MS));
+        final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
+        updateDescription(new ClusterDescription(newServerDescriptionList, SLAVE_ACCEPTABLE_LATENCY_MS, Discovering));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

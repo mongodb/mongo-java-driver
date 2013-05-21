@@ -26,7 +26,6 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.Clusters;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
-import org.mongodb.connection.ReplicaSetCluster;
 import org.mongodb.connection.ServerDescription;
 
 import java.net.UnknownHostException;
@@ -124,6 +123,7 @@ public class Mongo {
 
     /**
      * Gets a list of all server addresses used when this Mongo was created
+     *
      * @return list of server addresses
      * @throws MongoException
      */
@@ -149,6 +149,7 @@ public class Mongo {
 
     /**
      * Gets the address of the current master
+     *
      * @return the address
      */
     public ServerAddress getAddress() {
@@ -161,10 +162,12 @@ public class Mongo {
 
     /**
      * Get the status of the replica set cluster.
+     *
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return cluster instanceof ReplicaSetCluster
+        return cluster.getDescription().getType() == ClusterDescription.Type.ReplicaSet
+                && cluster.getDescription().getMode() == ClusterDescription.Mode.Discovering
                 ? new ReplicaSetStatus(cluster)
                 : null; // this is intended behavior in 2.x
     }
@@ -246,8 +249,8 @@ public class Mongo {
     /**
      * Makes it possible to run read queries on secondary nodes
      *
-     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      * @see ReadPreference#secondaryPreferred()
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
     @Deprecated
     public void slaveOk() {
@@ -256,6 +259,7 @@ public class Mongo {
 
     /**
      * Set the default query options.
+     *
      * @param options value to be set
      */
     public void setOptions(final int options) {
@@ -271,6 +275,7 @@ public class Mongo {
 
     /**
      * Add the default query option.
+     *
      * @param option value to be added to current options
      */
     public void addOption(final int option) {
@@ -293,7 +298,8 @@ public class Mongo {
         if (mongoURI.getHosts().size() == 1) {
             return Clusters.create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
                     mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
-        } else {
+        }
+        else {
             List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.connection.ServerAddress(cur));

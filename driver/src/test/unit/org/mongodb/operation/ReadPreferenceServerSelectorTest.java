@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
 
 public class ReadPreferenceServerSelectorTest {
     @Test
@@ -49,6 +50,6 @@ public class ReadPreferenceServerSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), 15)));
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), 15, Discovering)));
     }
 }

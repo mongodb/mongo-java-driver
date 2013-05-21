@@ -22,19 +22,52 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 
 /**
  * Immutable snapshot state of a cluster.
  */
 @Immutable
 public class ClusterDescription {
+
+    public enum Mode {
+        Direct, Discovering
+    }
+
+    public enum Type {
+        StandAlone, ReplicaSet, Sharded, Unknown
+    }
+
     private final List<ServerDescription> all;
 
     private final int acceptableLatencyMS;
+    private final Mode mode;
 
-    public ClusterDescription(final List<ServerDescription> all, final int acceptableLatencyMS) {
+    public ClusterDescription(final List<ServerDescription> all, final int acceptableLatencyMS, final Mode mode) {
+        notNull("all", all);
+        this.mode = notNull("mode", mode);
         this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(all));
         this.acceptableLatencyMS = acceptableLatencyMS;
+    }
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public Type getType() {
+        for (ServerDescription description : all) {
+            if (description.isReplicaSetMember()) {
+                return Type.ReplicaSet;
+            }
+            else if (description.isShardRouter()) {
+                return Type.Sharded;
+            }
+            else if (description.isStandAlone()) {
+                return Type.StandAlone;
+            }
+        }
+        return Type.Unknown;
     }
 
     public List<ServerDescription> getAll() {

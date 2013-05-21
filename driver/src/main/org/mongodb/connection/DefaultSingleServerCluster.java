@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ClusterDescription.Mode.Direct;
 
 class DefaultSingleServerCluster extends DefaultCluster {
     private final Server server;
@@ -38,10 +39,19 @@ class DefaultSingleServerCluster extends DefaultCluster {
         this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
             @Override
             public void stateChanged(final ChangeEvent<ServerDescription> event) {
-                updateDescription(new ClusterDescription(Arrays.asList(event.getNewValue()), 15));
+                updateDescription(event.getNewValue());
             }
 
         });
+        updateDescription();
+    }
+
+    private void updateDescription(final ServerDescription serverDescription) {
+        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), 15, Direct));
+    }
+
+    private void updateDescription() {
+        updateDescription(server.getDescription());
     }
 
     @Override

@@ -33,14 +33,23 @@ public class ServerDescriptionTest {
     public void testDefaults() throws UnknownHostException {
         ServerDescription serverDescription = ServerDescription.builder().address(new ServerAddress()).type(ServerType.ReplicaSetPrimary)
                 .build();
+
         assertEquals(new ServerAddress(), serverDescription.getAddress());
         assertFalse(serverDescription.isOk());
+
+        assertTrue(serverDescription.isReplicaSetMember());
+        assertFalse(serverDescription.isShardRouter());
+        assertFalse(serverDescription.isStandAlone());
+
         assertFalse(serverDescription.isPrimary());
         assertFalse(serverDescription.isSecondary());
+
         assertEquals(0F, serverDescription.getAveragePingTime(), 0L);
         assertEquals(0F, serverDescription.getAveragePingTimeMillis(), 0F);
+
         assertEquals(0x1000000, serverDescription.getMaxDocumentSize());
         assertEquals(0x2000000, serverDescription.getMaxMessageSize());
+
         assertNull(serverDescription.getPrimary());
         assertEquals(Collections.<String>emptyList(), serverDescription.getHosts());
         assertEquals(Tags.freeze(new Tags()), serverDescription.getTags());

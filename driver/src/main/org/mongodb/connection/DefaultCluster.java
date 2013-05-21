@@ -21,7 +21,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoInterruptedException;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -32,7 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 public abstract class DefaultCluster implements Cluster {
 
@@ -50,8 +48,7 @@ public abstract class DefaultCluster implements Cluster {
     };
 
     private volatile boolean isClosed;
-    private volatile ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(),
-            SLAVE_ACCEPTABLE_LATENCY_MS);
+    private volatile ClusterDescription description;
 
     public DefaultCluster(final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList,
                           final MongoClientOptions options, final ServerFactory serverFactory) {

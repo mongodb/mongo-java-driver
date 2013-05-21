@@ -143,6 +143,14 @@ public class ServerDescription {
         return (type == ReplicaSetPrimary || type == ReplicaSetSecondary || type == ReplicaSetArbiter || type == ReplicaSetOther);
     }
 
+    public boolean isShardRouter() {
+        return type == ShardRouter;
+    }
+
+    public boolean isStandAlone() {
+        return type == StandAlone;
+    }
+
     public boolean isPrimary() {
         return ok && (type == ReplicaSetPrimary || type == ShardRouter || type == StandAlone);
     }

@@ -83,7 +83,6 @@ class DefaultServer implements Server {
     @Override
     public void addChangeListener(final ChangeListener<ServerDescription> changeListener) {
         changeListeners.add(changeListener);
-        changeListener.stateChanged(new ChangeEvent<ServerDescription>(null, description));
     }
 
     @Override

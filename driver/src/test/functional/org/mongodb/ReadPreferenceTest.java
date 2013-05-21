@@ -31,6 +31,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
@@ -79,9 +80,9 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ClusterDescription(nodeList, (int) acceptableLatencyMS);
-        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (int) acceptableLatencyMS);
-        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (int) acceptableLatencyMS);
+        set = new ClusterDescription(nodeList, (int) acceptableLatencyMS, Discovering);
+        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (int) acceptableLatencyMS, Discovering);
+        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (int) acceptableLatencyMS, Discovering);
     }
 
 
