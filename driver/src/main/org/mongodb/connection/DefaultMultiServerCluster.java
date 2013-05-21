@@ -67,6 +67,8 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
 
     protected synchronized void addServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
+
         if (!addressToServerMap.containsKey(serverAddress)) {
             Server mongoServer = createServer(serverAddress, createServerStateListener(serverAddress));
             addressToServerMap.put(serverAddress, mongoServer);
@@ -90,10 +92,12 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     }
 
     protected void updateDescription() {
-        updateDescription(new ClusterDescription(getNewServerDescriptions(), SLAVE_ACCEPTABLE_LATENCY_MS));
+        isTrue("open", !isClosed());
+
+        updateDescription(new ClusterDescription(getNewServerDescriptionList(), SLAVE_ACCEPTABLE_LATENCY_MS));
     }
 
-    private List<ServerDescription> getNewServerDescriptions() {
+    private List<ServerDescription> getNewServerDescriptionList() {
         List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
         for (Server server : addressToServerMap.values()) {
            serverDescriptions.add(server.getDescription());
