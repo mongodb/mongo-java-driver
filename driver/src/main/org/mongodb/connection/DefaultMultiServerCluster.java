@@ -53,7 +53,7 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
+    protected abstract ChangeListener<ServerDescription> createServerStateListener(final ServerAddress serverAddress);
 
     @Override
     protected Server getServer(final ServerAddress serverAddress) {

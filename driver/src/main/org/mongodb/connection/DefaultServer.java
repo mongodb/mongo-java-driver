@@ -37,8 +37,8 @@ class DefaultServer implements Server {
     private final Pool<AsyncConnection> asyncConnectionPool;
     private final IsMasterServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
-    private final Set<ServerStateListener> changeListeners =
-            Collections.newSetFromMap(new ConcurrentHashMap<ServerStateListener, Boolean>());
+    private final Set<ChangeListener<ServerDescription>> changeListeners =
+            Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private volatile ServerDescription description;
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
@@ -81,9 +81,9 @@ class DefaultServer implements Server {
     }
 
     @Override
-    public void addChangeListener(final ServerStateListener changeListener) {
+    public void addChangeListener(final ChangeListener<ServerDescription> changeListener) {
         changeListeners.add(changeListener);
-        changeListener.notify(description);
+        changeListener.stateChanged(new ChangeEvent<ServerDescription>(null, description));
     }
 
     @Override
@@ -106,22 +106,15 @@ class DefaultServer implements Server {
         invalidate();  // TODO: handle different exceptions sub-classes differently
     }
 
-    private final class DefaultServerStateListener implements ServerStateListener {
+    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
         @Override
-        public void notify(final ServerDescription serverDescription) {
-            description = serverDescription;
-            for (ServerStateListener listener : changeListeners) {
-                listener.notify(serverDescription);
+        public void stateChanged(final ChangeEvent<ServerDescription> event) {
+            description = event.getNewValue();
+            for (ChangeListener<ServerDescription> listener : changeListeners) {
+                listener.stateChanged(event);
             }
         }
 
-        @Override
-        public void notify(final MongoException e) {
-            description = ServerDescription.builder().address(serverAddress).build();
-            for (ServerStateListener listener : changeListeners) {
-                listener.notify(e);
-            }
-        }
     }
 
     private class DefaultServerConnection implements Connection {

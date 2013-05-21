@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -34,50 +33,35 @@ class DefaultReplicaSetCluster extends DefaultMultiServerCluster implements Repl
         super(seedList, credentialList, options, bufferPool, serverFactory);
     }
 
-    protected ServerStateListener createServerStateListener(final ServerAddress serverAddress) {
-        return new ReplicaSetServerStateListener(serverAddress);
+    protected ChangeListener<ServerDescription> createServerStateListener(final ServerAddress serverAddress) {
+        return new ReplicaSetServerStateListener();
     }
 
-    private final class ReplicaSetServerStateListener implements ServerStateListener {
-        private ServerAddress serverAddress;
+    private final class ReplicaSetServerStateListener implements ChangeListener<ServerDescription> {
 
-        private ReplicaSetServerStateListener(final ServerAddress serverAddress) {
-            this.serverAddress = serverAddress;
+        private ReplicaSetServerStateListener() {
         }
 
         @Override
-        public void notify(final ServerDescription serverDescription) {
+        public void stateChanged(final ChangeEvent<ServerDescription> event) {
             if (isClosed()) {
                 return;
             }
 
             synchronized (DefaultReplicaSetCluster.this) {
-
-                addNewHosts(serverDescription.getHosts());
-                addNewHosts(serverDescription.getPassives());
-                if (serverDescription.isPrimary()) {
-                    removeExtras(serverDescription);
+                if (event.getNewValue().isOk()) {
+                    addNewHosts(event.getNewValue().getHosts());
+                    addNewHosts(event.getNewValue().getPassives());
+                    if (event.getNewValue().isPrimary()) {
+                        removeExtras(event.getNewValue());
+                    }
                 }
-
-                updateDescription();
-            }
-        }
-
-        @Override
-        public void notify(final MongoException e) {
-            if (isClosed()) {
-                return;
-            }
-
-            synchronized (DefaultReplicaSetCluster.this) {
-
-                ServerDescription serverDescription = getDescription().getByServerAddress(serverAddress);
-
-                updateDescription();
-
-                if (serverDescription.isPrimary()) {
-                    invalidateAll();
+                else {
+                    if (event.getOldValue() != null && event.getOldValue().isPrimary()) {
+                        invalidateAll();
+                    }
                 }
+                updateDescription();
             }
         }
 

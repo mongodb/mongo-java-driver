@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -36,15 +35,12 @@ class DefaultSingleServerCluster extends DefaultCluster {
         super(bufferPool, credentialList, options, serverFactory);
         notNull("serverAddress", serverAddress);
 
-        this.server = createServer(serverAddress, new ServerStateListener() {
+        this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
             @Override
-            public void notify(final ServerDescription serverDescription) {
-                updateDescription(new ClusterDescription(Arrays.asList(serverDescription), 15));
+            public void stateChanged(final ChangeEvent<ServerDescription> event) {
+                updateDescription(new ClusterDescription(Arrays.asList(event.getNewValue()), 15));
             }
 
-            @Override
-            public void notify(final MongoException e) {
-            }
         });
     }
 

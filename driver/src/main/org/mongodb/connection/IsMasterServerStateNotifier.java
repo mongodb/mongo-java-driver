@@ -17,8 +17,6 @@
 package org.mongodb.connection;
 
 import org.mongodb.Document;
-import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommand;
@@ -35,55 +33,60 @@ import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
 import static org.mongodb.connection.ServerType.ShardRouter;
 import static org.mongodb.connection.ServerType.StandAlone;
+import static org.mongodb.connection.ServerType.Unknown;
 
 @ThreadSafe
 class IsMasterServerStateNotifier implements ServerStateNotifier {
 
-    private final ServerStateListener serverStateListener;
+    private final ChangeListener serverStateListener;
     private final ConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
     private Connection connection;
     private int count;
     private long elapsedNanosSum;
+    private volatile ServerDescription serverDescription;
 
-    IsMasterServerStateNotifier(final ServerStateListener serverStateListener, final ConnectionFactory connectionFactory,
+    IsMasterServerStateNotifier(final ChangeListener serverStateListener, final ConnectionFactory connectionFactory,
                                 final BufferPool<ByteBuffer> bufferPool) {
         this.serverStateListener = serverStateListener;
         this.connectionFactory = connectionFactory;
+        serverDescription = getConnectingServerDescription();
         this.bufferPool = bufferPool;
+    }
+
+    private ServerDescription getConnectingServerDescription() {
+        return ServerDescription.builder().type(Unknown).address(connectionFactory.getServerAddress()).build();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public synchronized void run() {
+        ServerDescription currentServerDescription = serverDescription;
         try {
-            ServerDescription serverDescription = null;
-            try {
-                if (connection == null) {
-                    connection = connectionFactory.create();
-                }
-                try {
-                    final CommandResult commandResult = new CommandOperation("admin",
-                            new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection);
-                    count++;
-                    elapsedNanosSum += commandResult.getElapsedNanoseconds();
-
-                    serverDescription = createDescription(commandResult, elapsedNanosSum / count);
-                } catch (MongoSocketException e) {
-                    connection.close();
-                    connection = null;
-                    count = 0;
-                    elapsedNanosSum = 0;
-                    throw e;
-                }
-            } catch (MongoException e) {
-                serverStateListener.notify(e);
-            } catch (Throwable t) {
-                serverStateListener.notify(new MongoInternalException("Unexpected exception", t));
+            if (connection == null) {
+                connection = connectionFactory.create();
             }
+            try {
+                final CommandResult commandResult = new CommandOperation("admin",
+                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection);
+                count++;
+                elapsedNanosSum += commandResult.getElapsedNanoseconds();
 
-            if (serverDescription != null) {
-                serverStateListener.notify(serverDescription);
+                serverDescription = createDescription(commandResult, elapsedNanosSum / count);
+            } catch (MongoSocketException e) {
+                connection.close();
+                connection = null;
+                count = 0;
+                elapsedNanosSum = 0;
+                throw e;
+            }
+        } catch (Throwable t) {
+            serverDescription = getConnectingServerDescription();
+        }
+
+        try {
+            if (!currentServerDescription.equals(serverDescription)) {
+                serverStateListener.stateChanged(new ChangeEvent(currentServerDescription, serverDescription));
             }
         } catch (Throwable t) {
             // log something

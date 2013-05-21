@@ -211,6 +211,11 @@ public class ServerDescription {
         return averagePingTime / 1000000F;
     }
 
+    /**
+     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the average ping time.
+     * @param o the object to compare to
+     * @return true if this instance is equals to @code{o}
+     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -218,7 +223,6 @@ public class ServerDescription {
 
         final ServerDescription that = (ServerDescription) o;
 
-        if (Long.compare(that.averagePingTime, averagePingTime) != 0) return false;
         if (type != that.type) return false;
         if (maxDocumentSize != that.maxDocumentSize) return false;
         if (maxMessageSize != that.maxMessageSize) return false;
@@ -244,7 +248,6 @@ public class ServerDescription {
         result = 31 * result + maxMessageSize;
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (int) (averagePingTime ^ (averagePingTime >>> 32));
         result = 31 * result + (ok ? 1 : 0);
         return result;
     }

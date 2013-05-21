@@ -125,7 +125,7 @@ public abstract class DefaultCluster implements Cluster {
         return random.get();
     }
 
-    protected Server createServer(final ServerAddress serverAddress, final ServerStateListener serverStateListener) {
+    protected Server createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener) {
         final Server server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
         server.addChangeListener(serverStateListener);
         return server;

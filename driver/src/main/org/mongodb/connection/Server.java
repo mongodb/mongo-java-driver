@@ -25,7 +25,7 @@ public interface Server {
 
     void close();
 
-    void addChangeListener(ServerStateListener changeListener);
+    void addChangeListener(ChangeListener<ServerDescription> changeListener);
 
     void invalidate();
 

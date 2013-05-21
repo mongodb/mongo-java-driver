@@ -16,10 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoException;
-
-public interface ServerStateListener {
-    void notify(final ServerDescription serverDescription);
-
-    void notify(MongoException e);
+public interface ChangeListener<T> {
+    void stateChanged(ChangeEvent<T> event);
 }
