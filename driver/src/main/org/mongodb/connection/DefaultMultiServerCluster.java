@@ -44,17 +44,6 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     }
 
     @Override
-    public Server getServer(final ServerAddress serverAddress) {
-        isTrue("open", !isClosed());
-
-        Server connection = addressToServerMap.get(serverAddress);
-        if (connection == null) {
-            throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
-        }
-        return connection;
-    }
-
-    @Override
     public void close() {
         if (!isClosed()) {
             for (Server server : addressToServerMap.values()) {
@@ -65,6 +54,17 @@ abstract class DefaultMultiServerCluster extends DefaultCluster {
     }
 
     protected abstract ServerStateListener createServerStateListener(final ServerAddress serverAddress);
+
+    @Override
+    protected Server getServer(final ServerAddress serverAddress) {
+        isTrue("open", !isClosed());
+
+        Server connection = addressToServerMap.get(serverAddress);
+        if (connection == null) {
+            throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
+        }
+        return connection;
+    }
 
     protected synchronized void addServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());

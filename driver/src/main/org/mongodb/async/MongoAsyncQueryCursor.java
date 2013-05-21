@@ -25,6 +25,7 @@ import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.SingleConnectionAsyncSession;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.connection.SingleServerAsyncSession;
@@ -60,12 +61,11 @@ public class MongoAsyncQueryCursor<T> {
         this.decoder = decoder;
         this.block = block;
         final AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
-        final Server server = initialSession.getCluster().getServer(connection.getServerAddress());
-
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             this.session = new SingleConnectionAsyncSession(connection, initialSession.getCluster());
         }
         else {
+            Server server = initialSession.getCluster().getServer(new ServerAddressSelector(connection.getServerAddress()));
             this.session = new SingleServerAsyncSession(server, initialSession.getCluster());
         }
     }

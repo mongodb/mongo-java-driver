@@ -20,6 +20,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.Session;
 import org.mongodb.connection.SingleConnectionSession;
 import org.mongodb.connection.SingleServerSession;
@@ -57,7 +58,6 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private long nextCount;
     private final List<Integer> sizes = new ArrayList<Integer>();
     private boolean closed;
-    private static int i = 0;
 
     public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
                             final Decoder<T> decoder, final Session initialSession) {
@@ -70,8 +70,8 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
                 this.session = new SingleConnectionSession(connection, initialSession.getCluster());
             }
             else {
-                this.session = new SingleServerSession(initialSession.getCluster().getServer(connection.getServerAddress()),
-                        initialSession.getCluster());
+                this.session = new SingleServerSession(initialSession.getCluster()
+                        .getServer(new ServerAddressSelector(connection.getServerAddress())), initialSession.getCluster());
             }
 
             currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, getBufferPool()).execute(session);

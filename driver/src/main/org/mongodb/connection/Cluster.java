@@ -24,8 +24,6 @@ public interface Cluster {
 
     Server getServer(ServerSelector serverSelector);
 
-    Server getServer(final ServerAddress serverAddress);
-
     BufferPool<ByteBuffer> getBufferPool();
 
     void close();

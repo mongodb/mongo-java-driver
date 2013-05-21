@@ -110,6 +110,8 @@ public abstract class DefaultCluster implements Cluster {
         return isClosed;
     }
 
+    protected abstract Server getServer(final ServerAddress serverAddress);
+
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         description = newDescription;
         clusterPhaser.arrive();
