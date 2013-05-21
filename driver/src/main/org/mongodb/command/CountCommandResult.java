@@ -25,6 +25,6 @@ public class CountCommandResult extends CommandResult {
     }
 
     public long getCount() {
-        return ((Double) getResponse().get("n")).longValue();
+        return ((Number) getResponse().get("n")).longValue();
     }
 }
