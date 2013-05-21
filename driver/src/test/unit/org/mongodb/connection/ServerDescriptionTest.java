@@ -44,8 +44,7 @@ public class ServerDescriptionTest {
         assertFalse(serverDescription.isPrimary());
         assertFalse(serverDescription.isSecondary());
 
-        assertEquals(0F, serverDescription.getAveragePingTime(), 0L);
-        assertEquals(0F, serverDescription.getAveragePingTimeMillis(), 0F);
+        assertEquals(0F, serverDescription.getAveragePingTimeNanos(), 0L);
 
         assertEquals(0x1000000, serverDescription.getMaxDocumentSize());
         assertEquals(0x2000000, serverDescription.getMaxMessageSize());
@@ -67,7 +66,7 @@ public class ServerDescriptionTest {
                 .setName("test")
                 .maxDocumentSize(100)
                 .maxMessageSize(200)
-                .averagePingTime(50000)
+                .averagePingTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .primary("localhost:27017")
                 .hosts(Arrays.asList("localhost:27017", "localhost:27018"))
                 .passives(Arrays.asList("localhost:27019"))

@@ -25,6 +25,7 @@ import org.mongodb.connection.ServerType;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -50,6 +51,32 @@ public class ReadPreferenceServerSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), 15, Discovering)));
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), Discovering)));
+    }
+
+    @Test
+    public void testChaining() throws UnknownHostException {
+        ReadPreferenceServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.secondary());
+        final ServerDescription primary = ServerDescription.builder()
+                .address(new ServerAddress())
+                .ok(true)
+                .type(ServerType.ReplicaSetPrimary)
+                .averagePingTime(1, TimeUnit.MILLISECONDS)
+                .build();
+        final ServerDescription secondaryOne = ServerDescription.builder()
+                .address(new ServerAddress("localhost:27018"))
+                .ok(true)
+                .type(ServerType.ReplicaSetSecondary)
+                .averagePingTime(2, TimeUnit.MILLISECONDS)
+                .build();
+        final ServerDescription secondaryTwo = ServerDescription.builder()
+                .address(new ServerAddress("localhost:27019"))
+                .ok(true)
+                .type(ServerType.ReplicaSetSecondary)
+                .averagePingTime(20, TimeUnit.MILLISECONDS)
+                .build();
+        assertEquals(Arrays.asList(secondaryOne), selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne, secondaryTwo),
+                Discovering)));
+
     }
 }

@@ -54,21 +54,21 @@ public class ReadPreferenceTest {
         final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
         primary = ServerDescription.builder().address(new ServerAddress(HOST, 27017))
-                .averagePingTime(acceptablePingTime * 1000000L)
+                .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .tags(tags1)
                 .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().address(new ServerAddress(HOST, 27018))
-                .averagePingTime(bestPingTime * 1000000L)
+                .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .tags(tags2)
                 .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().address(new ServerAddress(HOST, 27019))
-                .averagePingTime(unacceptablePingTime * 1000000L)
+                .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .tags(tags3)
@@ -80,9 +80,9 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ClusterDescription(nodeList, (int) acceptableLatencyMS, Discovering);
-        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), (int) acceptableLatencyMS, Discovering);
-        setNoSecondary = new ClusterDescription(Arrays.asList(primary), (int) acceptableLatencyMS, Discovering);
+        set = new ClusterDescription(nodeList, Discovering);
+        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), Discovering);
+        setNoSecondary = new ClusterDescription(Arrays.asList(primary), Discovering);
     }
 
 
@@ -107,8 +107,9 @@ public class ReadPreferenceTest {
         assertTrue(ReadPreference.secondary().toString().startsWith("secondary"));
 
         List<ServerDescription> candidates = ReadPreference.secondary().choose(set);
-        assertEquals(1, candidates.size());
-        assertTrue(candidates.get(0).isSecondary());
+        assertEquals(2, candidates.size());
+        assertTrue(candidates.contains(secondary));
+        assertTrue(candidates.contains(otherSecondary));
 
         candidates = ReadPreference.secondary().choose(setNoSecondary);
         assertTrue(candidates.isEmpty());
@@ -147,8 +148,9 @@ public class ReadPreferenceTest {
         assertEquals(primary, candidates.get(0));
 
         candidates = pref.choose(setNoPrimary);
-        assertEquals(1, candidates.size());
-        assertEquals(secondary, candidates.get(0));
+        assertEquals(2, candidates.size());
+        assertTrue(candidates.contains(secondary));
+        assertTrue(candidates.contains(otherSecondary));
 
         pref = ReadPreference.primaryPreferred(new Tags("baz", "2"));
         assertEquals(1, pref.choose(set).size());
@@ -168,8 +170,9 @@ public class ReadPreferenceTest {
 
         pref = ReadPreference.secondaryPreferred();
         final List<ServerDescription> candidates = pref.choose(set);
-        assertEquals(1, candidates.size());
+        assertEquals(2, candidates.size());
         assertTrue(candidates.contains(secondary));
+        assertTrue(candidates.contains(otherSecondary));
 
         assertTrue(ReadPreference.secondaryPreferred().choose(setNoSecondary).contains(primary));
     }

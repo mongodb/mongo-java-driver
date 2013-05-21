@@ -51,6 +51,6 @@ public class ServerAddressSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .build();
-        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondary), 15, Discovering)));
+        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondary), Discovering)));
    }
 }

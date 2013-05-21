@@ -41,14 +41,12 @@ public class ClusterDescription {
 
     private final List<ServerDescription> all;
 
-    private final int acceptableLatencyMS;
     private final Mode mode;
 
-    public ClusterDescription(final List<ServerDescription> all, final int acceptableLatencyMS, final Mode mode) {
+    public ClusterDescription(final List<ServerDescription> all, final Mode mode) {
         notNull("all", all);
         this.mode = notNull("mode", mode);
         this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(all));
-        this.acceptableLatencyMS = acceptableLatencyMS;
     }
 
     public Mode getMode() {
@@ -91,30 +89,23 @@ public class ClusterDescription {
      * @return a list of servers that can act as primaries\
      */
     public List<ServerDescription> getPrimaries() {
-        List<ServerDescription> primaries = getAllGoodPrimaries(all);
-        return getAllServersWithAcceptableLatency(primaries, calculateBestPingTime(primaries), acceptableLatencyMS);
+        return getAllGoodPrimaries(all);
     }
 
     public List<ServerDescription> getSecondaries() {
-        List<ServerDescription> secondaries = getAllGoodSecondaries(all);
-        return getAllServersWithAcceptableLatency(secondaries, calculateBestPingTime(secondaries), acceptableLatencyMS);
+        return getAllGoodSecondaries(all);
     }
 
     public List<ServerDescription> getSecondaries(final Tags tags) {
-        List<ServerDescription> taggedServers = getServersByTags(all, tags);
-        List<ServerDescription> taggedSecondaries = getAllGoodSecondaries(taggedServers);
-        return getAllServersWithAcceptableLatency(taggedSecondaries, calculateBestPingTime(taggedSecondaries), acceptableLatencyMS);
+        return getAllGoodSecondaries(getServersByTags(all, tags));
     }
 
     public List<ServerDescription> getAny() {
-        List<ServerDescription> any = getAllGoodServers(all);
-        return getAllServersWithAcceptableLatency(any, calculateBestPingTime(any), acceptableLatencyMS);
+        return getAllGoodServers(all);
     }
 
     public List<ServerDescription> getAny(final Tags tags) {
-        List<ServerDescription> taggedServers = getServersByTags(all, tags);
-        List<ServerDescription> taggedAny = getAllGoodServers(taggedServers);
-        return getAllServersWithAcceptableLatency(taggedAny, calculateBestPingTime(taggedAny), acceptableLatencyMS);
+        return getAllGoodServers(getServersByTags(all, tags));
     }
 
     @Override
@@ -127,19 +118,6 @@ public class ClusterDescription {
         sb.setLength(sb.length() - 1); //remove last comma
         sb.append(" ]");
         return sb.toString();
-    }
-
-    static float calculateBestPingTime(final List<ServerDescription> members) {
-        float bestPingTime = Float.MAX_VALUE;
-        for (final ServerDescription cur : members) {
-            if (!cur.isSecondary()) {
-                continue;
-            }
-            if (cur.getAveragePingTimeMillis() < bestPingTime) {
-                bestPingTime = cur.getAveragePingTimeMillis();
-            }
-        }
-        return bestPingTime;
     }
 
     static List<ServerDescription> getAllGoodPrimaries(final List<ServerDescription> servers) {
@@ -166,17 +144,6 @@ public class ClusterDescription {
         final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(server.size());
         for (final ServerDescription cur : server) {
             if (cur.isSecondary()) {
-                goodSecondaries.add(cur);
-            }
-        }
-        return goodSecondaries;
-    }
-
-    static List<ServerDescription> getAllServersWithAcceptableLatency(final List<ServerDescription> servers,
-                                                                      final float bestPingTime, final int acceptableLatencyMS) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
-        for (final ServerDescription cur : servers) {
-            if (cur.getAveragePingTimeMillis() - acceptableLatencyMS <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }

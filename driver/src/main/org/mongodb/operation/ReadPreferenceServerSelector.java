@@ -17,16 +17,22 @@
 package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
+import org.mongodb.connection.ChainingServerSelector;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
 import java.util.List;
 
-public class ReadPreferenceServerSelector implements ServerSelector {
+public class ReadPreferenceServerSelector extends ChainingServerSelector {
     private final ReadPreference readPreference;
 
     public ReadPreferenceServerSelector(final ReadPreference readPreference) {
+        this(readPreference, new LatencyMinimizingServerSelector());
+    }
+
+    public ReadPreferenceServerSelector(final ReadPreference readPreference, final ServerSelector chainedSelector) {
+        super(chainedSelector);
         // TODO: this is hiding bugs:
         // notNull("readPreference", readPreference);
         this.readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
@@ -37,7 +43,7 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     }
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    protected List<ServerDescription> chooseStep(final ClusterDescription clusterDescription) {
         return readPreference.choose(clusterDescription);
     }
 

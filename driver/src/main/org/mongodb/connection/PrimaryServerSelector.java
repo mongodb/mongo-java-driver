@@ -16,18 +16,18 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.operation.LatencyMinimizingServerSelector;
+
 import java.util.List;
 
-final class PrimaryServerSelector implements ServerSelector {
+final class PrimaryServerSelector extends ChainingServerSelector {
 
-    private static PrimaryServerSelector singleton = new PrimaryServerSelector();
-
-    public static PrimaryServerSelector get() {
-        return singleton;
+    PrimaryServerSelector() {
+        super(new LatencyMinimizingServerSelector());
     }
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    protected List<ServerDescription> chooseStep(final ClusterDescription clusterDescription) {
         return clusterDescription.getPrimaries();
     }
 
@@ -52,8 +52,5 @@ final class PrimaryServerSelector implements ServerSelector {
     @Override
     public String toString() {
         return "PrimaryServerSelector";
-    }
-
-    private PrimaryServerSelector() {
     }
 }

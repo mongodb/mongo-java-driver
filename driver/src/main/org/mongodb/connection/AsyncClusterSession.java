@@ -33,6 +33,6 @@ public class AsyncClusterSession extends AbstractBaseSession implements AsyncSes
     @Override
     public AsyncConnection getConnection() {
         isTrue("open", !isClosed());
-        return getConnection(PrimaryServerSelector.get());
+        return getConnection(new PrimaryServerSelector());
     }
 }

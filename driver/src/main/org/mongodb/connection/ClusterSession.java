@@ -31,6 +31,6 @@ public class ClusterSession extends AbstractBaseSession implements Session {
 
     @Override
     public Connection getConnection() {
-        return getConnection(PrimaryServerSelector.get());
+        return getConnection(new PrimaryServerSelector());
     }
 }

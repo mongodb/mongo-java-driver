@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentMap;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
-import static org.mongodb.connection.MonitorDefaults.SLAVE_ACCEPTABLE_LATENCY_MS;
 
 class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
@@ -128,7 +127,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
         isTrue("open", !isClosed());
 
         final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(newServerDescriptionList, SLAVE_ACCEPTABLE_LATENCY_MS, Discovering));
+        updateDescription(new ClusterDescription(newServerDescriptionList, Discovering));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

@@ -19,6 +19,7 @@ package org.mongodb.connection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
@@ -44,7 +45,7 @@ public class ServerDescription {
     private final int maxMessageSize;
     private final Tags tags;
     private final String setName;
-    private final long averagePingTime;
+    private final long averagePingTimeNanos;
     private final boolean ok;
 
 
@@ -58,7 +59,7 @@ public class ServerDescription {
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
-        private long averagePingTime;
+        private long averagePingTimeNanos;
         private boolean ok;
 
         // CHECKSTYLE:OFF
@@ -102,8 +103,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder averagePingTime(final long averagePingTime) {
-            this.averagePingTime = averagePingTime;
+        public Builder averagePingTime(final long averagePingTime, final TimeUnit timeUnit) {
+            this.averagePingTimeNanos = timeUnit.toNanos(averagePingTime);
             return this;
         }
 
@@ -217,12 +218,8 @@ public class ServerDescription {
         return ok;
     }
 
-    public long getAveragePingTime() {
-        return averagePingTime;
-    }
-
-    public float getAveragePingTimeMillis() {
-        return averagePingTime / 1000000F;
+    public long getAveragePingTimeNanos() {
+        return averagePingTimeNanos;
     }
 
     /**
@@ -278,7 +275,7 @@ public class ServerDescription {
                 + ", maxMessageSize=" + maxMessageSize
                 + ", tags=" + tags
                 + ", setName='" + setName + '\''
-                + ", averagePingTime=" + averagePingTime
+                + ", averagePingTimeNanos=" + averagePingTimeNanos
                 + ", ok=" + ok
                 + '}';
     }
@@ -293,7 +290,7 @@ public class ServerDescription {
         maxMessageSize = builder.maxMessageSize;
         tags = builder.tags;
         setName = builder.setName;
-        averagePingTime = builder.averagePingTime;
+        averagePingTimeNanos = builder.averagePingTimeNanos;
         ok = builder.ok;
     }
 

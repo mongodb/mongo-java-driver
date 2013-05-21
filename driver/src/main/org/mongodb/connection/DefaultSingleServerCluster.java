@@ -47,7 +47,7 @@ class DefaultSingleServerCluster extends DefaultCluster {
     }
 
     private void updateDescription(final ServerDescription serverDescription) {
-        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), 15, Direct));
+        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), Direct));
     }
 
     private void updateDescription() {

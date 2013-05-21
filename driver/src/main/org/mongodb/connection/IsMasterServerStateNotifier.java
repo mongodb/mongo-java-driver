@@ -26,6 +26,7 @@ import org.mongodb.operation.CommandResult;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
@@ -102,7 +103,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     }
 
     @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final CommandResult commandResult, final long averagePingTime) {
+    private ServerDescription createDescription(final CommandResult commandResult, final long averagePingTimeNanos) {
         return ServerDescription.builder()
                 .address(commandResult.getAddress())
                 .type(getServerType(commandResult.getResponse()))
@@ -115,7 +116,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                         ServerDescription.getDefaultMaxMessageSize()))
                 .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
                 .setName(commandResult.getResponse().getString("setName"))
-                .averagePingTime(averagePingTime)
+                .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
                 .ok(commandResult.isOk()).build();
     }
 

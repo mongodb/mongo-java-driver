@@ -28,9 +28,9 @@ import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
 public class PrimaryServerSelectorTest {
     @Test
     public void testAll() throws UnknownHostException {
-        PrimaryServerSelector selector = PrimaryServerSelector.get();
+        PrimaryServerSelector selector = new PrimaryServerSelector();
 
-        assertEquals(PrimaryServerSelector.get(), selector);
+        assertEquals(new PrimaryServerSelector(), selector);
         assertNotEquals(new Object(), selector);
 
         assertEquals("PrimaryServerSelector", selector.toString());
@@ -42,7 +42,7 @@ public class PrimaryServerSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), 15, Discovering)));
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), Discovering)));
 
     }
 }

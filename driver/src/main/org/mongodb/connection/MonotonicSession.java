@@ -61,7 +61,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
-                connectionForWrites = getCluster().getServer(PrimaryServerSelector.get()).getConnection();
+                connectionForWrites = getCluster().getServer(new PrimaryServerSelector()).getConnection();
                 if (connectionForReads != null) {
                     connectionForReads.close();
                     connectionForReads = null;

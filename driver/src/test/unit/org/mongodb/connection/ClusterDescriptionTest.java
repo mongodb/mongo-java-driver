@@ -30,7 +30,7 @@ import static org.mongodb.connection.ServerType.ShardRouter;
 public class ClusterDescriptionTest {
     @Test
     public void testMode() {
-        ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), 15, Discovering);
+        ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), Discovering);
         assertEquals(Discovering, description.getMode());
     }
 
@@ -38,17 +38,17 @@ public class ClusterDescriptionTest {
     public void testType() throws UnknownHostException {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
                 ServerDescription.builder().address(new ServerAddress()).type(ReplicaSetPrimary).build()),
-                15, Discovering);
+                Discovering);
         assertEquals(ClusterDescription.Type.ReplicaSet, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
                 ServerDescription.builder().address(new ServerAddress()).type(ShardRouter).build()),
-                15, Discovering);
+                Discovering);
         assertEquals(ClusterDescription.Type.Sharded, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
                 ServerDescription.builder().address(new ServerAddress()).type(ServerType.StandAlone).build()),
-                15, Discovering);
+                Discovering);
         assertEquals(ClusterDescription.Type.StandAlone, description.getType());
     }
 }
