@@ -19,12 +19,12 @@ package org.mongodb.connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoClientOptions;
 
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mongodb.Fixture.getOptions;
 import static org.mongodb.Fixture.getPrimary;
 
 public class DefaultSingleServerClusterTest {
@@ -32,7 +32,7 @@ public class DefaultSingleServerClusterTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        cluster = new DefaultSingleServerCluster(getPrimary(), null, MongoClientOptions.builder().build(), new DefaultServerFactory());
+        cluster = new DefaultSingleServerCluster(getPrimary(), null, getOptions(), new DefaultServerFactory());
     }
 
     @After
@@ -42,14 +42,14 @@ public class DefaultSingleServerClusterTest {
 
     @Test
     public void shouldGetDescription() {
-         assertNotNull(cluster.getDescription());
+        assertNotNull(cluster.getDescription());
     }
 
     @Test
     public void shouldGetServerWithOkDescription() throws InterruptedException {
         Server server = cluster.getServer(new PrimaryServerSelector());
         assertTrue(server.getDescription().isOk());
-     }
+    }
 
 
 }
