@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Clusters;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
 
 import java.net.UnknownHostException;
@@ -28,12 +27,11 @@ import java.util.List;
 @ThreadSafe
 public final class MongoClients {
     public static MongoClient create(final ServerAddress serverAddress) {
-        final MongoClientOptions options = MongoClientOptions.builder().build();
-        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
+        return create(serverAddress, MongoClientOptions.builder().build());
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
+        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options));
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -41,7 +39,7 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, Clusters.create(seedList, null, options, new PowerOfTwoByteBufferPool()));
+        return new MongoClientImpl(options, Clusters.create(seedList, null, options));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -51,15 +49,14 @@ public final class MongoClients {
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, Clusters.create(new ServerAddress(mongoURI.getHosts().get(0)),
-                    mongoURI.getCredentials(), options, new PowerOfTwoByteBufferPool()));
+                    mongoURI.getCredentials(), options));
         }
         else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options,  Clusters.create(seedList, mongoURI.getCredentials(), options,
-                    new PowerOfTwoByteBufferPool()));
+            return new MongoClientImpl(options,  Clusters.create(seedList, mongoURI.getCredentials(), options));
         }
     }
 

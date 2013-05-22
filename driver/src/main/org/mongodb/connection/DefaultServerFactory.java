@@ -29,8 +29,7 @@ final class DefaultServerFactory implements ServerFactory {
     public Server create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                          final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
                          final BufferPool<ByteBuffer> bufferPool) {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(options,
-                serverAddress, bufferPool, credentialList);
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(options, serverAddress, bufferPool, credentialList);
         AsyncConnectionFactory asyncConnectionFactory = null;
 
         if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {

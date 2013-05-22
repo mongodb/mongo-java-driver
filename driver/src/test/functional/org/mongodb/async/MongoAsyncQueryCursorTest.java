@@ -36,6 +36,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getAsyncSession;
+import static org.mongodb.Fixture.getBufferPool;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.operation.QueryOption.Exhaust;
 
@@ -68,8 +69,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testBlockRun() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(),
-                new TestBlock()).start();
+                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(),
+                getAsyncSession(), new TestBlock()).start();
         latch.await();
         assertEquals(documentList, documentResultList);
     }
@@ -78,7 +79,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(100).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
+                new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 100)));
@@ -88,7 +90,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
+                new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList));
@@ -98,7 +101,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getAsyncSession(), new TestBlock()).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
+                new TestBlock()).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 5)));
@@ -110,7 +114,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), session, new TestBlock(1)).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1)).start();
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 1)));
@@ -120,7 +124,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), session, new TestBlock(1, nextLatch)).start();
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1,
+                nextLatch)).start();
         nextLatch.await();
         assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
     }

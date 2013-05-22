@@ -50,12 +50,12 @@ public abstract class DefaultCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public DefaultCluster(final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList,
+    public DefaultCluster(final List<MongoCredential> credentialList,
                           final MongoClientOptions options, final ServerFactory serverFactory) {
         this.credentialList = credentialList;
         this.options = notNull("options", options);
         this.serverFactory = notNull("serverFactory", serverFactory);
-        this.bufferPool = notNull("bufferPool", bufferPool);
+        this.bufferPool = new PowerOfTwoByteBufferPool();
         scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
     }
 
@@ -85,13 +85,6 @@ public abstract class DefaultCluster implements Cluster {
     @Override
     public ClusterDescription getDescription() {
         return description;
-    }
-
-    @Override
-    public BufferPool<ByteBuffer> getBufferPool() {
-        isTrue("open", !isClosed());
-
-        return bufferPool;
     }
 
     @Override

@@ -16,15 +16,11 @@
 
 package org.mongodb.connection;
 
-import java.nio.ByteBuffer;
-
 public interface Cluster {
 
     ClusterDescription getDescription();
 
     Server getServer(ServerSelector serverSelector);
-
-    BufferPool<ByteBuffer> getBufferPool();
 
     void close();
 

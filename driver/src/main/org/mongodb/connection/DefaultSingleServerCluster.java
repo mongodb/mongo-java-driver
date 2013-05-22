@@ -19,7 +19,6 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,9 +30,8 @@ class DefaultSingleServerCluster extends DefaultCluster {
     private final Server server;
 
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                      final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
-                                      final ServerFactory serverFactory) {
-        super(bufferPool, credentialList, options, serverFactory);
+                                      final MongoClientOptions options, final ServerFactory serverFactory) {
+        super(credentialList, options, serverFactory);
         notNull("serverAddress", serverAddress);
 
         this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {

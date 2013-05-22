@@ -22,6 +22,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
+import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.Clusters;
@@ -29,6 +30,7 @@ import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerDescription;
 
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,9 +52,10 @@ public class Mongo {
 
     private final Codec<Document> documentCodec;
     private final Cluster cluster;
+    private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(Clusters.create(createNewSeedList(seedList), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
+        this(Clusters.create(createNewSeedList(seedList), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -60,7 +63,7 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(Clusters.create(serverAddress.toNew(), mongoOptions.toNew(), new PowerOfTwoByteBufferPool()), mongoOptions);
+        this(Clusters.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options) {
@@ -297,14 +300,14 @@ public class Mongo {
     private static Cluster createCluster(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return Clusters.create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
-                    mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
+                    mongoURI.getCredentials(), mongoURI.getOptions());
         }
         else {
             List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.connection.ServerAddress(cur));
             }
-            return Clusters.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions(), new PowerOfTwoByteBufferPool());
+            return Clusters.create(seedList, mongoURI.getCredentials(), mongoURI.getOptions());
         }
     }
 
@@ -316,4 +319,7 @@ public class Mongo {
         return optionHolder;
     }
 
+    BufferPool<ByteBuffer> getBufferPool() {
+        return bufferPool;
+    }
 }

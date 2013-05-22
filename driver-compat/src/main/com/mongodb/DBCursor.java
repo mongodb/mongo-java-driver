@@ -588,7 +588,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
    private void query() {
         cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getSession());
+                getSession(), getCollection().getBufferPool());
 //        sizes.add(results.size());
     }
 

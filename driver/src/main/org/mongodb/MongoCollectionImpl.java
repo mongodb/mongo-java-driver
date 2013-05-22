@@ -470,7 +470,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> all() {
-            return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getSession());
+            return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getSession(),
+                    client.getBufferPool());
         }
 
         @Override
@@ -841,7 +842,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getAsyncSession(), block).start();
+            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferPool(),
+                    client.getAsyncSession(), block).start();
         }
 
         @Override

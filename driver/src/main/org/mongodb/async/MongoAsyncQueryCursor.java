@@ -48,17 +48,20 @@ public class MongoAsyncQueryCursor<T> {
     private final MongoFind find;
     private Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
+    private final BufferPool<ByteBuffer> bufferPool;
     private final AsyncBlock<? super T> block;
     private final AsyncSession session;
     private long numFetchedSoFar;
     private ServerCursor cursor;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final AsyncSession initialSession, final AsyncBlock<? super T> block) {
+                                 final Decoder<T> decoder, final BufferPool<ByteBuffer> bufferPool, final AsyncSession initialSession,
+                                 final AsyncBlock<? super T> block) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
+        this.bufferPool = bufferPool;
         this.block = block;
         final AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
         if (find.getOptions().contains(QueryOption.Exhaust)) {
@@ -71,13 +74,9 @@ public class MongoAsyncQueryCursor<T> {
     }
 
     public void start() {
-        new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, getBufferPool()).execute(session)
+        new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(session)
                 .register(new QueryResultSingleResultCallback());
 
-    }
-
-    private BufferPool<ByteBuffer> getBufferPool() {
-        return session.getCluster().getBufferPool();
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
@@ -114,7 +113,7 @@ public class MongoAsyncQueryCursor<T> {
                 // get more results
                 AsyncGetMoreOperation<T> getMoreOperation = new AsyncGetMoreOperation<T>(namespace,
                         new MongoGetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder,
-                        getBufferPool());
+                        bufferPool);
                 if (find.getOptions().contains(QueryOption.Exhaust)) {
                     getMoreOperation.executeReceive(session, result.getRequestId()).register(this);
                 }
@@ -136,7 +135,7 @@ public class MongoAsyncQueryCursor<T> {
         private void handleExhaustCleanup() {
             MongoFuture<Void> future = new AsyncGetMoreOperation<T>(namespace, new MongoGetMore(cursor, find.getLimit(),
                     find.getBatchSize(),
-                    numFetchedSoFar), null, getBufferPool()).executeDiscard(session);
+                    numFetchedSoFar), null, bufferPool).executeDiscard(session);
             future.register(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {

@@ -19,31 +19,28 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public final class Clusters {
     private Clusters() {
     }
 
-    public static Cluster create(final ServerAddress serverAddress, final MongoClientOptions options,
-                                 final BufferPool<ByteBuffer> bufferPool) {
-        return create(serverAddress, null, options, bufferPool);
+    public static Cluster create(final ServerAddress serverAddress, final MongoClientOptions options) {
+        return create(serverAddress, null, options);
     }
 
     public static Cluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                 final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new DefaultSingleServerCluster(serverAddress, credentialList, options, bufferPool, new DefaultServerFactory());
+                                 final MongoClientOptions options) {
+        return new DefaultSingleServerCluster(serverAddress, credentialList, options, new DefaultServerFactory());
     }
 
-    public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options,
-                                           final BufferPool<ByteBuffer> bufferPool) {
-        return create(seedList, null, options, bufferPool);
+    public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        return create(seedList, null, options);
     }
 
     public static Cluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                           final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool) {
-        return new DefaultMultiServerCluster(seedList, credentialList, options, bufferPool, new DefaultServerFactory());
+                                           final MongoClientOptions options) {
+        return new DefaultMultiServerCluster(seedList, credentialList, options, new DefaultServerFactory());
     }
 }
 

@@ -25,6 +25,7 @@ import org.mongodb.operation.QueryOption;
 import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.Fixture.getBufferPool;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 
@@ -43,7 +44,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -59,14 +60,14 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
 
         cursor.next();
         cursor.close();
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession);
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
         assertEquals(new Document("_id", 999), cursor.next());
     }
 }

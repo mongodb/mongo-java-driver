@@ -32,8 +32,7 @@ public class DefaultSingleServerClusterTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        cluster = new DefaultSingleServerCluster(getPrimary(), null, MongoClientOptions.builder().build(),
-                new PowerOfTwoByteBufferPool(), new DefaultServerFactory());
+        cluster = new DefaultSingleServerCluster(getPrimary(), null, MongoClientOptions.builder().build(), new DefaultServerFactory());
     }
 
     @After

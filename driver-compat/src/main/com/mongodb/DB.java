@@ -475,6 +475,6 @@ public class DB implements IDB {
     }
 
     BufferPool<ByteBuffer> getBufferPool() {
-        return getCluster().getBufferPool();
+        return getMongo().getBufferPool();
     }
 }

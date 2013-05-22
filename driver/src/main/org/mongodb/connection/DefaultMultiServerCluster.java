@@ -20,7 +20,6 @@ import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +35,8 @@ class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
 
     protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                        final MongoClientOptions options, final BufferPool<ByteBuffer> bufferPool,
-                                        final ServerFactory serverFactory) {
-        super(bufferPool, credentialList, options, serverFactory);
+                                        final MongoClientOptions options, final ServerFactory serverFactory) {
+        super(credentialList, options, serverFactory);
 
         notNull("seedList", seedList);
         for (ServerAddress serverAddress : seedList) {

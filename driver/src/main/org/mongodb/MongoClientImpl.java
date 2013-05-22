@@ -23,6 +23,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSession;
 import org.mongodb.connection.MonotonicSession;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.Session;
@@ -39,6 +40,7 @@ public class MongoClientImpl implements MongoClient {
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
     private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
+    private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
 
     public MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
         this.clientOptions = clientOptions;
@@ -117,7 +119,7 @@ public class MongoClientImpl implements MongoClient {
     }
 
     public BufferPool<ByteBuffer> getBufferPool() {
-        return cluster.getBufferPool();
+        return bufferPool;
     }
 
     private void pinSession() {
