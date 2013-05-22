@@ -44,7 +44,7 @@ public final class Fixture {
         if (mongoClient == null) {
             final MongoClientURI mongoURI = getMongoClientURI();
             try {
-                mongoClient = MongoClientsImpl.create(mongoURI);
+                mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
             }

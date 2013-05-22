@@ -17,34 +17,52 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.Clusters;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 @ThreadSafe
 public final class MongoClients {
-    private MongoClients() {
-    }
-
     public static MongoClient create(final ServerAddress serverAddress) {
-        return MongoClientsImpl.create(serverAddress, MongoClientOptions.builder().build());
+        final MongoClientOptions options = MongoClientOptions.builder().build();
+        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return MongoClientsImpl.create(serverAddress, options);
+        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options, new PowerOfTwoByteBufferPool()));
     }
 
-    // TODO: there needs to be an easier way to create a MongoClient for a replica set
     public static MongoClient create(final List<ServerAddress> seedList) {
         return create(seedList, MongoClientOptions.builder().build());
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return MongoClientsImpl.create(seedList, options);
+        return new MongoClientImpl(options, Clusters.create(seedList, null, options, new PowerOfTwoByteBufferPool()));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
-        return MongoClientsImpl.create(mongoURI);
+        return create(mongoURI, mongoURI.getOptions());
+    }
+
+    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
+        if (mongoURI.getHosts().size() == 1) {
+            return new MongoClientImpl(options, Clusters.create(new ServerAddress(mongoURI.getHosts().get(0)),
+                    mongoURI.getCredentials(), options, new PowerOfTwoByteBufferPool()));
+        }
+        else {
+            List<ServerAddress> seedList = new ArrayList<ServerAddress>();
+            for (String cur : mongoURI.getHosts()) {
+                seedList.add(new ServerAddress(cur));
+            }
+            return new MongoClientImpl(options,  Clusters.create(seedList, mongoURI.getCredentials(), options,
+                    new PowerOfTwoByteBufferPool()));
+        }
+    }
+
+    private MongoClients() {
     }
 }
