@@ -89,23 +89,43 @@ public class ClusterDescription {
      * @return a list of servers that can act as primaries\
      */
     public List<ServerDescription> getPrimaries() {
-        return getAllGoodPrimaries(all);
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isPrimary();
+            }
+        });
     }
 
     public List<ServerDescription> getSecondaries() {
-        return getAllGoodSecondaries(all);
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isSecondary();
+            }
+        });
     }
 
     public List<ServerDescription> getSecondaries(final Tags tags) {
-        return getAllGoodSecondaries(getServersByTags(all, tags));
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isSecondary() && serverDescription.hasTags(tags);
+            }
+        });
     }
 
     public List<ServerDescription> getAny() {
-        return getAllGoodServers(all);
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isPrimary() || serverDescription.isSecondary();
+            }
+        });
     }
 
     public List<ServerDescription> getAny(final Tags tags) {
-        return getAllGoodServers(getServersByTags(all, tags));
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
+                return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tags);
+            }
+        });
     }
 
     @Override
@@ -120,42 +140,16 @@ public class ClusterDescription {
         return sb.toString();
     }
 
-    static List<ServerDescription> getAllGoodPrimaries(final List<ServerDescription> servers) {
-        final List<ServerDescription> goodPrimaries = new ArrayList<ServerDescription>(servers.size());
-        for (final ServerDescription cur : servers) {
-            if (cur.isPrimary()) {
-                goodPrimaries.add(cur);
-            }
-        }
-        return goodPrimaries;
+    private interface Predicate {
+        boolean apply(ServerDescription serverDescription);
     }
 
-    static List<ServerDescription> getAllGoodServers(final List<ServerDescription> servers) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
-        for (final ServerDescription cur : servers) {
-            if (cur.isOk()) {
-                goodSecondaries.add(cur);
-            }
-        }
-        return goodSecondaries;
-    }
-
-    static List<ServerDescription> getAllGoodSecondaries(final List<ServerDescription> server) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(server.size());
-        for (final ServerDescription cur : server) {
-            if (cur.isSecondary()) {
-                goodSecondaries.add(cur);
-            }
-        }
-        return goodSecondaries;
-    }
-
-    static List<ServerDescription> getServersByTags(final List<ServerDescription> servers, final Tags tags) {
+    private List<ServerDescription> getServersByPredicate(final Predicate predicate) {
 
         final List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
 
-        for (final ServerDescription cur : servers) {
-            if (cur.hasTags(tags)) {
+        for (final ServerDescription cur : all) {
+            if (predicate.apply(cur)) {
                 membersByTag.add(cur);
             }
         }
