@@ -43,7 +43,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
-    private final ChangeListener serverStateListener;
+    private final ChangeListener<ServerDescription> serverStateListener;
     private final ConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
     private Connection connection;
@@ -51,7 +51,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
 
-    IsMasterServerStateNotifier(final ChangeListener serverStateListener, final ConnectionFactory connectionFactory,
+    IsMasterServerStateNotifier(final ChangeListener<ServerDescription> serverStateListener, final ConnectionFactory connectionFactory,
                                 final BufferPool<ByteBuffer> bufferPool) {
         this.serverStateListener = serverStateListener;
         this.connectionFactory = connectionFactory;
@@ -93,7 +93,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
 
         try {
             if (!currentServerDescription.equals(serverDescription)) {
-                serverStateListener.stateChanged(new ChangeEvent(currentServerDescription, serverDescription));
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
             }
         } catch (Throwable t) {
             LOGGER.log(Level.INFO, "Exception in background thread during notification of server description state change", t);

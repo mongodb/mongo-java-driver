@@ -50,7 +50,7 @@ public class ChangeEvent<T> {
             return false;
         }
 
-        final ChangeEvent that = (ChangeEvent) o;
+        final ChangeEvent<?> that = (ChangeEvent<?>) o;
 
         if (!newValue.equals(that.newValue)) {
             return false;
