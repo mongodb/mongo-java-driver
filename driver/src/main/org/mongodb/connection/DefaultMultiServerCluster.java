@@ -84,9 +84,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
             if (event.getNewValue().isOk()) {
                 addNewHosts(event.getNewValue().getHosts());
                 addNewHosts(event.getNewValue().getPassives());
-                if (event.getNewValue().isPrimary()) {
-                    removeExtras(event.getNewValue());
-                }
+                removeExtras(event.getNewValue());
             }
             else {
                 if (event.getOldValue() != null && event.getOldValue().isPrimary()) {
