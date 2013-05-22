@@ -27,6 +27,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
@@ -38,6 +40,8 @@ import static org.mongodb.connection.ServerType.Unknown;
 
 @ThreadSafe
 class IsMasterServerStateNotifier implements ServerStateNotifier {
+
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
     private final ChangeListener serverStateListener;
     private final ConnectionFactory connectionFactory;
@@ -83,6 +87,8 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
         } catch (Throwable t) {
             serverDescription = getConnectingServerDescription();
+            LOGGER.log(Level.INFO, String.format("Exception in background thread while attempting to call ismaster command on server %s",
+                    connectionFactory.getServerAddress()), t);
         }
 
         try {
@@ -90,7 +96,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 serverStateListener.stateChanged(new ChangeEvent(currentServerDescription, serverDescription));
             }
         } catch (Throwable t) {
-            // log something
+            LOGGER.log(Level.INFO, "Exception in background thread during notification of server description state change", t);
         }
     }
 
