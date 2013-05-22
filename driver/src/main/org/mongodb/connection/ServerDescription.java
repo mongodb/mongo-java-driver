@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.annotations.Immutable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import static org.mongodb.connection.ServerType.ShardRouter;
 import static org.mongodb.connection.ServerType.StandAlone;
 import static org.mongodb.connection.ServerType.Unknown;
 
+@Immutable
 public class ServerDescription {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
