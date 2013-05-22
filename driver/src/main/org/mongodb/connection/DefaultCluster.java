@@ -28,11 +28,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class DefaultCluster implements Cluster {
+
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final BufferPool<ByteBuffer> bufferPool;
@@ -65,15 +69,23 @@ public abstract class DefaultCluster implements Cluster {
 
         try {
             CountDownLatch currentPhase = phase.get();
-            List<ServerDescription> serverDescriptions = serverSelector.choose(description);
+            ClusterDescription curDescription = description;
+            List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             long endTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(20, TimeUnit.SECONDS); // TODO: configurable
             while (serverDescriptions.isEmpty()) {
-                if (!currentPhase.await(endTime - System.nanoTime(), TimeUnit.NANOSECONDS)) {
+                final long timeout = endTime - System.nanoTime();
+
+                LOGGER.log(Level.FINE, String.format(
+                        "No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
+                        serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, TimeUnit.NANOSECONDS)));
+
+                if (!currentPhase.await(timeout, TimeUnit.NANOSECONDS)) {
                     throw new MongoTimeoutException(
                             "Thread timed out while waiting for a server that satisfied server selector: " + serverSelector);
                 }
                 currentPhase = phase.get();
-                serverDescriptions = serverSelector.choose(description);
+                curDescription = description;
+                serverDescriptions = serverSelector.choose(curDescription);
             }
             return getServer(getRandomServer(serverDescriptions).getAddress());
         } catch (InterruptedException e) {
@@ -104,6 +116,8 @@ public abstract class DefaultCluster implements Cluster {
     protected abstract Server getServer(final ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
+        LOGGER.log(Level.FINE, String.format("Updating cluster description %s and notifying all waiters", newDescription));
+
         description = newDescription;
         CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
         current.countDown();
