@@ -72,8 +72,8 @@ public abstract class DefaultCluster implements Cluster {
                     throw new MongoTimeoutException(
                             "Thread timed out while waiting for a server that satisfied server selector: " + serverSelector);
                 }
-                serverDescriptions = serverSelector.choose(description);
                 currentPhase = phase.get();
+                serverDescriptions = serverSelector.choose(description);
             }
             return getServer(getRandomServer(serverDescriptions).getAddress());
         } catch (InterruptedException e) {
