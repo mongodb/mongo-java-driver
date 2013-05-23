@@ -31,7 +31,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerDescription.Status.Connecting;
 
-class DefaultServer implements Server {
+class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
     private final Pool<Connection> connectionPool;
@@ -41,6 +41,7 @@ class DefaultServer implements Server {
     private final Set<ChangeListener<ServerDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private volatile ServerDescription description;
+    private volatile boolean isClosed;
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                          final AsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
@@ -89,12 +90,20 @@ class DefaultServer implements Server {
 
     @Override
     public void close() {
-        connectionPool.close();
-        if (asyncConnectionPool != null) {
-            asyncConnectionPool.close();
+        if (!isClosed()) {
+            connectionPool.close();
+            if (asyncConnectionPool != null) {
+                asyncConnectionPool.close();
+            }
+            scheduledFuture.cancel(true);
+            stateNotifier.close();
+            isClosed = true;
         }
-        scheduledFuture.cancel(true);
-        stateNotifier.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 
     private void handleException() {

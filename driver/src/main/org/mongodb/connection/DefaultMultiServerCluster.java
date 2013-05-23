@@ -32,10 +32,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
 
 class DefaultMultiServerCluster extends DefaultCluster {
-    private final ConcurrentMap<ServerAddress, Server> addressToServerMap = new ConcurrentHashMap<ServerAddress, Server>();
+    private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
+            new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
     protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                        final MongoClientOptions options, final ServerFactory serverFactory) {
+                                        final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
         super(credentialList, options, serverFactory);
 
         notNull("seedList", seedList);
@@ -98,7 +99,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
         isTrue("open", !isClosed());
 
         if (!addressToServerMap.containsKey(serverAddress)) {
-            Server mongoServer = createServer(serverAddress, new DefaultServerStateListener());
+            ClusterableServer mongoServer = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerMap.put(serverAddress, mongoServer);
         }
     }
@@ -114,7 +115,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
     private void invalidateAll() {
         isTrue("open", !isClosed());
 
-        for (Server server : addressToServerMap.values()) {
+        for (ClusterableServer server : addressToServerMap.values()) {
             server.invalidate();
         }
     }

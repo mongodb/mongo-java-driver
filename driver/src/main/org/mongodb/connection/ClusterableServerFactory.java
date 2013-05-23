@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-public interface ServerFactory {
-    Server create(ServerAddress serverAddress, List<MongoCredential> credentialList,
-                  MongoClientOptions options, ScheduledExecutorService scheduledExecutorService,
-                  BufferPool<ByteBuffer> bufferPool);
+public interface ClusterableServerFactory {
+    ClusterableServer create(ServerAddress serverAddress, List<MongoCredential> credentialList,
+                             MongoClientOptions options, ScheduledExecutorService scheduledExecutorService,
+                             BufferPool<ByteBuffer> bufferPool);
 }

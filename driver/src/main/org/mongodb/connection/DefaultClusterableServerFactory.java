@@ -23,12 +23,12 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-final class DefaultServerFactory implements ServerFactory {
+final class DefaultClusterableServerFactory implements ClusterableServerFactory {
 
     @Override
-    public Server create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                         final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
-                         final BufferPool<ByteBuffer> bufferPool) {
+    public ClusterableServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                    final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
+                                    final BufferPool<ByteBuffer> bufferPool) {
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(options, serverAddress, bufferPool, credentialList);
         AsyncConnectionFactory asyncConnectionFactory = null;
 

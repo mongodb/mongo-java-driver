@@ -31,7 +31,7 @@ public final class Clusters {
 
     public static Cluster create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                  final MongoClientOptions options) {
-        return new DefaultSingleServerCluster(serverAddress, credentialList, options, new DefaultServerFactory());
+        return new DefaultSingleServerCluster(serverAddress, credentialList, options, new DefaultClusterableServerFactory());
     }
 
     public static Cluster create(final List<ServerAddress> seedList, final MongoClientOptions options) {
@@ -40,7 +40,7 @@ public final class Clusters {
 
     public static Cluster create(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
                                            final MongoClientOptions options) {
-        return new DefaultMultiServerCluster(seedList, credentialList, options, new DefaultServerFactory());
+        return new DefaultMultiServerCluster(seedList, credentialList, options, new DefaultClusterableServerFactory());
     }
 }
 

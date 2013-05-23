@@ -62,20 +62,17 @@ public interface Server {
     AsyncConnection getAsyncConnection();
 
     /**
-     * Adds a change listener to this server.
-     *
-     * @param changeListener the listener for change events to the description of this server
-     */
-    void addChangeListener(ChangeListener<ServerDescription> changeListener);
-
-    /**
-     * Invalidate the description of this server.  Implementation of this method should not block,
-     * but rather trigger an asynchronous attempt to connect with the server in order to determine its current status.
-     */
-    void invalidate();
-
-    /**
      * Closes the server.  Instances that have been closed will no longer be available for use.
+     * <p>
+     *     Implementations should ensure that this method can be called multiple times with no ill effects.
+     * </p>
      */
     void close();
+
+    /**
+     * Returns true if the server is closed, false otherwise.
+     *
+     * * @return whether the server is closed
+     */
+    boolean isClosed();
 }

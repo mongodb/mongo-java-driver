@@ -42,7 +42,7 @@ public abstract class DefaultCluster implements Cluster {
     private final BufferPool<ByteBuffer> bufferPool;
     private final List<MongoCredential> credentialList;
     private final MongoClientOptions options;
-    private final ServerFactory serverFactory;
+    private final ClusterableServerFactory serverFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
         @Override
@@ -55,7 +55,7 @@ public abstract class DefaultCluster implements Cluster {
     private volatile ClusterDescription description;
 
     public DefaultCluster(final List<MongoCredential> credentialList,
-                          final MongoClientOptions options, final ServerFactory serverFactory) {
+                          final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
         this.credentialList = credentialList;
         this.options = notNull("options", options);
         this.serverFactory = notNull("serverFactory", serverFactory);
@@ -93,7 +93,7 @@ public abstract class DefaultCluster implements Cluster {
                 curDescription = description;
                 serverDescriptions = serverSelector.choose(curDescription);
             }
-            return getServer(getRandomServer(serverDescriptions).getAddress());
+            return new WrappedServer(getServer(getRandomServer(serverDescriptions).getAddress()));
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(
                     String.format("Interrupted while waiting for a server that satisfies server selector %s ", serverSelector), e);
@@ -137,9 +137,48 @@ public abstract class DefaultCluster implements Cluster {
         return random.get();
     }
 
-    protected Server createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener) {
-        final Server server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService, bufferPool);
+    protected ClusterableServer createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription>
+            serverStateListener) {
+        final ClusterableServer server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService,
+                bufferPool);
         server.addChangeListener(serverStateListener);
         return server;
+    }
+
+    private class WrappedServer implements Server {
+        private volatile Server wrapped;
+
+        public WrappedServer(final Server server) {
+            wrapped = server;
+        }
+
+        @Override
+        public ServerDescription getDescription() {
+            isTrue("open", !isClosed());
+            return wrapped.getDescription();
+        }
+
+        @Override
+        public Connection getConnection() {
+            isTrue("open", !isClosed());
+            return wrapped.getConnection();
+        }
+
+        @Override
+        public AsyncConnection getAsyncConnection() {
+            isTrue("open", !isClosed());
+            return wrapped.getAsyncConnection();
+        }
+
+        @Override
+        public void close() {
+            wrapped = null;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return wrapped == null;
+        }
+
     }
 }

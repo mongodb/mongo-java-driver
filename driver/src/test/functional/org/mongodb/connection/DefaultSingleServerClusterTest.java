@@ -32,7 +32,7 @@ public class DefaultSingleServerClusterTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        cluster = new DefaultSingleServerCluster(getPrimary(), null, getOptions(), new DefaultServerFactory());
+        cluster = new DefaultSingleServerCluster(getPrimary(), null, getOptions(), new DefaultClusterableServerFactory());
     }
 
     @After

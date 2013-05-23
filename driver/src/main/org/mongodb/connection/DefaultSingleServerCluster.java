@@ -30,7 +30,7 @@ class DefaultSingleServerCluster extends DefaultCluster {
     private final Server server;
 
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                      final MongoClientOptions options, final ServerFactory serverFactory) {
+                                      final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
         super(credentialList, options, serverFactory);
         notNull("serverAddress", serverAddress);
 
