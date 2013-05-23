@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerDescription.Status.Connecting;
 
 
 /**
@@ -66,6 +67,20 @@ public class ClusterDescription {
             }
         }
         return Type.Unknown;
+    }
+
+    /**
+     * Returns true if the application has been unsuccessful in its last attempt to connect to any of the servers in the cluster.
+     *
+     * @return true if connecting, false otherwise
+     */
+    public boolean isConnecting() {
+        for (final ServerDescription cur : all) {
+            if (cur.getStatus() == Connecting) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<ServerDescription> getAll() {

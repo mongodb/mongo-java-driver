@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerDescription.Status.Connecting;
 
 class DefaultServer implements Server {
     private final ScheduledExecutorService scheduledExecutorService;
@@ -51,7 +52,7 @@ class DefaultServer implements Server {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
         this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
-        this.description = ServerDescription.builder().address(serverAddress).build();
+        this.description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
         // TODO: configurable
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS);
@@ -87,7 +88,7 @@ class DefaultServer implements Server {
 
     @Override
     public void invalidate() {
-        description = ServerDescription.builder().address(serverAddress).build();
+        description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
         scheduledExecutorService.submit(stateNotifier);
     }
 

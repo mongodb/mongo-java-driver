@@ -34,6 +34,19 @@ import static org.mongodb.connection.ServerType.Unknown;
 
 @Immutable
 public class ServerDescription {
+
+    public enum Status {
+        /**
+         * The application is actively attempting to connect to the remote server.
+         */
+        Connecting,
+
+        /**
+         *  The application is connected to the remote server.
+         */
+        Connected
+    }
+
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
@@ -50,7 +63,7 @@ public class ServerDescription {
     private final String setName;
     private final long averagePingTimeNanos;
     private final boolean ok;
-
+    private final Status status;
 
     public static class Builder {
         private ServerAddress address;
@@ -64,6 +77,7 @@ public class ServerDescription {
         private String setName;
         private long averagePingTimeNanos;
         private boolean ok;
+        private Status status;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -118,6 +132,11 @@ public class ServerDescription {
 
         public Builder ok(final boolean ok) {
             this.ok = ok;
+            return this;
+        }
+
+        public Builder status(final Status status) {
+            this.status = status;
             return this;
         }
 
@@ -221,6 +240,14 @@ public class ServerDescription {
         return ok;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public ServerType getType() {
+        return type;
+    }
+
     public long getAveragePingTimeNanos() {
         return averagePingTimeNanos;
     }
@@ -247,7 +274,7 @@ public class ServerDescription {
         if (!address.equals(that.address)) return false;
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) return false;
         if (!tags.equals(that.tags)) return false;
-
+        if (status != that.status) return false;
         return true;
     }
 
@@ -263,6 +290,7 @@ public class ServerDescription {
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
+        result = 31 * result + status.hashCode();
         return result;
     }
 
@@ -280,12 +308,14 @@ public class ServerDescription {
                 + ", setName='" + setName + '\''
                 + ", averagePingTimeNanos=" + averagePingTimeNanos
                 + ", ok=" + ok
+                + ", state=" + status
                 + '}';
     }
 
     ServerDescription(final Builder builder) {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
+        status = notNull("status", builder.status);
         hosts = builder.hosts;
         passives = builder.passives;
         primary = builder.primary;

@@ -22,7 +22,7 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
-import org.mongodb.connection.MongoTimeoutException;
+import org.mongodb.connection.MongoServerSelectionFailureException;
 import org.mongodb.connection.Tags;
 
 @Category(ReplicaSet.class)
@@ -34,7 +34,7 @@ public class ReplicaSetTest extends DatabaseTestCase {
         collection.count();
     }
 
-    @Test(expected = MongoTimeoutException.class)
+    @Test(expected = MongoServerSelectionFailureException.class)
     public void shouldThrowTimeoutException() {
         collection.readPreference(ReadPreference.nearest(new Tags("fakeTag", "fakeValue"))).count();
     }

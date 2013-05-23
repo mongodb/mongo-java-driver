@@ -73,6 +73,12 @@ public abstract class DefaultCluster implements Cluster {
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             long endTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(20, TimeUnit.SECONDS); // TODO: configurable
             while (serverDescriptions.isEmpty()) {
+
+                if (!curDescription.isConnecting()) {
+                    throw new MongoServerSelectionFailureException(String.format("No server satisfies the selector %s",
+                            serverSelector));
+                }
+
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.log(Level.FINE, String.format(
@@ -81,7 +87,7 @@ public abstract class DefaultCluster implements Cluster {
 
                 if (!currentPhase.await(timeout, TimeUnit.NANOSECONDS)) {
                     throw new MongoTimeoutException(
-                            "Thread timed out while waiting for a server that satisfied server selector: " + serverSelector);
+                            "Timed out while waiting for a server that satisfies the selector: " + serverSelector);
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -90,7 +96,7 @@ public abstract class DefaultCluster implements Cluster {
             return getServer(getRandomServer(serverDescriptions).getAddress());
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(
-                    "Thread was interrupted while waiting for a server that satisfied server selector: " + serverSelector, e);
+                    String.format("Interrupted while waiting for a server that satisfies server selector %s ", serverSelector), e);
         }
     }
 

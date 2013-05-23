@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
+import static org.mongodb.connection.ServerDescription.Status.Connected;
 
 public class ReadPreferenceServerSelectorTest {
     @Test
@@ -47,6 +48,7 @@ public class ReadPreferenceServerSelectorTest {
         assertEquals("ReadPreferenceServerSelector{readPreference=primary}", selector.toString());
 
         final ServerDescription primary = ServerDescription.builder()
+                .status(Connected)
                 .address(new ServerAddress())
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
@@ -58,18 +60,21 @@ public class ReadPreferenceServerSelectorTest {
     public void testChaining() throws UnknownHostException {
         ReadPreferenceServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.secondary());
         final ServerDescription primary = ServerDescription.builder()
+                .status(Connected)
                 .address(new ServerAddress())
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .averagePingTime(1, TimeUnit.MILLISECONDS)
                 .build();
         final ServerDescription secondaryOne = ServerDescription.builder()
+                .status(Connected)
                 .address(new ServerAddress("localhost:27018"))
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .averagePingTime(2, TimeUnit.MILLISECONDS)
                 .build();
         final ServerDescription secondaryTwo = ServerDescription.builder()
+                .status(Connected)
                 .address(new ServerAddress("localhost:27019"))
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)

@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.mongodb.connection.ServerDescription.Status.Connected;
+import static org.mongodb.connection.ServerDescription.Status.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -60,7 +62,8 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     }
 
     private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(Unknown).address(connectionFactory.getServerAddress()).build();
+        return ServerDescription.builder().type(Unknown).status(
+                Connecting).address(connectionFactory.getServerAddress()).build();
     }
 
     @Override
@@ -111,6 +114,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     @SuppressWarnings("unchecked")
     private ServerDescription createDescription(final CommandResult commandResult, final long averagePingTimeNanos) {
         return ServerDescription.builder()
+                .status(Connected)
                 .address(commandResult.getAddress())
                 .type(getServerType(commandResult.getResponse()))
                 .hosts((List<String>) commandResult.getResponse().get("hosts"))

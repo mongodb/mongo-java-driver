@@ -23,7 +23,11 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
+import static org.mongodb.connection.ServerDescription.Status.Connected;
+import static org.mongodb.connection.ServerDescription.Status.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ShardRouter;
 
@@ -37,18 +41,35 @@ public class ClusterDescriptionTest {
     @Test
     public void testType() throws UnknownHostException {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().address(new ServerAddress()).type(ReplicaSetPrimary).build()),
+                ServerDescription.builder().status(Connected).address(new ServerAddress())
+                        .type(ReplicaSetPrimary).build()),
                 Discovering);
         assertEquals(ClusterDescription.Type.ReplicaSet, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().address(new ServerAddress()).type(ShardRouter).build()),
+                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ShardRouter).build()),
                 Discovering);
         assertEquals(ClusterDescription.Type.Sharded, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().address(new ServerAddress()).type(ServerType.StandAlone).build()),
+                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ServerType.StandAlone).build()),
                 Discovering);
         assertEquals(ClusterDescription.Type.StandAlone, description.getType());
+    }
+
+
+    @Test
+    public void testIsConnecting() throws UnknownHostException {
+        ClusterDescription description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().status(Connecting).address(new ServerAddress())
+                        .type(ReplicaSetPrimary).build()),
+                Discovering);
+        assertTrue(description.isConnecting());
+
+        description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().status(Connected).address(new ServerAddress())
+                        .type(ReplicaSetPrimary).build()),
+                Discovering);
+        assertFalse(description.isConnecting());
     }
 }
