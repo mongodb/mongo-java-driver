@@ -49,7 +49,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
     @Override
     public void close() {
         if (!isClosed()) {
-            for (Server server : addressToServerMap.values()) {
+            for (ClusterableServer server : addressToServerMap.values()) {
                 server.close();
             }
             super.close();
@@ -107,7 +107,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
     private void removeServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        Server server = addressToServerMap.remove(serverAddress);
+        ClusterableServer server = addressToServerMap.remove(serverAddress);
         server.close();
     }
 

@@ -169,16 +169,5 @@ public abstract class DefaultCluster implements Cluster {
             isTrue("open", !isClosed());
             return wrapped.getAsyncConnection();
         }
-
-        @Override
-        public void close() {
-            wrapped = null;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return wrapped == null;
-        }
-
-    }
+   }
 }

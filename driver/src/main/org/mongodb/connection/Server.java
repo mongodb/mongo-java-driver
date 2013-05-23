@@ -60,19 +60,4 @@ public interface Server {
      * @return an asynchronous connection to this server
      */
     AsyncConnection getAsyncConnection();
-
-    /**
-     * Closes the server.  Instances that have been closed will no longer be available for use.
-     * <p>
-     *     Implementations should ensure that this method can be called multiple times with no ill effects.
-     * </p>
-     */
-    void close();
-
-    /**
-     * Returns true if the server is closed, false otherwise.
-     *
-     * * @return whether the server is closed
-     */
-    boolean isClosed();
 }

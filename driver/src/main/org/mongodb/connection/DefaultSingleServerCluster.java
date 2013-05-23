@@ -27,7 +27,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterDescription.Mode.Direct;
 
 class DefaultSingleServerCluster extends DefaultCluster {
-    private final Server server;
+    private final ClusterableServer server;
 
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
