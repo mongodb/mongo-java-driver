@@ -16,18 +16,66 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.annotations.ThreadSafe;
+
+/**
+ * A logical connection to a MongoDB server.
+ *
+ * @since 3.0
+ */
+@ThreadSafe
 public interface Server {
+    /**
+     * Gets the description of this server.  Implementations of this method should not block if the server has not yet been successfully
+     * contacted, but rather return immediately a @code{ServerDescription} in a @code{ServerDescription.Status.Connecting} state.
+     *
+     * @return the description of this server
+     */
+    ServerDescription getDescription();
+
+    /**
+     * Gets a connection to this server.  The connection should be closed after the caller is done with it.
+     * <p>
+     * Implementations of this method are allowed to block while waiting for a free connection from a pool of available connections.
+     * </p>
+     * <p>
+     * Implementations of this method will likely pool the underlying connections, so the effect of closing the returned connection will
+     * be to return the connection to the pool.
+     * </p>
+     *
+     * @return a connection this server
+     */
     Connection getConnection();
 
+    /**
+     * Gets an asynchronous connection to this server.  The connection should be closed after the caller is done with it.
+     * <p>
+     * Implementations of this method are allowed to block while waiting for a free connection from a pool of available connections.
+     * </p>
+     * <p>
+     * Implementations of this method will likely pool the underlying connections, so the effect of closing the returned connection will
+     * be to return the connection to the pool.
+     * </p>
+     *
+     * @return an asynchronous connection to this server
+     */
     AsyncConnection getAsyncConnection();
 
-    ServerAddress getServerAddress();
-
-    void close();
-
+    /**
+     * Adds a change listener to this server.
+     *
+     * @param changeListener the listener for change events to the description of this server
+     */
     void addChangeListener(ChangeListener<ServerDescription> changeListener);
 
+    /**
+     * Invalidate the description of this server.  Implementation of this method should not block,
+     * but rather trigger an asynchronous attempt to connect with the server in order to determine its current status.
+     */
     void invalidate();
 
-    ServerDescription getDescription();
+    /**
+     * Closes the server.  Instances that have been closed will no longer be available for use.
+     */
+    void close();
 }

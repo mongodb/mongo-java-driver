@@ -72,11 +72,6 @@ class DefaultServer implements Server {
     }
 
     @Override
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    @Override
     public ServerDescription getDescription() {
         return description;
     }
