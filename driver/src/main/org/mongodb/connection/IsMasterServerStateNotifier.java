@@ -52,6 +52,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private int count;
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
+    private volatile boolean isClosed;
 
     IsMasterServerStateNotifier(final ChangeListener<ServerDescription> serverStateListener, final ConnectionFactory connectionFactory,
                                 final BufferPool<ByteBuffer> bufferPool) {
@@ -69,6 +70,10 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     @Override
     @SuppressWarnings("unchecked")
     public synchronized void run() {
+        if (isClosed) {
+            return;
+        }
+
         ServerDescription currentServerDescription = serverDescription;
         try {
             if (connection == null) {
@@ -82,29 +87,37 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
 
                 serverDescription = createDescription(commandResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
-                connection.close();
-                connection = null;
-                count = 0;
-                elapsedNanosSum = 0;
-                throw e;
+                if (!isClosed) {
+                    connection.close();
+                    connection = null;
+                    count = 0;
+                    elapsedNanosSum = 0;
+                    throw e;
+                }
             }
         } catch (Throwable t) {
-            serverDescription = getConnectingServerDescription();
-            LOGGER.log(Level.INFO, String.format("Exception in background thread while attempting to call ismaster command on server %s",
-                    connectionFactory.getServerAddress()), t);
+            if (!isClosed) {
+                serverDescription = getConnectingServerDescription();
+                LOGGER.log(Level.INFO, String.format(
+                        "Exception in background thread while attempting to call ismaster command on server %s",
+                        connectionFactory.getServerAddress()), t);
+            }
         }
 
-        try {
-            if (!currentServerDescription.equals(serverDescription)) {
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+        if (!isClosed) {
+            try {
+                if (!currentServerDescription.equals(serverDescription)) {
+                    serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+                }
+            } catch (Throwable t) {
+                LOGGER.log(Level.INFO, "Exception in background thread during notification of server description state change", t);
             }
-        } catch (Throwable t) {
-            LOGGER.log(Level.INFO, "Exception in background thread during notification of server description state change", t);
         }
     }
 
     @Override
     public void close() {
+        isClosed = true;
         if (connection != null) {
             connection.close();
             connection = null;
