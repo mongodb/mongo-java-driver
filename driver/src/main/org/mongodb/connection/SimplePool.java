@@ -64,21 +64,23 @@ abstract class SimplePool<T> implements Pool<T> {
     }
 
     /**
-     * call done when you are done with an object from the pool if there is room and the object is ok will get added
+     * Return an instance of T to the pool
      *
      * @param t item to return to the pool
      */
-    public void done(final T t) {
-        done(t, false);
+    @Override
+    public void release(final T t) {
+        release(t, false);
     }
 
     /**
      * call done when you are done with an object from the pool if there is room and the object is ok will get added
      *
      * @param t       item to return to the pool
-     * @param discard true if the item should be discarded, false if it should be back in the pool
+     * @param discard true if the item should be discarded, false if it should be put back in the pool
      */
-    public void done(final T t, final boolean discard) {
+    @Override
+    public void release(final T t, final boolean discard) {
         if (t == null) {
             throw new IllegalArgumentException("Can not return a null item to the pool");
         }
@@ -119,7 +121,7 @@ abstract class SimplePool<T> implements Pool<T> {
      * Gets an object from the pool - will block if none are available
      *
      * @param timeout  negative - forever 0        - return immediately no matter what positive ms to wait
-     * @param timeUnit
+     * @param timeUnit the time unit of the timeout
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
     @Override
@@ -191,6 +193,7 @@ abstract class SimplePool<T> implements Pool<T> {
         clear();
     }
 
+    @Override
     public synchronized void clear() {
         for (final T t : available) {
             cleanup(t);

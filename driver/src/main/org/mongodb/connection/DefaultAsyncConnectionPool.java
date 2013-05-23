@@ -42,8 +42,23 @@ class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
     }
 
     @Override
+    public void release(final AsyncConnection asyncConnection) {
+        wrappedPool.release(asyncConnection);
+    }
+
+    @Override
     public void close() {
         wrappedPool.close();
+    }
+
+    @Override
+    public void clear() {
+        wrappedPool.clear();
+    }
+
+    @Override
+    public void release(final AsyncConnection asyncConnection, final boolean discard) {
+        wrappedPool.release(asyncConnection, discard);
     }
 
     private AsyncConnection wrap(final AsyncConnection connection) {
@@ -83,7 +98,7 @@ class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
         @Override
         public void close() {
             try {
-                DefaultAsyncConnectionPool.this.wrappedPool.done(wrapped, wrapped.isClosed());
+                DefaultAsyncConnectionPool.this.wrappedPool.release(wrapped, wrapped.isClosed());
             } finally {
                 wrapped = null;
             }

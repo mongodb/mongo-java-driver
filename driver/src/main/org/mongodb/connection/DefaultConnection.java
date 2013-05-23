@@ -118,7 +118,7 @@ abstract class DefaultConnection implements Connection {
 
             replyHeader = new MongoReplyHeader(headerInputBuffer);
         } finally {
-            bufferPool.done(headerByteBuffer);
+            bufferPool.release(headerByteBuffer);
         }
 
         // TODO: make max message length dynamic

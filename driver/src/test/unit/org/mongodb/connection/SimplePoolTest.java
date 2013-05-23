@@ -50,7 +50,7 @@ public class SimplePoolTest {
     public void testThatDoneIncreasesAvailability() {
         pool.get();
         pool.get();
-        pool.done(pool.get());
+        pool.release(pool.get());
         assertNotNull(pool.get());
     }
 
@@ -60,6 +60,6 @@ public class SimplePoolTest {
     public void testDoneAfterClear() {
         ByteBuffer buffer = pool.get();
         pool.clear();
-        pool.done(buffer);
+        pool.release(buffer);
     }
 }

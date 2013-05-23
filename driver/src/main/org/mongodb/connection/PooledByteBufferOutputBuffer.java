@@ -72,7 +72,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     private ByteBuffer getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, pool.getMaximumBufferSize())));
+            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, pool.getMaximumPooledSize())));
         }
         return bufferList.get(index);
     }
@@ -170,7 +170,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
         while (bufferList.size() > bufferPositionPair.bufferIndex + 1) {
             ByteBuffer buffer = bufferList.remove(bufferList.size() - 1);
-            pool.done(buffer);
+            pool.release(buffer);
         }
 
         curBufferIndex = bufferPositionPair.bufferIndex;
@@ -201,7 +201,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
     @Override
     public void close() {
         for (final ByteBuffer cur : bufferList) {
-            pool.done(cur);
+            pool.release(cur);
         }
         bufferList.clear();
     }

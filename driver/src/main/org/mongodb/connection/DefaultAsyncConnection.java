@@ -223,7 +223,7 @@ class DefaultAsyncConnection implements AsyncConnection {
 
                 final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
 
-                bufferPool.done(result);
+                bufferPool.release(result);
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);

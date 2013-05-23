@@ -21,7 +21,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
+public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
 
     private final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
     private int highestPowerOfTwo;
@@ -47,37 +47,39 @@ public class PowerOfTwoByteBufferPool extends BufferPool<ByteBuffer> {
     }
 
     @Override
-    public int getMaximumBufferSize() {
+    public int getMaximumPooledSize() {
         return 1 << highestPowerOfTwo;
     }
 
     @Override
     public ByteBuffer get(final int size) {
         final Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
-        final ByteBuffer byteBuffer;
-        byteBuffer = pool.get();
+        final ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
+
         byteBuffer.clear();
         byteBuffer.limit(size);
         return byteBuffer;
     }
 
     @Override
-    public void done(final ByteBuffer buffer) {
-        powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity())).done(buffer);
+    public void release(final ByteBuffer buffer) {
+        final SimplePool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
+        if (pool != null) {
+            pool.release(buffer);
+        }
     }
 
     @Override
-    public ByteBuffer createNew(final int size) {
+    public void clear() {
+        for (Pool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
+            cur.clear();
+        }
+    }
+
+    private ByteBuffer createNew(final int size) {
         final ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
         buf.order(ByteOrder.LITTLE_ENDIAN);
         return buf;
-    }
-
-    @Override
-    public void close() {
-        for (Pool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
-            cur.close();
-        }
     }
 
     static int roundUpToNextHighestPowerOfTwo(final int size) {

@@ -42,8 +42,23 @@ class DefaultConnectionPool implements Pool<Connection> {
     }
 
     @Override
+    public void release(final Connection connection) {
+        wrappedPool.release(connection);
+    }
+
+    @Override
     public void close() {
         wrappedPool.close();
+    }
+
+    @Override
+    public void clear() {
+        wrappedPool.clear();
+    }
+
+    @Override
+    public void release(final Connection connection, final boolean discard) {
+        wrappedPool.release(connection, discard);
     }
 
     private Connection wrap(final Connection connection) {
@@ -83,7 +98,7 @@ class DefaultConnectionPool implements Pool<Connection> {
         @Override
         public void close() {
             if (wrapped != null) {
-                DefaultConnectionPool.this.wrappedPool.done(wrapped, wrapped.isClosed());
+                release(wrapped, wrapped.isClosed());
                 wrapped = null;
             }
         }
@@ -138,7 +153,7 @@ class DefaultConnectionPool implements Pool<Connection> {
          */
         private void handleException(final MongoException e) {
             if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-               DefaultConnectionPool.this.wrappedPool.clear();
+               clear();
             }
         }
     }

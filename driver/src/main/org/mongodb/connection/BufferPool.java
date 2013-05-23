@@ -16,16 +16,13 @@
 
 package org.mongodb.connection;
 
-public abstract class BufferPool<T> {
+public interface BufferPool<T> {
 
-    public abstract int getMaximumBufferSize();
+    T get(int size);
 
-    public abstract T get(int size);
+    void release(T buffer);
 
-    public abstract void done(T buffer);
+    void clear();
 
-    public abstract T createNew(int size);
-
-    public abstract void close();
-
+    int getMaximumPooledSize();
 }

@@ -23,5 +23,11 @@ interface Pool<T> {
 
     T get(long timeout, final TimeUnit timeUnit);
 
+    void release(T t);
+
     void close();
+
+    void clear();
+
+    void release(T t, boolean discard);
 }

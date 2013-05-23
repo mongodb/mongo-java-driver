@@ -34,7 +34,7 @@ class PooledInputBuffer extends BasicInputBuffer {
     @Override
     public void close() {
         super.close();
-        pool.done(pooledBuffer);
+        pool.release(pooledBuffer);
         pooledBuffer = null;
     }
 }
