@@ -93,19 +93,6 @@ public abstract class BSONReader implements Closeable {
     }
 
     /**
-     * @return The current BSONType (calls readBSONType if necessary).
-     */
-    public BSONType getNextBSONType() {
-        if (state == State.INITIAL || state == State.DONE || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
-            readBSONType();
-        }
-        if (state != State.VALUE) {
-            throwInvalidState("GetCurrentBSONType", State.VALUE);
-        }
-        return currentBSONType;
-    }
-
-    /**
      * Reads BSON Binary data from the reader.
      *
      * @return A Binary.
