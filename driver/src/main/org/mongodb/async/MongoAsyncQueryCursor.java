@@ -21,14 +21,10 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerSelectingSession;
 import org.mongodb.connection.AsyncSession;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Server;
-import org.mongodb.connection.ServerAddressSelector;
-import org.mongodb.connection.SingleConnectionAsyncSession;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.connection.SingleServerAsyncSession;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.MongoGetMore;
@@ -40,7 +36,9 @@ import org.mongodb.operation.async.AsyncGetMoreOperation;
 import org.mongodb.operation.async.AsyncQueryOperation;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.Executor;
+
+import static org.mongodb.connection.AsyncServerSelectingSession.BindingType.Connection;
+import static org.mongodb.connection.AsyncServerSelectingSession.BindingType.Server;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
@@ -50,35 +48,27 @@ public class MongoAsyncQueryCursor<T> {
     private Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
     private final BufferPool<ByteBuffer> bufferPool;
-    private final AsyncBlock<? super T> block;
     private final AsyncSession session;
+    private final AsyncBlock<? super T> block;
     private long numFetchedSoFar;
     private ServerCursor cursor;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final BufferPool<ByteBuffer> bufferPool, final AsyncSession initialSession,
-                                 final AsyncBlock<? super T> block, final Executor executor) {
+                                 final Decoder<T> decoder, final BufferPool<ByteBuffer> bufferPool,
+                                 final AsyncServerSelectingSession initialSession, final AsyncBlock<? super T> block) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
         this.bufferPool = bufferPool;
         this.block = block;
-        // TODO: this is synchronous
-        AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference())).get();
-        if (find.getOptions().contains(QueryOption.Exhaust)) {
-            this.session = new SingleConnectionAsyncSession(connection, initialSession.getCluster(), executor);
-        }
-        else {
-            Server server = initialSession.getCluster().getServer(new ServerAddressSelector(connection.getServerAddress()));
-            this.session = new SingleServerAsyncSession(server, initialSession.getCluster(), executor);
-        }
+        this.session = initialSession.getBoundSession(new ReadPreferenceServerSelector(find.getReadPreference()),
+                find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
     }
 
     public void start() {
         new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferPool).execute(session)
                 .register(new QueryResultSingleResultCallback());
-
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {

@@ -18,14 +18,30 @@ package org.mongodb.connection;
 
 import org.mongodb.operation.MongoFuture;
 
+/**
+ * A provider of asynchronous connections.
+ *
+ * @since 3.0
+ */
 public interface AsyncSession {
-    Cluster getCluster();
 
+    /**
+     * Gets a connection, which should be closed after use.
+     *
+     * @return a future for an asynchronous connection
+     */
+    MongoFuture<AsyncConnection> getConnection();
+
+    /**
+     * Close the session.  Care should be taken to close any connections that were provided by this session before the session itself is
+     * closed.
+     */
     void close();
 
+    /**
+     * Returns true if this session has been closed
+     *
+     * @return true if the session has been closed;
+     */
     boolean isClosed();
-
-    MongoFuture<AsyncConnection> getConnection(ServerSelector serverSelector);
-
-    MongoFuture<AsyncConnection> getConnection();
 }

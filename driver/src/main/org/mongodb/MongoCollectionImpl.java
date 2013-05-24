@@ -842,7 +842,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
             new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferPool(),
-                    client.getAsyncSession(), block, client.getExecutor()).start();
+                    client.getAsyncSession(), block).start();
         }
 
         @Override

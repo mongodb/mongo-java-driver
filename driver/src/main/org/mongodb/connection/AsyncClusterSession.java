@@ -25,7 +25,7 @@ import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class AsyncClusterSession extends AbstractAsyncBaseSession implements AsyncSession {
+public class AsyncClusterSession extends AbstractAsyncBaseSession implements AsyncServerSelectingSession {
 
     public AsyncClusterSession(final Cluster cluster, final Executor executor) {
         super(cluster, executor);
@@ -60,5 +60,15 @@ public class AsyncClusterSession extends AbstractAsyncBaseSession implements Asy
     public MongoFuture<AsyncConnection> getConnection() {
         isTrue("open", !isClosed());
         return getConnection(new PrimaryServerSelector());
+    }
+
+    @Override
+    public AsyncSession getBoundSession(final ServerSelector serverSelector, final BindingType bindingType) {
+        if (bindingType == BindingType.Connection) {
+            return new SingleConnectionAsyncSession(serverSelector, this);
+        }
+        else {
+            return new SingleServerAsyncSession(serverSelector, getCluster(), getExecutor());
+        }
     }
 }

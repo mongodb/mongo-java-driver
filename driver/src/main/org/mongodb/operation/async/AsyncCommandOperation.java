@@ -22,7 +22,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.AsyncSession;
+import org.mongodb.connection.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
@@ -46,7 +46,7 @@ public class AsyncCommandOperation extends AsyncOperation {
     }
 
 
-    public MongoFuture<CommandResult> execute(final AsyncSession session) {
+    public MongoFuture<CommandResult> execute(final AsyncServerSelectingSession session) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()))

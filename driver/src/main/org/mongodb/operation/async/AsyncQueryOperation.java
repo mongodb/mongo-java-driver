@@ -29,7 +29,6 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryResult;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.protocol.MongoQueryMessage;
 
 import java.nio.ByteBuffer;
@@ -51,8 +50,7 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
 
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        session.getConnection(
-                new ReadPreferenceServerSelector(find.getReadPreference())).register(new SingleResultCallback<AsyncConnection>() {
+        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
             @Override
             public void onResult(final AsyncConnection connection, final MongoException e) {
                 if (e != null) {

@@ -16,37 +16,57 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.MongoException;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
 
-import java.util.concurrent.Executor;
-
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleConnectionAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
-    private final AsyncConnection connection;
+public class SingleConnectionAsyncSession implements AsyncSession {
+    private final ServerSelector serverSelector;
+    private AsyncConnection connection;
+    private AsyncServerSelectingSession session;
+    private volatile boolean isClosed;
 
-    public SingleConnectionAsyncSession(final AsyncConnection connection, final Cluster cluster, final Executor executor) {
-        super(cluster, executor);
-        this.connection = connection;
+    public SingleConnectionAsyncSession(final ServerSelector serverSelector, final AsyncServerSelectingSession session) {
+        this.session = session;
+        this.serverSelector = serverSelector;
     }
 
     public void close() {
         if (!isClosed()) {
             connection.close();
-            super.close();
+            isClosed = true;
         }
     }
 
     @Override
-    public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-        return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+    public boolean isClosed() {
+        return isClosed;
     }
 
     @Override
     public MongoFuture<AsyncConnection> getConnection() {
         isTrue("open", !isClosed());
-        return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+
+        if (connection != null) {
+            return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+        }
+        else {
+            final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
+            session.getConnection(serverSelector).register(new SingleResultCallback<AsyncConnection>() {
+                @Override
+                public void onResult(final AsyncConnection newConnection, final MongoException e) {
+                    if (e != null) {
+                        retVal.init(null, e);
+                    }
+                    else {
+                        connection = newConnection;
+                        retVal.init(new DelayedCloseAsyncConnection(newConnection), null);
+                    }
+                }
+            });
+            return retVal;
+        }
     }
 }

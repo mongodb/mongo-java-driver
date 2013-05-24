@@ -27,17 +27,12 @@ import java.util.concurrent.Executor;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 public class SingleServerAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
-    private final Server server;
+    private final ServerSelector serverSelector;
+    private Server server;
 
-    public SingleServerAsyncSession(final Server server, final Cluster cluster, final Executor executor) {
+    public SingleServerAsyncSession(final ServerSelector serverSelector, final Cluster cluster, final Executor executor) {
         super(cluster, executor);
-        this.server = server;
-    }
-
-    @Override
-    public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-        return getConnection();
+        this.serverSelector = serverSelector;
     }
 
     @Override
@@ -50,7 +45,7 @@ public class SingleServerAsyncSession extends AbstractAsyncBaseSession implement
             @Override
             public void run() {
                 try {
-                    AsyncConnection connection = server.getAsyncConnection();
+                    AsyncConnection connection = getServer().getAsyncConnection();
                     retVal.init(connection, null);
                 } catch (MongoException e) {
                     retVal.init(null, e);
@@ -61,5 +56,12 @@ public class SingleServerAsyncSession extends AbstractAsyncBaseSession implement
         });
 
         return retVal;
+    }
+
+    private synchronized Server getServer() {
+        if (server == null) {
+            server = getCluster().getServer(serverSelector);
+        }
+        return server;
     }
 }

@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.AsyncSession;
+import org.mongodb.connection.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
@@ -26,7 +26,6 @@ import org.mongodb.connection.Session;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -73,14 +72,9 @@ public final class Fixture {
         return mongoClient.getSession();
     }
 
-    public static AsyncSession getAsyncSession() {
+    public static AsyncServerSelectingSession getAsyncSession() {
         getMongoClient();
         return mongoClient.getAsyncSession();
-    }
-
-    public static Executor getExecutor() {
-        getMongoClient();
-        return mongoClient.getExecutor();
     }
 
     // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
