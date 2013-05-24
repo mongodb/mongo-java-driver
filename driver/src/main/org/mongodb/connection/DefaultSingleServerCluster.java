@@ -53,7 +53,7 @@ class DefaultSingleServerCluster extends DefaultCluster {
     }
 
     @Override
-    protected Server getServer(final ServerAddress serverAddress) {
+    protected ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
         return server;

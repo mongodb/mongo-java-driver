@@ -119,7 +119,7 @@ public abstract class DefaultCluster implements Cluster {
         return isClosed;
     }
 
-    protected abstract Server getServer(final ServerAddress serverAddress);
+    protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         LOGGER.log(Level.FINE, String.format("Updating cluster description %s and notifying all waiters", newDescription));
@@ -145,28 +145,25 @@ public abstract class DefaultCluster implements Cluster {
         return server;
     }
 
-    private class WrappedServer implements Server {
-        private volatile Server wrapped;
+    private static final class WrappedServer implements Server {
+        private volatile ClusterableServer wrapped;
 
-        public WrappedServer(final Server server) {
+        public WrappedServer(final ClusterableServer server) {
             wrapped = server;
         }
 
         @Override
         public ServerDescription getDescription() {
-            isTrue("open", !isClosed());
             return wrapped.getDescription();
         }
 
         @Override
         public Connection getConnection() {
-            isTrue("open", !isClosed());
             return wrapped.getConnection();
         }
 
         @Override
         public AsyncConnection getAsyncConnection() {
-            isTrue("open", !isClosed());
             return wrapped.getAsyncConnection();
         }
    }

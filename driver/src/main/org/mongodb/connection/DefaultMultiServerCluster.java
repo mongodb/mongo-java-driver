@@ -57,14 +57,14 @@ class DefaultMultiServerCluster extends DefaultCluster {
     }
 
     @Override
-    protected Server getServer(final ServerAddress serverAddress) {
+    protected ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
 
-        Server connection = addressToServerMap.get(serverAddress);
-        if (connection == null) {
+        ClusterableServer server = addressToServerMap.get(serverAddress);
+        if (server == null) {
             throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
         }
-        return connection;
+        return server;
     }
 
 

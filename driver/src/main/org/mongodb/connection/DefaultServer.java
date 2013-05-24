@@ -61,11 +61,15 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public Connection getConnection() {
+        isTrue("open", !isClosed());
+
         return new DefaultServerConnection(connectionPool.get());
     }
 
     @Override
     public AsyncConnection getAsyncConnection() {
+        isTrue("open", !isClosed());
+
         if (asyncConnectionPool == null) {
             throw new UnsupportedOperationException("Asynchronous connections not supported in this version of Java");
         }
@@ -74,16 +78,22 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public ServerDescription getDescription() {
+        isTrue("open", !isClosed());
+
         return description;
     }
 
     @Override
     public void addChangeListener(final ChangeListener<ServerDescription> changeListener) {
+        isTrue("open", !isClosed());
+
         changeListeners.add(changeListener);
     }
 
     @Override
     public void invalidate() {
+        isTrue("open", !isClosed());
+
         description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
         scheduledExecutorService.submit(stateNotifier);
     }
