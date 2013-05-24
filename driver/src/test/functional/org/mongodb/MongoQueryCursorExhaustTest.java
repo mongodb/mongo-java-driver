@@ -18,7 +18,15 @@ package org.mongodb;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.SingleConnectionSession;
+import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerSelectingSession;
+import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.Session;
+import org.mongodb.connection.SessionBindingType;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 
@@ -26,8 +34,9 @@ import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferPool;
-import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
+import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
@@ -56,7 +65,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        SingleConnectionSession singleConnectionSession = new SingleConnectionSession(getSession().getConnection(), getCluster());
+        SingleConnectionServerSelectingSession singleConnectionSession = new SingleConnectionServerSelectingSession(getSession()
+                .getConnection());
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
@@ -69,5 +79,88 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                 new MongoFind().limit(1).order(new Document("_id", -1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
         assertEquals(new Document("_id", 999), cursor.next());
+
+        singleConnectionSession.connection.close();
+    }
+
+    private static class SingleConnectionServerSelectingSession implements ServerSelectingSession {
+        private Connection connection;
+        private boolean isClosed;
+
+        public SingleConnectionServerSelectingSession(final Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public Connection getConnection(final ServerSelector serverSelector) {
+            return getConnection();
+        }
+
+        @Override
+        public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+            return new SingleConnectionServerSelectingSession(new DelayedCloseConnection(connection));
+        }
+
+        @Override
+        public Connection getConnection() {
+            return new DelayedCloseConnection(connection);
+        }
+
+        @Override
+        public void close() {
+           isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
+        }
+    }
+
+    private static class DelayedCloseConnection implements Connection {
+        private Connection wrapped;
+        private boolean isClosed;
+
+
+        public DelayedCloseConnection(final Connection wrapped) {
+            this.wrapped = notNull("wrapped", wrapped);
+        }
+
+        @Override
+        public ServerAddress getServerAddress() {
+            isTrue("open", !isClosed());
+            return getWrapped().getServerAddress();
+        }
+
+        @Override
+        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            wrapped.sendAndReceiveMessage(buffer);
+        }
+
+        @Override
+        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
+            isTrue("open", !isClosed());
+            return wrapped.sendAndReceiveMessage(buffer);
+        }
+
+        @Override
+        public ResponseBuffers receiveMessage() {
+            isTrue("open", !isClosed());
+            return wrapped.receiveMessage();
+        }
+
+        protected BaseConnection getWrapped() {
+            return wrapped;
+        }
+       @Override
+        public void close() {
+            isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
+        }
     }
 }

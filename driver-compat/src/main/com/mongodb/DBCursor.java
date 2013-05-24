@@ -21,7 +21,7 @@ import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.Session;
+import org.mongodb.connection.ServerSelectingSession;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
@@ -592,7 +592,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 //        sizes.add(results.size());
     }
 
-    public Session getSession() {
+    public ServerSelectingSession getSession() {
         return getCollection().getSession();
     }
 

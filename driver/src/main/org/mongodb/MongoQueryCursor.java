@@ -18,12 +18,9 @@ package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerAddressSelector;
+import org.mongodb.connection.ServerSelectingSession;
 import org.mongodb.connection.Session;
-import org.mongodb.connection.SingleConnectionSession;
-import org.mongodb.connection.SingleServerSession;
 import org.mongodb.operation.GetMoreOperation;
 import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.MongoFind;
@@ -43,6 +40,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static org.mongodb.connection.SessionBindingType.Connection;
+import static org.mongodb.connection.SessionBindingType.Server;
+
 /**
  * @param <T> the document type of the cursor
  * @since 3.0
@@ -61,30 +61,18 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final Session initialSession, final BufferPool<ByteBuffer> bufferPool) {
+                            final Decoder<T> decoder, final ServerSelectingSession initialSession,
+                            final BufferPool<ByteBuffer> bufferPool) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
         this.bufferPool = bufferPool;
-        final Connection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
-        try {
-            if (find.getOptions().contains(QueryOption.Exhaust)) {
-                this.session = new SingleConnectionSession(connection, initialSession.getCluster());
-            }
-            else {
-                this.session = new SingleServerSession(initialSession.getCluster()
-                        .getServer(new ServerAddressSelector(connection.getServerAddress())), initialSession.getCluster());
-            }
-
-            currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferPool).execute(session);
-            currentIterator = currentResult.getResults().iterator();
-            sizes.add(currentResult.getResults().size());
-            killCursorIfLimitReached();
-        } finally {
-            if (!find.getOptions().contains(QueryOption.Exhaust)) {
-                connection.close();
-            }
-        }
+        this.session = initialSession.getBoundSession(new ReadPreferenceServerSelector(find.getReadPreference()),
+                find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
+        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferPool).execute(session);
+        currentIterator = currentResult.getResults().iterator();
+        sizes.add(currentResult.getResults().size());
+        killCursorIfLimitReached();
     }
 
     @Override

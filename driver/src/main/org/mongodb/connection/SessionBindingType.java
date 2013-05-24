@@ -16,29 +16,17 @@
 
 package org.mongodb.connection;
 
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
+/**
+ * The binding type for bound sessions.
+ */
+public enum SessionBindingType {
+    /**
+     * For sessions that are bound to a single server.
+     */
+    Server,
 
-public abstract class AbstractBaseSession implements BaseSession {
-    private Cluster cluster;
-
-    public AbstractBaseSession(final Cluster cluster) {
-        this.cluster = notNull("cluster", cluster);
-    }
-
-    @Override
-    public Cluster getCluster() {
-        isTrue("open", !isClosed());
-        return cluster;
-    }
-
-    @Override
-    public void close() {
-        cluster = null;
-    }
-
-    @Override
-    public boolean isClosed() {
-        return cluster == null;
-    }
+    /**
+     * For sessions that are bound to a single connection.
+     */
+    Connection
 }

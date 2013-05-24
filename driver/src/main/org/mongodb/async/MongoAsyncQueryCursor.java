@@ -37,8 +37,8 @@ import org.mongodb.operation.async.AsyncQueryOperation;
 
 import java.nio.ByteBuffer;
 
-import static org.mongodb.connection.AsyncServerSelectingSession.BindingType.Connection;
-import static org.mongodb.connection.AsyncServerSelectingSession.BindingType.Server;
+import static org.mongodb.connection.SessionBindingType.Connection;
+import static org.mongodb.connection.SessionBindingType.Server;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback

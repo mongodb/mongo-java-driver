@@ -21,14 +21,19 @@ import org.mongodb.annotations.NotThreadSafe;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * @since 3.0
+ */
 @NotThreadSafe
-public class MonotonicSession extends AbstractBaseSession implements Session {
+public class MonotonicSession implements ServerSelectingSession {
     private ServerSelector lastRequestedServerSelector;
     private Connection connectionForReads;
     private Connection connectionForWrites;
+    private Cluster cluster;
+    private boolean isClosed;
 
     public MonotonicSession(final Cluster cluster) {
-        super(cluster);
+        this.cluster = notNull("cluster", cluster);
     }
 
     @Override
@@ -45,7 +50,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
                 if (connectionForReads != null) {
                     connectionForReads.close();
                 }
-                connectionForReads = getCluster().getServer(serverSelector).getConnection();
+                connectionForReads = cluster.getServer(serverSelector).getConnection();
 
                 connectionToUse = connectionForReads;
             }
@@ -61,7 +66,7 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {
-                connectionForWrites = getCluster().getServer(new PrimaryServerSelector()).getConnection();
+                connectionForWrites = cluster.getServer(new PrimaryServerSelector()).getConnection();
                 if (connectionForReads != null) {
                     connectionForReads.close();
                     connectionForReads = null;
@@ -69,6 +74,11 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
             }
             return new DelayedCloseConnection(connectionForWrites);
         }
+    }
+
+    @Override
+    public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+        return new SingleConnectionSession(getConnection(serverSelector));
     }
 
     @Override
@@ -82,6 +92,12 @@ public class MonotonicSession extends AbstractBaseSession implements Session {
                 connectionForWrites.close();
                 connectionForWrites = null;
             }
+            isClosed = true;
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

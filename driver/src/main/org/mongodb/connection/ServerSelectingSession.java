@@ -16,10 +16,8 @@
 
 package org.mongodb.connection;
 
-public interface BaseSession {
-    Cluster getCluster();
+public interface ServerSelectingSession extends Session {
+    Connection getConnection(ServerSelector serverSelector);
 
-    void close();
-
-    boolean isClosed();
+    Session getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
 }

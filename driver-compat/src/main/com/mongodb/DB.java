@@ -30,6 +30,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSession;
 import org.mongodb.connection.MonotonicSession;
+import org.mongodb.connection.ServerSelectingSession;
 import org.mongodb.connection.Session;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.MongoFind;
@@ -55,7 +56,7 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
+    private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -450,7 +451,7 @@ public class DB implements IDB {
         return getMongo().getCluster();
     }
 
-    Session getSession() {
+    ServerSelectingSession getSession() {
         if (pinnedSession.get() != null) {
             return pinnedSession.get();
         }

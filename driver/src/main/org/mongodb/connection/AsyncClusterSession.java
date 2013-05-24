@@ -24,11 +24,17 @@ import org.mongodb.operation.async.SingleResultFuture;
 import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.connection.SessionBindingType.Connection;
 
-public class AsyncClusterSession extends AbstractAsyncBaseSession implements AsyncServerSelectingSession {
+public class AsyncClusterSession implements AsyncServerSelectingSession {
+
+    private final Cluster cluster;
+    private final Executor executor;
+    private volatile boolean isClosed;
 
     public AsyncClusterSession(final Cluster cluster, final Executor executor) {
-        super(cluster, executor);
+        this.cluster = cluster;
+        this.executor = executor;
     }
 
 
@@ -38,11 +44,11 @@ public class AsyncClusterSession extends AbstractAsyncBaseSession implements Asy
 
         final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
 
-        getExecutor().execute(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Server server = getCluster().getServer(serverSelector);
+                    Server server = cluster.getServer(serverSelector);
                     AsyncConnection connection = server.getAsyncConnection();
                     retVal.init(connection, null);
                 } catch (MongoException e) {
@@ -59,16 +65,29 @@ public class AsyncClusterSession extends AbstractAsyncBaseSession implements Asy
     @Override
     public MongoFuture<AsyncConnection> getConnection() {
         isTrue("open", !isClosed());
+
         return getConnection(new PrimaryServerSelector());
     }
 
     @Override
-    public AsyncSession getBoundSession(final ServerSelector serverSelector, final BindingType bindingType) {
-        if (bindingType == BindingType.Connection) {
+    public AsyncSession getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+        isTrue("open", !isClosed());
+
+        if (sessionBindingType == Connection) {
             return new SingleConnectionAsyncSession(serverSelector, this);
         }
         else {
-            return new SingleServerAsyncSession(serverSelector, getCluster(), getExecutor());
+            return new SingleServerAsyncSession(serverSelector, cluster, executor);
         }
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

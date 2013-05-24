@@ -45,7 +45,7 @@ public class QueryOperation<T> extends Operation {
     }
 
     public QueryResult<T> execute(final Session session) {
-        Connection connection = session.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
+        Connection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {

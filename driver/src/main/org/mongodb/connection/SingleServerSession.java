@@ -16,33 +16,37 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.annotations.ThreadSafe;
+
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class SingleServerSession extends AbstractBaseSession implements Session {
-    private Server server;
+/**
+ *
+ * @since 3.0
+ */
+@ThreadSafe
+class SingleServerSession implements Session {
+    private final Server server;
+    private volatile boolean isClosed;
 
-    public SingleServerSession(final Server server, final Cluster cluster) {
-        super(cluster);
+    public SingleServerSession(final Server server) {
         this.server = notNull("server", server);
-    }
-
-    /**
-     * Get a connection from the server bound to this session
-     *
-     * @param serverSelector in this implementation, read preference is ignored.  It's assumed that the server bound to this session was
-     *                       already checked to ensure it satisfies the read preference.
-     * @return a connection from the bound server
-     */
-    @Override
-    public Connection getConnection(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-        return server.getConnection();
     }
 
     @Override
     public Connection getConnection() {
         isTrue("open", !isClosed());
         return server.getConnection();
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

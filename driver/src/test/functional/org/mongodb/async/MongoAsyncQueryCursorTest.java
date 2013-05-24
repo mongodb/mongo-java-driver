@@ -23,9 +23,21 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerSelectingSession;
+import org.mongodb.connection.AsyncSession;
+import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.SessionBindingType;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.async.SingleResultFuture;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -36,6 +48,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.operation.QueryOption.Exhaust;
 
 @Category(Async.class)
@@ -108,26 +121,24 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
-//        SingleConnectionAsyncSession session = new SingleConnectionAsyncSession(getAsyncSession().getConnection().get(), getCluster(),
-//                getExecutor());
-//
-//        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-//                new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-//                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1),
-//                getExecutor()).start();
-//
-//        latch.await();
-//        assertThat(documentResultList, is(documentList.subList(0, 1)));
-//
-//        documentResultList.clear();
-//        CountDownLatch nextLatch = new CountDownLatch(1);
-//
-//        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-//                new MongoFind().limit(1).order(new Document("_id", -1)),
-//                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1,
-//                nextLatch), getExecutor()).start();
-//        nextLatch.await();
-//        assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
+        SingleConnectionAsyncSession session = new SingleConnectionAsyncSession(getAsyncSession().getConnection().get());
+
+        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1)).start();
+
+        latch.await();
+        assertThat(documentResultList, is(documentList.subList(0, 1)));
+
+        documentResultList.clear();
+        CountDownLatch nextLatch = new CountDownLatch(1);
+
+        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                new MongoFind().limit(1).order(new Document("_id", -1)),
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1, nextLatch))
+                .start();
+        nextLatch.await();
+        assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
     }
 
 
@@ -159,6 +170,82 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             iterations++;
             documentResultList.add(document);
             return iterations < count;
+        }
+    }
+
+    private static final class SingleConnectionAsyncSession implements AsyncServerSelectingSession {
+        private AsyncConnection connection;
+        private boolean isClosed;
+
+        public SingleConnectionAsyncSession(final AsyncConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
+            return getConnection();
+        }
+
+        @Override
+        public AsyncSession getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+            return new SingleConnectionAsyncSession(new DelayedCloseAsyncConnection(connection));
+        }
+
+        @Override
+        public MongoFuture<AsyncConnection> getConnection() {
+            return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+        }
+
+        @Override
+        public void close() {
+            isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
+        }
+    }
+
+    private static class DelayedCloseAsyncConnection implements AsyncConnection {
+        private AsyncConnection wrapped;
+        private boolean isClosed;
+
+        public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
+            wrapped = asyncConnection;
+        }
+
+        @Override
+        public ServerAddress getServerAddress() {
+            return wrapped.getServerAddress();
+        }
+
+        @Override
+        public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.sendMessage(buffer, callback);
+        }
+
+        @Override
+        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.sendAndReceiveMessage(buffer, callback);
+        }
+
+        @Override
+        public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.receiveMessage(callback);
+        }
+
+        @Override
+        public void close() {
+            isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
         }
     }
 }

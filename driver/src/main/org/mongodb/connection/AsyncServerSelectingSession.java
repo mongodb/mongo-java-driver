@@ -26,21 +26,6 @@ import org.mongodb.operation.MongoFuture;
 public interface AsyncServerSelectingSession extends AsyncSession {
 
     /**
-     * The binding type for bound sessions.
-     */
-    enum BindingType {
-        /**
-         * For sessions that are bound to a single server.
-         */
-        Server,
-
-        /**
-         * For sessions that are bound to a single connection.
-         */
-        Connection
-    }
-
-    /**
      * Gets a connection from a server that satisfies the given server selector.
      *
      * @param serverSelector the server selector to use when choosing a server to get a connection from.
@@ -57,8 +42,8 @@ public interface AsyncServerSelectingSession extends AsyncSession {
      * </p>
      *
      * @param serverSelector the server selector to use when binding the session
-     * @param bindingType the binding type
+     * @param sessionBindingType the binding type
      * @return the bound session
      */
-    AsyncSession getBoundSession(ServerSelector serverSelector, BindingType bindingType);
+    AsyncSession getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
 }

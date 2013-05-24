@@ -16,20 +16,21 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.annotations.NotThreadSafe;
+
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
-public class SingleConnectionSession extends AbstractBaseSession implements Session {
-    private Connection connection;
+/**
+ * @since 3.0
+ */
+@NotThreadSafe
+class SingleConnectionSession implements Session {
+    private final Connection connection;
+    private boolean isClosed;
 
-    public SingleConnectionSession(final Connection connection, final Cluster cluster) {
-        super(cluster);
-        this.connection = connection;
-    }
-
-    @Override
-    public Connection getConnection(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-        return new DelayedCloseConnection(connection);
+    public SingleConnectionSession(final Connection connection) {
+        this.connection = notNull("connection", connection);
     }
 
     @Override
@@ -38,12 +39,14 @@ public class SingleConnectionSession extends AbstractBaseSession implements Sess
         return new DelayedCloseConnection(connection);
     }
 
-    /**
-     * Closes the session and the connection bound to this session.
-     */
     @Override
     public void close() {
         connection.close();
-        super.close();
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

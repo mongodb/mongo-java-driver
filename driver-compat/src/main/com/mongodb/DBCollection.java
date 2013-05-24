@@ -48,7 +48,7 @@ import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Session;
+import org.mongodb.connection.ServerSelectingSession;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFind;
@@ -1516,7 +1516,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void drop() {
         try {
-            org.mongodb.operation.CommandResult commandResult = getDB().executeCommand(new Drop(getName()));
+            getDB().executeCommand(new Drop(getName()));
         } catch (MongoCommandFailureException ex) {
             if (!"ns not found".equals(ex.getErrorMessage())) {
                 throw new MongoException(ex);
@@ -1678,7 +1678,7 @@ public class DBCollection implements IDBCollection {
         return keys;
     }
 
-    public Session getSession() {
+    public ServerSelectingSession getSession() {
         return getDB().getSession();
     }
 

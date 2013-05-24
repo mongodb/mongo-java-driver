@@ -18,10 +18,9 @@ package org.mongodb;
 
 import org.mongodb.connection.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Cluster;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.Session;
+import org.mongodb.connection.ServerSelectingSession;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -62,12 +61,7 @@ public final class Fixture {
         return mongoClientURI;
     }
 
-    public static Cluster getCluster() {
-        getMongoClient();
-        return mongoClient.getCluster();
-    }
-
-    public static Session getSession() {
+    public static ServerSelectingSession getSession() {
         getMongoClient();
         return mongoClient.getSession();
     }

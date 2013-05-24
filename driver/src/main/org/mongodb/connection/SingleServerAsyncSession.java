@@ -19,6 +19,7 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
+import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
 
@@ -26,13 +27,22 @@ import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-class SingleServerAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
+/**
+ *
+ * @since 3.0
+ */
+@NotThreadSafe
+class SingleServerAsyncSession implements AsyncSession {
     private final ServerSelector serverSelector;
+    private final Cluster cluster;
+    private final Executor executor;
     private Server server;
+    private boolean isClosed;
 
     public SingleServerAsyncSession(final ServerSelector serverSelector, final Cluster cluster, final Executor executor) {
-        super(cluster, executor);
         this.serverSelector = serverSelector;
+        this.cluster = cluster;
+        this.executor = executor;
     }
 
     @Override
@@ -41,7 +51,7 @@ class SingleServerAsyncSession extends AbstractAsyncBaseSession implements Async
 
         final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
 
-        getExecutor().execute(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -58,9 +68,19 @@ class SingleServerAsyncSession extends AbstractAsyncBaseSession implements Async
         return retVal;
     }
 
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
+
     private synchronized Server getServer() {
         if (server == null) {
-            server = getCluster().getServer(serverSelector);
+            server = cluster.getServer(serverSelector);
         }
         return server;
     }

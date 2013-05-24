@@ -24,7 +24,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.Session;
+import org.mongodb.connection.ServerSelectingSession;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 
@@ -41,7 +41,7 @@ public class CommandOperation extends Operation {
         this.codec = codec;
     }
 
-    public CommandResult execute(final Session session) {
+    public CommandResult execute(final ServerSelectingSession session) {
         Connection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
         try {
             return execute(connection);

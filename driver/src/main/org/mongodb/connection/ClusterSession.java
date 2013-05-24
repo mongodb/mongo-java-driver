@@ -16,21 +16,52 @@
 
 package org.mongodb.connection;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import org.mongodb.annotations.ThreadSafe;
 
-public class ClusterSession extends AbstractBaseSession implements Session {
+import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.SessionBindingType.Connection;
+
+/**
+ * @since 3.0
+ */
+@ThreadSafe
+public class ClusterSession implements ServerSelectingSession {
+    private Cluster cluster;
+    private volatile boolean isClosed;
+
     public ClusterSession(final Cluster cluster) {
-        super(cluster);
+        this.cluster = cluster;
     }
 
     @Override
     public Connection getConnection(final ServerSelector serverSelector) {
         notNull("serverSelector", serverSelector);
-        return getCluster().getServer(serverSelector).getConnection();
+        return cluster.getServer(serverSelector).getConnection();
     }
 
     @Override
     public Connection getConnection() {
         return getConnection(new PrimaryServerSelector());
     }
+
+    @Override
+    public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+        if (sessionBindingType == Connection) {
+            return new SingleConnectionSession(getConnection(serverSelector));
+        }
+        else {
+            return new SingleServerSession(cluster.getServer(serverSelector));
+        }
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
 }
+
