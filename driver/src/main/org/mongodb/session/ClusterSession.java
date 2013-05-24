@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerSelector;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.SessionBindingType.Connection;
 
 /**
  * @since 3.0
@@ -46,7 +48,7 @@ public class ClusterSession implements ServerSelectingSession {
 
     @Override
     public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
-        if (sessionBindingType == Connection) {
+        if (sessionBindingType == SessionBindingType.Connection) {
             return new SingleConnectionSession(getConnection(serverSelector));
         }
         else {

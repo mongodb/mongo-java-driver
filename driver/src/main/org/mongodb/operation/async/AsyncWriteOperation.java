@@ -22,7 +22,7 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.AsyncSession;
+import org.mongodb.session.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;

@@ -22,7 +22,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.AsyncSession;
+import org.mongodb.session.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;

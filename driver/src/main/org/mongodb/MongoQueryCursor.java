@@ -19,8 +19,8 @@ package org.mongodb;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerSelectingSession;
-import org.mongodb.connection.Session;
+import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
 import org.mongodb.operation.GetMoreOperation;
 import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.MongoFind;
@@ -40,8 +40,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static org.mongodb.connection.SessionBindingType.Connection;
-import static org.mongodb.connection.SessionBindingType.Server;
+import static org.mongodb.session.SessionBindingType.Connection;
+import static org.mongodb.session.SessionBindingType.Server;
 
 /**
  * @param <T> the document type of the cursor

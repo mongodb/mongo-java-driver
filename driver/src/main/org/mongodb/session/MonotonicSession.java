@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerSelector;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;

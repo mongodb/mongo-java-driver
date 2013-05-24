@@ -21,8 +21,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.AsyncServerSelectingSession;
-import org.mongodb.connection.AsyncSession;
+import org.mongodb.session.AsyncServerSelectingSession;
+import org.mongodb.session.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFind;
@@ -37,8 +37,8 @@ import org.mongodb.operation.async.AsyncQueryOperation;
 
 import java.nio.ByteBuffer;
 
-import static org.mongodb.connection.SessionBindingType.Connection;
-import static org.mongodb.connection.SessionBindingType.Server;
+import static org.mongodb.session.SessionBindingType.Connection;
+import static org.mongodb.session.SessionBindingType.Server;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback

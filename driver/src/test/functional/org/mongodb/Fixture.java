@@ -16,11 +16,11 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.AsyncServerSelectingSession;
+import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerSelectingSession;
+import org.mongodb.session.ServerSelectingSession;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;

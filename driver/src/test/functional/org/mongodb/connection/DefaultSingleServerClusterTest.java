@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +48,12 @@ public class DefaultSingleServerClusterTest {
 
     @Test
     public void shouldGetServerWithOkDescription() throws InterruptedException {
-        Server server = cluster.getServer(new PrimaryServerSelector());
+        Server server = cluster.getServer(new ServerSelector() {
+            @Override
+            public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+                return clusterDescription.getPrimaries();
+            }
+        });
         assertTrue(server.getDescription().isOk());
     }
 

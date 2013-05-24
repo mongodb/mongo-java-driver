@@ -14,41 +14,41 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
-import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.Server;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-@NotThreadSafe
-class DelayedCloseConnection extends DelayedCloseBaseConnection implements Connection {
-    private Connection wrapped;
+/**
+ *
+ * @since 3.0
+ */
+@ThreadSafe
+class SingleServerSession implements Session {
+    private final Server server;
+    private volatile boolean isClosed;
 
-    public DelayedCloseConnection(final Connection wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    public SingleServerSession(final Server server) {
+        this.server = notNull("server", server);
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer);
+        return server.getConnection();
     }
 
     @Override
-    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-        isTrue("open", !isClosed());
-        return wrapped.sendAndReceiveMessage(buffer);
+    public void close() {
+        isClosed = true;
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
-        isTrue("open", !isClosed());
-        return wrapped.receiveMessage();
-    }
-
-    @Override
-    protected BaseConnection getWrapped() {
-        return wrapped;
+    public boolean isClosed() {
+        return isClosed;
     }
 }

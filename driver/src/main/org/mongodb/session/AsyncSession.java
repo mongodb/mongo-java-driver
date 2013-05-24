@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
+import org.mongodb.connection.AsyncConnection;
 import org.mongodb.operation.MongoFuture;
 
 /**

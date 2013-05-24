@@ -48,7 +48,7 @@ import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.ServerSelectingSession;
+import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFind;

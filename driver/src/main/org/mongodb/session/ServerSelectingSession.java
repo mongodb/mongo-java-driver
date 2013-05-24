@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
-public interface Session {
-    Connection getConnection();
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerSelector;
 
-    void close();
+public interface ServerSelectingSession extends Session {
+    Connection getConnection(ServerSelector serverSelector);
 
-    boolean isClosed();
+    Session getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
 }

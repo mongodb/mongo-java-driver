@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
 import org.mongodb.MongoException;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
 

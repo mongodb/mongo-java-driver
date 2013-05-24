@@ -19,7 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.Session;
+import org.mongodb.session.Session;
 import org.mongodb.operation.protocol.MongoKillCursorsMessage;
 
 import java.nio.ByteBuffer;

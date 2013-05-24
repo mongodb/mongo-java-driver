@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
+
+import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.ServerAddress;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 

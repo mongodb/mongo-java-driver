@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
-/**
- * The binding type for bound sessions.
- */
-public enum SessionBindingType {
-    /**
-     * For sessions that are bound to a single server.
-     */
-    Server,
+import org.mongodb.connection.Connection;
 
-    /**
-     * For sessions that are bound to a single connection.
-     */
-    Connection
+public interface Session {
+    Connection getConnection();
+
+    void close();
+
+    boolean isClosed();
 }

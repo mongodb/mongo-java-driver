@@ -23,10 +23,10 @@ import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerSelectingSession;
+import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.connection.Session;
-import org.mongodb.connection.SessionBindingType;
+import org.mongodb.session.Session;
+import org.mongodb.session.SessionBindingType;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
 

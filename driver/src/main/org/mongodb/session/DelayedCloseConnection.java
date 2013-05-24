@@ -14,33 +14,41 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
+
+import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ResponseBuffers;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 
-class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncConnection {
-    private AsyncConnection wrapped;
+@NotThreadSafe
+class DelayedCloseConnection extends DelayedCloseBaseConnection implements Connection {
+    private Connection wrapped;
 
-    public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
-        wrapped = asyncConnection;
+    public DelayedCloseConnection(final Connection wrapped) {
+        this.wrapped = notNull("wrapped", wrapped);
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
         isTrue("open", !isClosed());
-        wrapped.sendMessage(buffer, callback);
+        wrapped.sendAndReceiveMessage(buffer);
     }
 
     @Override
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer, callback);
+        return wrapped.sendAndReceiveMessage(buffer);
     }
 
     @Override
-    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+    public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
-        wrapped.receiveMessage(callback);
+        return wrapped.receiveMessage();
     }
 
     @Override

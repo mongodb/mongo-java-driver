@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
-public interface ServerSelectingSession extends Session {
-    Connection getConnection(ServerSelector serverSelector);
+/**
+ * The binding type for bound sessions.
+ */
+public enum SessionBindingType {
+    /**
+     * For sessions that are bound to a single server.
+     */
+    Server,
 
-    Session getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
+    /**
+     * For sessions that are bound to a single connection.
+     */
+    Connection
 }

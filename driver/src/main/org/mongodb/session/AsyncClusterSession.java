@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.session;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
 
 import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.connection.SessionBindingType.Connection;
 
 public class AsyncClusterSession implements AsyncServerSelectingSession {
 
@@ -73,7 +76,7 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
     public AsyncSession getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
         isTrue("open", !isClosed());
 
-        if (sessionBindingType == Connection) {
+        if (sessionBindingType == SessionBindingType.Connection) {
             return new SingleConnectionAsyncSession(serverSelector, this);
         }
         else {
