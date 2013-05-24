@@ -26,7 +26,7 @@ import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleServerAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
+class SingleServerAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
     private final ServerSelector serverSelector;
     private Server server;
 

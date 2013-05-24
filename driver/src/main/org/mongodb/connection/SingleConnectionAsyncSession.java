@@ -22,7 +22,7 @@ import org.mongodb.operation.async.SingleResultFuture;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleConnectionAsyncSession implements AsyncSession {
+class SingleConnectionAsyncSession implements AsyncSession {
     private final ServerSelector serverSelector;
     private AsyncConnection connection;
     private AsyncServerSelectingSession session;
