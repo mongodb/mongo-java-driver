@@ -19,8 +19,9 @@ package org.mongodb.connection;
 import org.mongodb.annotations.Immutable;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -53,8 +54,9 @@ public class ServerDescription {
     private final ServerAddress address;
 
     private final ServerType type;
-    private final List<String> hosts;
-    private final List<String> passives;
+    private final Set<String> hosts;
+    private final Set<String> passives;
+    private final Set<String> arbiters;
     private final String primary;
     private final int maxDocumentSize;
 
@@ -68,8 +70,9 @@ public class ServerDescription {
     public static class Builder {
         private ServerAddress address;
         private ServerType type = Unknown;
-        private List<String> hosts = Collections.emptyList();
-        private List<String> passives = Collections.emptyList();
+        private Set<String> hosts = Collections.emptySet();
+        private Set<String> passives = Collections.emptySet();
+        private Set<String> arbiters = Collections.emptySet();
         private String primary;
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
@@ -90,13 +93,18 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder hosts(final List<String> hosts) {
-            this.hosts = hosts == null ? Collections.<String>emptyList() : Collections.unmodifiableList(hosts);
+        public Builder hosts(final Set<String> hosts) {
+            this.hosts = hosts == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
             return this;
         }
 
-        public Builder passives(final List<String> passives) {
-            this.passives = passives == null ? Collections.<String>emptyList() : Collections.unmodifiableList(passives);
+        public Builder passives(final Set<String> passives) {
+            this.passives = passives == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
+            return this;
+        }
+
+        public Builder arbiters(final Set<String> arbiters) {
+            this.arbiters = arbiters == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
             return this;
         }
 
@@ -182,12 +190,16 @@ public class ServerDescription {
         return ok && (type == ReplicaSetSecondary || type == ShardRouter || type == StandAlone);
     }
 
-    public List<String> getHosts() {
+    public Set<String> getHosts() {
         return hosts;
     }
 
-    public List<String> getPassives() {
+    public Set<String> getPassives() {
         return passives;
+    }
+
+    public Set<String> getArbiters() {
+        return arbiters;
     }
 
     public String getPrimary() {
@@ -270,6 +282,7 @@ public class ServerDescription {
         if (ok != that.ok) return false;
         if (!hosts.equals(that.hosts)) return false;
         if (!passives.equals(that.passives)) return false;
+        if (!arbiters.equals(that.arbiters)) return false;
         if (primary != null ? !primary.equals(that.primary) : that.primary != null) return false;
         if (!address.equals(that.address)) return false;
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) return false;
@@ -284,6 +297,7 @@ public class ServerDescription {
         result = 31 * result + type.hashCode();
         result = 31 * result + hosts.hashCode();
         result = 31 * result + passives.hashCode();
+        result = 31 * result + arbiters.hashCode();
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
@@ -301,6 +315,7 @@ public class ServerDescription {
                 + ", type=" + type
                 + ", hosts=" + hosts
                 + ", passives=" + passives
+                + ", arbiters=" + arbiters
                 + ", primary='" + primary + '\''
                 + ", maxDocumentSize=" + maxDocumentSize
                 + ", maxMessageSize=" + maxMessageSize
@@ -318,6 +333,7 @@ public class ServerDescription {
         status = notNull("status", builder.status);
         hosts = builder.hosts;
         passives = builder.passives;
+        arbiters = builder.arbiters;
         primary = builder.primary;
         maxDocumentSize = builder.maxDocumentSize;
         maxMessageSize = builder.maxMessageSize;
@@ -326,5 +342,4 @@ public class ServerDescription {
         averagePingTimeNanos = builder.averagePingTimeNanos;
         ok = builder.ok;
     }
-
 }

@@ -24,8 +24,11 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -130,8 +133,9 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 .status(Connected)
                 .address(commandResult.getAddress())
                 .type(getServerType(commandResult.getResponse()))
-                .hosts((List<String>) commandResult.getResponse().get("hosts"))
-                .passives((List<String>) commandResult.getResponse().get("passives"))
+                .hosts(listToSet((List<String>) commandResult.getResponse().get("hosts")))
+                .passives(listToSet((List<String>) commandResult.getResponse().get("passives")))
+                .arbiters(listToSet((List<String>) commandResult.getResponse().get("arbiters")))
                 .primary(commandResult.getResponse().getString("primary"))
                 .maxDocumentSize(getInteger(commandResult.getResponse().getInteger("maxBsonObjectSize"),
                         ServerDescription.getDefaultMaxDocumentSize()))
@@ -141,6 +145,15 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 .setName(commandResult.getResponse().getString("setName"))
                 .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
                 .ok(commandResult.isOk()).build();
+    }
+
+    private Set<String> listToSet(final List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return Collections.emptySet();
+        }
+        else {
+            return new HashSet<String>(list);
+        }
     }
 
     private static ServerType getServerType(final Document isMasterResult) {

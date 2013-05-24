@@ -136,7 +136,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
         return serverDescriptions;
     }
 
-    private void addNewHosts(final List<String> hosts) {
+    private void addNewHosts(final Set<String> hosts) {
         for (String cur : hosts) {
             ServerAddress curServerAddress = getServerAddress(cur);
             if (curServerAddress != null) {
@@ -154,15 +154,15 @@ class DefaultMultiServerCluster extends DefaultCluster {
         }
     }
 
-    // TODO: move these next two methods to ServerDescription
     private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
         Set<ServerAddress> retVal = new HashSet<ServerAddress>();
         addHostsToSet(serverDescription.getHosts(), retVal);
         addHostsToSet(serverDescription.getPassives(), retVal);
+        addHostsToSet(serverDescription.getArbiters(), retVal);
         return retVal;
     }
 
-    private void addHostsToSet(final List<String> hosts, final Set<ServerAddress> retVal) {
+    private void addHostsToSet(final Set<String> hosts, final Set<ServerAddress> retVal) {
         for (String host : hosts) {
             ServerAddress curServerAddress = getServerAddress(host);
             if (curServerAddress != null) {

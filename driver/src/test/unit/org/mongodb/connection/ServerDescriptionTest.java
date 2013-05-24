@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -67,10 +68,10 @@ public class ServerDescriptionTest {
         assertEquals(0x2000000, serverDescription.getMaxMessageSize());
 
         assertNull(serverDescription.getPrimary());
-        assertEquals(Collections.<String>emptyList(), serverDescription.getHosts());
+        assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Tags.freeze(new Tags()), serverDescription.getTags());
-        assertEquals(Collections.<String>emptyList(), serverDescription.getHosts());
-        assertEquals(Collections.<String>emptyList(), serverDescription.getPassives());
+        assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
+        assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
     }
 
@@ -85,8 +86,8 @@ public class ServerDescriptionTest {
                 .maxMessageSize(200)
                 .averagePingTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .primary("localhost:27017")
-                .hosts(Arrays.asList("localhost:27017", "localhost:27018"))
-                .passives(Arrays.asList("localhost:27019"))
+                .hosts(new HashSet<String>(Arrays.asList("localhost:27017", "localhost:27018")))
+                .passives(new HashSet<String>(Arrays.asList("localhost:27019")))
                 .ok(true)
                 .status(Connected);
         assertEquals(builder.build(), builder.build());
