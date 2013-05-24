@@ -118,10 +118,6 @@ public class SingleResultFutureTest {
                     future.get();
                 } catch (CancellationException e) {
                     latch.countDown();
-                } catch (InterruptedException e) { // NOPMD
-                    // all good
-                } catch (ExecutionException e) { // NOPMD
-                    // all good
                 }
             }
         }).start();

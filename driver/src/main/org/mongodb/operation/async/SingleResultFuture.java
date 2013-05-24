@@ -17,12 +17,12 @@
 package org.mongodb.operation.async;
 
 import org.mongodb.MongoException;
+import org.mongodb.MongoInterruptedException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -90,7 +90,7 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
     }
 
     @Override
-    public synchronized T get() throws InterruptedException, ExecutionException {
+    public synchronized T get() {
         try {
             return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
@@ -99,13 +99,17 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
     }
 
     @Override
-    public synchronized T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public synchronized T get(final long timeout, final TimeUnit unit) throws TimeoutException {
         if (unit == null) {
             throw new IllegalArgumentException("Time unit can not be null");
 
         }
         if (!isDone()) {
-            wait(unit.toMillis(timeout));
+            try {
+                wait(unit.toMillis(timeout));
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Interrupted", e);
+            }
         }
 
         if (isCancelled()) {

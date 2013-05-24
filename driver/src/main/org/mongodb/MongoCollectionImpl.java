@@ -58,7 +58,6 @@ import org.mongodb.operation.async.SingleResultFutureCallback;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -735,7 +734,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
 
                 @Override
-                public T get() throws InterruptedException, ExecutionException {
+                public T get() {
                     final QueryResult<T> queryResult = queryResultFuture.get();
                     if (queryResult.getResults().isEmpty()) {
                         return null;
@@ -746,7 +745,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
 
                 @Override
-                public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                public T get(final long timeout, final TimeUnit unit) throws TimeoutException {
                     final QueryResult<T> queryResult = queryResultFuture.get(timeout, unit);
                     if (queryResult.getResults().isEmpty()) {
                         return null;
@@ -797,13 +796,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
 
                 @Override
-                public Long get() throws InterruptedException, ExecutionException {
+                public Long get() {
                     final CommandResult commandResult = commandResultFuture.get();
                     return new CountCommandResult(commandResult).getCount();
                 }
 
                 @Override
-                public Long get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                public Long get(final long timeout, final TimeUnit unit) throws TimeoutException {
                     final CommandResult commandResult = commandResultFuture.get(timeout, unit);
                     return new CountCommandResult(commandResult).getCount();
                 }
@@ -843,7 +842,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
             new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferPool(),
-                    client.getAsyncSession(), block).start();
+                    client.getAsyncSession(), block, client.getExecutor()).start();
         }
 
         @Override

@@ -33,6 +33,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MongoClientImpl implements MongoClient {
 
@@ -41,6 +44,7 @@ public class MongoClientImpl implements MongoClient {
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
     private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
     private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
         this.clientOptions = clientOptions;
@@ -82,6 +86,7 @@ public class MongoClientImpl implements MongoClient {
     @Override
     public void close() {
         cluster.close();
+        executorService.shutdownNow();
     }
 
     @Override
@@ -104,7 +109,7 @@ public class MongoClientImpl implements MongoClient {
     }
 
     public AsyncSession getAsyncSession() {
-        return new AsyncClusterSession(cluster);
+        return new AsyncClusterSession(cluster, executorService);
     }
 
     public Session getSession() {
@@ -120,6 +125,10 @@ public class MongoClientImpl implements MongoClient {
 
     public BufferPool<ByteBuffer> getBufferPool() {
         return bufferPool;
+    }
+
+    public Executor getExecutor() {
+        return executorService;
     }
 
     private void pinSession() {

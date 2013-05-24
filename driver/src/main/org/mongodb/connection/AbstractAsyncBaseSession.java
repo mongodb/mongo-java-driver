@@ -16,16 +16,17 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.operation.MongoFuture;
+import java.util.concurrent.Executor;
 
-public interface AsyncSession {
-    Cluster getCluster();
+public class AbstractAsyncBaseSession extends AbstractBaseSession {
+    private final Executor executor;
 
-    void close();
+    protected AbstractAsyncBaseSession(final Cluster cluster, final Executor executor) {
+        super(cluster);
+        this.executor = executor;
+    }
 
-    boolean isClosed();
-
-    MongoFuture<AsyncConnection> getConnection(ServerSelector serverSelector);
-
-    MongoFuture<AsyncConnection> getConnection();
+    protected Executor getExecutor() {
+        return executor;
+    }
 }

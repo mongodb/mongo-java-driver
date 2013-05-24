@@ -22,7 +22,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 public abstract class AbstractBaseSession implements BaseSession {
     private Cluster cluster;
 
-    protected AbstractBaseSession(final Cluster cluster) {
+    public AbstractBaseSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
     }
 

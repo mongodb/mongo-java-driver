@@ -16,26 +16,19 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.async.SingleResultFuture;
+
+import java.util.concurrent.Executor;
+
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleConnectionAsyncSession extends AbstractBaseSession implements AsyncSession {
+public class SingleConnectionAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
     private final AsyncConnection connection;
 
-    public SingleConnectionAsyncSession(final AsyncConnection connection, final Cluster cluster) {
-        super(cluster);
+    public SingleConnectionAsyncSession(final AsyncConnection connection, final Cluster cluster, final Executor executor) {
+        super(cluster, executor);
         this.connection = connection;
-    }
-
-    @Override
-    public AsyncConnection getConnection(final ServerSelector serverSelector) {
-        isTrue("open", !isClosed());
-        return new DelayedCloseAsyncConnection(connection);
-    }
-
-    @Override
-    public AsyncConnection getConnection() {
-        isTrue("open", !isClosed());
-        return new DelayedCloseAsyncConnection(connection);
     }
 
     public void close() {
@@ -43,5 +36,17 @@ public class SingleConnectionAsyncSession extends AbstractBaseSession implements
             connection.close();
             super.close();
         }
+    }
+
+    @Override
+    public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
+        isTrue("open", !isClosed());
+        return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+    }
+
+    @Override
+    public MongoFuture<AsyncConnection> getConnection() {
+        isTrue("open", !isClosed());
+        return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
     }
 }

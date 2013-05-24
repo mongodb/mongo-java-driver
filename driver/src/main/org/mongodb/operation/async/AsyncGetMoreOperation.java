@@ -44,22 +44,43 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
     public MongoFuture<QueryResult<T>> execute(final AsyncSession session) {
-        AsyncConnection connection = session.getConnection();
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        MongoFuture<QueryResult<T>> wrapped = execute(connection);
-        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection connection, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<QueryResult<T>> wrapped = execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+                }
+            }
+        });
+
         return retVal;
     }
 
 
     public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session, final int requestId) {
-        AsyncConnection connection = session.getConnection();
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        MongoFuture<QueryResult<T>> wrapped = executeReceive(connection, requestId);
-        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection connection, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<QueryResult<T>> wrapped = executeReceive(connection, requestId);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+                }
+            }
+        });
+
         return retVal;
+
     }
 
     public MongoFuture<Void> executeDiscard(final AsyncSession session) {
@@ -67,11 +88,21 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
             return new SingleResultFuture<Void>(null, null);
         }
         else {
-            AsyncConnection connection = session.getConnection();
+            final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
-            MongoFuture<Void> wrapped = executeDiscard(connection);
-            SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-            wrapped.register(new ConnectionClosingSingleResultCallback<Void>(connection, retVal));
+            session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+                @Override
+                public void onResult(final AsyncConnection connection, final MongoException e) {
+                    if (e != null) {
+                        retVal.init(null, e);
+                    }
+                    else {
+                        MongoFuture<Void> wrapped = executeDiscard(connection);
+                        wrapped.register(new ConnectionClosingSingleResultCallback<Void>(connection, retVal));
+                    }
+                }
+            });
+
             return retVal;
         }
     }

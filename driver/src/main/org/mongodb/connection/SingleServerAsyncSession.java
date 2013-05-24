@@ -17,25 +17,49 @@
 package org.mongodb.connection;
 
 
+import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
+import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.async.SingleResultFuture;
+
+import java.util.concurrent.Executor;
+
 import static org.mongodb.assertions.Assertions.isTrue;
 
-public class SingleServerAsyncSession extends AbstractBaseSession implements AsyncSession {
+public class SingleServerAsyncSession extends AbstractAsyncBaseSession implements AsyncSession {
     private final Server server;
 
-    public SingleServerAsyncSession(final Server server, final Cluster cluster) {
-        super(cluster);
+    public SingleServerAsyncSession(final Server server, final Cluster cluster, final Executor executor) {
+        super(cluster, executor);
         this.server = server;
     }
 
     @Override
-    public AsyncConnection getConnection(final ServerSelector serverSelector) {
+    public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
-        return server.getAsyncConnection();
+        return getConnection();
     }
 
     @Override
-    public AsyncConnection getConnection() {
+    public MongoFuture<AsyncConnection> getConnection() {
         isTrue("open", !isClosed());
-        return server.getAsyncConnection();
+
+        final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    AsyncConnection connection = server.getAsyncConnection();
+                    retVal.init(connection, null);
+                } catch (MongoException e) {
+                    retVal.init(null, e);
+                } catch (Throwable t) {
+                    retVal.init(null, new MongoInternalException("Exception getting a connection", t));
+                }
+            }
+        });
+
+        return retVal;
     }
 }

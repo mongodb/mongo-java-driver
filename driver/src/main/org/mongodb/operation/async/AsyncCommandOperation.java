@@ -18,12 +18,14 @@ package org.mongodb.operation.async;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.ReadPreferenceServerSelector;
@@ -45,11 +47,22 @@ public class AsyncCommandOperation extends AsyncOperation {
 
 
     public MongoFuture<CommandResult> execute(final AsyncSession session) {
-        AsyncConnection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
+        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        MongoFuture<CommandResult> wrapped = execute(connection);
-        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-        wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
+        session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()))
+                .register(new SingleResultCallback<AsyncConnection>() {
+                    @Override
+                    public void onResult(final AsyncConnection connection, final MongoException e) {
+                        if (e != null) {
+                            retVal.init(null, e);
+                        }
+                        else {
+                            MongoFuture<CommandResult> wrapped = execute(connection);
+                            wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
+                        }
+                    }
+                });
+
         return retVal;
     }
 

@@ -40,6 +40,7 @@ import org.mongodb.operation.async.AsyncGetMoreOperation;
 import org.mongodb.operation.async.AsyncQueryOperation;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.Executor;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
@@ -56,20 +57,21 @@ public class MongoAsyncQueryCursor<T> {
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
                                  final Decoder<T> decoder, final BufferPool<ByteBuffer> bufferPool, final AsyncSession initialSession,
-                                 final AsyncBlock<? super T> block) {
+                                 final AsyncBlock<? super T> block, final Executor executor) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
         this.bufferPool = bufferPool;
         this.block = block;
-        final AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
+        // TODO: this is synchronous
+        AsyncConnection connection = initialSession.getConnection(new ReadPreferenceServerSelector(find.getReadPreference())).get();
         if (find.getOptions().contains(QueryOption.Exhaust)) {
-            this.session = new SingleConnectionAsyncSession(connection, initialSession.getCluster());
+            this.session = new SingleConnectionAsyncSession(connection, initialSession.getCluster(), executor);
         }
         else {
             Server server = initialSession.getCluster().getServer(new ServerAddressSelector(connection.getServerAddress()));
-            this.session = new SingleServerAsyncSession(server, initialSession.getCluster());
+            this.session = new SingleServerAsyncSession(server, initialSession.getCluster(), executor);
         }
     }
 

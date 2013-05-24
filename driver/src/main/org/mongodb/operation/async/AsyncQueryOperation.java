@@ -19,11 +19,13 @@ package org.mongodb.operation.async;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryResult;
@@ -46,11 +48,23 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
     }
 
     public MongoFuture<QueryResult<T>> execute(final AsyncSession session) {
-        AsyncConnection connection = session.getConnection(new ReadPreferenceServerSelector(find.getReadPreference()));
 
-        MongoFuture<QueryResult<T>> wrapped = execute(connection);
-        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+
+        session.getConnection(
+                new ReadPreferenceServerSelector(find.getReadPreference())).register(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection connection, final MongoException e) {
+                if (e != null) {
+                   retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<QueryResult<T>> wrapped = execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
+                }
+            }
+        });
+
         return retVal;
     }
 

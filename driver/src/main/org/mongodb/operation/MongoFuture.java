@@ -19,8 +19,16 @@ package org.mongodb.operation;
 import org.mongodb.connection.SingleResultCallback;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public interface MongoFuture<T> extends Future<T>  {
+
+    @Override
+    T get();
+
+    @Override
+    T get(long timeout, TimeUnit unit) throws TimeoutException;
 
     void register(SingleResultCallback<T> newCallback);
 }

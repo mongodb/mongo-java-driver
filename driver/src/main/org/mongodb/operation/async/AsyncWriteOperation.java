@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.async;
 
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -39,11 +40,21 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     }
 
     public MongoFuture<WriteResult> execute(final AsyncSession session) {
-        AsyncConnection connection = session.getConnection();
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        MongoFuture<WriteResult> wrapped = execute(connection);
-        SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-        wrapped.register(new ConnectionClosingSingleResultCallback<WriteResult>(connection, retVal));
+        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection connection, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<WriteResult> wrapped = execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<WriteResult>(connection, retVal));
+                }
+            }
+        });
+
         return retVal;
     }
 
