@@ -43,7 +43,6 @@ class DefaultMultiServerCluster extends DefaultCluster {
         for (ServerAddress serverAddress : seedList) {
             addServer(serverAddress);
         }
-        updateDescription();
     }
 
     @Override
@@ -101,6 +100,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
         if (!addressToServerMap.containsKey(serverAddress)) {
             ClusterableServer mongoServer = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerMap.put(serverAddress, mongoServer);
+            updateDescription();
         }
     }
 
@@ -109,6 +109,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
 
         ClusterableServer server = addressToServerMap.remove(serverAddress);
         server.close();
+        updateDescription();
     }
 
 
