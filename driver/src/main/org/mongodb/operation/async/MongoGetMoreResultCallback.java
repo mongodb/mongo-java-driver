@@ -27,7 +27,7 @@ import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 
-public class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
+class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
     private final long cursorId;

@@ -25,7 +25,7 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 
-public abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
+abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
     private final MongoCommand commandOperation;
     private final Decoder<Document> decoder;
 

@@ -25,7 +25,7 @@ import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CommandResult;
 
-public class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
+class MongoCommandResultCallback extends MongoCommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
 
     public MongoCommandResultCallback(final SingleResultCallback<CommandResult> callback,

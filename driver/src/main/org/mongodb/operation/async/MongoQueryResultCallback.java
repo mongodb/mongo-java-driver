@@ -28,7 +28,7 @@ import org.mongodb.operation.MongoQueryFailureException;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 
-public class MongoQueryResultCallback<T> extends MongoResponseCallback {
+class MongoQueryResultCallback<T> extends MongoResponseCallback {
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
 

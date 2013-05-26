@@ -22,7 +22,7 @@ import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 
-public abstract class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
+abstract class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
     private AsyncConnection connection;
     private long requestId;

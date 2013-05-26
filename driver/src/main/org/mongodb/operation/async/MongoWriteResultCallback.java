@@ -32,7 +32,7 @@ import org.mongodb.operation.protocol.MongoRequestMessage;
 
 import java.nio.ByteBuffer;
 
-public class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
+class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final SingleResultCallback<WriteResult> callback;
     private final MongoWrite writeOperation;
     private final GetLastError getLastError;
