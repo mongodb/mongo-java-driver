@@ -18,7 +18,6 @@
 
 package com.mongodb.util;
 
-import com.mongodb.DBObject;
 import org.bson.BSONCallback;
 
 /**
@@ -74,7 +73,7 @@ public class JSON {
      */
     public static Object parse(String s, BSONCallback c) {
         if (s == null || (s = s.trim()).equals("")) {
-            return (DBObject) null;
+            return null;
         }
 
         JSONParser p = new JSONParser(s, c);
