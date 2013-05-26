@@ -18,10 +18,8 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.connection.ServerAddress;
 
 import java.io.Closeable;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -73,6 +71,4 @@ public interface MongoClient extends Closeable {
      * @return the ClientAdministration that provides admin methods that can be performed
      */
     ClientAdministration tools();
-
-    Set<ServerAddress> getServerAddresses();
 }

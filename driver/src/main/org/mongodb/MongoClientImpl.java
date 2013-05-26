@@ -24,14 +24,10 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.MonotonicSession;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
-import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -97,15 +93,6 @@ public class MongoClientImpl implements MongoClient {
     @Override
     public ClientAdministration tools() {
         return new ClientAdministrationImpl(this, primitiveCodecs);
-    }
-
-    @Override
-    public Set<ServerAddress> getServerAddresses() {
-        Set<ServerAddress> serverAddresses = new HashSet<ServerAddress>();
-        for (ServerDescription cur : cluster.getDescription().getAll()) {
-            serverAddresses.add(cur.getAddress());
-        }
-        return serverAddresses;
     }
 
     public AsyncServerSelectingSession getAsyncSession() {
