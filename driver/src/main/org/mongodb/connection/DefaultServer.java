@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerDescription.Status.Connecting;
+import static org.mongodb.connection.ServerConnectionStatus.Connecting;
 
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;

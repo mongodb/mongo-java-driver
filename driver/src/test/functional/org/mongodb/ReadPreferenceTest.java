@@ -31,8 +31,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
-import static org.mongodb.connection.ServerDescription.Status.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ServerConnectionStatus.Connected;
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;

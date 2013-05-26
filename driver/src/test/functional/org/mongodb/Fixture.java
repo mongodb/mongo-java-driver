@@ -16,16 +16,18 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ServerSelectingSession;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
+
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -99,7 +101,7 @@ public final class Fixture {
 
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
-        return mongoClient.getCluster().getDescription().getType() == ClusterDescription.Type.ReplicaSet
-                && mongoClient.getCluster().getDescription().getMode() == ClusterDescription.Mode.Discovering;
+        return mongoClient.getCluster().getDescription().getType() == ReplicaSet
+                && mongoClient.getCluster().getDescription().getMode() == Discovering;
     }
 }

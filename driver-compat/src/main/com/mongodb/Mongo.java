@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
+
 @ThreadSafe
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
@@ -169,10 +172,8 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return cluster.getDescription().getType() == ClusterDescription.Type.ReplicaSet
-                && cluster.getDescription().getMode() == ClusterDescription.Mode.Discovering
-                ? new ReplicaSetStatus(cluster)
-                : null; // this is intended behavior in 2.x
+        return cluster.getDescription().getType() == ReplicaSet && cluster.getDescription().getMode() == Discovering
+                ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
     }
 
 

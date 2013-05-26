@@ -36,18 +36,6 @@ import static org.mongodb.connection.ServerType.Unknown;
 @Immutable
 public class ServerDescription {
 
-    public enum Status {
-        /**
-         * The application is actively attempting to connect to the remote server.
-         */
-        Connecting,
-
-        /**
-         *  The application is connected to the remote server.
-         */
-        Connected
-    }
-
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
@@ -65,7 +53,7 @@ public class ServerDescription {
     private final String setName;
     private final long averagePingTimeNanos;
     private final boolean ok;
-    private final Status status;
+    private final ServerConnectionStatus status;
 
     public static class Builder {
         private ServerAddress address;
@@ -80,7 +68,7 @@ public class ServerDescription {
         private String setName;
         private long averagePingTimeNanos;
         private boolean ok;
-        private Status status;
+        private ServerConnectionStatus status;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -143,7 +131,7 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder status(final Status status) {
+        public Builder status(final ServerConnectionStatus status) {
             this.status = status;
             return this;
         }
@@ -252,7 +240,7 @@ public class ServerDescription {
         return ok;
     }
 
-    public Status getStatus() {
+    public ServerConnectionStatus getStatus() {
         return status;
     }
 

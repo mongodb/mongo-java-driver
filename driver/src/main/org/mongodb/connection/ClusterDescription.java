@@ -23,7 +23,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerDescription.Status.Connecting;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterType.Sharded;
+import static org.mongodb.connection.ClusterType.StandAlone;
+import static org.mongodb.connection.ClusterType.Unknown;
+import static org.mongodb.connection.ServerConnectionStatus.Connecting;
 
 
 /**
@@ -32,41 +36,33 @@ import static org.mongodb.connection.ServerDescription.Status.Connecting;
 @Immutable
 public class ClusterDescription {
 
-    public enum Mode {
-        Direct, Discovering
-    }
-
-    public enum Type {
-        StandAlone, ReplicaSet, Sharded, Unknown
-    }
-
     private final List<ServerDescription> all;
 
-    private final Mode mode;
+    private final ClusterConnectionMode mode;
 
-    public ClusterDescription(final List<ServerDescription> all, final Mode mode) {
+    public ClusterDescription(final List<ServerDescription> all, final ClusterConnectionMode mode) {
         notNull("all", all);
         this.mode = notNull("mode", mode);
         this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(all));
     }
 
-    public Mode getMode() {
+    public ClusterConnectionMode getMode() {
         return mode;
     }
 
-    public Type getType() {
+    public ClusterType getType() {
         for (ServerDescription description : all) {
             if (description.isReplicaSetMember()) {
-                return Type.ReplicaSet;
+                return ReplicaSet;
             }
             else if (description.isShardRouter()) {
-                return Type.Sharded;
+                return Sharded;
             }
             else if (description.isStandAlone()) {
-                return Type.StandAlone;
+                return StandAlone;
             }
         }
-        return Type.Unknown;
+        return Unknown;
     }
 
     /**

@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 
 class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =

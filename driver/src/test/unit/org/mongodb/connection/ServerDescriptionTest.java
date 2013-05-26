@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ServerDescription.Status.Connected;
+import static org.mongodb.connection.ServerConnectionStatus.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.Unknown;
 

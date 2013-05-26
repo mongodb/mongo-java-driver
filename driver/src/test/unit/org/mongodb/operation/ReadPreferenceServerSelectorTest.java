@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.mongodb.connection.ClusterDescription.Mode.Discovering;
-import static org.mongodb.connection.ServerDescription.Status.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ServerConnectionStatus.Connected;
 
 public class ReadPreferenceServerSelectorTest {
     @Test

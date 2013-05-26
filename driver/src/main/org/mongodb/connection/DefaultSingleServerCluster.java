@@ -24,7 +24,7 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ClusterDescription.Mode.Direct;
+import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 class DefaultSingleServerCluster extends DefaultCluster {
     private final ClusterableServer server;

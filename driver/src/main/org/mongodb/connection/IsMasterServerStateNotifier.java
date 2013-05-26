@@ -33,8 +33,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.mongodb.connection.ServerDescription.Status.Connected;
-import static org.mongodb.connection.ServerDescription.Status.Connecting;
+import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionStatus.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
