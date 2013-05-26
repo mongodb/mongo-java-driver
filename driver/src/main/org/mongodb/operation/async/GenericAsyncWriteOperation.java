@@ -24,7 +24,7 @@ import org.mongodb.operation.protocol.MongoRequestMessage;
 
 import java.nio.ByteBuffer;
 
-public class GenericAsyncWriteOperation extends AsyncWriteOperation {
+class GenericAsyncWriteOperation extends AsyncWriteOperation {
     private final MongoWrite write;
     private final MongoRequestMessage requestMessage;
 
