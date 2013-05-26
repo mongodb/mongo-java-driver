@@ -19,7 +19,6 @@ package org.mongodb.session;
 import org.mongodb.connection.ChainingServerSelector;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.LatencyMinimizingServerSelector;
 
 import java.util.List;
 
