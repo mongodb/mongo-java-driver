@@ -33,7 +33,7 @@ import java.util.Set;
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
  * can be accessed via MongoClient.
  */
-class ClientAdminImpl implements ClientAdmin {
+class ClientAdministrationImpl implements ClientAdministration {
     private static final String ADMIN_DATABASE = "admin";
     private static final Ping PING_COMMAND = new Ping();
     private static final ListDatabases LIST_DATABASES = new ListDatabases();
@@ -41,7 +41,7 @@ class ClientAdminImpl implements ClientAdmin {
     private final DocumentCodec documentCodec;
     private final MongoClientImpl client;
 
-    ClientAdminImpl(final MongoClientImpl client, final PrimitiveCodecs primitiveCodecs) {
+    ClientAdministrationImpl(final MongoClientImpl client, final PrimitiveCodecs primitiveCodecs) {
         this.client = client;
         documentCodec = new DocumentCodec(primitiveCodecs);
     }

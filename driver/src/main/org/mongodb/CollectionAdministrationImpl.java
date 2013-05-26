@@ -36,7 +36,7 @@ import java.util.List;
  * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class
  * you can create indexes and drop the collection.
  */
-public class CollectionAdminImpl implements CollectionAdmin {
+class CollectionAdministrationImpl implements CollectionAdministration {
     private static final String NAMESPACE_KEY_NAME = "ns";
 
     private final MongoClientImpl client;
@@ -50,10 +50,10 @@ public class CollectionAdminImpl implements CollectionAdmin {
     private final CollStats collStatsCommand;
     private final Drop dropCollectionCommand;
 
-    CollectionAdminImpl(final MongoClientImpl client,
-                        final PrimitiveCodecs primitiveCodecs,
-                        final MongoNamespace collectionNamespace,
-                        final MongoDatabase database) {
+    CollectionAdministrationImpl(final MongoClientImpl client,
+                                 final PrimitiveCodecs primitiveCodecs,
+                                 final MongoNamespace collectionNamespace,
+                                 final MongoDatabase database) {
         this.client = client;
         this.database = database;
         this.documentCodec = new DocumentCodec(primitiveCodecs);

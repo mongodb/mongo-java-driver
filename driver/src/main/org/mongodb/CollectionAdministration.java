@@ -22,7 +22,7 @@ import java.util.List;
  * Provides the functionality for a collection that is useful for administration, but not necessarily in the course
  * of normal use of a collection.
  */
-public interface CollectionAdmin {
+public interface CollectionAdministration {
     /**
      * @param index all the details of the index to add
      * @see Index

@@ -48,5 +48,5 @@ public interface MongoCollection<T> extends MongoStream<T> {
 
     CollectibleCodec<T> getCodec();
 
-    CollectionAdmin tools();
+    CollectionAdministration tools();
 }

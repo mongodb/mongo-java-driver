@@ -70,9 +70,9 @@ public interface MongoClient extends Closeable {
     MongoClientOptions getOptions();
 
     /**
-     * @return the ClientAdmin that provides admin methods that can be performed
+     * @return the ClientAdministration that provides admin methods that can be performed
      */
-    ClientAdmin tools();
+    ClientAdministration tools();
 
     Set<ServerAddress> getServerAddresses();
 }

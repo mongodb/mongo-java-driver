@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * The administrative commands that can be run against a selected database.
  */
-public interface DatabaseAdmin {
+public interface DatabaseAdministration {
     /**
      * Drops this database.
      *

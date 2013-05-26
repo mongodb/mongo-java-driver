@@ -42,7 +42,7 @@ public interface MongoDatabase {
     <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec, MongoCollectionOptions options);
 
     //TODO: still need to come up with a sensible name for this
-    DatabaseAdmin tools();
+    DatabaseAdministration tools();
 
     //    MongoDatabase withClient(MongoClient client);
     //

@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * All the commands that can be run without needing a specific database.
  */
-public interface ClientAdmin {
+public interface ClientAdministration {
     /**
      * @return a non-null number if the server is reachable.
      */

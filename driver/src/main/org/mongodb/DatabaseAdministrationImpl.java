@@ -36,7 +36,7 @@ import static org.mongodb.connection.NativeAuthenticationHelper.createAuthentica
  * not implemented in MongoDatabase in order to keep the API very simple, these should be the methods that are not
  * commonly used by clients of the driver.
  */
-public class DatabaseAdminImpl implements DatabaseAdmin {
+class DatabaseAdministrationImpl implements DatabaseAdministration {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
     private static final MongoFind FIND_ALL = new MongoFind().readPreference(ReadPreference.primary());
 
@@ -44,7 +44,7 @@ public class DatabaseAdminImpl implements DatabaseAdmin {
     private final Codec<Document> documentCodec;
     private final MongoClientImpl client;
 
-    public DatabaseAdminImpl(final String databaseName, final MongoClientImpl client, final Codec<Document> documentCodec) {
+    public DatabaseAdministrationImpl(final String databaseName, final MongoClientImpl client, final Codec<Document> documentCodec) {
         this.databaseName = databaseName;
         this.client = client;
         this.documentCodec = documentCodec;

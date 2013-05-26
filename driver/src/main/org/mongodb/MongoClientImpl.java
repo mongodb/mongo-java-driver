@@ -95,8 +95,8 @@ public class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public ClientAdmin tools() {
-        return new ClientAdminImpl(this, primitiveCodecs);
+    public ClientAdministration tools() {
+        return new ClientAdministrationImpl(this, primitiveCodecs);
     }
 
     @Override

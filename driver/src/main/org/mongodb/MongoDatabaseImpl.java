@@ -26,7 +26,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
     private final MongoClientImpl client;
-    private final DatabaseAdmin admin;
+    private final DatabaseAdministration admin;
     private final Codec<Document> documentCodec;
 
     public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
@@ -34,7 +34,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         this.client = client;
         this.options = options;
         documentCodec = options.getDocumentCodec();
-        this.admin = new DatabaseAdminImpl(name, client, documentCodec);
+        this.admin = new DatabaseAdministrationImpl(name, client, documentCodec);
     }
 
     @Override
@@ -71,7 +71,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public DatabaseAdmin tools() {
+    public DatabaseAdministration tools() {
         return admin;
     }
 
