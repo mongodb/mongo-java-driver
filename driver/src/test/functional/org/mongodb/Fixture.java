@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
@@ -94,5 +95,11 @@ public final class Fixture {
 
     public static List<MongoCredential> getCredentialList() {
         return getMongoClientURI().getCredentials();
+    }
+
+    public static boolean isDiscoverableReplicaSet() {
+        getMongoClient();
+        return mongoClient.getCluster().getDescription().getType() == ClusterDescription.Type.ReplicaSet
+                && mongoClient.getCluster().getDescription().getMode() == ClusterDescription.Mode.Discovering;
     }
 }

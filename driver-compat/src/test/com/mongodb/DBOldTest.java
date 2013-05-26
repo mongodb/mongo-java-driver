@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 
 public class DBOldTest extends DatabaseTestCase {
     @Test
@@ -145,6 +146,9 @@ public class DBOldTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void testRequestPinning() throws UnknownHostException {
+        if (!isDiscoverableReplicaSet()) {
+            return;
+        }
         database.requestStart();
         try {
             DBCursor cursorBefore = collection.find().setReadPreference(ReadPreference.secondary());

@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertTrue;
+import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 
 public class ErrorOldTest extends DatabaseTestCase {
 
@@ -45,6 +46,10 @@ public class ErrorOldTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void testLastErrorWithConcernAndW() {
+        if (!isDiscoverableReplicaSet()) {
+            return;
+        }
+
         database.resetError();
         final CommandResult cr = database.getLastError(WriteConcern.REPLICAS_SAFE);
         assertTrue(cr.get("err") == null);
