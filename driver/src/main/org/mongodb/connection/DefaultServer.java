@@ -156,17 +156,6 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-            isTrue("open", !isClosed());
-            try {
-                return wrapped.sendAndReceiveMessage(buffer);
-            } catch (MongoException e) {
-                handleException();
-                throw e;
-            }
-        }
-
-        @Override
         public ResponseBuffers receiveMessage() {
             isTrue("open", !isClosed());
             try {

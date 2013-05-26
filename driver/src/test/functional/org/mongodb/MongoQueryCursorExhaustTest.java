@@ -135,13 +135,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         @Override
         public void sendMessage(final ChannelAwareOutputBuffer buffer) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer);
-        }
-
-        @Override
-        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-            isTrue("open", !isClosed());
-            return wrapped.sendAndReceiveMessage(buffer);
+            wrapped.sendMessage(buffer);
         }
 
         @Override

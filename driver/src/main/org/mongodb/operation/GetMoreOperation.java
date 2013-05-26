@@ -74,7 +74,8 @@ public class GetMoreOperation<T> extends Operation {
         try {
             final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
             message.encode(buffer);
-            final ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
+            connection.sendMessage(buffer);
+            final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {
                 if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                     throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));

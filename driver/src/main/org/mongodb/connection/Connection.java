@@ -20,7 +20,5 @@ public interface Connection extends BaseConnection {
 
     void sendMessage(ChannelAwareOutputBuffer buffer);
 
-    ResponseBuffers sendAndReceiveMessage(ChannelAwareOutputBuffer buffer);
-
     ResponseBuffers receiveMessage();
 }

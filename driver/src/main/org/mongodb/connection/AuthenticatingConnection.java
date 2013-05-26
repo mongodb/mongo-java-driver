@@ -61,13 +61,6 @@ class AuthenticatingConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-        isTrue("open", wrapped != null);
-        authenticator.authenticateAll();
-        return wrapped.sendAndReceiveMessage(buffer);
-    }
-
-    @Override
     public ResponseBuffers receiveMessage() {
         isTrue("open", wrapped != null);
         authenticator.authenticateAll();

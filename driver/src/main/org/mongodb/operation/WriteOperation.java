@@ -61,7 +61,8 @@ public abstract class WriteOperation extends Operation {
                         MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastError,
                         codec);
                 getLastErrorMessage.encode(buffer);
-                ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
+                connection.sendMessage(buffer);
+                ResponseBuffers responseBuffers = connection.receiveMessage();
                 try {
                     getLastErrorResult = getLastError.parseGetLastErrorResponse(createCommandResult(getLastError,
                             new MongoReplyMessage<Document>(responseBuffers, codec, getLastErrorMessage.getId()), connection));

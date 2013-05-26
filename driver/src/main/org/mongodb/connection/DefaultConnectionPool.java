@@ -126,17 +126,6 @@ class DefaultConnectionPool implements Pool<Connection> {
         }
 
         @Override
-        public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-            isTrue("open", wrapped != null);
-            try {
-                return wrapped.sendAndReceiveMessage(buffer);
-            } catch (MongoException e) {
-                handleException(e);
-                throw e;
-            }
-        }
-
-        @Override
         public ResponseBuffers receiveMessage() {
             isTrue("open", wrapped != null);
             try {

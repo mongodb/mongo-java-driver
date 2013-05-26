@@ -59,7 +59,8 @@ public class QueryOperation<T> extends Operation {
             final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
             message.encode(buffer);
 
-            final ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
+            connection.sendMessage(buffer);
+            final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =

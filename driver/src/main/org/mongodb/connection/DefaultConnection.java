@@ -66,12 +66,6 @@ abstract class DefaultConnection implements Connection {
         }
     }
 
-    public ResponseBuffers sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer) {
-        check();
-        sendMessage(buffer);
-        return receiveMessage();
-    }
-
     @Override
     public ResponseBuffers receiveMessage() {
         check();

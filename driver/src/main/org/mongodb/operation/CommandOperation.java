@@ -55,7 +55,8 @@ public class CommandOperation extends Operation {
         try {
             final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
             message.encode(buffer);
-            final ResponseBuffers responseBuffers = connection.sendAndReceiveMessage(buffer);
+            connection.sendMessage(buffer);
+            final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {
                 MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, codec, message.getId());
                 return createCommandResult(commandOperation, replyMessage, connection);
