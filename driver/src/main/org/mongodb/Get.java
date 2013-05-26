@@ -19,8 +19,4 @@ package org.mongodb;
 public enum Get {
     BeforeChangeApplied,
     AfterChangeApplied
-
-    //GetDocument
-    // BeforeChangeApplied
-    // AfterChangeApplied
 }
