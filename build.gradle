@@ -16,11 +16,6 @@
 
 def configDir = new File(rootDir, 'config')
 
-buildscript {
-    repositories { mavenCentral() }
-    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.3.0' }
-}
-
 //////////////////////////////////////////
 // Common behavior                      //
 //////////////////////////////////////////
@@ -56,16 +51,8 @@ subprojects {
     }
 
     sourceSets {
-        main {
-            java {
-                srcDir 'src/main'
-            }
-        }
-        test {
-            java {
-                srcDir 'src/test'
-            }
-        }
+        main { java.srcDir 'src/main' }
+        test { java.srcDir 'src/test' }
     }
 
     /* Compiling */
@@ -73,11 +60,10 @@ subprojects {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
-        options.compilerArgs = ['-Xlint:all','-Xlint:-options']
+        options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
 
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
-
 
     /* Testing */
     tasks.withType(Test) {
@@ -85,7 +71,7 @@ subprojects {
         systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
         systemProperty 'org.mongodb.useSocket', System.getProperty('org.mongodb.useSocket', "false")
         systemProperty 'org.mongodb.disableAsync', System.getProperty('org.mongodb.disableAsync', "false")
-        if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()){
+        if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()) {
             systemProperty 'javax.net.ssl.keyStoreType', project.property('ssl.keyStoreType')
             systemProperty 'javax.net.ssl.keyStore', project.property('ssl.keyStore')
             systemProperty 'javax.net.ssl.keyStorePassword', project.property('ssl.keyStorePassword')
@@ -95,7 +81,7 @@ subprojects {
         }
         jacoco { enabled = false }
 
-        beforeTest{ descr ->
+        beforeTest { descr ->
             logger.info("[Test ${descr.className} > ${descr.name}]")
         }
     }
@@ -105,7 +91,6 @@ subprojects {
             tasks.withType(Test) { jacoco { enabled = true } }
         }
     }
-
 
     /* Code quality */
     checkstyle {
@@ -131,7 +116,6 @@ subprojects {
             html.enabled = !project.hasProperty('xmlReportsEnabled')
         }
     }
-
 
     /* Artifacts */
     task sourcesJar(type: Jar) {
@@ -259,22 +243,21 @@ project(':driver') {
         }
     }
 
+    configurations {
+        unitCompile { extendsFrom testCompile }
+        functionalCompile { extendsFrom unitCompile }
+        acceptanceCompile { extendsFrom functionalCompile }
+    }
+
+
+
     dependencies {
         compile project(':bson')
 //        testCompile 'org.jmock:jmock:2.6.0'
         testCompile 'org.jmock:jmock-legacy:2.6.0'
         testCompile 'org.jmock:jmock-junit4:2.6.0'
-        unitCompile 'junit:junit:4.11'
-//        unitCompile 'org.jmock:jmock:2.6.0'
-        unitCompile 'org.jmock:jmock-legacy:2.6.0'
-        unitCompile 'org.jmock:jmock-junit4:2.6.0'
-        unitCompile sourceSets.main.runtimeClasspath
-        functionalCompile 'junit:junit:4.11'
-        functionalCompile sourceSets.main.runtimeClasspath
-        functionalCompile sourceSets.unit.runtimeClasspath
-        acceptanceCompile 'junit:junit:4.11'
-        acceptanceCompile sourceSets.main.runtimeClasspath
-        acceptanceCompile sourceSets.functional.runtimeClasspath
+        unitCompile sourceSets.main.output
+        acceptanceCompile sourceSets.functional.output
     }
 
     idea.module {
@@ -357,7 +340,7 @@ project(':driver-compat') {
     }
 
     test {
-        useJUnit(){
+        useJUnit() {
             if (!JavaVersion.current().isJava7Compatible()
                     || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
                 excludeCategories 'category.Async'
@@ -409,7 +392,7 @@ project(':driver-compat') {
 
     pmd {
         //cut down version of PMD for the older code base
-        ruleSets =  ["braces"]
+        ruleSets = ["braces"]
         ignoreFailures = false
     }
 
@@ -421,8 +404,8 @@ project(':driver-compat') {
                 node = provider.node.appendNode('component')
             }
             node.replaceNode {
-                component(name:'CheckStyle-IDEA-Module') {
-                    option(name:'configuration'){
+                component(name: 'CheckStyle-IDEA-Module') {
+                    option(name: 'configuration') {
                         map {
                             entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
                         }
@@ -457,8 +440,8 @@ idea {
 
                 def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' } ?: provider.node.appendNode('component')
                 node.replaceNode {
-                    component(name:'CheckStyle-IDEA') {
-                        option(name:'configuration'){
+                    component(name: 'CheckStyle-IDEA') {
+                        option(name: 'configuration') {
                             map {
                                 entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle.xml:Default')
                                 entry(key: 'check-test-classes', value: true)
@@ -472,20 +455,20 @@ idea {
 
                 node = provider.node.component.find { it.@name == 'CopyrightManager' } ?: provider.node.appendNode('component')
                 node.replaceNode {
-                    component(name:'CopyrightManager', default:'10gen') {
+                    component(name: 'CopyrightManager', default: '10gen') {
                         copyright {
-                            option(name:'notice', value:'Copyright (c) 2008 - \$today.year 10gen, Inc. <http://10gen.com>\n\nLicensed under the Apache License, Version 2.0 (the "License");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n  http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an "AS IS" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.')
-                            option(name:'keyword', value:'Copyright')
-                            option(name:'allowReplaceKeyword', value:'')
-                            option(name:'myName', value:'10gen')
-                            option(name:'myLocal', value:true)
+                            option(name: 'notice', value: 'Copyright (c) 2008 - \$today.year 10gen, Inc. <http://10gen.com>\n\nLicensed under the Apache License, Version 2.0 (the "License");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\n  http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an "AS IS" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.')
+                            option(name: 'keyword', value: 'Copyright')
+                            option(name: 'allowReplaceKeyword', value: '')
+                            option(name: 'myName', value: '10gen')
+                            option(name: 'myLocal', value: true)
                         }
                         module2copyright {
-                            element(module:'Project Files',copyright:'10gen')
+                            element(module: 'Project Files', copyright: '10gen')
                         }
-                        LanguageOptions (name:'XML') {
-                            option(name:'fileTypeOverride', value:1)
-                            option(name:'prefixLines', value:false)
+                        LanguageOptions(name: 'XML') {
+                            option(name: 'fileTypeOverride', value: 1)
+                            option(name: 'prefixLines', value: false)
                         }
                     }
                 }
