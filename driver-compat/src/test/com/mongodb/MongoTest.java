@@ -29,6 +29,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mongodb.connection.ClusterConnectionMode.Direct;
+import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterType.Sharded;
 
 public class MongoTest {
 
@@ -55,12 +59,12 @@ public class MongoTest {
 
 
     @Test
-    public void shouldReturnReplicaSetStatusIfClusterTypeReplicaSetAndModeDiscoring() {
+    public void shouldReturnReplicaSetStatusIfClusterTypeReplicaSetAndModeDiscovering() {
         context.checking(new Expectations() {{
             allowing(clusterDescription).getType();
-            will(returnValue(ClusterDescription.Type.ReplicaSet));
+            will(returnValue(ReplicaSet));
             allowing(clusterDescription).getMode();
-            will(returnValue(ClusterDescription.Mode.Discovering));
+            will(returnValue(Discovering));
         }});
         assertThat(mongo.getReplicaSetStatus(), is(notNullValue()));
     }
@@ -70,9 +74,9 @@ public class MongoTest {
     public void shouldReturnNullIfClusterTypeNotReplica() {
         context.checking(new Expectations() {{
             allowing(clusterDescription).getType();
-            will(returnValue(ClusterDescription.Type.Sharded));
+            will(returnValue(Sharded));
             allowing(clusterDescription).getMode();
-            will(returnValue(ClusterDescription.Mode.Discovering));
+            will(returnValue(Discovering));
         }});
         assertThat(mongo.getReplicaSetStatus(), is(nullValue()));
     }
@@ -81,9 +85,9 @@ public class MongoTest {
     public void shouldReturnNullIfClusterModeNotDiscovering() {
         context.checking(new Expectations() {{
             allowing(clusterDescription).getType();
-            will(returnValue(ClusterDescription.Type.ReplicaSet));
+            will(returnValue(ReplicaSet));
             allowing(clusterDescription).getMode();
-            will(returnValue(ClusterDescription.Mode.Direct));
+            will(returnValue(Direct));
         }});
         assertThat(mongo.getReplicaSetStatus(), is(nullValue()));
     }
