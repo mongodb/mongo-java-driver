@@ -30,14 +30,11 @@ import java.net.UnknownHostException;
 public class ServerAddress {
     private final String host;
     private final int port;
-    private volatile InetSocketAddress address;
     /**
      * Creates a ServerAddress with default host and port
      *
-     * @throws UnknownHostException
      */
-    public ServerAddress()
-            throws UnknownHostException {
+    public ServerAddress() {
         this(defaultHost(), defaultPort());
     }
 
@@ -45,10 +42,8 @@ public class ServerAddress {
      * Creates a ServerAddress with default port
      *
      * @param host hostname
-     * @throws UnknownHostException
      */
-    public ServerAddress(final String host)
-            throws UnknownHostException {
+    public ServerAddress(final String host) {
         this(host, defaultPort());
     }
 
@@ -57,10 +52,8 @@ public class ServerAddress {
      *
      * @param host hostname
      * @param port mongod port
-     * @throws UnknownHostException
      */
-    public ServerAddress(final String host, final int port)
-            throws UnknownHostException {
+    public ServerAddress(final String host, final int port) {
         String hostToUse = host;
         if (hostToUse == null) {
             hostToUse = defaultHost();
@@ -82,37 +75,6 @@ public class ServerAddress {
 
         this.host = hostToUse;
         this.port = portToUse;
-        updateInetAddress();
-    }
-
-    /**
-     * Creates a ServerAddress with default port
-     *
-     * @param addr host address
-     */
-    public ServerAddress(final InetAddress addr) {
-        this(new InetSocketAddress(addr, defaultPort()));
-    }
-
-    /**
-     * Creates a ServerAddress
-     *
-     * @param addr host address
-     * @param port mongod port
-     */
-    public ServerAddress(final InetAddress addr, final int port) {
-        this(new InetSocketAddress(addr, port));
-    }
-
-    /**
-     * Creates a ServerAddress
-     *
-     * @param addr inet socket address containing hostname and port
-     */
-    public ServerAddress(final InetSocketAddress addr) {
-        address = addr;
-        host = address.getHostName();
-        port = address.getPort();
     }
 
     // --------
@@ -149,7 +111,11 @@ public class ServerAddress {
 
         final ServerAddress that = (ServerAddress) o;
 
-        if (!address.equals(that.address)) {
+        if (port != that.port) {
+            return false;
+        }
+
+        if (!host.equals(that.host)) {
             return false;
         }
 
@@ -158,7 +124,9 @@ public class ServerAddress {
 
     @Override
     public int hashCode() {
-        return address.hashCode();
+        int result = host.hashCode();
+        result = 31 * result + port;
+        return result;
     }
 
     /**
@@ -184,16 +152,19 @@ public class ServerAddress {
      *
      * @return socket address
      */
-    public InetSocketAddress getSocketAddress() {
-        return address;
+    public InetSocketAddress getSocketAddress() throws UnknownHostException {
+        return new InetSocketAddress(InetAddress.getByName(host), port);
     }
+
 
     @Override
     public String toString() {
-        return address.toString();
+        return "ServerAddress{"
+                + "host='" + host + '\''
+                + ", port=" + port
+                + '}';
     }
-
-    // --------
+// --------
     // static helpers
     // --------
 
@@ -213,17 +184,5 @@ public class ServerAddress {
      */
     public static int defaultPort() {
         return 27017;
-    }
-
-    /**
-     * attempts to update the internal InetAddress by resolving the host name.
-     *
-     * @return true if host resolved to a new IP that is different from old one, false otherwise
-     * @throws UnknownHostException
-     */
-    boolean updateInetAddress() throws UnknownHostException {
-        final InetSocketAddress oldAddress = address;
-        address = new InetSocketAddress(InetAddress.getByName(host), port);
-        return !address.equals(oldAddress);
     }
 }

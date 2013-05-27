@@ -19,7 +19,6 @@ package org.mongodb.connection;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -138,10 +137,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
 
     private void addNewHosts(final Set<String> hosts) {
         for (String cur : hosts) {
-            ServerAddress curServerAddress = getServerAddress(cur);
-            if (curServerAddress != null) {
-                addServer(curServerAddress);
-            }
+            addServer(new ServerAddress(cur));
         }
     }
 
@@ -164,18 +160,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
 
     private void addHostsToSet(final Set<String> hosts, final Set<ServerAddress> retVal) {
         for (String host : hosts) {
-            ServerAddress curServerAddress = getServerAddress(host);
-            if (curServerAddress != null) {
-                retVal.add(curServerAddress);
-            }
-        }
-    }
-
-    private ServerAddress getServerAddress(final String serverAddressString) {
-        try {
-            return new ServerAddress(serverAddressString);
-        } catch (UnknownHostException e) {
-            return null;
+            retVal.add(new ServerAddress(host));
         }
     }
 }

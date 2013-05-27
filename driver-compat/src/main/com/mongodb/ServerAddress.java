@@ -22,6 +22,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import static org.mongodb.connection.ServerAddress.defaultPort;
+
 @Immutable
 public class ServerAddress {
     private final org.mongodb.connection.ServerAddress proxied;
@@ -34,20 +36,20 @@ public class ServerAddress {
         proxied = new org.mongodb.connection.ServerAddress(host);
     }
 
-    public ServerAddress(final String host, final int port) throws UnknownHostException {
+    public ServerAddress(final String host, final int port) {
         proxied = new org.mongodb.connection.ServerAddress(host, port);
     }
 
-    public ServerAddress(final InetAddress addr) {
-        proxied = new org.mongodb.connection.ServerAddress(addr);
+    public ServerAddress(final InetAddress inetAddress) {
+        this(inetAddress.getHostName(), defaultPort());
     }
 
-    public ServerAddress(final InetAddress addr, final int port) {
-        proxied = new org.mongodb.connection.ServerAddress(addr, port);
+    public ServerAddress(final InetAddress inetAddress, final int port) {
+        this(inetAddress.getHostName(), port);
     }
 
-    public ServerAddress(final InetSocketAddress addr) {
-        proxied = new org.mongodb.connection.ServerAddress(addr);
+    public ServerAddress(final InetSocketAddress inetSocketAddress) {
+        this(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
     }
 
     public ServerAddress(final org.mongodb.connection.ServerAddress address) {
@@ -78,7 +80,11 @@ public class ServerAddress {
      * @return socket address
      */
     public InetSocketAddress getSocketAddress() {
-        return proxied.getSocketAddress();
+        try {
+            return proxied.getSocketAddress();
+        } catch (UnknownHostException e) {
+            throw new MongoException("Unknown host", e);
+        }
     }
 
     @Override
