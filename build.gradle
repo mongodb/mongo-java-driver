@@ -330,6 +330,8 @@ project(':driver-compat') {
     dependencies {
         compile project(':driver')
         testCompile project(':driver').sourceSets.test.output
+        testCompile 'org.jmock:jmock-legacy:2.6.0'
+        testCompile 'org.jmock:jmock-junit4:2.6.0'
     }
 
     clirr {
