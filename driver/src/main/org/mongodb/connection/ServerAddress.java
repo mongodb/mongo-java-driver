@@ -19,6 +19,7 @@ package org.mongodb.connection;
 
 import org.mongodb.annotations.Immutable;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -27,7 +28,10 @@ import java.net.UnknownHostException;
  * Represents the location of a Mongo server - i.e. server name and port number
  */
 @Immutable
-public class ServerAddress {
+public class ServerAddress implements Serializable {
+
+    private static final long serialVersionUID = 4027873363095395504L;
+
     private final String host;
     private final int port;
 
