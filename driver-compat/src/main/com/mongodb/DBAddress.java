@@ -19,8 +19,6 @@ package com.mongodb;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static org.mongodb.connection.ServerAddress.defaultPort;
-
 /**
  * Represents a database address
  */

@@ -30,12 +30,31 @@ import java.net.UnknownHostException;
 public class ServerAddress {
     private final String host;
     private final int port;
+
+    /**
+     * Returns the default database host: "127.0.0.1"
+     *
+     * @return IP address of default host.
+     */
+    public static String getDefaultHost() {
+        return "127.0.0.1"; // NOPMD
+    }
+
+    /**
+     * Returns the default database port: 27017
+     *
+     * @return the default port
+     */
+    public static int getDefaultPort() {
+        return 27017;
+    }
+
     /**
      * Creates a ServerAddress with default host and port
      *
      */
     public ServerAddress() {
-        this(defaultHost(), defaultPort());
+        this(getDefaultHost(), getDefaultPort());
     }
 
     /**
@@ -44,7 +63,7 @@ public class ServerAddress {
      * @param host hostname
      */
     public ServerAddress(final String host) {
-        this(host, defaultPort());
+        this(host, getDefaultPort());
     }
 
     /**
@@ -56,17 +75,17 @@ public class ServerAddress {
     public ServerAddress(final String host, final int port) {
         String hostToUse = host;
         if (hostToUse == null) {
-            hostToUse = defaultHost();
+            hostToUse = getDefaultHost();
         }
         hostToUse = hostToUse.trim();
         if (hostToUse.length() == 0) {
-            hostToUse = defaultHost();
+            hostToUse = getDefaultHost();
         }
 
         int portToUse = port;
         final int idx = hostToUse.indexOf(":");
         if (idx > 0) {
-            if (port != defaultPort()) {
+            if (port != getDefaultPort()) {
                 throw new IllegalArgumentException("can't specify port in construct and via host");
             }
             portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
@@ -75,29 +94,6 @@ public class ServerAddress {
 
         this.host = hostToUse;
         this.port = portToUse;
-    }
-
-    // --------
-    // equality, etc...
-    // --------
-
-
-    /**
-     * Determines whether this address is the same as a given host.
-     *
-     * @param hostName the address to compare
-     * @return if they are the same
-     */
-    public boolean sameHost(final String hostName) {
-        String hostToUse = hostName;
-        final int idx = hostToUse.indexOf(":");
-        int portToUse = defaultPort();
-        if (idx > 0) {
-            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
-            hostToUse = hostToUse.substring(0, idx);
-        }
-
-        return this.port == portToUse && host.equalsIgnoreCase(hostToUse);
     }
 
     @Override
@@ -163,26 +159,5 @@ public class ServerAddress {
                 + "host='" + host + '\''
                 + ", port=" + port
                 + '}';
-    }
-// --------
-    // static helpers
-    // --------
-
-    /**
-     * Returns the default database host: "127.0.0.1"
-     *
-     * @return IP address of default host.
-     */
-    public static String defaultHost() {
-        return "127.0.0.1"; // NOPMD
-    }
-
-    /**
-     * Returns the default database port: 27017
-     *
-     * @return the default port
-     */
-    public static int defaultPort() {
-        return 27017;
     }
 }

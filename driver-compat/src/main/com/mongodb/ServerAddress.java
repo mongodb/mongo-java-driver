@@ -22,11 +22,27 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import static org.mongodb.connection.ServerAddress.defaultPort;
-
 @Immutable
 public class ServerAddress {
     private final org.mongodb.connection.ServerAddress proxied;
+
+    /**
+     * Returns the default database host: "127.0.0.1"
+     *
+     * @return IP address of default host.
+     */
+    public static String defaultHost() {
+        return org.mongodb.connection.ServerAddress.getDefaultHost();
+    }
+
+    /**
+     * Returns the default database port: 27017
+     *
+     * @return the default port
+     */
+    public static int defaultPort() {
+        return org.mongodb.connection.ServerAddress.getDefaultPort();
+    }
 
     public ServerAddress() throws UnknownHostException {
         proxied = new org.mongodb.connection.ServerAddress();
@@ -122,10 +138,18 @@ public class ServerAddress {
     /**
      * Determines whether this address is the same as a given host.
      *
-     * @param host the address to compare
+     * @param hostName the address to compare
      * @return if they are the same
      */
-    public boolean sameHost(String host) {
-        return proxied.sameHost(host);
+    public boolean sameHost(final String hostName) {
+        String hostToUse = hostName;
+        final int idx = hostToUse.indexOf(":");
+        int portToUse = defaultPort();
+        if (idx > 0) {
+            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+            hostToUse = hostToUse.substring(0, idx);
+        }
+
+        return getPort() == portToUse && getHost().equalsIgnoreCase(hostToUse);
     }
 }
