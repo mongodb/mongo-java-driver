@@ -17,15 +17,15 @@
 package org.mongodb.operation;
 
 public class WriteResult {
-    private final MongoWrite write;
+    private final BaseWrite write;
     private final CommandResult getLastErrorResult;
 
-    public WriteResult(final MongoWrite write, final CommandResult getLastErrorResult) {
+    public WriteResult(final BaseWrite write, final CommandResult getLastErrorResult) {
         this.write = write;
         this.getLastErrorResult = getLastErrorResult;
     }
 
-    public MongoWrite getWrite() {
+    public BaseWrite getWrite() {
         return write;
     }
 

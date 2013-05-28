@@ -80,7 +80,7 @@ public abstract class WriteOperation extends Operation {
         }
     }
 
-    public abstract MongoWrite getWrite();
+    public abstract BaseWrite getWrite();
 
     protected abstract RequestMessage createRequestMessage(final MessageSettings settings);
 }

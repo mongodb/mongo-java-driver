@@ -17,17 +17,16 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFindAndReplace;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
-public final class FindAndReplace<T> extends MongoCommand {
+public final class FindAndReplace<T> extends Command {
 
-    public FindAndReplace(final MongoFindAndReplace<T> findAndReplace, final String collectionName) {
+    public FindAndReplace(final org.mongodb.operation.FindAndReplace<T> findAndReplace, final String collectionName) {
         super(asDocument(findAndReplace, collectionName));
     }
 
-    private static <T> Document asDocument(final MongoFindAndReplace<T> findAndReplace,
+    private static <T> Document asDocument(final org.mongodb.operation.FindAndReplace<T> findAndReplace,
                                            final String collectionName) {
         final Document cmd = getFindAndModify(findAndReplace, collectionName);
         // TODO: I don't think this will work, as we don't have a Class<T> to make sure that serialization works

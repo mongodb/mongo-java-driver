@@ -28,7 +28,7 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoStream;
 import org.mongodb.ReadPreference;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.WriteResult;
 
@@ -150,7 +150,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindCriteria() {
-        MongoFind find = new MongoFind()
+        Find find = new Find()
                 .options(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData))
                 .skip(2).limit(5).batchSize(3).select(new Document("y", 1)).filter(new Document("x", 5)).order(new Document("x", 1))
                 .readPreference(ReadPreference.secondary());

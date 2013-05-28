@@ -32,11 +32,11 @@ import org.mongodb.session.Session;
 import java.nio.ByteBuffer;
 
 public class QueryOperation<T> extends Operation {
-    private final MongoFind find;
+    private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
 
-    public QueryOperation(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
+    public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                           final Decoder<T> resultDecoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.find = find;

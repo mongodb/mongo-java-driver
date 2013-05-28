@@ -26,10 +26,10 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class InsertOperation<T> extends WriteOperation {
-    private final MongoInsert<T> insert;
+    private final Insert<T> insert;
     private final Encoder<T> encoder;
 
-    public InsertOperation(final MongoNamespace namespace, final MongoInsert<T> insert, final Encoder<T> encoder,
+    public InsertOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
                            final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.insert = insert;
@@ -40,7 +40,7 @@ public class InsertOperation<T> extends WriteOperation {
         return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
-    public MongoInsert<T> getWrite() {
+    public Insert<T> getWrite() {
         return insert;
     }
 }

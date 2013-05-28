@@ -17,50 +17,49 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 
-public class MongoUpdate extends MongoUpdateBase {
-    private final Document updateOperations;
-    private boolean isMulti = false;
+public class FindAndUpdate<T> extends FindAndModify {
+    private Document updateOperations;
 
-    public MongoUpdate(final Document filter, final Document updateOperations) {
-        super(filter);
-
+    //CHECKSTYLE:OFF
+    public FindAndUpdate<T> updateWith(final Document updateOperations) {
         this.updateOperations = updateOperations;
+        return this;
     }
+    //CHECKSTYLE:ON
 
     public Document getUpdateOperations() {
         return updateOperations;
     }
 
-    public boolean isMulti() {
-        return isMulti;
-    }
-
-    //CHECKSTYLE:OFF
-    public MongoUpdate multi(final boolean isMulti) {
-        this.isMulti = isMulti;
+    @Override
+    public FindAndUpdate<T> where(final Document filter) {
+        super.where(filter);
         return this;
     }
-    //CHECKSTYLE:ON
 
     @Override
-    public MongoUpdate upsert(final boolean isUpsert) {
-        super.upsert(isUpsert);
+    public FindAndUpdate<T> select(final Document selector) {
+        super.select(selector);
         return this;
     }
 
-
-    public MongoUpdate writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
+    @Override
+    public FindAndUpdate<T> sortBy(final Document sortCriteria) {
+        super.sortBy(sortCriteria);
         return this;
     }
 
-    public MongoUpdate writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
+    @Override
+    public FindAndUpdate<T> returnNew(final boolean returnNew) {
+        super.returnNew(returnNew);
         return this;
     }
 
+    @Override
+    public FindAndUpdate<T> upsert(final boolean upsert) {
+        super.upsert(upsert);
+        return this;
+    }
 
 }
-

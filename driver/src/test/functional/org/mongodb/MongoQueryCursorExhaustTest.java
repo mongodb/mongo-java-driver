@@ -25,7 +25,7 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
@@ -53,7 +53,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
+                new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
 
         int count = 0;
@@ -70,14 +70,14 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                 .getConnection());
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().addOptions(EnumSet.of(QueryOption.Exhaust)),
+                new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
 
         cursor.next();
         cursor.close();
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().limit(1).order(new Document("_id", -1)),
+                new Find().limit(1).order(new Document("_id", -1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
         assertEquals(new Document("_id", 999), cursor.next());
 

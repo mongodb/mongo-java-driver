@@ -23,7 +23,7 @@ import org.mongodb.Document;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.Insert;
 
 import java.util.Arrays;
 
@@ -38,7 +38,7 @@ public class MaxMessageSizeTest {
     @Before
     public void setUp() {
         message = new InsertMessage<Document>("test.test",
-                new MongoInsert<Document>(
+                new Insert<Document>(
                         Arrays.asList(
                                 new Document("bytes", new byte[2048]),
                                 new Document("bytes", new byte[2048]),

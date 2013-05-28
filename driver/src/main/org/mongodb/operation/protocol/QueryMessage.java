@@ -19,13 +19,13 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 
 public class QueryMessage extends BaseQueryMessage {
-    private final MongoFind find;
+    private final Find find;
     private Encoder<Document> encoder;
 
-    public QueryMessage(final String collectionName, final MongoFind find, final Encoder<Document> encoder,
+    public QueryMessage(final String collectionName, final Find find, final Encoder<Document> encoder,
                         final MessageSettings settings) {
         super(collectionName, settings);
         this.find = find;

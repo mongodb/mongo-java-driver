@@ -17,12 +17,12 @@
 package org.mongodb.operation.protocol;
 
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoKillCursor;
+import org.mongodb.operation.KillCursor;
 
 public class KillCursorsMessage extends RequestMessage {
-    private final MongoKillCursor killCursor;
+    private final KillCursor killCursor;
 
-    public KillCursorsMessage(final MongoKillCursor killCursor, final MessageSettings settings) {
+    public KillCursorsMessage(final KillCursor killCursor, final MessageSettings settings) {
         super(OpCode.OP_KILL_CURSORS, settings);
         this.killCursor = killCursor;
     }

@@ -21,7 +21,7 @@ import org.mongodb.Document;
 /**
  * Knows how to build the document that represents the Drop Collection command.
  */
-public final class Drop extends MongoCommand {
+public final class Drop extends Command {
     public Drop(final String collectionName) {
         super(new Document("drop", collectionName));
     }

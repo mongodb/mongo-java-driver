@@ -18,11 +18,11 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public abstract class MongoUpdateBase extends MongoWrite {
+public abstract class BaseUpdate extends BaseWrite {
     private final Document filter;
     private boolean isUpsert = false;
 
-    public MongoUpdateBase(final Document filter) {
+    public BaseUpdate(final Document filter) {
         this.filter = filter;
     }
 
@@ -35,7 +35,7 @@ public abstract class MongoUpdateBase extends MongoWrite {
     }
 
     //CHECKSTYLE:OFF
-    public MongoUpdateBase upsert(final boolean isUpsert) {
+    public BaseUpdate upsert(final boolean isUpsert) {
         this.isUpsert = isUpsert;
         return this;
     }

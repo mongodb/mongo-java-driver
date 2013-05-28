@@ -22,7 +22,7 @@ import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryResult;
 
@@ -38,7 +38,7 @@ import static org.mongodb.connection.NativeAuthenticationHelper.createAuthentica
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
     private static final DropDatabase DROP_DATABASE = new DropDatabase();
-    private static final MongoFind FIND_ALL = new MongoFind().readPreference(ReadPreference.primary());
+    private static final Find FIND_ALL = new Find().readPreference(ReadPreference.primary());
 
     private final String databaseName;
     private final Codec<Document> documentCodec;

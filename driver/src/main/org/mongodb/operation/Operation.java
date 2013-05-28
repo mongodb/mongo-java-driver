@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
@@ -46,7 +46,7 @@ public abstract class Operation {
     }
 
     // TODO: this should move somewhere else.
-    protected CommandResult createCommandResult(final MongoCommand commandOperation, final ReplyMessage<Document> replyMessage,
+    protected CommandResult createCommandResult(final Command commandOperation, final ReplyMessage<Document> replyMessage,
                                               final Connection connection) {
         CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getServerAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());

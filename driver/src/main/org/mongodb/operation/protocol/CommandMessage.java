@@ -18,14 +18,14 @@ package org.mongodb.operation.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 
 public class CommandMessage extends BaseQueryMessage {
-    private final MongoCommand commandOperation;
+    private final Command commandOperation;
     private final Encoder<Document> encoder;
 
-    public CommandMessage(final String collectionName, final MongoCommand commandOperation, final Encoder<Document> encoder,
+    public CommandMessage(final String collectionName, final Command commandOperation, final Encoder<Document> encoder,
                           final MessageSettings settings) {
         super(collectionName, settings);
         this.commandOperation = commandOperation;

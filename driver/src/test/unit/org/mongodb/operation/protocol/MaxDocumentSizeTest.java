@@ -24,7 +24,7 @@ import org.mongodb.MongoInvalidDocumentException;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.Insert;
 
 import static org.mongodb.Fixture.getBufferPool;
 
@@ -35,7 +35,7 @@ public class MaxDocumentSizeTest {
     @Before
     public void setUp() {
         message = new InsertMessage<Document>("test.test",
-                new MongoInsert<Document>(new Document("bytes", new byte[2048])).writeConcern(WriteConcern.ACKNOWLEDGED),
+                new Insert<Document>(new Document("bytes", new byte[2048])).writeConcern(WriteConcern.ACKNOWLEDGED),
                 new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferPool());
     }

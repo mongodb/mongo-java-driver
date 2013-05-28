@@ -25,8 +25,8 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.BaseWrite;
 import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.MongoWrite;
 import org.mongodb.operation.WriteResult;
 import org.mongodb.operation.protocol.RequestMessage;
 
@@ -34,20 +34,20 @@ import java.nio.ByteBuffer;
 
 class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<WriteResult> callback;
-    private final MongoWrite writeOperation;
+    private final BaseWrite writeOperation;
     private final GetLastError getLastError;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferPool<ByteBuffer> bufferPool;
 
-    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
                                final BufferPool<ByteBuffer> bufferPool) {
         this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
     }
 
-    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
                                final BufferPool<ByteBuffer> bufferPool, final long requestId) {

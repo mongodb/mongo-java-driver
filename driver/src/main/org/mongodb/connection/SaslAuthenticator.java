@@ -20,7 +20,7 @@ import org.bson.types.Binary;
 import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
@@ -76,13 +76,13 @@ abstract class SaslAuthenticator extends Authenticator {
                 new DocumentCodec(), bufferPool).execute(new ConnectingServerConnection(getConnection()));
     }
 
-    private MongoCommand createSaslStartCommand(final byte[] outToken) {
-        return new MongoCommand(new Document("saslStart", 1).append("mechanism", getMechanismName())
+    private Command createSaslStartCommand(final byte[] outToken) {
+        return new Command(new Document("saslStart", 1).append("mechanism", getMechanismName())
                 .append("payload", outToken != null ? outToken : new byte[0]));
     }
 
-    private MongoCommand createSaslContinueCommand(final int conversationId, final byte[] outToken) {
-        return new MongoCommand(new Document("saslContinue", 1).append("conversationId", conversationId).
+    private Command createSaslContinueCommand(final int conversationId, final byte[] outToken) {
+        return new Command(new Document("saslContinue", 1).append("conversationId", conversationId).
                 append("payload", outToken));
     }
 

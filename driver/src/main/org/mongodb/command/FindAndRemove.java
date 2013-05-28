@@ -17,17 +17,17 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.FindAndModify;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
-public final class FindAndRemove<T> extends MongoCommand {
+public final class FindAndRemove extends Command {
 
-    public FindAndRemove(final MongoFindAndModify findAndModify, final String collectionName) {
+    public FindAndRemove(final FindAndModify findAndModify, final String collectionName) {
         super(asDocument(findAndModify, collectionName));
     }
 
-    private static Document asDocument(final MongoFindAndModify findAndModify,
+    private static Document asDocument(final FindAndModify findAndModify,
                                        final String collectionName) {
         final Document cmd = getFindAndModify(findAndModify, collectionName);
         cmd.put("remove", true);

@@ -20,7 +20,7 @@ import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
 
-public abstract class MongoQuery {
+public abstract class Query {
     private ReadPreference readPreference;
     //CHECKSTYLE:OFF
     protected int batchSize;  // TODO: make private
@@ -29,10 +29,10 @@ public abstract class MongoQuery {
     private int limit;
     private EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
 
-    public MongoQuery() {
+    public Query() {
     }
 
-    public MongoQuery(final MongoQuery from) {
+    public Query(final Query from) {
         readPreference = from.readPreference;
         batchSize = from.batchSize;
         skip = from.skip;
@@ -41,35 +41,35 @@ public abstract class MongoQuery {
     }
 
     //CHECKSTYLE:OFF
-    public MongoQuery readPreference(final ReadPreference readPreference) {
+    public Query readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;
     }
 
     //TODO: I hate this
-    public MongoQuery readPreferenceIfAbsent(final ReadPreference readPreference) {
+    public Query readPreferenceIfAbsent(final ReadPreference readPreference) {
         if (this.readPreference == null) {
             readPreference(readPreference);
         }
         return this;
     }
 
-    public MongoQuery skip(final int skip) {
+    public Query skip(final int skip) {
         this.skip = skip;
         return this;
     }
 
-    public MongoQuery limit(final int limit) {
+    public Query limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
-    public MongoQuery batchSize(final int batchSize) {
+    public Query batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
-    public MongoQuery addOptions(final EnumSet<QueryOption> options) {
+    public Query addOptions(final EnumSet<QueryOption> options) {
         if (options == null) {
             throw new IllegalArgumentException();
         }
@@ -77,7 +77,7 @@ public abstract class MongoQuery {
         return this;
     }
 
-    public MongoQuery options(final EnumSet<QueryOption> options) {
+    public Query options(final EnumSet<QueryOption> options) {
         if (options == null) {
             throw new IllegalArgumentException();
         }
@@ -151,7 +151,7 @@ public abstract class MongoQuery {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final MongoQuery that = (MongoQuery) o;
+        final Query that = (Query) o;
 
         if (batchSize != that.batchSize) return false;
         if (limit != that.limit) return false;

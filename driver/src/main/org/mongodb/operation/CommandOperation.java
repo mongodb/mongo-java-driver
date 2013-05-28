@@ -19,7 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -31,10 +31,10 @@ import org.mongodb.session.ServerSelectingSession;
 import java.nio.ByteBuffer;
 
 public class CommandOperation extends Operation {
-    private final MongoCommand commandOperation;
+    private final Command commandOperation;
     private final Codec<Document> codec;
 
-    public CommandOperation(final String database, final MongoCommand commandOperation, final Codec<Document> codec,
+    public CommandOperation(final String database, final Command commandOperation, final Codec<Document> codec,
                             final BufferPool<ByteBuffer> bufferPool) {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
         this.commandOperation = commandOperation;

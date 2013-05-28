@@ -20,7 +20,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.Insert;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.InsertMessage;
 import org.mongodb.operation.protocol.RequestMessage;
@@ -28,10 +28,10 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class AsyncInsertOperation<T> extends AsyncWriteOperation {
-    private final MongoInsert<T> insert;
+    private final Insert<T> insert;
     private final Encoder<T> encoder;
 
-    public AsyncInsertOperation(final MongoNamespace namespace, final MongoInsert<T> insert,
+    public AsyncInsertOperation(final MongoNamespace namespace, final Insert<T> insert,
                                 final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.insert = insert;
@@ -44,7 +44,7 @@ public class AsyncInsertOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
-    public MongoInsert<T> getWrite() {
+    public Insert<T> getWrite() {
         return insert;
     }
 

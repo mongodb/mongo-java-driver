@@ -19,7 +19,7 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoUpdateBase;
+import org.mongodb.operation.BaseUpdate;
 
 public abstract class BaseUpdateMessage extends RequestMessage {
     private final Encoder<Document> baseEncoder;
@@ -47,7 +47,7 @@ public abstract class BaseUpdateMessage extends RequestMessage {
         addDocument(getUpdateBase().getFilter(), baseEncoder, buffer);
     }
 
-    protected abstract MongoUpdateBase getUpdateBase();
+    protected abstract BaseUpdate getUpdateBase();
 
     public Encoder<Document> getBaseEncoder() {
         return baseEncoder;

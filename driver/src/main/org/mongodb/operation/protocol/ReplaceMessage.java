@@ -19,14 +19,14 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoUpdateBase;
+import org.mongodb.operation.BaseUpdate;
+import org.mongodb.operation.Replace;
 
 public class ReplaceMessage<T> extends BaseUpdateMessage {
-    private MongoReplace<T> replace;
+    private Replace<T> replace;
     private final Encoder<T> encoder;
 
-    public ReplaceMessage(final String collectionName, final MongoReplace<T> replace,
+    public ReplaceMessage(final String collectionName, final Replace<T> replace,
                           final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, baseEncoder, settings);
         this.replace = replace;
@@ -41,7 +41,7 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
     }
 
     @Override
-    protected MongoUpdateBase getUpdateBase() {
+    protected BaseUpdate getUpdateBase() {
         return replace;
     }
 }

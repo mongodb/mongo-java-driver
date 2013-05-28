@@ -25,7 +25,7 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.protocol.QueryMessage;
@@ -34,11 +34,11 @@ import org.mongodb.session.AsyncSession;
 import java.nio.ByteBuffer;
 
 public class AsyncQueryOperation<T> extends AsyncOperation {
-    private final MongoFind find;
+    private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
 
-    public AsyncQueryOperation(final MongoNamespace namespace, final MongoFind find, final Encoder<Document> queryEncoder,
+    public AsyncQueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                                final Decoder<T> resultDecoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.find = find;

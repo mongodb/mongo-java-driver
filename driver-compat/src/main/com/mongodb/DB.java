@@ -21,19 +21,19 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.command.Command;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
-import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
+import org.mongodb.operation.Find;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.MonotonicSession;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 import org.mongodb.operation.CommandOperation;
-import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
@@ -174,7 +174,7 @@ public class DB implements IDB {
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
-        final MongoFind findAll = new MongoFind().readPreference(org.mongodb.ReadPreference.primary());
+        final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
                 getBufferPool()).execute(getSession());
 
@@ -281,7 +281,7 @@ public class DB implements IDB {
      * @mongodb.driver.manual tutorial/use-database-commands commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
-        final MongoCommand mongoCommand = new MongoCommand(toDocument(cmd))
+        final Command mongoCommand = new Command(toDocument(cmd))
                 .readPreference(readPrefs.toNew())
                 .addOptions(QueryOption.toSet(options));
         return new CommandResult(executeCommandWithoutException(mongoCommand));
@@ -301,7 +301,7 @@ public class DB implements IDB {
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
                                  final DBEncoder encoder) {
         final Document document = toDocument(cmd, encoder, documentCodec);
-        final MongoCommand mongoCommand = new MongoCommand(document)
+        final Command mongoCommand = new Command(document)
                 .readPreference(readPrefs.toNew())
                 .addOptions(QueryOption.toSet(options));
         return new CommandResult(executeCommandWithoutException(mongoCommand));
@@ -347,7 +347,7 @@ public class DB implements IDB {
 
     @Override
     public CommandResult doEval(final String code, final Object... args) {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("$eval", code).append("args", args));
+        final Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
@@ -360,25 +360,25 @@ public class DB implements IDB {
 
     @Override
     public CommandResult getStats() {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("dbStats", 1).append("scale", 1));
+        final Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
     @Override
     public CommandResult getPreviousError() {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("getPrevError", 1));
+        final Command mongoCommand = new Command(new Document("getPrevError", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
     @Override
     public void resetError() {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("resetError", 1));
+        final Command mongoCommand = new Command(new Document("resetError", 1));
         executeCommand(mongoCommand);
     }
 
     @Override
     public void forceError() {
-        final MongoCommand mongoCommand = new MongoCommand(new Document("forceerror", 1));
+        final Command mongoCommand = new Command(new Document("forceerror", 1));
         executeCommandWithoutException(mongoCommand);
     }
 
@@ -458,12 +458,12 @@ public class DB implements IDB {
         return new ClusterSession(getCluster());
     }
 
-    org.mongodb.operation.CommandResult executeCommand(final MongoCommand commandOperation) {
+    org.mongodb.operation.CommandResult executeCommand(final Command commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
         return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getSession());
     }
 
-    org.mongodb.operation.CommandResult executeCommandWithoutException(final MongoCommand mongoCommand) {
+    org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {
         try {
             return executeCommand(mongoCommand);
         } catch (MongoCommandFailureException ex) {

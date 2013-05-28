@@ -17,17 +17,16 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFindAndUpdate;
 
 import static org.mongodb.command.CommandDocumentTemplates.getFindAndModify;
 
-public final class FindAndUpdate<T> extends MongoCommand {
+public final class FindAndUpdate<T> extends Command {
 
-    public FindAndUpdate(final MongoFindAndUpdate<T> findAndUpdate, final String collectionName) {
+    public FindAndUpdate(final org.mongodb.operation.FindAndUpdate<T> findAndUpdate, final String collectionName) {
         super(asDocument(findAndUpdate, collectionName));
     }
 
-    private static <T> Document asDocument(final MongoFindAndUpdate<T> findAndUpdate,
+    private static <T> Document asDocument(final org.mongodb.operation.FindAndUpdate<T> findAndUpdate,
                                            final String collectionName) {
         final Document cmd = getFindAndModify(findAndUpdate, collectionName);
         cmd.put("update", findAndUpdate.getUpdateOperations());

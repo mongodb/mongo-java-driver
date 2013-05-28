@@ -20,7 +20,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.async.AsyncCommandOperation;
 
@@ -38,7 +38,7 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
     @Override
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
-                new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
+                new Command(NativeAuthenticationHelper.getNonceCommand()),
                 new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
@@ -49,7 +49,7 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
                         }
                         else {
                             new AsyncCommandOperation(getCredential().getSource(),
-                                    new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
+                                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                             getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
                                     new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
                                     .execute(new ConnectingAsyncServerConnection(getConnection()))

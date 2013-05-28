@@ -30,7 +30,7 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
 import org.mongodb.session.AsyncServerSelectingSession;
@@ -81,7 +81,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testBlockRun() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(),
+                new Find().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(),
                 getAsyncSession(), new TestBlock()).start();
         latch.await();
         assertEquals(documentList, documentResultList);
@@ -90,7 +90,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2).limit(100).order(new Document("_id", 1)),
+                new Find().batchSize(2).limit(100).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
                 new TestBlock()).start();
 
@@ -101,7 +101,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                new Find().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
                 new TestBlock()).start();
 
@@ -112,7 +112,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), getAsyncSession(),
                 new TestBlock()).start();
 
@@ -125,7 +125,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         SingleConnectionAsyncSession session = new SingleConnectionAsyncSession(getAsyncSession().getConnection().get());
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1)).start();
 
         latch.await();
@@ -135,7 +135,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         CountDownLatch nextLatch = new CountDownLatch(1);
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new MongoFind().limit(1).order(new Document("_id", -1)),
+                new Find().limit(1).order(new Document("_id", -1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferPool(), session, new TestBlock(1, nextLatch))
                 .start();
         nextLatch.await();

@@ -17,11 +17,13 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
+import org.mongodb.WriteConcern;
 
-public class MongoFindAndReplace<T> extends MongoFindAndModify {
+public class Replace<T> extends BaseUpdate {
     private final T replacement;
 
-    public MongoFindAndReplace(final T replacement) {
+    public Replace(final Document filter, final T replacement) {
+        super(filter);
         this.replacement = replacement;
     }
 
@@ -29,33 +31,23 @@ public class MongoFindAndReplace<T> extends MongoFindAndModify {
         return replacement;
     }
 
-    @Override
-    public MongoFindAndReplace<T> sortBy(final Document sortCriteria) {
-        super.sortBy(sortCriteria);
+    public Replace<T> upsert(final boolean isUpsert) {
+        super.upsert(isUpsert);
         return this;
     }
 
     @Override
-    public MongoFindAndReplace<T> returnNew(final boolean returnNew) {
-        super.returnNew(returnNew);
+    public boolean isMulti() {
+        return false;
+    }
+
+    public Replace<T> writeConcern(final WriteConcern writeConcern) {
+        super.writeConcern(writeConcern);
         return this;
     }
 
-    @Override
-    public MongoFindAndReplace<T> upsert(final boolean upsert) {
-        super.upsert(upsert);
-        return this;
-    }
-
-    @Override
-    public MongoFindAndReplace<T> where(final Document filter) {
-        super.where(filter);
-        return this;
-    }
-
-    @Override
-    public MongoFindAndReplace<T> select(final Document selector) {
-        super.select(selector);
+    public Replace<T> writeConcernIfAbsent(final WriteConcern writeConcern) {
+        super.writeConcernIfAbsent(writeConcern);
         return this;
     }
 

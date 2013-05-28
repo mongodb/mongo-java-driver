@@ -27,11 +27,11 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class ReplaceOperation<T> extends WriteOperation {
-    private final MongoReplace<T> replace;
+    private final Replace<T> replace;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
-    public ReplaceOperation(final MongoNamespace namespace, final MongoReplace<T> replace, final Encoder<Document> queryEncoder,
+    public ReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
                             final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.replace = replace;
@@ -45,7 +45,7 @@ public class ReplaceOperation<T> extends WriteOperation {
     }
 
     @Override
-    public MongoReplace<T> getWrite() {
+    public Replace<T> getWrite() {
         return replace;
     }
 }

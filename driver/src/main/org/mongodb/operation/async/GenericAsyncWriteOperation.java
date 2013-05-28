@@ -19,17 +19,17 @@ package org.mongodb.operation.async;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.MongoWrite;
+import org.mongodb.operation.BaseWrite;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
 class GenericAsyncWriteOperation extends AsyncWriteOperation {
-    private final MongoWrite write;
+    private final BaseWrite write;
     private final RequestMessage requestMessage;
 
-    public GenericAsyncWriteOperation(final MongoNamespace namespace, final MongoWrite write, final RequestMessage requestMessage,
+    public GenericAsyncWriteOperation(final MongoNamespace namespace, final BaseWrite write, final RequestMessage requestMessage,
                                       final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.write = write;
@@ -42,7 +42,7 @@ class GenericAsyncWriteOperation extends AsyncWriteOperation {
     }
 
     @Override
-    public MongoWrite getWrite() {
+    public BaseWrite getWrite() {
         return write;
     }
 

@@ -19,7 +19,7 @@ package org.mongodb.connection;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
@@ -38,11 +38,11 @@ public class NativeAuthenticator extends Authenticator {
     public void authenticate() {
         try {
             CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
-                    new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
+                    new Command(NativeAuthenticationHelper.getNonceCommand()),
                     new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
                     new ConnectingServerConnection(getConnection()));
             new CommandOperation(getCredential().getSource(),
-                    new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
+                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                             getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
                     new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
                     new ConnectingServerConnection(getConnection()));

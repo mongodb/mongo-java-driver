@@ -25,7 +25,7 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.Insert;
 import org.mongodb.operation.async.AsyncInsertOperation;
 
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
         documents.add(new Document("bytes", hugeByteArray));
 
-        final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
                 getBufferPool()).execute(getAsyncSession()).get();
         assertEquals(documents.size(), collection.count());

@@ -31,10 +31,10 @@ import org.mongodb.session.Session;
 import java.nio.ByteBuffer;
 
 public class GetMoreOperation<T> extends Operation {
-    private final MongoGetMore getMore;
+    private final GetMore getMore;
     private final Decoder<T> resultDecoder;
 
-    public GetMoreOperation(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
+    public GetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
                             final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.getMore = getMore;

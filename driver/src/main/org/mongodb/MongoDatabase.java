@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.operation.CommandResult;
 
 /**
@@ -27,7 +27,7 @@ import org.mongodb.operation.CommandResult;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(MongoCommand commandOperation);
+    CommandResult executeCommand(Command commandOperation);
 
 //    MongoClient getClient();
 

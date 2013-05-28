@@ -24,8 +24,8 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.session.AsyncSession;
@@ -33,10 +33,10 @@ import org.mongodb.session.AsyncSession;
 import java.nio.ByteBuffer;
 
 public class AsyncGetMoreOperation<T> extends AsyncOperation {
-    private final MongoGetMore getMore;
+    private final GetMore getMore;
     private final Decoder<T> resultDecoder;
 
-    public AsyncGetMoreOperation(final MongoNamespace namespace, final MongoGetMore getMore, final Decoder<T> resultDecoder,
+    public AsyncGetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
                                  final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.getMore = getMore;

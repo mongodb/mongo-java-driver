@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.junit.Test;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.MongoGetMore;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.ServerCursor;
 
 import java.net.UnknownHostException;
@@ -29,7 +29,7 @@ public class MongoGetMoreTest {
 
     @Test
     public void testGetters() throws UnknownHostException {
-        MongoGetMore getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 20, -40, 5);
+        GetMore getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 20, -40, 5);
         assertEquals(20, getMore.getLimit());
         assertEquals(-40, getMore.getBatchSize());
         assertEquals(5, getMore.getNumFetchedSoFar());
@@ -37,22 +37,22 @@ public class MongoGetMoreTest {
 
     @Test
     public void testNumberToReturn() throws UnknownHostException {
-        MongoGetMore getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 5);
+        GetMore getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 5);
         assertEquals(0, getMore.getNumberToReturn());
 
-        getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 0, 40, 5);
+        getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 0, 40, 5);
         assertEquals(40, getMore.getNumberToReturn());
 
-        getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 0, -40, 5);
+        getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 0, -40, 5);
         assertEquals(-40, getMore.getNumberToReturn());
 
-        getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 20, 0, 5);
+        getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 20, 0, 5);
         assertEquals(15, getMore.getNumberToReturn());
 
-        getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 20, 10, 5);
+        getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 20, 10, 5);
         assertEquals(10, getMore.getNumberToReturn());
 
-        getMore = new MongoGetMore(new ServerCursor(1, new ServerAddress()), 20, -40, 5);
+        getMore = new GetMore(new ServerCursor(1, new ServerAddress()), 20, -40, 5);
         assertEquals(15, getMore.getNumberToReturn());
     }
 }

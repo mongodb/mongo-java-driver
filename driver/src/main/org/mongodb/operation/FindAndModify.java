@@ -18,39 +18,39 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public abstract class MongoFindAndModify extends MongoQuery {
+public abstract class FindAndModify extends Query {
     private Document filter;
     private Document selector;
     private Document sortCriteria;
     private boolean returnNew;
     private boolean upsert;
 
-    public MongoFindAndModify() {
+    public FindAndModify() {
     }
 
     //CHECKSTYLE:OFF
-    public MongoFindAndModify where(final Document filter) {
+    public FindAndModify where(final Document filter) {
         this.filter = filter;
         return this;
     }
 
-    public MongoFindAndModify select(final Document selector) {
+    public FindAndModify select(final Document selector) {
         this.selector = selector;
         return this;
     }
 
-    public MongoFindAndModify sortBy(final Document sortCriteria) {
+    public FindAndModify sortBy(final Document sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }
 
-    public MongoFindAndModify returnNew(final boolean returnNew) {
+    public FindAndModify returnNew(final boolean returnNew) {
         this.returnNew = returnNew;
         return this;
     }
 
     // TODO: doesn't make sense for find and remove
-    public MongoFindAndModify upsert(final boolean upsert) {
+    public FindAndModify upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }

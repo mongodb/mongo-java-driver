@@ -17,15 +17,15 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 
-public final class Count extends MongoCommand {
-    public Count(final MongoFind find, final String collectionName) {
+public final class Count extends Command {
+    public Count(final Find find, final String collectionName) {
         super(asDocument(find, collectionName));
         readPreference(find.getReadPreference());
     }
 
-    private static Document asDocument(final MongoFind find, final String collectionName) {
+    private static Document asDocument(final Find find, final String collectionName) {
 
         final Document document = new Document("count", collectionName);
 

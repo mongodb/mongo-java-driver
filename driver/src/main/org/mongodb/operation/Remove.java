@@ -16,42 +16,41 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.Document;
 import org.mongodb.WriteConcern;
 
-import java.util.Arrays;
-import java.util.List;
+public class Remove extends BaseWrite {
+    private final Document filter;
+    private boolean isMulti = true;
 
-public class MongoInsert<T> extends MongoWrite {
-    private final List<T> documents;
-
-    @SuppressWarnings("unchecked")
-    public MongoInsert(final T document) {
-        this(Arrays.asList(document));
+    public Remove(final Document filter) {
+        this.filter = filter;
     }
 
-    public MongoInsert(final List<T> documents) {
-        this.documents = documents;
+    public Document getFilter() {
+        return filter;
     }
 
-    public MongoInsert(final MongoInsert<T> insert, final int startPos) {
-        writeConcern(insert.getWriteConcern());
-        documents = insert.getDocuments().subList(startPos, insert.getDocuments().size());
+    //CHECKSTYLE:OFF
+    public Remove multi(final boolean isMulti) {
+        this.isMulti = isMulti;
+        return this;
     }
+    //CHECKSTYLE:ON
 
-    public List<T> getDocuments() {
-        return documents;
+    public boolean isMulti() {
+        return isMulti;
     }
 
     @Override
-    public MongoInsert<T> writeConcern(final WriteConcern writeConcern) {
+    public Remove writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
         return this;
     }
 
     @Override
-    public MongoInsert<T> writeConcernIfAbsent(final WriteConcern writeConcern) {
+    public Remove writeConcernIfAbsent(final WriteConcern writeConcern) {
         super.writeConcernIfAbsent(writeConcern);
         return this;
     }
 }
-

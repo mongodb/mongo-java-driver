@@ -19,7 +19,7 @@ package org.mongodb.connection;
 import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
@@ -79,7 +79,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",
-                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool)
+                        new Command(new Document("ismaster", 1)), new DocumentCodec(), bufferPool)
                         .execute(new ConnectingServerConnection(connection));
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();

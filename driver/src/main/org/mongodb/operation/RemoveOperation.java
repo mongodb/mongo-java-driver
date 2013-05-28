@@ -27,10 +27,10 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class RemoveOperation extends WriteOperation {
-    private final MongoRemove remove;
+    private final Remove remove;
     private final Encoder<Document> queryEncoder;
 
-    public RemoveOperation(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder,
+    public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
                            final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.remove = remove;
@@ -43,7 +43,7 @@ public class RemoveOperation extends WriteOperation {
     }
 
     @Override
-    public MongoRemove getWrite() {
+    public Remove getWrite() {
         return remove;
     }
 }

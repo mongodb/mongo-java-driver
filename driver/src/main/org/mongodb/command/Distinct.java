@@ -17,15 +17,15 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 
-public class Distinct extends MongoCommand {
-    public Distinct(final String collectionName, final String fieldName, final MongoFind query) {
+public class Distinct extends Command {
+    public Distinct(final String collectionName, final String fieldName, final Find query) {
         super(toDocument(collectionName, fieldName, query));
     }
 
     private static Document toDocument(final String collectionName, final String fieldName,
-                                              final MongoFind query) {
+                                              final Find query) {
         final Document cmd = new Document("distinct", collectionName);
         cmd.put("key", fieldName);
         if (query.getFilter() != null) {

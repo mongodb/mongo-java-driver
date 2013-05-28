@@ -31,6 +31,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.CollStats;
+import org.mongodb.command.Command;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.Distinct;
@@ -39,26 +40,22 @@ import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
-import org.mongodb.command.FindAndRemove;
-import org.mongodb.command.FindAndReplace;
-import org.mongodb.command.FindAndUpdate;
-import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.operation.Find;
+import org.mongodb.operation.FindAndRemove;
+import org.mongodb.operation.FindAndReplace;
+import org.mongodb.operation.FindAndUpdate;
+import org.mongodb.operation.Insert;
+import org.mongodb.operation.Remove;
+import org.mongodb.operation.Replace;
+import org.mongodb.operation.Update;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoFindAndRemove;
-import org.mongodb.operation.MongoFindAndReplace;
-import org.mongodb.operation.MongoFindAndUpdate;
-import org.mongodb.operation.MongoInsert;
-import org.mongodb.operation.MongoRemove;
-import org.mongodb.operation.MongoReplace;
-import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.RemoveOperation;
@@ -234,9 +231,9 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
-        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
+        final Insert<DBObject> insert = new Insert<DBObject>(documents)
                 .writeConcern(aWriteConcern.toNew());
-        return new WriteResult(insertInternal(mongoInsert, codec), aWriteConcern, getDB());
+        return new WriteResult(insertInternal(insert, codec), aWriteConcern, getDB());
     }
 
     /**
@@ -270,9 +267,9 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
-        final MongoInsert<DBObject> mongoInsert = new MongoInsert<DBObject>(documents)
+        final Insert<DBObject> insert = new Insert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
-        return new WriteResult(insertInternal(mongoInsert, encoder), aWriteConcern, getDB());
+        return new WriteResult(insertInternal(insert, encoder), aWriteConcern, getDB());
     }
 
     private Encoder<DBObject> toEncoder(DBEncoder dbEncoder) {
@@ -287,10 +284,10 @@ public class DBCollection implements IDBCollection {
         return encoder;
     }
 
-    private org.mongodb.operation.WriteResult insertInternal(final MongoInsert<DBObject> mongoInsert, Encoder<DBObject> encoder) {
+    private org.mongodb.operation.WriteResult insertInternal(final Insert<DBObject> insert, Encoder<DBObject> encoder) {
         try {
-            mongoInsert.writeConcernIfAbsent(getWriteConcern().toNew());
-            return new InsertOperation<DBObject>(getNamespace(), mongoInsert, encoder, getBufferPool()).execute(getSession());
+            insert.writeConcernIfAbsent(getWriteConcern().toNew());
+            return new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool()).execute(getSession());
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
@@ -341,7 +338,7 @@ public class DBCollection implements IDBCollection {
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
         final Document filter = new Document("_id", getCodec().getId(obj));
 
-        final MongoReplace<DBObject> replace = new MongoReplace<DBObject>(filter, obj)
+        final Replace<DBObject> replace = new Replace<DBObject>(filter, obj)
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
@@ -371,7 +368,7 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final MongoUpdate mongoUpdate = new MongoUpdate(toDocument(query), toDocument(update))
+        final Update mongoUpdate = new Update(toDocument(query), toDocument(update))
                 .upsert(upsert)
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
@@ -379,9 +376,9 @@ public class DBCollection implements IDBCollection {
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
     }
 
-    private org.mongodb.operation.WriteResult updateInternal(MongoUpdate mongoUpdate) {
+    private org.mongodb.operation.WriteResult updateInternal(Update update) {
         try {
-            return new UpdateOperation(getNamespace(), mongoUpdate, documentCodec, getBufferPool()).execute(getSession());
+            return new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool()).execute(getSession());
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -413,7 +410,7 @@ public class DBCollection implements IDBCollection {
 
         final Document filter = toDocument(query, encoder, getDocumentCodec());
         final Document updateOperations = toDocument(update, encoder, getDocumentCodec());
-        final MongoUpdate mongoUpdate = new MongoUpdate(filter, updateOperations)
+        final Update mongoUpdate = new Update(filter, updateOperations)
                 .upsert(upsert)
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
@@ -483,10 +480,10 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
 
-        final MongoRemove mongoRemove = new MongoRemove(toDocument(query))
+        final Remove remove = new Remove(toDocument(query))
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, documentCodec,
+        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), remove, documentCodec,
                 getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
@@ -503,10 +500,10 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final MongoRemove mongoRemove = new MongoRemove(filter)
+        final Remove remove = new Remove(filter)
                 .writeConcern(writeConcern.toNew());
 
-        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), mongoRemove, getDocumentCodec(),
+        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), remove, getDocumentCodec(),
                 getBufferPool()).execute(getSession());
 
         return new WriteResult(result, writeConcern, getDB());
@@ -652,14 +649,14 @@ public class DBCollection implements IDBCollection {
     public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                             final ReadPreference readPreference) {
 
-        final MongoFind mongoFind = new MongoFind()
+        final Find find = new Find()
                 .select(toFieldSelectorDocument(projection))
                 .where(toDocument(query))
                 .order(toDocument(sort))
                 .readPreference(readPreference.toNew())
                 .batchSize(-1);
 
-        final QueryResult<DBObject> res = new QueryOperation<DBObject>(getNamespace(), mongoFind, documentCodec, codec,
+        final QueryResult<DBObject> res = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, codec,
                 getBufferPool()).execute(getSession());
         if (res.getResults().isEmpty()) {
             return null;
@@ -869,7 +866,7 @@ public class DBCollection implements IDBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        final Count countCommand = new Count(new MongoFind(toDocument(query)), getName());
+        final Count countCommand = new Count(new Find(toDocument(query)), getName());
         countCommand.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
 
 
@@ -1042,10 +1039,10 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        final MongoFind mongoFind = new MongoFind()
+        final Find find = new Find()
                 .filter(toDocument(query))
                 .readPreference(readPreference.toNew());
-        final Distinct distinctOperation = new Distinct(getName(), fieldName, mongoFind);
+        final Distinct distinctOperation = new Distinct(getName(), fieldName, find);
         return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
     }
 
@@ -1231,8 +1228,8 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void ensureIndex(final DBObject keys, final DBObject options) {
-        final MongoInsert<Document> insertIndexOperation
-                = new MongoInsert<Document>(toIndexDetailsDocument(keys, options));
+        final Insert<Document> insertIndexOperation
+                = new Insert<Document>(toIndexDetailsDocument(keys, options));
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1246,8 +1243,8 @@ public class DBCollection implements IDBCollection {
         final Index index = new Index(new Index.OrderedKey(name, OrderBy.ASC));
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
-        final MongoInsert<Document> insertIndexOperation
-                = new MongoInsert<Document>(indexDetails);
+        final Insert<Document> insertIndexOperation
+                = new Insert<Document>(indexDetails);
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1285,11 +1282,11 @@ public class DBCollection implements IDBCollection {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
-        final MongoInsert<DBObject> insertIndexOperation = new MongoInsert<DBObject>(toDBObject(indexDetails));
+        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(toDBObject(indexDetails));
         insertIndex(insertIndexOperation, encoder);
     }
 
-    private <T> void insertIndex(final MongoInsert<T> insertIndexOperation, final Encoder<T> encoder) {
+    private <T> void insertIndex(final Insert<T> insertIndexOperation, final Encoder<T> encoder) {
         insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
             new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
@@ -1375,37 +1372,37 @@ public class DBCollection implements IDBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final MongoCommand mongoCommand;
+        final Command mongoCommand;
 
         if (remove) {
-            final MongoFindAndRemove<DBObject> mongoFindAndRemove = new MongoFindAndRemove<DBObject>()
+            final FindAndRemove<DBObject> mongoFindAndRemove = new FindAndRemove<DBObject>()
                     .where(toDocument(query))
                     .sortBy(toDocument(sort))
                     .returnNew(returnNew);
-            mongoCommand = new FindAndRemove<DBObject>(mongoFindAndRemove, getName());
+            mongoCommand = new org.mongodb.command.FindAndRemove(mongoFindAndRemove, getName());
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                final MongoFindAndUpdate<DBObject> mongoFindAndUpdate = new MongoFindAndUpdate<DBObject>()
+                final FindAndUpdate<DBObject> mongoFindAndUpdate = new FindAndUpdate<DBObject>()
                         .where(toDocument(query))
                         .sortBy(toDocument(sort))
                         .returnNew(returnNew)
                         .select(toDocument(fields))
                         .updateWith(toUpdateOperationsDocument(update))
                         .upsert(upsert);
-                mongoCommand = new FindAndUpdate<DBObject>(mongoFindAndUpdate, getName());
+                mongoCommand = new org.mongodb.command.FindAndUpdate(mongoFindAndUpdate, getName());
             } else {
-                final MongoFindAndReplace<DBObject> mongoFindAndReplace
-                        = new MongoFindAndReplace<DBObject>(update)
+                final FindAndReplace<DBObject> mongoFindAndReplace
+                        = new FindAndReplace<DBObject>(update)
                         .where(toDocument(query))
                         .sortBy(toDocument(sort))
                         .select(toDocument(fields))
                         .returnNew(returnNew)
                         .upsert(upsert);
-                mongoCommand = new FindAndReplace<DBObject>(mongoFindAndReplace, getName());
+                mongoCommand = new org.mongodb.command.FindAndReplace(mongoFindAndReplace, getName());
             }
         }
 
@@ -1554,7 +1551,7 @@ public class DBCollection implements IDBCollection {
     public List<DBObject> getIndexInfo() {
         final ArrayList<DBObject> res = new ArrayList<DBObject>();
 
-        final MongoFind queryForCollectionNamespace = new MongoFind(
+        final Find queryForCollectionNamespace = new Find(
                 new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
                 .readPreference(org.mongodb.ReadPreference.primary());
 

@@ -26,9 +26,9 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.Find;
+import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoInsert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +60,10 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
         documents.add(new Document("bytes", hugeByteArray));
 
-        final MongoInsert<Document> insert = new MongoInsert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(getSession());
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
-                new Count(new MongoFind(), collectionName), new DocumentCodec(), getBufferPool()).execute(getSession()))
+                new Count(new Find(), collectionName), new DocumentCodec(), getBufferPool()).execute(getSession()))
                 .getCount());
     }
 

@@ -25,37 +25,37 @@ import java.util.EnumSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class MongoQueryTest {
+public class QueryTest {
     @Test
     public void testNumberToReturn() {
-        MongoQuery query = new MongoFind();
+        Query query = new Find();
         assertEquals(0, query.getNumberToReturn());
 
-        query = new MongoFind().limit(-10);
+        query = new Find().limit(-10);
         assertEquals(-10, query.getNumberToReturn());
 
-        query = new MongoFind().batchSize(10);
+        query = new Find().batchSize(10);
         assertEquals(10, query.getNumberToReturn());
 
-        query = new MongoFind().limit(10);
+        query = new Find().limit(10);
         assertEquals(10, query.getNumberToReturn());
 
-        query = new MongoFind().limit(10).batchSize(15);
+        query = new Find().limit(10).batchSize(15);
         assertEquals(10, query.getNumberToReturn());
 
-        query = new MongoFind().limit(10).batchSize(-15);
+        query = new Find().limit(10).batchSize(-15);
         assertEquals(10, query.getNumberToReturn());
 
-        query = new MongoFind().limit(10).batchSize(7);
+        query = new Find().limit(10).batchSize(7);
         assertEquals(7, query.getNumberToReturn());
 
-        query = new MongoFind().limit(10).batchSize(-7);
+        query = new Find().limit(10).batchSize(-7);
         assertEquals(-7, query.getNumberToReturn());
     }
 
     @Test
     public void testOptions() {
-        MongoQuery query = new MongoFind();
+        Query query = new Find();
         assertEquals(EnumSet.noneOf(QueryOption.class), query.getOptions());
 
         query.addOptions(EnumSet.of(QueryOption.Tailable));
@@ -84,9 +84,9 @@ public class MongoQueryTest {
 
     @Test
     public void testCopyConstructor() {
-        MongoFind query = new MongoFind();
+        Find query = new Find();
         query.addOptions(EnumSet.allOf(QueryOption.class)).readPreference(ReadPreference.primary()).batchSize(2).limit(5).skip(1);
-        MongoQuery copy = new MongoFind(query);
+        Query copy = new Find(query);
         assertEquals(EnumSet.allOf(QueryOption.class), copy.getOptions());
         assertEquals(ReadPreference.primary(), copy.getReadPreference());
         assertEquals(2, copy.getBatchSize());

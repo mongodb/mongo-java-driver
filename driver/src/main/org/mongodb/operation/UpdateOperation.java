@@ -27,10 +27,10 @@ import org.mongodb.operation.protocol.UpdateMessage;
 import java.nio.ByteBuffer;
 
 public class UpdateOperation extends WriteOperation {
-    private final MongoUpdate update;
+    private final Update update;
     private final Encoder<Document> queryEncoder;
 
-    public UpdateOperation(final MongoNamespace namespace, final MongoUpdate update, final Encoder<Document> queryEncoder,
+    public UpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
                            final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.update = update;
@@ -43,7 +43,7 @@ public class UpdateOperation extends WriteOperation {
     }
 
     @Override
-    public MongoUpdate getWrite() {
+    public Update getWrite() {
         return update;
     }
 }

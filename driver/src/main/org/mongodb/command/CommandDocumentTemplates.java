@@ -17,14 +17,14 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoFindAndModify;
+import org.mongodb.operation.FindAndModify;
 
 final class CommandDocumentTemplates {
 
     private CommandDocumentTemplates() {
     }
 
-    static Document getFindAndModify(final MongoFindAndModify findAndModify,
+    static Document getFindAndModify(final FindAndModify findAndModify,
                                             final String collectionName) {
         final Document cmd = new Document("findandmodify", collectionName);
         if (findAndModify.getFilter() != null) {

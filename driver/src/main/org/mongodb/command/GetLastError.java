@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * The getlasterror command.
  */
-public final class GetLastError extends MongoCommand {
+public final class GetLastError extends Command {
 
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
 

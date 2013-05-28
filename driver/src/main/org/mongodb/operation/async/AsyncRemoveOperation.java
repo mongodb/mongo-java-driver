@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.Remove;
 import org.mongodb.operation.protocol.DeleteMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
@@ -29,10 +29,10 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class AsyncRemoveOperation extends AsyncWriteOperation {
-    private final MongoRemove remove;
+    private final Remove remove;
     private final Encoder<Document> queryEncoder;
 
-    public AsyncRemoveOperation(final MongoNamespace namespace, final MongoRemove remove, final Encoder<Document> queryEncoder,
+    public AsyncRemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
                                 final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.remove = remove;
@@ -45,7 +45,7 @@ public class AsyncRemoveOperation extends AsyncWriteOperation {
     }
 
     @Override
-    public MongoRemove getWrite() {
+    public Remove getWrite() {
         return remove;
     }
 

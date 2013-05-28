@@ -19,13 +19,13 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoUpdate;
-import org.mongodb.operation.MongoUpdateBase;
+import org.mongodb.operation.BaseUpdate;
+import org.mongodb.operation.Update;
 
 public class UpdateMessage extends BaseUpdateMessage {
-    private MongoUpdate update;
+    private Update update;
 
-    public UpdateMessage(final String fullName, final MongoUpdate update, final Encoder<Document> encoder,
+    public UpdateMessage(final String fullName, final Update update, final Encoder<Document> encoder,
                          final MessageSettings settings) {
         super(fullName, OpCode.OP_UPDATE, encoder, settings);
         this.update = update;
@@ -39,7 +39,7 @@ public class UpdateMessage extends BaseUpdateMessage {
     }
 
     @Override
-    protected MongoUpdateBase getUpdateBase() {
+    protected BaseUpdate getUpdateBase() {
         return update;
     }
 }

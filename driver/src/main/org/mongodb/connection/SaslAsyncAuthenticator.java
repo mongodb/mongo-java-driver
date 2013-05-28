@@ -21,7 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.async.AsyncCommandOperation;
 
@@ -96,13 +96,13 @@ abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
                 new DocumentCodec(), bufferPool).execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 
-    private MongoCommand createSaslStartCommand(final byte[] outToken) {
-        return new MongoCommand(new Document("saslStart", 1).append("mechanism", getMechanismName())
+    private Command createSaslStartCommand(final byte[] outToken) {
+        return new Command(new Document("saslStart", 1).append("mechanism", getMechanismName())
                 .append("payload", outToken != null ? outToken : new byte[0]));
     }
 
-    private MongoCommand createSaslContinueCommand(final int conversationId, final byte[] outToken) {
-        return new MongoCommand(new Document("saslContinue", 1).append("conversationId", conversationId).
+    private Command createSaslContinueCommand(final int conversationId, final byte[] outToken) {
+        return new Command(new Document("saslContinue", 1).append("conversationId", conversationId).
                 append("payload", outToken));
     }
 

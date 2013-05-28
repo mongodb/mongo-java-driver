@@ -19,14 +19,14 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.Insert;
 
 public class InsertMessage<T> extends RequestMessage {
 
-    private final MongoInsert<T> insert;
+    private final Insert<T> insert;
     private final Encoder<T> encoder;
 
-    public InsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder,
+    public InsertMessage(final String collectionName, final Insert<T> insert, final Encoder<T> encoder,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
         this.insert = insert;
@@ -42,7 +42,7 @@ public class InsertMessage<T> extends RequestMessage {
             addDocument(document, encoder, buffer);
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
-                return new InsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder, getSettings());
+                return new InsertMessage<T>(getCollectionName(), new Insert<T>(insert, i), encoder, getSettings());
             }
         }
         return null;

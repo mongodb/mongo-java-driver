@@ -25,9 +25,9 @@ import org.mongodb.session.Session;
 import java.nio.ByteBuffer;
 
 public class KillCursorOperation extends Operation {
-    private final MongoKillCursor killCursor;
+    private final KillCursor killCursor;
 
-    public KillCursorOperation(final MongoKillCursor killCursor, final BufferPool<ByteBuffer> bufferPool) {
+    public KillCursorOperation(final KillCursor killCursor, final BufferPool<ByteBuffer> bufferPool) {
         super(null, bufferPool);
         this.killCursor = killCursor;
     }

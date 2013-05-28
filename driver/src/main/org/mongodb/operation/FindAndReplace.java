@@ -18,47 +18,44 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public class MongoFindAndUpdate<T> extends MongoFindAndModify {
-    private Document updateOperations;
+public class FindAndReplace<T> extends FindAndModify {
+    private final T replacement;
 
-    //CHECKSTYLE:OFF
-    public MongoFindAndUpdate<T> updateWith(final Document updateOperations) {
-        this.updateOperations = updateOperations;
-        return this;
+    public FindAndReplace(final T replacement) {
+        this.replacement = replacement;
     }
-    //CHECKSTYLE:ON
 
-    public Document getUpdateOperations() {
-        return updateOperations;
+    public T getReplacement() {
+        return replacement;
     }
 
     @Override
-    public MongoFindAndUpdate<T> where(final Document filter) {
-        super.where(filter);
-        return this;
-    }
-
-    @Override
-    public MongoFindAndUpdate<T> select(final Document selector) {
-        super.select(selector);
-        return this;
-    }
-
-    @Override
-    public MongoFindAndUpdate<T> sortBy(final Document sortCriteria) {
+    public FindAndReplace<T> sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate<T> returnNew(final boolean returnNew) {
+    public FindAndReplace<T> returnNew(final boolean returnNew) {
         super.returnNew(returnNew);
         return this;
     }
 
     @Override
-    public MongoFindAndUpdate<T> upsert(final boolean upsert) {
+    public FindAndReplace<T> upsert(final boolean upsert) {
         super.upsert(upsert);
+        return this;
+    }
+
+    @Override
+    public FindAndReplace<T> where(final Document filter) {
+        super.where(filter);
+        return this;
+    }
+
+    @Override
+    public FindAndReplace<T> select(final Document selector) {
+        super.select(selector);
         return this;
     }
 

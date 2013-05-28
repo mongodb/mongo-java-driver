@@ -18,37 +18,37 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public class MongoFindAndRemove<T> extends MongoFindAndModify {
+public class FindAndRemove<T> extends FindAndModify {
     public boolean isRemove() {
         return true;
     }
 
     @Override
-    public MongoFindAndRemove<T> where(final Document filter) {
+    public FindAndRemove<T> where(final Document filter) {
         super.where(filter);
         return this;
     }
 
     @Override
-    public MongoFindAndRemove<T> select(final Document selector) {
+    public FindAndRemove<T> select(final Document selector) {
         super.select(selector);
         return this;
     }
 
     @Override
-    public MongoFindAndRemove<T> sortBy(final Document sortCriteria) {
+    public FindAndRemove<T> sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }
 
     @Override
-    public MongoFindAndRemove<T> returnNew(final boolean returnNew) {
+    public FindAndRemove<T> returnNew(final boolean returnNew) {
         super.returnNew(returnNew);
         return this;
     }
 
     @Override
-    public MongoFindAndRemove<T> upsert(final boolean upsert) {
+    public FindAndRemove<T> upsert(final boolean upsert) {
         throw new UnsupportedOperationException("Can't upsert a remove");
     }
 

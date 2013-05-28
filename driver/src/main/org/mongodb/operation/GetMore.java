@@ -16,13 +16,13 @@
 
 package org.mongodb.operation;
 
-public class MongoGetMore {
+public class GetMore {
     private final int limit;
     private final int batchSize;
     private final long numFetchedSoFar;
     private final ServerCursor serverCursor;
 
-    public MongoGetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
+    public GetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
         this.serverCursor = serverCursor;
         this.limit = limit;
         this.batchSize = batchSize;

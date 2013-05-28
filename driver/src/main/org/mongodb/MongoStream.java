@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.async.MongoAsyncReadableStream;
 import org.mongodb.async.MongoAsyncWritableStream;
-import org.mongodb.operation.MongoFind;
+import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOption;
 
 import java.util.EnumSet;
@@ -59,5 +59,5 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
      *
      * @return the criteria
      */
-    MongoFind getCriteria();
+    Find getCriteria();
 }

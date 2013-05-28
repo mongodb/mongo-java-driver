@@ -16,14 +16,27 @@
 
 package org.mongodb.operation;
 
-public class MongoKillCursor {
-    private final ServerCursor serverCursor;
+import org.mongodb.WriteConcern;
 
-    public MongoKillCursor(final ServerCursor serverCursor) {
-        this.serverCursor = serverCursor;
+public abstract class BaseWrite {
+    private WriteConcern writeConcern;
+
+    // TODO: discuss this builder pattern.  It doesn't work so well with subclasses
+    //CHECKSTYLE:OFF
+    public BaseWrite writeConcern(final WriteConcern writeConcern) {
+        this.writeConcern = writeConcern;
+        return this;
     }
 
-    public ServerCursor getServerCursor() {
-        return serverCursor;
+    public BaseWrite writeConcernIfAbsent(final WriteConcern writeConcern) {
+        if (this.writeConcern == null) {
+            this.writeConcern = writeConcern;
+        }
+        return this;
+    }
+    //CHECKSTYLE:ON
+
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 }

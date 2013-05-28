@@ -19,17 +19,17 @@ package org.mongodb.operation.async;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
-import org.mongodb.command.MongoCommand;
+import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 abstract class CommandResultBaseCallback extends ResponseCallback {
-    private final MongoCommand commandOperation;
+    private final Command commandOperation;
     private final Decoder<Document> decoder;
 
-    public CommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder,
+    public CommandResultBaseCallback(final Command commandOperation, final Decoder<Document> decoder,
                                      final AsyncServerConnection connection, final long requestId) {
         super(connection, requestId);
         this.commandOperation = commandOperation;

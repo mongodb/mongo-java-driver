@@ -18,7 +18,7 @@ package org.mongodb.command;
 
 import org.mongodb.Document;
 
-public final class CollStats extends MongoCommand {
+public final class CollStats extends Command {
     public CollStats(final String collectionName) {
         super(new Document("collStats", collectionName));
     }

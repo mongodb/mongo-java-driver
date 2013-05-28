@@ -18,7 +18,7 @@ package org.mongodb.command;
 
 import org.mongodb.Document;
 
-public class DropIndex  extends MongoCommand {
+public class DropIndex  extends Command {
     public DropIndex(final String collectionName, final String indexName) {
         //TODO: should fail
         super(createDocument(collectionName, indexName));

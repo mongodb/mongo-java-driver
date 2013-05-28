@@ -19,13 +19,13 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.operation.MongoRemove;
+import org.mongodb.operation.Remove;
 
 public class DeleteMessage extends RequestMessage {
-    private final MongoRemove remove;
+    private final Remove remove;
     private final Encoder<Document> encoder;
 
-    public DeleteMessage(final String collectionName, final MongoRemove remove, final Encoder<Document> encoder,
+    public DeleteMessage(final String collectionName, final Remove remove, final Encoder<Document> encoder,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
         this.remove = remove;

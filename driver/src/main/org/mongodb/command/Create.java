@@ -18,7 +18,7 @@ package org.mongodb.command;
 
 import org.mongodb.CreateCollectionOptions;
 
-public final class Create extends MongoCommand {
+public final class Create extends Command {
     public Create(final CreateCollectionOptions createCollectionOptions) {
         super(createCollectionOptions.asDocument());
     }

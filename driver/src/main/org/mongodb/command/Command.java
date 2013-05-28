@@ -19,28 +19,28 @@ package org.mongodb.command;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
-import org.mongodb.operation.MongoQuery;
+import org.mongodb.operation.Query;
 import org.mongodb.operation.QueryOption;
 
 import java.util.EnumSet;
 
-public class MongoCommand extends MongoQuery implements ConvertibleToDocument {
+public class Command extends Query implements ConvertibleToDocument {
     private final Document command;
 
-    public MongoCommand(final Document commandDocument) {
+    public Command(final Document commandDocument) {
         this.command = commandDocument;
         batchSize = -1;
     }
 
     @Override
-    public MongoCommand readPreference(final ReadPreference readPreference) {
+    public Command readPreference(final ReadPreference readPreference) {
         super.readPreference(readPreference);
         return this;
     }
 
 
     @Override
-    public MongoCommand addOptions(final EnumSet<QueryOption> options) {
+    public Command addOptions(final EnumSet<QueryOption> options) {
         super.addOptions(options);
         return this;
     }

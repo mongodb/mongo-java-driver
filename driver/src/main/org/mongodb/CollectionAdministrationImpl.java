@@ -23,9 +23,9 @@ import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.CommandResult;
+import org.mongodb.operation.Find;
+import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.MongoFind;
-import org.mongodb.operation.MongoInsert;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.util.FieldHelpers;
@@ -45,7 +45,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     private final DocumentCodec documentCodec;
     private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
-    private final MongoFind queryForCollectionNamespace;
+    private final Find queryForCollectionNamespace;
 
     private final CollStats collStatsCommand;
     private final Drop dropCollectionCommand;
@@ -60,7 +60,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new CollStats(collectionNamespace.getCollectionName());
-        queryForCollectionNamespace = new MongoFind(
+        queryForCollectionNamespace = new Find(
                 new Document(NAMESPACE_KEY_NAME, this.collectionNamespace.getFullName()))
                 .readPreference(ReadPreference.primary());
         dropCollectionCommand = new Drop(this.collectionNamespace.getCollectionName());
@@ -71,7 +71,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
-        final MongoInsert<Document> insertIndexOperation = new MongoInsert<Document>(indexDetails);
+        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
         new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferPool())

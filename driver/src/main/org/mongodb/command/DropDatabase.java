@@ -18,7 +18,7 @@ package org.mongodb.command;
 
 import org.mongodb.Document;
 
-public final class DropDatabase extends MongoCommand {
+public final class DropDatabase extends Command {
     public DropDatabase() {
         super(new Document("dropDatabase", 1));
     }

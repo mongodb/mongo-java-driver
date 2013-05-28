@@ -21,8 +21,8 @@ import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.operation.Find;
 import org.mongodb.session.ServerSelectingSession;
-import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
@@ -61,7 +61,7 @@ import static com.mongodb.DBObjects.toDocument;
 @NotThreadSafe
 public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
     private final DBCollection collection;
-    private final MongoFind find;
+    private final Find find;
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
     private CursorType cursorType;
@@ -81,20 +81,20 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         this(collection,
-                new MongoFind()
+                new Find()
                         .where(toDocument(query))
                         .select(DBObjects.toFieldSelectorDocument(fields))
                         .readPreference(readPreference.toNew())
                         .addOptions(QueryOption.toSet(collection.getOptions())));
     }
 
-    private DBCursor(final DBCollection collection, final MongoFind find) {
+    private DBCursor(final DBCollection collection, final Find find) {
         if (collection == null) {
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
         this.resultDecoder = collection.getCodec();
-        this.find = new MongoFind(find);
+        this.find = new Find(find);
     }
 
     /**
@@ -241,7 +241,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
-        MongoFind copy = new MongoFind(find);
+        Find copy = new Find(find);
         copy.explain();
         if (copy.getLimit() > 0) {
             // need to pass a negative batchSize as limit for explain

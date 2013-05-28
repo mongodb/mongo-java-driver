@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.MongoReplace;
+import org.mongodb.operation.Replace;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplaceMessage;
 import org.mongodb.operation.protocol.RequestMessage;
@@ -29,11 +29,11 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
-    private final MongoReplace<T> replace;
+    private final Replace<T> replace;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
-    public AsyncReplaceOperation(final MongoNamespace namespace, final MongoReplace<T> replace, final Encoder<Document> queryEncoder,
+    public AsyncReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
                                  final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
         this.replace = replace;
@@ -47,7 +47,7 @@ public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
-    public MongoReplace<T> getWrite() {
+    public Replace<T> getWrite() {
         return replace;
     }
 
