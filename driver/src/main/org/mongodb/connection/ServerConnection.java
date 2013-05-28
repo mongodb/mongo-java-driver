@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.connection;
 
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.ServerSelector;
+import org.mongodb.annotations.NotThreadSafe;
 
-public interface ServerSelectingSession extends Session {
-    ServerConnection getConnection(ServerSelector serverSelector);
-
-    Session getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
+/**
+ *
+ * A server-aware connection, from which clients can retrieve the description of the server to which it is connected.
+ *
+ * @since 3.0
+ */
+@NotThreadSafe
+public interface ServerConnection extends Connection {
+    /**
+     * Gets the description of the server that this is a connection to.
+     *
+     * @return the server description
+     */
+    ServerDescription getDescription();
 }

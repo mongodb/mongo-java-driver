@@ -18,7 +18,7 @@ package org.mongodb.session;
 
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerSelector;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -36,13 +36,13 @@ public class ClusterSession implements ServerSelectingSession {
     }
 
     @Override
-    public Connection getConnection(final ServerSelector serverSelector) {
+    public ServerConnection getConnection(final ServerSelector serverSelector) {
         notNull("serverSelector", serverSelector);
         return cluster.getServer(serverSelector).getConnection();
     }
 
     @Override
-    public Connection getConnection() {
+    public ServerConnection getConnection() {
         return getConnection(new PrimaryServerSelector());
     }
 

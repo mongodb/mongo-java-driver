@@ -20,15 +20,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.session.Session;
-import org.mongodb.session.SessionBindingType;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.QueryOption;
+import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
+import org.mongodb.session.SessionBindingType;
 
 import java.util.EnumSet;
 
@@ -84,15 +85,15 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     }
 
     private static class SingleConnectionServerSelectingSession implements ServerSelectingSession {
-        private Connection connection;
+        private ServerConnection connection;
         private boolean isClosed;
 
-        public SingleConnectionServerSelectingSession(final Connection connection) {
+        public SingleConnectionServerSelectingSession(final ServerConnection connection) {
             this.connection = connection;
         }
 
         @Override
-        public Connection getConnection(final ServerSelector serverSelector) {
+        public ServerConnection getConnection(final ServerSelector serverSelector) {
             return getConnection();
         }
 
@@ -102,7 +103,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public Connection getConnection() {
+        public ServerConnection getConnection() {
             return new DelayedCloseConnection(connection);
         }
 
@@ -117,12 +118,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
     }
 
-    private static class DelayedCloseConnection implements Connection {
-        private Connection wrapped;
+    private static class DelayedCloseConnection implements ServerConnection {
+        private ServerConnection wrapped;
         private boolean isClosed;
 
 
-        public DelayedCloseConnection(final Connection wrapped) {
+        public DelayedCloseConnection(final ServerConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -155,6 +156,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         @Override
         public boolean isClosed() {
             return isClosed;
+        }
+
+        @Override
+        public ServerDescription getDescription() {
+            isTrue("open", !isClosed());
+            return wrapped.getDescription();
         }
     }
 }

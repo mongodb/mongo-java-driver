@@ -18,7 +18,7 @@ package org.mongodb.session;
 
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerSelector;
 
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -30,8 +30,8 @@ import static org.mongodb.assertions.Assertions.notNull;
 @NotThreadSafe
 public class MonotonicSession implements ServerSelectingSession {
     private ServerSelector lastRequestedServerSelector;
-    private Connection connectionForReads;
-    private Connection connectionForWrites;
+    private ServerConnection connectionForReads;
+    private ServerConnection connectionForWrites;
     private Cluster cluster;
     private boolean isClosed;
 
@@ -40,11 +40,11 @@ public class MonotonicSession implements ServerSelectingSession {
     }
 
     @Override
-    public Connection getConnection(final ServerSelector serverSelector) {
+    public ServerConnection getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
         notNull("serverSelector", serverSelector);
         synchronized (this) {
-            Connection connectionToUse;
+            ServerConnection connectionToUse;
             if (connectionForWrites != null) {
                 connectionToUse = connectionForWrites;
             }
@@ -65,7 +65,7 @@ public class MonotonicSession implements ServerSelectingSession {
     }
 
     @Override
-    public Connection getConnection() {
+    public ServerConnection getConnection() {
         isTrue("open", !isClosed());
         synchronized (this) {
             if (connectionForWrites == null) {

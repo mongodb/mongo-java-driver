@@ -17,8 +17,8 @@
 package org.mongodb.session;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerConnection;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -37,7 +37,7 @@ class SingleServerSession implements Session {
     }
 
     @Override
-    public Connection getConnection() {
+    public ServerConnection getConnection() {
         isTrue("open", !isClosed());
         return server.getConnection();
     }

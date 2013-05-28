@@ -158,7 +158,7 @@ public abstract class DefaultCluster implements Cluster {
         }
 
         @Override
-        public Connection getConnection() {
+        public ServerConnection getConnection() {
             return wrapped.getConnection();
         }
 

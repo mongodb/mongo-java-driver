@@ -60,7 +60,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public Connection getConnection() {
+    public ServerConnection getConnection() {
         isTrue("open", !isClosed());
 
         return new DefaultServerConnection(connectionPool.get());
@@ -131,7 +131,7 @@ class DefaultServer implements ClusterableServer {
 
     }
 
-    private class DefaultServerConnection implements Connection {
+    private class DefaultServerConnection implements ServerConnection {
         private Connection wrapped;
 
         public DefaultServerConnection(final Connection wrapped) {
@@ -177,6 +177,11 @@ class DefaultServer implements ClusterableServer {
         @Override
         public boolean isClosed() {
             return wrapped == null;
+        }
+
+        @Override
+        public ServerDescription getDescription() {
+            return description;
         }
     }
 

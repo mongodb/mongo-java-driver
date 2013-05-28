@@ -17,7 +17,7 @@
 package org.mongodb.session;
 
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerConnection;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -27,15 +27,15 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 @NotThreadSafe
 class SingleConnectionSession implements Session {
-    private final Connection connection;
+    private final ServerConnection connection;
     private boolean isClosed;
 
-    public SingleConnectionSession(final Connection connection) {
+    public SingleConnectionSession(final ServerConnection connection) {
         this.connection = notNull("connection", connection);
     }
 
     @Override
-    public Connection getConnection() {
+    public ServerConnection getConnection() {
         isTrue("open", !isClosed());
         return new DelayedCloseConnection(connection);
     }

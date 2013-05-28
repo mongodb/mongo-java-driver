@@ -19,17 +19,18 @@ package org.mongodb.session;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerDescription;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
-class DelayedCloseConnection extends DelayedCloseBaseConnection implements Connection {
-    private Connection wrapped;
+class DelayedCloseConnection extends DelayedCloseBaseConnection implements ServerConnection {
+    private ServerConnection wrapped;
 
-    public DelayedCloseConnection(final Connection wrapped) {
+    public DelayedCloseConnection(final ServerConnection wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -48,5 +49,11 @@ class DelayedCloseConnection extends DelayedCloseBaseConnection implements Conne
     @Override
     protected BaseConnection getWrapped() {
         return wrapped;
+    }
+
+    @Override
+    public ServerDescription getDescription() {
+        isTrue("open", !isClosed());
+        return wrapped.getDescription();
     }
 }
