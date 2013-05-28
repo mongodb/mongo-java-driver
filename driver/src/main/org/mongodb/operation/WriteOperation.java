@@ -24,6 +24,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
@@ -50,17 +51,17 @@ public abstract class WriteOperation extends Operation {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             CommandResult getLastErrorResult = null;
-            MongoRequestMessage nextMessage = createRequestMessage().encode(buffer, connection.getDescription());
+            MongoRequestMessage nextMessage = createRequestMessage(getMessageSettings(connection.getDescription())).encode(buffer);
             while (nextMessage != null) {
-                nextMessage = nextMessage.encode(buffer, connection.getDescription());
+                nextMessage = nextMessage.encode(buffer);
             }
             if (getWrite().getWriteConcern().callGetLastError()) {
                 final GetLastError getLastError = new GetLastError(getWrite().getWriteConcern());
                 final DocumentCodec codec = new DocumentCodec();
                 MongoCommandMessage getLastErrorMessage = new MongoCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                         MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastError,
-                        codec);
-                getLastErrorMessage.encode(buffer, connection.getDescription());
+                        codec, getMessageSettings(connection.getDescription()));
+                getLastErrorMessage.encode(buffer);
                 connection.sendMessage(buffer);
                 ResponseBuffers responseBuffers = connection.receiveMessage();
                 try {
@@ -81,5 +82,5 @@ public abstract class WriteOperation extends Operation {
 
     public abstract MongoWrite getWrite();
 
-    protected abstract MongoRequestMessage createRequestMessage();
+    protected abstract MongoRequestMessage createRequestMessage(final MessageSettings settings);
 }

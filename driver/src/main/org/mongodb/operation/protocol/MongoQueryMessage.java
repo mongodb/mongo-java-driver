@@ -19,22 +19,21 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoFind;
 
 public class MongoQueryMessage extends MongoQueryBaseMessage {
     private final MongoFind find;
     private Encoder<Document> encoder;
 
-    public MongoQueryMessage(final String collectionName, final MongoFind find, final Encoder<Document> encoder) {
-        super(collectionName);
+    public MongoQueryMessage(final String collectionName, final MongoFind find, final Encoder<Document> encoder,
+                             final MessageSettings settings) {
+        super(collectionName, settings);
         this.find = find;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
-                                                    final ServerDescription description) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(find, buffer);
         addDocument(getQueryDocument(), encoder, buffer);
         if (find.getFields() != null) {

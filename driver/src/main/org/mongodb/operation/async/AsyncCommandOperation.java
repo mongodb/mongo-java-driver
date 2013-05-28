@@ -70,8 +70,9 @@ public class AsyncCommandOperation extends AsyncOperation {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
-        encodeMessageToBuffer(message, buffer, connection.getDescription());
+        final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec,
+                getMessageSettings(connection.getDescription()));
+        encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(
                 new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
 

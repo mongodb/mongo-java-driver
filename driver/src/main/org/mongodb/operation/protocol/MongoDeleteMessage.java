@@ -19,22 +19,21 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoRemove;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
     private final MongoRemove remove;
     private final Encoder<Document> encoder;
 
-    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final Encoder<Document> encoder) {
-        super(collectionName, OpCode.OP_DELETE);
+    public MongoDeleteMessage(final String collectionName, final MongoRemove remove, final Encoder<Document> encoder,
+                              final MessageSettings settings) {
+        super(collectionName, OpCode.OP_DELETE, settings);
         this.remove = remove;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
-                                                    final ServerDescription description) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeDelete(buffer);
         return null;
     }

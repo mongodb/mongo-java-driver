@@ -18,8 +18,8 @@ package org.mongodb.operation.protocol;
 
 import org.bson.BSONBinaryWriter;
 import org.mongodb.Encoder;
+import org.mongodb.MongoInvalidDocumentException;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,17 +31,19 @@ public abstract class MongoRequestMessage {
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     private final String collectionName;
+    private MessageSettings settings;
     private final int id;
     private final OpCode opCode;
 
-    public MongoRequestMessage(final String collectionName, final OpCode opCode) {
+    public MongoRequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         this.collectionName = collectionName;
+        this.settings = settings;
         id = REQUEST_ID.getAndIncrement();
         this.opCode = opCode;
     }
 
-    public MongoRequestMessage(final OpCode opCode) {
-        this(null, opCode);
+    public MongoRequestMessage(final OpCode opCode, final MessageSettings settings) {
+        this(null, opCode, settings);
     }
 
     protected void writeMessagePrologue(final ChannelAwareOutputBuffer buffer) {
@@ -63,27 +65,35 @@ public abstract class MongoRequestMessage {
         return getCollectionName() != null ? getCollectionName() : null;
     }
 
-    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer, final ServerDescription serverDescription) {
+
+    public MessageSettings getSettings() {
+        return settings;
+    }
+
+    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer) {
         int messageStartPosition = buffer.getPosition();
         writeMessagePrologue(buffer);
-        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition, serverDescription);
+        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
         backpatchMessageLength(messageStartPosition, buffer);
         return nextMessage;
     }
 
-    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
-                                                             final ServerDescription description);
+    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);
-
         try {
+            int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);
+            int documentSize = buffer.getPosition() - startPosition;
+            if (documentSize > getSettings().getMaxDocumentSize()) {
+                buffer.truncateToPosition(startPosition);
+                throw new MongoInvalidDocumentException(String.format("Document size of %d exceeds maximum of %d", documentSize,
+                        getSettings().getMaxDocumentSize()));
+            }
         } finally {
             writer.close();
         }
-
-        // TODO: Figure out how to deal with exceeding max BSON object size
     }
 
     protected void backpatchMessageLength(final int startPosition, final ChannelAwareOutputBuffer buffer) {

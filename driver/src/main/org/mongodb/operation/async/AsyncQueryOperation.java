@@ -70,8 +70,9 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
-        encodeMessageToBuffer(message, buffer, connection.getDescription());
+        final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder,
+                getMessageSettings(connection.getDescription()));
+        encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection, message.getId()));
 

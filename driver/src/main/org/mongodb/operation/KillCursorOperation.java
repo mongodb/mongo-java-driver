@@ -45,8 +45,9 @@ public class KillCursorOperation extends Operation {
     public void execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);
-            message.encode(buffer, connection.getDescription());
+            final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
             connection.sendMessage(buffer);
         } finally {
             buffer.close();

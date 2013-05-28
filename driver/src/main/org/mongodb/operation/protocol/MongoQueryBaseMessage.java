@@ -22,8 +22,8 @@ import org.mongodb.operation.QueryOption;
 
 public abstract class MongoQueryBaseMessage extends MongoRequestMessage {
 
-    public MongoQueryBaseMessage(final String collectionName) {
-        super(collectionName, OpCode.OP_QUERY);
+    public MongoQueryBaseMessage(final String collectionName, final MessageSettings settings) {
+        super(collectionName, OpCode.OP_QUERY, settings);
     }
 
     protected void writeQueryPrologue(final MongoQuery query, final ChannelAwareOutputBuffer buffer) {

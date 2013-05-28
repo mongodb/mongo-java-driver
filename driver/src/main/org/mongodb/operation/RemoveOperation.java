@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoDeleteMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 
@@ -37,8 +38,8 @@ public class RemoveOperation extends WriteOperation {
     }
 
     @Override
-    protected MongoRequestMessage createRequestMessage() {
-        return new MongoDeleteMessage(getNamespace().getFullName(), remove, queryEncoder);
+    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
+        return new MongoDeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
     }
 
     @Override

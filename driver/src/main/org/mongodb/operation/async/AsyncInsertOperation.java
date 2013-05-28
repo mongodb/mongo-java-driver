@@ -21,6 +21,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.operation.MongoInsert;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoInsertMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 
@@ -38,8 +39,8 @@ public class AsyncInsertOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
-    protected MongoRequestMessage createRequestMessage() {
-       return new MongoInsertMessage<T>(getNamespace().getFullName(), insert, encoder);
+    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
+       return new MongoInsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
     @Override

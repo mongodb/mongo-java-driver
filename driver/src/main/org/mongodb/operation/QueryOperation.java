@@ -56,8 +56,9 @@ public class QueryOperation<T> extends Operation {
     public QueryResult<T> execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
-            message.encode(buffer, connection.getDescription());
+            final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
 
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();

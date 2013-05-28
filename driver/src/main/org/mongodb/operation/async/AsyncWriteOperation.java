@@ -28,6 +28,7 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.operation.WriteResult;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 import org.mongodb.session.AsyncSession;
@@ -67,13 +68,14 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
 
     public void execute(final AsyncServerConnection connection, final SingleResultCallback<WriteResult> callback) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(), buffer, connection.getDescription());
+        MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
+                buffer);
         if (getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(getWriteConcern());
             MongoCommandMessage getLastErrorMessage =
                     new MongoCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME)
-                            .getFullName(), getLastError, new DocumentCodec());
-            encodeMessageToBuffer(getLastErrorMessage, buffer, connection.getDescription());
+                            .getFullName(), getLastError, new DocumentCodec(), getMessageSettings(connection.getDescription()));
+            encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, getWrite(), getLastError,
                     new DocumentCodec(), getNamespace(), nextMessage, connection, getBufferPool(), getLastErrorMessage.getId()));
         }
@@ -83,7 +85,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         }
     }
 
-    protected abstract MongoRequestMessage createRequestMessage();
+    protected abstract MongoRequestMessage createRequestMessage(final MessageSettings settings);
 
     public abstract MongoWrite getWrite();
 

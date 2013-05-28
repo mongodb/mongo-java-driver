@@ -25,8 +25,9 @@ public abstract class MongoUpdateBaseMessage extends MongoRequestMessage {
     private final Encoder<Document> baseEncoder;
 
 
-    public MongoUpdateBaseMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder) {
-        super(collectionName, opCode);
+    public MongoUpdateBaseMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder,
+                                  final MessageSettings settings) {
+        super(collectionName, opCode, settings);
         this.baseEncoder = encoder;
     }
 

@@ -53,8 +53,9 @@ public class CommandOperation extends Operation {
     public CommandResult execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
-            message.encode(buffer, connection.getDescription());
+            final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {

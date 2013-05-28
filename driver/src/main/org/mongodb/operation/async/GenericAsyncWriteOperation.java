@@ -20,6 +20,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.operation.MongoWrite;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ class GenericAsyncWriteOperation extends AsyncWriteOperation {
     }
 
     @Override
-    protected MongoRequestMessage createRequestMessage() {
+    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
         return requestMessage;
     }
 

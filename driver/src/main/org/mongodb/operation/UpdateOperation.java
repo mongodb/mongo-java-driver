@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 import org.mongodb.operation.protocol.MongoUpdateMessage;
 
@@ -37,8 +38,8 @@ public class UpdateOperation extends WriteOperation {
     }
 
     @Override
-    protected MongoRequestMessage createRequestMessage() {
-        return new MongoUpdateMessage(getNamespace().getFullName(), update, queryEncoder);
+    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
+        return new MongoUpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
     }
 
     @Override

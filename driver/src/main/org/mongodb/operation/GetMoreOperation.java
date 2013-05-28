@@ -72,8 +72,9 @@ public class GetMoreOperation<T> extends Operation {
     public QueryResult<T> execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
-            message.encode(buffer, connection.getDescription());
+            final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {

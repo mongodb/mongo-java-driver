@@ -17,14 +17,13 @@
 package org.mongodb.operation.protocol;
 
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoGetMore;
 
 public class MongoGetMoreMessage extends MongoRequestMessage {
     private final MongoGetMore getMore;
 
-    public MongoGetMoreMessage(final String collectionName, final MongoGetMore getMore) {
-        super(collectionName, OpCode.OP_GETMORE);
+    public MongoGetMoreMessage(final String collectionName, final MongoGetMore getMore, final MessageSettings settings) {
+        super(collectionName, OpCode.OP_GETMORE, settings);
         this.getMore = getMore;
     }
 
@@ -33,8 +32,7 @@ public class MongoGetMoreMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
-                                                    final ServerDescription description) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeGetMore(buffer);
         return null;
     }

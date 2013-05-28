@@ -19,7 +19,6 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoInsert;
 
 public class MongoInsertMessage<T> extends MongoRequestMessage {
@@ -27,23 +26,23 @@ public class MongoInsertMessage<T> extends MongoRequestMessage {
     private final MongoInsert<T> insert;
     private final Encoder<T> encoder;
 
-    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder) {
-        super(collectionName, OpCode.OP_INSERT);
+    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder,
+                              final MessageSettings settings) {
+        super(collectionName, OpCode.OP_INSERT, settings);
         this.insert = insert;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
-                                                    final ServerDescription serverDescription) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeInsertPrologue(insert.getWriteConcern(), buffer);
         for (int i = 0; i < insert.getDocuments().size(); i++) {
             T document = insert.getDocuments().get(i);
             int pos = buffer.getPosition();
             addDocument(document, encoder, buffer);
-            if (buffer.getPosition() - messageStartPosition > serverDescription.getMaxMessageSize()) {
+            if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
-                return new MongoInsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder);
+                return new MongoInsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder, getSettings());
             }
         }
         return null;
