@@ -67,7 +67,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public AsyncConnection getAsyncConnection() {
+    public AsyncServerConnection getAsyncConnection() {
         isTrue("open", !isClosed());
 
         if (asyncConnectionPool == null) {
@@ -186,7 +186,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     // TODO: chain callbacks in order to be notified of exceptions
-    private class DefaultServerAsyncConnection implements AsyncConnection {
+    private class DefaultServerAsyncConnection implements AsyncServerConnection {
         private AsyncConnection wrapped;
 
         public DefaultServerAsyncConnection(final AsyncConnection wrapped) {
@@ -228,6 +228,11 @@ class DefaultServer implements ClusterableServer {
         @Override
         public boolean isClosed() {
             return wrapped == null;
+        }
+
+        @Override
+        public ServerDescription getDescription() {
+            return description;
         }
 
 

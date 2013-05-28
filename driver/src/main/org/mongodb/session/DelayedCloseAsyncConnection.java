@@ -16,18 +16,19 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncConnection {
-    private AsyncConnection wrapped;
+class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncServerConnection {
+    private AsyncServerConnection wrapped;
 
-    public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
+    public DelayedCloseAsyncConnection(final AsyncServerConnection asyncConnection) {
         wrapped = asyncConnection;
     }
 
@@ -52,5 +53,11 @@ class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements 
     @Override
     protected BaseConnection getWrapped() {
         return wrapped;
+    }
+
+    @Override
+    public ServerDescription getDescription() {
+        isTrue("open", !isClosed());
+        return wrapped.getDescription();
     }
 }

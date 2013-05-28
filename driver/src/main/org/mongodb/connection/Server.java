@@ -59,5 +59,5 @@ public interface Server {
      *
      * @return an asynchronous connection to this server
      */
-    AsyncConnection getAsyncConnection();
+    AsyncServerConnection getAsyncConnection();
 }

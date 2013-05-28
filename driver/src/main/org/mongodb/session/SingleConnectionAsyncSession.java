@@ -17,7 +17,7 @@
 package org.mongodb.session;
 
 import org.mongodb.MongoException;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
@@ -27,7 +27,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 
 class SingleConnectionAsyncSession implements AsyncSession {
     private final ServerSelector serverSelector;
-    private AsyncConnection connection;
+    private AsyncServerConnection connection;
     private AsyncServerSelectingSession session;
     private volatile boolean isClosed;
 
@@ -49,17 +49,17 @@ class SingleConnectionAsyncSession implements AsyncSession {
     }
 
     @Override
-    public MongoFuture<AsyncConnection> getConnection() {
+    public MongoFuture<AsyncServerConnection> getConnection() {
         isTrue("open", !isClosed());
 
         if (connection != null) {
-            return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+            return new SingleResultFuture<AsyncServerConnection>(new DelayedCloseAsyncConnection(connection), null);
         }
         else {
-            final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
-            session.getConnection(serverSelector).register(new SingleResultCallback<AsyncConnection>() {
+            final SingleResultFuture<AsyncServerConnection> retVal = new SingleResultFuture<AsyncServerConnection>();
+            session.getConnection(serverSelector).register(new SingleResultCallback<AsyncServerConnection>() {
                 @Override
-                public void onResult(final AsyncConnection newConnection, final MongoException e) {
+                public void onResult(final AsyncServerConnection newConnection, final MongoException e) {
                     if (e != null) {
                         retVal.init(null, e);
                     }

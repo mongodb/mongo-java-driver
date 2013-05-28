@@ -16,7 +16,7 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.operation.MongoFuture;
 
 /**
@@ -31,7 +31,7 @@ public interface AsyncSession {
      *
      * @return a future for an asynchronous connection
      */
-    MongoFuture<AsyncConnection> getConnection();
+    MongoFuture<AsyncServerConnection> getConnection();
 
     /**
      * Close the session.  Care should be taken to close any connections that were provided by this session before the session itself is

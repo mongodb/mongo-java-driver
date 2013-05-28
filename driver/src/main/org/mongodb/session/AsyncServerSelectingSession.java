@@ -16,7 +16,7 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.MongoFuture;
 
@@ -30,10 +30,11 @@ public interface AsyncServerSelectingSession extends AsyncSession {
     /**
      * Gets a connection from a server that satisfies the given server selector.
      *
+     *
      * @param serverSelector the server selector to use when choosing a server to get a connection from.
      * @return a future for a connection
      */
-    MongoFuture<AsyncConnection> getConnection(ServerSelector serverSelector);
+    MongoFuture<AsyncServerConnection> getConnection(ServerSelector serverSelector);
 
     /**
      * Gets a new session that is bound to a single server or a single connection, based on the given binding type.  In the former case,

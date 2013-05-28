@@ -18,7 +18,7 @@ package org.mongodb.session;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerSelector;
@@ -42,17 +42,17 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
 
 
     @Override
-    public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
+    public MongoFuture<AsyncServerConnection> getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
-        final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
+        final SingleResultFuture<AsyncServerConnection> retVal = new SingleResultFuture<AsyncServerConnection>();
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     Server server = cluster.getServer(serverSelector);
-                    AsyncConnection connection = server.getAsyncConnection();
+                    AsyncServerConnection connection = server.getAsyncConnection();
                     retVal.init(connection, null);
                 } catch (MongoException e) {
                     retVal.init(null, e);
@@ -66,7 +66,7 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
     }
 
     @Override
-    public MongoFuture<AsyncConnection> getConnection() {
+    public MongoFuture<AsyncServerConnection> getConnection() {
         isTrue("open", !isClosed());
 
         return getConnection(new PrimaryServerSelector());

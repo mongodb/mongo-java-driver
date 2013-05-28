@@ -20,7 +20,7 @@ package org.mongodb.session;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerSelector;
@@ -50,16 +50,16 @@ class SingleServerAsyncSession implements AsyncSession {
     }
 
     @Override
-    public MongoFuture<AsyncConnection> getConnection() {
+    public MongoFuture<AsyncServerConnection> getConnection() {
         isTrue("open", !isClosed());
 
-        final SingleResultFuture<AsyncConnection> retVal = new SingleResultFuture<AsyncConnection>();
+        final SingleResultFuture<AsyncServerConnection> retVal = new SingleResultFuture<AsyncServerConnection>();
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    AsyncConnection connection = getServer().getAsyncConnection();
+                    AsyncServerConnection connection = getServer().getAsyncConnection();
                     retVal.init(connection, null);
                 } catch (MongoException e) {
                     retVal.init(null, e);

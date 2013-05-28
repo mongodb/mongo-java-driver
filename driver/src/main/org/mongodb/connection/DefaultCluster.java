@@ -163,7 +163,7 @@ public abstract class DefaultCluster implements Cluster {
         }
 
         @Override
-        public AsyncConnection getAsyncConnection() {
+        public AsyncServerConnection getAsyncConnection() {
             return wrapped.getAsyncConnection();
         }
    }
