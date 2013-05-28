@@ -32,7 +32,7 @@ import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
-class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
+class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<WriteResult> callback;
     private final MongoWrite writeOperation;
     private final GetLastError getLastError;
@@ -40,17 +40,17 @@ class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferPool<ByteBuffer> bufferPool;
 
-    public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
-                                    final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final RequestMessage nextMessage, final AsyncServerConnection connection,
-                                    final BufferPool<ByteBuffer> bufferPool) {
+    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+                               final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
+                               final RequestMessage nextMessage, final AsyncServerConnection connection,
+                               final BufferPool<ByteBuffer> bufferPool) {
         this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
     }
 
-    public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
-                                    final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final RequestMessage nextMessage, final AsyncServerConnection connection,
-                                    final BufferPool<ByteBuffer> bufferPool, final long requestId) {
+    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
+                               final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
+                               final RequestMessage nextMessage, final AsyncServerConnection connection,
+                               final BufferPool<ByteBuffer> bufferPool, final long requestId) {
         super(getLastError, decoder, connection, requestId);
         this.callback = callback;
         this.writeOperation = writeOperation;

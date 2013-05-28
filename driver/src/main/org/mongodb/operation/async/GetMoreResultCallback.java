@@ -17,26 +17,27 @@
 package org.mongodb.operation.async;
 
 import org.mongodb.Decoder;
-import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoQueryFailureException;
+import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.ServerCursor;
 import org.mongodb.operation.protocol.ReplyMessage;
 
-class MongoQueryResultCallback<T> extends MongoResponseCallback {
+class GetMoreResultCallback<T> extends ResponseCallback {
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
+    private final long cursorId;
 
-    public MongoQueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                                    final AsyncServerConnection connection, final int requestId) {
+    public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
+                                 final long cursorId, final AsyncServerConnection connection, final long requestId) {
         super(connection, requestId);
         this.callback = callback;
         this.decoder = decoder;
+        this.cursorId = cursorId;
     }
 
     @Override
@@ -47,10 +48,8 @@ class MongoQueryResultCallback<T> extends MongoResponseCallback {
             if (e != null) {
                 throw e;
             }
-            else if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
-                        getRequestId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(getConnection().getServerAddress(), errorDocument);
+            else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
+                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getServerAddress()));
             }
             else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),

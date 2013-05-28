@@ -115,7 +115,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(
+        connection.sendAndReceiveMessage(buffer, new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
                 message.getId()));
 
@@ -124,7 +124,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     public MongoFuture<QueryResult<T>> executeReceive(final AsyncServerConnection connection, final int requestId) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        connection.receiveMessage(new MongoGetMoreResultCallback<T>(
+        connection.receiveMessage(new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
                 requestId));
 

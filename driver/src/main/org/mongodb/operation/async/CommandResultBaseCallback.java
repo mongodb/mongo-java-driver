@@ -25,12 +25,12 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.protocol.ReplyMessage;
 
-abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
+abstract class CommandResultBaseCallback extends ResponseCallback {
     private final MongoCommand commandOperation;
     private final Decoder<Document> decoder;
 
-    public MongoCommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder,
-                                          final AsyncServerConnection connection, final long requestId) {
+    public CommandResultBaseCallback(final MongoCommand commandOperation, final Decoder<Document> decoder,
+                                     final AsyncServerConnection connection, final long requestId) {
         super(connection, requestId);
         this.commandOperation = commandOperation;
         this.decoder = decoder;
