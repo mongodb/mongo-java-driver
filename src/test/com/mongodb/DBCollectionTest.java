@@ -23,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 public class DBCollectionTest extends TestCase {
@@ -344,6 +345,30 @@ public class DBCollectionTest extends TestCase {
         c.drop();
 
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
+        c.insert(obj);
+    }
+
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testDotKeysArrayFail() {
+        DBCollection c = _db.getCollection("testdotkeysFail");
+        c.drop();
+
+        DBObject obj = BasicDBObjectBuilder.start()
+        					.add("x",1)
+        					.add("y",2)
+        					.add("array", new Object[] { new BasicDBObject("foo.bar", "baz") }).get();
+        c.insert(obj);
+    }
+
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testDotKeysListFail() {
+        DBCollection c = _db.getCollection("testdotkeysFail");
+        c.drop();
+
+        DBObject obj = BasicDBObjectBuilder.start()
+        					.add("x",1)
+        					.add("y",2)
+        					.add("array", Arrays.asList(new Object[] { new BasicDBObject("foo.bar", "baz") })).get();
         c.insert(obj);
     }
     
