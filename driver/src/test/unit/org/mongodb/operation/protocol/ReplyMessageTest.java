@@ -20,7 +20,7 @@ import org.bson.io.BasicInputBuffer;
 import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.MongoReplyHeader;
+import org.mongodb.connection.ReplyHeader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -44,7 +44,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
-        final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+        final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
     }
 
@@ -65,7 +65,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
-        final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+        final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, 5, 100);
     }
 }

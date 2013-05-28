@@ -28,7 +28,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 
-import static org.mongodb.connection.MongoReplyHeader.REPLY_HEADER_LENGTH;
+import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
     private final ServerAddress serverAddress;
@@ -103,12 +103,12 @@ abstract class DefaultConnection implements Connection {
     private ResponseBuffers receiveMessage(final ResponseSettings responseSettings, final long start) throws IOException {
         ByteBuffer headerByteBuffer = bufferPool.get(REPLY_HEADER_LENGTH);
 
-        final MongoReplyHeader replyHeader;
+        final ReplyHeader replyHeader;
         try {
             fillAndFlipBuffer(headerByteBuffer);
             final InputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
 
-            replyHeader = new MongoReplyHeader(headerInputBuffer);
+            replyHeader = new ReplyHeader(headerInputBuffer);
         } finally {
             bufferPool.release(headerByteBuffer);
         }

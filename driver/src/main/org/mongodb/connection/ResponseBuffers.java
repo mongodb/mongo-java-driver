@@ -19,17 +19,17 @@ package org.mongodb.connection;
 import org.bson.io.InputBuffer;
 
 public class ResponseBuffers {
-    private final MongoReplyHeader replyHeader;
+    private final ReplyHeader replyHeader;
     private PooledInputBuffer bodyByteBuffer;
     private final long elapsedNanoseconds;
 
-    public ResponseBuffers(final MongoReplyHeader replyHeader, final PooledInputBuffer bodyByteBuffer, final long elapsedNanoseconds) {
+    public ResponseBuffers(final ReplyHeader replyHeader, final PooledInputBuffer bodyByteBuffer, final long elapsedNanoseconds) {
         this.replyHeader = replyHeader;
         this.bodyByteBuffer = bodyByteBuffer;
         this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
-    public MongoReplyHeader getReplyHeader() {
+    public ReplyHeader getReplyHeader() {
         return replyHeader;
     }
 

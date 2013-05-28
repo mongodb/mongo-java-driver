@@ -18,7 +18,7 @@ package org.mongodb.connection;
 
 import org.bson.io.InputBuffer;
 
-public class MongoReplyHeader {
+public class ReplyHeader {
     /**
      * The length of the reply header in the MongoDB wire protocol.
      */
@@ -36,7 +36,7 @@ public class MongoReplyHeader {
     private final int startingFrom;
     private final int numberReturned;
 
-    public MongoReplyHeader(final InputBuffer headerInputBuffer) {
+    public ReplyHeader(final InputBuffer headerInputBuffer) {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
         responseTo = headerInputBuffer.readInt32();

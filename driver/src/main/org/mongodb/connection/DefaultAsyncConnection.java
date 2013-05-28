@@ -28,7 +28,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.connection.MongoReplyHeader.REPLY_HEADER_LENGTH;
+import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 class DefaultAsyncConnection implements AsyncConnection {
     private static final int MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH = 48000000;
@@ -221,7 +221,7 @@ class DefaultAsyncConnection implements AsyncConnection {
             else {
                 final InputBuffer headerInputBuffer = new BasicInputBuffer(result);
 
-                final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
+                final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
 
                 bufferPool.release(result);
 
@@ -242,9 +242,9 @@ class DefaultAsyncConnection implements AsyncConnection {
         }
 
         private class ResponseBodyCallback implements SingleResultCallback<ByteBuffer> {
-            private final MongoReplyHeader replyHeader;
+            private final ReplyHeader replyHeader;
 
-            public ResponseBodyCallback(final MongoReplyHeader replyHeader) {
+            public ResponseBodyCallback(final ReplyHeader replyHeader) {
                 this.replyHeader = replyHeader;
             }
 

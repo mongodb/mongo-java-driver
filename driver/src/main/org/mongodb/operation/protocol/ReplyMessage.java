@@ -22,7 +22,7 @@ import org.bson.BSONReaderSettings;
 import org.bson.io.InputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.MongoReplyHeader;
+import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;
 
 import java.util.ArrayList;
@@ -30,11 +30,11 @@ import java.util.List;
 
 public class ReplyMessage<T> {
 
-    private final MongoReplyHeader replyHeader;
+    private final ReplyHeader replyHeader;
     private final long elapsedNanoseconds;
     private final List<T> documents;
 
-    public ReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
+    public ReplyMessage(final ReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
                         final Decoder<T> decoder, final long requestId, final long elapsedNanoseconds) {
         this(replyHeader, requestId, elapsedNanoseconds);
 
@@ -45,7 +45,7 @@ public class ReplyMessage<T> {
         }
     }
 
-    public ReplyMessage(final MongoReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
+    public ReplyMessage(final ReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
         if (requestId != replyHeader.getResponseTo()) {
             throw new MongoInternalException(
                     String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
@@ -67,7 +67,7 @@ public class ReplyMessage<T> {
                 responseBuffers.getElapsedNanoseconds());
     }
 
-    public MongoReplyHeader getReplyHeader() {
+    public ReplyHeader getReplyHeader() {
         return replyHeader;
     }
 
