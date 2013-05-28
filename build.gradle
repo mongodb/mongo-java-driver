@@ -243,21 +243,29 @@ project(':driver') {
         }
     }
 
-    configurations {
-        unitCompile { extendsFrom testCompile }
-        functionalCompile { extendsFrom unitCompile }
-        acceptanceCompile { extendsFrom functionalCompile }
-    }
+//    configurations {
+//        unitCompile { extendsFrom testCompile }
+//        functionalCompile { extendsFrom unitCompile }
+//        acceptanceCompile { extendsFrom functionalCompile }
+//    }
 
 
 
     dependencies {
         compile project(':bson')
-//        testCompile 'org.jmock:jmock:2.6.0'
         testCompile 'org.jmock:jmock-legacy:2.6.0'
         testCompile 'org.jmock:jmock-junit4:2.6.0'
-        unitCompile sourceSets.main.output
-        acceptanceCompile sourceSets.functional.output
+        unitCompile 'junit:junit:4.11'
+        //unitCompile 'org.jmock:jmock:2.6.0'
+        unitCompile 'org.jmock:jmock-legacy:2.6.0'
+        unitCompile 'org.jmock:jmock-junit4:2.6.0'
+        unitCompile sourceSets.main.runtimeClasspath
+        functionalCompile 'junit:junit:4.11'
+        functionalCompile sourceSets.main.runtimeClasspath
+        functionalCompile sourceSets.unit.runtimeClasspath
+        acceptanceCompile 'junit:junit:4.11'
+        acceptanceCompile sourceSets.main.runtimeClasspath
+        acceptanceCompile sourceSets.functional.runtimeClasspath
     }
 
     idea.module {
