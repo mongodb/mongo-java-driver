@@ -57,7 +57,8 @@ public class CommandOperation extends Operation {
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);
-            final ResponseBuffers responseBuffers = connection.receiveMessage();
+            final ResponseBuffers responseBuffers = connection.receiveMessage(
+                    getResponseSettings(connection.getDescription(), message.getId()));
             try {
                 ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
                 return createCommandResult(commandOperation, replyMessage, connection);

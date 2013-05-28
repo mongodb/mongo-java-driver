@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
@@ -41,12 +42,14 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
+    private final byte[] bytes = new byte[10000];
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {
-            collection.insert(new Document("_id", i));
+            collection.insert(new Document("_id", i).append("bytes", bytes));
         }
     }
 
@@ -77,7 +80,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         cursor.close();
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().limit(1).order(new Document("_id", -1)),
+                new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
         assertEquals(new Document("_id", 999), cursor.next());
 
@@ -140,9 +143,9 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ResponseBuffers receiveMessage() {
+        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
             isTrue("open", !isClosed());
-            return wrapped.receiveMessage();
+            return wrapped.receiveMessage(responseSettings);
         }
 
         protected BaseConnection getWrapped() {

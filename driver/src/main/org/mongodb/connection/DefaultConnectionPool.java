@@ -126,10 +126,10 @@ class DefaultConnectionPool implements Pool<Connection> {
         }
 
         @Override
-        public ResponseBuffers receiveMessage() {
+        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
             isTrue("open", wrapped != null);
             try {
-                return wrapped.receiveMessage();
+                return wrapped.receiveMessage(responseSettings);
             } catch (MongoException e) {
                 handleException(e);
                 throw e;

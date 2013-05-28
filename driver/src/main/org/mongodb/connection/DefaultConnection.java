@@ -67,7 +67,7 @@ abstract class DefaultConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         check();
         try {
             return receiveMessage(System.nanoTime());

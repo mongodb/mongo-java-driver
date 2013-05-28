@@ -51,19 +51,19 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final Session session, final long requestId) {
+    public QueryResult<T> executeReceive(final Session session, final int responseTo) {
         ServerConnection connection = session.getConnection();
         try {
-            return executeReceive(connection, requestId);
+            return executeReceive(connection, responseTo);
         } finally {
             connection.close();
         }
     }
 
-    public void executeDiscard(final Session session) {
+    public void executeDiscard(final Session session, final int responseTo) {
         ServerConnection connection = session.getConnection();
         try {
-            executeDiscard(connection);
+            executeDiscard(connection, responseTo);
         } finally {
             connection.close();
         }
@@ -76,7 +76,8 @@ public class GetMoreOperation<T> extends Operation {
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);
-            final ResponseBuffers responseBuffers = connection.receiveMessage();
+            final ResponseBuffers responseBuffers = connection.receiveMessage(
+                    getResponseSettings(connection.getDescription(), message.getId()));
             try {
                 if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                     throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
@@ -98,21 +99,24 @@ public class GetMoreOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> executeReceive(final ServerConnection connection, final long requestId) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage();
+    public QueryResult<T> executeReceive(final ServerConnection connection, final int responseTo) {
+        final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo));
         try {
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, requestId), connection.getServerAddress());
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }
     }
 
-    public void executeDiscard(final ServerConnection connection) {
+    public void executeDiscard(final ServerConnection connection, final int responseTo) {
         long cursorId = getMore.getServerCursor().getId();
+        int curResponseTo = responseTo;
         while (cursorId != 0) {
-            final ResponseBuffers responseBuffers = connection.receiveMessage();
+            final ResponseBuffers responseBuffers = connection.receiveMessage(
+                    getResponseSettings(connection.getDescription(), curResponseTo));
             try {
                cursorId = responseBuffers.getReplyHeader().getCursorId();
+               curResponseTo = responseBuffers.getReplyHeader().getRequestId();
             } finally {
                 responseBuffers.close();
             }

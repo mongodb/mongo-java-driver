@@ -61,7 +61,8 @@ public class QueryOperation<T> extends Operation {
             message.encode(buffer);
 
             connection.sendMessage(buffer);
-            final ResponseBuffers responseBuffers = connection.receiveMessage();
+            final ResponseBuffers responseBuffers = connection.receiveMessage(
+                    getResponseSettings(connection.getDescription(), message.getId()));
             try {
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =

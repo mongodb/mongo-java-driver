@@ -63,7 +63,8 @@ public abstract class WriteOperation extends Operation {
                         codec, getMessageSettings(connection.getDescription()));
                 getLastErrorMessage.encode(buffer);
                 connection.sendMessage(buffer);
-                ResponseBuffers responseBuffers = connection.receiveMessage();
+                ResponseBuffers responseBuffers = connection.receiveMessage(
+                        getResponseSettings(connection.getDescription(), getLastErrorMessage.getId()));
                 try {
                     getLastErrorResult = getLastError.parseGetLastErrorResponse(createCommandResult(getLastError,
                             new ReplyMessage<Document>(responseBuffers, codec, getLastErrorMessage.getId()), connection));

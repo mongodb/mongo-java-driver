@@ -194,7 +194,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void discardRemainingGetMoreResponses() {
         new GetMoreOperation<T>(namespace, new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
-                decoder, bufferPool).executeDiscard(session);
+                decoder, bufferPool).executeDiscard(session, currentResult.getRequestId());
     }
 
     @Override

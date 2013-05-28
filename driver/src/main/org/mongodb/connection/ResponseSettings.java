@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.protocol;
+package org.mongodb.connection;
 
-public final class MessageSettings {
-    private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
-    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
-
-    private final int maxDocumentSize;
+public final class ResponseSettings {
+    private final int responseTo;
     private final int maxMessageSize;
 
     public static Builder builder() {
@@ -28,16 +25,12 @@ public final class MessageSettings {
     }
 
     public static final class Builder {
-        private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
-        private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
-
-        public MessageSettings build() {
-            return new MessageSettings(this);
-        }
+        private int responseTo;
+        private int maxMessageSize;
 
         // CHECKSTYLE:OFF
-        public Builder maxDocumentSize(final int maxDocumentSize) {
-            this.maxDocumentSize = maxDocumentSize;
+        public Builder responseTo(final int responseTo) {
+            this.responseTo = responseTo;
             return this;
         }
 
@@ -45,19 +38,23 @@ public final class MessageSettings {
             this.maxMessageSize = maxMessageSize;
             return this;
         }
+
+        public ResponseSettings build() {
+            return new ResponseSettings(this);
+        }
         // CHECKSTYLE:ON
     }
 
-    public int getMaxDocumentSize() {
-        return maxDocumentSize;
+    public int getResponseTo() {
+        return responseTo;
     }
 
     public int getMaxMessageSize() {
         return maxMessageSize;
     }
 
-    MessageSettings(final Builder builder) {
-        this.maxDocumentSize = builder.maxDocumentSize;
+    ResponseSettings(final Builder builder) {
+        this.responseTo = builder.responseTo;
         this.maxMessageSize = builder.maxMessageSize;
     }
 }

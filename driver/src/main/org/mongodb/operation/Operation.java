@@ -22,6 +22,7 @@ import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
@@ -60,5 +61,9 @@ public abstract class Operation {
     protected MessageSettings getMessageSettings(final ServerDescription serverDescription) {
         return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
                 .getMaxMessageSize()).build();
+    }
+
+    protected ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
+        return ResponseSettings.builder().maxMessageSize(serverDescription.getMaxMessageSize()).responseTo(responseTo).build();
     }
 }

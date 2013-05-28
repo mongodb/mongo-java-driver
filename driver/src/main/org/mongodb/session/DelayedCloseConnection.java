@@ -20,6 +20,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 
@@ -41,9 +42,9 @@ class DelayedCloseConnection extends DelayedCloseBaseConnection implements Serve
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         isTrue("open", !isClosed());
-        return wrapped.receiveMessage();
+        return wrapped.receiveMessage(responseSettings);
     }
 
     @Override

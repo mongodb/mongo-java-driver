@@ -61,9 +61,9 @@ class AuthenticatingConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         isTrue("open", wrapped != null);
         authenticator.authenticateAll();
-        return wrapped.receiveMessage();
+        return wrapped.receiveMessage(responseSettings);
     }
 }

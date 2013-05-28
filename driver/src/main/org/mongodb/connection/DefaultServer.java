@@ -156,10 +156,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ResponseBuffers receiveMessage() {
+        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
             isTrue("open", !isClosed());
             try {
-                return wrapped.receiveMessage();
+                return wrapped.receiveMessage(responseSettings);
             } catch (MongoException e) {
                 handleException();
                 throw e;

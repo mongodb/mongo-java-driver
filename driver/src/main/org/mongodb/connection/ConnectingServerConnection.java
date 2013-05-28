@@ -40,8 +40,8 @@ public class ConnectingServerConnection implements ServerConnection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
-        return connection.receiveMessage();
+    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+        return connection.receiveMessage(responseSettings);
     }
 
     @Override
