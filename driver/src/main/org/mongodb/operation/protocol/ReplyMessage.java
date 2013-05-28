@@ -28,14 +28,14 @@ import org.mongodb.connection.ResponseBuffers;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MongoReplyMessage<T> {
+public class ReplyMessage<T> {
 
     private final MongoReplyHeader replyHeader;
     private final long elapsedNanoseconds;
     private final List<T> documents;
 
-    public MongoReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
-                             final Decoder<T> decoder, final long requestId, final long elapsedNanoseconds) {
+    public ReplyMessage(final MongoReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
+                        final Decoder<T> decoder, final long requestId, final long elapsedNanoseconds) {
         this(replyHeader, requestId, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
@@ -45,14 +45,14 @@ public class MongoReplyMessage<T> {
         }
     }
 
-    public MongoReplyMessage(final MongoReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
+    public ReplyMessage(final MongoReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
         if (requestId != replyHeader.getResponseTo()) {
             throw new MongoInternalException(
                     String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
                     replyHeader.getResponseTo(), requestId));
         }
 
-        if (replyHeader.getOpCode() != MongoRequestMessage.OpCode.OP_REPLY.getValue()) {
+        if (replyHeader.getOpCode() != RequestMessage.OpCode.OP_REPLY.getValue()) {
             throw new MongoInternalException(String.format("Invalid opCode for a reply message: %d", replyHeader.getOpCode()));
         }
 
@@ -62,7 +62,7 @@ public class MongoReplyMessage<T> {
         documents = new ArrayList<T>(replyHeader.getNumberReturned());
     }
 
-    public MongoReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
+    public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
         this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), decoder, requestId,
                 responseBuffers.getElapsedNanoseconds());
     }

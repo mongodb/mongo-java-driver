@@ -25,7 +25,7 @@ import org.mongodb.connection.MongoReplyHeader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class MongoReplyMessageTest {
+public class ReplyMessageTest {
     @Test(expected = MongoInternalException.class)
     public void shouldThrowExceptionIfRequestIdDoesNotMatchResponseTo() {
         int badResponseTo = 34565;
@@ -45,7 +45,7 @@ public class MongoReplyMessageTest {
 
         final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-        new MongoReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
+        new ReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
     }
 
     @Test(expected = MongoInternalException.class)
@@ -66,6 +66,6 @@ public class MongoReplyMessageTest {
 
         final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         final MongoReplyHeader replyHeader = new MongoReplyHeader(headerInputBuffer);
-        new MongoReplyMessage<Document>(replyHeader, 5, 100);
+        new ReplyMessage<Document>(replyHeader, 5, 100);
     }
 }

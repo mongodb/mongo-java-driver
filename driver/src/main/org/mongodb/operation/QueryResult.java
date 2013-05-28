@@ -17,7 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class QueryResult<T> {
     private final ServerAddress serverAddress;
     private final int requestId;
 
-    public QueryResult(final MongoReplyMessage<T> replyMessage, final ServerAddress address) {
+    public QueryResult(final ReplyMessage<T> replyMessage, final ServerAddress address) {
         if (replyMessage.getReplyHeader().getCursorId() != 0) {
             serverCursor = new ServerCursor(replyMessage.getReplyHeader().getCursorId(), address);
         }

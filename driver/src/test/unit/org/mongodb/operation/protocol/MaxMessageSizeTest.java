@@ -33,11 +33,11 @@ import static org.mongodb.Fixture.getBufferPool;
 
 public class MaxMessageSizeTest {
     private PooledByteBufferOutputBuffer buffer;
-    private MongoInsertMessage<Document> message;
+    private InsertMessage<Document> message;
 
     @Before
     public void setUp() {
-        message = new MongoInsertMessage<Document>("test.test",
+        message = new InsertMessage<Document>("test.test",
                 new MongoInsert<Document>(
                         Arrays.asList(
                                 new Document("bytes", new byte[2048]),
@@ -55,7 +55,7 @@ public class MaxMessageSizeTest {
 
     @Test
     public void testMaxDocumentSize() {
-        MongoRequestMessage next = message.encode(buffer);
+        RequestMessage next = message.encode(buffer);
         assertNotNull(next);
         assertNull(next.encode(buffer));
     }

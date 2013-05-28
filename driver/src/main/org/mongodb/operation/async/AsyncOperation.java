@@ -20,7 +20,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.Operation;
-import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
@@ -29,7 +29,7 @@ public abstract class AsyncOperation extends Operation {
         super(namespace, bufferPool);
     }
 
-    protected MongoRequestMessage encodeMessageToBuffer(final MongoRequestMessage message, final PooledByteBufferOutputBuffer buffer) {
+    protected RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {
         try {
             return message.encode(buffer);
         } catch (RuntimeException e) {

@@ -23,8 +23,8 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.MongoReplaceMessage;
-import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.operation.protocol.ReplaceMessage;
+import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
@@ -42,8 +42,8 @@ public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
-    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
-        return new MongoReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
+    protected RequestMessage createRequestMessage(final MessageSettings settings) {
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
     }
 
     @Override

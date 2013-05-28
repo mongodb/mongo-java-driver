@@ -25,8 +25,8 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.protocol.MongoQueryMessage;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.QueryMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
@@ -56,7 +56,7 @@ public class QueryOperation<T> extends Operation {
     public QueryResult<T> execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder,
+            final QueryMessage message = new QueryMessage(getNamespace().getFullName(), find, queryEncoder,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
 
@@ -65,10 +65,10 @@ public class QueryOperation<T> extends Operation {
             try {
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =
-                            new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                            new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
                     throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
                 }
-                final MongoReplyMessage<T> replyMessage = new MongoReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
+                final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
                 return new QueryResult<T>(replyMessage, connection.getServerAddress());
             } finally {

@@ -21,20 +21,20 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoInsert;
 
-public class MongoInsertMessage<T> extends MongoRequestMessage {
+public class InsertMessage<T> extends RequestMessage {
 
     private final MongoInsert<T> insert;
     private final Encoder<T> encoder;
 
-    public MongoInsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder,
-                              final MessageSettings settings) {
+    public InsertMessage(final String collectionName, final MongoInsert<T> insert, final Encoder<T> encoder,
+                         final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
         this.insert = insert;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeInsertPrologue(insert.getWriteConcern(), buffer);
         for (int i = 0; i < insert.getDocuments().size(); i++) {
             T document = insert.getDocuments().get(i);
@@ -42,7 +42,7 @@ public class MongoInsertMessage<T> extends MongoRequestMessage {
             addDocument(document, encoder, buffer);
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
-                return new MongoInsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder, getSettings());
+                return new InsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder, getSettings());
             }
         }
         return null;

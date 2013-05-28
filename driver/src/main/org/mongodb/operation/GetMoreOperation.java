@@ -24,8 +24,8 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.protocol.MongoGetMoreMessage;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.GetMoreMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
@@ -72,7 +72,7 @@ public class GetMoreOperation<T> extends Operation {
     public QueryResult<T> execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore,
+            final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);
@@ -84,11 +84,11 @@ public class GetMoreOperation<T> extends Operation {
 
                 if (responseBuffers.getReplyHeader().isQueryFailure()) {
                     final Document errorDocument =
-                            new MongoReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                            new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
                     throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
                 }
 
-                return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
+                return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
                         connection.getServerAddress());
             } finally {
                 responseBuffers.close();
@@ -101,7 +101,7 @@ public class GetMoreOperation<T> extends Operation {
     public QueryResult<T> executeReceive(final ServerConnection connection, final long requestId) {
         final ResponseBuffers responseBuffers = connection.receiveMessage();
         try {
-            return new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, resultDecoder, requestId), connection.getServerAddress());
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, requestId), connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

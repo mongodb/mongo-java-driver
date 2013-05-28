@@ -24,7 +24,7 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 
 import java.nio.ByteBuffer;
 
@@ -46,7 +46,7 @@ public abstract class Operation {
     }
 
     // TODO: this should move somewhere else.
-    protected CommandResult createCommandResult(final MongoCommand commandOperation, final MongoReplyMessage<Document> replyMessage,
+    protected CommandResult createCommandResult(final MongoCommand commandOperation, final ReplyMessage<Document> replyMessage,
                                               final Connection connection) {
         CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getServerAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());

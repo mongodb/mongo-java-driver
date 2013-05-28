@@ -21,12 +21,12 @@ import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoUpdateBase;
 
-public abstract class MongoUpdateBaseMessage extends MongoRequestMessage {
+public abstract class BaseUpdateMessage extends RequestMessage {
     private final Encoder<Document> baseEncoder;
 
 
-    public MongoUpdateBaseMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder,
-                                  final MessageSettings settings) {
+    public BaseUpdateMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder,
+                             final MessageSettings settings) {
         super(collectionName, opCode, settings);
         this.baseEncoder = encoder;
     }

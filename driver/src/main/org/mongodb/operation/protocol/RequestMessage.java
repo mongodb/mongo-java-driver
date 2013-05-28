@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
  */
-public abstract class MongoRequestMessage {
+public abstract class RequestMessage {
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
@@ -35,14 +35,14 @@ public abstract class MongoRequestMessage {
     private final int id;
     private final OpCode opCode;
 
-    public MongoRequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
+    public RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         this.collectionName = collectionName;
         this.settings = settings;
         id = REQUEST_ID.getAndIncrement();
         this.opCode = opCode;
     }
 
-    public MongoRequestMessage(final OpCode opCode, final MessageSettings settings) {
+    public RequestMessage(final OpCode opCode, final MessageSettings settings) {
         this(null, opCode, settings);
     }
 
@@ -70,15 +70,15 @@ public abstract class MongoRequestMessage {
         return settings;
     }
 
-    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer) {
+    public RequestMessage encode(final ChannelAwareOutputBuffer buffer) {
         int messageStartPosition = buffer.getPosition();
         writeMessagePrologue(buffer);
-        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
+        RequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
         backpatchMessageLength(messageStartPosition, buffer);
         return nextMessage;
     }
 
-    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
+    protected abstract RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);

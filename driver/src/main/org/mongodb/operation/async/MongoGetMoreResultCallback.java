@@ -25,7 +25,7 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ServerCursor;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 
 class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
     private final SingleResultCallback<QueryResult<T>> callback;
@@ -52,7 +52,7 @@ class MongoGetMoreResultCallback<T> extends MongoResponseCallback {
                 throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getServerAddress()));
             }
             else {
-                result = new QueryResult<T>(new MongoReplyMessage<T>(responseBuffers, decoder, getRequestId()),
+                result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                         getConnection().getServerAddress());
             }
         } catch (MongoException me) {

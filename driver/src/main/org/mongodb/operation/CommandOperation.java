@@ -24,8 +24,8 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.protocol.MongoCommandMessage;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.CommandMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.session.ServerSelectingSession;
 
 import java.nio.ByteBuffer;
@@ -53,13 +53,13 @@ public class CommandOperation extends Operation {
     public CommandResult execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec,
+            final CommandMessage message = new CommandMessage(getNamespace().getFullName(), commandOperation, codec,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {
-                MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, codec, message.getId());
+                ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
                 return createCommandResult(commandOperation, replyMessage, connection);
             } finally {
                 responseBuffers.close();

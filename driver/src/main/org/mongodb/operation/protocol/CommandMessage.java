@@ -21,19 +21,19 @@ import org.mongodb.Encoder;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 
-public class MongoCommandMessage extends MongoQueryBaseMessage {
+public class CommandMessage extends BaseQueryMessage {
     private final MongoCommand commandOperation;
     private final Encoder<Document> encoder;
 
-    public MongoCommandMessage(final String collectionName, final MongoCommand commandOperation, final Encoder<Document> encoder,
-                               final MessageSettings settings) {
+    public CommandMessage(final String collectionName, final MongoCommand commandOperation, final Encoder<Document> encoder,
+                          final MessageSettings settings) {
         super(collectionName, settings);
         this.commandOperation = commandOperation;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(commandOperation, buffer);
         addDocument(commandOperation.toDocument(), encoder, buffer);
         return null;

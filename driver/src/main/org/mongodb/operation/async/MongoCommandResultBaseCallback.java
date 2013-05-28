@@ -23,7 +23,7 @@ import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.operation.protocol.ReplyMessage;
 
 abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
     private final MongoCommand commandOperation;
@@ -42,7 +42,7 @@ abstract class MongoCommandResultBaseCallback extends MongoResponseCallback {
                 callCallback((CommandResult) null, e);
             }
             else {
-                MongoReplyMessage<Document> replyMessage = new MongoReplyMessage<Document>(responseBuffers, decoder, getRequestId());
+                ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, getRequestId());
                 callCallback(new CommandResult(commandOperation.toDocument(), getConnection().getServerAddress(),
                         replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), null);
             }

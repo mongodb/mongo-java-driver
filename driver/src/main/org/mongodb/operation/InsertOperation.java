@@ -19,9 +19,9 @@ package org.mongodb.operation;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.operation.protocol.InsertMessage;
 import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.MongoInsertMessage;
-import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
@@ -36,8 +36,8 @@ public class InsertOperation<T> extends WriteOperation {
         this.encoder = encoder;
     }
 
-    protected MongoRequestMessage createRequestMessage(final MessageSettings settings) {
-        return new MongoInsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
+    protected RequestMessage createRequestMessage(final MessageSettings settings) {
+        return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
     public MongoInsert<T> getWrite() {

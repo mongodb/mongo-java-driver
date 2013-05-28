@@ -28,7 +28,7 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoWrite;
 import org.mongodb.operation.WriteResult;
-import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
@@ -37,19 +37,19 @@ class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
     private final MongoWrite writeOperation;
     private final GetLastError getLastError;
     private final MongoNamespace namespace;
-    private final MongoRequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
+    private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferPool<ByteBuffer> bufferPool;
 
     public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
                                     final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final MongoRequestMessage nextMessage, final AsyncServerConnection connection,
+                                    final RequestMessage nextMessage, final AsyncServerConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool) {
         this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
     }
 
     public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
                                     final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final MongoRequestMessage nextMessage, final AsyncServerConnection connection,
+                                    final RequestMessage nextMessage, final AsyncServerConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool, final long requestId) {
         super(getLastError, decoder, connection, requestId);
         this.callback = callback;

@@ -27,7 +27,7 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.QueryResult;
-import org.mongodb.operation.protocol.MongoGetMoreMessage;
+import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.session.AsyncSession;
 
 import java.nio.ByteBuffer;
@@ -112,7 +112,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore,
+        final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(

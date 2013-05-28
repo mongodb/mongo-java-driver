@@ -22,17 +22,17 @@ import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoUpdate;
 import org.mongodb.operation.MongoUpdateBase;
 
-public class MongoUpdateMessage extends MongoUpdateBaseMessage {
+public class UpdateMessage extends BaseUpdateMessage {
     private MongoUpdate update;
 
-    public MongoUpdateMessage(final String fullName, final MongoUpdate update, final Encoder<Document> encoder,
-                              final MessageSettings settings) {
+    public UpdateMessage(final String fullName, final MongoUpdate update, final Encoder<Document> encoder,
+                         final MessageSettings settings) {
         super(fullName, OpCode.OP_UPDATE, encoder, settings);
         this.update = update;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
         addDocument(update.getUpdateOperations(), getBaseEncoder(), buffer);
         return null;

@@ -22,19 +22,19 @@ import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoReplace;
 import org.mongodb.operation.MongoUpdateBase;
 
-public class MongoReplaceMessage<T> extends MongoUpdateBaseMessage {
+public class ReplaceMessage<T> extends BaseUpdateMessage {
     private MongoReplace<T> replace;
     private final Encoder<T> encoder;
 
-    public MongoReplaceMessage(final String collectionName, final MongoReplace<T> replace,
-                               final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
+    public ReplaceMessage(final String collectionName, final MongoReplace<T> replace,
+                          final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, baseEncoder, settings);
         this.replace = replace;
         this.encoder = encoder;
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
         addDocument(replace.getReplacement(), encoder, buffer);
         return null;

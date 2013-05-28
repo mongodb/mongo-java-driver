@@ -19,7 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.protocol.MongoKillCursorsMessage;
+import org.mongodb.operation.protocol.KillCursorsMessage;
 import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
@@ -45,7 +45,7 @@ public class KillCursorOperation extends Operation {
     public void execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor,
+            final KillCursorsMessage message = new KillCursorsMessage(killCursor,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);

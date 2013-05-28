@@ -20,9 +20,9 @@ import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.MongoQuery;
 import org.mongodb.operation.QueryOption;
 
-public abstract class MongoQueryBaseMessage extends MongoRequestMessage {
+public abstract class BaseQueryMessage extends RequestMessage {
 
-    public MongoQueryBaseMessage(final String collectionName, final MessageSettings settings) {
+    public BaseQueryMessage(final String collectionName, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
     }
 
