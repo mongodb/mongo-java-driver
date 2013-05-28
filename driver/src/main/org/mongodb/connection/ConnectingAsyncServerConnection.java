@@ -34,13 +34,14 @@ class ConnectingAsyncServerConnection implements AsyncServerConnection {
     }
 
     @Override
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
-        connection.sendAndReceiveMessage(buffer, callback);
+    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+                                      final SingleResultCallback<ResponseBuffers> callback) {
+        connection.sendAndReceiveMessage(buffer, responseSettings, callback);
     }
 
     @Override
-    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
-        connection.receiveMessage(callback);
+    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+        connection.receiveMessage(responseSettings, callback);
     }
 
     @Override

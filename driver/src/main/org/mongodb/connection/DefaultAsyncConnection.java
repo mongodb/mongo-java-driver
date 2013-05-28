@@ -82,13 +82,14 @@ class DefaultAsyncConnection implements AsyncConnection {
         });
     }
 
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+                                      final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         sendOneWayMessage(buffer, new ReceiveMessageCompletionHandler(System.nanoTime(), callback));
     }
 
     @Override
-    public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
         fillAndFlipBuffer(bufferPool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(callback, System.nanoTime()));
     }
 

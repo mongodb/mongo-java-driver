@@ -26,6 +26,7 @@ import org.mongodb.Document;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
@@ -228,15 +229,16 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+                                          final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, callback);
+            wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);
         }
 
         @Override
-        public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessage(callback);
+            wrapped.receiveMessage(responseSettings, callback);
         }
 
         @Override

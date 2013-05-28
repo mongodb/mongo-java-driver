@@ -73,8 +73,9 @@ public class AsyncCommandOperation extends AsyncOperation {
         final CommandMessage message = new CommandMessage(getNamespace().getFullName(), commandOperation, codec,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendAndReceiveMessage(buffer, new CommandResultCallback(
-                new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
+        connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), message.getId()),
+                new CommandResultCallback(
+                        new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
 
         return retVal;
     }

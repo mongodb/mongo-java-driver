@@ -58,12 +58,12 @@ public abstract class Operation {
         return commandResult;
     }
 
-    protected MessageSettings getMessageSettings(final ServerDescription serverDescription) {
+    protected static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
         return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
                 .getMaxMessageSize()).build();
     }
 
-    protected ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
+    protected static ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
         return ResponseSettings.builder().maxMessageSize(serverDescription.getMaxMessageSize()).responseTo(responseTo).build();
     }
 }

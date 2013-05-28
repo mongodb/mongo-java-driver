@@ -63,7 +63,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
 
-    public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session, final int requestId) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session, final int responseTo) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
@@ -73,7 +73,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
                     retVal.init(null, e);
                 }
                 else {
-                    MongoFuture<QueryResult<T>> wrapped = executeReceive(connection, requestId);
+                    MongoFuture<QueryResult<T>> wrapped = executeReceive(connection, responseTo);
                     wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
                 }
             }
@@ -83,7 +83,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     }
 
-    public MongoFuture<Void> executeDiscard(final AsyncSession session) {
+    public MongoFuture<Void> executeDiscard(final AsyncSession session, final int responseTo) {
         if (getMore.getServerCursor() == null) {
             return new SingleResultFuture<Void>(null, null);
         }
@@ -97,7 +97,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
                         retVal.init(null, e);
                     }
                     else {
-                        MongoFuture<Void> wrapped = executeDiscard(connection);
+                        MongoFuture<Void> wrapped = executeDiscard(connection, responseTo);
                         wrapped.register(new ConnectionClosingSingleResultCallback<Void>(connection, retVal));
                     }
                 }
@@ -115,30 +115,32 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendAndReceiveMessage(buffer, new GetMoreResultCallback<T>(
-                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
-                message.getId()));
+        connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), message.getId()),
+                new GetMoreResultCallback<T>(
+                        new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(),
+                        connection, message.getId()));
 
         return retVal;
     }
 
-    public MongoFuture<QueryResult<T>> executeReceive(final AsyncServerConnection connection, final int requestId) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncServerConnection connection, final int responseTo) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        connection.receiveMessage(new GetMoreResultCallback<T>(
+        connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo), new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
-                requestId));
+                responseTo));
 
         return retVal;
     }
 
-    public MongoFuture<Void> executeDiscard(final AsyncServerConnection connection) {
+    public MongoFuture<Void> executeDiscard(final AsyncServerConnection connection, final int responseTo) {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (getMore.getServerCursor() == null) {
             retVal.init(null, null);
         }
         else {
-            connection.receiveMessage(new DiscardCallback(connection, retVal));
+            connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo),
+                    new DiscardCallback(connection, retVal, responseTo));
         }
 
         return retVal;
@@ -148,10 +150,13 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
         private AsyncServerConnection connection;
         private SingleResultFuture<Void> future;
+        private int responseTo;
 
-        public DiscardCallback(final AsyncServerConnection connection, final SingleResultFuture<Void> future) {
+        public DiscardCallback(final AsyncServerConnection connection, final SingleResultFuture<Void> future,
+                               final int responseTo) {
             this.connection = connection;
             this.future = future;
+            this.responseTo = responseTo;
         }
 
         @Override
@@ -160,7 +165,8 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
                 future.init(null, null);
             }
             else {
-                connection.receiveMessage(new DiscardCallback(connection, future));
+                connection.receiveMessage(AsyncGetMoreOperation.getResponseSettings(connection.getDescription(), responseTo),
+                        new DiscardCallback(connection, future, result.getReplyHeader().getRequestId()));
             }
         }
     }

@@ -75,7 +75,7 @@ public class MongoAsyncQueryCursor<T> {
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (e != null) {
-                close();
+                close(0);
             }
             else {
                 cursor = result.getCursor();
@@ -97,13 +97,12 @@ public class MongoAsyncQueryCursor<T> {
             }
 
             if (result.getCursor() == null || breakEarly) {
-                close();
+                close(result.getRequestId());
             }
             else {
                 // get more results
                 AsyncGetMoreOperation<T> getMoreOperation = new AsyncGetMoreOperation<T>(namespace,
-                        new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder,
-                        bufferPool);
+                        new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder, bufferPool);
                 if (find.getOptions().contains(QueryOption.Exhaust)) {
                     getMoreOperation.executeReceive(session, result.getRequestId()).register(this);
                 }
@@ -113,9 +112,9 @@ public class MongoAsyncQueryCursor<T> {
             }
         }
 
-        private void close() {
+        private void close(final int responseTo) {
             if (find.getOptions().contains(QueryOption.Exhaust)) {
-                handleExhaustCleanup();
+                handleExhaustCleanup(responseTo);
             }
             else {
                 session.close();
@@ -123,10 +122,10 @@ public class MongoAsyncQueryCursor<T> {
             }
         }
 
-        private void handleExhaustCleanup() {
+        private void handleExhaustCleanup(final int responseTo) {
             MongoFuture<Void> future = new AsyncGetMoreOperation<T>(namespace, new GetMore(cursor, find.getLimit(),
                     find.getBatchSize(),
-                    numFetchedSoFar), null, bufferPool).executeDiscard(session);
+                    numFetchedSoFar), null, bufferPool).executeDiscard(session, responseTo);
             future.register(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {

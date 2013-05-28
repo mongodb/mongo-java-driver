@@ -202,19 +202,20 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendMessage(buffer, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override
-        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+                                          final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendAndReceiveMessage(buffer, responseSettings, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override
-        public void receiveMessage(final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessage(new InvalidatingSingleResultCallback(callback));
+            wrapped.receiveMessage(responseSettings, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override
