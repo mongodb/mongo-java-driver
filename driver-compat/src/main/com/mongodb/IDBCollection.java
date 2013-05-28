@@ -288,7 +288,4 @@ public interface IDBCollection {
     DBEncoderFactory getDBEncoderFactory();
 
     //These are all the classes used by the old DBCollection, that have not yet been implemented in driver-compat.
-
-    class GroupCommand {
-    }
 }

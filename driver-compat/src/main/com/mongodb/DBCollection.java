@@ -42,13 +42,13 @@ import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.FindAndRemove;
 import org.mongodb.command.FindAndReplace;
 import org.mongodb.command.FindAndUpdate;
+import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFind;
@@ -64,6 +64,7 @@ import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.UpdateOperation;
+import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.util.FieldHelpers;
 
 import java.nio.ByteBuffer;
@@ -71,9 +72,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.DBObjects.toDBList;
 import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toFieldSelectorDocument;
+import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 
 
@@ -116,7 +119,7 @@ import static com.mongodb.DBObjects.toUpdateOperationsDocument;
  * </blockquote>
  */
 @ThreadSafe
-@SuppressWarnings({ "rawtypes", "deprecation" })
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection implements IDBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
     private final DB database;
@@ -345,7 +348,7 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), 
+        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(),
                 getBufferPool()).execute(getSession()), wc, getDB());
     }
 
@@ -956,7 +959,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           final String finalize, final ReadPreference readPreference) {
-        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
+        return group(new GroupCommand(getName(), key, cond, initial, reduce, finalize), readPreference);
     }
 
     /**
@@ -981,12 +984,12 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
+        return group(cmd.toNew());
     }
 
     /**
      * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * Deprecated. Use {@link #group(com.mongodb.IDBCollection.GroupCommand)} instead.
+     * Deprecated. Use {@link #group(com.mongodb.GroupCommand)} instead.
      *
      * @param args specifies the arguments to the group function
      * @return a document with the grouped records as well as the command meta-data
@@ -994,7 +997,18 @@ public class DBCollection implements IDBCollection {
     @Override
     @Deprecated
     public DBObject group(final DBObject args) {
-        throw new UnsupportedOperationException(); //TODO We neew GroupCommand to implement this
+        final Document commandDocument = new Document("group", toDocument(args).append("ns", getName()));
+        return group(new MongoCommand(commandDocument));
+    }
+
+
+    private DBObject group(final MongoCommand command) {
+        try {
+            final GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
+            return toDBList(commandResult.getValue());
+        } catch (MongoCommandFailureException e) {
+            throw new CommandFailureException(new CommandResult(e.getCommandResult()));
+        }
     }
 
     /**
@@ -1379,8 +1393,8 @@ public class DBCollection implements IDBCollection {
 
         if (remove) {
             final MongoFindAndRemove<DBObject> mongoFindAndRemove = new MongoFindAndRemove<DBObject>()
-                    .where(toDocument(query))
-                    .sortBy(toDocument(sort))
+                    .where(toNullableDocument(query))
+                    .sortBy(toNullableDocument(sort))
                     .returnNew(returnNew);
             mongoCommand = new FindAndRemove<DBObject>(mongoFindAndRemove, getName());
         } else {
@@ -1390,19 +1404,19 @@ public class DBCollection implements IDBCollection {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
                 final MongoFindAndUpdate<DBObject> mongoFindAndUpdate = new MongoFindAndUpdate<DBObject>()
-                        .where(toDocument(query))
-                        .sortBy(toDocument(sort))
+                        .where(toNullableDocument(query))
+                        .sortBy(toNullableDocument(sort))
                         .returnNew(returnNew)
-                        .select(toDocument(fields))
+                        .select(toFieldSelectorDocument(fields))
                         .updateWith(toUpdateOperationsDocument(update))
                         .upsert(upsert);
                 mongoCommand = new FindAndUpdate<DBObject>(mongoFindAndUpdate, getName());
             } else {
                 final MongoFindAndReplace<DBObject> mongoFindAndReplace
                         = new MongoFindAndReplace<DBObject>(update)
-                        .where(toDocument(query))
-                        .sortBy(toDocument(sort))
-                        .select(toDocument(fields))
+                        .where(toNullableDocument(query))
+                        .sortBy(toNullableDocument(sort))
+                        .select(toFieldSelectorDocument(fields))
                         .returnNew(returnNew)
                         .upsert(upsert);
                 mongoCommand = new FindAndReplace<DBObject>(mongoFindAndReplace, getName());
@@ -1622,8 +1636,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Sets the internal class for the given path in the document hierarchy
      *
-     * @param path  the path to map the given Class to
-     * @param cls the Class to map the given path to
+     * @param path the path to map the given Class to
+     * @param cls  the Class to map the given path to
      */
     public void setInternalClass(final String path, final Class<? extends DBObject> cls) {
         typeMapping.setInternalClass(Arrays.asList(path.split("\\.")), cls);
@@ -1631,6 +1645,7 @@ public class DBCollection implements IDBCollection {
 
     /**
      * Gets the type mapping for a document hierarchy.
+     *
      * @return
      */
     TypeMapping getTypeMapping() {
