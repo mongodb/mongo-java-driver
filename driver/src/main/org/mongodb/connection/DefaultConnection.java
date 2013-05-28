@@ -31,8 +31,6 @@ import java.nio.channels.ClosedByInterruptException;
 import static org.mongodb.connection.MongoReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
-    private static final int MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH = 48000000;
-
     private final ServerAddress serverAddress;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile boolean isClosed;
@@ -70,7 +68,7 @@ abstract class DefaultConnection implements Connection {
     public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         check();
         try {
-            return receiveMessage(System.nanoTime());
+            return receiveMessage(responseSettings, System.nanoTime());
         } catch (IOException e) {
             close();
             throw translateReadException(e);
@@ -102,7 +100,7 @@ abstract class DefaultConnection implements Connection {
         }
     }
 
-    private ResponseBuffers receiveMessage(final long start) throws IOException {
+    private ResponseBuffers receiveMessage(final ResponseSettings responseSettings, final long start) throws IOException {
         ByteBuffer headerByteBuffer = bufferPool.get(REPLY_HEADER_LENGTH);
 
         final MongoReplyHeader replyHeader;
@@ -115,10 +113,15 @@ abstract class DefaultConnection implements Connection {
             bufferPool.release(headerByteBuffer);
         }
 
-        // TODO: make max message length dynamic
-        if (replyHeader.getMessageLength() > MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH) {
+        if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
+            throw new MongoInternalException(
+                    String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
+                            replyHeader.getResponseTo(), responseSettings.getResponseTo()));
+        }
+
+        if (replyHeader.getMessageLength() > responseSettings.getMaxMessageSize()) {
             throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
-                    replyHeader.getMessageLength(), MAXIMUM_EXPECTED_REPLY_MESSAGE_LENGTH));
+                    replyHeader.getMessageLength(), responseSettings.getMaxMessageSize()));
         }
 
         PooledInputBuffer bodyInputBuffer = null;
