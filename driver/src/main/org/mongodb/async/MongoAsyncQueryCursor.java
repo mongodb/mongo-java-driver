@@ -76,7 +76,6 @@ public class MongoAsyncQueryCursor<T> {
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (e != null) {
                 close();
-                block.done();
             }
             else {
                 cursor = result.getCursor();
@@ -99,7 +98,6 @@ public class MongoAsyncQueryCursor<T> {
 
             if (result.getCursor() == null || breakEarly) {
                 close();
-                block.done();
             }
             else {
                 // get more results
@@ -121,6 +119,7 @@ public class MongoAsyncQueryCursor<T> {
             }
             else {
                 session.close();
+                block.done();
             }
         }
 
@@ -132,6 +131,7 @@ public class MongoAsyncQueryCursor<T> {
                 @Override
                 public void onResult(final Void result, final MongoException e) {
                     session.close();
+                    block.done();
                 }
             });
         }
