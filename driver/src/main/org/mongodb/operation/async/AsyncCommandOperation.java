@@ -21,8 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.MongoCommand;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.session.AsyncServerSelectingSession;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
@@ -30,6 +29,7 @@ import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.protocol.MongoCommandMessage;
+import org.mongodb.session.AsyncServerSelectingSession;
 
 import java.nio.ByteBuffer;
 
@@ -50,9 +50,9 @@ public class AsyncCommandOperation extends AsyncOperation {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()))
-                .register(new SingleResultCallback<AsyncConnection>() {
+                .register(new SingleResultCallback<AsyncServerConnection>() {
                     @Override
-                    public void onResult(final AsyncConnection connection, final MongoException e) {
+                    public void onResult(final AsyncServerConnection connection, final MongoException e) {
                         if (e != null) {
                             retVal.init(null, e);
                         }
@@ -66,12 +66,12 @@ public class AsyncCommandOperation extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<CommandResult> execute(final AsyncConnection connection) {
+    public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
-        encodeMessageToBuffer(message, buffer);
+        encodeMessageToBuffer(message, buffer, connection.getDescription());
         connection.sendAndReceiveMessage(buffer, new MongoCommandResultCallback(
                 new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
 

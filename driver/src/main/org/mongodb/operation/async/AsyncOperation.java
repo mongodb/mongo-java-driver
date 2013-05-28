@@ -19,6 +19,7 @@ package org.mongodb.operation.async;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.protocol.MongoRequestMessage;
 
@@ -29,9 +30,10 @@ public abstract class AsyncOperation extends Operation {
         super(namespace, bufferPool);
     }
 
-    protected MongoRequestMessage encodeMessageToBuffer(final MongoRequestMessage message, final PooledByteBufferOutputBuffer buffer) {
+    protected MongoRequestMessage encodeMessageToBuffer(final MongoRequestMessage message, final PooledByteBufferOutputBuffer buffer,
+                                                        final ServerDescription serverDescription) {
         try {
-            return message.encode(buffer);
+            return message.encode(buffer, serverDescription);
         } catch (RuntimeException e) {
             buffer.close();
             throw e;

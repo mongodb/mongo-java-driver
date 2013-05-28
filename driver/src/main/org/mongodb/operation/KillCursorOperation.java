@@ -17,10 +17,10 @@
 package org.mongodb.operation;
 
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.session.Session;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.MongoKillCursorsMessage;
+import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
 
@@ -33,7 +33,7 @@ public class KillCursorOperation extends Operation {
     }
 
     public void execute(final Session session) {
-        Connection connection = session.getConnection();
+        ServerConnection connection = session.getConnection();
         try {
             execute(connection);
         } finally {
@@ -42,11 +42,11 @@ public class KillCursorOperation extends Operation {
 
     }
 
-    public void execute(final Connection connection) {
+    public void execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoKillCursorsMessage message = new MongoKillCursorsMessage(killCursor);
-            message.encode(buffer);
+            message.encode(buffer, connection.getDescription());
             connection.sendMessage(buffer);
         } finally {
             buffer.close();

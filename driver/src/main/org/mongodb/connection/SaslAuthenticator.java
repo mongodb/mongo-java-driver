@@ -68,12 +68,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                bufferPool).execute(getConnection());
+                bufferPool).execute(new ConnectingServerConnection(getConnection()));
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), bufferPool).execute(getConnection());
+                new DocumentCodec(), bufferPool).execute(new ConnectingServerConnection(getConnection()));
     }
 
     private MongoCommand createSaslStartCommand(final byte[] outToken) {

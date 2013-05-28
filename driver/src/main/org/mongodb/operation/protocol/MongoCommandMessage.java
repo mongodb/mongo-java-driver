@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 
 public class MongoCommandMessage extends MongoQueryBaseMessage {
     private final MongoCommand commandOperation;
@@ -32,7 +33,8 @@ public class MongoCommandMessage extends MongoQueryBaseMessage {
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
+                                                    final ServerDescription description) {
         writeQueryPrologue(commandOperation, buffer);
         addDocument(commandOperation.toDocument(), encoder, buffer);
         return null;

@@ -19,8 +19,7 @@ package org.mongodb.operation.async;
 import org.mongodb.Decoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.session.AsyncSession;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -29,6 +28,7 @@ import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.MongoGetMore;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.protocol.MongoGetMoreMessage;
+import org.mongodb.session.AsyncSession;
 
 import java.nio.ByteBuffer;
 
@@ -46,9 +46,9 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> execute(final AsyncSession session) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
             @Override
-            public void onResult(final AsyncConnection connection, final MongoException e) {
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
                 if (e != null) {
                     retVal.init(null, e);
                 }
@@ -66,9 +66,9 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> executeReceive(final AsyncSession session, final int requestId) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
             @Override
-            public void onResult(final AsyncConnection connection, final MongoException e) {
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
                 if (e != null) {
                     retVal.init(null, e);
                 }
@@ -90,9 +90,9 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         else {
             final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
-            session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+            session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
                 @Override
-                public void onResult(final AsyncConnection connection, final MongoException e) {
+                public void onResult(final AsyncServerConnection connection, final MongoException e) {
                     if (e != null) {
                         retVal.init(null, e);
                     }
@@ -108,12 +108,12 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     }
 
 
-    public MongoFuture<QueryResult<T>> execute(final AsyncConnection connection) {
+    public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         final MongoGetMoreMessage message = new MongoGetMoreMessage(getNamespace().getFullName(), getMore);
-        encodeMessageToBuffer(message, buffer);
+        encodeMessageToBuffer(message, buffer, connection.getDescription());
         connection.sendAndReceiveMessage(buffer, new MongoGetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
                 message.getId()));
@@ -121,7 +121,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<QueryResult<T>> executeReceive(final AsyncConnection connection, final int requestId) {
+    public MongoFuture<QueryResult<T>> executeReceive(final AsyncServerConnection connection, final int requestId) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessage(new MongoGetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
@@ -130,7 +130,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<Void> executeDiscard(final AsyncConnection connection) {
+    public MongoFuture<Void> executeDiscard(final AsyncServerConnection connection) {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (getMore.getServerCursor() == null) {
@@ -145,10 +145,10 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
 
     private static class DiscardCallback implements SingleResultCallback<ResponseBuffers> {
 
-        private AsyncConnection connection;
+        private AsyncServerConnection connection;
         private SingleResultFuture<Void> future;
 
-        public DiscardCallback(final AsyncConnection connection, final SingleResultFuture<Void> future) {
+        public DiscardCallback(final AsyncServerConnection connection, final SingleResultFuture<Void> future) {
             this.connection = connection;
             this.future = future;
         }

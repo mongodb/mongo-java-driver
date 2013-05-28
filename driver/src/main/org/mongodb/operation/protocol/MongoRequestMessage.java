@@ -19,6 +19,7 @@ package org.mongodb.operation.protocol;
 import org.bson.BSONBinaryWriter;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -62,15 +63,16 @@ public abstract class MongoRequestMessage {
         return getCollectionName() != null ? getCollectionName() : null;
     }
 
-    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer) {
+    public MongoRequestMessage encode(final ChannelAwareOutputBuffer buffer, final ServerDescription serverDescription) {
         int messageStartPosition = buffer.getPosition();
         writeMessagePrologue(buffer);
-        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
+        MongoRequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition, serverDescription);
         backpatchMessageLength(messageStartPosition, buffer);
         return nextMessage;
     }
 
-    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
+    protected abstract MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
+                                                             final ServerDescription description);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);

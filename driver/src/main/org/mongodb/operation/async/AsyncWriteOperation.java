@@ -21,8 +21,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.session.AsyncSession;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
@@ -31,6 +30,7 @@ import org.mongodb.operation.MongoWrite;
 import org.mongodb.operation.WriteResult;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.session.AsyncSession;
 
 import java.nio.ByteBuffer;
 
@@ -42,9 +42,9 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     public MongoFuture<WriteResult> execute(final AsyncSession session) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
             @Override
-            public void onResult(final AsyncConnection connection, final MongoException e) {
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
                 if (e != null) {
                     retVal.init(null, e);
                 }
@@ -58,22 +58,22 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<WriteResult> execute(final AsyncConnection connection) {
+    public MongoFuture<WriteResult> execute(final AsyncServerConnection connection) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
         execute(connection, new SingleResultFutureCallback<WriteResult>(retVal));
         return retVal;
     }
 
 
-    public void execute(final AsyncConnection connection, final SingleResultCallback<WriteResult> callback) {
+    public void execute(final AsyncServerConnection connection, final SingleResultCallback<WriteResult> callback) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(), buffer);
+        MongoRequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(), buffer, connection.getDescription());
         if (getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(getWriteConcern());
             MongoCommandMessage getLastErrorMessage =
                     new MongoCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME)
                             .getFullName(), getLastError, new DocumentCodec());
-            encodeMessageToBuffer(getLastErrorMessage, buffer);
+            encodeMessageToBuffer(getLastErrorMessage, buffer, connection.getDescription());
             connection.sendAndReceiveMessage(buffer, new MongoWriteResultCallback(callback, getWrite(), getLastError,
                     new DocumentCodec(), getNamespace(), nextMessage, connection, getBufferPool(), getLastErrorMessage.getId()));
         }

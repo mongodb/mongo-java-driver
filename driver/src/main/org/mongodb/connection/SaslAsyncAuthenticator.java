@@ -87,13 +87,13 @@ abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                bufferPool).execute(getConnection()).register(callback);
+                bufferPool).execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), bufferPool).execute(getConnection()).register(callback);
+                new DocumentCodec(), bufferPool).execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 
     private MongoCommand createSaslStartCommand(final byte[] outToken) {

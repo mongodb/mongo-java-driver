@@ -21,8 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.session.AsyncSession;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
@@ -30,6 +29,7 @@ import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.protocol.MongoQueryMessage;
+import org.mongodb.session.AsyncSession;
 
 import java.nio.ByteBuffer;
 
@@ -50,9 +50,9 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
 
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        session.getConnection().register(new SingleResultCallback<AsyncConnection>() {
+        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
             @Override
-            public void onResult(final AsyncConnection connection, final MongoException e) {
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
                 if (e != null) {
                    retVal.init(null, e);
                 }
@@ -66,12 +66,12 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<QueryResult<T>> execute(final AsyncConnection connection) {
+    public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
-        encodeMessageToBuffer(message, buffer);
+        encodeMessageToBuffer(message, buffer, connection.getDescription());
         connection.sendAndReceiveMessage(buffer, new MongoQueryResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection, message.getId()));
 

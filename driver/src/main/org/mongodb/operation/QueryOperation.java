@@ -22,12 +22,12 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.session.Session;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.MongoQueryMessage;
 import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
 
@@ -45,7 +45,7 @@ public class QueryOperation<T> extends Operation {
     }
 
     public QueryResult<T> execute(final Session session) {
-        Connection connection = session.getConnection();
+        ServerConnection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
@@ -53,11 +53,11 @@ public class QueryOperation<T> extends Operation {
         }
     }
 
-    public QueryResult<T> execute(final Connection connection) {
+    public QueryResult<T> execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoQueryMessage message = new MongoQueryMessage(getNamespace().getFullName(), find, queryEncoder);
-            message.encode(buffer);
+            message.encode(buffer, connection.getDescription());
 
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();

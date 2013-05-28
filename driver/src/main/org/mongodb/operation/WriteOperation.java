@@ -21,13 +21,13 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.session.Session;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoReplyMessage;
 import org.mongodb.operation.protocol.MongoRequestMessage;
+import org.mongodb.session.Session;
 
 import java.nio.ByteBuffer;
 
@@ -38,7 +38,7 @@ public abstract class WriteOperation extends Operation {
     }
 
     public WriteResult execute(final Session session) {
-        Connection connection = session.getConnection();
+        ServerConnection connection = session.getConnection();
         try {
             return execute(connection);
         } finally {
@@ -46,13 +46,13 @@ public abstract class WriteOperation extends Operation {
         }
     }
 
-    public WriteResult execute(final Connection connection) {
+    public WriteResult execute(final ServerConnection connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             CommandResult getLastErrorResult = null;
-            MongoRequestMessage nextMessage = createRequestMessage().encode(buffer);
+            MongoRequestMessage nextMessage = createRequestMessage().encode(buffer, connection.getDescription());
             while (nextMessage != null) {
-                nextMessage = nextMessage.encode(buffer);
+                nextMessage = nextMessage.encode(buffer, connection.getDescription());
             }
             if (getWrite().getWriteConcern().callGetLastError()) {
                 final GetLastError getLastError = new GetLastError(getWrite().getWriteConcern());
@@ -60,7 +60,7 @@ public abstract class WriteOperation extends Operation {
                 MongoCommandMessage getLastErrorMessage = new MongoCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                         MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastError,
                         codec);
-                getLastErrorMessage.encode(buffer);
+                getLastErrorMessage.encode(buffer, connection.getDescription());
                 connection.sendMessage(buffer);
                 ResponseBuffers responseBuffers = connection.receiveMessage();
                 try {

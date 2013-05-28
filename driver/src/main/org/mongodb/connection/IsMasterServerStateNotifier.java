@@ -65,11 +65,6 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
         this.bufferPool = bufferPool;
     }
 
-    private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(Unknown).status(
-                Connecting).address(connectionFactory.getServerAddress()).build();
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public synchronized void run() {
@@ -84,7 +79,8 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",
-                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool).execute(connection);
+                        new MongoCommand(new Document("ismaster", 1)), new DocumentCodec(), bufferPool)
+                        .execute(new ConnectingServerConnection(connection));
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();
 
@@ -202,5 +198,9 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             tags.put(curEntry.getKey(), curEntry.getValue().toString());
         }
         return tags;
+    }
+
+    private ServerDescription getConnectingServerDescription() {
+        return ServerDescription.builder().type(Unknown).status(Connecting).address(connectionFactory.getServerAddress()).build();
     }
 }

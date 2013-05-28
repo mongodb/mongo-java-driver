@@ -19,10 +19,10 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoInsert;
 
 public class MongoInsertMessage<T> extends MongoRequestMessage {
-    private static final int MAX_MESSAGE_SIZE = 48000000;  // TODO: this shouldn't be a constant
 
     private final MongoInsert<T> insert;
     private final Encoder<T> encoder;
@@ -34,13 +34,14 @@ public class MongoInsertMessage<T> extends MongoRequestMessage {
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
+                                                    final ServerDescription serverDescription) {
         writeInsertPrologue(insert.getWriteConcern(), buffer);
         for (int i = 0; i < insert.getDocuments().size(); i++) {
             T document = insert.getDocuments().get(i);
             int pos = buffer.getPosition();
             addDocument(document, encoder, buffer);
-            if (buffer.getPosition() - messageStartPosition > MAX_MESSAGE_SIZE) {
+            if (buffer.getPosition() - messageStartPosition > serverDescription.getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
                 return new MongoInsertMessage<T>(getCollectionName(), new MongoInsert<T>(insert, i), encoder);
             }

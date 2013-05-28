@@ -23,18 +23,19 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.session.AsyncServerSelectingSession;
-import org.mongodb.session.AsyncSession;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.session.SessionBindingType;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFind;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.async.SingleResultFuture;
+import org.mongodb.session.AsyncServerSelectingSession;
+import org.mongodb.session.AsyncSession;
+import org.mongodb.session.SessionBindingType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,15 +175,15 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     }
 
     private static final class SingleConnectionAsyncSession implements AsyncServerSelectingSession {
-        private AsyncConnection connection;
+        private AsyncServerConnection connection;
         private boolean isClosed;
 
-        public SingleConnectionAsyncSession(final AsyncConnection connection) {
+        public SingleConnectionAsyncSession(final AsyncServerConnection connection) {
             this.connection = connection;
         }
 
         @Override
-        public MongoFuture<AsyncConnection> getConnection(final ServerSelector serverSelector) {
+        public MongoFuture<AsyncServerConnection> getConnection(final ServerSelector serverSelector) {
             return getConnection();
         }
 
@@ -192,8 +193,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public MongoFuture<AsyncConnection> getConnection() {
-            return new SingleResultFuture<AsyncConnection>(new DelayedCloseAsyncConnection(connection), null);
+        public MongoFuture<AsyncServerConnection> getConnection() {
+            return new SingleResultFuture<AsyncServerConnection>(new DelayedCloseAsyncConnection(connection), null);
         }
 
         @Override
@@ -207,11 +208,11 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
     }
 
-    private static class DelayedCloseAsyncConnection implements AsyncConnection {
-        private AsyncConnection wrapped;
+    private static class DelayedCloseAsyncConnection implements AsyncServerConnection {
+        private AsyncServerConnection wrapped;
         private boolean isClosed;
 
-        public DelayedCloseAsyncConnection(final AsyncConnection asyncConnection) {
+        public DelayedCloseAsyncConnection(final AsyncServerConnection asyncConnection) {
             wrapped = asyncConnection;
         }
 
@@ -246,6 +247,12 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         @Override
         public boolean isClosed() {
             return isClosed;
+        }
+
+        @Override
+        public ServerDescription getDescription() {
+            isTrue("open", !isClosed());
+            return wrapped.getDescription();
         }
     }
 }

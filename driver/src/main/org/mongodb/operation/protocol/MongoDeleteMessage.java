@@ -19,6 +19,7 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoRemove;
 
 public class MongoDeleteMessage extends MongoRequestMessage {
@@ -32,7 +33,8 @@ public class MongoDeleteMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
+                                                    final ServerDescription description) {
         writeDelete(buffer);
         return null;
     }

@@ -39,7 +39,8 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection())
+                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
+                .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override
                     public void onResult(final CommandResult result, final MongoException e) {
@@ -51,12 +52,13 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
                                     new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                             getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
                                     new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
-                                    .execute(getConnection()).register(new SingleResultCallback<CommandResult>() {
-                                @Override
-                                public void onResult(final CommandResult result, final MongoException e) {
-                                    callback.onResult(result, e);
-                                }
-                            });
+                                    .execute(new ConnectingAsyncServerConnection(getConnection()))
+                                    .register(new SingleResultCallback<CommandResult>() {
+                                        @Override
+                                        public void onResult(final CommandResult result, final MongoException e) {
+                                            callback.onResult(result, e);
+                                        }
+                                    });
                         }
                     }
                 });

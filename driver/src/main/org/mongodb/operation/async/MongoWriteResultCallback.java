@@ -22,7 +22,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CommandResult;
@@ -42,14 +42,14 @@ class MongoWriteResultCallback extends MongoCommandResultBaseCallback {
 
     public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
                                     final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final MongoRequestMessage nextMessage, final AsyncConnection connection,
+                                    final MongoRequestMessage nextMessage, final AsyncServerConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool) {
         this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
     }
 
     public MongoWriteResultCallback(final SingleResultCallback<WriteResult> callback, final MongoWrite writeOperation,
                                     final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                                    final MongoRequestMessage nextMessage, final AsyncConnection connection,
+                                    final MongoRequestMessage nextMessage, final AsyncServerConnection connection,
                                     final BufferPool<ByteBuffer> bufferPool, final long requestId) {
         super(getLastError, decoder, connection, requestId);
         this.callback = callback;

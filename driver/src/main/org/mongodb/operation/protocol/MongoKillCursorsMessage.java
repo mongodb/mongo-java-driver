@@ -17,6 +17,7 @@
 package org.mongodb.operation.protocol;
 
 import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.MongoKillCursor;
 
 public class MongoKillCursorsMessage extends MongoRequestMessage {
@@ -28,7 +29,8 @@ public class MongoKillCursorsMessage extends MongoRequestMessage {
     }
 
     @Override
-    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected MongoRequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition,
+                                                    final ServerDescription description) {
         writeKillCursorsPrologue(1, buffer);
         buffer.writeLong(killCursor.getServerCursor().getId());
         return null;

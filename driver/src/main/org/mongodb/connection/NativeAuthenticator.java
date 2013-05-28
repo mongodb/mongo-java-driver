@@ -39,11 +39,13 @@ public class NativeAuthenticator extends Authenticator {
         try {
             CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                     new MongoCommand(NativeAuthenticationHelper.getNonceCommand()),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
+                    new ConnectingServerConnection(getConnection()));
             new CommandOperation(getCredential().getSource(),
                     new MongoCommand(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                             getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(getConnection());
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
+                    new ConnectingServerConnection(getConnection()));
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

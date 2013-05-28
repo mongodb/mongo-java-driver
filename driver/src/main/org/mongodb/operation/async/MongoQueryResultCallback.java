@@ -21,7 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoQueryFailureException;
@@ -33,7 +33,7 @@ class MongoQueryResultCallback<T> extends MongoResponseCallback {
     private final Decoder<T> decoder;
 
     public MongoQueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                                    final AsyncConnection connection, final int requestId) {
+                                    final AsyncServerConnection connection, final int requestId) {
         super(connection, requestId);
         this.callback = callback;
         this.decoder = decoder;

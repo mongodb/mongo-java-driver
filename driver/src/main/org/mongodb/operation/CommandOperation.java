@@ -21,12 +21,12 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.MongoCommand;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.MongoCommandMessage;
 import org.mongodb.operation.protocol.MongoReplyMessage;
+import org.mongodb.session.ServerSelectingSession;
 
 import java.nio.ByteBuffer;
 
@@ -42,7 +42,7 @@ public class CommandOperation extends Operation {
     }
 
     public CommandResult execute(final ServerSelectingSession session) {
-        Connection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
+        ServerConnection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
         try {
             return execute(connection);
         } finally {
@@ -50,11 +50,11 @@ public class CommandOperation extends Operation {
         }
     }
 
-    public CommandResult execute(final Connection connection) {
+    public CommandResult execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             final MongoCommandMessage message = new MongoCommandMessage(getNamespace().getFullName(), commandOperation, codec);
-            message.encode(buffer);
+            message.encode(buffer, connection.getDescription());
             connection.sendMessage(buffer);
             final ResponseBuffers responseBuffers = connection.receiveMessage();
             try {

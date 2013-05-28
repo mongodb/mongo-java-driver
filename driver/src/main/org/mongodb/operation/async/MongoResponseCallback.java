@@ -18,21 +18,21 @@ package org.mongodb.operation.async;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 
 abstract class MongoResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
-    private AsyncConnection connection;
+    private AsyncServerConnection connection;
     private long requestId;
 
-    public MongoResponseCallback(final AsyncConnection connection, final long requestId) {
+    public MongoResponseCallback(final AsyncServerConnection connection, final long requestId) {
         this.connection = connection;
         this.requestId = requestId;
     }
 
-    protected AsyncConnection getConnection() {
+    protected AsyncServerConnection getConnection() {
         return connection;
     }
 
