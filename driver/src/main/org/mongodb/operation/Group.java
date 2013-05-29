@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public class MongoGroup {
+public class Group {
 
     private final Document key;
     private final String keyf;
@@ -27,27 +27,27 @@ public class MongoGroup {
     private Document cond;
     private String finalize;
 
-    private MongoGroup(final Document key, final String keyf, final String reduce, final Document initial) {
+    private Group(final Document key, final String keyf, final String reduce, final Document initial) {
         this.keyf = keyf;
         this.key = key;
         this.reduce = reduce;
         this.initial = initial;
     }
 
-    public MongoGroup(final Document key, final String reduce, final Document initial) {
+    public Group(final Document key, final String reduce, final Document initial) {
         this(key, null, reduce, initial);
     }
 
-    public MongoGroup(final String keyf, final String reduce, final Document initial) {
+    public Group(final String keyf, final String reduce, final Document initial) {
         this(null, keyf, reduce, initial);
     }
 
-    public MongoGroup cond(final Document aCond) {
+    public Group cond(final Document aCond) {
         this.cond = aCond;
         return this;
     }
 
-    public MongoGroup finalize(final String finalizeFunction) {
+    public Group finalize(final String finalizeFunction) {
         this.finalize = finalizeFunction;
         return this;
     }

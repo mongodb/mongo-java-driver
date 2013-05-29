@@ -17,8 +17,7 @@
 package com.mongodb;
 
 import org.mongodb.command.Command;
-import org.mongodb.command.Group;
-import org.mongodb.operation.MongoGroup;
+import org.mongodb.operation.Group;
 
 import static com.mongodb.DBObjects.toNullableDocument;
 
@@ -58,10 +57,10 @@ public class GroupCommand {
     }
 
     public Command toNew() {
-        final MongoGroup mongoGroup = new MongoGroup(toNullableDocument(keys), reduce, toNullableDocument(initial))
+        final Group group = new Group(toNullableDocument(keys), reduce, toNullableDocument(initial))
                 .cond(toNullableDocument(condition))
                 .finalize(finalize);
 
-        return new Group(mongoGroup, input);
+        return new org.mongodb.command.Group(group, input);
     }
 }

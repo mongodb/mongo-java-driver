@@ -17,15 +17,14 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
-import org.mongodb.operation.MongoGroup;
 
 public class Group extends Command {
 
-    public Group(final MongoGroup group, final String collectionName) {
+    public Group(final org.mongodb.operation.Group group, final String collectionName) {
         super(asDocument(group, collectionName));
     }
 
-    private static Document asDocument(final MongoGroup group, final String collectionName) {
+    private static Document asDocument(final org.mongodb.operation.Group group, final String collectionName) {
 
         final Document document = new Document("ns", collectionName);
 
