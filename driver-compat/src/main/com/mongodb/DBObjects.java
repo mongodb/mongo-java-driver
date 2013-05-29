@@ -25,7 +25,6 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +60,13 @@ public class DBObjects {
         return toDocument(fields);
     }
 
+    public static Document toNullableDocument(final DBObject obj) {
+        if (obj == null) {
+            return null;
+        }
+        return toDocument(obj);
+    }
+
     public static Document toUpdateOperationsDocument(final DBObject o) {
         if (o == null) {
             return null;
@@ -88,13 +94,11 @@ public class DBObjects {
                 final Object value = obj.get(key);
                 if (value instanceof List) {
                     document.put(key, value);
-                }
-                else if (value instanceof BSONObject) {
+                } else if (value instanceof BSONObject) {
                     final Document nestedDocument = new Document();
                     fill((DBObject) value, nestedDocument);
                     document.put(key, nestedDocument);
-                }
-                else {
+                } else {
                     document.put(key, obj.get(key));
                 }
             }
@@ -104,25 +108,26 @@ public class DBObjects {
     private static void fill(final Document document, final DBObject obj) {
         for (final Map.Entry<String, Object> cur : document.entrySet()) {
             if (cur.getValue() instanceof List<?>) {
-                final List<?> source = (List) cur.getValue();
-                final List<Object> destination = new ArrayList<Object>(source.size());
-                for (Object o : source) {
-                    if (o instanceof Document) {
-                        destination.add(toDBObject((Document) o));
-                    } else {
-                        destination.add(o);
-                    }
-                }
-                obj.put(cur.getKey(), destination);
-            }
-            else if (cur.getValue() instanceof Document) {
+                obj.put(cur.getKey(), toDBList((List) cur.getValue()));
+            } else if (cur.getValue() instanceof Document) {
                 final DBObject nestedObj = new BasicDBObject();
                 fill((Document) cur.getValue(), nestedObj);
                 obj.put(cur.getKey(), nestedObj);
-            }
-            else {
+            } else {
                 obj.put(cur.getKey(), cur.getValue());
             }
         }
+    }
+
+    public static BasicDBList toDBList(final List<?> source) {
+        final BasicDBList dbList = new BasicDBList();
+        for (Object o : source) {
+            if (o instanceof Document) {
+                dbList.add(toDBObject((Document) o));
+            } else {
+                dbList.add(o);
+            }
+        }
+        return dbList;
     }
 }

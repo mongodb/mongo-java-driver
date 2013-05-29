@@ -37,6 +37,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -227,7 +228,7 @@ public class DBCollectionTest extends DatabaseTestCase {
                 false,
                 true
         );
-        assertEquals(new BasicDBObject(), newDoc);
+        assertNull(newDoc);
         assertEquals(doc, collection.findOne(null, null, new BasicDBObject("_id", -1)));
     }
 
