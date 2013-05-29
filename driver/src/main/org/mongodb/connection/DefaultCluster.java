@@ -102,7 +102,29 @@ public abstract class DefaultCluster implements Cluster {
 
     @Override
     public ClusterDescription getDescription() {
-        return description;
+        isTrue("open", !isClosed());
+
+        try {
+            CountDownLatch currentPhase = phase.get();
+            ClusterDescription curDescription = description;
+            long endTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(20, TimeUnit.SECONDS); // TODO: configurable
+            while (curDescription.getType() == ClusterType.Unknown) {
+                final long timeout = endTime - System.nanoTime();
+
+                LOGGER.log(Level.FINE, String.format("Cluster description not yet available. Waiting for %d ms before timing out",
+                        TimeUnit.MILLISECONDS.convert(timeout, TimeUnit.NANOSECONDS)));
+
+                if (!currentPhase.await(timeout, TimeUnit.NANOSECONDS)) {
+                    throw new MongoTimeoutException("Timed out while waiting for the cluster description");
+                }
+                currentPhase = phase.get();
+                curDescription = description;
+            }
+            return curDescription;
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(
+                    String.format("Interrupted while waiting for the cluster description"), e);
+        }
     }
 
     @Override
