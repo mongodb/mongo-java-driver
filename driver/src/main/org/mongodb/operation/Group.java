@@ -16,39 +16,40 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Code;
 import org.mongodb.Document;
 
 public class Group {
 
     private final Document key;
-    private final String keyf;
-    private final String reduce;
+    private final Code keyFunction;
+    private final Code reduceFunction;
     private final Document initial;
-    private Document cond;
-    private String finalize;
+    private Document filter;
+    private Code finalizeFunction;
 
-    private Group(final Document key, final String keyf, final String reduce, final Document initial) {
-        this.keyf = keyf;
+    private Group(final Document key, final Code keyFunction, final Code reduceFunction, final Document initial) {
+        this.keyFunction = keyFunction;
         this.key = key;
-        this.reduce = reduce;
+        this.reduceFunction = reduceFunction;
         this.initial = initial;
     }
 
-    public Group(final Document key, final String reduce, final Document initial) {
-        this(key, null, reduce, initial);
+    public Group(final Document key, final Code reduceFunction, final Document initial) {
+        this(key, null, reduceFunction, initial);
     }
 
-    public Group(final String keyf, final String reduce, final Document initial) {
-        this(null, keyf, reduce, initial);
+    public Group(final Code keyFunction, final Code reduceFunction, final Document initial) {
+        this(null, keyFunction, reduceFunction, initial);
     }
 
-    public Group cond(final Document aCond) {
-        this.cond = aCond;
+    public Group filter(final Document aCond) {
+        this.filter = aCond;
         return this;
     }
 
-    public Group finalize(final String finalizeFunction) {
-        this.finalize = finalizeFunction;
+    public Group finalizeFunction(final Code finalize) {
+        this.finalizeFunction = finalize;
         return this;
     }
 
@@ -56,23 +57,23 @@ public class Group {
         return key;
     }
 
-    public Document getCond() {
-        return cond;
+    public Document getFilter() {
+        return filter;
     }
 
     public Document getInitial() {
         return initial;
     }
 
-    public String getReduce() {
-        return reduce;
+    public Code getReduceFunction() {
+        return reduceFunction;
     }
 
-    public String getFinalize() {
-        return finalize;
+    public Code getFinalizeFunction() {
+        return finalizeFunction;
     }
 
-    public String getKeyf() {
-        return keyf;
+    public Code getKeyFunction() {
+        return keyFunction;
     }
 }

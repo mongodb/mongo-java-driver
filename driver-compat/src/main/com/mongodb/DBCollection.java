@@ -46,22 +46,22 @@ import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
 import org.mongodb.operation.FindAndReplace;
 import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.Insert;
-import org.mongodb.operation.Remove;
-import org.mongodb.operation.Replace;
-import org.mongodb.operation.Update;
-import org.mongodb.session.ServerSelectingSession;
-import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
+import org.mongodb.operation.Replace;
 import org.mongodb.operation.ReplaceOperation;
+import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
+import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.util.FieldHelpers;
 
 import java.nio.ByteBuffer;
@@ -345,7 +345,7 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), 
+        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(),
                 getBufferPool()).execute(getSession()), wc, getDB());
     }
 
@@ -956,7 +956,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           final String finalize, final ReadPreference readPreference) {
-        return group(new GroupCommand(getName(), key, cond, initial, reduce, finalize), readPreference);
+        return group(new GroupCommand(this, key, cond, initial, reduce, finalize), readPreference);
     }
 
     /**

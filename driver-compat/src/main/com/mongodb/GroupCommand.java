@@ -16,9 +16,11 @@
 
 package com.mongodb;
 
+import org.bson.types.Code;
 import org.mongodb.command.Command;
 import org.mongodb.operation.Group;
 
+import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 
 /**
@@ -34,9 +36,9 @@ public class GroupCommand {
     private final String reduce;
     private final String finalize;
 
-    public GroupCommand(final String input, final DBObject keys, final DBObject condition,
+    public GroupCommand(final DBCollection input, final DBObject keys, final DBObject condition,
                         final DBObject initial, final String reduce, final String finalize) {
-        this.input = input;
+        this.input = input.getName();
         this.keys = keys;
         this.condition = condition;
         this.initial = initial;
@@ -57,9 +59,18 @@ public class GroupCommand {
     }
 
     public Command toNew() {
-        final Group group = new Group(toNullableDocument(keys), reduce, toNullableDocument(initial))
-                .cond(toNullableDocument(condition))
-                .finalize(finalize);
+        final Group group = new Group(
+                toNullableDocument(keys),
+                reduce != null ? new Code(reduce) : null,
+                toNullableDocument(initial)
+        );
+
+        if (finalize != null) {
+            group.finalizeFunction(new Code(finalize));
+        }
+        if (condition != null) {
+            group.filter(toDocument(condition));
+        }
 
         return new org.mongodb.command.Group(group, input);
     }

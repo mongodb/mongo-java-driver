@@ -22,7 +22,7 @@ import java.util.List;
  * Interface extracted from the old DBCollection.  The aim of this interface is simply to keep track of what needs to be
  * implemented for backwards compatibility.
  */
-@SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
+@SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 public interface IDBCollection {
     WriteResult insert(DBObject[] arr, WriteConcern concern);
 

@@ -31,18 +31,18 @@ public class Group extends Command {
         if (group.getKey() != null) {
             document.put("key", group.getKey());
         } else {
-            document.put("keyf", group.getKeyf());
+            document.put("keyf", group.getKeyFunction());
         }
 
         document.put("initial", group.getInitial());
-        document.put("$reduce", group.getReduce());
+        document.put("$reduce", group.getReduceFunction());
 
-        if (group.getFinalize() != null) {
-            document.put("finalize", group.getFinalize());
+        if (group.getFinalizeFunction() != null) {
+            document.put("finalize", group.getFinalizeFunction());
         }
 
-        if (group.getCond() != null) {
-            document.put("cond", group.getCond());
+        if (group.getFilter() != null) {
+            document.put("cond", group.getFilter());
         }
 
         return new Document("group", document);

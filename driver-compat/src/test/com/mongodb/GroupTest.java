@@ -51,7 +51,7 @@ public class GroupTest extends DatabaseTestCase {
     @Test
     public void testGroupWithGroupCommand() {
         final GroupCommand command = new GroupCommand(
-                collection.getName(),
+                collection,
                 new BasicDBObject("x", 1),
                 null,
                 new BasicDBObject("count", 0),
@@ -125,5 +125,37 @@ public class GroupTest extends DatabaseTestCase {
                 new BasicDBObject("z", 0),
                 null
         );
+    }
+
+    @Test
+    public void testGroupCommandWithPlainDBObject() {
+        final DBObject command = new BasicDBObject()
+                .append("key", new BasicDBObject("x", 1))
+                .append("cond", null)
+                .append("$reduce", "function( o , p ){ p.count++; }")
+                .append("initial", new BasicDBObject("count", 0));
+
+        final BasicDBList result = (BasicDBList) collection.group(command);
+        assertEquals(2, result.size());
+        assertThat(result, hasItem(new BasicDBObject("x", "a").append("count", 3.0)));
+    }
+
+    @Test
+    public void testGroupCommandToDBObject() {
+        final DBObject command = new GroupCommand(
+                collection,
+                new BasicDBObject("x", 1),
+                null,
+                new BasicDBObject("c", 0),
+                "function(o,p){}",
+                null
+        ).toDBObject();
+
+        final DBObject args = new BasicDBObject("ns", collection.getName())
+                .append("key", new BasicDBObject("x", 1))
+                .append("cond", null)
+                .append("$reduce", "function(o,p){}")
+                .append("initial", new BasicDBObject("c", 0));
+        assertEquals(new BasicDBObject("group", args), command);
     }
 }
