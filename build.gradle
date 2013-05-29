@@ -51,8 +51,8 @@ subprojects {
     }
 
     sourceSets {
-        main { java.srcDir 'src/main' }
-        test { java.srcDir 'src/test' }
+        main { java.srcDirs = ['src/main'] }
+        test { java.srcDirs = ['src/test'] }
     }
 
     /* Compiling */
@@ -226,42 +226,20 @@ project(':bson') {
 project(':driver') {
 
     sourceSets {
-        acceptance {
-            java {
-                srcDir 'src/test/acceptance'
-            }
-        }
-        functional {
-            java {
-                srcDir 'src/test/functional'
-            }
-        }
-        unit {
-            java {
-                srcDir 'src/test/unit'
-            }
-        }
+        test        { java.srcDirs = ['src/test/unit'] }
+        acceptance  { java.srcDirs = ['src/test/acceptance'] }
+        functional  { java.srcDirs = ['src/test/functional'] }
     }
-
-    configurations {
-        unitCompile { extendsFrom testCompile }
-        functionalCompile { extendsFrom unitCompile }
-        acceptanceCompile { extendsFrom functionalCompile }
-    }
-
-
 
     dependencies {
-        compile project(':bson')
-//        testCompile 'org.jmock:jmock:2.6.0'
-        testCompile 'org.jmock:jmock-legacy:2.6.0'
-        testCompile 'org.jmock:jmock-junit4:2.6.0'
-        unitCompile sourceSets.main.output
-        acceptanceCompile sourceSets.functional.output
+        compile             project(':bson')
+        testCompile         'org.jmock:jmock-legacy:2.6.0'
+        testCompile         'org.jmock:jmock-junit4:2.6.0'
+        functionalCompile   sourceSets.test.runtimeClasspath
+        acceptanceCompile   sourceSets.functional.runtimeClasspath
     }
 
     idea.module {
-        testSourceDirs += project.sourceSets.unit.allSource.getSrcDirs()
         testSourceDirs += project.sourceSets.functional.allSource.getSrcDirs()
         testSourceDirs += project.sourceSets.acceptance.allSource.getSrcDirs()
     }
@@ -279,12 +257,7 @@ project(':driver') {
         }
     }
 
-    task unitTest(type: Test) {
-        testClassesDir = sourceSets.unit.output.classesDir
-        classpath = sourceSets.unit.runtimeClasspath
-    }
-
-    task functionalTest(type: Test, dependsOn: unitTest) {
+    task functionalTest(type: Test, dependsOn: test) {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
         useJUnit() {
