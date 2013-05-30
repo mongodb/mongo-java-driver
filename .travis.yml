@@ -21,4 +21,5 @@ branches:
     - master
     - 3.0.x
 
-script: "./gradlew"
+install: "./gradlew -q assemble"
+script: "./gradlew -q test"
