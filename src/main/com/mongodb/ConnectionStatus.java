@@ -210,24 +210,23 @@ abstract class ConnectionStatus {
                     _maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
                 }
             } catch (Exception e) {
-                if (!((_ok) ? true : (Math.random() > 0.1))) {
-                    return res;
-                }
+                if (_ok || (Math.random() > 0.9)) {
+                    // only log if state changes, or only 10% if was down before
+                    final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(_addr);
 
-                final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(_addr);
+                    if (e instanceof IOException) {
 
-                if (e instanceof IOException) {
+                        logError.append(" - ").append(IOException.class.getName());
 
-                    logError.append(" - ").append(IOException.class.getName());
+                        if (e.getMessage() != null) {
+                            logError.append(" - message: ").append(e.getMessage());
+                        }
 
-                    if (e.getMessage() != null) {
-                        logError.append(" - message: ").append(e.getMessage());
+                        getLogger().log(Level.WARNING, logError.toString());
+
+                    } else {
+                        getLogger().log(Level.WARNING, logError.toString(), e);
                     }
-
-                    getLogger().log(Level.WARNING, logError.toString());
-
-                } else {
-                    getLogger().log(Level.WARNING, logError.toString(), e);
                 }
                 _ok = false;
             }
