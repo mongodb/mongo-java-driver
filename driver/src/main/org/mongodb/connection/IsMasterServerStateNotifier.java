@@ -104,7 +104,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
         } catch (Throwable t) {
             if (!isClosed) {
                 // Log on state change
-                if (currentServerDescription.getStatus() != Connecting) {
+                if (currentServerDescription.getStatus() != Connecting) { // NOPMD
                     serverDescription = getConnectingServerDescription();
                     LOGGER.log(Level.INFO, String.format(
                             "Exception in monitor thread while connecting to server %s", connectionFactory.getServerAddress()), t);
