@@ -460,7 +460,8 @@ public class DB implements IDB {
 
     org.mongodb.operation.CommandResult executeCommand(final Command commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new CommandOperation(getName(), commandOperation, documentCodec, getBufferPool()).execute(getSession());
+        return new CommandOperation(getName(), commandOperation, documentCodec, getCluster().getDescription(),
+                getBufferPool()).execute(getSession());
     }
 
     org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {

@@ -51,7 +51,7 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public double ping() {
         final CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, documentCodec,
-                getBufferPool()).execute(client.getSession());
+                client.getCluster().getDescription(), getBufferPool()).execute(client.getSession());
 
         return (Double) pingResult.getResponse().get("ok");
     }
@@ -59,7 +59,7 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public Set<String> getDatabaseNames() {
         final CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, documentCodec,
-                getBufferPool()).execute(client.getSession());
+                client.getCluster().getDescription(), getBufferPool()).execute(client.getSession());
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");

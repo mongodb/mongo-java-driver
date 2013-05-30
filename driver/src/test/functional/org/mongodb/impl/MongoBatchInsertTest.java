@@ -25,6 +25,8 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
+import org.mongodb.connection.ClusterConnectionMode;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
@@ -63,8 +65,8 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(getSession());
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
-                new Count(new Find(), collectionName), new DocumentCodec(), getBufferPool()).execute(getSession()))
-                .getCount());
+                new Count(new Find(), collectionName), new DocumentCodec(), new ClusterDescription(ClusterConnectionMode.Direct),
+                getBufferPool()).execute(getSession())).getCount());
     }
 
 }

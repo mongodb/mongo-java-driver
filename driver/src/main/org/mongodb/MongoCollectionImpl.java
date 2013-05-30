@@ -610,7 +610,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     getOptions().getPrimitiveCodecs(),
                     getCodec());
             return new FindAndModifyCommandResult<T>(new CommandOperation(getDatabase().getName(), findAndUpdateCommand, codec,
-                    client.getBufferPool()).execute(client.getSession())).getValue();
+                    client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -624,8 +624,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     .upsert(true).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(findOp.getOrder());
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndUpdate<T>(findAndUpdate, getName()),
-                            new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()), client.getBufferPool())
-                            .execute(client.getSession())).getValue();
+                            new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
+                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -640,7 +640,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                            client.getBufferPool()).execute(client.getSession()))
+                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession()))
                     .getValue();
         }
 
@@ -651,7 +651,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                            client.getBufferPool()).execute(client.getSession())).getValue();
+                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -663,8 +663,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     = new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),
                     getCodec());
             return new FindAndModifyCommandResult<T>(new CommandOperation(getDatabase().getName(),
-                    new org.mongodb.command.FindAndRemove(findAndRemove, getName()), codec, client.getBufferPool())
-                    .execute(client.getSession())).getValue();
+                    new org.mongodb.command.FindAndRemove(findAndRemove, getName()), codec, client.getCluster().getDescription(),
+                    client.getBufferPool()).execute(client.getSession())).getValue();
         }
         //CHECKSTYLE:OFF
 

@@ -26,6 +26,8 @@ import org.mongodb.operation.CommandResult;
 
 import java.nio.ByteBuffer;
 
+import static org.mongodb.connection.ClusterConnectionMode.Direct;
+
 public class NativeAuthenticator extends Authenticator {
     private final BufferPool<ByteBuffer> bufferPool;
 
@@ -39,13 +41,13 @@ public class NativeAuthenticator extends Authenticator {
         try {
             CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                     new Command(NativeAuthenticationHelper.getNonceCommand()),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
-                    new ConnectingServerConnection(getConnection()));
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                    .execute(new ConnectingServerConnection(getConnection()));
             new CommandOperation(getCredential().getSource(),
                     new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                             getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool).execute(
-                    new ConnectingServerConnection(getConnection()));
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                    .execute(new ConnectingServerConnection(getConnection()));
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

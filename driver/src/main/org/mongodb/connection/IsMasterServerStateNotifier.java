@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.mongodb.connection.ClusterConnectionMode.Direct;
 import static org.mongodb.connection.ServerConnectionStatus.Connected;
 import static org.mongodb.connection.ServerConnectionStatus.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
@@ -79,7 +80,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",
-                        new Command(new Document("ismaster", 1)), new DocumentCodec(), bufferPool)
+                        new Command(new Document("ismaster", 1)), new DocumentCodec(), new ClusterDescription(Direct), bufferPool)
                         .execute(new ConnectingServerConnection(connection));
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();

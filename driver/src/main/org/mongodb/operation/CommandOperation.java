@@ -21,6 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
@@ -35,7 +36,7 @@ public class CommandOperation extends Operation {
     private final Codec<Document> codec;
 
     public CommandOperation(final String database, final Command commandOperation, final Codec<Document> codec,
-                            final BufferPool<ByteBuffer> bufferPool) {
+                            final ClusterDescription clusterDescription, final BufferPool<ByteBuffer> bufferPool) {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
         this.commandOperation = commandOperation;
         this.codec = codec;

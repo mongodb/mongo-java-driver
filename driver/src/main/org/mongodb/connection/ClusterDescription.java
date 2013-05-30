@@ -40,6 +40,10 @@ public class ClusterDescription {
 
     private final ClusterConnectionMode mode;
 
+    public ClusterDescription(final ClusterConnectionMode mode) {
+        this(Collections.<ServerDescription>emptyList(), mode);
+    }
+
     public ClusterDescription(final List<ServerDescription> all, final ClusterConnectionMode mode) {
         notNull("all", all);
         this.mode = notNull("mode", mode);

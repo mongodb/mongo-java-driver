@@ -78,7 +78,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final Command commandOperation) {
         commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandOperation(getName(), commandOperation, documentCodec, client.getBufferPool()).execute(client.getSession());
+        return new CommandOperation(getName(), commandOperation, documentCodec, client.getCluster().getDescription(),
+                client.getBufferPool()).execute(client.getSession());
     }
 
 //    @Override

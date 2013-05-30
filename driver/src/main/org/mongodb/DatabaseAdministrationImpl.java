@@ -53,7 +53,8 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getBufferPool()).execute(client.getSession());
+        new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getCluster().getDescription(),
+                client.getBufferPool()).execute(client.getSession());
     }
 
     @Override
@@ -82,7 +83,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandOperation(databaseName, new Create(createCollectionOptions), documentCodec,
-                client.getBufferPool()).execute(client.getSession());
+                client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession());
         ErrorHandling.handleErrors(commandResult);
     }
 
@@ -94,7 +95,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec,
+        final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec, client.getCluster().getDescription(),
                 client.getBufferPool()).execute(client.getSession());
         ErrorHandling.handleErrors(commandResult);
     }

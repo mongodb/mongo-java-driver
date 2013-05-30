@@ -902,7 +902,8 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            new CommandOperation("admin", renameCommand, getDocumentCodec(), getBufferPool()).execute(getSession());
+            new CommandOperation("admin", renameCommand, getDocumentCodec(), getDB().getCluster().getDescription(), getBufferPool())
+                    .execute(getSession());
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1425,7 +1426,7 @@ public class DBCollection implements IDBCollection {
 
         final FindAndModifyCommandResult<DBObject> commandResult =
                 new FindAndModifyCommandResult<DBObject>(new CommandOperation(getDB().getName(), mongoCommand,
-                        findAndModifyCommandResultCodec, getBufferPool()).execute(getSession()));
+                        findAndModifyCommandResultCodec, getDB().getCluster().getDescription(), getBufferPool()).execute(getSession()));
 
         return commandResult.getValue();
     }
