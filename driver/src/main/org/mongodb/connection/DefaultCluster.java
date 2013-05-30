@@ -167,6 +167,10 @@ public abstract class DefaultCluster implements Cluster {
         return server;
     }
 
+    protected ClusterDescription getDescriptionNonBlocking() {
+        return description;
+    }
+
     private static final class WrappedServer implements Server {
         private volatile ClusterableServer wrapped;
 
