@@ -39,6 +39,7 @@ public class AsyncCommandOperation extends AsyncOperation {
     public AsyncCommandOperation(final String database, final Command command, final Codec<Document> codec,
                                  final ClusterDescription clusterDescription, final BufferPool<ByteBuffer> bufferPool) {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
+        command.readPreference(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
         this.command = command;
         this.codec = codec;
     }
