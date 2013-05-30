@@ -32,18 +32,23 @@ import org.mongodb.session.ServerSelectingSession;
 import java.nio.ByteBuffer;
 
 public class CommandOperation extends Operation {
-    private final Command commandOperation;
+    private final Command command;
     private final Codec<Document> codec;
 
-    public CommandOperation(final String database, final Command commandOperation, final Codec<Document> codec,
+    public CommandOperation(final String database, final Command command, final Codec<Document> codec,
                             final ClusterDescription clusterDescription, final BufferPool<ByteBuffer> bufferPool) {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
-        this.commandOperation = commandOperation;
+        command.readPreference(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
+        this.command = command;
         this.codec = codec;
     }
 
+    public Command getCommand() {
+        return command;
+    }
+
     public CommandResult execute(final ServerSelectingSession session) {
-        ServerConnection connection = session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()));
+        ServerConnection connection = session.getConnection(new ReadPreferenceServerSelector(command.getReadPreference()));
         try {
             return execute(connection);
         } finally {
@@ -54,7 +59,7 @@ public class CommandOperation extends Operation {
     public CommandResult execute(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
-            final CommandMessage message = new CommandMessage(getNamespace().getFullName(), commandOperation, codec,
+            final CommandMessage message = new CommandMessage(getNamespace().getFullName(), command, codec,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer);
@@ -62,7 +67,7 @@ public class CommandOperation extends Operation {
                     getResponseSettings(connection.getDescription(), message.getId()));
             try {
                 ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-                return createCommandResult(commandOperation, replyMessage, connection);
+                return createCommandResult(command, replyMessage, connection);
             } finally {
                 responseBuffers.close();
             }
