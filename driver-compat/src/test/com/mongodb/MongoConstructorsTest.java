@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertSame;
 public class MongoConstructorsTest {
 
     @Test
+    @Ignore
     public void shouldDefaultToLocalhost() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
         try {
@@ -38,6 +40,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @Ignore
     public void shouldUseGivenHost() throws UnknownHostException {
         final Mongo mongo = new MongoClient("localhost");
         try {
@@ -48,6 +51,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @Ignore
     public void shouldUseGivenServerAddress() throws UnknownHostException {
         final Mongo mongo = new MongoClient(new ServerAddress("localhost"));
         try {
