@@ -47,7 +47,7 @@ import static org.mongodb.connection.ServerType.Unknown;
 @ThreadSafe
 class IsMasterServerStateNotifier implements ServerStateNotifier {
 
-    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection.monitor");
 
     private final ChangeListener<ServerDescription> serverStateListener;
     private final ConnectionFactory connectionFactory;
@@ -85,6 +85,12 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();
 
+                // Log on state change
+                if (currentServerDescription.getStatus() == Connecting) {
+                    LOGGER.log(Level.INFO, String.format("Monitor thread successfully connected to %s",
+                            connectionFactory.getServerAddress()));
+                }
+
                 serverDescription = createDescription(commandResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {
@@ -97,10 +103,12 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
         } catch (Throwable t) {
             if (!isClosed) {
-                serverDescription = getConnectingServerDescription();
-                LOGGER.log(Level.INFO, String.format(
-                        "Exception in background thread while attempting to call ismaster command on server %s",
-                        connectionFactory.getServerAddress()), t);
+                // Log on state change
+                if (currentServerDescription.getStatus() != Connecting) {
+                    serverDescription = getConnectingServerDescription();
+                    LOGGER.log(Level.INFO, String.format(
+                            "Exception in monitor thread while connecting to server %s", connectionFactory.getServerAddress()), t);
+                }
             }
         }
 
@@ -110,7 +118,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                     serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
                 }
             } catch (Throwable t) {
-                LOGGER.log(Level.INFO, "Exception in background thread during notification of server description state change", t);
+                LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
             }
         }
     }
