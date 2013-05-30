@@ -81,7 +81,7 @@ public abstract class DefaultCluster implements Cluster {
 
                 final long timeout = endTime - System.nanoTime();
 
-                LOGGER.log(Level.FINE, String.format(
+                LOGGER.log(Level.INFO, String.format(
                         "No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
                         serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, TimeUnit.NANOSECONDS)));
 
