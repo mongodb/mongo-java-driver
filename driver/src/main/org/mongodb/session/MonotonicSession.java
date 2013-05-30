@@ -81,6 +81,7 @@ public class MonotonicSession implements ServerSelectingSession {
 
     @Override
     public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+        isTrue("open", !isClosed());
         return new SingleConnectionSession(getConnection(serverSelector));
     }
 

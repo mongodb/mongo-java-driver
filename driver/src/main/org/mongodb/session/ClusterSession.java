@@ -21,6 +21,7 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerSelector;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -37,17 +38,23 @@ public class ClusterSession implements ServerSelectingSession {
 
     @Override
     public ServerConnection getConnection(final ServerSelector serverSelector) {
+        isTrue("open", !isClosed());
         notNull("serverSelector", serverSelector);
+
         return cluster.getServer(serverSelector).getConnection();
     }
 
     @Override
     public ServerConnection getConnection() {
+        isTrue("open", !isClosed());
+
         return getConnection(new PrimaryServerSelector());
     }
 
     @Override
     public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+        isTrue("open", !isClosed());
+
         if (sessionBindingType == SessionBindingType.Connection) {
             return new SingleConnectionSession(getConnection(serverSelector));
         }
