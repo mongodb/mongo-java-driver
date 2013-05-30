@@ -1,0 +1,24 @@
+language: java
+
+jdk:
+  - oraclejdk7
+
+notifications:
+  email:
+    recipients:
+      - jeff.yemin@10gen.com
+      - trisha.gee@10gen.com
+      - uladzimir.mihura@10gen.com
+    on_success: change
+    on_failure: always
+
+services:
+  - mongodb
+
+branches:
+  only:
+    - master
+    - 3.0.x
+
+install: "./gradlew -q assemble"
+script: "./gradlew -q check"

@@ -68,16 +68,22 @@ subprojects {
     /* Testing */
     tasks.withType(Test) {
         maxParallelForks = 1
-        systemProperty 'org.mongodb.test.uri', System.getProperty('org.mongodb.test.uri', null)
-        systemProperty 'org.mongodb.useSocket', System.getProperty('org.mongodb.useSocket', "false")
-        systemProperty 'org.mongodb.disableAsync', System.getProperty('org.mongodb.disableAsync', "false")
+        systemProperties(
+                'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
+                'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', "false"),
+                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', "false")
+        )
+
         if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()) {
-            systemProperty 'javax.net.ssl.keyStoreType', project.property('ssl.keyStoreType')
-            systemProperty 'javax.net.ssl.keyStore', project.property('ssl.keyStore')
-            systemProperty 'javax.net.ssl.keyStorePassword', project.property('ssl.keyStorePassword')
-            systemProperty 'javax.net.ssl.trustStoreType', project.property('ssl.trustStoreType')
-            systemProperty 'javax.net.ssl.trustStore', project.property('ssl.trustStore')
-            systemProperty 'javax.net.ssl.trustStorePassword', project.property('ssl.trustStorePassword')
+            systemProperties(
+                    'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
+                    'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
+                    'javax.net.ssl.keyStorePassword': project.property('ssl.keyStorePassword'),
+                    'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
+                    'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
+                    'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
+            )
+
         }
         jacoco { enabled = false }
 
@@ -275,6 +281,8 @@ project(':driver') {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
     }
+
+    check.dependsOn acceptanceTest
 
     sourcesJar {
         from project(':bson').sourceSets.main.allSource
