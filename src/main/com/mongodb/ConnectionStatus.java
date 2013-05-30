@@ -15,6 +15,8 @@
  */
 package com.mongodb;
 
+import com.google.gag.annotation.remark.WTF;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -210,7 +212,9 @@ abstract class ConnectionStatus {
                     _maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
                 }
             } catch (Exception e) {
-                if (!((_ok) ? true : (Math.random() > 0.1))) {
+                @WTF
+                boolean randomExceptionHandling = true;
+                if (!((_ok) ? true : (Math.random() >  0.1))) {
                     return res;
                 }
 

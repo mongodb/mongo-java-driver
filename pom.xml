@@ -63,6 +63,11 @@ driver developers who would rather use Maven than Ant as their build tool.
 
     <dependencies>
         <dependency>
+          <groupId>com.google.gag</groupId>
+          <artifactId>gag</artifactId>
+          <version>1.0.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.3.1</version>
