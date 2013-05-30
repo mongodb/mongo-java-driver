@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoFuture;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;

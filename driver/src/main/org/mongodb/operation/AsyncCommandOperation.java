@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
@@ -23,11 +23,9 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.session.AsyncServerSelectingSession;
 
@@ -35,21 +33,24 @@ import java.nio.ByteBuffer;
 
 public class AsyncCommandOperation extends AsyncOperation {
 
-    private final Command commandOperation;
+    private final Command command;
     private final Codec<Document> codec;
 
-    public AsyncCommandOperation(final String database, final Command commandOperation, final Codec<Document> codec,
-                                 final BufferPool<ByteBuffer> bufferPool) {
+    public AsyncCommandOperation(final String database, final Command command, final Codec<Document> codec,
+                                 final ClusterDescription clusterDescription, final BufferPool<ByteBuffer> bufferPool) {
         super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
-        this.commandOperation = commandOperation;
+        this.command = command;
         this.codec = codec;
     }
 
+    public Command getCommand() {
+        return command;
+    }
 
     public MongoFuture<CommandResult> execute(final AsyncServerSelectingSession session) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        session.getConnection(new ReadPreferenceServerSelector(commandOperation.getReadPreference()))
+        session.getConnection(new ReadPreferenceServerSelector(command.getReadPreference()))
                 .register(new SingleResultCallback<AsyncServerConnection>() {
                     @Override
                     public void onResult(final AsyncServerConnection connection, final MongoException e) {
@@ -70,12 +71,12 @@ public class AsyncCommandOperation extends AsyncOperation {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
-        final CommandMessage message = new CommandMessage(getNamespace().getFullName(), commandOperation, codec,
+        final CommandMessage message = new CommandMessage(getNamespace().getFullName(), command, codec,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), message.getId()),
                 new CommandResultCallback(
-                        new SingleResultFutureCallback<CommandResult>(retVal), commandOperation, codec, connection, message.getId()));
+                        new SingleResultFutureCallback<CommandResult>(retVal), command, codec, connection, message.getId()));
 
         return retVal;
     }

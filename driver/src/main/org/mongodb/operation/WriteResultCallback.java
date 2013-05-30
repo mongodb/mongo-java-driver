@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.Decoder;
 import org.mongodb.Document;
@@ -25,9 +25,6 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.BaseWrite;
-import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.WriteResult;
 import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;

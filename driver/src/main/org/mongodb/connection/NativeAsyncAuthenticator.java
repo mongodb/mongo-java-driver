@@ -22,9 +22,11 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.operation.CommandResult;
-import org.mongodb.operation.async.AsyncCommandOperation;
+import org.mongodb.operation.AsyncCommandOperation;
 
 import java.nio.ByteBuffer;
+
+import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 class NativeAsyncAuthenticator extends AsyncAuthenticator {
     private final BufferPool<ByteBuffer> bufferPool;
@@ -39,7 +41,7 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new Command(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
+                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override
@@ -51,7 +53,7 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
                             new AsyncCommandOperation(getCredential().getSource(),
                                     new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                             getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                                    new DocumentCodec(PrimitiveCodecs.createDefault()), bufferPool)
+                                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
                                     .execute(new ConnectingAsyncServerConnection(getConnection()))
                                     .register(new SingleResultCallback<CommandResult>() {
                                         @Override

@@ -14,43 +14,44 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.Remove;
-import org.mongodb.operation.protocol.DeleteMessage;
 import org.mongodb.operation.protocol.MessageSettings;
+import org.mongodb.operation.protocol.ReplaceMessage;
 import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
-public class AsyncRemoveOperation extends AsyncWriteOperation {
-    private final Remove remove;
+public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
+    private final Replace<T> replace;
     private final Encoder<Document> queryEncoder;
+    private final Encoder<T> encoder;
 
-    public AsyncRemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                                final BufferPool<ByteBuffer> bufferPool) {
+    public AsyncReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
+                                 final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
-        this.remove = remove;
+        this.replace = replace;
         this.queryEncoder = queryEncoder;
+        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
     }
 
     @Override
-    public Remove getWrite() {
-        return remove;
+    public Replace<T> getWrite() {
+        return replace;
     }
 
     @Override
     public WriteConcern getWriteConcern() {
-        return remove.getWriteConcern();
+        return replace.getWriteConcern();
     }
 }

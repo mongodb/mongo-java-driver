@@ -14,45 +14,39 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.Replace;
 import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.ReplaceMessage;
 import org.mongodb.operation.protocol.RequestMessage;
 
 import java.nio.ByteBuffer;
 
-public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
-    private final Replace<T> replace;
-    private final Encoder<Document> queryEncoder;
-    private final Encoder<T> encoder;
+class GenericAsyncWriteOperation extends AsyncWriteOperation {
+    private final BaseWrite write;
+    private final RequestMessage requestMessage;
 
-    public AsyncReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
-                                 final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
+    public GenericAsyncWriteOperation(final MongoNamespace namespace, final BaseWrite write, final RequestMessage requestMessage,
+                                      final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
-        this.replace = replace;
-        this.queryEncoder = queryEncoder;
-        this.encoder = encoder;
+        this.write = write;
+        this.requestMessage = requestMessage;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
+        return requestMessage;
     }
 
     @Override
-    public Replace<T> getWrite() {
-        return replace;
+    public BaseWrite getWrite() {
+        return write;
     }
 
     @Override
     public WriteConcern getWriteConcern() {
-        return replace.getWriteConcern();
+        return write.getWriteConcern();
     }
 }

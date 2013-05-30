@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.MongoException;
+import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.SingleResultCallback;
 
-// TODO: should this be public?
-public class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
+class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
+    private final AsyncConnection connection;
     private final SingleResultFuture<T> retVal;
 
-    public SingleResultFutureCallback(final SingleResultFuture<T> retVal) {
+    public ConnectionClosingSingleResultCallback(final AsyncConnection connection, final SingleResultFuture<T> retVal) {
+        this.connection = connection;
         this.retVal = retVal;
     }
 
     @Override
     public void onResult(final T result, final MongoException e) {
+        connection.close();
         retVal.init(result, e);
     }
 }

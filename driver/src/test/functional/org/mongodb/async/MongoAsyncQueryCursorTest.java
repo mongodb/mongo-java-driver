@@ -33,7 +33,7 @@ import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.async.SingleResultFuture;
+import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.AsyncSession;
 import org.mongodb.session.SessionBindingType;

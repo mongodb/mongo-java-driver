@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;

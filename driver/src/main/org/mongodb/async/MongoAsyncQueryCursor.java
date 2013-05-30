@@ -32,8 +32,8 @@ import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
-import org.mongodb.operation.async.AsyncGetMoreOperation;
-import org.mongodb.operation.async.AsyncQueryOperation;
+import org.mongodb.operation.AsyncGetMoreOperation;
+import org.mongodb.operation.AsyncQueryOperation;
 
 import java.nio.ByteBuffer;
 

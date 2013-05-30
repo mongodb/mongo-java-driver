@@ -14,40 +14,42 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
+import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.BaseWrite;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
+import org.mongodb.operation.protocol.UpdateMessage;
 
 import java.nio.ByteBuffer;
 
-class GenericAsyncWriteOperation extends AsyncWriteOperation {
-    private final BaseWrite write;
-    private final RequestMessage requestMessage;
+public class AsyncUpdateOperation extends AsyncWriteOperation {
+    private final Update update;
+    private final Encoder<Document> queryEncoder;
 
-    public GenericAsyncWriteOperation(final MongoNamespace namespace, final BaseWrite write, final RequestMessage requestMessage,
-                                      final BufferPool<ByteBuffer> bufferPool) {
+    public AsyncUpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
+                                final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
-        this.write = write;
-        this.requestMessage = requestMessage;
+        this.update = update;
+        this.queryEncoder = queryEncoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return requestMessage;
+        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
     }
 
     @Override
-    public BaseWrite getWrite() {
-        return write;
+    public Update getWrite() {
+        return update;
     }
 
     @Override
     public WriteConcern getWriteConcern() {
-        return write.getWriteConcern();
+        return update.getWriteConcern();
     }
 }

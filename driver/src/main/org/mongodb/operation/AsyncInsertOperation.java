@@ -14,43 +14,41 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
-import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferPool;
-import org.mongodb.operation.Update;
+import org.mongodb.operation.protocol.InsertMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-import org.mongodb.operation.protocol.UpdateMessage;
 
 import java.nio.ByteBuffer;
 
-public class AsyncUpdateOperation extends AsyncWriteOperation {
-    private final Update update;
-    private final Encoder<Document> queryEncoder;
+public class AsyncInsertOperation<T> extends AsyncWriteOperation {
+    private final Insert<T> insert;
+    private final Encoder<T> encoder;
 
-    public AsyncUpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                                final BufferPool<ByteBuffer> bufferPool) {
+    public AsyncInsertOperation(final MongoNamespace namespace, final Insert<T> insert,
+                                final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
         super(namespace, bufferPool);
-        this.update = update;
-        this.queryEncoder = queryEncoder;
+        this.insert = insert;
+        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
+       return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
     @Override
-    public Update getWrite() {
-        return update;
+    public Insert<T> getWrite() {
+        return insert;
     }
 
     @Override
     public WriteConcern getWriteConcern() {
-        return update.getWriteConcern();
+        return insert.getWriteConcern();
     }
 }

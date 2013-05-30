@@ -21,7 +21,7 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.async.SingleResultFuture;
+import org.mongodb.operation.SingleResultFuture;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 

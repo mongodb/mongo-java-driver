@@ -46,11 +46,11 @@ import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.WriteResult;
-import org.mongodb.operation.async.AsyncCommandOperation;
-import org.mongodb.operation.async.AsyncQueryOperation;
-import org.mongodb.operation.async.AsyncReplaceOperation;
-import org.mongodb.operation.async.SingleResultFuture;
-import org.mongodb.operation.async.SingleResultFutureCallback;
+import org.mongodb.operation.AsyncCommandOperation;
+import org.mongodb.operation.AsyncQueryOperation;
+import org.mongodb.operation.AsyncReplaceOperation;
+import org.mongodb.operation.SingleResultFuture;
+import org.mongodb.operation.SingleResultFutureCallback;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -745,7 +745,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> asyncCount() {
             final MongoFuture<CommandResult> commandResultFuture = new AsyncCommandOperation(getDatabase().getName(), new Count(findOp,
-                    getName()), getDocumentCodec(), client.getBufferPool()).execute(client.getAsyncSession());
+                    getName()), getDocumentCodec(), client.getCluster().getDescription(), client.getBufferPool()).execute(client
+                    .getAsyncSession());
             return new MongoFuture<Long>() {
                 @Override
                 public boolean cancel(final boolean mayInterruptIfRunning) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.Decoder;
 import org.mongodb.MongoException;
@@ -22,9 +22,6 @@ import org.mongodb.MongoInternalException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoCursorNotFoundException;
-import org.mongodb.operation.QueryResult;
-import org.mongodb.operation.ServerCursor;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 class GetMoreResultCallback<T> extends ResponseCallback {

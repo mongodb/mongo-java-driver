@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
@@ -25,9 +25,6 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.BaseWrite;
-import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.WriteResult;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;

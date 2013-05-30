@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.async;
+package org.mongodb.operation;
 
 import org.mongodb.Decoder;
 import org.mongodb.Document;
@@ -22,7 +22,6 @@ import org.mongodb.MongoException;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 abstract class CommandResultBaseCallback extends ResponseCallback {
