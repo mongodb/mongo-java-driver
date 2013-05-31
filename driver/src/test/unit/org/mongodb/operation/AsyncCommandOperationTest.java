@@ -31,14 +31,14 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferPool;
 import static org.mongodb.ReadPreference.primary;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 
 public class AsyncCommandOperationTest {
     @Test
     public void testReadPreferenceOverride() {
         ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
                 ClusterConnectionMode.Discovering);
 
         AsyncCommandOperation operation = new AsyncCommandOperation("test",

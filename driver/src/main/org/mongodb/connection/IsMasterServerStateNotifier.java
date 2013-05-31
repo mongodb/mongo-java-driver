@@ -34,9 +34,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
-import static org.mongodb.connection.ServerConnectionStatus.Connecting;
-import static org.mongodb.connection.ServerConnectionStatus.Unconnected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Unconnected;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -136,7 +136,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     @SuppressWarnings("unchecked")
     private ServerDescription createDescription(final CommandResult commandResult, final long averagePingTimeNanos) {
         return ServerDescription.builder()
-                .status(Connected)
+                .state(Connected)
                 .address(commandResult.getAddress())
                 .type(getServerType(commandResult.getResponse()))
                 .hosts(listToSet((List<String>) commandResult.getResponse().get("hosts")))
@@ -211,10 +211,10 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     }
 
     private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(Unknown).status(Connecting).address(connectionFactory.getServerAddress()).build();
+        return ServerDescription.builder().type(Unknown).state(Connecting).address(connectionFactory.getServerAddress()).build();
     }
 
     private ServerDescription getUnconnectedServerDescription() {
-        return ServerDescription.builder().type(Unknown).status(Unconnected).address(connectionFactory.getServerAddress()).build();
+        return ServerDescription.builder().type(Unknown).state(Unconnected).address(connectionFactory.getServerAddress()).build();
     }
 }

@@ -30,8 +30,8 @@ import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.StandAlone;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
-import static org.mongodb.connection.ServerConnectionStatus.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ShardRouter;
 
@@ -51,15 +51,15 @@ public class ClusterDescriptionTest {
     @Test
     public void testType() throws UnknownHostException {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
         assertEquals(ReplicaSet, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ShardRouter).build()), Discovering);
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ShardRouter).build()), Discovering);
         assertEquals(Sharded, description.getType());
 
         description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ServerType.StandAlone).build()),
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ServerType.StandAlone).build()),
                 Discovering);
         assertEquals(StandAlone, description.getType());
     }
@@ -68,20 +68,20 @@ public class ClusterDescriptionTest {
     @Test
     public void testIsConnecting() throws UnknownHostException {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connecting).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
+                ServerDescription.builder().state(Connecting).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
         assertTrue(description.isConnecting());
 
         description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
         assertFalse(description.isConnecting());
     }
 
     @Test
     public void testSortingOfAll() {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27017")).build()),
                 Discovering);
         Iterator<ServerDescription> iter = description.getAll().iterator();
         assertEquals(new ServerAddress("localhost:27017"), iter.next().getAddress());
@@ -92,14 +92,14 @@ public class ClusterDescriptionTest {
     @Test
     public void testObjectOverrides() {
         ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27017")).build()),
                 Discovering);
         ClusterDescription descriptionTwo = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
-                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("localhost:27017")).build()),
                 Discovering);
         assertEquals(description, descriptionTwo);
         assertEquals(description.hashCode(), descriptionTwo.hashCode());

@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class DefaultMultiClusterTest {
     private TestClusterableServerFactory factory;
@@ -44,7 +44,7 @@ public class DefaultMultiClusterTest {
         DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress), null,
                 MongoClientOptions.builder().build(), factory);
         factory.getServer(serverAddress).sendNotification(
-                ServerDescription.builder().address(serverAddress).ok(true).status(Connected)
+                ServerDescription.builder().address(serverAddress).ok(true).state(Connected)
                         .type(ServerType.ReplicaSetSecondary)
                         .hosts(new HashSet<String>(Arrays.asList("localhost:27017", "localhost:27018", "localhost:27019")))
                         .build());

@@ -53,7 +53,7 @@ public class ServerDescription {
     private final String setName;
     private final long averagePingTimeNanos;
     private final boolean ok;
-    private final ServerConnectionStatus status;
+    private final ServerConnectionState state;
 
     public static class Builder {
         private ServerAddress address;
@@ -68,7 +68,7 @@ public class ServerDescription {
         private String setName;
         private long averagePingTimeNanos;
         private boolean ok;
-        private ServerConnectionStatus status;
+        private ServerConnectionState state;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -131,8 +131,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder status(final ServerConnectionStatus status) {
-            this.status = status;
+        public Builder state(final ServerConnectionState state) {
+            this.state = state;
             return this;
         }
 
@@ -240,8 +240,8 @@ public class ServerDescription {
         return ok;
     }
 
-    public ServerConnectionStatus getStatus() {
-        return status;
+    public ServerConnectionState getState() {
+        return state;
     }
 
     public ServerType getType() {
@@ -275,7 +275,7 @@ public class ServerDescription {
         if (!address.equals(that.address)) return false;
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) return false;
         if (!tags.equals(that.tags)) return false;
-        if (status != that.status) return false;
+        if (state != that.state) return false;
         return true;
     }
 
@@ -292,7 +292,7 @@ public class ServerDescription {
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
-        result = 31 * result + status.hashCode();
+        result = 31 * result + state.hashCode();
         return result;
     }
 
@@ -311,14 +311,14 @@ public class ServerDescription {
                 + ", setName='" + setName + '\''
                 + ", averagePingTimeNanos=" + averagePingTimeNanos
                 + ", ok=" + ok
-                + ", state=" + status
+                + ", state=" + state
                 + '}';
     }
 
     ServerDescription(final Builder builder) {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
-        status = notNull("status", builder.status);
+        state = notNull("state", builder.state);
         hosts = builder.hosts;
         passives = builder.passives;
         arbiters = builder.arbiters;

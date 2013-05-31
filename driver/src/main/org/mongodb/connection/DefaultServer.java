@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerConnectionStatus.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
 
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
@@ -53,7 +53,7 @@ class DefaultServer implements ClusterableServer {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
         this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
-        this.description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
+        this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
         // TODO: configurable
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS);
@@ -94,7 +94,7 @@ class DefaultServer implements ClusterableServer {
     public void invalidate() {
         isTrue("open", !isClosed());
 
-        description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
+        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         scheduledExecutorService.submit(stateNotifier);
     }
 

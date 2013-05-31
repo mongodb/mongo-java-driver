@@ -28,7 +28,7 @@ import org.mongodb.connection.ServerDescription;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
 import static org.mongodb.connection.ServerType.ShardRouter;
@@ -38,7 +38,7 @@ public class CommandReadPreferenceHelperTest {
     @Test
     public void testObedience() {
         ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
                 ClusterConnectionMode.Discovering);
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
                 new Command(new Document("group", "test.test").append("key", "x")).readPreference(ReadPreference.secondary()),
@@ -87,7 +87,7 @@ public class CommandReadPreferenceHelperTest {
     @Test
     public void testIgnoreObedienceForDirectConnection() {
         ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetSecondary).build()),
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetSecondary).build()),
                 ClusterConnectionMode.Direct);
 
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
@@ -98,7 +98,7 @@ public class CommandReadPreferenceHelperTest {
     @Test
     public void testIgnoreObedienceForMongosDiscovering() {
         ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ShardRouter).build()),
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ShardRouter).build()),
                 ClusterConnectionMode.Discovering);
 
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(

@@ -25,7 +25,7 @@ public class ConnectingServerConnection implements ServerConnection {
 
     public ConnectingServerConnection(final Connection connection) {
         this.connection = notNull("connection", connection);
-        this.serverDescription = ServerDescription.builder().status(ServerConnectionStatus.Connecting).type(ServerType.Unknown)
+        this.serverDescription = ServerDescription.builder().state(ServerConnectionState.Connecting).type(ServerType.Unknown)
                 .address(connection.getServerAddress()).build();
     }
 

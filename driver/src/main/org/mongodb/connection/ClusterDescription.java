@@ -30,7 +30,7 @@ import static org.mongodb.connection.ClusterType.ReplicaSet;
 import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.StandAlone;
 import static org.mongodb.connection.ClusterType.Unknown;
-import static org.mongodb.connection.ServerConnectionStatus.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
 
 
 /**
@@ -88,7 +88,7 @@ public class ClusterDescription {
      */
     public boolean isConnecting() {
         for (final ServerDescription cur : all) {
-            if (cur.getStatus() == Connecting) {
+            if (cur.getState() == Connecting) {
                 return true;
             }
         }

@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import static org.mongodb.connection.ServerConnectionStatus.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
 
 public class TestServer implements ClusterableServer {
     private ChangeListener<ServerDescription> changeListener;
@@ -25,7 +25,7 @@ public class TestServer implements ClusterableServer {
     private boolean isInvalidated;
 
     public TestServer(final ServerAddress serverAddress) {
-        description = ServerDescription.builder().status(Connecting).address(serverAddress).build();
+        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
     }
 
     public void sendNotification(final ServerDescription newDescription) {

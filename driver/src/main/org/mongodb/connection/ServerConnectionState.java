@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-public enum ServerConnectionStatus {
+public enum ServerConnectionState {
     /**
      * The application is actively attempting to connect to the remote server.
      */

@@ -32,7 +32,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
@@ -54,21 +54,21 @@ public class ReadPreferenceTest {
         final long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
         final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = ServerDescription.builder().status(Connected).address(new ServerAddress(HOST, 27017))
+        primary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27017))
                 .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .tags(tags1)
                 .maxDocumentSize(FOUR_MEG).build();
 
-        secondary = ServerDescription.builder().status(Connected).address(new ServerAddress(HOST, 27018))
+        secondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27018))
                 .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .tags(tags2)
                 .maxDocumentSize(FOUR_MEG).build();
 
-        otherSecondary = ServerDescription.builder().status(Connected).address(new ServerAddress(HOST, 27019))
+        otherSecondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27019))
                 .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)

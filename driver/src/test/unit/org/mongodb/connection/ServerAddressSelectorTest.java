@@ -25,7 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
-import static org.mongodb.connection.ServerConnectionStatus.Connected;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class ServerAddressSelectorTest {
     @Test
@@ -43,13 +43,13 @@ public class ServerAddressSelectorTest {
         assertEquals(selector.getServerAddress().hashCode(), selector.hashCode());
 
         final ServerDescription primary = ServerDescription.builder()
-                .status(Connected)
+                .state(Connected)
                 .address(new ServerAddress())
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .build();
         final ServerDescription secondary = ServerDescription.builder()
-                .status(Connected)
+                .state(Connected)
                 .address(new ServerAddress("localhost:27018"))
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
