@@ -23,7 +23,6 @@ def configDir = new File(rootDir, 'config')
 configure(subprojects.findAll {it.name != 'util'}) {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
-    apply plugin: 'pmd'
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
 
@@ -112,9 +111,7 @@ configure(subprojects.findAll {it.name != 'util'}) {
     findbugs {
         ignoreFailures = true
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
-    }
 
-    tasks.matching { (it instanceof FindBugs) || (it instanceof Pmd) }.all {
         reports {
             xml.enabled = project.hasProperty('xmlReportsEnabled') && project.property('xmlReportsEnabled').toBoolean()
             html.enabled = !xml.enabled
@@ -184,12 +181,6 @@ project(':driver-compat') {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
-    }
-
-    pmd {
-        //cut down version of PMD for the older code base
-        ruleSets = ["braces"]
-        ignoreFailures = false
     }
 }
 
