@@ -20,7 +20,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ChangeEventTest {
@@ -37,19 +36,5 @@ public class ChangeEventTest {
         assertNotEquals(new ChangeEvent<Integer>(2, 3), event);
         assertNotEquals(new Object(), event);
         assertEquals(33, event.hashCode());
-    }
-
-    @Test
-    public void testNullOldValue() {
-        ChangeEvent<Integer> event = new ChangeEvent<Integer>(null, 1);
-        assertNull(event.getOldValue());
-        assertEquals(Integer.valueOf(1), event.getNewValue());
-
-        assertEquals(event, event);
-        assertEquals(new ChangeEvent<Integer>(null, 1), event);
-        assertNotEquals(new ChangeEvent<Integer>(null, 2), event);
-        assertNotEquals(new ChangeEvent<Integer>(2, 3), event);
-        assertNotEquals(new Object(), event);
-        assertEquals(1, event.hashCode());
     }
 }

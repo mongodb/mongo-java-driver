@@ -24,11 +24,11 @@ public class ChangeEvent<T> {
 
     /**
      *
-     * @param oldValue the value before the change, which may be null on the very first change, or on a newly added listener.
+     * @param oldValue the value before the change
      * @param newValue the value after the change
      */
     public ChangeEvent(final T oldValue, final T newValue) {
-        this.oldValue = oldValue;
+        this.oldValue = notNull("oldValue", oldValue);
         this.newValue = notNull("newValue", newValue);
     }
 
