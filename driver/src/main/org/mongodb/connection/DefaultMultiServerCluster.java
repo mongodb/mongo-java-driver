@@ -30,7 +30,10 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 
-class DefaultMultiServerCluster extends DefaultCluster {
+/**
+ * This class needs to be final because we are leaking a reference to "this" from the constructor
+ */
+final class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
@@ -39,7 +42,8 @@ class DefaultMultiServerCluster extends DefaultCluster {
         super(credentialList, options, serverFactory);
 
         notNull("seedList", seedList);
-        // synchronizing this code because addServer registers a callback which is re-entrant to this instance
+        // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
+        // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
             for (ServerAddress serverAddress : seedList) {
                 addServer(serverAddress);

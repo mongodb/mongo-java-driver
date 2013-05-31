@@ -26,7 +26,10 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
-class DefaultSingleServerCluster extends DefaultCluster {
+/**
+ * This class needs to be final because we are leaking a reference to "this" from the constructor
+ */
+final class DefaultSingleServerCluster extends DefaultCluster {
     private final ClusterableServer server;
 
     public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
@@ -34,17 +37,21 @@ class DefaultSingleServerCluster extends DefaultCluster {
         super(credentialList, options, serverFactory);
         notNull("serverAddress", serverAddress);
 
-        this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
-            @Override
-            public void stateChanged(final ChangeEvent<ServerDescription> event) {
-                updateDescription(event.getNewValue());
-            }
+        // synchronized in the constructor because the change listener is re-entrant to this instance.
+        // In other words, we are leaking a reference to "this" from the constructor.
+        synchronized (this) {
+            this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
+                @Override
+                public void stateChanged(final ChangeEvent<ServerDescription> event) {
+                    updateDescription(event.getNewValue());
+                }
 
-        });
-        updateDescription();
+            });
+            updateDescription();
+        }
     }
 
-    private void updateDescription(final ServerDescription serverDescription) {
+    private synchronized void updateDescription(final ServerDescription serverDescription) {
         updateDescription(new ClusterDescription(Arrays.asList(serverDescription), Direct));
     }
 
