@@ -143,9 +143,9 @@ class DefaultMultiServerCluster extends DefaultCluster {
 
     private void removeExtras(final ServerDescription serverDescription) {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-        for (ServerDescription cur : getDescriptionNonBlocking().getAll()) {
-            if (!allServerAddresses.contains(cur.getAddress())) {
-                removeServer(cur.getAddress());
+        for (Server cur : addressToServerMap.values()) {
+            if (!allServerAddresses.contains(cur.getDescription().getAddress())) {
+                removeServer(cur.getDescription().getAddress());
             }
         }
     }
