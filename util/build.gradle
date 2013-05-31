@@ -14,4 +14,12 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver', 'driver-compat'
+apply plugin: 'java'
+
+dependencies {
+    compile files("${System.getProperty('java.home')}/../lib/tools.jar")
+}
+
+sourceSets {
+    main { java.srcDirs = ['src/main'] }
+}
