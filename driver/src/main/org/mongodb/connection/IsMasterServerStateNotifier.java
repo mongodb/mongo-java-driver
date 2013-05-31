@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 import static org.mongodb.connection.ServerConnectionStatus.Connected;
 import static org.mongodb.connection.ServerConnectionStatus.Connecting;
+import static org.mongodb.connection.ServerConnectionStatus.Unconnected;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -74,6 +75,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
         }
 
         ServerDescription currentServerDescription = serverDescription;
+        Throwable throwable = null;
         try {
             if (connection == null) {
                 connection = connectionFactory.create();
@@ -84,12 +86,6 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                         .execute(new ConnectingServerConnection(connection));
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();
-
-                // Log on state change
-                if (currentServerDescription.getStatus() == Connecting) {
-                    LOGGER.log(Level.INFO, String.format("Monitor thread successfully connected to %s",
-                            connectionFactory.getServerAddress()));
-                }
 
                 serverDescription = createDescription(commandResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
@@ -102,21 +98,26 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 }
             }
         } catch (Throwable t) {
-            if (!isClosed) {
-                // Log on state change
-                if (currentServerDescription.getStatus() != Connecting) { // NOPMD
-                    serverDescription = getConnectingServerDescription();
-                    LOGGER.log(Level.INFO, String.format(
-                            "Exception in monitor thread while connecting to server %s", connectionFactory.getServerAddress()), t);
-                }
-            }
+            throwable = t;
+            serverDescription = getUnconnectedServerDescription();
         }
 
         if (!isClosed) {
             try {
+                // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+                // so this will not spam the logs too hard.
                 if (!currentServerDescription.equals(serverDescription)) {
-                    serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+                    if (throwable != null) {
+                        LOGGER.log(Level.INFO, String.format(
+                                "Exception in monitor thread while connecting to server %s", connectionFactory.getServerAddress()),
+                                throwable);
+                    }
+                    else {
+                        LOGGER.log(Level.INFO, String.format("Monitor thread successfully connected to server with description %s",
+                                serverDescription));
+                    }
                 }
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
             } catch (Throwable t) {
                 LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
             }
@@ -211,5 +212,9 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
 
     private ServerDescription getConnectingServerDescription() {
         return ServerDescription.builder().type(Unknown).status(Connecting).address(connectionFactory.getServerAddress()).build();
+    }
+
+    private ServerDescription getUnconnectedServerDescription() {
+        return ServerDescription.builder().type(Unknown).status(Unconnected).address(connectionFactory.getServerAddress()).build();
     }
 }
