@@ -25,7 +25,6 @@ configure(subprojects.findAll {it.name != 'util'}) {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'findbugs'
-    apply plugin: 'osgi'
     apply plugin: 'jacoco'
 
     evaluationDependsOn(':util')
@@ -117,20 +116,9 @@ configure(subprojects.findAll {it.name != 'util'}) {
 
     tasks.matching { (it instanceof FindBugs) || (it instanceof Pmd) }.all {
         reports {
-            xml.enabled = project.hasProperty('xmlReportsEnabled')
-            html.enabled = !project.hasProperty('xmlReportsEnabled')
+            xml.enabled = project.hasProperty('xmlReportsEnabled') && project.property('xmlReportsEnabled').toBoolean()
+            html.enabled = !xml.enabled
         }
-    }
-
-    /* Artifacts */
-    task sourcesJar(type: Jar) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc
     }
 
     javadoc {
@@ -142,27 +130,13 @@ configure(subprojects.findAll {it.name != 'util'}) {
         options.taglets 'ManualTaglet'
     }
 
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
 }
 
 //////////////////////////////////////////
 // Project specific behavior            //
 //////////////////////////////////////////
 
-project(':bson') {
-
-    jar {
-        manifest {
-            attributes(
-                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-Name': 'BSON'
-            )
-        }
-    }
-}
+project(':bson') { }
 
 project(':driver') {
 
@@ -180,19 +154,6 @@ project(':driver') {
         acceptanceCompile   sourceSets.functional.runtimeClasspath
     }
 
-    jar {
-        from project(':bson').sourceSets.main.output
-        manifest {
-            attributes(
-                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-Name': 'MongoDB Java Driver',
-                    'Bundle-SymbolicName': 'org.mongodb.driver',
-                    'Import-Package': 'javax.management, javax.net, javax.net.ssl',
-
-            )
-        }
-    }
-
     task functionalTest(type: Test, dependsOn: test) {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
@@ -201,14 +162,6 @@ project(':driver') {
     task acceptanceTest(type: Test, dependsOn: functionalTest) {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
-    }
-
-    sourcesJar {
-        from project(':bson').sourceSets.main.allSource
-    }
-
-    javadoc {
-        source project(':bson').sourceSets.main.allJava
     }
 }
 
@@ -227,29 +180,6 @@ project(':driver-compat') {
         baseline 'org.mongodb:mongo-java-driver:2.11.0'
         failOnBinError = false
         failOnSrcError = false
-    }
-
-    jar {
-        from project(':bson').sourceSets.main.output
-        from project(':driver').sourceSets.main.output
-        manifest {
-            attributes(
-                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-                    'Bundle-Name': 'MongoDB Java Driver',
-                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
-                    'Import-Package': 'javax.management, javax.net, javax.net.ssl'
-            )
-        }
-    }
-
-    sourcesJar {
-        from project(':bson').sourceSets.main.allSource
-        from project(':driver').sourceSets.main.allSource
-    }
-
-    javadoc {
-        source project(':bson').sourceSets.main.allJava
-        source project(':driver').sourceSets.main.allJava
     }
 
     checkstyle {
@@ -275,5 +205,6 @@ gradle.buildFinished { BuildResult result ->
         gradle.rootProject.logger.error("\n* Warning:\nJDK ${JavaVersion.VERSION_1_7} is minimal requirement for building the driver. You have ${JavaVersion.current()}.")
 }
 
-apply from: 'gradle/ide-configuration.gradle'
-apply from: 'gradle/maven-configuration.gradle'
+apply from: 'gradle/ide-settings.gradle'
+apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/osgi-compatibility.gradle'

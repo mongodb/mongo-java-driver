@@ -14,36 +14,58 @@
  * limitations under the License.
  */
 
-configure(subprojects.findAll {it.name != 'util'}) {
+configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'maven'
     apply plugin: 'signing'
 
-    project.ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+    /* Artifacts */
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
 
     signing {
-        required { project.isReleaseVersion && gradle.taskGraph.hasTask("deploy") }
+        required { gradle.taskGraph.hasTask("uploadArchives") }
         sign configurations.archives
     }
 
+    project.ext.mavenDeployers = []
+
+    def pom = { config ->
+        project.mavenDeployers*.pom config
+    }
+
     install {
-        project.ext.installer = repositories.mavenInstaller
+        project.mavenDeployers << repositories.mavenInstaller
     }
 
     uploadArchives {
-        project.ext.deployer = repositories.mavenDeployer {
-            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots')
+        project.mavenDeployers << repositories.mavenDeployer {
+            def sonatypeCredentials = [
+                    userName: project.properties.sonatypeUsername,
+                    password: project.properties.sonatypePassword
+            ]
+
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
+                authentication(sonatypeCredentials)
+            }
             repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-                if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')) {
-                    authentication(
-                            userName: project.property('sonatypeUsername'),
-                            password: project.property('sonatypePassword')
-                    )
-                }
+                authentication(sonatypeCredentials)
             }
         }
     }
 
-    [project.installer, project.deployer]*.pom {
+    project.mavenDeployers*.pom {
 
         project {
             scm {
@@ -67,51 +89,45 @@ configure(subprojects.findAll {it.name != 'util'}) {
             }
         }
 
-        whenConfigured { pom ->
-            pom.dependencies.removeAll { dep -> dep.scope != 'compile' }
-            pom.dependencies*.scope = null
+        whenConfigured { resultPom ->
+            resultPom.dependencies.removeAll { dep -> dep.scope != 'compile' }
+            resultPom.dependencies*.scope = null
         }
     }
 }
 
 project(':bson') {
-    [project.installer, project.deployer]*.pom {
+    pom {
         project {
             name 'BSON'
             description 'The BSON libs'
             url 'http://bsonspec.org/'
         }
-
-        whenConfigured { pom ->
-            pom.dependencies.removeAll { true }
-        }
     }
 }
 
 project(':driver') {
-    [project.installer, project.deployer]*.pom {
+
+    archivesBaseName = 'mongodb-driver'
+
+    pom {
         project {
             name 'MongoDB Java Driver'
             description 'The MongoDB Java Driver'
             url 'http://www.mongodb.org'
-        }
-
-        whenConfigured { pom ->
-            pom.dependencies.removeAll { true }
         }
     }
 }
 
 project(':driver-compat') {
-    [project.installer, project.deployer]*.pom {
+
+    archivesBaseName = 'mongo-java-driver'
+
+    pom {
         project {
             name 'MongoDB Java Driver'
             description 'The MongoDB Java Driver'
             url 'http://www.mongodb.org'
-        }
-
-        whenConfigured { pom ->
-            pom.dependencies.removeAll { true }
         }
     }
 }

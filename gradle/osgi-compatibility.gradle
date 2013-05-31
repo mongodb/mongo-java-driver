@@ -1,0 +1,41 @@
+configure(subprojects.findAll {it.name != 'util'}) {
+    apply plugin: 'osgi'
+}
+
+project(':bson') {
+    jar {
+        manifest {
+            attributes(
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-Name': 'BSON'
+            )
+        }
+    }
+}
+
+project(':driver') {
+    jar {
+        manifest {
+            attributes(
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-Name': 'MongoDB Java Driver',
+                    'Bundle-SymbolicName': 'org.mongodb.mongodb-driver',
+                    'Import-Package': 'javax.management, javax.net, javax.net.ssl',
+
+            )
+        }
+    }
+}
+
+project(':driver-compat') {
+    jar {
+        manifest {
+            attributes(
+                    'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+                    'Bundle-Name': 'MongoDB Java Driver',
+                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
+                    'Import-Package': 'javax.management, javax.net, javax.net.ssl'
+            )
+        }
+    }
+}

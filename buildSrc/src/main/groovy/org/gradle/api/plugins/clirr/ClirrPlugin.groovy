@@ -102,6 +102,10 @@ class ClirrPlugin implements Plugin<Project> {
                 ) {
                     origfiles(file: baseJar.getPath())
                     newfiles(dir: jarTask.destinationDir, includes: jarTask.archiveName)
+                    newClassPath {
+                        pathElement(path: project.configurations.compile.asPath)
+                    }
+
                     extension.formats.each { format ->
                         if (format != 'html'){
                             formatter(type: format, outfile: "$extension.reportsDir/report.${format == 'xml' ? 'xml' : 'txt'}")
