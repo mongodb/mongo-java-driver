@@ -12,7 +12,7 @@ public class PojoEncoder<T> implements Encoder<T> {
 
     //at this time, this seems to be the only way to
     @SuppressWarnings("rawtypes")
-    private final Map<Class<?>, ClassModel> fieldsForClass = new HashMap<Class<?>, ClassModel>();
+    private final Map<Class<?>, ClassModel> classModelForClass = new HashMap<Class<?>, ClassModel>();
 
     public PojoEncoder(final Codecs codecs) {
         this.codecs = codecs;
@@ -27,10 +27,10 @@ public class PojoEncoder<T> implements Encoder<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes"}) //bah.  maybe this isn't even correct
     private void encodePojo(final BSONWriter bsonWriter, final T value) {
-        ClassModel<T> classModel = fieldsForClass.get(value.getClass());
+        ClassModel<T> classModel = classModelForClass.get(value.getClass());
         if (classModel == null) {
             classModel = new ClassModel(value.getClass());
-            fieldsForClass.put(value.getClass(), classModel);
+            classModelForClass.put(value.getClass(), classModel);
         }
         for (final Field field : classModel.getFields()) {
             encodeField(bsonWriter, value, field, field.getName());

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static java.lang.reflect.Modifier.isTransient;
+
 public class ClassModel<T> {
     private static final Pattern FIELD_NAME_REGEX_PATTERN = Pattern.compile("([a-zA-Z_][\\w$]*)");
 
@@ -22,7 +24,7 @@ public class ClassModel<T> {
 
         for (final Field field : theClass.getDeclaredFields()) {
             final String fieldName = field.getName();
-            if (isValidFieldName(fieldName)) {
+            if (isValidFieldName(fieldName) && !isTransient(field.getModifiers())) {
                 this.validatedFields.add(field);
                 this.validatedFieldsByName.put(fieldName, field);
             }

@@ -220,9 +220,20 @@ public class PojoEncoderTest {
     }
 
     @Test
-    @Ignore("not implemented")
-    public void shouldHandleTransient() {
-        fail("Not implemented");
+    public void shouldIgnoreTransientFields() {
+        final PojoEncoder<ObjWithTransientField> pojoEncoder = new PojoEncoder<ObjWithTransientField>(codecs);
+
+        final String value = "some value";
+        context.checking(new Expectations() {{
+            oneOf(bsonWriter).writeStartDocument();
+            oneOf(bsonWriter).writeEndDocument();
+
+            never(bsonWriter).writeName("transientField");
+            never(bsonWriter).writeString(value);
+
+        }});
+
+        pojoEncoder.encode(bsonWriter, new ObjWithTransientField(value));
     }
 
     @Test
@@ -258,6 +269,14 @@ public class PojoEncoderTest {
 
         public SimpleObject(final String name) {
             this.name = name;
+        }
+    }
+
+    private static class ObjWithTransientField {
+        private final transient String transientField;
+
+        public ObjWithTransientField(final String transientField) {
+            this.transientField = transientField;
         }
     }
 

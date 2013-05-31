@@ -19,6 +19,7 @@ package org.mongodb.acceptancetest.crud.pojo;
 public class Person {
     private String firstName;
     private String lastName;
+    private final transient String ignoredValue = "ignoreMe!";
 
     //CHECKSTYLE:OFF
     //necessary evil until we do smart stuff around identifying the ID

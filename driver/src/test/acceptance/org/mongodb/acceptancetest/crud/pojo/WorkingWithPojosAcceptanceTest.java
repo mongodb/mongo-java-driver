@@ -28,6 +28,7 @@ import org.mongodb.codecs.PojoCodec;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -64,10 +65,10 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCorrectlyInsertAndRetrievePojosContainingOtherPojos() {
-        MongoCollection<Address> addresses = Fixture.getMongoClient()
-                                .getDatabase(getDatabaseName())
-                                .getCollection("addresses",
-                                               new PojoCodec<Address>(Codecs.createDefault(), Address.class));
+        final MongoCollection<Address> addresses = Fixture.getMongoClient()
+                                                          .getDatabase(getDatabaseName())
+                                                          .getCollection("addresses",
+                                                                         new PojoCodec<Address>(Codecs.createDefault(), Address.class));
         addresses.tools().drop();
 
         final Address address = new Address("Address Line 1", "Town", new Postcode("W12"));
@@ -76,6 +77,19 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
         final Address result = addresses.one();
         assertThat(result, is(address));
+    }
+
+    @Test
+    public void shouldIgnoreTransientFields() {
+        final Person person = new Person("Bob", "Smith");
+        pojoCollection.insert(person);
+
+        final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
+
+        final Document personInCollection = personCollection.filter(new Document("firstName", person.getFirstName())
+                                                                    .append("lastName", person.getLastName())).one();
+
+        assertThat(personInCollection.get("ignoredValue"), is(nullValue()));
     }
 
     private void assertInsertedIntoDatabase(final Person person) {
