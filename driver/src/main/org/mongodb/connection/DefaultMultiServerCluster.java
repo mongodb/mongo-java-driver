@@ -39,16 +39,21 @@ class DefaultMultiServerCluster extends DefaultCluster {
         super(credentialList, options, serverFactory);
 
         notNull("seedList", seedList);
-        for (ServerAddress serverAddress : seedList) {
-            addServer(serverAddress);
+        // synchronizing this code because addServer registers a callback which is re-entrant to this instance
+        synchronized (this) {
+            for (ServerAddress serverAddress : seedList) {
+                addServer(serverAddress);
+            }
         }
     }
 
     @Override
     public void close() {
         if (!isClosed()) {
-            for (ClusterableServer server : addressToServerMap.values()) {
-                server.close();
+            synchronized (this) {
+                for (ClusterableServer server : addressToServerMap.values()) {
+                    server.close();
+                }
             }
             super.close();
         }
@@ -70,7 +75,6 @@ class DefaultMultiServerCluster extends DefaultCluster {
         @Override
         public void stateChanged(final ChangeEvent<ServerDescription> event) {
             onChange(event);
-            updateDescription();
         }
     }
 
@@ -91,6 +95,7 @@ class DefaultMultiServerCluster extends DefaultCluster {
                 }
             }
         }
+        updateDescription();
     }
 
     private void addServer(final ServerAddress serverAddress) {
