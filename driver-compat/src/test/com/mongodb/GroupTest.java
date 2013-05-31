@@ -128,6 +128,7 @@ public class GroupTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testGroupCommandWithPlainDBObject() {
         final DBObject command = new BasicDBObject()
                 .append("key", new BasicDBObject("x", 1))
