@@ -109,6 +109,11 @@ public abstract class DefaultCluster implements Cluster {
             ClusterDescription curDescription = description;
             long endTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(20, TimeUnit.SECONDS); // TODO: configurable
             while (curDescription.getType() == ClusterType.Unknown) {
+
+                if (!curDescription.isConnecting()) {
+                    throw new MongoServerSelectionFailureException(String.format("Unable to determine cluster type"));
+                }
+
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.log(Level.FINE, String.format("Cluster description not yet available. Waiting for %d ms before timing out",
