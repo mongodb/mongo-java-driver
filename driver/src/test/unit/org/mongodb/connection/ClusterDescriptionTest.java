@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,6 +40,12 @@ public class ClusterDescriptionTest {
     public void testMode() {
         ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), Discovering);
         assertEquals(Discovering, description.getMode());
+    }
+
+    @Test
+    public void testEmptySet() {
+        ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), Discovering);
+        assertTrue(description.getAll().isEmpty());
     }
 
     @Test
@@ -68,4 +75,35 @@ public class ClusterDescriptionTest {
                 ServerDescription.builder().status(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Discovering);
         assertFalse(description.isConnecting());
     }
+
+    @Test
+    public void testSortingOfAll() {
+        ClusterDescription description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                Discovering);
+        Iterator<ServerDescription> iter = description.getAll().iterator();
+        assertEquals(new ServerAddress("localhost:27017"), iter.next().getAddress());
+        assertEquals(new ServerAddress("localhost:27018"), iter.next().getAddress());
+        assertEquals(new ServerAddress("localhost:27019"), iter.next().getAddress());
+    }
+
+    @Test
+    public void testObjectOverrides() {
+        ClusterDescription description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                Discovering);
+        ClusterDescription descriptionTwo = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27019")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27018")).build(),
+                ServerDescription.builder().status(Connecting).address(new ServerAddress("localhost:27017")).build()),
+                Discovering);
+        assertEquals(description, descriptionTwo);
+        assertEquals(description.hashCode(), descriptionTwo.hashCode());
+        assertTrue(description.toString().startsWith("ClusterDescription"));
+
+   }
 }

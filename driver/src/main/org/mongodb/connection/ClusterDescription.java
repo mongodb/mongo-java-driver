@@ -20,7 +20,10 @@ import org.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -32,11 +35,13 @@ import static org.mongodb.connection.ServerConnectionStatus.Connecting;
 
 /**
  * Immutable snapshot state of a cluster.
+ *
+ * @since 3.0
  */
 @Immutable
 public class ClusterDescription {
 
-    private final List<ServerDescription> all;
+    private final Set<ServerDescription> all;
 
     private final ClusterConnectionMode mode;
 
@@ -44,10 +49,17 @@ public class ClusterDescription {
         this(Collections.<ServerDescription>emptyList(), mode);
     }
 
-    public ClusterDescription(final List<ServerDescription> all, final ClusterConnectionMode mode) {
-        notNull("all", all);
+    public ClusterDescription(final List<ServerDescription> serverDescriptions, final ClusterConnectionMode mode) {
+        notNull("all", serverDescriptions);
         this.mode = notNull("mode", mode);
-        this.all = Collections.unmodifiableList(new ArrayList<ServerDescription>(all));
+        Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>(new Comparator<ServerDescription>() {
+            @Override
+            public int compare(final ServerDescription o1, final ServerDescription o2) {
+                return o1.getAddress().toString().compareTo(o2.getAddress().toString());
+            }
+        });
+        serverDescriptionSet.addAll(serverDescriptions);
+        this.all = Collections.unmodifiableSet(serverDescriptionSet);
     }
 
     public ClusterConnectionMode getMode() {
@@ -83,7 +95,11 @@ public class ClusterDescription {
         return false;
     }
 
-    public List<ServerDescription> getAll() {
+    /**
+     * Returns the Set of all server descriptions in this cluster, sorted by the String value of the ServerAddress of each one.
+     * @return the set of server descriptions
+     */
+    public Set<ServerDescription> getAll() {
         return all;
     }
 
@@ -144,15 +160,39 @@ public class ClusterDescription {
     }
 
     @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[ ");
-        for (final ServerDescription node : getAll()) {
-            sb.append(node).append(",");
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-        sb.setLength(sb.length() - 1); //remove last comma
-        sb.append(" ]");
-        return sb.toString();
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ClusterDescription that = (ClusterDescription) o;
+
+        if (!all.equals(that.all)) {
+            return false;
+        }
+        if (mode != that.mode) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = all.hashCode();
+        result = 31 * result + mode.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterDescription{"
+                + "all=" + all
+                + ", mode=" + mode
+                + '}';
     }
 
     private interface Predicate {
