@@ -112,6 +112,9 @@ configure(subprojects.findAll {it.name != 'util'}) {
         ignoreFailures = true
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
 
+    }
+
+    tasks.withType(FindBugs) {
         reports {
             xml.enabled = project.hasProperty('xmlReportsEnabled') && project.property('xmlReportsEnabled').toBoolean()
             html.enabled = !xml.enabled
