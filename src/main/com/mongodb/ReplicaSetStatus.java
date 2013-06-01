@@ -601,7 +601,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
 
         void update(Set<UpdatableReplicaSetNode> seenNodes) {
             CommandResult res = update();
-            if (res == null || !_ok) {
+            if (res == null || !isOk()) {
                 return;
             }
 
@@ -769,7 +769,7 @@ public class ReplicaSetStatus extends ConnectionStatus {
         private List<ReplicaSetNode> createNodeList() {
             List<ReplicaSetNode> nodeList = new ArrayList<ReplicaSetNode>(_all.size());
             for (UpdatableReplicaSetNode cur : _all) {
-                nodeList.add(new ReplicaSetNode(cur._addr, cur._names, cur._setName, cur._pingTimeMS, cur._ok, cur._isMaster, cur._isSecondary, cur._tags, cur._maxBsonObjectSize));
+                nodeList.add(new ReplicaSetNode(cur._addr, cur._names, cur._setName, cur._pingTimeMS, cur.isOk(), cur._isMaster, cur._isSecondary, cur._tags, cur._maxBsonObjectSize));
             }
             return nodeList;
         }

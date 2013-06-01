@@ -64,7 +64,7 @@ class MongosStatus extends ConnectionStatus {
                         MongosNode bestThisPass = null;
                         for (MongosNode cur : mongosNodes) {
                             cur.update();
-                            if (cur._ok) {
+                            if (cur.isOk()) {
                                 if (bestThisPass == null || (cur._pingTimeMS < bestThisPass._pingTimeMS)) {
                                     bestThisPass = cur;
                                 }
@@ -109,7 +109,7 @@ class MongosStatus extends ConnectionStatus {
         if (bestThisPass == null) {
             preferred = null;
         } else {
-            preferred = new Node(bestThisPass._pingTimeMS, bestThisPass._addr, bestThisPass._maxBsonObjectSize, bestThisPass._ok);
+            preferred = new Node(bestThisPass._pingTimeMS, bestThisPass._addr, bestThisPass._maxBsonObjectSize, bestThisPass.isOk());
         }
         notifyAll();
     }

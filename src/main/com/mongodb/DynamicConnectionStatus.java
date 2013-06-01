@@ -112,7 +112,7 @@ class DynamicConnectionStatus extends ConnectionStatus {
                             while (!Thread.interrupted()) {
                                 try {
                                     node.update();
-                                    if (node._ok) {
+                                    if (node.isOk()) {
                                         notifyOfOkNode(node);
                                         return;
                                     }
