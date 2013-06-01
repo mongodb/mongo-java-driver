@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
+import static com.mongodb.ConnectionStatus.UpdatableNode.ConnectionState.Connected;
+
 /**
  * Copyright (c) 2008 - 2011 10gen, Inc. <http://10gen.com>
  * <p/>
@@ -240,7 +242,7 @@ public class ReplicaSetStatusDomainModelTest extends TestCase {
         ServerAddress serverAddress = new ServerAddress(address);
         ReplicaSetStatus.UpdatableReplicaSetNode updatableNode
                 = new ReplicaSetStatus.UpdatableReplicaSetNode(serverAddress, updatableNodes, _logger, null, _mongoOptions, _lastPrimarySignal);
-        updatableNode._ok = true;
+        updatableNode._connectionState = Connected;
         updatableNode._pingTimeMS = pingTime;
         updatableNode._isSecondary = isSecondary;
         updatableNode._isMaster = !isSecondary;

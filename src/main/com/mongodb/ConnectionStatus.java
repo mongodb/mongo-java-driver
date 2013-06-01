@@ -15,11 +15,14 @@
  */
 package com.mongodb;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.mongodb.ConnectionStatus.UpdatableNode.ConnectionState.Connected;
+import static com.mongodb.ConnectionStatus.UpdatableNode.ConnectionState.Connecting;
+import static com.mongodb.ConnectionStatus.UpdatableNode.ConnectionState.Unconnected;
 
 /**
  * Base class for classes that manage connections to mongo instances as background tasks.
@@ -171,6 +174,11 @@ abstract class ConnectionStatus {
     }
 
     static abstract class UpdatableNode {
+
+        enum ConnectionState {
+            Connecting, Connected, Unconnected
+        }
+
         UpdatableNode(final ServerAddress addr, Mongo mongo, MongoOptions mongoOptions) {
             this._addr = addr;
             this._mongo = mongo;
@@ -178,61 +186,41 @@ abstract class ConnectionStatus {
             this._port = new DBPort(addr, null, mongoOptions);
         }
 
+        public boolean isOk() {
+            return _connectionState == Connected;
+        }
+
         public CommandResult update() {
-            CommandResult res = null;
             try {
                 long start = System.nanoTime();
-                res = _port.runCommand(_mongo.getDB("admin"), isMasterCmd);
+                CommandResult res = _port.runCommand(_mongo.getDB("admin"), isMasterCmd);
+
                 long end = System.nanoTime();
                 float newPingMS = (end - start) / 1000000F;
-                if (!successfullyContacted)
+                if (_connectionState != Connected) {
                     _pingTimeMS = newPingMS;
-                else
+                }
+                else {
                     _pingTimeMS = _pingTimeMS + ((newPingMS - _pingTimeMS) / latencySmoothFactor);
+                }
+
+                _maxBsonObjectSize = res.getInt("maxBsonObjectSize", Bytes.MAX_OBJECT_SIZE);
+
+                if (_connectionState != Connected) {
+                    _connectionState = Connected;
+                    getLogger().log(Level.INFO, "Server seen up: " + _addr);
+                }
 
                 getLogger().log(Level.FINE, "Latency to " + _addr + " actual=" + newPingMS + " smoothed=" + _pingTimeMS);
 
-                successfullyContacted = true;
-
-                if (res == null) {
-                    throw new MongoInternalException("Invalid null value returned from isMaster");
-                }
-
-                if (!_ok) {
-                    getLogger().log(Level.INFO, "Server seen up: " + _addr);
-                }
-                _ok = true;
-
-                // max size was added in 1.8
-                if (res.containsField("maxBsonObjectSize")) {
-                    _maxBsonObjectSize = (Integer) res.get("maxBsonObjectSize");
-                } else {
-                    _maxBsonObjectSize = Bytes.MAX_OBJECT_SIZE;
-                }
+                return res;
             } catch (Exception e) {
-                if (!((_ok) ? true : (Math.random() > 0.1))) {
-                    return res;
+                if (_connectionState != Unconnected) {
+                    _connectionState = Unconnected;
+                    getLogger().log(Level.WARNING, String.format("Server seen down: %s", _addr), e);
                 }
-
-                final StringBuilder logError = (new StringBuilder("Server seen down: ")).append(_addr);
-
-                if (e instanceof IOException) {
-
-                    logError.append(" - ").append(IOException.class.getName());
-
-                    if (e.getMessage() != null) {
-                        logError.append(" - message: ").append(e.getMessage());
-                    }
-
-                    getLogger().log(Level.WARNING, logError.toString());
-
-                } else {
-                    getLogger().log(Level.WARNING, logError.toString(), e);
-                }
-                _ok = false;
+                return null;
             }
-
-            return res;
         }
 
         protected abstract Logger getLogger();
@@ -243,10 +231,9 @@ abstract class ConnectionStatus {
 
         DBPort _port; // we have our own port so we can set different socket options and don't have to worry about the pool
 
-        boolean successfullyContacted = false;
-        boolean _ok = false;
         float _pingTimeMS = 0;
         int _maxBsonObjectSize;
+        ConnectionState _connectionState = Connecting;
     }
 
 }
