@@ -95,7 +95,7 @@ configure(subprojects.findAll {it.name != 'util'}) {
     }
 
     gradle.taskGraph.whenReady { taskGraph ->
-        if (taskGraph.hasTask('check')) {
+        if (taskGraph.hasTask(check)) {
             tasks.withType(Test) { jacoco { enabled = true } }
         }
     }
