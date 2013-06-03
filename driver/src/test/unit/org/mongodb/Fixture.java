@@ -19,6 +19,7 @@ package org.mongodb;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ServerSelectingSession;
 
@@ -91,8 +92,14 @@ public final class Fixture {
         return getMongoClientURI().getOptions();
     }
 
-    public static ServerAddress getPrimary() throws UnknownHostException {
-        return new ServerAddress(getMongoClientURI().getHosts().get(0));
+    public static ServerAddress getPrimary() throws UnknownHostException, InterruptedException {
+        getMongoClient();
+        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+        while (serverDescriptions.isEmpty()) {
+            Thread.sleep(100);
+            serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+        }
+        return serverDescriptions.get(0).getAddress();
     }
 
     public static List<MongoCredential> getCredentialList() {

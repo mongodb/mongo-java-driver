@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.UnknownHostException;
 import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
@@ -32,7 +31,7 @@ public class DefaultSingleServerClusterTest {
     private DefaultSingleServerCluster cluster;
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() throws Exception {
         cluster = new DefaultSingleServerCluster(getPrimary(), null, getOptions(), new DefaultClusterableServerFactory());
     }
 

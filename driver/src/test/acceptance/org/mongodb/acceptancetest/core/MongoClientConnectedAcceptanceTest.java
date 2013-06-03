@@ -22,8 +22,6 @@ import org.junit.Test;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
 
-import java.net.UnknownHostException;
-
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getOptions;
@@ -34,7 +32,7 @@ public class MongoClientConnectedAcceptanceTest {
     private MongoClient mongoClient;
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() throws Exception {
         mongoClient = MongoClients.create(getPrimary(), getOptions());
     }
 
