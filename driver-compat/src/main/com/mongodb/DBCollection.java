@@ -23,7 +23,6 @@ import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.Get;
 import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
@@ -498,7 +497,7 @@ public class DBCollection implements IDBCollection {
      * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
-     * @return
+     * @return the result of the operation
      */
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
@@ -1431,10 +1430,6 @@ public class DBCollection implements IDBCollection {
         return commandResult.getValue();
     }
 
-    private Get asGetOrder(final boolean returnNew) {
-        return returnNew ? Get.BeforeChangeApplied : Get.AfterChangeApplied;
-    }
-
     /**
      * Returns the database this collection is a member of.
      *
@@ -1644,7 +1639,7 @@ public class DBCollection implements IDBCollection {
     /**
      * Gets the type mapping for a document hierarchy.
      *
-     * @return
+     * @return the type mapping
      */
     TypeMapping getTypeMapping() {
         return typeMapping; //TODO Make unmodifiable
