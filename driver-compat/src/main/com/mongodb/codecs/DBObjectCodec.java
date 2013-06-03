@@ -116,10 +116,10 @@ public class DBObjectCodec implements Codec<DBObject> {
     private void encodeEmbeddedObject(final BSONWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
-        for (final String key : document.keySet()) {
-            validateField(key);
-            bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key));
+        for (final Map.Entry<String, Object> entry : document.entrySet()) {
+            validateField(entry.getKey());
+            bsonWriter.writeName(entry.getKey());
+            writeValue(bsonWriter, entry.getValue());
         }
         bsonWriter.writeEndDocument();
     }
@@ -155,7 +155,7 @@ public class DBObjectCodec implements Codec<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        final List<String> path = new ArrayList<String>(10);
+        final List<String> path = new ArrayList<>(10);
         final DBObject document = typeMapping.getNewInstance(path);
 
         reader.readStartDocument();
