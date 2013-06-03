@@ -139,15 +139,25 @@ configure(subprojects.findAll {it.name != 'util'}) {
 project(':bson') { }
 
 project(':driver') {
+    apply plugin: "groovy"
 
     sourceSets {
-        test        { java.srcDirs = ['src/test/unit'] }
+        test {
+            groovy {
+                srcDirs = ['src/test/unit']
+            }
+            java {
+                srcDirs = ['src/test/unit']
+            }
+        }
         acceptance  { java.srcDirs = ['src/test/acceptance'] }
         functional  { java.srcDirs = ['src/test/functional'] }
     }
 
     dependencies {
         compile             project(':bson')
+        testCompile         'org.codehaus.groovy:groovy-all:1.8.6'
+        testCompile         'org.spockframework:spock-core:0.6-groovy-1.8'
         testCompile         'org.jmock:jmock-legacy:2.6.0'
         testCompile         'org.jmock:jmock-junit4:2.6.0'
         functionalCompile   sourceSets.test.runtimeClasspath
