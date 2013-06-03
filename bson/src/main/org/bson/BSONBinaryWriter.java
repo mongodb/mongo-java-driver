@@ -258,10 +258,6 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     @Override
-    public void close() {
-    }
-
-    @Override
     public void writeStartArray() {
         checkPreconditions("writeStartArray", State.VALUE);
 
