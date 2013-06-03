@@ -137,11 +137,11 @@ public class ObjectIdTest {
         ObjectId id = new ObjectId();
         assertEquals(id.getTimestamp(), id.getTimeSecond());
         assertEquals(id.getCounter(), id.getInc());
-        assertEquals(id.getCounter(), id.inc());
+        assertEquals(id.getCounter(), id._inc());
+        assertEquals(id.getTimeSecond(), id._time());
         assertEquals(id.getMachineIdentifier(), id.getMachine());
-        assertEquals(id.getMachineIdentifier(), id.machine());
+        assertEquals(id.getMachineIdentifier(), id._machine());
         assertEquals(id.toHexString(), id.toStringMongod());
-
     }
 }
 

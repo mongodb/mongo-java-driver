@@ -437,7 +437,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @deprecated
      */
     @Deprecated
-    public int time() {
+    public int _time() {
         return timestamp;
     }
 
@@ -461,7 +461,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @deprecated
      */
     @Deprecated
-    public int machine() {
+    public int _machine() {
         return machineIdentifier;
     }
 
@@ -473,7 +473,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @deprecated
      */
     @Deprecated
-    public int inc() {
+    public int _inc() {
         return counter;
     }
 
