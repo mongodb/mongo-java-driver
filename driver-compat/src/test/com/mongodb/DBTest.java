@@ -16,8 +16,10 @@
 
 package com.mongodb;
 
+import category.ReplicaSet;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -66,7 +68,7 @@ public class DBTest extends DatabaseTestCase {
 
         final String[] collectionNames = {"c1", "c2", "c3"};
 
-        for (String name : collectionNames) {
+        for (final String name : collectionNames) {
             database.createCollection(name, new BasicDBObject());
         }
 
@@ -151,6 +153,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
         final CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, ReadPreference.secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
