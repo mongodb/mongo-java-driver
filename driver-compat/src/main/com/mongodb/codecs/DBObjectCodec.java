@@ -155,7 +155,7 @@ public class DBObjectCodec implements Codec<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        final List<String> path = new ArrayList<>(10);
+        final List<String> path = new ArrayList<String>(10);
         final DBObject document = typeMapping.getNewInstance(path);
 
         reader.readStartDocument();
