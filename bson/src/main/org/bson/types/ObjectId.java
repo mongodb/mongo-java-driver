@@ -430,18 +430,6 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     /**
-     * Gets the timestamp.
-     *
-     * @return the timestamp
-     * @see org.bson.types.ObjectId#getTimestamp()
-     * @deprecated
-     */
-    @Deprecated
-    public int _time() {
-        return timestamp;
-    }
-
-    /**
      * Gets the machine identifier.
      *
      * @return the machine identifier
@@ -451,6 +439,19 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     @Deprecated
     public int getMachine() {
         return machineIdentifier;
+    }
+
+    // CHECKSTYLE:OFF
+    /**
+     * Gets the timestamp.
+     *
+     * @return the timestamp
+     * @see org.bson.types.ObjectId#getTimestamp()
+     * @deprecated
+     */
+    @Deprecated
+    public int _time() {
+        return timestamp;
     }
 
     /**
@@ -476,6 +477,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     public int _inc() {
         return counter;
     }
+    // CHECKSTYLE:ON
 
     /**
      * @return a string representation of the ObjectId in hexadecimal format
