@@ -105,7 +105,7 @@ public class DocumentCodec implements Codec<Document> {
         return document;
     }
 
-    private Object readValue(final BSONReader reader, final String fieldName) {
+    protected Object readValue(final BSONReader reader, final String fieldName) {
         final BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
             return getDecoderForField(fieldName).decode(reader);
