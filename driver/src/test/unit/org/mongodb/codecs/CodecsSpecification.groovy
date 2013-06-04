@@ -31,7 +31,7 @@ class CodecsSpecification extends Specification {
 
     private Codecs codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault()).build();
 
-    def shouldEncodeCodeWithScopeAsJavaScriptFollowedByDocumentOfScopeWhenPassedInAsObject() {
+    def 'should encode code with scope as java script followed by document of scope when passed in as object'() {
         setup:
         final String javascriptCode = "<javascript code>";
         final Object codeWithScope = new CodeWithScope(javascriptCode, new Document("the", "scope"));
@@ -47,7 +47,7 @@ class CodecsSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    def shouldDecodeCodeWithScope() {
+    def 'should decode code with scope'() {
         setup:
         final CodeWithScope codeWithScope = new CodeWithScope("{javascript code}", new Document("the", "scope"));
         final BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
@@ -59,7 +59,7 @@ class CodecsSpecification extends Specification {
         actualCodeWithScope == codeWithScope;
     }
 
-    def shouldEncodeDbRefWhenDisguisedAsAnObject() {
+    def 'should encode db ref when disguised as an object'() {
         setup:
         final String namespace = "theNamespace";
         final String theId = "TheId";
@@ -76,7 +76,7 @@ class CodecsSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    def shouldEncodeNull() {
+    def 'should encode null'() {
         when:
         codecs.encode(bsonWriter, (Object) null);
 
@@ -84,53 +84,53 @@ class CodecsSpecification extends Specification {
         1 * bsonWriter.writeNull();
     }
 
-    def shouldBeAbleToEncodeMap() {
+    def 'should be able to encode map'() {
         expect:
         codecs.canEncode(new HashMap<String, Object>()) == true;
     }
 
-    def shouldBeAbleToEncodeArray() {
+    def 'should be able to encode array'() {
         expect:
         codecs.canEncode(["some string"] as String[]) == true;
     }
 
-    def shouldBeAbleToEncodeList() {
+    def 'should be able to encode list'() {
         expect:
         codecs.canEncode(new ArrayList<String>()) == true;
     }
 
-    def shouldBeAbleToEncodePrimitive() {
+    def 'should be able to encode primitive'() {
         expect:
         codecs.canEncode(1) == true;
     }
 
-    def shouldBeAbleToEncodeCodeWithScope() {
+    def 'should be able to encode code with scope'() {
         expect:
         codecs.canEncode(new CodeWithScope(null, null)) == true;
     }
 
-    def shouldBeAbleToEncodeDBRef() {
+    def 'should be able to encode d b ref'() {
         expect:
         codecs.canEncode(new DBRef(null, null)) == true;
     }
 
-    def shouldBeAbleToEncodeNull() {
+    def 'should be able to encode null'() {
         expect:
         codecs.canEncode(null) == true;
     }
 
-    def shouldBeAbleToDecodeMap() {
+    def 'should be able to decode map'() {
         expect:
         codecs.canDecode(Map.class) == true;
     }
 
-    def shouldBeAbleToDecodeHashMap() {
+    def 'should be able to decode hash map'() {
         expect:
         codecs.canDecode(HashMap.class) == true;
     }
 
     @Ignore("not supported yet")
-    def shouldBeAbleToDecodePrimitive() {
+    def 'should be able to decode primitive'() {
         expect:
         codecs.canDecode(int.class) == true;
     }
