@@ -203,11 +203,11 @@ public class DB implements IDB {
     }
 
     private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
-        if (options.get("size") != null && !(options.get("size") instanceof Integer)) {
-            throw new IllegalArgumentException("'size' should be Integer");
+        if (options.get("size") != null && !(options.get("size") instanceof Number)) {
+            throw new IllegalArgumentException("'size' should be Number");
         }
-        if (options.get("max") != null && !(options.get("max") instanceof Integer)) {
-            throw new IllegalArgumentException("'max' should be Integer");
+        if (options.get("max") != null && !(options.get("max") instanceof Number)) {
+            throw new IllegalArgumentException("'max' should be Number");
         }
         if (options.get("capped") != null && !(options.get("capped") instanceof Boolean)) {
             throw new IllegalArgumentException("'capped' should be Boolean");
@@ -218,19 +218,19 @@ public class DB implements IDB {
 
         boolean capped = false;
         boolean autoIndex = true;
-        int sizeInBytes = 0;
-        int maxDocuments = 0;
+        long sizeInBytes = 0;
+        long maxDocuments = 0;
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
         if (options.get("size") != null) {
-            sizeInBytes = (Integer) options.get("size");
+            sizeInBytes = ((Number) options.get("size")).longValue();
         }
         if (options.get("autoIndexId") != null) {
             autoIndex = (Boolean) options.get("autoIndexId");
         }
         if (options.get("max") != null) {
-            maxDocuments = (Integer) options.get("max");
+            maxDocuments = ((Number) options.get("max")).longValue();
         }
         return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments);
     }

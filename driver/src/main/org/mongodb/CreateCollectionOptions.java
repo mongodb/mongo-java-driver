@@ -33,8 +33,8 @@ public class CreateCollectionOptions {
         this(collectionName, capped, sizeInBytes, autoIndex, 0);
     }
 
-    public CreateCollectionOptions(final String collectionName, final boolean capped, final int sizeInBytes,
-                                   final boolean autoIndex, final int maxDocuments) {
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
+                                   final boolean autoIndex, final long maxDocuments) {
         this.collectionName = collectionName;
         createDocument = new Document("create", collectionName);
         createDocument.put("capped", capped);
