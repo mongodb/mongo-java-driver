@@ -25,6 +25,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mongodb.codecs.pojo.ObjectWithArray;
+import org.mongodb.codecs.pojo.ObjectWithMapOfStrings;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
@@ -41,7 +43,7 @@ public class PojoCodecEncodingTest {
 
     private BSONWriter bsonWriter;
     private PojoCodec<Object> pojoCodec;
-    private Codecs codecs = Codecs.createDefault();
+    private final Codecs codecs = Codecs.createDefault();
 
     @Before
     public void setUp() {
@@ -247,19 +249,6 @@ public class PojoCodecEncodingTest {
         public NestedObjectWithFields(final int intValue, final SimpleObject mySimpleObject) {
             this.intValue = intValue;
             this.mySimpleObject = mySimpleObject;
-        }
-    }
-
-    private static final class ObjectWithArray {
-        private final String[] theStringArray = {"Uno", "Dos", "Tres"};
-    }
-
-    private static final class ObjectWithMapOfStrings {
-        private final Map<String, String> theMap = new HashMap<String, String>();
-
-        {
-            theMap.put("first", "the first value");
-            theMap.put("second", "the second value");
         }
     }
 
