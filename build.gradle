@@ -167,8 +167,8 @@ project(':driver') {
         compile             project(':bson')
         testCompile         'org.codehaus.groovy:groovy-all:1.8.6'
         testCompile         'org.spockframework:spock-core:0.7-groovy-1.8'
-        testCompile         'org.jmock:jmock-legacy:2.6.0'
-        testCompile         'org.jmock:jmock-junit4:2.6.0'
+        testCompile         'cglib:cglib-nodep:2.2.2'
+        testCompile         'org.objenesis:objenesis:1.3'
         functionalCompile   sourceSets.test.runtimeClasspath
         acceptanceCompile   sourceSets.functional.runtimeClasspath
     }
