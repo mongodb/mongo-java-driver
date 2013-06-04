@@ -21,6 +21,8 @@ import org.mongodb.annotations.Immutable;
 
 import java.util.Arrays;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 /**
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
  * the authentication mechanism to use.
@@ -49,9 +51,9 @@ public final class MongoCredential {
     /**
      * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
      *
-     * @param userName the user name
-     * @param database the database where the user is defined
-     * @param password the user's password
+     * @param userName the non-null user name
+     * @param database the non-null database where the user is defined
+     * @param password the non-null password
      * @return the credential
      */
     public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
@@ -61,7 +63,7 @@ public final class MongoCredential {
     /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
      *
-     * @param userName the user name
+     * @param userName the non-null user name
      * @return the credential
      */
     public static MongoCredential createGSSAPICredential(final String userName) {
@@ -78,13 +80,9 @@ public final class MongoCredential {
      * @param password the password
      */
     MongoCredential(final String mechanism, final String userName, final String source, final char[] password) {
-        if (mechanism == null) {
-            throw new IllegalArgumentException("mechanism can not be null");
-        }
-
-        if (userName == null) {
-            throw new IllegalArgumentException("username can not be null");
-        }
+        this.mechanism = notNull("mechanism", mechanism);
+        this.userName = notNull("userName", userName);
+        this.source = notNull("source", source);
 
         if (mechanism.equals(MONGODB_CR_MECHANISM) && password == null) {
             throw new IllegalArgumentException("Password can not be null for " + MONGODB_CR_MECHANISM + " mechanism");
@@ -94,9 +92,6 @@ public final class MongoCredential {
             throw new IllegalArgumentException("Password must be null for the " + GSSAPI_MECHANISM + " mechanism");
         }
 
-        this.mechanism = mechanism;
-        this.userName = userName;
-        this.source = source;
         this.password = password != null ? password.clone() : null;
     }
 
