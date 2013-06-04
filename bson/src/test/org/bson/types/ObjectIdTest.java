@@ -142,6 +142,8 @@ public class ObjectIdTest {
         assertEquals(id.getMachineIdentifier(), id.getMachine());
         assertEquals(id.getMachineIdentifier(), id._machine());
         assertEquals(id.toHexString(), id.toStringMongod());
+        assertArrayEquals(new byte[]{0x12, 0x34, 0x56, 0x78, 0x43, 0x21, 0xffffff87, 0x65, 0x74, 0xffffff92, 0xffffff87, 0x56},
+                new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
     }
 }
 

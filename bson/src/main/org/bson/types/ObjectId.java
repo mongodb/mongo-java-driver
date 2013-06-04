@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * <td colspan="2">pid</td><td colspan="3">inc</td>
  * </tr>
  * </table>
- *
+ * <p/>
  * Instances of this class are immutable.
  *
  * @mongodb.driver.manual core/object-id ObjectId
@@ -222,6 +222,36 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         processIdentifier = (short) makeInt((byte) 0, (byte) 0, bytes[7], bytes[8]);
         counter = makeInt((byte) 0, bytes[9], bytes[10], bytes[11]);
     }
+
+    /**
+     * Creates an ObjectId
+     *
+     * @param timestamp                   time in seconds
+     * @param machineAndProcessIdentifier machine and process identifier
+     * @param counter                     incremental value
+     */
+    @Deprecated
+    public ObjectId(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
+        this(legacyToBytes(timestamp, machineAndProcessIdentifier, counter));
+    }
+
+    private static byte[] legacyToBytes(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
+        final byte[] bytes = new byte[12];
+        bytes[0] = int3(timestamp);
+        bytes[1] = int2(timestamp);
+        bytes[2] = int1(timestamp);
+        bytes[3] = int0(timestamp);
+        bytes[4] = int3(machineAndProcessIdentifier);
+        bytes[5] = int2(machineAndProcessIdentifier);
+        bytes[6] = int1(machineAndProcessIdentifier);
+        bytes[7] = int0(machineAndProcessIdentifier);
+        bytes[8] = int3(counter);
+        bytes[9] = int2(counter);
+        bytes[10] = int1(counter);
+        bytes[11] = int0(counter);
+        return bytes;
+    }
+
 
     /**
      * Convert to a byte array.  Note that the numbers are stored in big-endian order.
@@ -442,6 +472,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     // CHECKSTYLE:OFF
+
     /**
      * Gets the timestamp.
      *
@@ -537,7 +568,8 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
             if (processName.contains("@")) {
                 processId = (short) Integer.parseInt(processName.substring(0, processName.indexOf('@')));
-            } else {
+            }
+            else {
                 processId = (short) java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
             }
 
