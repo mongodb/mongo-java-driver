@@ -17,7 +17,6 @@
 package org.mongodb.connection;
 
 import org.bson.io.BasicInputBuffer;
-import org.bson.io.InputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 
@@ -226,10 +225,10 @@ class DefaultAsyncConnection implements AsyncConnection {
                 callback.onResult(null, e);
             }
             else {
-                final InputBuffer headerInputBuffer = new BasicInputBuffer(result);
-
+                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
                 final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
 
+                headerInputBuffer.close();
                 bufferPool.release(result);
 
                 if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {

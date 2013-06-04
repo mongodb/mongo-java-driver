@@ -17,7 +17,6 @@
 package org.mongodb.connection;
 
 import org.bson.io.BasicInputBuffer;
-import org.bson.io.InputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
@@ -106,9 +105,12 @@ abstract class DefaultConnection implements Connection {
         final ReplyHeader replyHeader;
         try {
             fillAndFlipBuffer(headerByteBuffer);
-            final InputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
-
-            replyHeader = new ReplyHeader(headerInputBuffer);
+            BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
+            try {
+                replyHeader = new ReplyHeader(headerInputBuffer);
+            } finally {
+                headerInputBuffer.close();
+            }
         } finally {
             bufferPool.release(headerByteBuffer);
         }
