@@ -132,26 +132,20 @@ class IterableCodecSpecification extends Specification {
 
     public void 'should be able to plug in custom decoder'() {
         setup:
-        final StubDecoder decoder = new StubDecoder();
-        final IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), decoder);
+        int timesDecodeCalled = 0;
 
-        final Iterable<Integer> expectedSet = new HashSet<Integer>([1]);
+        final HashSet<Integer> expectedSet = new HashSet<Integer>([1]);
         final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
+
+        final Decoder decoder = Mock();
+        //this magic incantation is the stubbing
+        decoder.decode(reader) >> { reader.readInt32(); timesDecodeCalled++; }
+        final IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), decoder);
 
         when:
         iterableCodecForSet.decode(reader);
 
         then:
-        decoder.timesCalled == 1;
-    }
-
-    private static final class StubDecoder implements Decoder<Object> {
-        private int timesCalled;
-
-        @Override
-        public Object decode(final BSONReader reader) {
-            timesCalled++;
-            return reader.readInt32();
-        }
+        timesDecodeCalled == 1;
     }
 }
