@@ -62,6 +62,13 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    public void shouldUseGivenCredentials() throws UnknownHostException {
+        final Mongo mongo = new MongoClient(new ServerAddress(),
+                Arrays.asList(MongoCredential.createMongoCRCredential("user", "admin", "pwd".toCharArray())));
+        mongo.close();
+    }
+
+    @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
         final Mongo mongo = new MongoClient();
         try {

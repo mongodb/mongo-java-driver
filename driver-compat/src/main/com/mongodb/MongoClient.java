@@ -125,6 +125,19 @@ public class MongoClient extends Mongo {
     }
 
     /**
+     * Creates a Mongo instance based on a (single) mongodb node and a list of credentials
+     *
+     * @param addr the database address
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @since 2.11.0
+     */
+    public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList) {
+        this(addr, credentialsList, new MongoClientOptions.Builder().build());
+    }
+
+    /**
      * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress and default options.
      *
      * @param addr    the database address
@@ -134,6 +147,20 @@ public class MongoClient extends Mongo {
      */
     public MongoClient(final ServerAddress addr, final MongoClientOptions options) {
         super(addr, options);
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress and default options.
+     *
+     * @param addr    the database address
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @param options default options
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @since 2.11.0
+     */
+    public MongoClient(ServerAddress addr, List<MongoCredential> credentialsList, MongoClientOptions options) {
+        super(addr, credentialsList, options);
     }
 
     /**
@@ -170,10 +197,31 @@ public class MongoClient extends Mongo {
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
-    private MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
+    public MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
         super(seeds, options);
     }
 
+    /**
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.
+     * <p/>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
+     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *                either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *                sharded cluster.
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @param options default options
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @since 2.11.0
+     */
+    public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList, MongoClientOptions options) {
+        super(seeds, credentialsList, options);
+    }
 
     /**
      * Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it

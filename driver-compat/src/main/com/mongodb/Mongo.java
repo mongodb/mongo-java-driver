@@ -69,6 +69,14 @@ public class Mongo {
         this(Clusters.create(serverAddress.toNew(), mongoOptions.toNew()), mongoOptions);
     }
 
+    public Mongo(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        this(Clusters.create(addr.toNew(), createNewCredentialList(credentialsList), options.toNew()), options);
+    }
+
+    Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        this(Clusters.create(createNewSeedList(seedList), createNewCredentialList(credentialsList), options.toNew()), options);
+    }
+
     Mongo(final Cluster cluster, final MongoClientOptions options) {
         this.cluster = cluster;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
@@ -293,6 +301,14 @@ public class Mongo {
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
         List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (ServerAddress cur : seedList) {
+            retVal.add(cur.toNew());
+        }
+        return retVal;
+    }
+
+    private static List<org.mongodb.MongoCredential> createNewCredentialList(final List<MongoCredential> credentialsList) {
+        List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
+        for (MongoCredential cur : credentialsList) {
             retVal.add(cur.toNew());
         }
         return retVal;
