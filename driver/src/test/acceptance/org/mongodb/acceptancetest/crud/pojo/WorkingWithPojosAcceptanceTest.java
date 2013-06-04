@@ -28,7 +28,7 @@ import org.mongodb.codecs.PojoCodec;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
