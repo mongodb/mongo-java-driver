@@ -35,7 +35,7 @@ import java.nio.ByteBuffer;
 /**
  * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer.
  * It assumes that it contains a single encoded BSON document.
- * <p>
+ * <p/>
  * This should even be usable as a nested document codec by adding an instance of it to a PrimitiveCodecs instance.
  */
 public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuffer> {
@@ -55,16 +55,18 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public BSONDocumentBuffer decode(final BSONReader reader) {
+        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool));
         try {
-            BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool));
-            binaryWriter.pipe(reader);
+            writer.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =
-                    new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
-            binaryWriter.getBuffer().pipe(byteArrayOutputStream);
+                    new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
+            writer.getBuffer().pipe(byteArrayOutputStream);
             return new BSONDocumentBuffer(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);
+        } finally {
+            writer.close();
         }
     }
 
@@ -76,17 +78,21 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
     @Override
     public Object getId(final BSONDocumentBuffer document) {
         BSONReader reader = new BSONBinaryReader(new BasicInputBuffer(document.getByteBuffer()));
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            String name = reader.readName();
-            if (name.equals("_id")) {
-                return primitiveCodecs.decode(reader);
+        try {
+            reader.readStartDocument();
+            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                String name = reader.readName();
+                if (name.equals("_id")) {
+                    return primitiveCodecs.decode(reader);
+                }
+                else {
+                    reader.skipValue();
+                }
             }
-            else {
-                reader.skipValue();
-            }
+            return null;
+        } finally {
+            reader.close();
         }
-        return null;
     }
 
     // Just so we don't have to copy the buffer
