@@ -14,245 +14,225 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.codecs
 
-import org.bson.BSONWriter;
-import org.jmock.Expectations;
-import org.jmock.integration.junit4.JUnitRuleMockery;
-import org.jmock.lib.concurrent.Synchroniser;
-import org.jmock.lib.legacy.ClassImposteriser;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mongodb.codecs.pojo.Address;
-import org.mongodb.codecs.pojo.Name;
-import org.mongodb.codecs.pojo.ObjectWithArray;
-import org.mongodb.codecs.pojo.ObjectWithMapOfStrings;
-import org.mongodb.codecs.pojo.Person;
+import org.bson.BSONWriter
+import org.mongodb.codecs.pojo.Address
+import org.mongodb.codecs.pojo.Name
+import org.mongodb.codecs.pojo.ObjectWithArray
+import org.mongodb.codecs.pojo.ObjectWithMapOfStrings
+import org.mongodb.codecs.pojo.Person
+import spock.lang.Ignore
+import spock.lang.Specification
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.Assert.fail
 
-import static org.junit.Assert.fail;
-
-public class PojoEncoderTest {
-    //CHECKSTYLE:OFF
-    @Rule
-    public final JUnitRuleMockery context = new JUnitRuleMockery();
-    //CHECKSTYLE:ON
-
-    private BSONWriter bsonWriter;
+class PojoEncoderSpecification extends Specification {
+    private BSONWriter bsonWriter = Mock();
 
     private final Codecs codecs = Codecs.createDefault();
 
-    @Before
-    public void setUp() {
-        context.setImposteriser(ClassImposteriser.INSTANCE);
-        context.setThreadingPolicy(new Synchroniser());
-        bsonWriter = context.mock(BSONWriter.class);
-    }
-
-    @Test
     public void shouldEncodeSimplePojo() {
+        setup:
         final PojoEncoder<SimpleObject> pojoEncoder = new PojoEncoder<SimpleObject>(codecs);
-
         final String valueInSimpleObject = "MyName";
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString(valueInSimpleObject);
-            oneOf(bsonWriter).writeEndDocument();
-
-        }});
+        
+        when:
         pojoEncoder.encode(bsonWriter, new SimpleObject(valueInSimpleObject));
+        
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("name");
+        1 * bsonWriter.writeString(valueInSimpleObject);
+        1 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodePojoContainingOtherPojos() {
+        setup:
         final PojoEncoder<NestedObject> pojoEncoder = new PojoEncoder<NestedObject>(codecs);
-
         final String anotherName = "AnotherName";
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("mySimpleObject");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString(anotherName);
-            exactly(2).of(bsonWriter).writeEndDocument();
 
-        }});
+        when:
         pojoEncoder.encode(bsonWriter, new NestedObject(new SimpleObject(anotherName)));
+        
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("mySimpleObject");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("name");
+        1 * bsonWriter.writeString(anotherName);
+        2 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodePojoContainingOtherPojosAndFields() {
+        setup:
         final PojoEncoder<NestedObjectWithFields> pojoEncoder = new PojoEncoder<NestedObjectWithFields>(codecs);
 
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("intValue");
-            oneOf(bsonWriter).writeInt32(98);
-            oneOf(bsonWriter).writeName("mySimpleObject");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString("AnotherName");
-            exactly(2).of(bsonWriter).writeEndDocument();
-
-        }});
+        when:
         pojoEncoder.encode(bsonWriter, new NestedObjectWithFields(98, new SimpleObject("AnotherName")));
+        
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("intValue");
+        1 * bsonWriter.writeInt32(98);
+        1 * bsonWriter.writeName("mySimpleObject");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("name");
+        1 * bsonWriter.writeString("AnotherName");
+        2 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldSupportArrays() {
+        setup:
         final PojoEncoder<ObjectWithArray> pojoEncoder = new PojoEncoder<ObjectWithArray>(codecs);
 
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("theStringArray");
-            oneOf(bsonWriter).writeStartArray();
-            oneOf(bsonWriter).writeString("Uno");
-            oneOf(bsonWriter).writeString("Dos");
-            oneOf(bsonWriter).writeString("Tres");
-            oneOf(bsonWriter).writeEndArray();
-            oneOf(bsonWriter).writeEndDocument();
-
-        }});
+        when:
         pojoEncoder.encode(bsonWriter, new ObjectWithArray());
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("theStringArray");
+        1 * bsonWriter.writeStartArray();
+        1 * bsonWriter.writeString("Uno");
+        1 * bsonWriter.writeString("Dos");
+        1 * bsonWriter.writeString("Tres");
+        1 * bsonWriter.writeEndArray();
+        1 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodeMapsOfPrimitiveTypes() {
+        setup:
         final PojoEncoder<ObjectWithMapOfStrings> pojoEncoder = new PojoEncoder<ObjectWithMapOfStrings>(codecs);
 
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("theMap");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("first");
-            oneOf(bsonWriter).writeString("the first value");
-            oneOf(bsonWriter).writeName("second");
-            oneOf(bsonWriter).writeString("the second value");
-            exactly(2).of(bsonWriter).writeEndDocument();
-
-        }});
+        when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfStrings());
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("theMap");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("first");
+        1 * bsonWriter.writeString("the first value");
+        1 * bsonWriter.writeName("second");
+        1 * bsonWriter.writeString("the second value");
+        2 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodeMapsOfObjects() {
+        setup:
         final PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
         //TODO: get rid of this - default object codec is a bit of a smell
         codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
 
         final String simpleObjectValue = "theValue";
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("theMap");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("first");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeString(simpleObjectValue);
-            exactly(3).of(bsonWriter).writeEndDocument();
-
-        }});
+        
+        when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfObjects(simpleObjectValue));
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("theMap");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("first");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("name");
+        1 * bsonWriter.writeString(simpleObjectValue);
+        3 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodeMapsOfMaps() {
+        setup:
         final PojoEncoder<ObjectWithMapOfMaps> pojoEncoder = new PojoEncoder<ObjectWithMapOfMaps>(codecs);
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("theMap");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("theMapInsideTheMap");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("innerMapField");
-            oneOf(bsonWriter).writeString("theInnerMapFieldValue");
-            exactly(3).of(bsonWriter).writeEndDocument();
 
-        }});
+        when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfMaps());
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("theMap");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("theMapInsideTheMap");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("innerMapField");
+        1 * bsonWriter.writeString("theInnerMapFieldValue");
+        3 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldNotEncodeSpecialFieldsLikeJacocoData() {
+        setup:
         final PojoEncoder<JacocoDecoratedObject> pojoEncoder = new PojoEncoder<JacocoDecoratedObject>(codecs);
         final JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject("thisName");
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeEndDocument();
 
-        }});
-
+        when:
         pojoEncoder.encode(bsonWriter, jacocoDecoratedObject);
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldEncodeComplexPojo() {
+        setup:
         final PojoEncoder<Person> pojoEncoder = new PojoEncoder<Person>(codecs);
         final Address address = new Address();
         final Name name = new Name();
         final Person person = new Person(address, name);
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("address");
 
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("address1");
-            oneOf(bsonWriter).writeString(address.getAddress1());
-            oneOf(bsonWriter).writeName("address2");
-            oneOf(bsonWriter).writeString(address.getAddress2());
-            oneOf(bsonWriter).writeEndDocument();
-
-            oneOf(bsonWriter).writeName("name");
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeName("firstName");
-            oneOf(bsonWriter).writeString(name.getFirstName());
-            oneOf(bsonWriter).writeName("surname");
-            oneOf(bsonWriter).writeString(name.getSurname());
-
-            exactly(2).of(bsonWriter).writeEndDocument();
-
-        }});
-
+        when:
         pojoEncoder.encode(bsonWriter, person);
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("address");
+
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("address1");
+        1 * bsonWriter.writeString(address.getAddress1());
+        1 * bsonWriter.writeName("address2");
+        1 * bsonWriter.writeString(address.getAddress2());
+        1 * bsonWriter.writeEndDocument();
+
+        1 * bsonWriter.writeName("name");
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeName("firstName");
+        1 * bsonWriter.writeString(name.getFirstName());
+        1 * bsonWriter.writeName("surname");
+        1 * bsonWriter.writeString(name.getSurname());
+
+        2 * bsonWriter.writeEndDocument();
     }
 
-    @Test
     public void shouldIgnoreTransientFields() {
+        setup:
         final PojoEncoder<ObjWithTransientField> pojoEncoder = new PojoEncoder<ObjWithTransientField>(codecs);
-
         final String value = "some value";
-        context.checking(new Expectations() {{
-            oneOf(bsonWriter).writeStartDocument();
-            oneOf(bsonWriter).writeEndDocument();
 
-            never(bsonWriter).writeName("transientField");
-            never(bsonWriter).writeString(value);
-
-        }});
-
+        when:
         pojoEncoder.encode(bsonWriter, new ObjWithTransientField(value));
+
+        then:
+        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeEndDocument();
+
+        0 * bsonWriter.writeName("transientField");
+        0 * bsonWriter.writeString(value);
     }
 
-    @Test
     @Ignore("not implemented")
     public void shouldEncodeIds() {
+        setup:
         fail("Not implemented");
     }
 
-    @Test
     @Ignore("not implemented")
     public void shouldThrowAnExceptionWhenItCannotEncodeAField() {
+        setup:
         fail("Not implemented");
     }
 
-    @Test
     @Ignore("not implemented")
     public void shouldEncodeEnumsAsStrings() {
+        setup:
         fail("Not implemented");
     }
 
