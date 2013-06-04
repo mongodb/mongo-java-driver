@@ -25,7 +25,7 @@ import java.util.Arrays;
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
  * the authentication mechanism to use.
  *
- * @since 2.11.0
+ * @since 3.0
  */
 @Immutable
 public final class MongoCredential {
