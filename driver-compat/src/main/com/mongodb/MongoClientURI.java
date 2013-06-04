@@ -81,8 +81,17 @@ public class MongoClientURI {
         this(uri, new MongoClientOptions.Builder());
     }
 
-    MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
-        proxied = new org.mongodb.MongoClientURI(uri);
+    /**
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
+     * with default options, which may be overridden by options specified in the URI string.
+     *
+     * @param uri     the URI
+     * @param builder a Builder
+     * @see org.mongodb.MongoClientURI#getOptions()
+     * @since 2.11.0
+     */
+    public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
+        proxied = new org.mongodb.MongoClientURI(uri, builder.getProxied());
     }
 
 

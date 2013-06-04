@@ -207,6 +207,10 @@ public class MongoClientOptions {
         public MongoClientOptions build() {
             return new MongoClientOptions(this);
         }
+
+        org.mongodb.MongoClientOptions.Builder getProxied() {
+            return proxied;
+        }
     }
 
     /**
