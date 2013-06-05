@@ -101,12 +101,12 @@ public class JSONSerializersTest extends com.mongodb.util.TestCase {
         assertEquals(buf.toString(), "[ { \"key1\" : \"val1\"} , { \"key2\" : \"val2\"}]");
         
         // test  MAP
-        HashMap<String, String> testMap = new HashMap<String, String>();
+        TreeMap<String, String> testMap = new TreeMap<String, String>();
         testMap.put("key1", "val1");
         testMap.put("key2", "val2");
         buf = new StringBuilder();
         serializer.serialize(testMap, buf);
-        assertEquals(buf.toString(), "{ \"key2\" : \"val2\" , \"key1\" : \"val1\"}");
+        assertEquals(buf.toString(), "{ \"key1\" : \"val1\" , \"key2\" : \"val2\"}");
         
         // test  MAXKEY
         buf = new StringBuilder();
