@@ -1407,13 +1407,8 @@ public abstract class DBCollection {
             return;
 
         for ( String s : o.keySet() ){
-            validateKey ( s );
-            Object inner = o.get( s );
-            if ( inner instanceof DBObject ) {
-                _checkKeys( (DBObject)inner );
-            } else if ( inner instanceof Map ) {
-                _checkKeys( (Map<String, Object>)inner );
-            }
+            validateKey( s );
+            _checkValue( o.get( s ) );
         }
     }
 
@@ -1421,14 +1416,25 @@ public abstract class DBCollection {
      * Checks key strings for invalid characters.
      */
     private void _checkKeys( Map<String, Object> o ) {
-        for ( String s : o.keySet() ){
-            validateKey ( s );
-            Object inner = o.get( s );
-            if ( inner instanceof DBObject ) {
-                _checkKeys( (DBObject)inner );
-            } else if ( inner instanceof Map ) {
-                _checkKeys( (Map<String, Object>)inner );
-            }
+        for ( Map.Entry<String, Object> cur : o.entrySet() ){
+            validateKey( cur.getKey() );
+            _checkValue( cur.getValue() );
+        }
+    }
+
+    private void _checkValues( final List list ) {
+        for ( Object cur : list ) {
+            _checkValue( cur );
+        }
+    }
+
+    private void _checkValue(final Object value) {
+        if ( value instanceof DBObject ) {
+            _checkKeys( (DBObject)value );
+        } else if ( value instanceof Map ) {
+            _checkKeys( (Map<String, Object>)value );
+        } else if ( value instanceof List ) {
+            _checkValues((List) value);
         }
     }
 

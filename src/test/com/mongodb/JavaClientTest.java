@@ -1133,6 +1133,12 @@ public class JavaClientTest extends TestCase {
             fail("Bad key was accepted");
         } catch (IllegalArgumentException e) {}
 
+        try {
+            final List<BasicDBObject> list = Arrays.asList(new BasicDBObject("$a", 1));
+            c.save(new BasicDBObject("a", list));
+            fail("Bad key was accepted");
+        } catch (IllegalArgumentException e) {}
+
 //        try {
 //            c.save(new BasicDBObject("a", Arrays.asList(new BasicDBObject("$a", 1))));
 //            fail("Bad key was accepted");
