@@ -135,11 +135,11 @@ limitations under the License.
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
+            target="${build.conf.javac.source}"
             encoding="ISO-8859-1"
             fork="true"
             debug="on"
             includeantruntime="false"
-            target="${build.conf.javac.source}"
             memoryMaximumSize="256M"
             >
             <compilerarg value="-Xlint:all,-rawtypes"/>
@@ -275,6 +275,7 @@ limitations under the License.
                 optimize="off"
                 deprecation="off"
                 source="${build.conf.javac.source}"
+                target="${build.conf.javac.source}"
                 encoding="ISO-8859-1"
                 fork="true"
                 debug="on"
@@ -331,6 +332,7 @@ limitations under the License.
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
+            target="${build.conf.javac.source}"
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
@@ -350,6 +352,7 @@ limitations under the License.
             optimize="off"
             deprecation="off"
             source="${build.conf.javac.source}"
+            target="${build.conf.javac.source}"
             encoding="ISO-8859-1"
             debug="on"
             includeantruntime="false">
