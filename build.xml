@@ -60,6 +60,11 @@ limitations under the License.
         <pathelement path="${build.main.dir}" />
         <pathelement path="${build.test.dir}" />
     </path>
+    <path id="artifact.classpath">
+        <pathelement path="${build.test.dir}" />
+        <pathelement location="lib/testng-6.3.1.jar"/>
+        <pathelement location="${artifact.name}"/>
+    </path>
 
     <!-- ******************************************************************* -->
     <!-- Tasks definition                                                    -->
@@ -295,13 +300,27 @@ limitations under the License.
         </testng>
     </target>
 
-    <target name="test-with-artifact" depends="test-compile">
+    <target name="test-artifact-compile">
+        <property name="myclasspath" refid="artifact.classpath"/>
+        <!-- Emit the property to the ant console -->
+        <echo message="Classpath = ${myclasspath}"/>
 
-        <path id="artifact.classpath">
-            <pathelement path="${build.test.dir}" />
-            <pathelement location="lib/testng-6.3.1.jar"/>
-            <pathelement location="${artifact.name}"/>
-        </path>
+        <javac
+                srcdir="src/test"
+                destdir="${build.test.dir}"
+                optimize="off"
+                deprecation="off"
+                source="${build.conf.javac.source}"
+                encoding="ISO-8859-1"
+                fork="true"
+                debug="on"
+                includeantruntime="false">
+            <classpath refid="artifact.classpath"/>
+            <compilerarg value="-Xlint:all,-rawtypes"/>
+        </javac>
+    </target>
+
+    <target name="test-artifact" depends="test-artifact-compile">
 
         <testng classpathref="artifact.classpath" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
             <jvmarg value="-Xmx512M" />
