@@ -229,7 +229,7 @@ public class MongoClientURI {
                 hosts = Collections.unmodifiableList(all);
             }
 
-            if (nsPart != null && !nsPart.isEmpty()) { // database,_collection
+            if (nsPart != null && nsPart.length() != 0) { // database,_collection
                 int idx = nsPart.indexOf(".");
                 if (idx < 0) {
                     database = nsPart;
