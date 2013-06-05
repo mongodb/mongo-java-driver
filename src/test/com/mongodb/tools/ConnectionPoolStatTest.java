@@ -28,10 +28,23 @@ public class ConnectionPoolStatTest extends TestCase {
 
     @Test
     public void testBasic() throws IOException, JMException {
+        if (!isAtLeastJava6()) {
+            return;
+       }
         ConnectionPoolStat stat = new ConnectionPoolStat();
         String stats = stat.getStats();
         assertNotNull(stats);
         DBObject obj = (DBObject) JSON.parse(stats);
         assertNotNull(obj);
+    }
+
+    private boolean isAtLeastJava6() {
+        String javaSpecificationVersion = System.getProperty("java.specification.version");
+        String minorVersionString = javaSpecificationVersion.substring(javaSpecificationVersion.lastIndexOf(".") + 1);
+        try {
+            return Integer.parseInt(minorVersionString) >= 6;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
