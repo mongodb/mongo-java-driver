@@ -70,6 +70,7 @@ public class DBPortTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testOpenFailure() throws UnknownHostException {
         final MongoOptions options = new MongoOptions();
         options.autoConnectRetry = true;
