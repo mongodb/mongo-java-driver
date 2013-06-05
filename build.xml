@@ -60,11 +60,6 @@ limitations under the License.
         <pathelement path="${build.main.dir}" />
         <pathelement path="${build.test.dir}" />
     </path>
-    <path id="artifact.classpath">
-        <pathelement path="${build.test.dir}" />
-        <pathelement location="lib/testng-6.3.1.jar"/>
-        <pathelement location="${artifact.name}"/>
-    </path>
 
     <!-- ******************************************************************* -->
     <!-- Tasks definition                                                    -->
@@ -289,43 +284,14 @@ limitations under the License.
         </javac>
     </target>
 
-    <target name="test" depends="test-compile">
+    <target name="test" depends="test-compile, test-nodeps"/>
 
+    <target name="test-nodeps">
         <testng classpathref="${test.classpath}" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
             <jvmarg value="-Xmx512M" />
             <jvmarg value="-ea" />
             <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <sysproperty key="${cobertura.arg}" value="${cobertura.datafile}" />
-            <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
-        </testng>
-    </target>
-
-    <target name="test-artifact-compile" depends="init">
-        <property name="myclasspath" refid="artifact.classpath"/>
-        <!-- Emit the property to the ant console -->
-        <echo message="Classpath = ${myclasspath}"/>
-
-        <javac
-                srcdir="src/test"
-                destdir="${build.test.dir}"
-                optimize="off"
-                deprecation="off"
-                source="${build.conf.javac.source}"
-                encoding="ISO-8859-1"
-                fork="true"
-                debug="on"
-                includeantruntime="false">
-            <classpath refid="artifact.classpath"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
-        </javac>
-    </target>
-
-    <target name="test-artifact" depends="test-artifact-compile">
-
-        <testng classpathref="artifact.classpath" outputdir="${test.dir}" listeners="com.mongodb.util.TestNGListener" haltonfailure="false" verbose="1" >
-            <jvmarg value="-Xmx512M" />
-            <jvmarg value="-ea" />
-            <jvmarg value="-Dcom.mongodb.slaveAcceptableLatencyMS=${test.com.mongodb.slaveAcceptableLatencyMS}"/>
             <classfileset  dir="${build.test.dir}" includes="**/${test.classes}.class" />
         </testng>
     </target>
