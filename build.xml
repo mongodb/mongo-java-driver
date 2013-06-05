@@ -300,7 +300,7 @@ limitations under the License.
         </testng>
     </target>
 
-    <target name="test-artifact-compile">
+    <target name="test-artifact-compile" depends="init">
         <property name="myclasspath" refid="artifact.classpath"/>
         <!-- Emit the property to the ant console -->
         <echo message="Classpath = ${myclasspath}"/>
