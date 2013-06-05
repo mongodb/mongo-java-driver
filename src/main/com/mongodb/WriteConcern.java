@@ -335,6 +335,7 @@ public class WriteConcern implements Serializable {
      * @deprecated construct a new instance instead.  This method will be removed in a future major release, as instances of this class
      * should really be immutable.
      */
+    @Deprecated
     public void setWObject(Object w) {
         if ( ! (w instanceof Integer) && ! (w instanceof String) )
             throw new IllegalArgumentException("The w parameter must be an int or a String");
