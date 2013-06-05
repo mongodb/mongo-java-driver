@@ -28,7 +28,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
     final DB db;
 
     public LazyDBCallback(final DBCollection collection) {
-        this.db = collection.getDB();
+        this.db = collection == null ? null : collection.getDB();
     }
 
     @Override

@@ -25,9 +25,16 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
 
     @Override
     public DBCallback getDBCallback(final DBCollection collection) {
-        // callback doesnt do anything special, could be unique per decoder
+        // callback doesn't do anything special, could be unique per decoder
         // but have to create per collection due to DBRef, at least
         return new LazyDBCallback(collection);
+    }
+
+    @Override
+    public DBObject readObject(final InputStream in) throws IOException {
+        final DBCallback dbCallback = getDBCallback(null);
+        decode(in, dbCallback);
+        return (DBObject) dbCallback.get();
     }
 
     @Override
