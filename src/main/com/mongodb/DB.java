@@ -50,6 +50,7 @@ public abstract class DB {
         _obedientCommands.add("geonear");
         _obedientCommands.add("geosearch");
         _obedientCommands.add("geowalk");
+        _obedientCommands.add("text");
     }
 
     /**
