@@ -18,6 +18,7 @@ package org.mongodb
 
 import category.Slow
 import org.bson.types.BSONTimestamp
+import org.junit.experimental.categories.Category
 import org.mongodb.operation.Find
 import org.mongodb.operation.GetMore
 import org.mongodb.operation.GetMoreOperation
@@ -224,7 +225,7 @@ class MongoQueryCursorSpecification extends Specification {
         cursor.getSizes().get(2) == 2;
     }
 
-    @org.junit.experimental.categories.Category(Slow.class)
+    @Category(Slow.class)
     public void 'test tailable await'() {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
@@ -261,7 +262,7 @@ class MongoQueryCursorSpecification extends Specification {
         cursor.next().get("_id") == 2;
     }
 
-    @org.junit.experimental.categories.Category(Slow.class)
+    @Category(Slow.class)
     public void 'test tailable await interrupt'() throws InterruptedException {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
@@ -341,7 +342,7 @@ class MongoQueryCursorSpecification extends Specification {
     }
 
     public void 'test limit with large documents'() {
-        char[] array = 'x'*16000
+        char[] array = 'x' * 16000
         final String bigString = new String(array);
 
         for (int i = 11; i < 1000; i++) {
