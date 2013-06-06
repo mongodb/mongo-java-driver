@@ -235,7 +235,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final Insert<DBObject> insert = new Insert<DBObject>(documents)
                 .writeConcern(aWriteConcern.toNew());
-        return new WriteResult(insertInternal(insert, codec), aWriteConcern, getDB());
+        return new WriteResult(insertInternal(insert, codec), aWriteConcern);
     }
 
     /**
@@ -271,28 +271,40 @@ public class DBCollection implements IDBCollection {
 
         final Insert<DBObject> insert = new Insert<DBObject>(documents)
                 .writeConcern(this.writeConcern.toNew());
-        return new WriteResult(insertInternal(insert, encoder), aWriteConcern, getDB());
+        return new WriteResult(insertInternal(insert, encoder), aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(DBEncoder dbEncoder) {
         Encoder<DBObject> encoder;
         if (dbEncoder != null) {
             encoder = new DBEncoderAdapter(dbEncoder);
-        } else if (encoderFactory != null) {
+        }
+        else if (encoderFactory != null) {
             encoder = new DBEncoderAdapter(encoderFactory.create());
-        } else {
+        }
+        else {
             encoder = this.codec;
         }
         return encoder;
     }
 
-    private org.mongodb.operation.WriteResult insertInternal(final Insert<DBObject> insert, Encoder<DBObject> encoder) {
+    private CommandResult insertInternal(final Insert<DBObject> insert, Encoder<DBObject> encoder) {
         try {
             insert.writeConcernIfAbsent(getWriteConcern().toNew());
-            return new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool()).execute(getSession());
+            return translateCommandResult(new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool())
+                    .execute(getSession()));
         } catch (MongoDuplicateKeyException e) {
             throw new MongoException.DuplicateKey(e);
         }
+    }
+
+
+    private CommandResult translateCommandResult(final org.mongodb.operation.CommandResult commandResult) {
+        if (commandResult == null) {
+            return null;
+        }
+
+        return new CommandResult(commandResult);
     }
 
     /**
@@ -332,7 +344,8 @@ public class DBCollection implements IDBCollection {
         final Object id = getCodec().getId(document);
         if (id == null) {
             return insert(document, writeConcern);
-        } else {
+        }
+        else {
             return replaceOrInsert(document, writeConcern);
         }
     }
@@ -344,8 +357,8 @@ public class DBCollection implements IDBCollection {
                 .upsert(true)
                 .writeConcern(wc.toNew());
 
-        return new WriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(),
-                getBufferPool()).execute(getSession()), wc, getDB());
+        return new WriteResult(translateCommandResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(),
+                getBufferPool()).execute(getSession())), wc);
     }
 
     /**
@@ -375,12 +388,13 @@ public class DBCollection implements IDBCollection {
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
 
-    private org.mongodb.operation.WriteResult updateInternal(Update update) {
+    private CommandResult updateInternal(Update update) {
         try {
-            return new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool()).execute(getSession());
+            return translateCommandResult(new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool())
+                    .execute(getSession()));
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
         }
@@ -417,7 +431,7 @@ public class DBCollection implements IDBCollection {
                 .multi(multi)
                 .writeConcern(aWriteConcern.toNew());
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern, getDB());
+        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
 
     /**
@@ -482,13 +496,10 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
 
-        final Remove remove = new Remove(toDocument(query))
-                .writeConcern(writeConcern.toNew());
+        final Remove remove = new Remove(toDocument(query)).writeConcern(writeConcern.toNew());
 
-        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), remove, documentCodec,
-                getBufferPool()).execute(getSession());
-
-        return new WriteResult(result, writeConcern, getDB());
+        return new WriteResult(translateCommandResult(new RemoveOperation(getNamespace(), remove, documentCodec,
+                getBufferPool()).execute(getSession())), writeConcern);
     }
 
     /**
@@ -502,13 +513,10 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final Remove remove = new Remove(filter)
-                .writeConcern(writeConcern.toNew());
+        final Remove remove = new Remove(filter).writeConcern(writeConcern.toNew());
 
-        final org.mongodb.operation.WriteResult result = new RemoveOperation(getNamespace(), remove, getDocumentCodec(),
-                getBufferPool()).execute(getSession());
-
-        return new WriteResult(result, writeConcern, getDB());
+        return new WriteResult(translateCommandResult(new RemoveOperation(getNamespace(), remove, getDocumentCodec(),
+                getBufferPool()).execute(getSession())), writeConcern);
     }
 
     /**
@@ -524,10 +532,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize,
                          final int options) {
-        return new DBCursor(this, query, projection, getReadPreference())
-                .batchSize(batchSize)
-                .skip(numToSkip)
-                .setOptions(options);
+        return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip).setOptions(options);
     }
 
     /**
@@ -541,9 +546,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize) {
-        return new DBCursor(this, query, projection, getReadPreference())
-                .batchSize(batchSize)
-                .skip(numToSkip);
+        return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip);
     }
 
     /**
@@ -1130,7 +1133,8 @@ public class DBCollection implements IDBCollection {
                     getOptions(),
                     command.getReadPreference() != null ? command.getReadPreference() : getReadPreference()
             );
-        } else {
+        }
+        else {
             res = database.command(commandDocument);
         }
         res.throwOnError();
@@ -1394,7 +1398,8 @@ public class DBCollection implements IDBCollection {
                     .sortBy(toNullableDocument(sort))
                     .returnNew(returnNew);
             mongoCommand = new org.mongodb.command.FindAndRemove(mongoFindAndRemove, getName());
-        } else {
+        }
+        else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
@@ -1408,7 +1413,8 @@ public class DBCollection implements IDBCollection {
                         .updateWith(toUpdateOperationsDocument(update))
                         .upsert(upsert);
                 mongoCommand = new org.mongodb.command.FindAndUpdate<DBObject>(mongoFindAndUpdate, getName());
-            } else {
+            }
+            else {
                 final FindAndReplace<DBObject> mongoFindAndReplace
                         = new FindAndReplace<DBObject>(update)
                         .where(toNullableDocument(query))
@@ -1676,9 +1682,11 @@ public class DBCollection implements IDBCollection {
             final Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            } else if (keyType.equals("2d")) {
+            }
+            else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
-            } else {
+            }
+            else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
 

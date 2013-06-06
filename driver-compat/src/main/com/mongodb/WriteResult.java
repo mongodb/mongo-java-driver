@@ -17,57 +17,108 @@
 package com.mongodb;
 
 
-import org.mongodb.command.GetLastError;
-
+/**
+ * This class lets you access the results of the previous write. If the write was performed with an acknowledged write concern,
+ * this just stores the result of the write.
+ *
+ * @see WriteConcern#UNACKNOWLEDGED
+ */
 public class WriteResult {
 
     private final com.mongodb.WriteConcern writeConcern;
-    private final DB db;
-    private CommandResult getLastErrorResult;
+    private final CommandResult commandResult;
 
-    WriteResult(final org.mongodb.operation.WriteResult result, final WriteConcern writeConcern, final DB db) {
+    WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
+        this.commandResult = commandResult;
         this.writeConcern = writeConcern;
-        this.db = db;
-        if (result.getGetLastErrorResult() != null) {
-            getLastErrorResult = toGetLastErrorResult(result.getGetLastErrorResult());
-        }
     }
 
-
+    /**
+     * Gets the result of the write operation.  If the write was not an acknowledged one, throws {@code MongoException}.
+     *
+     * @return the result of the write operation
+     * @throws MongoException if the write was unacknowledged
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
     public com.mongodb.CommandResult getLastError() {
-        if (getLastErrorResult == null) {
-            org.mongodb.operation.CommandResult commandResult
-                    = db.executeCommand(new GetLastError(writeConcern.toNew()));
-            getLastErrorResult = toGetLastErrorResult(commandResult);
+        if (commandResult == null) {
+            throw new MongoException("Write was unacknowledged, so no result is available");
         }
-
-        return getLastErrorResult;
+        return commandResult;
     }
 
-    private CommandResult toGetLastErrorResult(final org.mongodb.operation.CommandResult commandResult) {
-        // TODO: need command and server address fer realz
-        return DBObjects
-                .toCommandResult(DBObjects.toDBObject(commandResult.getCommand()),
-                        new ServerAddress(commandResult.getAddress()),
-                        commandResult.getResponse());
+    /**
+     * Gets the result of the write operation. If the write was not an acknowledged one, returns null.
+     *
+     * @return the result of the write operation, or null if the write was unacknowledged.
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
+    public CommandResult getCachedLastError() {
+        return commandResult;
     }
 
+    /**
+     * Gets the last {@code WriteConcern} used for the write operation.
+     *
+     * @return the write concern
+     */
     public WriteConcern getLastConcern() {
         return writeConcern;
     }
 
-    public CommandResult getCachedLastError() {
-        return getLastErrorResult;
+    /**
+     * Gets the error string for the write operation result (the "err" field)
+     *
+     * @return the error string
+     * @throws MongoException if the write was unacknowledged
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
+    public String getError() {
+        Object errField = getField("err");
+        if (errField == null) {
+            return null;
+        }
+        return errField.toString();
     }
 
     /**
-     * Gets the "n" field, which contains the number of documents
-     * affected in the write operation.
+     * Gets the "n" field, which contains the number of documents affected in the write operation.
      *
-     * @return number of documents affected in the write operation
-     * @throws MongoException
+     * @return the value of the "n" field
+     * @throws MongoException if the write was unacknowledged
+     * @see WriteConcern#UNACKNOWLEDGED
      */
     public int getN() {
         return getLastError().getInt("n");
+    }
+
+    /**
+     * Gets a field from the result document.
+     *
+     * @param name field name
+     * @return the value of the field
+     * @throws MongoException if the write was unacknowledged
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
+    public Object getField(final String name) {
+        return getLastError().get(name);
+    }
+
+    /**
+     * Returns whether or not the result is lazy, meaning that getLastError was not called automatically
+     *
+     * @return true if the write operation was unacknowledged
+     * @see WriteConcern#UNACKNOWLEDGED
+     */
+    public boolean isLazy() {
+        return commandResult == null;
+    }
+
+    @Override
+    public String toString() {
+        return "WriteResult{"
+                + "writeConcern=" + writeConcern
+                + ", commandResult=" + commandResult
+                + '}';
     }
 }

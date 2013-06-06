@@ -37,8 +37,8 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         super(namespace, bufferPool);
     }
 
-    public MongoFuture<WriteResult> execute(final AsyncSession session) {
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+    public MongoFuture<CommandResult> execute(final AsyncSession session) {
+        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
             @Override
@@ -47,8 +47,8 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
                     retVal.init(null, e);
                 }
                 else {
-                    MongoFuture<WriteResult> wrapped = execute(connection);
-                    wrapped.register(new ConnectionClosingSingleResultCallback<WriteResult>(connection, retVal));
+                    MongoFuture<CommandResult> wrapped = execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
                 }
             }
         });
@@ -56,14 +56,14 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
         return retVal;
     }
 
-    public MongoFuture<WriteResult> execute(final AsyncServerConnection connection) {
-        SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-        execute(connection, new SingleResultFutureCallback<WriteResult>(retVal));
+    public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
+        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        execute(connection, new SingleResultFutureCallback<CommandResult>(retVal));
         return retVal;
     }
 
 
-    public void execute(final AsyncServerConnection connection, final SingleResultCallback<WriteResult> callback) {
+    public void execute(final AsyncServerConnection connection, final SingleResultCallback<CommandResult> callback) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
                 buffer);

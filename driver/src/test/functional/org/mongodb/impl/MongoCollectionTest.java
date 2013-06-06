@@ -28,9 +28,9 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoStream;
 import org.mongodb.ReadPreference;
+import org.mongodb.WriteResult;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOption;
-import org.mongodb.operation.WriteResult;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -87,7 +87,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(documents);
 
         WriteResult res = collection.noLimit().modify(new Document("$set", new Document("x", 1)));
-        assertEquals(10, res.getGetLastErrorResult().getResponse().get("n"));
+        assertEquals(10, res.getResult().getResponse().get("n"));
     }
 
     @Test
@@ -100,10 +100,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(documents);
 
         WriteResult res = collection.modify(new Document("$set", new Document("x", 1)));
-        assertEquals(1, res.getGetLastErrorResult().getResponse().get("n"));
+        assertEquals(1, res.getResult().getResponse().get("n"));
 
         res = collection.limit(1).modify(new Document("$set", new Document("x", 1)));
-        assertEquals(1, res.getGetLastErrorResult().getResponse().get("n"));
+        assertEquals(1, res.getResult().getResponse().get("n"));
     }
 
     @Test

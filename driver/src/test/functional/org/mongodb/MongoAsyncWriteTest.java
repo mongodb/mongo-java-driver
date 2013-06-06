@@ -19,7 +19,6 @@ package org.mongodb;
 import category.Async;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.operation.WriteResult;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

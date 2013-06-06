@@ -14,23 +14,36 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
+import org.mongodb.operation.CommandResult;
+
+/**
+ *
+ * @since 3.0
+ */
 public class WriteResult {
-    private final BaseWrite write;
     private final CommandResult getLastErrorResult;
+    private WriteConcern writeConcern;
 
-    public WriteResult(final BaseWrite write, final CommandResult getLastErrorResult) {
-        this.write = write;
-        this.getLastErrorResult = getLastErrorResult;
+    public WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
+        this.getLastErrorResult = commandResult;
+        this.writeConcern = writeConcern;
     }
 
-    public BaseWrite getWrite() {
-        return write;
-    }
-
-
-    public CommandResult getGetLastErrorResult() {
+    public CommandResult getResult() {
         return getLastErrorResult;
+    }
+
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    @Override
+    public String toString() {
+        return "WriteResult{"
+                + "getLastErrorResult=" + getLastErrorResult
+                + ", writeConcern=" + writeConcern
+                + '}';
     }
 }

@@ -30,21 +30,21 @@ import org.mongodb.operation.protocol.RequestMessage;
 import java.nio.ByteBuffer;
 
 class WriteResultCallback extends CommandResultBaseCallback {
-    private final SingleResultCallback<WriteResult> callback;
+    private final SingleResultCallback<CommandResult> callback;
     private final BaseWrite writeOperation;
     private final GetLastError getLastError;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferPool<ByteBuffer> bufferPool;
 
-    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final BaseWrite writeOperation,
+    public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
                                final BufferPool<ByteBuffer> bufferPool) {
         this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
     }
 
-    public WriteResultCallback(final SingleResultCallback<WriteResult> callback, final BaseWrite writeOperation,
+    public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
                                final BufferPool<ByteBuffer> bufferPool, final long requestId) {
@@ -79,7 +79,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
                         .execute(getConnection(), callback);
             }
             else {
-                callback.onResult(new WriteResult(writeOperation, commandResult), null);
+                callback.onResult(commandResult, null);
             }
         }
     }

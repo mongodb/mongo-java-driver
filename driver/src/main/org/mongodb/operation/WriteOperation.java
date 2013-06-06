@@ -38,7 +38,7 @@ public abstract class WriteOperation extends Operation {
         super(namespace, bufferPool);
     }
 
-    public WriteResult execute(final Session session) {
+    public CommandResult execute(final Session session) {
         ServerConnection connection = session.getConnection();
         try {
             return execute(connection);
@@ -47,7 +47,7 @@ public abstract class WriteOperation extends Operation {
         }
     }
 
-    public WriteResult execute(final ServerConnection connection) {
+    public CommandResult execute(final ServerConnection connection) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
         try {
             CommandResult getLastErrorResult = null;
@@ -75,7 +75,7 @@ public abstract class WriteOperation extends Operation {
             else {
                 connection.sendMessage(buffer);
             }
-            return new WriteResult(getWrite(), getLastErrorResult);
+            return getLastErrorResult;
         } finally {
             buffer.close();
         }

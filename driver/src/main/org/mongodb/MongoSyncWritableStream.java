@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.WriteResult;
-
 import java.util.List;
 
 public interface MongoSyncWritableStream<T> {
