@@ -591,7 +591,7 @@ public class MongoClientURI {
      *
      * @return the credentials
      */
-    public List<MongoCredential> getCredentials() {
+    public List<MongoCredential> getCredentialList() {
         return credentials != null ? Arrays.asList(credentials) : new ArrayList<MongoCredential>();
     }
 

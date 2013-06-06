@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoCredential;
 
 import javax.net.SocketFactory;
@@ -24,18 +23,23 @@ import javax.net.ssl.SSLSocketFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 class DefaultConnectionFactory implements ConnectionFactory {
-    private MongoClientOptions options;
     private ServerAddress serverAddress;
+    private final DefaultConnectionSettings settings;
+    private final SSLSettings sslSettings;
     private BufferPool<ByteBuffer> bufferPool;
     private List<MongoCredential> credentialList;
 
-    public DefaultConnectionFactory(final MongoClientOptions options, final ServerAddress serverAddress,
-                                    final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
-        this.options = options;
-        this.serverAddress = serverAddress;
-        this.bufferPool = bufferPool;
-        this.credentialList = credentialList;
+    public DefaultConnectionFactory(final ServerAddress serverAddress, final DefaultConnectionSettings settings,
+                                    final SSLSettings sslSettings, final BufferPool<ByteBuffer> bufferPool,
+                                    final List<MongoCredential> credentialList) {
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.settings = notNull("settings", settings);
+        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.bufferPool = notNull("bufferPool", bufferPool);
+        this.credentialList = notNull("credentialList", credentialList);
     }
 
     @Override
@@ -46,14 +50,14 @@ class DefaultConnectionFactory implements ConnectionFactory {
     @Override
     public Connection create() {
         Connection socketConnection;
-        if (options.isSSLEnabled()) {
-            socketConnection = new DefaultSocketConnection(serverAddress, bufferPool, SSLSocketFactory.getDefault());
+        if (sslSettings.isEnabled()) {
+            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferPool, SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            socketConnection = new DefaultSocketConnection(serverAddress, bufferPool, SocketFactory.getDefault());
+            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferPool, SocketFactory.getDefault());
         }
         else {
-            socketConnection = new DefaultSocketChannelConnection(serverAddress, bufferPool);
+            socketConnection = new DefaultSocketChannelConnection(serverAddress, settings, bufferPool);
         }
         return new AuthenticatingConnection(socketConnection, credentialList, bufferPool);
     }

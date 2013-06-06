@@ -24,15 +24,16 @@ import java.nio.channels.SocketChannel;
 class DefaultSocketChannelConnection extends DefaultConnection {
     private volatile SocketChannel socketChannel;
 
-    public DefaultSocketChannelConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool) {
-        super(address, bufferPool);
+    public DefaultSocketChannelConnection(final ServerAddress address, final DefaultConnectionSettings settings,
+                                          final BufferPool<ByteBuffer> bufferPool) {
+        super(address, settings, bufferPool);
     }
 
     protected void ensureOpen() {
         try {
             if (socketChannel == null) {
-                socketChannel = SocketChannel.open(getServerAddress().getSocketAddress());
-                socketChannel.socket().setTcpNoDelay(true);
+                socketChannel = SocketChannel.open();
+                initializeSocket(socketChannel.socket());
             }
         } catch (IOException e) {
             close();

@@ -21,18 +21,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getOptions;
 import static org.mongodb.Fixture.getPrimary;
+import static org.mongodb.Fixture.getSSLSettings;
 
 public class DefaultSingleServerClusterTest {
     private DefaultSingleServerCluster cluster;
 
     @Before
     public void setUp() throws Exception {
-        cluster = new DefaultSingleServerCluster(getPrimary(), null, getOptions(), new DefaultClusterableServerFactory());
+        cluster = new DefaultSingleServerCluster(getPrimary(),
+                new DefaultClusterableServerFactory(getCredentialList(), getOptions(), DefaultConnectionSettings.builder().build(),
+                        getSSLSettings(), Executors.newScheduledThreadPool(1),
+                        getBufferPool()));
     }
 
     @After

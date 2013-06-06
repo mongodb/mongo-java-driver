@@ -23,6 +23,7 @@ import org.mongodb.MongoInterruptedException;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
@@ -31,11 +32,14 @@ import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
     private final ServerAddress serverAddress;
+    private DefaultConnectionSettings settings;
     private final BufferPool<ByteBuffer> bufferPool;
     private volatile boolean isClosed;
 
-    DefaultConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
+    DefaultConnection(final ServerAddress serverAddress, final DefaultConnectionSettings settings,
+                      final BufferPool<ByteBuffer> bufferPool) {
         this.serverAddress = serverAddress;
+        this.settings = settings;
         this.bufferPool = bufferPool;
     }
 
@@ -51,6 +55,10 @@ abstract class DefaultConnection implements Connection {
 
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    public DefaultConnectionSettings getSettings() {
+        return settings;
     }
 
     public void sendMessage(final ChannelAwareOutputBuffer buffer) {
@@ -140,5 +148,17 @@ abstract class DefaultConnection implements Connection {
 
     private void check() {
         ensureOpen();
+    }
+
+    protected void initializeSocket(final Socket socket) throws IOException {
+        socket.setTcpNoDelay(true);
+        socket.setSoTimeout(getSettings().getReadTimeoutMS());
+        if (getSettings().getReceiveBufferSize() > 0) {
+            socket.setReceiveBufferSize(getSettings().getReceiveBufferSize());
+        }
+        if (getSettings().getSendBufferSize() > 0) {
+            socket.setSendBufferSize(getSettings().getSendBufferSize());
+        }
+        socket.connect(getServerAddress().getSocketAddress(), getSettings().getConnectTimeoutMS());
     }
 }

@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.session.AsyncServerSelectingSession;
@@ -88,6 +89,10 @@ public final class Fixture {
         return bufferPool;
     }
 
+    public static SSLSettings getSSLSettings() {
+        return SSLSettings.builder().enabled(getMongoClientURI().getOptions().isSSLEnabled()).build();
+    }
+
     public static MongoClientOptions getOptions() {
         return getMongoClientURI().getOptions();
     }
@@ -103,7 +108,7 @@ public final class Fixture {
     }
 
     public static List<MongoCredential> getCredentialList() {
-        return getMongoClientURI().getCredentials();
+        return getMongoClientURI().getCredentialList();
     }
 
     public static boolean isDiscoverableReplicaSet() {

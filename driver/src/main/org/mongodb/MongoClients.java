@@ -17,12 +17,19 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.connection.Clusters;
+import org.mongodb.connection.DefaultClusterableServerFactory;
+import org.mongodb.connection.DefaultConnectionSettings;
+import org.mongodb.connection.DefaultMultiServerCluster;
+import org.mongodb.connection.DefaultSingleServerCluster;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 @ThreadSafe
 public final class MongoClients {
@@ -31,15 +38,18 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, Clusters.create(serverAddress, null, options));
+        return new MongoClientImpl(options, new DefaultSingleServerCluster(serverAddress,
+                getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
     }
+
 
     public static MongoClient create(final List<ServerAddress> seedList) {
         return create(seedList, MongoClientOptions.builder().build());
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, Clusters.create(seedList, null, options));
+        return new MongoClientImpl(options, new DefaultMultiServerCluster(seedList,
+                getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -48,18 +58,33 @@ public final class MongoClients {
 
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, Clusters.create(new ServerAddress(mongoURI.getHosts().get(0)),
-                    mongoURI.getCredentials(), options));
+            return new MongoClientImpl(options, new DefaultSingleServerCluster(new ServerAddress(mongoURI.getHosts().get(0)),
+                    getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
         else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options,  Clusters.create(seedList, mongoURI.getCredentials(), options));
+            return new MongoClientImpl(options, new DefaultMultiServerCluster(seedList,
+                    getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
     }
 
     private MongoClients() {
+    }
+
+    private static DefaultClusterableServerFactory getClusterableServerFactory(final List<MongoCredential> credentialList,
+                                                                               final MongoClientOptions options) {
+        return new DefaultClusterableServerFactory(
+                credentialList, options,
+                DefaultConnectionSettings.builder()
+                        .connectTimeoutMS(options.getConnectTimeout())
+                        .readTimeoutMS(options.getSocketTimeout())
+                        .build(),
+                SSLSettings.builder().enabled(options.isSSLEnabled()).build(),
+                Executors.newScheduledThreadPool(3),
+                new PowerOfTwoByteBufferPool()
+        );
     }
 }

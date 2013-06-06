@@ -16,8 +16,33 @@
 
 package org.mongodb.connection;
 
-public interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress);
+public class SSLSettings {
+    private final boolean enabled;
 
-    void close();
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private boolean enabled;
+
+        // CHECKSTYLE:OFF
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+        // CHECKSTYLE:ON
+
+        public SSLSettings build() {
+            return new SSLSettings(this);
+        }
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public SSLSettings(final Builder builder) {
+        enabled = builder.enabled;
+    }
 }

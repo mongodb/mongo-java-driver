@@ -16,14 +16,8 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
-
-import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
@@ -31,15 +25,18 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     private Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                    final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
-                                    final BufferPool<ByteBuffer> bufferPool) {
+    public ClusterableServer create(final ServerAddress serverAddress) {
         isTrue("not created yet", addressToServerMap.get(serverAddress) == null);
         addressToServerMap.put(serverAddress, new TestServer(serverAddress));
         return addressToServerMap.get(serverAddress);
     }
 
+    @Override
+    public void close() {
+
+    }
     public TestServer getServer(final ServerAddress serverAddress) {
         return addressToServerMap.get(serverAddress);
     }
+
 }

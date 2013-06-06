@@ -26,17 +26,17 @@ class DefaultSocketConnection extends DefaultConnection {
     private final SocketFactory socketFactory;
     private volatile Socket socket;
 
-    public DefaultSocketConnection(final ServerAddress address, final BufferPool<ByteBuffer> bufferPool,
-                                   final SocketFactory socketFactory) {
-        super(address, bufferPool);
+    public DefaultSocketConnection(final ServerAddress address, final DefaultConnectionSettings settings,
+                                   final BufferPool<ByteBuffer> bufferPool, final SocketFactory socketFactory) {
+        super(address, settings, bufferPool);
         this.socketFactory = socketFactory;
     }
 
     protected void ensureOpen() {
         try {
             if (socket == null) {
-                socket = socketFactory.createSocket(getServerAddress().getSocketAddress().getAddress(), getServerAddress().getPort());
-                socket.setTcpNoDelay(true);
+                socket = socketFactory.createSocket();
+                initializeSocket(socket);
             }
         } catch (IOException e) {
             close();

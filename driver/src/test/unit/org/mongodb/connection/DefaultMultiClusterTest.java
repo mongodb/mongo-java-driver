@@ -18,15 +18,14 @@ package org.mongodb.connection;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoClientOptions;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 import static org.mongodb.connection.ServerConnectionState.Connected;
@@ -41,8 +40,8 @@ public class DefaultMultiClusterTest {
     @Test
     public void testDiscovery() {
         ServerAddress serverAddress = new ServerAddress("localhost:27017");
-        DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress), null,
-                MongoClientOptions.builder().build(), factory);
+        DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress),
+                factory);
         factory.getServer(serverAddress).sendNotification(
                 ServerDescription.builder().address(serverAddress).ok(true).state(Connected)
                         .type(ServerType.ReplicaSetSecondary)

@@ -23,18 +23,43 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-final class DefaultClusterableServerFactory implements ClusterableServerFactory {
+public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
+    private final List<MongoCredential> credentialList;
+    private MongoClientOptions options;
+    private final DefaultConnectionSettings connectionSettings;
+    private final SSLSettings sslSettings;
+    private final ScheduledExecutorService scheduledExecutorService;
+    private final BufferPool<ByteBuffer> bufferPool;
+
+    public DefaultClusterableServerFactory(final List<MongoCredential> credentialList,
+                                           final MongoClientOptions options,
+                                           final DefaultConnectionSettings connectionSettings,
+                                           final SSLSettings sslSettings,
+                                           final ScheduledExecutorService scheduledExecutorService,
+                                           final BufferPool<ByteBuffer> bufferPool) {
+
+        this.credentialList = credentialList;
+        this.options = options;
+        this.connectionSettings = connectionSettings;
+        this.sslSettings = sslSettings;
+        this.scheduledExecutorService = scheduledExecutorService;
+        this.bufferPool = bufferPool;
+    }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                    final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
-                                    final BufferPool<ByteBuffer> bufferPool) {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(options, serverAddress, bufferPool, credentialList);
+    public ClusterableServer create(final ServerAddress serverAddress) {
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(serverAddress, connectionSettings, sslSettings, bufferPool,
+                credentialList);
         AsyncConnectionFactory asyncConnectionFactory = null;
 
-        if (options.isAsyncEnabled() && !options.isSSLEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
+        if (options.isAsyncEnabled() && !sslSettings.isEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             asyncConnectionFactory = new DefaultAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
         }
         return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService, bufferPool);
+    }
+
+    @Override
+    public void close() {
+        scheduledExecutorService.shutdownNow();
     }
 }

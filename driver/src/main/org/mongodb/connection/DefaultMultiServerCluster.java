@@ -16,9 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,13 +30,12 @@ import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DefaultMultiServerCluster extends DefaultCluster {
+public final class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
-    protected DefaultMultiServerCluster(final List<ServerAddress> seedList, final List<MongoCredential> credentialList,
-                                        final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
-        super(credentialList, options, serverFactory);
+    public DefaultMultiServerCluster(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
+        super(serverFactory);
 
         notNull("seedList", seedList);
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.

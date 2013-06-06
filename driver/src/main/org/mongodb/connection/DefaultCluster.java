@@ -16,16 +16,11 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
 import org.mongodb.MongoInterruptedException;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -39,11 +34,7 @@ public abstract class DefaultCluster implements Cluster {
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
-    private final BufferPool<ByteBuffer> bufferPool;
-    private final List<MongoCredential> credentialList;
-    private final MongoClientOptions options;
     private final ClusterableServerFactory serverFactory;
-    private final ScheduledExecutorService scheduledExecutorService;
     private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
         @Override
         protected Random initialValue() {
@@ -54,13 +45,8 @@ public abstract class DefaultCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public DefaultCluster(final List<MongoCredential> credentialList,
-                          final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
-        this.credentialList = credentialList;
-        this.options = notNull("options", options);
+    public DefaultCluster(final ClusterableServerFactory serverFactory) {
         this.serverFactory = notNull("serverFactory", serverFactory);
-        this.bufferPool = new PowerOfTwoByteBufferPool();
-        scheduledExecutorService = Executors.newScheduledThreadPool(3);  // TODO: configurable
     }
 
     @Override
@@ -136,7 +122,7 @@ public abstract class DefaultCluster implements Cluster {
     public void close() {
         if (!isClosed()) {
             isClosed = true;
-            scheduledExecutorService.shutdownNow();
+            serverFactory.close();
             phase.get().countDown();
         }
     }
@@ -166,8 +152,7 @@ public abstract class DefaultCluster implements Cluster {
 
     protected ClusterableServer createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription>
             serverStateListener) {
-        final ClusterableServer server = serverFactory.create(serverAddress, credentialList, options, scheduledExecutorService,
-                bufferPool);
+        final ClusterableServer server = serverFactory.create(serverAddress);
         server.addChangeListener(serverStateListener);
         return server;
     }

@@ -16,11 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
-
 import java.util.Arrays;
-import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -29,12 +25,11 @@ import static org.mongodb.connection.ClusterConnectionMode.Direct;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DefaultSingleServerCluster extends DefaultCluster {
+public final class DefaultSingleServerCluster extends DefaultCluster {
     private final ClusterableServer server;
 
-    public DefaultSingleServerCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
-                                      final MongoClientOptions options, final ClusterableServerFactory serverFactory) {
-        super(credentialList, options, serverFactory);
+    public DefaultSingleServerCluster(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
+        super(serverFactory);
         notNull("serverAddress", serverAddress);
 
         // synchronized in the constructor because the change listener is re-entrant to this instance.
