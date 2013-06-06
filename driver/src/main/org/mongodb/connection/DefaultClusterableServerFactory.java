@@ -16,54 +16,37 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoCredential;
-
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
-    private final List<MongoCredential> credentialList;
     private DefaultServerSettings settings;
-    private MongoClientOptions options;
-    private final DefaultConnectionSettings connectionSettings;
-    private final SSLSettings sslSettings;
-    private DefaultConnectionSettings heartbeatConnectionSettings;
+    private final ConnectionProviderFactory connectionProviderFactory;
+    private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;
+    private final ConnectionFactory heartbeatConnectionFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferPool<ByteBuffer> bufferPool;
 
-    public DefaultClusterableServerFactory(final List<MongoCredential> credentialList,
-                                           final DefaultServerSettings settings,
-                                           final MongoClientOptions options,
-                                           final DefaultConnectionSettings connectionSettings,
-                                           final SSLSettings sslSettings,
-                                           final DefaultConnectionSettings heartbeatConnectionSettings,
+    public DefaultClusterableServerFactory(final DefaultServerSettings settings,
+                                           final ConnectionProviderFactory connectionProviderFactory,
+                                           final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
+                                           final ConnectionFactory heartbeatConnectionFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
                                            final BufferPool<ByteBuffer> bufferPool) {
 
-        this.credentialList = credentialList;
         this.settings = settings;
-        this.options = options;
-        this.connectionSettings = connectionSettings;
-        this.sslSettings = sslSettings;
-        this.heartbeatConnectionSettings = heartbeatConnectionSettings;
+        this.connectionProviderFactory = connectionProviderFactory;
+        this.asyncConnectionProviderFactory = asyncConnectionProviderFactory;
+        this.heartbeatConnectionFactory = heartbeatConnectionFactory;
         this.scheduledExecutorService = scheduledExecutorService;
         this.bufferPool = bufferPool;
     }
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        AsyncConnectionFactory asyncConnectionFactory = null;
-
-        if (options.isAsyncEnabled() && !sslSettings.isEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            asyncConnectionFactory = new DefaultAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
-        }
-        return new DefaultServer(serverAddress, settings,
-                new DefaultConnectionFactory(serverAddress, connectionSettings, sslSettings, bufferPool, credentialList),
-                asyncConnectionFactory,
-                new DefaultConnectionFactory(serverAddress, heartbeatConnectionSettings, sslSettings, bufferPool, credentialList),
-                options, scheduledExecutorService, bufferPool);
+        return new DefaultServer(serverAddress, settings, connectionProviderFactory.create(serverAddress),
+                asyncConnectionProviderFactory != null ? asyncConnectionProviderFactory.create(serverAddress) : null,
+                heartbeatConnectionFactory, scheduledExecutorService, bufferPool);
     }
 
     @Override

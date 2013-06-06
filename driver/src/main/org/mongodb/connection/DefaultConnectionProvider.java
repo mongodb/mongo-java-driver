@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoException;
 
 import java.util.concurrent.TimeUnit;
@@ -24,11 +23,12 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultConnectionProvider implements ConnectionProvider {
+public class DefaultConnectionProvider implements ConnectionProvider {
     private final SimplePool<Connection> pool;
 
-    DefaultConnectionProvider(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
-        pool = new SimpleConnectionPool(connectionFactory, options);
+    public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
+                                     final DefaultConnectionProviderSettings settings) {
+        pool = new SimpleConnectionPool(serverAddress, connectionFactory, settings);
     }
 
     @Override
@@ -56,15 +56,18 @@ class DefaultConnectionProvider implements ConnectionProvider {
     static class SimpleConnectionPool extends SimplePool<Connection> {
 
         private final ConnectionFactory connectionFactory;
+        private final ServerAddress serverAddress;
 
-        public SimpleConnectionPool(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
-            super(connectionFactory.getServerAddress().toString(), options.getConnectionsPerHost());
+        public SimpleConnectionPool(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
+                                    final DefaultConnectionProviderSettings settings) {
+            super(serverAddress.toString(), settings.getMaxSize());
+            this.serverAddress = serverAddress;
             this.connectionFactory = connectionFactory;
         }
 
         @Override
         protected Connection createNew() {
-            return connectionFactory.create();
+            return connectionFactory.create(serverAddress);
         }
 
         @Override
@@ -123,6 +126,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
 
         /**
          * If there was a socket exception that wasn't some form of interrupted read, clear the pool.
+         *
          * @param e the exception
          */
         private void handleException(final MongoException e) {

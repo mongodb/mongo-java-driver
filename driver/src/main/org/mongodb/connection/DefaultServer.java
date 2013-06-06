@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoException;
 
 import java.nio.ByteBuffer;
@@ -45,24 +44,23 @@ class DefaultServer implements ClusterableServer {
 
     public DefaultServer(final ServerAddress serverAddress,
                          final DefaultServerSettings settings,
-                         final ConnectionFactory connectionFactory,
-                         final AsyncConnectionFactory asyncConnectionFactory,
+                         final ConnectionProvider connectionProvider,
+                         final AsyncConnectionProvider asyncConnectionProvider,
                          final ConnectionFactory heartbeatConnectionFactory,
-                         final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
+                         final ScheduledExecutorService scheduledExecutorService,
                          final BufferPool<ByteBuffer> bufferPool) {
-        notNull("connectionFactory", connectionFactory);
-        notNull("options", options);
+        notNull("connectionProvider", connectionProvider);
         notNull("heartbeatConnectionFactory", heartbeatConnectionFactory);
         notNull("scheduledExecutorService", scheduledExecutorService);
         notNull("bufferPool", bufferPool);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionProvider = new DefaultConnectionProvider(connectionFactory, options);
-        this.asyncConnectionProvider = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionProvider(asyncConnectionFactory,
-                options);
+        this.connectionProvider = connectionProvider;
+        this.asyncConnectionProvider = asyncConnectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), heartbeatConnectionFactory, bufferPool);
+        this.stateNotifier = new IsMasterServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatConnectionFactory,
+                bufferPool);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                 settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }

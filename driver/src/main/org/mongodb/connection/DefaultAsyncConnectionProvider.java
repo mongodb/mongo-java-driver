@@ -16,19 +16,18 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoClientOptions;
-
 import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
+public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     private final SimplePool<AsyncConnection> pool;
 
-    DefaultAsyncConnectionProvider(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
-        pool = new SimpleAsyncConnectionPool(connectionFactory, options);
+    public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
+                                          final DefaultConnectionProviderSettings settings) {
+        pool = new SimpleAsyncConnectionPool(serverAddress, connectionFactory, settings);
     }
 
     @Override
@@ -55,16 +54,19 @@ class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     static class SimpleAsyncConnectionPool extends SimplePool<AsyncConnection> {
 
+        private final ServerAddress serverAddress;
         private final AsyncConnectionFactory connectionFactory;
 
-        public SimpleAsyncConnectionPool(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
-            super(connectionFactory.getServerAddress().toString(), options.getConnectionsPerHost());
+        public SimpleAsyncConnectionPool(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
+                                         final DefaultConnectionProviderSettings settings) {
+            super(serverAddress.toString(), settings.getMaxSize());
+            this.serverAddress = serverAddress;
             this.connectionFactory = connectionFactory;
         }
 
         @Override
         protected AsyncConnection createNew() {
-            return connectionFactory.create();
+            return connectionFactory.create(serverAddress);
         }
 
         @Override

@@ -16,6 +16,17 @@
 
 package org.mongodb.connection;
 
-public interface AsyncConnectionFactory {
-    AsyncConnection create(final ServerAddress serverAddress);
+public class DefaultConnectionProviderFactory implements ConnectionProviderFactory {
+    private final DefaultConnectionProviderSettings settings;
+    private final ConnectionFactory connectionFactory;
+
+    public DefaultConnectionProviderFactory(final DefaultConnectionProviderSettings settings, final ConnectionFactory connectionFactory) {
+        this.settings = settings;
+        this.connectionFactory = connectionFactory;
+    }
+
+    @Override
+    public ConnectionProvider create(final ServerAddress serverAddress) {
+        return new DefaultConnectionProvider(serverAddress, connectionFactory, settings);
+    }
 }

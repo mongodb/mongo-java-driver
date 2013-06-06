@@ -25,17 +25,15 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultConnectionFactory implements ConnectionFactory {
-    private ServerAddress serverAddress;
+public class DefaultConnectionFactory implements ConnectionFactory {
     private final DefaultConnectionSettings settings;
     private final SSLSettings sslSettings;
     private BufferPool<ByteBuffer> bufferPool;
     private List<MongoCredential> credentialList;
 
-    public DefaultConnectionFactory(final ServerAddress serverAddress, final DefaultConnectionSettings settings,
+    public DefaultConnectionFactory(final DefaultConnectionSettings settings,
                                     final SSLSettings sslSettings, final BufferPool<ByteBuffer> bufferPool,
                                     final List<MongoCredential> credentialList) {
-        this.serverAddress = notNull("serverAddress", serverAddress);
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.bufferPool = notNull("bufferPool", bufferPool);
@@ -43,12 +41,7 @@ class DefaultConnectionFactory implements ConnectionFactory {
     }
 
     @Override
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    @Override
-    public Connection create() {
+    public Connection create(final ServerAddress serverAddress) {
         Connection socketConnection;
         if (sslSettings.isEnabled()) {
             socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferPool, SSLSocketFactory.getDefault());

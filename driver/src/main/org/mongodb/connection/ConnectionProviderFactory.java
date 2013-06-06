@@ -16,6 +16,6 @@
 
 package org.mongodb.connection;
 
-public interface AsyncConnectionFactory {
-    AsyncConnection create(final ServerAddress serverAddress);
+public interface ConnectionProviderFactory {
+    ConnectionProvider create(ServerAddress serverAddress);
 }

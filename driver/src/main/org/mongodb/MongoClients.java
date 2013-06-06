@@ -17,7 +17,14 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.ConnectionFactory;
+import org.mongodb.connection.DefaultAsyncConnectionFactory;
+import org.mongodb.connection.DefaultAsyncConnectionProviderFactory;
 import org.mongodb.connection.DefaultClusterableServerFactory;
+import org.mongodb.connection.DefaultConnectionFactory;
+import org.mongodb.connection.DefaultConnectionProviderFactory;
+import org.mongodb.connection.DefaultConnectionProviderSettings;
 import org.mongodb.connection.DefaultConnectionSettings;
 import org.mongodb.connection.DefaultMultiServerCluster;
 import org.mongodb.connection.DefaultServerSettings;
@@ -27,10 +34,12 @@ import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
 public final class MongoClients {
@@ -77,18 +86,32 @@ public final class MongoClients {
 
     private static DefaultClusterableServerFactory getClusterableServerFactory(final List<MongoCredential> credentialList,
                                                                                final MongoClientOptions options) {
+        BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+        SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
+
+        DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
+                .maxSize(options.getConnectionsPerHost())
+                .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier()
+                        - options.getConnectionsPerHost())
+                .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
+                .build();
+        DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
+                .connectTimeoutMS(options.getConnectTimeout())
+                .readTimeoutMS(options.getSocketTimeout())
+                .build();
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList);
+
+        DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
+                options.isAsyncEnabled()
+                        ? new DefaultAsyncConnectionProviderFactory(connectionProviderSettings,
+                        new DefaultAsyncConnectionFactory(bufferPool, credentialList))
+                        : null;
         return new DefaultClusterableServerFactory(
-                credentialList,
                 DefaultServerSettings.builder().build(), // TODO: allow configuration
-                options,
-                DefaultConnectionSettings.builder()
-                        .connectTimeoutMS(options.getConnectTimeout())
-                        .readTimeoutMS(options.getSocketTimeout())
-                        .build(),
-                SSLSettings.builder().enabled(options.isSSLEnabled()).build(),
-                DefaultConnectionSettings.builder().build(),  // TODO: Allow configuration
-                Executors.newScheduledThreadPool(3),
-                new PowerOfTwoByteBufferPool()
-        );
+                new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
+                asyncConnectionProviderFactory,
+                new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList),  // TODO: allow configuration
+                Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                bufferPool);
     }
 }

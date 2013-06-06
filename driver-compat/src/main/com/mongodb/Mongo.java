@@ -26,7 +26,11 @@ import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterableServerFactory;
+import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.DefaultClusterableServerFactory;
+import org.mongodb.connection.DefaultConnectionFactory;
+import org.mongodb.connection.DefaultConnectionProviderFactory;
+import org.mongodb.connection.DefaultConnectionProviderSettings;
 import org.mongodb.connection.DefaultConnectionSettings;
 import org.mongodb.connection.DefaultMultiServerCluster;
 import org.mongodb.connection.DefaultServerSettings;
@@ -345,27 +349,38 @@ public class Mongo {
         return createClusterableServerFactory(Collections.<org.mongodb.MongoCredential>emptyList(), options);
     }
 
-    private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialsList,
+    private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialList,
                                                                            final org.mongodb.MongoClientOptions options) {
+        BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+        SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
+
+        DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
+                .maxSize(options.getConnectionsPerHost())
+                .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier() -
+                        options.getConnectionsPerHost())
+                .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
+                .build();
+        DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
+                .connectTimeoutMS(options.getConnectTimeout())
+                .readTimeoutMS(options.getSocketTimeout())
+                .build();
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList);
+
         return new DefaultClusterableServerFactory(
-                credentialsList,
                 DefaultServerSettings.builder()
                         .heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")),
                                 TimeUnit.MILLISECONDS)
                         .build(),
-                options,
-                DefaultConnectionSettings.builder()
-                        .connectTimeoutMS(options.getConnectTimeout())
-                        .readTimeoutMS(options.getSocketTimeout())
-                        .build(),
-                SSLSettings.builder().enabled(options.isSSLEnabled()).build(),
-                DefaultConnectionSettings.builder()
-                        .connectTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")))
-                        .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
-                        .build(),
-                Executors.newScheduledThreadPool(3),
-                new PowerOfTwoByteBufferPool()
-        );
+                new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
+                null,
+                new DefaultConnectionFactory(
+                        DefaultConnectionSettings.builder()
+                                .connectTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")))
+                                .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
+                                .build(),
+                        sslSettings, bufferPool, credentialList),
+                Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                bufferPool);
     }
 
     Cluster getCluster() {

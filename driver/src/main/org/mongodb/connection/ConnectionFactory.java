@@ -17,6 +17,5 @@
 package org.mongodb.connection;
 
 public interface ConnectionFactory {
-    ServerAddress getServerAddress();
-    Connection create();
+    Connection create(final ServerAddress serverAddress);
 }

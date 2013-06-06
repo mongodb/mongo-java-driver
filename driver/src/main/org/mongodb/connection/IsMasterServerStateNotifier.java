@@ -50,6 +50,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection.monitor");
 
+    private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final ConnectionFactory connectionFactory;
     private final BufferPool<ByteBuffer> bufferPool;
@@ -59,8 +60,9 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
 
-    IsMasterServerStateNotifier(final ChangeListener<ServerDescription> serverStateListener, final ConnectionFactory connectionFactory,
-                                final BufferPool<ByteBuffer> bufferPool) {
+    IsMasterServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
+                                final ConnectionFactory connectionFactory, final BufferPool<ByteBuffer> bufferPool) {
+        this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.connectionFactory = connectionFactory;
         serverDescription = getConnectingServerDescription();
@@ -78,7 +80,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
         Throwable throwable = null;
         try {
             if (connection == null) {
-                connection = connectionFactory.create();
+                connection = connectionFactory.create(serverAddress);
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",
@@ -109,8 +111,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
                         LOGGER.log(Level.INFO, String.format(
-                                "Exception in monitor thread while connecting to server %s", connectionFactory.getServerAddress()),
-                                throwable);
+                                "Exception in monitor thread while connecting to server %s", serverAddress), throwable);
                     }
                     else {
                         LOGGER.log(Level.INFO, String.format("Monitor thread successfully connected to server with description %s",
@@ -211,10 +212,10 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     }
 
     private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(Unknown).state(Connecting).address(connectionFactory.getServerAddress()).build();
+        return ServerDescription.builder().type(Unknown).state(Connecting).address(serverAddress).build();
     }
 
     private ServerDescription getUnconnectedServerDescription() {
-        return ServerDescription.builder().type(Unknown).state(Unconnected).address(connectionFactory.getServerAddress()).build();
+        return ServerDescription.builder().type(Unknown).state(Unconnected).address(serverAddress).build();
     }
 }

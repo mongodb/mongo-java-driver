@@ -38,6 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getPrimary;
 
 @Category(Async.class)
 public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
@@ -53,8 +54,7 @@ public class CachingAuthenticatorAsyncTest extends DatabaseTestCase {
     public void setUp() throws Exception {
         super.setUp();
         latch = new CountDownLatch(1);
-        connection =  new DefaultAsyncConnectionFactory(Fixture.getOptions(), Fixture.getPrimary(), getBufferPool(),
-                Fixture.getCredentialList()).create();
+        connection =  new DefaultAsyncConnectionFactory(getBufferPool(), Fixture.getCredentialList()).create(getPrimary());
         database.tools().addUser(USER, PASSWORD, true);
     }
 
