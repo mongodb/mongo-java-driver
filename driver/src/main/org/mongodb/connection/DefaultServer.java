@@ -43,8 +43,11 @@ class DefaultServer implements ClusterableServer {
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
-                         final AsyncConnectionFactory asyncConnectionFactory, final ConnectionFactory heartbeatConnectionFactory,
+    public DefaultServer(final ServerAddress serverAddress,
+                         final DefaultServerSettings settings,
+                         final ConnectionFactory connectionFactory,
+                         final AsyncConnectionFactory asyncConnectionFactory,
+                         final ConnectionFactory heartbeatConnectionFactory,
                          final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
                          final BufferPool<ByteBuffer> bufferPool) {
         notNull("connectionFactory", connectionFactory);
@@ -59,8 +62,8 @@ class DefaultServer implements ClusterableServer {
         this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), heartbeatConnectionFactory, bufferPool);
-        // TODO: configurable
-        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS);
+        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
+                settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
 
     @Override

@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final List<MongoCredential> credentialList;
+    private DefaultServerSettings settings;
     private MongoClientOptions options;
     private final DefaultConnectionSettings connectionSettings;
     private final SSLSettings sslSettings;
@@ -33,6 +34,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     private final BufferPool<ByteBuffer> bufferPool;
 
     public DefaultClusterableServerFactory(final List<MongoCredential> credentialList,
+                                           final DefaultServerSettings settings,
                                            final MongoClientOptions options,
                                            final DefaultConnectionSettings connectionSettings,
                                            final SSLSettings sslSettings,
@@ -41,6 +43,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
                                            final BufferPool<ByteBuffer> bufferPool) {
 
         this.credentialList = credentialList;
+        this.settings = settings;
         this.options = options;
         this.connectionSettings = connectionSettings;
         this.sslSettings = sslSettings;
@@ -56,7 +59,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
         if (options.isAsyncEnabled() && !sslSettings.isEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             asyncConnectionFactory = new DefaultAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
         }
-        return new DefaultServer(serverAddress,
+        return new DefaultServer(serverAddress, settings,
                 new DefaultConnectionFactory(serverAddress, connectionSettings, sslSettings, bufferPool, credentialList),
                 asyncConnectionFactory,
                 new DefaultConnectionFactory(serverAddress, heartbeatConnectionSettings, sslSettings, bufferPool, credentialList),

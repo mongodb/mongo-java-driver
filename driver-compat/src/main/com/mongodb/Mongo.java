@@ -29,6 +29,7 @@ import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.DefaultClusterableServerFactory;
 import org.mongodb.connection.DefaultConnectionSettings;
 import org.mongodb.connection.DefaultMultiServerCluster;
+import org.mongodb.connection.DefaultServerSettings;
 import org.mongodb.connection.DefaultSingleServerCluster;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.SSLSettings;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -347,6 +349,10 @@ public class Mongo {
                                                                            final org.mongodb.MongoClientOptions options) {
         return new DefaultClusterableServerFactory(
                 credentialsList,
+                DefaultServerSettings.builder()
+                        .heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")),
+                                TimeUnit.MILLISECONDS)
+                        .build(),
                 options,
                 DefaultConnectionSettings.builder()
                         .connectTimeoutMS(options.getConnectTimeout())

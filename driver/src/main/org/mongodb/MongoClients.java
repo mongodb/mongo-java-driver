@@ -20,6 +20,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.DefaultClusterableServerFactory;
 import org.mongodb.connection.DefaultConnectionSettings;
 import org.mongodb.connection.DefaultMultiServerCluster;
+import org.mongodb.connection.DefaultServerSettings;
 import org.mongodb.connection.DefaultSingleServerCluster;
 import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.connection.SSLSettings;
@@ -77,7 +78,9 @@ public final class MongoClients {
     private static DefaultClusterableServerFactory getClusterableServerFactory(final List<MongoCredential> credentialList,
                                                                                final MongoClientOptions options) {
         return new DefaultClusterableServerFactory(
-                credentialList, options,
+                credentialList,
+                DefaultServerSettings.builder().build(), // TODO: allow configuration
+                options,
                 DefaultConnectionSettings.builder()
                         .connectTimeoutMS(options.getConnectTimeout())
                         .readTimeoutMS(options.getSocketTimeout())
