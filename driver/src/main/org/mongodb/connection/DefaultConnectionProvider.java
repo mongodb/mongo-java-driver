@@ -24,41 +24,26 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultConnectionPool implements Pool<Connection> {
-    private final SimplePool<Connection> wrappedPool;
+class DefaultConnectionProvider implements ConnectionProvider {
+    private final SimplePool<Connection> pool;
 
-    DefaultConnectionPool(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
-        wrappedPool = new SimpleConnectionPool(connectionFactory, options);
+    DefaultConnectionProvider(final ConnectionFactory connectionFactory, final MongoClientOptions options) {
+        pool = new SimpleConnectionPool(connectionFactory, options);
     }
 
     @Override
     public Connection get() {
-        return wrap(wrappedPool.get());
+        return wrap(pool.get());
     }
 
     @Override
     public Connection get(final long timeout, final TimeUnit timeUnit) {
-        return wrap(wrappedPool.get(timeout, timeUnit));
-    }
-
-    @Override
-    public void release(final Connection connection) {
-        wrappedPool.release(connection);
+        return wrap(pool.get(timeout, timeUnit));
     }
 
     @Override
     public void close() {
-        wrappedPool.close();
-    }
-
-    @Override
-    public void clear() {
-        wrappedPool.clear();
-    }
-
-    @Override
-    public void release(final Connection connection, final boolean discard) {
-        wrappedPool.release(connection, discard);
+        pool.close();
     }
 
     private Connection wrap(final Connection connection) {
@@ -98,7 +83,7 @@ class DefaultConnectionPool implements Pool<Connection> {
         @Override
         public void close() {
             if (wrapped != null) {
-                release(wrapped, wrapped.isClosed());
+                pool.release(wrapped, wrapped.isClosed());
                 wrapped = null;
             }
         }
@@ -142,7 +127,7 @@ class DefaultConnectionPool implements Pool<Connection> {
          */
         private void handleException(final MongoException e) {
             if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-               clear();
+                pool.clear();
             }
         }
     }

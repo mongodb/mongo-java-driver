@@ -34,8 +34,8 @@ import static org.mongodb.connection.ServerConnectionState.Connecting;
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
-    private final Pool<Connection> connectionPool;
-    private final Pool<AsyncConnection> asyncConnectionPool;
+    private final ConnectionProvider connectionProvider;
+    private final AsyncConnectionProvider asyncConnectionProvider;
     private final IsMasterServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
@@ -58,8 +58,9 @@ class DefaultServer implements ClusterableServer {
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
-        this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
+        this.connectionProvider = new DefaultConnectionProvider(connectionFactory, options);
+        this.asyncConnectionProvider = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionProvider(asyncConnectionFactory,
+                options);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), heartbeatConnectionFactory, bufferPool);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
@@ -70,17 +71,17 @@ class DefaultServer implements ClusterableServer {
     public ServerConnection getConnection() {
         isTrue("open", !isClosed());
 
-        return new DefaultServerConnection(connectionPool.get());
+        return new DefaultServerConnection(connectionProvider.get());
     }
 
     @Override
     public AsyncServerConnection getAsyncConnection() {
         isTrue("open", !isClosed());
 
-        if (asyncConnectionPool == null) {
+        if (asyncConnectionProvider == null) {
             throw new UnsupportedOperationException("Asynchronous connections not supported in this version of Java");
         }
-        return new DefaultServerAsyncConnection(asyncConnectionPool.get());
+        return new DefaultServerAsyncConnection(asyncConnectionProvider.get());
     }
 
     @Override
@@ -108,9 +109,9 @@ class DefaultServer implements ClusterableServer {
     @Override
     public void close() {
         if (!isClosed()) {
-            connectionPool.close();
-            if (asyncConnectionPool != null) {
-                asyncConnectionPool.close();
+            connectionProvider.close();
+            if (asyncConnectionProvider != null) {
+                asyncConnectionProvider.close();
             }
             scheduledFuture.cancel(true);
             stateNotifier.close();

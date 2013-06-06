@@ -23,42 +23,27 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
+class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
-    private final SimplePool<AsyncConnection> wrappedPool;
+    private final SimplePool<AsyncConnection> pool;
 
-    DefaultAsyncConnectionPool(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
-        wrappedPool = new SimpleAsyncConnectionPool(connectionFactory, options);
+    DefaultAsyncConnectionProvider(final AsyncConnectionFactory connectionFactory, final MongoClientOptions options) {
+        pool = new SimpleAsyncConnectionPool(connectionFactory, options);
     }
 
     @Override
     public AsyncConnection get() {
-        return wrap(wrappedPool.get());
+        return wrap(pool.get());
     }
 
     @Override
     public AsyncConnection get(final long timeout, final TimeUnit timeUnit) {
-        return wrap(wrappedPool.get(timeout, timeUnit));
-    }
-
-    @Override
-    public void release(final AsyncConnection asyncConnection) {
-        wrappedPool.release(asyncConnection);
+        return wrap(pool.get(timeout, timeUnit));
     }
 
     @Override
     public void close() {
-        wrappedPool.close();
-    }
-
-    @Override
-    public void clear() {
-        wrappedPool.clear();
-    }
-
-    @Override
-    public void release(final AsyncConnection asyncConnection, final boolean discard) {
-        wrappedPool.release(asyncConnection, discard);
+        pool.close();
     }
 
     private AsyncConnection wrap(final AsyncConnection connection) {
@@ -98,7 +83,7 @@ class DefaultAsyncConnectionPool implements Pool<AsyncConnection> {
         @Override
         public void close() {
             try {
-                DefaultAsyncConnectionPool.this.wrappedPool.release(wrapped, wrapped.isClosed());
+                DefaultAsyncConnectionProvider.this.pool.release(wrapped, wrapped.isClosed());
             } finally {
                 wrapped = null;
             }
