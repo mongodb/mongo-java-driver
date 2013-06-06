@@ -353,6 +353,10 @@ public class Mongo {
                         .readTimeoutMS(options.getSocketTimeout())
                         .build(),
                 SSLSettings.builder().enabled(options.isSSLEnabled()).build(),
+                DefaultConnectionSettings.builder()
+                        .connectTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")))
+                        .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
+                        .build(),
                 Executors.newScheduledThreadPool(3),
                 new PowerOfTwoByteBufferPool()
         );

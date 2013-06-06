@@ -83,6 +83,7 @@ public final class MongoClients {
                         .readTimeoutMS(options.getSocketTimeout())
                         .build(),
                 SSLSettings.builder().enabled(options.isSSLEnabled()).build(),
+                DefaultConnectionSettings.builder().build(),  // TODO: Allow configuration
                 Executors.newScheduledThreadPool(3),
                 new PowerOfTwoByteBufferPool()
         );

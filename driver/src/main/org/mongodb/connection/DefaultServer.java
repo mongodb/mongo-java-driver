@@ -44,17 +44,21 @@ class DefaultServer implements ClusterableServer {
     private volatile boolean isClosed;
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
-                         final AsyncConnectionFactory asyncConnectionFactory, final MongoClientOptions options,
-                         final ScheduledExecutorService scheduledExecutorService, final BufferPool<ByteBuffer> bufferPool) {
-        notNull("connectionFactor", connectionFactory);
+                         final AsyncConnectionFactory asyncConnectionFactory, final ConnectionFactory heartbeatConnectionFactory,
+                         final MongoClientOptions options, final ScheduledExecutorService scheduledExecutorService,
+                         final BufferPool<ByteBuffer> bufferPool) {
+        notNull("connectionFactory", connectionFactory);
         notNull("options", options);
+        notNull("heartbeatConnectionFactory", heartbeatConnectionFactory);
+        notNull("scheduledExecutorService", scheduledExecutorService);
+        notNull("bufferPool", bufferPool);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = new DefaultConnectionPool(connectionFactory, options);
         this.asyncConnectionPool = asyncConnectionFactory == null ? null : new DefaultAsyncConnectionPool(asyncConnectionFactory, options);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), connectionFactory, bufferPool);
+        this.stateNotifier = new IsMasterServerStateNotifier(new DefaultServerStateListener(), heartbeatConnectionFactory, bufferPool);
         // TODO: configurable
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0, 5000, TimeUnit.MILLISECONDS);
     }

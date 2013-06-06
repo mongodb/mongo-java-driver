@@ -28,6 +28,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     private MongoClientOptions options;
     private final DefaultConnectionSettings connectionSettings;
     private final SSLSettings sslSettings;
+    private DefaultConnectionSettings heartbeatConnectionSettings;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferPool<ByteBuffer> bufferPool;
 
@@ -35,6 +36,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
                                            final MongoClientOptions options,
                                            final DefaultConnectionSettings connectionSettings,
                                            final SSLSettings sslSettings,
+                                           final DefaultConnectionSettings heartbeatConnectionSettings,
                                            final ScheduledExecutorService scheduledExecutorService,
                                            final BufferPool<ByteBuffer> bufferPool) {
 
@@ -42,20 +44,23 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
         this.options = options;
         this.connectionSettings = connectionSettings;
         this.sslSettings = sslSettings;
+        this.heartbeatConnectionSettings = heartbeatConnectionSettings;
         this.scheduledExecutorService = scheduledExecutorService;
         this.bufferPool = bufferPool;
     }
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(serverAddress, connectionSettings, sslSettings, bufferPool,
-                credentialList);
         AsyncConnectionFactory asyncConnectionFactory = null;
 
         if (options.isAsyncEnabled() && !sslSettings.isEnabled() && !System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             asyncConnectionFactory = new DefaultAsyncConnectionFactory(options, serverAddress, bufferPool, credentialList);
         }
-        return new DefaultServer(serverAddress, connectionFactory, asyncConnectionFactory, options, scheduledExecutorService, bufferPool);
+        return new DefaultServer(serverAddress,
+                new DefaultConnectionFactory(serverAddress, connectionSettings, sslSettings, bufferPool, credentialList),
+                asyncConnectionFactory,
+                new DefaultConnectionFactory(serverAddress, heartbeatConnectionSettings, sslSettings, bufferPool, credentialList),
+                options, scheduledExecutorService, bufferPool);
     }
 
     @Override

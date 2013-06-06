@@ -38,7 +38,7 @@ public class DefaultSingleServerClusterTest {
     public void setUp() throws Exception {
         cluster = new DefaultSingleServerCluster(getPrimary(),
                 new DefaultClusterableServerFactory(getCredentialList(), getOptions(), DefaultConnectionSettings.builder().build(),
-                        getSSLSettings(), Executors.newScheduledThreadPool(1),
+                        getSSLSettings(), DefaultConnectionSettings.builder().build(), Executors.newScheduledThreadPool(1),
                         getBufferPool()));
     }
 
