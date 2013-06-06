@@ -121,7 +121,7 @@ public class ReadPreferenceTest {
 //        List<Map<String, String>> tagsList3 = Arrays.asList(Collections.singletonMap("foo", "1"));
 //        List<Map<String, String>> tagsList4 = Arrays.asList(Collections.<String, String>singletonMap("foo", "1"));
 
-        List<Tags> tagsList = Arrays.asList(new Tags("foo", "1"),  new Tags("bar", "2"));
+        final List<Tags> tagsList = Arrays.asList(new Tags("foo", "1"),  new Tags("bar", "2"));
         ReadPreference pref = ReadPreference.secondary(tagsList);
         assertTrue(pref.toString().startsWith("secondary"));
 
