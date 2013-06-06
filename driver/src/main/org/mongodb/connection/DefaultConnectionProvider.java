@@ -19,26 +19,41 @@ package org.mongodb.connection;
 import org.mongodb.MongoException;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class DefaultConnectionProvider implements ConnectionProvider {
     private final SimplePool<Connection> pool;
+    private final DefaultConnectionProviderSettings settings;
+    private AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
-        pool = new SimpleConnectionPool(serverAddress, connectionFactory, settings);
+        this.settings = settings;
+        pool = new SimpleConnectionPool(serverAddress, connectionFactory);
     }
 
     @Override
     public Connection get() {
-        return wrap(pool.get());
+        return get(settings.getMaxWaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public Connection get(final long timeout, final TimeUnit timeUnit) {
-        return wrap(pool.get(timeout, timeUnit));
+        try {
+            if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
+                throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
+            }
+            final Connection connection = pool.get(timeout, timeUnit);
+            if (connection == null) {
+                throw new MongoTimeoutException(String.format("Timeout waiting for a connection after %d %s", timeout, timeUnit));
+            }
+            return wrap(connection);
+        } finally {
+            waitQueueSize.decrementAndGet();
+        }
     }
 
     @Override
@@ -53,13 +68,12 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return new PooledConnection(connection);
     }
 
-    static class SimpleConnectionPool extends SimplePool<Connection> {
+    private class SimpleConnectionPool extends SimplePool<Connection> {
 
         private final ConnectionFactory connectionFactory;
         private final ServerAddress serverAddress;
 
-        public SimpleConnectionPool(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
-                                    final DefaultConnectionProviderSettings settings) {
+        public SimpleConnectionPool(final ServerAddress serverAddress, final ConnectionFactory connectionFactory) {
             super(serverAddress.toString(), settings.getMaxSize());
             this.serverAddress = serverAddress;
             this.connectionFactory = connectionFactory;

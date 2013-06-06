@@ -18,17 +18,10 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoClientException;
 
-/**
- * General exception thrown when an operation times out.
- */
-public class MongoTimeoutException extends MongoClientException {
-    private static final long serialVersionUID = -1066179055916633201L;
+public class MongoWaitQueueFullException extends MongoClientException {
+    private static final long serialVersionUID = -5542267415148739967L;
 
-    /**
-     * Constructs a new instance with the given message.
-     * @param message the message
-     */
-    public MongoTimeoutException(final String message) {
-        super(message);
+    public MongoWaitQueueFullException(final String msg) {
+        super(msg);
     }
 }
