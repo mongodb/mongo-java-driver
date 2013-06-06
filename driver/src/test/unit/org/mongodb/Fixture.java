@@ -97,7 +97,7 @@ public final class Fixture {
         return getMongoClientURI().getOptions();
     }
 
-    public static ServerAddress getPrimary() throws UnknownHostException, InterruptedException {
+    public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
         List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {
