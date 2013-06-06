@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -24,20 +25,34 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     private final SimplePool<AsyncConnection> pool;
+    private final DefaultConnectionProviderSettings settings;
+    private AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
                                           final DefaultConnectionProviderSettings settings) {
-        pool = new SimpleAsyncConnectionPool(serverAddress, connectionFactory, settings);
+        this.settings = settings;
+        pool = new SimpleAsyncConnectionPool(serverAddress, connectionFactory);
     }
 
     @Override
     public AsyncConnection get() {
-        return wrap(pool.get());
+        return get(settings.getMaxWaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public AsyncConnection get(final long timeout, final TimeUnit timeUnit) {
-        return wrap(pool.get(timeout, timeUnit));
+        try {
+            if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
+                throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
+            }
+            final AsyncConnection connection = pool.get(timeout, timeUnit);
+            if (connection == null) {
+                throw new MongoTimeoutException(String.format("Timeout waiting for a connection after %d %s", timeout, timeUnit));
+            }
+            return wrap(connection);
+        } finally {
+            waitQueueSize.decrementAndGet();
+        }
     }
 
     @Override
@@ -52,13 +67,12 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
         return new PooledAsyncConnection(connection);
     }
 
-    static class SimpleAsyncConnectionPool extends SimplePool<AsyncConnection> {
+    private class SimpleAsyncConnectionPool extends SimplePool<AsyncConnection> {
 
         private final ServerAddress serverAddress;
         private final AsyncConnectionFactory connectionFactory;
 
-        public SimpleAsyncConnectionPool(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
-                                         final DefaultConnectionProviderSettings settings) {
+        public SimpleAsyncConnectionPool(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory) {
             super(serverAddress.toString(), settings.getMaxSize());
             this.serverAddress = serverAddress;
             this.connectionFactory = connectionFactory;

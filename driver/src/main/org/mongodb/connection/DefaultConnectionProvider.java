@@ -62,9 +62,6 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     private Connection wrap(final Connection connection) {
-        if (connection == null) {
-            return null;
-        }
         return new PooledConnection(connection);
     }
 
