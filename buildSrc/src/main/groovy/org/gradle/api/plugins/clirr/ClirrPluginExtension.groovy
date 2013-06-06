@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-
 package org.gradle.api.plugins.clirr
 
-import org.gradle.api.artifacts.Dependency
-
 class ClirrPluginExtension {
-    File reportsDir
 
+    File reportsDir
     Object baseline
-    List formats
-    Boolean failOnBinWarning
-    Boolean failOnBinError
-    Boolean failOnSrcWarning
-    Boolean failOnSrcError
+    Boolean ignoreFailures
+    List<Integer> ignoredDifferenceTypes = new ArrayList<Integer>()
+    List<String> ignoredPackages = new ArrayList<String>()
+
+    public void ignoredDifferenceTypes(final Integer... type) {
+        ignoredDifferenceTypes.addAll(type)
+    }
+
+    public void ignoredPackages(final String... pkg) {
+        ignoredPackages.addAll(pkg)
+    }
 }

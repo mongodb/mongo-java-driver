@@ -15,14 +15,21 @@
  */
 
 /* Supressing output from buildSrc */
-gradle.useLogger(new TaskExecutionListener(){
+gradle.useLogger(new TaskExecutionListener() {
     public void beforeExecute(Task task) {}
     public void afterExecute(Task task, TaskState state) {}
 })
 
-sourceCompatibility = '1.6'
-targetCompatibility = '1.6'
-
 tasks.withType(Compile) {
     options.compilerArgs = ['-Xlint:none']
+}
+
+repositories{
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile files('lib/clirr-core-0.7-SNAPSHOT.jar')
+    runtime 'asm:asm-all:2.2'
 }

@@ -176,10 +176,10 @@ project(':driver-compat') {
     }
 
     clirr {
-        formats = ['xml', 'html']
-        baseline 'org.mongodb:mongo-java-driver:2.11.0'
-        failOnBinError = false
-        failOnSrcError = false
+        ignoreFailures = true
+        ignoredDifferenceTypes 10000
+        ignoredPackages 'org.mongodb'
+        baseline 'org.mongodb:mongo-java-driver:2.11.1'
     }
 
     checkstyle {
