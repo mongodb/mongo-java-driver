@@ -1,4 +1,4 @@
-configure(subprojects.findAll {it.name != 'util'}) {
+configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'osgi'
 }
 
@@ -25,6 +25,10 @@ project(':driver') {
             )
         }
     }
+
+    uberJar {
+        manifest = jar.manifest //not sure, may be we need to include 'Export-Package' from :bson as well
+    }
 }
 
 project(':driver-compat') {
@@ -37,5 +41,9 @@ project(':driver-compat') {
                     'Import-Package': 'javax.management, javax.net, javax.net.ssl'
             )
         }
+    }
+
+    uberJar {
+        manifest = jar.manifest
     }
 }

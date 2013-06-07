@@ -16,6 +16,15 @@
 
 def configDir = new File(rootDir, 'config')
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'me.trnl:clirr-gradle-plugin:0.1'
+    }
+}
+
 //////////////////////////////////////////
 // Common behavior                      //
 //////////////////////////////////////////
@@ -163,6 +172,12 @@ project(':driver') {
         testClassesDir = sourceSets.acceptance.output.classesDir
         classpath = sourceSets.acceptance.runtimeClasspath
     }
+
+    task uberJar(type: Jar) {
+        classifier = 'all'
+        from project(':bson').sourceSets.main.output
+        from sourceSets.main.output
+    }
 }
 
 project(':driver-compat') {
@@ -184,6 +199,13 @@ project(':driver-compat') {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
+    }
+
+    task uberJar(type: Jar) {
+        classifier = 'all'
+        from project(':bson').sourceSets.main.output
+        from project(':driver').sourceSets.main.output
+        from sourceSets.main.output
     }
 }
 
