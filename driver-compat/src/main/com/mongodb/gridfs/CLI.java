@@ -16,6 +16,7 @@
 
 package com.mongodb.gridfs;
 
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
@@ -96,8 +97,14 @@ public class CLI {
 
                 System.out.printf("%-60s %-10s%n", "Filename", "Length");
 
-                for (final DBObject o : fs.getFileList()) {
-                    System.out.printf("%-60s %-10d%n", o.get("filename"), ((Number) o.get("length")).longValue());
+                DBCursor fileListCursor = fs.getFileList();
+                try {
+                    while (fileListCursor.hasNext()) {
+                        DBObject o = fileListCursor.next();
+                        System.out.printf("%-60s %-10d%n", o.get("filename"), ((Number) o.get("length")).longValue());
+                    }
+                } finally {
+                    fileListCursor.close();
                 }
                 return;
             }
