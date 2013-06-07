@@ -136,21 +136,24 @@ public class CLI {
 
                 final MessageDigest md5 = MessageDigest.getInstance("MD5");
                 md5.reset();
-                final DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
                 int read = 0;
-                while (is.read() >= 0) {
-                    read++;
-                    final int r = is.read(new byte[17]);
-                    if (r < 0) {
-                        break;
+                final DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
+                try {
+                    while (is.read() >= 0) {
+                        read++;
+                        final int r = is.read(new byte[17]);
+                        if (r < 0) {
+                            break;
+                        }
+                        read += r;
                     }
-                    read += r;
+                } finally {
+                    is.close();
                 }
                 final byte[] digest = md5.digest();
                 System.out.println("length: " + read + " md5: " + Util.toHex(digest));
                 return;
             }
-
 
             System.err.println("unknown option: " + s);
             return;
