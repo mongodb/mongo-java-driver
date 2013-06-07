@@ -22,10 +22,10 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
-import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
+import org.mongodb.session.ServerSelectingSession;
 
 import java.io.Closeable;
 import java.util.ArrayList;

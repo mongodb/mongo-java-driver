@@ -21,8 +21,8 @@ import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.AsyncCommandOperation;
+import org.mongodb.operation.CommandResult;
 
 import java.nio.ByteBuffer;
 

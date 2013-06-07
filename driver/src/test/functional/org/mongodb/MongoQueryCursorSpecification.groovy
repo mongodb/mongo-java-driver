@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb
 
 import category.Slow
 import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
-import org.mongodb.operation.Find
-import org.mongodb.operation.GetMore
-import org.mongodb.operation.GetMoreOperation
-import org.mongodb.operation.KillCursor
-import org.mongodb.operation.KillCursorOperation
-import org.mongodb.operation.MongoCursorNotFoundException
-import org.mongodb.operation.QueryOption
-import org.mongodb.operation.ServerCursor
+import org.mongodb.operation.*
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -192,7 +187,7 @@ class MongoQueryCursorSpecification extends Specification {
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
 
         then:
-        cursor.toString().startsWith("MongoQueryCursor") == true;
+        cursor.toString().startsWith("MongoQueryCursor");
     }
 
     public void 'test sizes and num get mores'() {
@@ -240,9 +235,9 @@ class MongoQueryCursorSpecification extends Specification {
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
 
         then:
-        cursor.hasNext() == true;
+        cursor.hasNext();
         cursor.next().get("_id") == 1;
-        cursor.hasNext() == true;
+        cursor.hasNext();
 
         when:
         new Thread(new Runnable() {
@@ -251,7 +246,7 @@ class MongoQueryCursorSpecification extends Specification {
                 try {
                     Thread.sleep(500);
                     collection.insert(new Document("_id", 2).append("ts", new BSONTimestamp(6, 0)));
-                } catch (InterruptedException e) { // NOPMD
+                } catch (InterruptedException e) {
                     // all good
                 }
             }
@@ -296,7 +291,7 @@ class MongoQueryCursorSpecification extends Specification {
         latch.await();
 
         then:
-        success.isEmpty() == false;
+        !success.isEmpty();
     }
 
     public void 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
@@ -370,7 +365,7 @@ class MongoQueryCursorSpecification extends Specification {
             cur.get("_id") == i;
         }
         i == 10;
-        cursor.hasNext() == false;
+        !cursor.hasNext();
     }
 
     public void 'test next without has next with get more'() {
@@ -384,8 +379,8 @@ class MongoQueryCursorSpecification extends Specification {
             final Document cur = cursor.next();
             cur.get("_id") == i;
         }
-        cursor.hasNext() == false;
-        cursor.hasNext() == false;
+        !cursor.hasNext();
+        !cursor.hasNext();
 
         when:
         cursor.next();

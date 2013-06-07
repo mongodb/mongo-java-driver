@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.codecs
 
 import org.bson.BSONWriter
-import org.mongodb.codecs.pojo.Address
-import org.mongodb.codecs.pojo.Name
-import org.mongodb.codecs.pojo.ObjectWithArray
-import org.mongodb.codecs.pojo.ObjectWithMapOfStrings
-import org.mongodb.codecs.pojo.Person
+import org.mongodb.codecs.pojo.*
 import spock.lang.Ignore
 import spock.lang.Specification
 

@@ -16,11 +16,11 @@
 
 package org.mongodb.acceptancetest.index;
 
-import org.mongodb.Document;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;

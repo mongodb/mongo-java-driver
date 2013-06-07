@@ -17,13 +17,13 @@
 package org.mongodb;
 
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.session.AsyncClusterSession;
-import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.session.AsyncClusterSession;
+import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.MonotonicSession;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 

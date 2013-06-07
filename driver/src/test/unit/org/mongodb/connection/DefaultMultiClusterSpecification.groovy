@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection
 
 import spock.lang.Specification
 
-import static org.mongodb.MongoClientOptions.builder
 import static org.mongodb.connection.ClusterConnectionMode.Discovering
 import static org.mongodb.connection.ClusterType.ReplicaSet
 import static org.mongodb.connection.ServerConnectionState.Connected
@@ -44,7 +45,7 @@ class DefaultMultiClusterSpecification extends Specification {
 
         then:
         final ClusterDescription clusterDescription = cluster.getDescription();
-        clusterDescription.isConnecting() == true;
+        clusterDescription.isConnecting();
         clusterDescription.getType() == ReplicaSet;
         clusterDescription.getMode() == Discovering;
     }

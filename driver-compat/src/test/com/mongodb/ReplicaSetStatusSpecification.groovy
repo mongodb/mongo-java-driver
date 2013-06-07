@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
-
-import static org.hamcrest.CoreMatchers.nullValue
 
 class ReplicaSetStatusSpecification extends Specification {
     private ClusterDescription clusterDescription = Mock();

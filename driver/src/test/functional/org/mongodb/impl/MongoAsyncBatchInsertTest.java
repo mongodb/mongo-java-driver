@@ -25,8 +25,8 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.Insert;
 import org.mongodb.operation.AsyncInsertOperation;
+import org.mongodb.operation.Insert;
 
 import java.util.ArrayList;
 import java.util.List;

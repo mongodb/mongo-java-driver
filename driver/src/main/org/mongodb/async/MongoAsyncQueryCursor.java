@@ -21,19 +21,19 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.GetMore;
-import org.mongodb.session.AsyncServerSelectingSession;
-import org.mongodb.session.AsyncSession;
 import org.mongodb.connection.BufferPool;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.AsyncGetMoreOperation;
+import org.mongodb.operation.AsyncQueryOperation;
+import org.mongodb.operation.Find;
+import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
-import org.mongodb.operation.AsyncGetMoreOperation;
-import org.mongodb.operation.AsyncQueryOperation;
+import org.mongodb.session.AsyncServerSelectingSession;
+import org.mongodb.session.AsyncSession;
 
 import java.nio.ByteBuffer;
 

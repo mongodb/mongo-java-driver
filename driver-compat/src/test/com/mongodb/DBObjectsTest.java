@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.mongodb.Document;
 import org.junit.Test;
+import org.mongodb.Document;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
