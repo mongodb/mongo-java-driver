@@ -177,7 +177,11 @@ project(':driver') {
 
 project(':driver-compat') {
     apply plugin: 'clirr'
+    apply plugin: "groovy"
 
+    sourceSets {
+        test.groovy { srcDirs = ['src/test'] }
+    }
     dependencies {
         compile project(':driver')
         testCompile project(':driver').sourceSets.test.output
