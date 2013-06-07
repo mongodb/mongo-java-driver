@@ -81,7 +81,7 @@ public abstract class RequestMessage {
     protected abstract RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
-        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);
+        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
         try {
             int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);

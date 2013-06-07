@@ -304,12 +304,16 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(OutputBuffer outputBuffer, BSONObject document) {
             final int start = outputBuffer.getPosition();
-            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
-            bsonWriter.writeStartDocument();
-            bsonWriter.writeInt32("_id", 1);
-            bsonWriter.writeString("s", "foo");
-            bsonWriter.writeEndDocument();
-            return outputBuffer.getPosition() - start;
+            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+            try {
+                bsonWriter.writeStartDocument();
+                bsonWriter.writeInt32("_id", 1);
+                bsonWriter.writeString("s", "foo");
+                bsonWriter.writeEndDocument();
+                return outputBuffer.getPosition() - start;
+            } finally {
+                bsonWriter.close();
+            }
         }
 
         public static DBObject getConstantObject() {
@@ -337,16 +341,20 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(OutputBuffer outputBuffer, BSONObject document) {
             final int start = outputBuffer.getPosition();
-            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
-            bsonWriter.writeStartDocument();
-            bsonWriter.writeString("name", "z_1");
-            bsonWriter.writeStartDocument("key");
-            bsonWriter.writeInt32("z", 1);
-            bsonWriter.writeEndDocument();
-            bsonWriter.writeBoolean("unique", true);
-            bsonWriter.writeString("ns", ns);
-            bsonWriter.writeEndDocument();
-            return outputBuffer.getPosition() - start;
+            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+            try {
+                bsonWriter.writeStartDocument();
+                bsonWriter.writeString("name", "z_1");
+                bsonWriter.writeStartDocument("key");
+                bsonWriter.writeInt32("z", 1);
+                bsonWriter.writeEndDocument();
+                bsonWriter.writeBoolean("unique", true);
+                bsonWriter.writeString("ns", ns);
+                bsonWriter.writeEndDocument();
+                return outputBuffer.getPosition() - start;
+            } finally {
+                bsonWriter.close();
+            }
         }
     }
 

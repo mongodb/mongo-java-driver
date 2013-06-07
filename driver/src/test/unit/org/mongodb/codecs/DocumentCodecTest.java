@@ -30,6 +30,7 @@ import org.bson.types.CodeWithScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -55,8 +56,13 @@ public class DocumentCodecTest {
     @Before
     public void setUp() throws Exception {
         buffer = new BasicOutputBuffer();
-        writer = new BSONBinaryWriter(buffer);
+        writer = new BSONBinaryWriter(buffer, true);
         documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+    }
+
+    @After
+    public void tearDown() {
+        writer.close();
     }
 
     @Test

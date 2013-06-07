@@ -27,16 +27,26 @@ public class BSONBinaryWriter extends BSONWriter {
     private final BSONBinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
+    private final boolean closeBuffer;
 
-    public BSONBinaryWriter(final OutputBuffer buffer) {
-        this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer);
+    public BSONBinaryWriter(final OutputBuffer buffer, final boolean closeBuffer) {
+        this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, closeBuffer);
     }
 
     public BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
-                            final OutputBuffer buffer) {
+                            final OutputBuffer buffer, final boolean closeBuffer) {
         super(settings);
         this.binaryWriterSettings = binaryWriterSettings;
         this.buffer = buffer;
+        this.closeBuffer = closeBuffer;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (closeBuffer) {
+            buffer.close();
+        }
     }
 
     /**

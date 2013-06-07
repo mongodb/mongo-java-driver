@@ -21,6 +21,7 @@ import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriter;
 import org.bson.BSONWriterSettings;
 import org.bson.io.BasicOutputBuffer;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -35,8 +36,13 @@ public class CollectibleDocumentCodecUnitTest {
     public void setUp() throws Exception {
         writer = new BSONBinaryWriter(new BSONWriterSettings(100),
                                       new BSONBinaryWriterSettings(1024 * 1024),
-                                      new BasicOutputBuffer());
+                                      new BasicOutputBuffer(), true);
         codec = new CollectibleDocumentCodec(PrimitiveCodecs.createDefault(), new ObjectIdGenerator());
+    }
+
+    @After
+    public void tearDown() {
+        writer.close();
     }
 
     @Test(expected = IllegalArgumentException.class)

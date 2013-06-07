@@ -60,7 +60,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public BSONDocumentBuffer decode(final BSONReader reader) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool));
+        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool), true);
         try {
             writer.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =

@@ -22,6 +22,7 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,8 +44,12 @@ public class BSONBinaryWriterTest {
     @Before
     public void setup() {
         buffer = new BasicOutputBuffer();
+        writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer, true);
+    }
 
-        writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer);
+    @After
+    public void tearDown() {
+        writer.close();
     }
 
     @Test(expected = BSONInvalidOperationException.class)
@@ -537,12 +542,16 @@ public class BSONBinaryWriterTest {
 
         byte[] bytes = writer.getBuffer().toByteArray();
 
-        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer());
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes)), true);
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
         try {
-            newWriter.pipe(reader);
+            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes)), true);
+            try {
+                newWriter.pipe(reader);
+            } finally {
+                reader.close();
+            }
         } finally {
-            reader.close();
+            newWriter.close();
         }
         assertArrayEquals(bytes, newWriter.getBuffer().toByteArray());
     }

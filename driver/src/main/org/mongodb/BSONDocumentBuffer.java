@@ -53,9 +53,13 @@ public class BSONDocumentBuffer {
      * @param codec the codec to facilitate the transformation
      */
     public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer());
-        codec.encode(writer, document);
-        this.bytes = writer.getBuffer().toByteArray();
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        try {
+            codec.encode(writer, document);
+            this.bytes = writer.getBuffer().toByteArray();
+        } finally {
+            writer.close();
+        }
     }
 
     /**

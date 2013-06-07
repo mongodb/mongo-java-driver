@@ -43,12 +43,16 @@ public class UUIDEncoderTest {
     public void shouldEncodeLongAsLittleEndian() throws IOException {
         // Given
         final UUID uuid = new UUID(2L, 1L);
-        final BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer);
-        bsonWriter.writeStartDocument();
-        bsonWriter.writeName("_id");
+        final BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+        try {
+            bsonWriter.writeStartDocument();
+            bsonWriter.writeName("_id");
 
-        // When
-        uuidEncoder.encode(bsonWriter, uuid);
+            // When
+            uuidEncoder.encode(bsonWriter, uuid);
+        } finally {
+            bsonWriter.close();
+        }
 
         // Then
         final byte[] expectedList = {0, 0, 0, 0,       //Start of document

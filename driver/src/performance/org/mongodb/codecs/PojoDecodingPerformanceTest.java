@@ -196,10 +196,14 @@ public class PojoDecodingPerformanceTest {
 
     private <T> BasicOutputBuffer gatherTestData(final T pojo, final PojoCodec<T>  pojoCodec) {
         final BasicOutputBuffer buffer = new BasicOutputBuffer();
-        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer);
+        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
 
-        pojoCodec.encode(writer, pojo);
-        return buffer;
+        try {
+            pojoCodec.encode(writer, pojo);
+            return buffer;
+        } finally {
+            writer.close();
+        }
     }
 
     private void outputResults(final long startTime, final long endTime) {

@@ -43,9 +43,8 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferPool);
+        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool), true);
         try {
-            BSONBinaryWriter binaryWriter = new BSONBinaryWriter(buffer);
             binaryWriter.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =
                     new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
@@ -55,7 +54,7 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);
         } finally {
-            buffer.close();
+            binaryWriter.close();
         }
     }
 

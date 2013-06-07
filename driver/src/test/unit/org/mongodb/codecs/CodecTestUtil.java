@@ -38,8 +38,14 @@ public final class CodecTestUtil {
 
         final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        codecs.encode(new BSONBinaryWriter(outputBuffer), document);
-        final byte[] documentAsByteArrayForReader = outputBuffer.toByteArray();
+        final BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        final byte[] documentAsByteArrayForReader;
+        try {
+            codecs.encode(writer, document);
+            documentAsByteArrayForReader = outputBuffer.toByteArray();
+        } finally {
+            writer.close();
+        }
 
         final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(documentAsByteArrayForReader)), false);
 
@@ -52,8 +58,14 @@ public final class CodecTestUtil {
     static <T> BSONBinaryReader prepareReaderWithObjectToBeDecoded(final T objectToDecode, final Codec<T> codec) {
         final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        codec.encode(new BSONBinaryWriter(outputBuffer), objectToDecode);
-        final byte[] documentAsByteArrayForReader = outputBuffer.toByteArray();
+        final BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        final byte[] documentAsByteArrayForReader;
+        try {
+            codec.encode(writer, objectToDecode);
+            documentAsByteArrayForReader = outputBuffer.toByteArray();
+        } finally {
+            writer.close();
+        }
 
         return new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(documentAsByteArrayForReader)), false);
     }

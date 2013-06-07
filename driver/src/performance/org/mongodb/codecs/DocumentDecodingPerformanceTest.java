@@ -210,10 +210,14 @@ public class DocumentDecodingPerformanceTest {
     private BasicOutputBuffer gatherTestData(final Document document) throws Exception {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(100),
-                                                       new BSONBinaryWriterSettings(1024 * 1024), buffer);
+                                                       new BSONBinaryWriterSettings(1024 * 1024), buffer, false);
 
-        documentCodec.encode(writer, document);
-        return buffer;
+        try {
+            documentCodec.encode(writer, document);
+            return buffer;
+        } finally {
+            writer.close();
+        }
     }
 
     private void outputResults(final long startTime, final long endTime) {
