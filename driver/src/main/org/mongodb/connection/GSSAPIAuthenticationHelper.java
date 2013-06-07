@@ -40,8 +40,13 @@ final class GSSAPIAuthenticationHelper {
             Map<String, Object> props = new HashMap<String, Object>();
             props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
-            return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(), SaslAuthenticator.MONGODB_PROTOCOL,
-                    host, props, null);
+            SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(),
+                    SaslAuthenticator.MONGODB_PROTOCOL, host, props, null);
+            if (saslClient == null) {
+                throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI_MECHANISM));
+            }
+
+            return saslClient;
         } catch (SaslException e) {
             throw new MongoSecurityException(credential, "Exception initializing SASL client", e);
         } catch (GSSException e) {
