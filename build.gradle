@@ -57,7 +57,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     /* Compiling */
-    tasks.withType(Compile) {
+    tasks.withType(AbstractCompile) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
@@ -151,14 +151,7 @@ project(':driver') {
     apply plugin: "groovy"
 
     sourceSets {
-        test {
-            groovy {
-                srcDirs = ['src/test/unit']
-            }
-            java {
-                srcDirs = ['src/test/unit']
-            }
-        }
+        test { groovy.srcDirs = ['src/test/unit'] }
         acceptance { java.srcDirs = ['src/test/acceptance'] }
         functional { java.srcDirs = ['src/test/functional'] }
     }
@@ -195,7 +188,7 @@ project(':driver-compat') {
     apply plugin: "groovy"
 
     sourceSets {
-        test.groovy { srcDirs = ['src/test'] }
+        test { groovy.srcDirs = ['src/test'] }
     }
     dependencies {
         compile project(':driver')
