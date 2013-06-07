@@ -88,15 +88,17 @@ public class MonotonicSession implements ServerSelectingSession {
     @Override
     public void close() {
         if (!isClosed()) {
-            if (connectionForReads != null) {
-                connectionForReads.close();
-                connectionForReads = null;
+            synchronized (this) {
+                if (connectionForReads != null) {
+                    connectionForReads.close();
+                    connectionForReads = null;
+                }
+                if (connectionForWrites != null) {
+                    connectionForWrites.close();
+                    connectionForWrites = null;
+                }
+                isClosed = true;
             }
-            if (connectionForWrites != null) {
-                connectionForWrites.close();
-                connectionForWrites = null;
-            }
-            isClosed = true;
         }
     }
 
