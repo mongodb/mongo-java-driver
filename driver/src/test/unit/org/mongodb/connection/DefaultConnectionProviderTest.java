@@ -20,8 +20,10 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.getPrimary;
 
@@ -54,33 +56,54 @@ public class DefaultConnectionProviderTest {
 
     @Test
     public void shouldThrowIfWaitQueueIsFull() throws InterruptedException {
-        final ConnectionProvider connectionProvider = new DefaultConnectionProvider(getPrimary(), new TestConnectionFactory(),
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1)
-                        .maxWaitTime(Long.MAX_VALUE, TimeUnit.MILLISECONDS).build());
+        ConnectionProvider connectionProvider = new DefaultConnectionProvider(getPrimary(), new TestConnectionFactory(),
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxWaitTime(1, TimeUnit.SECONDS)
+                        .build());
 
         Connection first = connectionProvider.get();
         assertNotNull(first);
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(2);
+        AtomicBoolean gotTimeout = new AtomicBoolean(false);
+        AtomicBoolean gotWaitQueueFull = new AtomicBoolean(false);
 
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                latch.countDown();
-                connectionProvider.get();
-            }
-        });
-
-        t.start();
+        TestConnectionGetter connectionGetter = new TestConnectionGetter(connectionProvider, gotTimeout, gotWaitQueueFull, latch);
+        new Thread(connectionGetter).start();
+        new Thread(connectionGetter).start();
 
         latch.await();
 
-        // this test is racy, but not sure how to make it otherwise.
-        try {
-            connectionProvider.get();
-            fail();
-        } catch (MongoWaitQueueFullException e) {
-            // all good
+        assertTrue(gotTimeout.get());
+        assertTrue(gotWaitQueueFull.get());
+    }
+
+    private static class TestConnectionGetter implements Runnable {
+        private final ConnectionProvider connectionProvider;
+        private final AtomicBoolean gotTimeout;
+        private final AtomicBoolean gotWaitQueueFull;
+        private final CountDownLatch latch;
+
+        public TestConnectionGetter(final ConnectionProvider connectionProvider, final AtomicBoolean gotTimeout,
+                                    final AtomicBoolean gotWaitQueueFull, final CountDownLatch latch) {
+            this.connectionProvider = connectionProvider;
+            this.gotTimeout = gotTimeout;
+            this.gotWaitQueueFull = gotWaitQueueFull;
+            this.latch = latch;
+        }
+
+        @Override
+        public void run() {
+            try {
+                connectionProvider.get();
+            } catch (MongoTimeoutException e) {
+                gotTimeout.set(true);
+            } catch (MongoWaitQueueFullException e) {
+                gotWaitQueueFull.set(true);
+            }
+            latch.countDown();
         }
     }
 
