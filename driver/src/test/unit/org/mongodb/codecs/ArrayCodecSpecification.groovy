@@ -145,11 +145,8 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of double'() {
-        setup:
-        final double[] array = [1.1, 2.2];
-
         when:
-        arrayCodec.encode(bsonWriter, array);
+        arrayCodec.encode(bsonWriter, [1.1, 2.2] as double[]);
 
         then:
         1 * bsonWriter.writeStartArray();
