@@ -19,6 +19,7 @@ package org.mongodb.connection;
 public class DefaultConnectionSettings {
     private final int connectTimeoutMS;
     private final int readTimeoutMS;
+    private final boolean keepAlive;
     private final int receiveBufferSize;
     private final int sendBufferSize;
 
@@ -29,6 +30,7 @@ public class DefaultConnectionSettings {
     public static class Builder {
         private int connectTimeoutMS = 10000;
         private int readTimeoutMS;
+        private boolean keepAlive;
         private int receiveBufferSize;
         private int sendBufferSize;
 
@@ -40,6 +42,11 @@ public class DefaultConnectionSettings {
 
         public Builder readTimeoutMS(final int readTimeoutMS) {
             this.readTimeoutMS = readTimeoutMS;
+            return this;
+        }
+
+        public Builder keepAlive(boolean keepAlive) {
+            this.keepAlive = keepAlive;
             return this;
         }
 
@@ -67,6 +74,10 @@ public class DefaultConnectionSettings {
         return readTimeoutMS;
     }
 
+    public boolean isKeepAlive() {
+        return keepAlive;
+    }
+
     public int getReceiveBufferSize() {
         return receiveBufferSize;
     }
@@ -78,6 +89,7 @@ public class DefaultConnectionSettings {
     DefaultConnectionSettings(final Builder builder) {
         connectTimeoutMS = builder.connectTimeoutMS;
         readTimeoutMS = builder.readTimeoutMS;
+        keepAlive = builder.keepAlive;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
     }

@@ -363,6 +363,7 @@ public class Mongo {
         DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())
                 .readTimeoutMS(options.getSocketTimeout())
+                .keepAlive(options.isSocketKeepAlive())
                 .build();
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList);
 
@@ -377,6 +378,7 @@ public class Mongo {
                         DefaultConnectionSettings.builder()
                                 .connectTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")))
                                 .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
+                                .keepAlive(options.isSocketKeepAlive())
                                 .build(),
                         sslSettings, bufferPool, credentialList),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration

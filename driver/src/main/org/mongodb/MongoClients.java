@@ -98,6 +98,7 @@ public final class MongoClients {
         DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())
                 .readTimeoutMS(options.getSocketTimeout())
+                .keepAlive(options.isSocketKeepAlive())
                 .build();
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList);
 

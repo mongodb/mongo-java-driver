@@ -152,13 +152,14 @@ abstract class DefaultConnection implements Connection {
 
     protected void initializeSocket(final Socket socket) throws IOException {
         socket.setTcpNoDelay(true);
-        socket.setSoTimeout(getSettings().getReadTimeoutMS());
-        if (getSettings().getReceiveBufferSize() > 0) {
-            socket.setReceiveBufferSize(getSettings().getReceiveBufferSize());
+        socket.setSoTimeout(settings.getReadTimeoutMS());
+        socket.setKeepAlive(settings.isKeepAlive());
+        if (settings.getReceiveBufferSize() > 0) {
+            socket.setReceiveBufferSize(settings.getReceiveBufferSize());
         }
-        if (getSettings().getSendBufferSize() > 0) {
-            socket.setSendBufferSize(getSettings().getSendBufferSize());
+        if (settings.getSendBufferSize() > 0) {
+            socket.setSendBufferSize(settings.getSendBufferSize());
         }
-        socket.connect(getServerAddress().getSocketAddress(), getSettings().getConnectTimeoutMS());
+        socket.connect(getServerAddress().getSocketAddress(), settings.getConnectTimeoutMS());
     }
 }
