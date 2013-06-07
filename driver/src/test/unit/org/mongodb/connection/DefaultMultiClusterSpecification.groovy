@@ -37,7 +37,7 @@ class DefaultMultiClusterSpecification extends Specification {
 
     public void 'should correct report description when the cluster first starts'() {
         setup:
-        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster([SERVER_ADDRESS], null, builder().build(), factory);
+        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster([SERVER_ADDRESS], factory);
 
         when:
         factory.getServer(SERVER_ADDRESS).sendNotification(CONNECTED_DESCRIPTION_BUILDER.build());
@@ -51,7 +51,7 @@ class DefaultMultiClusterSpecification extends Specification {
 
     public void 'should discover all servers in the cluster'() {
         setup:
-        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster([SERVER_ADDRESS], null, builder().build(), factory);
+        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster([SERVER_ADDRESS], factory);
 
         when:
         factory.getServer(SERVER_ADDRESS).sendNotification(CONNECTED_DESCRIPTION_BUILDER.build());
