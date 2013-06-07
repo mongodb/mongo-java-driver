@@ -77,6 +77,11 @@ public class BSONDocumentBuffer {
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {
-        return codec.decode(new BSONBinaryReader(new BasicInputBuffer(getByteBuffer())));
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
+        try {
+            return codec.decode(reader);
+        } finally {
+            reader.close();
+        }
     }
 }

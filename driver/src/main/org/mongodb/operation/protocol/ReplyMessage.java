@@ -39,9 +39,12 @@ public class ReplyMessage<T> {
         this(replyHeader, requestId, elapsedNanoseconds);
 
         while (documents.size() < replyHeader.getNumberReturned()) {
-            final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer);
-            documents.add(decoder.decode(reader));
-            reader.close();
+            final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer, false);
+            try {
+                documents.add(decoder.decode(reader));
+            } finally {
+                reader.close();
+            }
         }
     }
 

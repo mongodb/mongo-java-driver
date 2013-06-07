@@ -458,69 +458,73 @@ public class BSONBinaryWriterTest {
 
         final BasicInputBuffer basicInputBuffer = new BasicInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
 
-        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), basicInputBuffer);
+        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), basicInputBuffer, false);
 
-        assertEquals(BSONType.DOCUMENT, reader.readBSONType());
-        reader.readStartDocument();
-        {
-            assertEquals(BSONType.BOOLEAN, reader.readBSONType());
-            assertEquals("b1", reader.readName());
-            assertEquals(true, reader.readBoolean());
-
-            assertEquals(BSONType.BOOLEAN, reader.readBSONType());
-            assertEquals("b2", reader.readName());
-            assertEquals(false, reader.readBoolean());
-
-            assertEquals(BSONType.ARRAY, reader.readBSONType());
-            assertEquals("a1", reader.readName());
-            reader.readStartArray();
-            {
-                assertEquals(BSONType.STRING, reader.readBSONType());
-                assertEquals("danke", reader.readString());
-
-                assertEquals(BSONType.STRING, reader.readBSONType());
-                assertEquals("", reader.readString());
-            }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
-            reader.readEndArray();
-            assertEquals("d1", reader.readName());
+        try {
+            assertEquals(BSONType.DOCUMENT, reader.readBSONType());
             reader.readStartDocument();
             {
-                assertEquals(BSONType.DOUBLE, reader.readBSONType());
-                assertEquals("do", reader.readName());
-                assertEquals(60, reader.readDouble(), 0);
+                assertEquals(BSONType.BOOLEAN, reader.readBSONType());
+                assertEquals("b1", reader.readName());
+                assertEquals(true, reader.readBoolean());
 
-                assertEquals(BSONType.INT32, reader.readBSONType());
-                assertEquals("i32", reader.readName());
-                assertEquals(40, reader.readInt32());
+                assertEquals(BSONType.BOOLEAN, reader.readBSONType());
+                assertEquals("b2", reader.readName());
+                assertEquals(false, reader.readBoolean());
 
-                assertEquals(BSONType.INT64, reader.readBSONType());
-                assertEquals("i64", reader.readName());
-                assertEquals(Long.MAX_VALUE, reader.readInt64());
+                assertEquals(BSONType.ARRAY, reader.readBSONType());
+                assertEquals("a1", reader.readName());
+                reader.readStartArray();
+                {
+                    assertEquals(BSONType.STRING, reader.readBSONType());
+                    assertEquals("danke", reader.readString());
+
+                    assertEquals(BSONType.STRING, reader.readBSONType());
+                    assertEquals("", reader.readString());
+                }
+                assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
+                reader.readEndArray();
+                assertEquals("d1", reader.readName());
+                reader.readStartDocument();
+                {
+                    assertEquals(BSONType.DOUBLE, reader.readBSONType());
+                    assertEquals("do", reader.readName());
+                    assertEquals(60, reader.readDouble(), 0);
+
+                    assertEquals(BSONType.INT32, reader.readBSONType());
+                    assertEquals("i32", reader.readName());
+                    assertEquals(40, reader.readInt32());
+
+                    assertEquals(BSONType.INT64, reader.readBSONType());
+                    assertEquals("i64", reader.readName());
+                    assertEquals(Long.MAX_VALUE, reader.readInt64());
+                }
+                assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
+                reader.readEndDocument();
+
+                assertEquals(BSONType.JAVASCRIPT_WITH_SCOPE, reader.readBSONType());
+                assertEquals("js1", reader.readName());
+                assertEquals("print x", reader.readJavaScriptWithScope());
+
+                reader.readStartDocument();
+                {
+                    assertEquals(BSONType.INT32, reader.readBSONType());
+                    assertEquals("x", reader.readName());
+                    assertEquals(1, reader.readInt32());
+                }
+                assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
+                reader.readEndDocument();
+
+                assertEquals(BSONType.OBJECT_ID, reader.readBSONType());
+                assertEquals("oid1", reader.readName());
+                assertEquals(oid1, reader.readObjectId());
+
+                assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
+                reader.readEndDocument();
+
             }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
-            reader.readEndDocument();
-
-            assertEquals(BSONType.JAVASCRIPT_WITH_SCOPE, reader.readBSONType());
-            assertEquals("js1", reader.readName());
-            assertEquals("print x", reader.readJavaScriptWithScope());
-
-            reader.readStartDocument();
-            {
-                assertEquals(BSONType.INT32, reader.readBSONType());
-                assertEquals("x", reader.readName());
-                assertEquals(1, reader.readInt32());
-            }
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
-            reader.readEndDocument();
-
-            assertEquals(BSONType.OBJECT_ID, reader.readBSONType());
-            assertEquals("oid1", reader.readName());
-            assertEquals(oid1, reader.readObjectId());
-
-            assertEquals(BSONType.END_OF_DOCUMENT, reader.readBSONType());
-            reader.readEndDocument();
-
+        } finally {
+            reader.close();
         }
     }
     //CHECKSTYLE:ON
@@ -534,7 +538,12 @@ public class BSONBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer());
-        newWriter.pipe(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes))));
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes)), true);
+        try {
+            newWriter.pipe(reader);
+        } finally {
+            reader.close();
+        }
         assertArrayEquals(bytes, newWriter.getBuffer().toByteArray());
     }
 }

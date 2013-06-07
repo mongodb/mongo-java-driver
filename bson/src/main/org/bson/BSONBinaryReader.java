@@ -28,15 +28,28 @@ public class BSONBinaryReader extends BSONReader {
 
     private Context context;
     private final InputBuffer buffer;
+    private final boolean closeBuffer;
 
-    public BSONBinaryReader(final BSONReaderSettings settings, final InputBuffer buffer) {
+    public BSONBinaryReader(final BSONReaderSettings settings, final InputBuffer buffer, final boolean closeBuffer) {
         super(settings);
+        if (buffer == null) {
+            throw new IllegalArgumentException("buffer is null");
+        }
         this.buffer = buffer;
+        this.closeBuffer = closeBuffer;
         context = new Context(null, BSONContextType.TOP_LEVEL, 0, 0);
     }
 
-    public BSONBinaryReader(final InputBuffer buffer) {
-        this(new BSONReaderSettings(), buffer);
+    public BSONBinaryReader(final InputBuffer buffer, final boolean closeBuffer) {
+        this(new BSONReaderSettings(), buffer, closeBuffer);
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (closeBuffer) {
+            buffer.close();
+        }
     }
 
     /**

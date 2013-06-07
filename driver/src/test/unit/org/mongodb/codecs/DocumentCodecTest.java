@@ -79,7 +79,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer));
+        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -92,7 +92,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -104,7 +104,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   createInputBuffer()));
+                                                                                   createInputBuffer(), false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -119,7 +119,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -133,7 +133,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -150,7 +150,7 @@ public class DocumentCodecTest {
         final List<Document> expectedListOfDocuments = asList(new Document("intVal", 1),
                                                               new Document("anotherInt", 2));
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertThat((List<Document>) decodedDocument.get("array"), is(expectedListOfDocuments));
     }
 
@@ -164,7 +164,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
 
         final List<Integer> value = asList(1, 2, 3, 4, 5);
         assertThat((List<Integer>) decodedDocument.get("array"), is(value));
@@ -182,7 +182,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -198,7 +198,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -211,7 +211,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -223,7 +223,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(document, decodedDocument);
     }
 
@@ -235,7 +235,7 @@ public class DocumentCodecTest {
 
         final InputBuffer inputBuffer = createInputBuffer();
         final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer));
+                                                                                   inputBuffer, false));
         assertEquals(document, decodedDocument);
     }
 

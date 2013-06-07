@@ -21,6 +21,8 @@ import org.bson.BSONBinaryWriter;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Test;
+import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.PojoCodec;
 import org.mongodb.codecs.pojo.Address;
 import org.mongodb.codecs.pojo.EmptyPojo;
 import org.mongodb.codecs.pojo.IntWrapper;
@@ -31,6 +33,7 @@ import org.mongodb.codecs.pojo.Person;
 import org.mongodb.codecs.pojo.PojoWrapper;
 import org.mongodb.codecs.pojo.StringWrapper;
 
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -209,7 +212,12 @@ public class PojoDecodingPerformanceTest {
 
     private <T> void decodeDocument(final int timesToRun, final byte[] inputAsByteArray, final PojoCodec<T> pojoCodec) {
         for (int i = 0; i < timesToRun; i++) {
-            pojoCodec.decode(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray))));
+            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray)), true);
+            try {
+                pojoCodec.decode(reader);
+            } finally {
+                reader.close();
+            }
         }
     }
 

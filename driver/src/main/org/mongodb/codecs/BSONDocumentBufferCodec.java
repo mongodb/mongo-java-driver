@@ -50,7 +50,12 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public void encode(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
-        bsonWriter.pipe(new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer())));
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
+        try {
+            bsonWriter.pipe(reader);
+        } finally {
+            reader.close();
+        }
     }
 
     @Override
@@ -77,7 +82,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public Object getId(final BSONDocumentBuffer document) {
-        BSONReader reader = new BSONBinaryReader(new BasicInputBuffer(document.getByteBuffer()));
+        BSONReader reader = new BSONBinaryReader(new BasicInputBuffer(document.getByteBuffer()), true);
         try {
             reader.readStartDocument();
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {

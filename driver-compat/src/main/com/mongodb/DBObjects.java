@@ -41,8 +41,12 @@ public class DBObjects {
     public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Decoder<Document> documentDecoder) {
         final BasicOutputBuffer buffer = new BasicOutputBuffer();
         encoder.writeObject(buffer, obj);
-        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())));
-        return documentDecoder.decode(bsonReader);
+        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())), true);
+        try {
+            return documentDecoder.decode(bsonReader);
+        } finally {
+            bsonReader.close();
+        }
     }
 
     public static Document[] toDocumentArray(final DBObject[] dbObjects) {

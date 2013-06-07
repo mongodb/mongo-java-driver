@@ -40,7 +40,12 @@ public class DBEncoderAdapter implements Encoder<DBObject> {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, value);
-            bsonWriter.pipe(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray()))));
+            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())), true);
+            try {
+                bsonWriter.pipe(reader);
+            } finally {
+                reader.close();
+            }
         } finally {
             buffer.close();
         }

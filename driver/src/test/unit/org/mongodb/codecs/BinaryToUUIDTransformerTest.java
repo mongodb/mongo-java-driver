@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.mongodb.codecs;
@@ -49,9 +48,14 @@ public class BinaryToUUIDTransformerTest {
                 2, 0, 0, 0, 0, 0, 0, 0, //
                 1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
                 0};                     // EOM
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(wrap(binaryTypeWithUUIDAsBytes)));
-        reader.readStartDocument();
-        Binary binary = reader.readBinaryData();
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(wrap(binaryTypeWithUUIDAsBytes)), true);
+        Binary binary;
+        try {
+            reader.readStartDocument();
+            binary = reader.readBinaryData();
+        } finally {
+            reader.close();
+        }
 
         // When
         final UUID actualUUID = binaryToUUIDTransformer.transform(binary);

@@ -19,12 +19,11 @@ package org.bson.io;
 import org.bson.BSONType;
 import org.bson.types.ObjectId;
 
-import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-public class BasicInputBuffer implements InputBuffer, Closeable {
+public class BasicInputBuffer implements InputBuffer {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private ByteBuffer buffer;

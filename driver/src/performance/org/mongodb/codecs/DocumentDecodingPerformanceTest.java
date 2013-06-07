@@ -26,7 +26,10 @@ import org.bson.types.CodeWithScope;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -223,7 +226,12 @@ public class DocumentDecodingPerformanceTest {
 
     private void decodeDocument(final int timesToRun, final byte[] inputAsByteArray) {
         for (int i = 0; i < timesToRun; i++) {
-            documentCodec.decode(new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray))));
+            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray)), true);
+            try {
+                documentCodec.decode(reader);
+            } finally {
+                reader.close();
+            }
         }
     }
 

@@ -68,15 +68,20 @@ public class LazyBSONObject implements BSONObject {
     @Override
     public Object get(final String key) {
         final BSONBinaryReader reader = getBSONReader();
-        reader.readStartDocument();
-        Object value = null;
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            if (key.equals(reader.readName())) {
-                value = readValue(reader);
-                break;
-            } else {
-                reader.skipValue();
+        Object value;
+        try {
+            reader.readStartDocument();
+            value = null;
+            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                if (key.equals(reader.readName())) {
+                    value = readValue(reader);
+                    break;
+                } else {
+                    reader.skipValue();
+                }
             }
+        } finally {
+            reader.close();
         }
         return value;
     }
@@ -96,12 +101,16 @@ public class LazyBSONObject implements BSONObject {
     public Set<String> keySet() {
         final Set<String> keys = new HashSet<String>();
         final BSONReader reader = getBSONReader();
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            keys.add(reader.readName());
-            reader.skipValue();
+        try {
+            reader.readStartDocument();
+            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                keys.add(reader.readName());
+                reader.skipValue();
+            }
+            reader.readEndDocument();
+        } finally {
+            reader.close();
         }
-        reader.readEndDocument();
         return Collections.unmodifiableSet(keys);
     }
 
@@ -174,7 +183,7 @@ public class LazyBSONObject implements BSONObject {
 
     BSONBinaryReader getBSONReader() {
         final ByteBuffer buffer = getBufferForInternalBytes();
-        return new BSONBinaryReader(new BasicInputBuffer(buffer));
+        return new BSONBinaryReader(new BasicInputBuffer(buffer), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {
@@ -201,11 +210,15 @@ public class LazyBSONObject implements BSONObject {
     public Set<Map.Entry<String, Object>> entrySet() {
         final Set<Map.Entry<String, Object>> entries = new HashSet<Map.Entry<String, Object>>();
         final BSONBinaryReader reader = getBSONReader();
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            entries.add(new AbstractMap.SimpleImmutableEntry<String, Object>(reader.readName(), readValue(reader)));
+        try {
+            reader.readStartDocument();
+            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                entries.add(new AbstractMap.SimpleImmutableEntry<String, Object>(reader.readName(), readValue(reader)));
+            }
+            reader.readEndDocument();
+        } finally {
+            reader.close();
         }
-        reader.readEndDocument();
         return Collections.unmodifiableSet(entries);
     }
 
