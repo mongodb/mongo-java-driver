@@ -31,13 +31,19 @@
         </Class>
     </Match>
     <Match>
-        <Class name="org.mongodb.BSONDocumentBuffer" />
-        <Method name="&lt;init&gt;" />
-        <Bug pattern="EI_EXPOSE_REP2" />
+        <Class name="org.mongodb.BSONDocumentBuffer"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="org.mongodb.codecs.pojo.ArrayWrapper" />
-        <Bug pattern="EI_EXPOSE_REP2" />
+        <Class name="org.mongodb.codecs.pojo.ArrayWrapper"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
+    <Match>
+        <Class name="~.*\.*Specification.*"/>
+        <Bug pattern="SE_NO_SERIALVERSIONID"/>
     </Match>
 
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
