@@ -40,8 +40,8 @@ public class DefaultMultiClusterTest {
     }
     @Test
     public void testDiscovery() {
-        ServerAddress serverAddress = new ServerAddress("localhost:27017");
-        DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress), null,
+        final ServerAddress serverAddress = new ServerAddress("localhost:27017");
+        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress), null,
                 MongoClientOptions.builder().build(), factory);
         factory.getServer(serverAddress).sendNotification(
                 ServerDescription.builder().address(serverAddress).ok(true).state(Connected)
@@ -52,18 +52,19 @@ public class DefaultMultiClusterTest {
         assertTrue(clusterDescription.isConnecting());
         assertEquals(ReplicaSet, clusterDescription.getType());
         assertEquals(Discovering, clusterDescription.getMode());
-        Iterator<ServerDescription> iter = clusterDescription.getAll().iterator();
+
+        final Iterator<ServerDescription> iter = clusterDescription.getAll().iterator();
         assertTrue(iter.hasNext());
-        ServerDescription first = iter.next();
+        final ServerDescription first = iter.next();
         assertEquals(factory.getServer(serverAddress).getDescription(), first);
         assertTrue(iter.hasNext());
-        ServerDescription second = iter.next();
-        TestServer secondServer = factory.getServer(new ServerAddress("localhost:27018"));
+        final ServerDescription second = iter.next();
+        final TestServer secondServer = factory.getServer(new ServerAddress("localhost:27018"));
         assertNotNull(secondServer);
         assertEquals(secondServer.getDescription(), second);
         assertTrue(iter.hasNext());
-        ServerDescription third = iter.next();
-        TestServer thirdServer = factory.getServer(new ServerAddress("localhost:27019"));
+        final ServerDescription third = iter.next();
+        final TestServer thirdServer = factory.getServer(new ServerAddress("localhost:27019"));
         assertNotNull(thirdServer);
         assertEquals(thirdServer.getDescription(), third);
     }
