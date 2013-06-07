@@ -194,8 +194,12 @@ public class GridFS {
         final List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
 
         final DBCursor c = _filesCollection.find(query);
-        while (c.hasNext()) {
-            files.add(_fix(c.next()));
+        try {
+            while (c.hasNext()) {
+                files.add(_fix(c.next()));
+            }
+        } finally {
+            c.close();
         }
         return files;
     }
