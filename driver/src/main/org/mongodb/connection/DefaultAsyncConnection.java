@@ -71,11 +71,13 @@ class DefaultAsyncConnection implements AsyncConnection {
         sendOneWayMessage(buffer, new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
+                buffer.close();
                 callback.onResult(null, null);
             }
 
             @Override
             public void failed(final Throwable t) {
+                buffer.close();
                 callback.onResult(null, new MongoInternalException("", t));  // TODO
             }
         });
@@ -84,7 +86,20 @@ class DefaultAsyncConnection implements AsyncConnection {
     public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        sendOneWayMessage(buffer, new ReceiveMessageCompletionHandler(responseSettings, System.nanoTime(), callback));
+        final long start = System.nanoTime();
+        sendOneWayMessage(buffer, new AsyncCompletionHandler() {
+            @Override
+            public void completed(final int bytesWritten) {
+                buffer.close();
+                receiveMessage(responseSettings, start, callback);
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                buffer.close();
+                callback.onResult(null, new MongoException("", t));  // TODO
+            }
+        });
     }
 
     @Override
@@ -99,7 +114,7 @@ class DefaultAsyncConnection implements AsyncConnection {
     }
 
     private void sendOneWayMessage(final AsyncOutputBuffer buffer, final AsyncCompletionHandler handler) {
-        buffer.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
+        buffer.pipe(new AsyncWritableByteChannelAdapter(), handler);
     }
 
     private void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
@@ -183,29 +198,6 @@ class DefaultAsyncConnection implements AsyncConnection {
                     handler.failed(t);
                 }
             });
-        }
-    }
-
-    private class ReceiveMessageCompletionHandler implements AsyncCompletionHandler {
-        private ResponseSettings responseSettings;
-        private final long start;
-        private final SingleResultCallback<ResponseBuffers> callback;
-
-        public ReceiveMessageCompletionHandler(final ResponseSettings responseSettings, final long start,
-                                               final SingleResultCallback<ResponseBuffers> callback) {
-            this.responseSettings = responseSettings;
-            this.start = start;
-            this.callback = callback;
-        }
-
-        @Override
-        public void completed(final int bytesWritten) {
-            receiveMessage(responseSettings, start, callback);
-        }
-
-        @Override
-        public void failed(final Throwable t) {
-            callback.onResult(null, new MongoException("", t));  // TODO
         }
     }
 

@@ -132,7 +132,7 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
 
 
     @Override
-    public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
+    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
         final Iterator<ByteBuf> iter = bufferList.iterator();
         pipeOneBuffer(channel, iter.next(), new AsyncCompletionHandler() {
             @Override
@@ -141,14 +141,12 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
                     pipeOneBuffer(channel, iter.next(), this);
                 }
                 else {
-                    close();
                     handler.completed(size());
                 }
             }
 
             @Override
             public void failed(final Throwable t) {
-                close();
                 handler.failed(t);
             }
         });

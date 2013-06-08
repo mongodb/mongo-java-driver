@@ -26,5 +26,5 @@ public abstract class AsyncOutputBuffer extends OutputBuffer {
      * @param channel the channel
      * @param handler the handler to invoke on complete or failure
      */
-    public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
+    public abstract void pipe(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
 }
