@@ -45,7 +45,11 @@ class DefaultSocketChannelConnection extends DefaultConnection {
 
     @Override
     protected void sendOneWayMessage(final OutputBuffer buffer) throws IOException {
-        buffer.pipeAndClose(socketChannel);
+        try {
+            buffer.pipe(socketChannel);
+        } finally {
+            buffer.close();
+        }
     }
 
     protected void fillAndFlipBuffer(final ByteBuf buffer) throws IOException {

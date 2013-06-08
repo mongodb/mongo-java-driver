@@ -116,7 +116,7 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
     }
 
     @Override
-    public void pipeAndClose(final GatheringByteChannel channel) throws IOException {
+    public void pipe(final GatheringByteChannel channel) throws IOException {
         for (final ByteBuf cur : bufferList) {
             cur.flip();
         }
@@ -128,15 +128,8 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
             }
             bytesRead += channel.write(byteBuffers);
         }
-        close();
     }
 
-
-    @Override
-    public void pipeAndClose(final OutputStream outputStream) throws IOException {
-        pipe(outputStream);
-        close();
-    }
 
     @Override
     public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {

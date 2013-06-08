@@ -54,20 +54,9 @@ public abstract class OutputBuffer extends OutputStream {
      *
      * @param channel the channel to pipe to
      */
-    public abstract void pipeAndClose(GatheringByteChannel channel) throws IOException;
+    public abstract void pipe(GatheringByteChannel channel) throws IOException;
 
     public abstract void truncateToPosition(final int newPosition);
-
-    /**
-     * Pipe the contents of this output buffer into the given output stream and close the buffer
-     *
-     * @param outputStream the output stream to pipe to.
-     * @throws IOException
-     */
-    public void pipeAndClose(final OutputStream outputStream) throws IOException {
-        pipe(outputStream);
-        close();
-    }
 
     /**
      * mostly for testing

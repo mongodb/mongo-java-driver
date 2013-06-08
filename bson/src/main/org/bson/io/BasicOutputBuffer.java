@@ -78,7 +78,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    public void pipeAndClose(final GatheringByteChannel channel) throws IOException {
+    public void pipe(final GatheringByteChannel channel) throws IOException {
         channel.write(ByteBuffer.wrap(buffer, 0, size));
     }
 
