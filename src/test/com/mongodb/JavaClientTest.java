@@ -509,6 +509,8 @@ public class JavaClientTest extends TestCase {
             return;
         }
 
+        throw new SkipException("Not testing mapreduce on secondaries since that's disabled right now.");
+
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
         //c.setReadPreference(ReadPreference.SECONDARY);
