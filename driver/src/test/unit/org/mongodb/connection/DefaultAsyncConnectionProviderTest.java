@@ -109,7 +109,7 @@ public class DefaultAsyncConnectionProviderTest {
         }
     }
 
-    private class TestAsyncConnectionFactory implements AsyncConnectionFactory {
+    private static class TestAsyncConnectionFactory implements AsyncConnectionFactory {
         @Override
         public AsyncConnection create(final ServerAddress serverAddress) {
             return new AsyncConnection() {

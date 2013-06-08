@@ -107,7 +107,7 @@ public class DefaultConnectionProviderTest {
         }
     }
 
-    private class TestConnectionFactory implements ConnectionFactory {
+    private static class TestConnectionFactory implements ConnectionFactory {
         @Override
         public Connection create(final ServerAddress serverAddress) {
             return new Connection() {
