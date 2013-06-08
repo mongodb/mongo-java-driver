@@ -58,15 +58,13 @@ public class ErrorTest extends TestCase {
         assert(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
 
-    @Test
+    @Test @Ignore
     public void testLastErrorWithConcernAndW()
         throws MongoException {
-        if ( /* TODO: running with slaves */ false ){
-            _db.resetError();
-            CommandResult cr = _db.getLastError(WriteConcern.REPLICAS_SAFE);
-            assert(cr.get("err") == null);
-            assert(cr.containsField("wtime"));
-        }
+        _db.resetError();
+        CommandResult cr = _db.getLastError(WriteConcern.REPLICAS_SAFE);
+        assert(cr.get("err") == null);
+        assert(cr.containsField("wtime"));
     }
 
     @Test
