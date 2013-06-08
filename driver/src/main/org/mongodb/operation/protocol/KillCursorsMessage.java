@@ -16,7 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.bson.io.OutputBuffer;
 import org.mongodb.operation.KillCursor;
 
 public class KillCursorsMessage extends RequestMessage {
@@ -28,13 +28,13 @@ public class KillCursorsMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeKillCursorsPrologue(1, buffer);
         buffer.writeLong(killCursor.getServerCursor().getId());
         return null;
     }
 
-    private void writeKillCursorsPrologue(final int numCursors, final ChannelAwareOutputBuffer buffer) {
+    private void writeKillCursorsPrologue(final int numCursors, final OutputBuffer buffer) {
         buffer.writeInt(0); // reserved
         buffer.writeInt(numCursors);
     }

@@ -55,7 +55,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
             @Override
@@ -71,7 +71,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {

@@ -16,7 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.bson.io.OutputBuffer;
 import org.mongodb.operation.Query;
 import org.mongodb.operation.QueryOption;
 
@@ -26,7 +26,7 @@ public abstract class BaseQueryMessage extends RequestMessage {
         super(collectionName, OpCode.OP_QUERY, settings);
     }
 
-    protected void writeQueryPrologue(final Query query, final ChannelAwareOutputBuffer buffer) {
+    protected void writeQueryPrologue(final Query query, final OutputBuffer buffer) {
         buffer.writeInt(QueryOption.fromSet(query.getOptions()));
         buffer.writeCString(getCollectionName());
 

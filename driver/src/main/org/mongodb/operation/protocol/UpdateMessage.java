@@ -16,9 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.BaseUpdate;
 import org.mongodb.operation.Update;
 
@@ -32,7 +32,7 @@ public class UpdateMessage extends BaseUpdateMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
         addDocument(update.getUpdateOperations(), getBaseEncoder(), buffer);
         return null;

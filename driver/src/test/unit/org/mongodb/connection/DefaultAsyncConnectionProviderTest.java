@@ -114,12 +114,12 @@ public class DefaultAsyncConnectionProviderTest {
         public AsyncConnection create(final ServerAddress serverAddress) {
             return new AsyncConnection() {
                 @Override
-                public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+                public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
-                public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+                public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                                   final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }

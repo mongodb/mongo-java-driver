@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
+import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
@@ -43,7 +44,7 @@ class DefaultSocketChannelConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException {
+    protected void sendOneWayMessage(final OutputBuffer buffer) throws IOException {
         buffer.pipeAndClose(socketChannel);
     }
 

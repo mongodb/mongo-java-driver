@@ -18,9 +18,9 @@ package org.mongodb.connection;
 
 public interface AsyncConnection extends BaseConnection {
 
-    void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
+    void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback);
 
-    void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+    void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                final SingleResultCallback<ResponseBuffers> callback);
 
     void receiveMessage(final ResponseSettings responseSettings, SingleResultCallback<ResponseBuffers> callback);

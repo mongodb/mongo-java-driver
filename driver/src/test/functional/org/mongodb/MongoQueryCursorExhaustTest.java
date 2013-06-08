@@ -16,10 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.io.OutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.BaseConnection;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
@@ -137,7 +137,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+        public void sendMessage(final OutputBuffer buffer) {
             isTrue("open", !isClosed());
             wrapped.sendMessage(buffer);
         }

@@ -20,14 +20,13 @@ import org.bson.ByteBuf;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.GatheringByteChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
+public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     public static final int MAX_BUFFER_SIZE = 1 << 24;
@@ -117,7 +116,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
     }
 
     @Override
-    public void pipeAndClose(final SocketChannel socketChannel) throws IOException {
+    public void pipeAndClose(final GatheringByteChannel channel) throws IOException {
         for (final ByteBuf cur : bufferList) {
             cur.flip();
         }
@@ -127,19 +126,15 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
             for (int i = 0; i < bufferList.size(); i++) {
                 byteBuffers[i] = bufferList.get(i).asNIO();
             }
-            bytesRead += socketChannel.write(byteBuffers);
+            bytesRead += channel.write(byteBuffers);
         }
         close();
     }
 
 
     @Override
-    public void pipeAndClose(final Socket socket) throws IOException {
-        for (final ByteBuf cur : bufferList) {
-            cur.flip();
-            socket.getOutputStream().write(cur.array(), 0, cur.limit());
-        }
-
+    public void pipeAndClose(final OutputStream outputStream) throws IOException {
+        pipe(outputStream);
         close();
     }
 

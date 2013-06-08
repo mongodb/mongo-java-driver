@@ -66,7 +66,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         return isClosed;
     }
 
-    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         sendOneWayMessage(buffer, new AsyncCompletionHandler() {
             @Override
@@ -81,7 +81,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         });
     }
 
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         sendOneWayMessage(buffer, new ReceiveMessageCompletionHandler(responseSettings, System.nanoTime(), callback));
@@ -98,7 +98,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, start, callback));
     }
 
-    private void sendOneWayMessage(final ChannelAwareOutputBuffer buffer, final AsyncCompletionHandler handler) {
+    private void sendOneWayMessage(final AsyncOutputBuffer buffer, final AsyncCompletionHandler handler) {
         buffer.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
     }
 

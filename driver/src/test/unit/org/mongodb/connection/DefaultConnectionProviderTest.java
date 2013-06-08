@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.io.OutputBuffer;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -112,7 +113,7 @@ public class DefaultConnectionProviderTest {
         public Connection create(final ServerAddress serverAddress) {
             return new Connection() {
                 @Override
-                public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+                public void sendMessage(final OutputBuffer buffer) {
                     throw new UnsupportedOperationException();
                 }
 

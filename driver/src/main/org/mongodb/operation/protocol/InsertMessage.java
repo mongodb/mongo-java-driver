@@ -16,9 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.Insert;
 
 public class InsertMessage<T> extends RequestMessage {
@@ -34,7 +34,7 @@ public class InsertMessage<T> extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeInsertPrologue(insert.getWriteConcern(), buffer);
         for (int i = 0; i < insert.getDocuments().size(); i++) {
             T document = insert.getDocuments().get(i);
@@ -48,7 +48,7 @@ public class InsertMessage<T> extends RequestMessage {
         return null;
     }
 
-    private void writeInsertPrologue(final WriteConcern concern, final ChannelAwareOutputBuffer buffer) {
+    private void writeInsertPrologue(final WriteConcern concern, final OutputBuffer buffer) {
         int flags = 0;
         if (concern.getContinueOnErrorForInsert()) {
             flags |= 1;

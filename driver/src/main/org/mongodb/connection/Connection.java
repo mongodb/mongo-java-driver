@@ -16,9 +16,11 @@
 
 package org.mongodb.connection;
 
+import org.bson.io.OutputBuffer;
+
 public interface Connection extends BaseConnection {
 
-    void sendMessage(ChannelAwareOutputBuffer buffer);
+    void sendMessage(OutputBuffer buffer);
 
     ResponseBuffers receiveMessage(final ResponseSettings responseSettings);
 }

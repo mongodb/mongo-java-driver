@@ -16,7 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.connection.ChannelAwareOutputBuffer;
+import org.bson.io.OutputBuffer;
 import org.mongodb.operation.GetMore;
 
 public class GetMoreMessage extends RequestMessage {
@@ -32,12 +32,12 @@ public class GetMoreMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeGetMore(buffer);
         return null;
     }
 
-    private void writeGetMore(final ChannelAwareOutputBuffer buffer) {
+    private void writeGetMore(final OutputBuffer buffer) {
         buffer.writeInt(0);
         buffer.writeCString(getCollectionName());
         buffer.writeInt(getMore.getNumberToReturn());

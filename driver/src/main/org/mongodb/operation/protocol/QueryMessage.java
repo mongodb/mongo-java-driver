@@ -16,9 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.Find;
 
 public class QueryMessage extends BaseQueryMessage {
@@ -33,7 +33,7 @@ public class QueryMessage extends BaseQueryMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(find, buffer);
         addDocument(getQueryDocument(), encoder, buffer);
         if (find.getFields() != null) {

@@ -21,6 +21,7 @@ package org.bson.io;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.GatheringByteChannel;
 
 public abstract class OutputBuffer extends OutputStream {
 
@@ -44,9 +45,29 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract int size();
 
     /**
-     * Pipe the contents of this output bufer into the given output stream
+     * Pipe the contents of this output buffer into the given output stream
      */
     public abstract void pipe(OutputStream out) throws IOException;
+
+    /**
+     * Pipe the contents of the buffer into the given  channel
+     *
+     * @param channel the channel to pipe to
+     */
+    public abstract void pipeAndClose(GatheringByteChannel channel) throws IOException;
+
+    public abstract void truncateToPosition(final int newPosition);
+
+    /**
+     * Pipe the contents of this output buffer into the given output stream and close the buffer
+     *
+     * @param outputStream the output stream to pipe to.
+     * @throws IOException
+     */
+    public void pipeAndClose(final OutputStream outputStream) throws IOException {
+        pipe(outputStream);
+        close();
+    }
 
     /**
      * mostly for testing
@@ -111,16 +132,19 @@ public abstract class OutputBuffer extends OutputStream {
             if (c < 0x80) {
                 write((byte) c);
                 total += 1;
-            } else if (c < 0x800) {
+            }
+            else if (c < 0x800) {
                 write((byte) (0xc0 + (c >> 6)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 2;
-            } else if (c < 0x10000) {
+            }
+            else if (c < 0x10000) {
                 write((byte) (0xe0 + (c >> 12)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 3;
-            } else {
+            }
+            else {
                 write((byte) (0xf0 + (c >> 18)));
                 write((byte) (0x80 + ((c >> 12) & 0x3f)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));

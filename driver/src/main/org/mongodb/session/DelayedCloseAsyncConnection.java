@@ -16,9 +16,9 @@
 
 package org.mongodb.session;
 
+import org.mongodb.connection.AsyncOutputBuffer;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BaseConnection;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerDescription;
@@ -34,13 +34,13 @@ class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements 
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         wrapped.sendMessage(buffer, callback);
     }
 
     @Override
-    public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);

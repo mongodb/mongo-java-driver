@@ -17,9 +17,9 @@
 package org.mongodb.operation.protocol;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.io.OutputBuffer;
 import org.mongodb.Encoder;
 import org.mongodb.MongoInvalidDocumentException;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,7 +46,7 @@ public abstract class RequestMessage {
         this(null, opCode, settings);
     }
 
-    protected void writeMessagePrologue(final ChannelAwareOutputBuffer buffer) {
+    protected void writeMessagePrologue(final OutputBuffer buffer) {
         buffer.writeInt(0); // length: will set this later
         buffer.writeInt(id);
         buffer.writeInt(0); // response to
@@ -70,7 +70,7 @@ public abstract class RequestMessage {
         return settings;
     }
 
-    public RequestMessage encode(final ChannelAwareOutputBuffer buffer) {
+    public RequestMessage encode(final OutputBuffer buffer) {
         int messageStartPosition = buffer.getPosition();
         writeMessagePrologue(buffer);
         RequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
@@ -78,9 +78,9 @@ public abstract class RequestMessage {
         return nextMessage;
     }
 
-    protected abstract RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition);
+    protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
-    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final ChannelAwareOutputBuffer buffer) {
+    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer) {
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
         try {
             int startPosition = buffer.getPosition();
@@ -96,7 +96,7 @@ public abstract class RequestMessage {
         }
     }
 
-    protected void backpatchMessageLength(final int startPosition, final ChannelAwareOutputBuffer buffer) {
+    protected void backpatchMessageLength(final int startPosition, final OutputBuffer buffer) {
         final int messageLength = buffer.getPosition() - startPosition;
         buffer.backpatchSize(messageLength);
     }

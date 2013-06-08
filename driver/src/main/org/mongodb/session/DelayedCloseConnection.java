@@ -16,9 +16,9 @@
 
 package org.mongodb.session;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BaseConnection;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerConnection;
@@ -36,7 +36,7 @@ class DelayedCloseConnection extends DelayedCloseBaseConnection implements Serve
     }
 
     @Override
-    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+    public void sendMessage(final OutputBuffer buffer) {
         isTrue("open", !isClosed());
         wrapped.sendMessage(buffer);
     }

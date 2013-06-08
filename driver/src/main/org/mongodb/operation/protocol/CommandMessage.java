@@ -16,10 +16,10 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.command.Command;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 
 public class CommandMessage extends BaseQueryMessage {
     private final Command commandOperation;
@@ -33,7 +33,7 @@ public class CommandMessage extends BaseQueryMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(commandOperation, buffer);
         addDocument(commandOperation.toDocument(), encoder, buffer);
         return null;

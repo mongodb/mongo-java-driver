@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 
 import java.util.concurrent.TimeUnit;
@@ -114,7 +115,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+        public void sendMessage(final OutputBuffer buffer) {
             isTrue("open", wrapped != null);
             try {
                 wrapped.sendMessage(buffer);

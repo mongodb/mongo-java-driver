@@ -18,25 +18,7 @@ package org.mongodb.connection;
 
 import org.bson.io.OutputBuffer;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.nio.channels.SocketChannel;
-
-public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
-
-    /**
-     * Pipe the contents of the buffer into the given socket channel
-     *
-     * @param socketChannel channel
-     */
-    public abstract void pipeAndClose(SocketChannel socketChannel) throws IOException;
-
-    /**
-     * Pipe the contents of the buffer into the given socket
-     * @param out
-     * @throws IOException
-     */
-    public abstract void pipeAndClose(final Socket out) throws IOException;
+public abstract class AsyncOutputBuffer extends OutputBuffer {
 
     /**
      * Pipe the contents of the buffer into the given asynchronous channel.
@@ -45,6 +27,4 @@ public abstract class ChannelAwareOutputBuffer extends OutputBuffer {
      * @param handler the handler to invoke on complete or failure
      */
     public abstract void pipeAndClose(final AsyncWritableByteChannel channel, AsyncCompletionHandler handler);
-
-    public abstract void truncateToPosition(final int pos);
 }

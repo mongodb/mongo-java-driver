@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
+import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
@@ -61,7 +62,7 @@ abstract class DefaultConnection implements Connection {
         return settings;
     }
 
-    public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+    public void sendMessage(final OutputBuffer buffer) {
         check();
         try {
             sendOneWayMessage(buffer);
@@ -90,7 +91,7 @@ abstract class DefaultConnection implements Connection {
 
     protected abstract void ensureOpen();
 
-    protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException;
+    protected abstract void sendOneWayMessage(final OutputBuffer buffer) throws IOException;
 
     protected abstract void fillAndFlipBuffer(final ByteBuf buffer) throws IOException;
 

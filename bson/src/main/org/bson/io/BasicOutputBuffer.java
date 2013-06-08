@@ -20,6 +20,8 @@ package org.bson.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.GatheringByteChannel;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
@@ -73,6 +75,19 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public void pipe(final OutputStream out) throws IOException {
         out.write(buffer, 0, size);
+    }
+
+    @Override
+    public void pipeAndClose(final GatheringByteChannel channel) throws IOException {
+        channel.write(ByteBuffer.wrap(buffer, 0, size));
+    }
+
+    @Override
+    public void truncateToPosition(final int newPosition) {
+        if (newPosition > size || newPosition < 0) {
+            throw new IllegalArgumentException();
+        }
+        size = newPosition;
     }
 
     private void ensure(final int more) {

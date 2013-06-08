@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 
 import java.util.Collections;
@@ -150,7 +151,7 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final ChannelAwareOutputBuffer buffer) {
+        public void sendMessage(final OutputBuffer buffer) {
             isTrue("open", !isClosed());
             try {
                 wrapped.sendMessage(buffer);
@@ -205,13 +206,13 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final ChannelAwareOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
             wrapped.sendMessage(buffer, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override
-        public void sendAndReceiveMessage(final ChannelAwareOutputBuffer buffer, final ResponseSettings responseSettings,
+        public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
                                           final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
             wrapped.sendAndReceiveMessage(buffer, responseSettings, new InvalidatingSingleResultCallback(callback));

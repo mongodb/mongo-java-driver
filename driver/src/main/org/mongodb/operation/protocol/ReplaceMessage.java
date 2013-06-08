@@ -16,9 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.BaseUpdate;
 import org.mongodb.operation.Replace;
 
@@ -34,7 +34,7 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
         addDocument(replace.getReplacement(), encoder, buffer);
         return null;

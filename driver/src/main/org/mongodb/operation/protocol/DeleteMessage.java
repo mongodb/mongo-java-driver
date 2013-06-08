@@ -16,9 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.connection.ChannelAwareOutputBuffer;
 import org.mongodb.operation.Remove;
 
 public class DeleteMessage extends RequestMessage {
@@ -33,12 +33,12 @@ public class DeleteMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final ChannelAwareOutputBuffer buffer, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeDelete(buffer);
         return null;
     }
 
-    private void writeDelete(final ChannelAwareOutputBuffer buffer) {
+    private void writeDelete(final OutputBuffer buffer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(getCollectionName());
 
