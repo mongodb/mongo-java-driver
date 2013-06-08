@@ -23,7 +23,6 @@ import org.mongodb.command.Command;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -53,7 +52,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final ConnectionFactory connectionFactory;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
     private Connection connection;
     private int count;
     private long elapsedNanosSum;
@@ -61,12 +60,12 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
     private volatile boolean isClosed;
 
     IsMasterServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                                final ConnectionFactory connectionFactory, final BufferPool<ByteBuffer> bufferPool) {
+                                final ConnectionFactory connectionFactory, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.connectionFactory = connectionFactory;
         serverDescription = getConnectingServerDescription();
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -84,7 +83,7 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",
-                        new Command(new Document("ismaster", 1)), new DocumentCodec(), new ClusterDescription(Direct), bufferPool)
+                        new Command(new Document("ismaster", 1)), new DocumentCodec(), new ClusterDescription(Direct), bufferProvider)
                         .execute(new ConnectingServerConnection(connection));
                 count++;
                 elapsedNanosSum += commandResult.getElapsedNanoseconds();

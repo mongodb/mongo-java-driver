@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoException;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,11 +47,11 @@ class DefaultServer implements ClusterableServer {
                          final AsyncConnectionProvider asyncConnectionProvider,
                          final ConnectionFactory heartbeatConnectionFactory,
                          final ScheduledExecutorService scheduledExecutorService,
-                         final BufferPool<ByteBuffer> bufferPool) {
+                         final BufferProvider bufferProvider) {
         notNull("connectionProvider", connectionProvider);
         notNull("heartbeatConnectionFactory", heartbeatConnectionFactory);
         notNull("scheduledExecutorService", scheduledExecutorService);
-        notNull("bufferPool", bufferPool);
+        notNull("bufferProvider", bufferProvider);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
@@ -60,7 +59,7 @@ class DefaultServer implements ClusterableServer {
         this.asyncConnectionProvider = asyncConnectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new IsMasterServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatConnectionFactory,
-                bufferPool);
+                bufferProvider);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                 settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }

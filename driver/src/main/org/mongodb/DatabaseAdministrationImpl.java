@@ -54,14 +54,14 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
         new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getCluster().getDescription(),
-                client.getBufferPool()).execute(client.getSession());
+                client.getBufferProvider()).execute(client.getSession());
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
         final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, FIND_ALL, documentCodec, documentCodec,
-                client.getBufferPool()).execute(client.getSession());
+                client.getBufferProvider()).execute(client.getSession());
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
@@ -83,7 +83,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         final CommandResult commandResult = new CommandOperation(databaseName, new Create(createCollectionOptions), documentCodec,
-                client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession());
+                client.getCluster().getDescription(), client.getBufferProvider()).execute(client.getSession());
         ErrorHandling.handleErrors(commandResult);
     }
 
@@ -96,7 +96,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
         final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec, client.getCluster().getDescription(),
-                client.getBufferPool()).execute(client.getSession());
+                client.getBufferProvider()).execute(client.getSession());
         ErrorHandling.handleErrors(commandResult);
     }
 

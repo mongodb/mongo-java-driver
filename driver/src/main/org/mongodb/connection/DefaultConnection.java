@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
@@ -33,14 +33,14 @@ import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 abstract class DefaultConnection implements Connection {
     private final ServerAddress serverAddress;
     private DefaultConnectionSettings settings;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
 
     DefaultConnection(final ServerAddress serverAddress, final DefaultConnectionSettings settings,
-                      final BufferPool<ByteBuffer> bufferPool) {
+                      final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
         this.settings = settings;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -92,7 +92,7 @@ abstract class DefaultConnection implements Connection {
 
     protected abstract void sendOneWayMessage(final ChannelAwareOutputBuffer buffer) throws IOException;
 
-    protected abstract void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException;
+    protected abstract void fillAndFlipBuffer(final ByteBuf buffer) throws IOException;
 
     private MongoException translateReadException(final IOException e) {
         close();
@@ -108,19 +108,15 @@ abstract class DefaultConnection implements Connection {
     }
 
     private ResponseBuffers receiveMessage(final ResponseSettings responseSettings, final long start) throws IOException {
-        ByteBuffer headerByteBuffer = bufferPool.get(REPLY_HEADER_LENGTH);
+        ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
 
         final ReplyHeader replyHeader;
+        fillAndFlipBuffer(headerByteBuffer);
+        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         try {
-            fillAndFlipBuffer(headerByteBuffer);
-            BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
-            try {
-                replyHeader = new ReplyHeader(headerInputBuffer);
-            } finally {
-                headerInputBuffer.close();
-            }
+            replyHeader = new ReplyHeader(headerInputBuffer);
         } finally {
-            bufferPool.release(headerByteBuffer);
+            headerInputBuffer.close();
         }
 
         if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
@@ -134,13 +130,12 @@ abstract class DefaultConnection implements Connection {
                     replyHeader.getMessageLength(), responseSettings.getMaxMessageSize()));
         }
 
-        PooledInputBuffer bodyInputBuffer = null;
+        BasicInputBuffer bodyInputBuffer = null;
 
         if (replyHeader.getNumberReturned() > 0) {
-            ByteBuffer bodyByteBuffer = bufferPool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
+            ByteBuf bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
             fillAndFlipBuffer(bodyByteBuffer);
-
-            bodyInputBuffer = new PooledInputBuffer(bodyByteBuffer, bufferPool);
+            bodyInputBuffer = new BasicInputBuffer(bodyByteBuffer);
         }
 
         return new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start);

@@ -20,10 +20,10 @@ import org.bson.io.InputBuffer;
 
 public class ResponseBuffers {
     private final ReplyHeader replyHeader;
-    private PooledInputBuffer bodyByteBuffer;
+    private InputBuffer bodyByteBuffer;
     private final long elapsedNanoseconds;
 
-    public ResponseBuffers(final ReplyHeader replyHeader, final PooledInputBuffer bodyByteBuffer, final long elapsedNanoseconds) {
+    public ResponseBuffers(final ReplyHeader replyHeader, final InputBuffer bodyByteBuffer, final long elapsedNanoseconds) {
         this.replyHeader = replyHeader;
         this.bodyByteBuffer = bodyByteBuffer;
         this.elapsedNanoseconds = elapsedNanoseconds;

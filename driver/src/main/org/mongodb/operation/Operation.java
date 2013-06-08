@@ -20,30 +20,28 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
 
-import java.nio.ByteBuffer;
-
 public abstract class Operation {
     private MongoNamespace namespace;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
-    public Operation(final MongoNamespace namespace, final BufferPool<ByteBuffer> bufferPool) {
+    public Operation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
         this.namespace = namespace;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     // TODO: this should move somewhere else.

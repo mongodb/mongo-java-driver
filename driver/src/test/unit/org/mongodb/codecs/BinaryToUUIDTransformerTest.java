@@ -17,6 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONBinaryReader;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.types.Binary;
 import org.junit.Before;
@@ -48,7 +49,7 @@ public class BinaryToUUIDTransformerTest {
                 2, 0, 0, 0, 0, 0, 0, 0, //
                 1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
                 0};                     // EOM
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(wrap(binaryTypeWithUUIDAsBytes)), true);
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(binaryTypeWithUUIDAsBytes))), true);
         Binary binary;
         try {
             reader.readStartDocument();

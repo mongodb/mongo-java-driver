@@ -19,6 +19,7 @@ package com.mongodb;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONObject;
 import org.bson.BSONReader;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Decoder;
@@ -41,7 +42,8 @@ public class DBObjects {
     public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Decoder<Document> documentDecoder) {
         final BasicOutputBuffer buffer = new BasicOutputBuffer();
         encoder.writeObject(buffer, obj);
-        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(buffer.toByteArray())), true);
+        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))),
+                true);
         try {
             return documentDecoder.decode(bsonReader);
         } finally {

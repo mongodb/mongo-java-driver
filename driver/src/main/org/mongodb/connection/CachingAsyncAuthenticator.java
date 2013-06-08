@@ -20,7 +20,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.operation.CommandResult;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,15 +28,15 @@ import java.util.Set;
 class CachingAsyncAuthenticator {
     private final MongoCredentialsStore credentialsStore;
     private final AsyncConnection connection;
-    private BufferPool<ByteBuffer> bufferPool;
+    private BufferProvider bufferProvider;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
     public CachingAsyncAuthenticator(final MongoCredentialsStore credentialsStore, final AsyncConnection connection,
-                                     final BufferPool<ByteBuffer> bufferPool) {
+                                     final BufferProvider bufferProvider) {
         this.credentialsStore = credentialsStore;
         this.connection = connection;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     public void asyncAuthenticateAll(final SingleResultCallback<Void> callback) {
@@ -94,10 +93,10 @@ class CachingAsyncAuthenticator {
     private AsyncAuthenticator createAuthenticator(final MongoCredential credential) {
         AsyncAuthenticator authenticator;
         if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAsyncAuthenticator(credential, connection, bufferPool);
+            authenticator = new NativeAsyncAuthenticator(credential, connection, bufferProvider);
         }
         else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAsyncAuthenticator(credential, connection, bufferPool);
+            authenticator = new GSSAPIAsyncAuthenticator(credential, connection, bufferProvider);
         }
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());

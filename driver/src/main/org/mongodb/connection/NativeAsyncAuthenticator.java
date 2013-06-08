@@ -24,24 +24,22 @@ import org.mongodb.command.Command;
 import org.mongodb.operation.AsyncCommandOperation;
 import org.mongodb.operation.CommandResult;
 
-import java.nio.ByteBuffer;
-
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 class NativeAsyncAuthenticator extends AsyncAuthenticator {
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
     NativeAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
-                             final BufferPool<ByteBuffer> bufferPool) {
+                             final BufferProvider bufferProvider) {
         super(credential, connection);
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new Command(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override
@@ -53,7 +51,7 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
                             new AsyncCommandOperation(getCredential().getSource(),
                                     new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                             getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
                                     .execute(new ConnectingAsyncServerConnection(getConnection()))
                                     .register(new SingleResultCallback<CommandResult>() {
                                         @Override

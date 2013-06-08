@@ -17,18 +17,18 @@
 package org.bson.io;
 
 import org.bson.BSONType;
+import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 public class BasicInputBuffer implements InputBuffer {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    private ByteBuffer buffer;
+    private ByteBuf buffer;
 
-    public BasicInputBuffer(final ByteBuffer buffer) {
+    public BasicInputBuffer(final ByteBuf buffer) {
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -121,6 +121,7 @@ public class BasicInputBuffer implements InputBuffer {
     }
 
     public void close() {
+        buffer.close();
         buffer = null;
     }
 }

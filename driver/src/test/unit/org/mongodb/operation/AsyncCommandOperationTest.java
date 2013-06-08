@@ -29,7 +29,7 @@ import org.mongodb.connection.ServerDescription;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -43,7 +43,7 @@ public class AsyncCommandOperationTest {
 
         AsyncCommandOperation operation = new AsyncCommandOperation("test",
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
-                new DocumentCodec(), clusterDescription, getBufferPool());
+                new DocumentCodec(), clusterDescription, getBufferProvider());
         assertEquals(primary(), operation.getCommand().getReadPreference());
     }
 }

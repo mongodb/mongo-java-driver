@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 
 public class MaxMessageSizeTest {
     private PooledByteBufferOutputBuffer buffer;
@@ -45,7 +45,7 @@ public class MaxMessageSizeTest {
                                 new Document("bytes", new byte[2048])))
                         .writeConcern(WriteConcern.ACKNOWLEDGED),
                 new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
-        buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }
 
     @After

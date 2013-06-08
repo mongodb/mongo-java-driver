@@ -26,7 +26,7 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.Insert;
 
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 
 public class MaxDocumentSizeTest {
     private PooledByteBufferOutputBuffer buffer;
@@ -37,7 +37,7 @@ public class MaxDocumentSizeTest {
         message = new InsertMessage<Document>("test.test",
                 new Insert<Document>(new Document("bytes", new byte[2048])).writeConcern(WriteConcern.ACKNOWLEDGED),
                 new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
-        buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }
 
     @After

@@ -18,6 +18,8 @@ package org.mongodb;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
+import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
@@ -63,15 +65,15 @@ public class BSONDocumentBuffer {
     }
 
     /**
-     * Returns a ByteBuffer that wraps the byte array, withe the proper byte order.  Any changes made to this ByteBuffer
+     * Returns a {@code ByteBuf} that wraps the byte array, with the proper byte order.  Any changes made to the returned
      * will be reflected in the underlying byte array owned by this instance.
      *
      * @return a byte buffer that wraps the byte array owned by this instance.
      */
-    public ByteBuffer getByteBuffer() {
+    public ByteBuf getByteBuffer() {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        return buffer;
+        return new ByteBufNIO(buffer);
     }
 
     /**

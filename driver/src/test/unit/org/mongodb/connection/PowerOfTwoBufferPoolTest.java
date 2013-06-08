@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,17 +26,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
-public class PowerOfTwoByteBufferPoolTest {
-    private PowerOfTwoByteBufferPool pool;
+public class PowerOfTwoBufferPoolTest {
+    private PowerOfTwoBufferPool pool;
 
     @Before
     public void setUp() {
-        pool = new PowerOfTwoByteBufferPool(10);
+        pool = new PowerOfTwoBufferPool(10);
     }
 
     @Test
     public void testNormalRequest() {
-        ByteBuffer buf = pool.get((int) Math.pow(2, 10));
+        ByteBuf buf = pool.get((int) Math.pow(2, 10));
         assertEquals((int) Math.pow(2, 10), buf.capacity());
         assertEquals((int) Math.pow(2, 10), buf.limit());
 
@@ -46,18 +47,19 @@ public class PowerOfTwoByteBufferPoolTest {
 
     @Test
     public void testReuse() {
-        ByteBuffer buf = pool.get((int) Math.pow(2, 10));
-        pool.release(buf);
-        assertSame(buf, pool.get((int) Math.pow(2, 10)));
+        ByteBuf buf = pool.get((int) Math.pow(2, 10));
+        ByteBuffer byteBuffer = buf.asNIO();
+        buf.close();
+        assertSame(byteBuffer, pool.get((int) Math.pow(2, 10)).asNIO());
     }
 
     @Test
     public void testHugeBufferRequest() {
-        ByteBuffer buf = pool.get((int) Math.pow(2, 10) + 1);
+        ByteBuf buf = pool.get((int) Math.pow(2, 10) + 1);
         assertEquals((int) Math.pow(2, 10) + 1, buf.capacity());
         assertEquals((int) Math.pow(2, 10) + 1, buf.limit());
 
-        pool.release(buf);
+        buf.close();
         assertNotSame(buf, pool.get((int) Math.pow(2, 10) + 1));
     }
 }

@@ -22,7 +22,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterableServerFactory;
@@ -35,12 +35,11 @@ import org.mongodb.connection.DefaultConnectionSettings;
 import org.mongodb.connection.DefaultMultiServerCluster;
 import org.mongodb.connection.DefaultServerSettings;
 import org.mongodb.connection.DefaultSingleServerCluster;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerDescription;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,7 +66,7 @@ public class Mongo {
 
     private final Codec<Document> documentCodec;
     private final Cluster cluster;
-    private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(new DefaultMultiServerCluster(createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())),
@@ -351,7 +350,7 @@ public class Mongo {
 
     private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialList,
                                                                            final org.mongodb.MongoClientOptions options) {
-        BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+        BufferProvider bufferProvider = new PowerOfTwoBufferPool();
         SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 
         DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
@@ -364,7 +363,7 @@ public class Mongo {
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
                 .build();
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferPool, credentialList);
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, credentialList);
 
         return new DefaultClusterableServerFactory(
                 DefaultServerSettings.builder()
@@ -379,9 +378,9 @@ public class Mongo {
                                 .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
                                 .keepAlive(options.isSocketKeepAlive())
                                 .build(),
-                        sslSettings, bufferPool, credentialList),
+                        sslSettings, bufferProvider, credentialList),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
-                bufferPool);
+                bufferProvider);
     }
 
     Cluster getCluster() {
@@ -392,7 +391,7 @@ public class Mongo {
         return optionHolder;
     }
 
-    BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
+    BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 }

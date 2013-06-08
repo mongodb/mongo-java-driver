@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.BufferPool;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
@@ -25,7 +25,6 @@ import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ServerSelectingSession;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
@@ -40,7 +39,7 @@ public final class Fixture {
 
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
-    private static BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+    private static BufferProvider bufferProvider = new PowerOfTwoBufferPool();
     private Fixture() {
     }
 
@@ -85,8 +84,8 @@ public final class Fixture {
         return database;
     }
 
-    public static BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
+    public static BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     public static SSLSettings getSSLSettings() {

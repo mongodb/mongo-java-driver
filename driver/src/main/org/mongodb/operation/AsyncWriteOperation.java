@@ -22,7 +22,7 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.CommandMessage;
@@ -30,11 +30,9 @@ import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.session.AsyncSession;
 
-import java.nio.ByteBuffer;
-
 public abstract class AsyncWriteOperation extends AsyncOperation {
-    public AsyncWriteOperation(final MongoNamespace namespace, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+    public AsyncWriteOperation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
     }
 
     public MongoFuture<CommandResult> execute(final AsyncSession session) {
@@ -64,7 +62,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
 
 
     public void execute(final AsyncServerConnection connection, final SingleResultCallback<CommandResult> callback) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
                 buffer);
         if (getWriteConcern().callGetLastError()) {
@@ -75,11 +73,11 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), getLastErrorMessage.getId()),
                     new WriteResultCallback(callback, getWrite(), getLastError, new DocumentCodec(), getNamespace(), nextMessage,
-                            connection, getBufferPool(), getLastErrorMessage.getId()));
+                            connection, getBufferProvider(), getLastErrorMessage.getId()));
         }
         else {
             connection.sendMessage(buffer, new WriteResultCallback(callback, getWrite(), null, new DocumentCodec(),
-                    getNamespace(), nextMessage, connection, getBufferPool()));
+                    getNamespace(), nextMessage, connection, getBufferProvider()));
         }
     }
 

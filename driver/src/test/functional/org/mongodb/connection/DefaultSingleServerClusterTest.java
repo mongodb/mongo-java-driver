@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
@@ -39,10 +39,10 @@ public class DefaultSingleServerClusterTest {
                 new DefaultClusterableServerFactory(DefaultServerSettings.builder().build(),
                         new DefaultConnectionProviderFactory(DefaultConnectionProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(),
-                                        getBufferPool(), getCredentialList())),
+                                        getBufferProvider(), getCredentialList())),
                         null,
-                        new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(), getBufferPool(),
-                                getCredentialList()), Executors.newScheduledThreadPool(1), getBufferPool()));
+                        new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(), getBufferProvider(),
+                                getCredentialList()), Executors.newScheduledThreadPool(1), getBufferProvider()));
     }
 
     @After

@@ -19,20 +19,18 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.DeleteMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 public class RemoveOperation extends WriteOperation {
     private final Remove remove;
     private final Encoder<Document> queryEncoder;
 
     public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                           final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                           final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.remove = remove;
         this.queryEncoder = queryEncoder;
     }

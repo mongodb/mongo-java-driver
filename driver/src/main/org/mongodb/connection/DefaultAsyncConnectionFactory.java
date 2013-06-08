@@ -18,20 +18,19 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
-    private BufferPool<ByteBuffer> bufferPool;
+    private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultAsyncConnectionFactory(final BufferPool<ByteBuffer> bufferPool, final List<MongoCredential> credentialList) {
-        this.bufferPool = bufferPool;
+    public DefaultAsyncConnectionFactory(final BufferProvider bufferProvider, final List<MongoCredential> credentialList) {
+        this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
     }
 
     @Override
     public AsyncConnection create(final ServerAddress serverAddress) {
-        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferPool), credentialList, bufferPool);
+        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferProvider), credentialList, bufferProvider);
     }
 }

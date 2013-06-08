@@ -19,20 +19,18 @@ package org.mongodb.operation;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.InsertMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 public class AsyncInsertOperation<T> extends AsyncWriteOperation {
     private final Insert<T> insert;
     private final Encoder<T> encoder;
 
     public AsyncInsertOperation(final MongoNamespace namespace, final Insert<T> insert,
-                                final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                                final Encoder<T> encoder, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.insert = insert;
         this.encoder = encoder;
     }

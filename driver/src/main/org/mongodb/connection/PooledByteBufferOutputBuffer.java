@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -28,12 +30,15 @@ import java.util.List;
 public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
-    private final BufferPool<ByteBuffer> pool;
-    private final List<ByteBuffer> bufferList = new ArrayList<ByteBuffer>();
+    public static final int MAX_BUFFER_SIZE = 1 << 24;
+
+
+    private final BufferProvider pool;
+    private final List<ByteBuf> bufferList = new ArrayList<ByteBuf>();
     private int curBufferIndex = 0;
     private int position = 0;
 
-    public PooledByteBufferOutputBuffer(final BufferPool<ByteBuffer> pool) {
+    public PooledByteBufferOutputBuffer(final BufferProvider pool) {
         if (pool == null) {
             throw new IllegalArgumentException("pool can not be null");
         }
@@ -45,7 +50,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         int currentOffset = offset;
         int remainingLen = len;
         while (remainingLen > 0) {
-            final ByteBuffer buf = getCurrentByteBuffer();
+            final ByteBuf buf = getCurrentByteBuffer();
             final int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
             buf.put(b, currentOffset, bytesToPutInCurrentBuffer);
             remainingLen -= bytesToPutInCurrentBuffer;
@@ -60,8 +65,8 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         position++;
     }
 
-    private ByteBuffer getCurrentByteBuffer() {
-        final ByteBuffer curByteBuffer = getByteBufferAtIndex(curBufferIndex);
+    private ByteBuf getCurrentByteBuffer() {
+        final ByteBuf curByteBuffer = getByteBufferAtIndex(curBufferIndex);
         if (curByteBuffer.hasRemaining()) {
             return curByteBuffer;
         }
@@ -70,9 +75,9 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         return getByteBufferAtIndex(curBufferIndex);
     }
 
-    private ByteBuffer getByteBufferAtIndex(final int index) {
+    private ByteBuf getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, pool.getMaximumPooledSize())));
+            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE)));
         }
         return bufferList.get(index);
     }
@@ -105,7 +110,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     @Override
     public void pipe(final OutputStream out) throws IOException {
-        for (final ByteBuffer cur : bufferList) {
+        for (final ByteBuf cur : bufferList) {
             cur.flip();
             out.write(cur.array(), 0, cur.limit());
         }
@@ -113,13 +118,16 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     @Override
     public void pipeAndClose(final SocketChannel socketChannel) throws IOException {
-        for (final ByteBuffer cur : bufferList) {
+        for (final ByteBuf cur : bufferList) {
             cur.flip();
         }
 
         for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
-            bytesRead += socketChannel.write(bufferList.toArray(new ByteBuffer[bufferList.size()]), 0,
-                    bufferList.size());
+            ByteBuffer[] byteBuffers = new ByteBuffer[bufferList.size()];
+            for (int i = 0; i < bufferList.size(); i++) {
+                byteBuffers[i] = bufferList.get(i).asNIO();
+            }
+            bytesRead += socketChannel.write(byteBuffers);
         }
         close();
     }
@@ -127,7 +135,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     @Override
     public void pipeAndClose(final Socket socket) throws IOException {
-        for (final ByteBuffer cur : bufferList) {
+        for (final ByteBuf cur : bufferList) {
             cur.flip();
             socket.getOutputStream().write(cur.array(), 0, cur.limit());
         }
@@ -137,7 +145,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     @Override
     public void pipeAndClose(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
-        final Iterator<ByteBuffer> iter = bufferList.iterator();
+        final Iterator<ByteBuf> iter = bufferList.iterator();
         pipeOneBuffer(channel, iter.next(), new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
@@ -169,22 +177,22 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         bufferList.get(bufferPositionPair.bufferIndex).position(bufferPositionPair.position);
 
         while (bufferList.size() > bufferPositionPair.bufferIndex + 1) {
-            ByteBuffer buffer = bufferList.remove(bufferList.size() - 1);
-            pool.release(buffer);
+            ByteBuf buffer = bufferList.remove(bufferList.size() - 1);
+            buffer.close();
         }
 
         curBufferIndex = bufferPositionPair.bufferIndex;
         position = newPosition;
     }
 
-    private void pipeOneBuffer(final AsyncWritableByteChannel channel, final ByteBuffer byteBuffer,
+    private void pipeOneBuffer(final AsyncWritableByteChannel channel, final ByteBuf byteBuffer,
                                final AsyncCompletionHandler outerHandler) {
         byteBuffer.flip();
-        channel.write(byteBuffer, new AsyncCompletionHandler() {
+        channel.write(byteBuffer.asNIO(), new AsyncCompletionHandler() {
             @Override
             public void completed(final int bytesWritten) {
                 if (byteBuffer.hasRemaining()) {
-                    channel.write(byteBuffer, this);
+                    channel.write(byteBuffer.asNIO(), this);
                 }
                 else {
                     outerHandler.completed(byteBuffer.limit());
@@ -200,8 +208,8 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
 
     @Override
     public void close() {
-        for (final ByteBuffer cur : bufferList) {
-            pool.release(cur);
+        for (final ByteBuf cur : bufferList) {
+            cur.close();
         }
         bufferList.clear();
     }
@@ -243,7 +251,7 @@ public class PooledByteBufferOutputBuffer extends ChannelAwareOutputBuffer {
         }
 
         void put(final byte b) {
-            final ByteBuffer byteBuffer = getByteBufferAtIndex(bufferIndex);
+            final ByteBuf byteBuffer = getByteBufferAtIndex(bufferIndex);
             byteBuffer.put(position++, b);
 
             if (position >= byteBuffer.capacity()) {

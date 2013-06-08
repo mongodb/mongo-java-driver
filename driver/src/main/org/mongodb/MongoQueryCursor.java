@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
@@ -32,7 +32,6 @@ import org.mongodb.operation.ServerCursor;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -53,7 +52,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Session session;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
@@ -62,14 +61,14 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     public MongoQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                             final Decoder<T> decoder, final ServerSelectingSession initialSession,
-                            final BufferPool<ByteBuffer> bufferPool) {
+                            final BufferProvider bufferProvider) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
         this.session = initialSession.getBoundSession(new ReadPreferenceServerSelector(find.getReadPreference()),
                 find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
-        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferPool).execute(session);
+        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferProvider).execute(session);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -85,7 +84,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             discardRemainingGetMoreResponses();
         }
         else if (currentResult.getCursor() != null && !limitReached()) {
-            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferPool).execute(session);
+            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider).execute(session);
         }
         session.close();
         currentResult = null;
@@ -180,7 +179,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         final GetMoreOperation<T> getMoreOperation = new GetMoreOperation<T>(namespace,
-                new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferPool);
+                new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider);
         if (find.getOptions().contains(QueryOption.Exhaust)) {
             currentResult = getMoreOperation.executeReceive(session, currentResult.getRequestId());
         }
@@ -194,7 +193,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void discardRemainingGetMoreResponses() {
         new GetMoreOperation<T>(namespace, new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
-                decoder, bufferPool).executeDiscard(session, currentResult.getRequestId());
+                decoder, bufferProvider).executeDiscard(session, currentResult.getRequestId());
     }
 
     @Override
@@ -209,7 +208,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferPool).execute(session);
+            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider).execute(session);
         }
     }
 

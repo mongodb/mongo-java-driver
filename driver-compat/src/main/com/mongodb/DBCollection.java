@@ -44,7 +44,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
@@ -63,7 +63,6 @@ import org.mongodb.operation.UpdateOperation;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.util.FieldHelpers;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1714,7 +1713,7 @@ public class DBCollection implements IDBCollection {
         return optionHolder;
     }
 
-    BufferPool<ByteBuffer> getBufferPool() {
+    BufferProvider getBufferPool() {
         return getDB().getBufferPool();
     }
 }

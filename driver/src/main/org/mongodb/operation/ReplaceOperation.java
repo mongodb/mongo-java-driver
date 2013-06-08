@@ -19,12 +19,10 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplaceMessage;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 public class ReplaceOperation<T> extends WriteOperation {
     private final Replace<T> replace;
@@ -32,8 +30,8 @@ public class ReplaceOperation<T> extends WriteOperation {
     private final Encoder<T> encoder;
 
     public ReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
-                            final Encoder<T> encoder, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                            final Encoder<T> encoder, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.replace = replace;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;

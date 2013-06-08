@@ -25,12 +25,11 @@ import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer.
@@ -39,12 +38,12 @@ import java.nio.ByteBuffer;
  * This should even be usable as a nested document codec by adding an instance of it to a PrimitiveCodecs instance.
  */
 public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuffer> {
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
     private final PrimitiveCodecs primitiveCodecs;
 
-    public BSONDocumentBufferCodec(final BufferPool<ByteBuffer> bufferPool,
+    public BSONDocumentBufferCodec(final BufferProvider bufferProvider,
                                    final PrimitiveCodecs primitiveCodecs) {
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
         this.primitiveCodecs = primitiveCodecs;
     }
 
@@ -60,7 +59,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public BSONDocumentBuffer decode(final BSONReader reader) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool), true);
+        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =

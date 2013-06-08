@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
@@ -32,13 +33,13 @@ import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 class DefaultAsyncConnection implements AsyncConnection {
 
     private final ServerAddress serverAddress;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
     private volatile AsynchronousSocketChannel channel;
     private volatile boolean isClosed;
 
-    public DefaultAsyncConnection(final ServerAddress serverAddress, final BufferPool<ByteBuffer> bufferPool) {
+    public DefaultAsyncConnection(final ServerAddress serverAddress, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -88,27 +89,28 @@ class DefaultAsyncConnection implements AsyncConnection {
 
     @Override
     public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(bufferPool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, System.nanoTime(), callback));
+        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, System.nanoTime(),
+                callback));
     }
 
     private void receiveMessage(final ResponseSettings responseSettings, final long start,
                                 final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(bufferPool.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, start, callback));
+        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, start, callback));
     }
 
     private void sendOneWayMessage(final ChannelAwareOutputBuffer buffer, final AsyncCompletionHandler handler) {
         buffer.pipeAndClose(new AsyncWritableByteChannelAdapter(), handler);
     }
 
-    private void fillAndFlipBuffer(final ByteBuffer buffer, final SingleResultCallback<ByteBuffer> callback) {
-        channel.read(buffer, null, new BasicCompletionHandler(buffer, callback));
+    private void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
+        channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, callback));
     }
 
     private final class BasicCompletionHandler implements CompletionHandler<Integer, Void> {
-        private final ByteBuffer dst;
-        private final SingleResultCallback<ByteBuffer> callback;
+        private final ByteBuf dst;
+        private final SingleResultCallback<ByteBuf> callback;
 
-        private BasicCompletionHandler(final ByteBuffer dst, final SingleResultCallback<ByteBuffer> callback) {
+        private BasicCompletionHandler(final ByteBuf dst, final SingleResultCallback<ByteBuf> callback) {
             this.dst = dst;
             this.callback = callback;
         }
@@ -120,7 +122,7 @@ class DefaultAsyncConnection implements AsyncConnection {
                 callback.onResult(dst, null);
             }
             else {
-                channel.read(dst, null, new BasicCompletionHandler(dst, callback));
+                channel.read(dst.asNIO(), null, new BasicCompletionHandler(dst, callback));
             }
         }
 
@@ -207,7 +209,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         }
     }
 
-    private class ResponseHeaderCallback implements SingleResultCallback<ByteBuffer> {
+    private class ResponseHeaderCallback implements SingleResultCallback<ByteBuf> {
         private ResponseSettings responseSettings;
         private final SingleResultCallback<ResponseBuffers> callback;
         private final long start;
@@ -220,16 +222,18 @@ class DefaultAsyncConnection implements AsyncConnection {
         }
 
         @Override
-        public void onResult(final ByteBuffer result, final MongoException e) {
+        public void onResult(final ByteBuf result, final MongoException e) {
             if (e != null) {
                 callback.onResult(null, e);
             }
             else {
-                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
-                final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
-
-                headerInputBuffer.close();
-                bufferPool.release(result);
+                ReplyHeader replyHeader;
+                BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
+                try {
+                    replyHeader = new ReplyHeader(headerInputBuffer);
+                } finally {
+                    headerInputBuffer.close();
+                }
 
                 if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
                     callback.onResult(null, new MongoInternalException(
@@ -247,13 +251,13 @@ class DefaultAsyncConnection implements AsyncConnection {
                                 replyHeader.getMessageLength(), responseSettings.getMaxMessageSize())));
                     }
 
-                    fillAndFlipBuffer(bufferPool.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
+                    fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
                             new ResponseBodyCallback(replyHeader));
                 }
             }
         }
 
-        private class ResponseBodyCallback implements SingleResultCallback<ByteBuffer> {
+        private class ResponseBodyCallback implements SingleResultCallback<ByteBuf> {
             private final ReplyHeader replyHeader;
 
             public ResponseBodyCallback(final ReplyHeader replyHeader) {
@@ -261,13 +265,12 @@ class DefaultAsyncConnection implements AsyncConnection {
             }
 
             @Override
-            public void onResult(final ByteBuffer result, final MongoException e) {
+            public void onResult(final ByteBuf result, final MongoException e) {
                 if (e != null) {
                     callback.onResult(null, e);
                 }
                 else {
-                    PooledInputBuffer bodyInputBuffer = new PooledInputBuffer(result, bufferPool);
-                    callback.onResult(new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start), null);
+                    callback.onResult(new ResponseBuffers(replyHeader, new BasicInputBuffer(result), System.nanoTime() - start), null);
                 }
             }
         }

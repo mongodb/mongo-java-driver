@@ -20,7 +20,6 @@ import org.mongodb.MongoCredential;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -28,15 +27,15 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultConnectionFactory implements ConnectionFactory {
     private final DefaultConnectionSettings settings;
     private final SSLSettings sslSettings;
-    private BufferPool<ByteBuffer> bufferPool;
+    private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
     public DefaultConnectionFactory(final DefaultConnectionSettings settings,
-                                    final SSLSettings sslSettings, final BufferPool<ByteBuffer> bufferPool,
+                                    final SSLSettings sslSettings, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
-        this.bufferPool = notNull("bufferPool", bufferPool);
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
     }
 
@@ -44,14 +43,14 @@ public class DefaultConnectionFactory implements ConnectionFactory {
     public Connection create(final ServerAddress serverAddress) {
         Connection socketConnection;
         if (sslSettings.isEnabled()) {
-            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferPool, SSLSocketFactory.getDefault());
+            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferPool, SocketFactory.getDefault());
+            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, SocketFactory.getDefault());
         }
         else {
-            socketConnection = new DefaultSocketChannelConnection(serverAddress, settings, bufferPool);
+            socketConnection = new DefaultSocketChannelConnection(serverAddress, settings, bufferProvider);
         }
-        return new AuthenticatingConnection(socketConnection, credentialList, bufferPool);
+        return new AuthenticatingConnection(socketConnection, credentialList, bufferProvider);
     }
 }

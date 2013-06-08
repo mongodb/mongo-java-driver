@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -29,9 +28,9 @@ class AuthenticatingConnection implements Connection {
     private final CachingAuthenticator authenticator;
 
     public AuthenticatingConnection(final Connection wrapped, final List<MongoCredential> credentialList,
-                                    final BufferPool<ByteBuffer> bufferPool) {
+                                    final BufferProvider bufferProvider) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferPool);
+        this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferProvider);
     }
 
     @Override

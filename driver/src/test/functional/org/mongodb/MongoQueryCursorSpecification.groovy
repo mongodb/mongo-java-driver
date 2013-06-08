@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb
 
 import category.Slow
@@ -28,7 +30,7 @@ import java.util.concurrent.CountDownLatch
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
-import static org.mongodb.Fixture.getBufferPool
+import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
 
 class MongoQueryCursorSpecification extends Specification {
@@ -71,7 +73,7 @@ class MongoQueryCursorSpecification extends Specification {
                 collection.getOptions().getDocumentCodec(),
                 collection.getCodec(),
                 getSession(),
-                getBufferPool());
+                getBufferProvider());
 
         then:
         cursor.getServerCursor() != null;
@@ -84,7 +86,7 @@ class MongoQueryCursorSpecification extends Specification {
                 collection.getOptions().getDocumentCodec(),
                 collection.getCodec(),
                 getSession(),
-                getBufferPool());
+                getBufferProvider());
         then:
         cursor.getServerCursor() == null;
         cursor.getServerAddress() != null;
@@ -94,7 +96,7 @@ class MongoQueryCursorSpecification extends Specification {
         when:
         final Find find = new Find().batchSize(2);
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find,
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.getCriteria() == find;
@@ -102,7 +104,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'should get Exceptions for operations on the cursor after closing'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.close();
@@ -129,7 +131,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'should throw an Exception when going off the end'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.next();
@@ -142,7 +144,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'test normal exhaustion'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         int i = 0;
@@ -157,7 +159,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'test limit exhaustion'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         int i = 0;
@@ -172,7 +174,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'test remove'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.remove();
@@ -184,7 +186,7 @@ class MongoQueryCursorSpecification extends Specification {
     public void 'test to string'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.toString().startsWith("MongoQueryCursor");
@@ -193,7 +195,7 @@ class MongoQueryCursorSpecification extends Specification {
     public void 'test sizes and num get mores'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.getNumGetMores() == 0;
@@ -232,7 +234,7 @@ class MongoQueryCursorSpecification extends Specification {
                 .filter(new Document("ts", new Document('$gte', new BSONTimestamp(5, 0))))
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.hasNext();
@@ -268,7 +270,7 @@ class MongoQueryCursorSpecification extends Specification {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         final CountDownLatch latch = new CountDownLatch(1);
         final List<Boolean> success = new ArrayList<Boolean>();
@@ -296,7 +298,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         final ServerCursor serverCursor = cursor.getServerCursor();
         Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
@@ -310,7 +312,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     public void 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(3).limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         final ServerCursor serverCursor = cursor.getServerCursor();
 
@@ -356,7 +358,7 @@ class MongoQueryCursorSpecification extends Specification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
         then:
         int i = 0;
         while (cursor.hasNext()) {
@@ -372,7 +374,7 @@ class MongoQueryCursorSpecification extends Specification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         for (int i = 0; i < 10; i++) {
@@ -392,8 +394,8 @@ class MongoQueryCursorSpecification extends Specification {
     public void 'should throw cursor not found exception'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
-        new KillCursorOperation(new KillCursor(cursor.getServerCursor()), getBufferPool()).execute(getSession());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+        new KillCursorOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider()).execute(getSession());
         cursor.next();
         cursor.next();
         then:
@@ -410,7 +412,7 @@ class MongoQueryCursorSpecification extends Specification {
         new GetMoreOperation<Document>(
                 collection.getNamespace(),
                 new GetMore(serverCursor, 1, 1, 1), collection.getOptions().getDocumentCodec(),
-                getBufferPool()
+                getBufferProvider()
         ).execute(getSession());
     }
 

@@ -23,7 +23,7 @@ import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertNull;
 public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     private final BSONDocumentBufferCodec codec =
-            new BSONDocumentBufferCodec(new PowerOfTwoByteBufferPool(24), PrimitiveCodecs.createDefault());
+            new BSONDocumentBufferCodec(new PowerOfTwoBufferPool(24), PrimitiveCodecs.createDefault());
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {

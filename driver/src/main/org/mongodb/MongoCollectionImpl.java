@@ -442,13 +442,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoCursor<T> all() {
             return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getSession(),
-                    client.getBufferPool());
+                    client.getBufferProvider());
         }
 
         @Override
         public T one() {
             final QueryResult<T> res = new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                    client.getBufferPool()).execute(client.getSession());
+                    client.getBufferProvider()).execute(client.getSession());
             if (res.getResults().isEmpty()) {
                 return null;
             }
@@ -509,13 +509,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult insert(final T document) {
             return new WriteResult(new InsertOperation<T>(getNamespace(), new Insert<T>(document).writeConcern(writeConcern), getCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
         public WriteResult insert(final List<T> documents) {
             return new WriteResult(new InsertOperation<T>(getNamespace(), new Insert<T>(documents).writeConcern(writeConcern), getCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
@@ -534,14 +534,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final Remove remove = new Remove(findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove))
                     .writeConcern(writeConcern);
             return new WriteResult(new RemoveOperation(getNamespace(), remove, getDocumentCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
         public WriteResult modify(final Document updateOperations) {
             final Update update = new Update(findOp.getFilter(), updateOperations).multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
-            return new WriteResult(new UpdateOperation(getNamespace(), update, getDocumentCodec(), client.getBufferPool())
+            return new WriteResult(new UpdateOperation(getNamespace(), update, getDocumentCodec(), client.getBufferProvider())
                     .execute(client.getSession()), writeConcern);
         }
 
@@ -550,7 +550,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final Update update = new Update(findOp.getFilter(), updateOperations).upsert(true).multi(getMultiFromLimit(UpdateType.modify))
                     .writeConcern(writeConcern);
             return new WriteResult(new UpdateOperation(getNamespace(), update, getDocumentCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
@@ -562,14 +562,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult replace(final T replacement) {
             final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).writeConcern(writeConcern);
             return new WriteResult(new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
         public WriteResult replaceOrInsert(final T replacement) {
             final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
             return new WriteResult(new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(),
-                    client.getBufferPool()).execute(client.getSession()), writeConcern);
+                    client.getBufferProvider()).execute(client.getSession()), writeConcern);
         }
 
         @Override
@@ -586,7 +586,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             final FindAndModifyCommandResultCodec<T> codec = new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(),
                     getCodec());
             return new FindAndModifyCommandResult<T>(new CommandOperation(getDatabase().getName(), findAndUpdateCommand, codec,
-                    client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
+                    client.getCluster().getDescription(), client.getBufferProvider()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -601,7 +601,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndUpdate<T>(findAndUpdate, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
+                            client.getCluster().getDescription(), client.getBufferProvider()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -616,7 +616,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession()))
+                            client.getCluster().getDescription(), client.getBufferProvider()).execute(client.getSession()))
                     .getValue();
         }
 
@@ -627,7 +627,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new FindAndModifyCommandResult<T>(
                     new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace, getName()),
                             new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                            client.getCluster().getDescription(), client.getBufferPool()).execute(client.getSession())).getValue();
+                            client.getCluster().getDescription(), client.getBufferProvider()).execute(client.getSession())).getValue();
         }
 
         @Override
@@ -640,7 +640,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     getCodec());
             return new FindAndModifyCommandResult<T>(new CommandOperation(getDatabase().getName(),
                     new org.mongodb.command.FindAndRemove(findAndRemove, getName()), codec, client.getCluster().getDescription(),
-                    client.getBufferPool()).execute(client.getSession())).getValue();
+                    client.getBufferProvider()).execute(client.getSession())).getValue();
         }
         //CHECKSTYLE:OFF
 
@@ -648,7 +648,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
             final MongoFuture<CommandResult> commandResultFuture = new AsyncReplaceOperation<T>(getNamespace(), replace,
-                    getDocumentCodec(), getCodec(), client.getBufferPool()).execute(client.getAsyncSession());
+                    getDocumentCodec(), getCodec(), client.getBufferProvider()).execute(client.getAsyncSession());
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {
                 @Override
                 public WriteResult apply(final CommandResult commandResult) {
@@ -665,7 +665,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<T> asyncOne() {
             final MongoFuture<QueryResult<T>> queryResultFuture =
                     new AsyncQueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                            client.getBufferPool()).execute(client.getAsyncSession());
+                            client.getBufferProvider()).execute(client.getAsyncSession());
             return new MappingFuture<QueryResult<T>, T>(queryResultFuture, new Function<QueryResult<T>, T>() {
                 @Override
                 public T apply(final QueryResult<T> queryResult) {
@@ -682,7 +682,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> asyncCount() {
             final MongoFuture<CommandResult> commandResultFuture = new AsyncCommandOperation(getDatabase().getName(), new Count(findOp,
-                    getName()), getDocumentCodec(), client.getCluster().getDescription(), client.getBufferPool()).execute(client
+                    getName()), getDocumentCodec(), client.getCluster().getDescription(), client.getBufferProvider()).execute(client
                     .getAsyncSession());
             return new MappingFuture<CommandResult, Long>(commandResultFuture, new Function<CommandResult, Long>() {
                 @Override
@@ -709,7 +709,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferPool(),
+            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferProvider(),
                     client.getAsyncSession(), block).start();
         }
 

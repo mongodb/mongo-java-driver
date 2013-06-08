@@ -20,20 +20,18 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.operation.protocol.UpdateMessage;
-
-import java.nio.ByteBuffer;
 
 public class AsyncUpdateOperation extends AsyncWriteOperation {
     private final Update update;
     private final Encoder<Document> queryEncoder;
 
     public AsyncUpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                                final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                                final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.update = update;
         this.queryEncoder = queryEncoder;
     }

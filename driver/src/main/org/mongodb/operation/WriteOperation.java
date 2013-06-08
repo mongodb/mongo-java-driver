@@ -20,7 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
@@ -30,12 +30,10 @@ import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
-
 public abstract class WriteOperation extends Operation {
 
-    public WriteOperation(final MongoNamespace namespace, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+    public WriteOperation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
     }
 
     public CommandResult execute(final Session session) {
@@ -48,7 +46,7 @@ public abstract class WriteOperation extends Operation {
     }
 
     public CommandResult execute(final ServerConnection connection) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         try {
             CommandResult getLastErrorResult = null;
             RequestMessage nextMessage = createRequestMessage(getMessageSettings(connection.getDescription())).encode(buffer);

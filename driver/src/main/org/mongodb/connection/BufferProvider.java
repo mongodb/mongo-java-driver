@@ -16,13 +16,8 @@
 
 package org.mongodb.connection;
 
-public interface BufferPool<T> {
+import org.bson.ByteBuf;
 
-    T get(int size);
-
-    void release(T buffer);
-
-    void clear();
-
-    int getMaximumPooledSize();
+public interface BufferProvider {
+    ByteBuf get(int size);
 }

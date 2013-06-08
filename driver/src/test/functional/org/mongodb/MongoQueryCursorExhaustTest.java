@@ -35,7 +35,7 @@ import org.mongodb.session.SessionBindingType;
 import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -57,7 +57,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -74,14 +74,14 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
 
         cursor.next();
         cursor.close();
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferPool());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
         assertEquals(new Document("_id", 999), cursor.next());
 
         singleConnectionSession.connection.close();

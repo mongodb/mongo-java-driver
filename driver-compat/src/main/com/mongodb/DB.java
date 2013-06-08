@@ -26,7 +26,7 @@ import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
@@ -38,7 +38,6 @@ import org.mongodb.session.MonotonicSession;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -476,7 +475,7 @@ public class DB implements IDB {
         return optionHolder;
     }
 
-    BufferPool<ByteBuffer> getBufferPool() {
-        return getMongo().getBufferPool();
+    BufferProvider getBufferPool() {
+        return getMongo().getBufferProvider();
     }
 }

@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -43,7 +44,7 @@ public class ReplyMessageTest {
         headerByteBuffer.putInt(0);
         headerByteBuffer.flip();
 
-        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
+        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
         final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
     }
@@ -64,7 +65,7 @@ public class ReplyMessageTest {
         headerByteBuffer.putInt(0);
         headerByteBuffer.flip();
 
-        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
+        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
         final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, 5, 100);
     }

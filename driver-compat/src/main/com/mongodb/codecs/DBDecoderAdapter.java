@@ -23,27 +23,26 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.mongodb.Decoder;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBDecoder decoder;
     private final DBCollection collection;
-    private BufferPool<ByteBuffer> bufferPool;
+    private BufferProvider bufferProvider;
 
-    public DBDecoderAdapter(final DBDecoder decoder, final DBCollection collection, final BufferPool<ByteBuffer> bufferPool) {
+    public DBDecoderAdapter(final DBDecoder decoder, final DBCollection collection, final BufferProvider bufferProvider) {
         this.decoder = decoder;
         this.collection = collection;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferPool), true);
+        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
         try {
             binaryWriter.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =

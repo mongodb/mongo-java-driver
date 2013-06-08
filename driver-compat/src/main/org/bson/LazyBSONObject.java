@@ -183,7 +183,7 @@ public class LazyBSONObject implements BSONObject {
 
     BSONBinaryReader getBSONReader() {
         final ByteBuffer buffer = getBufferForInternalBytes();
-        return new BSONBinaryReader(new BasicInputBuffer(buffer), true);
+        return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(buffer)), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {

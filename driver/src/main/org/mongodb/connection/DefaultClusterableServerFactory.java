@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -25,28 +24,28 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;
     private final ConnectionFactory heartbeatConnectionFactory;
     private final ScheduledExecutorService scheduledExecutorService;
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
     public DefaultClusterableServerFactory(final DefaultServerSettings settings,
                                            final ConnectionProviderFactory connectionProviderFactory,
                                            final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
                                            final ConnectionFactory heartbeatConnectionFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
-                                           final BufferPool<ByteBuffer> bufferPool) {
+                                           final BufferProvider bufferProvider) {
 
         this.settings = settings;
         this.connectionProviderFactory = connectionProviderFactory;
         this.asyncConnectionProviderFactory = asyncConnectionProviderFactory;
         this.heartbeatConnectionFactory = heartbeatConnectionFactory;
         this.scheduledExecutorService = scheduledExecutorService;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
         return new DefaultServer(serverAddress, settings, connectionProviderFactory.create(serverAddress),
                 asyncConnectionProviderFactory != null ? asyncConnectionProviderFactory.create(serverAddress) : null,
-                heartbeatConnectionFactory, scheduledExecutorService, bufferPool);
+                heartbeatConnectionFactory, scheduledExecutorService, bufferProvider);
     }
 
     @Override

@@ -18,7 +18,7 @@ package org.mongodb.io;
 
 import org.junit.Test;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class PooledByteBufferOutputBufferTest {
 
     @Test
     public void testBackpatch() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoByteBufferPool(11));
+        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
         buf.writeInt(0);
         final byte[] randomBytes = getRandomBytes(10000);
         buf.write(randomBytes, 0, 10000);
@@ -50,7 +50,7 @@ public class PooledByteBufferOutputBufferTest {
 
     @Test
     public void testTruncate() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoByteBufferPool(11));
+        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
         final byte[] randomBytes = getRandomBytes(10000);
 
         buf.writeInt(0);

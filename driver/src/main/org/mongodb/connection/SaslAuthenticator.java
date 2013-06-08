@@ -26,17 +26,16 @@ import org.mongodb.operation.CommandResult;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import java.nio.ByteBuffer;
 
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
-    SaslAuthenticator(final MongoCredential credential, final Connection connection, final BufferPool<ByteBuffer> bufferPool) {
+    SaslAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
         super(credential, connection);
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     public void authenticate() {
@@ -70,12 +69,13 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                new ClusterDescription(Direct), bufferPool).execute(new ConnectingServerConnection(getConnection()));
+                new ClusterDescription(Direct), bufferProvider).execute(new ConnectingServerConnection(getConnection()));
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return new CommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), new ClusterDescription(Direct), bufferPool).execute(new ConnectingServerConnection(getConnection()));
+                new DocumentCodec(), new ClusterDescription(Direct), bufferProvider)
+                .execute(new ConnectingServerConnection(getConnection()));
     }
 
     private Command createSaslStartCommand(final byte[] outToken) {

@@ -20,7 +20,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
@@ -28,15 +28,13 @@ import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
-
 public class GetMoreOperation<T> extends Operation {
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
 
     public GetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
-                            final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                            final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
     }
@@ -70,7 +68,7 @@ public class GetMoreOperation<T> extends Operation {
     }
 
     public QueryResult<T> execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         try {
             final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                     getMessageSettings(connection.getDescription()));

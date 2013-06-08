@@ -19,12 +19,11 @@ package org.mongodb.connection;
 import org.mongodb.MongoCredential;
 
 import javax.security.sasl.SaslClient;
-import java.nio.ByteBuffer;
 
 class GSSAPIAsyncAuthenticator extends SaslAsyncAuthenticator {
     public GSSAPIAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
-                                    final BufferPool<ByteBuffer> bufferPool) {
-        super(credential, connection, bufferPool);
+                                    final BufferProvider bufferProvider) {
+        super(credential, connection, bufferProvider);
     }
 
     @Override

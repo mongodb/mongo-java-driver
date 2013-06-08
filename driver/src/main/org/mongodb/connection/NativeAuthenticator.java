@@ -24,16 +24,14 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
-import java.nio.ByteBuffer;
-
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 public class NativeAuthenticator extends Authenticator {
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
-    public NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferPool<ByteBuffer> bufferPool) {
+    public NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
         super(credential, connection);
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -41,12 +39,12 @@ public class NativeAuthenticator extends Authenticator {
         try {
             CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
                     new Command(NativeAuthenticationHelper.getNonceCommand()),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
                     .execute(new ConnectingServerConnection(getConnection()));
             new CommandOperation(getCredential().getSource(),
                     new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                             getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferPool)
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
                     .execute(new ConnectingServerConnection(getConnection()));
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);

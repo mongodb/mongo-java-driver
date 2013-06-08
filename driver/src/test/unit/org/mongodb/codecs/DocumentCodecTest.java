@@ -21,6 +21,7 @@ import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReaderSettings;
 import org.bson.BSONWriter;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
@@ -249,6 +250,6 @@ public class DocumentCodecTest {
     private InputBuffer createInputBuffer() throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
-        return new BasicInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
+        return new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
     }
 }

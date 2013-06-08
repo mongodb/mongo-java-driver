@@ -27,17 +27,16 @@ import org.mongodb.operation.CommandResult;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import java.nio.ByteBuffer;
 
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
     SaslAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
-                           final BufferPool<ByteBuffer> bufferPool) {
+                           final BufferProvider bufferProvider) {
         super(credential, connection);
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -89,14 +88,14 @@ abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                new ClusterDescription(Direct), bufferPool).execute(new ConnectingAsyncServerConnection(getConnection()))
+                new ClusterDescription(Direct), bufferProvider).execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), new ClusterDescription(Direct), bufferPool).execute(
+                new DocumentCodec(), new ClusterDescription(Direct), bufferProvider).execute(
                 new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 

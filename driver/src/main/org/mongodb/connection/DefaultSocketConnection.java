@@ -16,10 +16,11 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 
 // TODO: migrate all the DBPort configuration
 class DefaultSocketConnection extends DefaultConnection {
@@ -27,8 +28,8 @@ class DefaultSocketConnection extends DefaultConnection {
     private volatile Socket socket;
 
     public DefaultSocketConnection(final ServerAddress address, final DefaultConnectionSettings settings,
-                                   final BufferPool<ByteBuffer> bufferPool, final SocketFactory socketFactory) {
-        super(address, settings, bufferPool);
+                                   final BufferProvider bufferProvider, final SocketFactory socketFactory) {
+        super(address, settings, bufferProvider);
         this.socketFactory = socketFactory;
     }
 
@@ -49,10 +50,7 @@ class DefaultSocketConnection extends DefaultConnection {
         buffer.pipeAndClose(socket);
     }
 
-    protected void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
-        if (buffer.isDirect()) {
-            throw new IllegalArgumentException("Only works with non-direct buffers, so something must be misconfigured");
-        }
+    protected void fillAndFlipBuffer(final ByteBuf buffer) throws IOException {
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {

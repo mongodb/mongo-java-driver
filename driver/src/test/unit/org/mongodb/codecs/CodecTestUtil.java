@@ -18,6 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Codec;
@@ -47,7 +48,8 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(documentAsByteArrayForReader)), false);
+        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(
+                new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
 
         //have to read off the wrapper document so the reader is in the correct position for the test
         reader.readStartDocument();
@@ -67,6 +69,6 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        return new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(documentAsByteArrayForReader)), false);
+        return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
     }
 }

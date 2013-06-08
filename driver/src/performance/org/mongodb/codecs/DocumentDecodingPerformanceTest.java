@@ -26,10 +26,7 @@ import org.bson.types.CodeWithScope;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 
-import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;

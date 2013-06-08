@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,15 +28,15 @@ import java.util.Set;
 class CachingAuthenticator {
     private final MongoCredentialsStore credentialsStore;
     private final Connection connection;
-    private BufferPool<ByteBuffer> bufferPool;
+    private BufferProvider bufferProvider;
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
     public CachingAuthenticator(final MongoCredentialsStore credentialsStore, final Connection connection,
-                                final BufferPool<ByteBuffer> bufferPool) {
+                                final BufferProvider bufferProvider) {
         this.credentialsStore = credentialsStore;
         this.connection = connection;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     public void authenticateAll() {
@@ -66,10 +65,10 @@ class CachingAuthenticator {
     private Authenticator createAuthenticator(final MongoCredential credential) {
         Authenticator authenticator;
         if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAuthenticator(credential, connection, bufferPool);
+            authenticator = new NativeAuthenticator(credential, connection, bufferProvider);
         }
         else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAuthenticator(credential, connection, bufferPool);
+            authenticator = new GSSAPIAuthenticator(credential, connection, bufferProvider);
         }
         else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());

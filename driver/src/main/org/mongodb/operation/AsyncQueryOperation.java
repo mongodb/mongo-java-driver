@@ -22,13 +22,11 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.QueryMessage;
 import org.mongodb.session.AsyncSession;
-
-import java.nio.ByteBuffer;
 
 public class AsyncQueryOperation<T> extends AsyncOperation {
     private final Find find;
@@ -36,8 +34,8 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
     private final Decoder<T> resultDecoder;
 
     public AsyncQueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                               final Decoder<T> resultDecoder, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                               final Decoder<T> resultDecoder, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
@@ -66,7 +64,7 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         final QueryMessage message = new QueryMessage(getNamespace().getFullName(), find, queryEncoder,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);

@@ -17,15 +17,13 @@
 package org.mongodb.operation;
 
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.protocol.RequestMessage;
 
-import java.nio.ByteBuffer;
-
 public abstract class AsyncOperation extends Operation {
-    public AsyncOperation(final MongoNamespace namespace, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+    public AsyncOperation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
     }
 
     protected RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {

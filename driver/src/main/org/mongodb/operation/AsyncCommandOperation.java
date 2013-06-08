@@ -22,14 +22,12 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.session.AsyncServerSelectingSession;
-
-import java.nio.ByteBuffer;
 
 public class AsyncCommandOperation extends AsyncOperation {
 
@@ -37,8 +35,8 @@ public class AsyncCommandOperation extends AsyncOperation {
     private final Codec<Document> codec;
 
     public AsyncCommandOperation(final String database, final Command command, final Codec<Document> codec,
-                                 final ClusterDescription clusterDescription, final BufferPool<ByteBuffer> bufferPool) {
-        super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferPool);
+                                 final ClusterDescription clusterDescription, final BufferProvider bufferProvider) {
+        super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferProvider);
         command.readPreference(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
         this.command = command;
         this.codec = codec;
@@ -71,7 +69,7 @@ public class AsyncCommandOperation extends AsyncOperation {
     public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         final CommandMessage message = new CommandMessage(getNamespace().getFullName(), command, codec,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);

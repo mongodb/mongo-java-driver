@@ -20,20 +20,18 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.DeleteMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 public class AsyncRemoveOperation extends AsyncWriteOperation {
     private final Remove remove;
     private final Encoder<Document> queryEncoder;
 
     public AsyncRemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                                final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                                final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.remove = remove;
         this.queryEncoder = queryEncoder;
     }

@@ -20,11 +20,10 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -71,7 +70,7 @@ class ClientAdministrationImpl implements ClientAdministration {
         return Collections.unmodifiableSet(databaseNames);
     }
 
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return client.getBufferPool();
+    public BufferProvider getBufferPool() {
+        return client.getBufferProvider();
     }
 }

@@ -16,22 +16,23 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
+public class PowerOfTwoBufferPool implements BufferProvider {
 
     private final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
-    private int highestPowerOfTwo;
 
-    public PowerOfTwoByteBufferPool() {
+    public PowerOfTwoBufferPool() {
         this(24);
     }
 
-    public PowerOfTwoByteBufferPool(final int highestPowerOfTwo) {
-        this.highestPowerOfTwo = highestPowerOfTwo;
+    public PowerOfTwoBufferPool(final int highestPowerOfTwo) {
         int x = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             final int size = x;
@@ -39,7 +40,7 @@ public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
             powerOfTwoToPoolMap.put(size, new SimplePool<ByteBuffer>("ByteBufferPool-2^" + i, Integer.MAX_VALUE) {
                 @Override
                 protected ByteBuffer createNew() {
-                    return PowerOfTwoByteBufferPool.this.createNew(size);
+                    return PowerOfTwoBufferPool.this.createNew(size);
                 }
             });
             x = x << 1;
@@ -47,29 +48,15 @@ public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
     }
 
     @Override
-    public int getMaximumPooledSize() {
-        return 1 << highestPowerOfTwo;
-    }
-
-    @Override
-    public ByteBuffer get(final int size) {
+    public ByteBuf get(final int size) {
         final Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
         final ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
         byteBuffer.clear();
         byteBuffer.limit(size);
-        return byteBuffer;
+        return new PooledByteBufNIO(byteBuffer);
     }
 
-    @Override
-    public void release(final ByteBuffer buffer) {
-        final SimplePool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
-        if (pool != null) {
-            pool.release(buffer);
-        }
-    }
-
-    @Override
     public void clear() {
         for (Pool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
             cur.clear();
@@ -82,6 +69,13 @@ public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
         return buf;
     }
 
+    private void release(final ByteBuffer buffer) {
+        final SimplePool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
+        if (pool != null) {
+            pool.release(buffer);
+        }
+    }
+
     static int roundUpToNextHighestPowerOfTwo(final int size) {
         int v = size;
         v--;
@@ -92,5 +86,20 @@ public class PowerOfTwoByteBufferPool implements BufferPool<ByteBuffer> {
         v |= v >> 16;
         v++;
         return v;
+    }
+
+    private class PooledByteBufNIO extends ByteBufNIO {
+
+        public PooledByteBufNIO(final ByteBuffer buf) {
+            super(buf);
+        }
+
+        @Override
+        public void close() {
+            if (asNIO() != null) {
+                release(asNIO());
+                super.close();
+            }
+        }
     }
 }

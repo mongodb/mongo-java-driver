@@ -21,7 +21,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
@@ -29,16 +29,14 @@ import org.mongodb.operation.protocol.QueryMessage;
 import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
-
 public class QueryOperation<T> extends Operation {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                          final Decoder<T> resultDecoder, final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
@@ -54,7 +52,7 @@ public class QueryOperation<T> extends Operation {
     }
 
     public QueryResult<T> execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         try {
             final QueryMessage message = new QueryMessage(getNamespace().getFullName(), find, queryEncoder,
                     getMessageSettings(connection.getDescription()));

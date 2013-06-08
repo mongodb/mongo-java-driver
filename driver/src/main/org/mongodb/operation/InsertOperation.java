@@ -18,20 +18,18 @@ package org.mongodb.operation;
 
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.InsertMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 public class InsertOperation<T> extends WriteOperation {
     private final Insert<T> insert;
     private final Encoder<T> encoder;
 
     public InsertOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
-                           final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                           final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.insert = insert;
         this.encoder = encoder;
     }

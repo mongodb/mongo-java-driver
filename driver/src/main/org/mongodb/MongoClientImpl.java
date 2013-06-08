@@ -17,9 +17,9 @@
 package org.mongodb;
 
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.PowerOfTwoByteBufferPool;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.session.AsyncClusterSession;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ClusterSession;
@@ -27,7 +27,6 @@ import org.mongodb.session.MonotonicSession;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -39,7 +38,7 @@ public class MongoClientImpl implements MongoClient {
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
     private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
-    private final BufferPool<ByteBuffer> bufferPool = new PowerOfTwoByteBufferPool();
+    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
@@ -110,8 +109,8 @@ public class MongoClientImpl implements MongoClient {
         return cluster;
     }
 
-    public BufferPool<ByteBuffer> getBufferPool() {
-        return bufferPool;
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     private void pinSession() {

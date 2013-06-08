@@ -23,11 +23,9 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.RequestMessage;
-
-import java.nio.ByteBuffer;
 
 class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
@@ -35,26 +33,26 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final GetLastError getLastError;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
-    private final BufferPool<ByteBuffer> bufferPool;
+    private final BufferProvider bufferProvider;
 
     public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
-                               final BufferPool<ByteBuffer> bufferPool) {
-        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferPool, 0);
+                               final BufferProvider bufferProvider) {
+        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferProvider, 0);
     }
 
     public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
-                               final BufferPool<ByteBuffer> bufferPool, final long requestId) {
+                               final BufferProvider bufferProvider, final long requestId) {
         super(getLastError, decoder, connection, requestId);
         this.callback = callback;
         this.writeOperation = writeOperation;
         this.getLastError = getLastError;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
-        this.bufferPool = bufferPool;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -75,7 +73,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
                 callback.onResult(null, commandException);
             }
             else if (nextMessage != null) {
-                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferPool)
+                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferProvider)
                         .execute(getConnection(), callback);
             }
             else {

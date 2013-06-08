@@ -20,22 +20,20 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BufferPool;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.session.AsyncSession;
 
-import java.nio.ByteBuffer;
-
 public class AsyncGetMoreOperation<T> extends AsyncOperation {
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
 
     public AsyncGetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
-                                 final BufferPool<ByteBuffer> bufferPool) {
-        super(namespace, bufferPool);
+                                 final BufferProvider bufferProvider) {
+        super(namespace, bufferProvider);
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
     }
@@ -108,7 +106,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferPool());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);

@@ -16,8 +16,9 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 // TODO: migrate all the DBPort configuration
@@ -25,8 +26,8 @@ class DefaultSocketChannelConnection extends DefaultConnection {
     private volatile SocketChannel socketChannel;
 
     public DefaultSocketChannelConnection(final ServerAddress address, final DefaultConnectionSettings settings,
-                                          final BufferPool<ByteBuffer> bufferPool) {
-        super(address, settings, bufferPool);
+                                          final BufferProvider bufferProvider) {
+        super(address, settings, bufferProvider);
     }
 
     protected void ensureOpen() {
@@ -46,10 +47,10 @@ class DefaultSocketChannelConnection extends DefaultConnection {
         buffer.pipeAndClose(socketChannel);
     }
 
-    protected void fillAndFlipBuffer(final ByteBuffer buffer) throws IOException {
+    protected void fillAndFlipBuffer(final ByteBuf buffer) throws IOException {
         int totalBytesRead = 0;
         while (totalBytesRead < buffer.limit()) {
-            final int bytesRead = socketChannel.read(buffer);
+            final int bytesRead = socketChannel.read(buffer.asNIO());
             if (bytesRead == -1) {
                 throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
             }

@@ -19,7 +19,6 @@ package org.mongodb.connection;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -30,9 +29,9 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     private volatile AsyncConnection wrapped;
 
     public AuthenticatingAsyncConnection(final AsyncConnection wrapped, final List<MongoCredential> credentialList,
-                                         final BufferPool<ByteBuffer> bufferPool) {
+                                         final BufferProvider bufferProvider) {
         this.wrapped = wrapped;
-        authenticator = new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferPool);
+        authenticator = new CachingAsyncAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferProvider);
     }
 
     @Override

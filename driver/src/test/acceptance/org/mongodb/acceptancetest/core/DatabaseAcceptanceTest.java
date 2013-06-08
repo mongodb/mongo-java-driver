@@ -34,7 +34,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getSession;
 
 /**
@@ -180,7 +180,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         final Connection connection = getSession().getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
-            new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
+            new NativeAuthenticator(credential, connection, getBufferProvider()).authenticate();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
@@ -196,7 +196,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             database.tools().removeUser(credential.getUserName());
             try {
-                new NativeAuthenticator(credential, connection, getBufferPool()).authenticate();
+                new NativeAuthenticator(credential, connection, getBufferProvider()).authenticate();
             } catch (MongoSecurityException e) { // NOPMD
                 // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
                 // the addUser to setUp, but that would require its own test class.

@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getAsyncSession;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
@@ -61,7 +61,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
         final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
         new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(),
-                getBufferPool()).execute(getAsyncSession()).get();
+                getBufferProvider()).execute(getAsyncSession()).get();
         assertEquals(documents.size(), collection.count());
     }
 }

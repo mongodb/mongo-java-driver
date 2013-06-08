@@ -461,7 +461,7 @@ public class BSONBinaryWriterTest {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
 
-        final BasicInputBuffer basicInputBuffer = new BasicInputBuffer(ByteBuffer.wrap(baos.toByteArray()));
+        final BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
         final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), basicInputBuffer, false);
 
@@ -544,7 +544,7 @@ public class BSONBinaryWriterTest {
 
         BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
         try {
-            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(bytes)), true);
+            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
             try {
                 newWriter.pipe(reader);
             } finally {

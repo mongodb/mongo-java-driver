@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBufferPool;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getSession;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
@@ -63,10 +63,10 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
-        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferPool()).execute(getSession());
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider()).execute(getSession());
         assertEquals(documents.size(), new CountCommandResult(new CommandOperation(database.getName(),
                 new Count(new Find(), collectionName), new DocumentCodec(), new ClusterDescription(ClusterConnectionMode.Direct),
-                getBufferPool()).execute(getSession())).getCount());
+                getBufferProvider()).execute(getSession())).getCount());
     }
 
 }
