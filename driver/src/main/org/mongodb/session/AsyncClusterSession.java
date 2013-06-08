@@ -50,15 +50,17 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                AsyncServerConnection connection = null;
+                MongoException exception = null;
                 try {
                     Server server = cluster.getServer(serverSelector);
-                    AsyncServerConnection connection = server.getAsyncConnection();
-                    retVal.init(connection, null);
+                    connection = server.getAsyncConnection();
                 } catch (MongoException e) {
-                    retVal.init(null, e);
+                    exception = e;
                 } catch (Throwable t) {
-                    retVal.init(null, new MongoInternalException("Exception getting a connection", t));
+                    exception = new MongoInternalException("Exception getting a connection", t);
                 }
+                retVal.init(connection, exception);
             }
         });
 
