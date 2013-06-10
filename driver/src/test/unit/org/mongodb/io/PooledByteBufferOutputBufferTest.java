@@ -29,11 +29,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PooledByteBufferOutputBufferTest {
-    private Random random = new Random();
+    private final Random random = new Random();
 
     @Test
     public void testBackpatch() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
+        final PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
         buf.writeInt(0);
         final byte[] randomBytes = getRandomBytes(10000);
         buf.write(randomBytes, 0, 10000);
@@ -50,13 +50,13 @@ public class PooledByteBufferOutputBufferTest {
 
     @Test
     public void testTruncate() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
+        final PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
         final byte[] randomBytes = getRandomBytes(10000);
 
         buf.writeInt(0);
         buf.write(randomBytes, 0, randomBytes.length);
         buf.backpatchSize(randomBytes.length + 4);
-        int pos = buf.getPosition();
+        final int pos = buf.getPosition();
 
         buf.write(randomBytes, 0, randomBytes.length);
 
@@ -80,7 +80,7 @@ public class PooledByteBufferOutputBufferTest {
     }
 
     private byte[] getRandomBytes(final int len) {
-        byte[] randomBytes = new byte[len];
+        final byte[] randomBytes = new byte[len];
         random.nextBytes(randomBytes);
         return randomBytes;
     }

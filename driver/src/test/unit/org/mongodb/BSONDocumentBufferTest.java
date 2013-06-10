@@ -23,15 +23,14 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-// A unit test
 public class BSONDocumentBufferTest {
     @Test
     public void testRoundTrip() {
-        Document document = new Document("a", 1).append("b", 2);
+        final Document document = new Document("a", 1).append("b", 2);
 
-        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        final DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
+        final BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
 
         assertNotNull(buffer.getByteBuffer());
         assertEquals(document, buffer.decode(documentCodec));
