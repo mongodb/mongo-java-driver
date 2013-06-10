@@ -64,7 +64,7 @@ abstract class DefaultConnection implements Connection {
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         check();
         try {
-            sendOneWayMessage(byteBuffers);
+            write(byteBuffers);
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -90,9 +90,9 @@ abstract class DefaultConnection implements Connection {
 
     protected abstract void ensureOpen();
 
-    protected abstract void sendOneWayMessage(final List<ByteBuf> pipeline) throws IOException;
+    protected abstract void write(final List<ByteBuf> buffers) throws IOException;
 
-    protected abstract void fillAndFlipBuffer(final ByteBuf buffer) throws IOException;
+    protected abstract void read(final ByteBuf buffer) throws IOException;
 
     private MongoException translateReadException(final IOException e) {
         close();
@@ -111,7 +111,7 @@ abstract class DefaultConnection implements Connection {
         ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
 
         final ReplyHeader replyHeader;
-        fillAndFlipBuffer(headerByteBuffer);
+        read(headerByteBuffer);
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         try {
             replyHeader = new ReplyHeader(headerInputBuffer);
@@ -134,7 +134,7 @@ abstract class DefaultConnection implements Connection {
 
         if (replyHeader.getNumberReturned() > 0) {
             ByteBuf bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
-            fillAndFlipBuffer(bodyByteBuffer);
+            read(bodyByteBuffer);
             bodyInputBuffer = new BasicInputBuffer(bodyByteBuffer);
         }
 

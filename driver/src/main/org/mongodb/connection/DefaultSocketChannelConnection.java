@@ -45,11 +45,11 @@ class DefaultSocketChannelConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final List<ByteBuf> byteBufList) throws IOException {
+    protected void write(final List<ByteBuf> buffers) throws IOException {
         int totalSize = 0;
-        ByteBuffer[] byteBufferArray = new ByteBuffer[byteBufList.size()];
-        for (int i = 0; i < byteBufList.size(); i++) {
-            byteBufferArray[i] = byteBufList.get(i).asNIO();
+        ByteBuffer[] byteBufferArray = new ByteBuffer[buffers.size()];
+        for (int i = 0; i < buffers.size(); i++) {
+            byteBufferArray[i] = buffers.get(i).asNIO();
             totalSize += byteBufferArray[i].limit();
         }
 
@@ -59,7 +59,7 @@ class DefaultSocketChannelConnection extends DefaultConnection {
         }
     }
 
-    protected void fillAndFlipBuffer(final ByteBuf buffer) throws IOException {
+    protected void read(final ByteBuf buffer) throws IOException {
         int totalBytesRead = 0;
         while (totalBytesRead < buffer.limit()) {
             final int bytesRead = socketChannel.read(buffer.asNIO());

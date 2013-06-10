@@ -47,13 +47,13 @@ class DefaultSocketConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final List<ByteBuf> byteBufList) throws IOException {
-        for (ByteBuf cur : byteBufList) {
+    protected void write(final List<ByteBuf> buffers) throws IOException {
+        for (ByteBuf cur : buffers) {
             socket.getOutputStream().write(cur.array(), 0, cur.limit());
         }
     }
 
-    protected void fillAndFlipBuffer(final ByteBuf buffer) throws IOException {
+    protected void read(final ByteBuf buffer) throws IOException {
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {
