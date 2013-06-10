@@ -510,7 +510,7 @@ public class JavaClientTest extends TestCase {
         }
 
         throw new SkipException("Not testing mapreduce on secondaries since that's disabled right now.");
-
+        /*
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
         //c.setReadPreference(ReadPreference.SECONDARY);
@@ -543,6 +543,7 @@ public class JavaClientTest extends TestCase {
         if( replStatus!= null && replStatus.getName() != null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
             assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ),
             		"Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus() + " \n Used: " + out.getCommandResult().getServerUsed() + " \n ");
+        */
     }
 
     @Test
