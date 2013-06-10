@@ -34,9 +34,8 @@ import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.session.ClusterSession;
-import org.mongodb.session.MonotonicSession;
+import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerSelectingSession;
-import org.mongodb.session.Session;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -103,7 +102,7 @@ public class DB implements IDB {
     @Override
     public void requestStart() {
         isTrue("request not already started", pinnedSession.get() == null);
-        pinnedSession.set(new MonotonicSession(getMongo().getCluster()));
+        pinnedSession.set(new PinnedSession(getMongo().getCluster()));
     }
 
     /**
@@ -112,7 +111,7 @@ public class DB implements IDB {
     @Override
     public void requestDone() {
         isTrue("request started", pinnedSession.get() != null);
-        Session session = pinnedSession.get();
+        ServerSelectingSession session = pinnedSession.get();
         pinnedSession.remove();
         session.close();
     }
@@ -174,8 +173,8 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
-                getBufferPool()).execute(getSession());
+        final QueryResult<Document> query = getSession().execute(
+                new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec, getBufferPool()));
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = getName().length();
@@ -459,8 +458,8 @@ public class DB implements IDB {
 
     org.mongodb.operation.CommandResult executeCommand(final Command commandOperation) {
         commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return new CommandOperation(getName(), commandOperation, documentCodec, getCluster().getDescription(),
-                getBufferPool()).execute(getSession());
+        return getSession().execute(
+                new CommandOperation(getName(), commandOperation, documentCodec, getCluster().getDescription(), getBufferPool()));
     }
 
     org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {

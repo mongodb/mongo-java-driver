@@ -16,10 +16,11 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.ServerConnection;
+import org.mongodb.Operation;
 
 public interface Session {
-    ServerConnection getConnection();
+
+    <T> T execute(Operation<T> operation);
 
     void close();
 

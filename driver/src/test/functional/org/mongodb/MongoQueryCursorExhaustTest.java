@@ -25,9 +25,9 @@ import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
 import org.mongodb.session.SessionBindingType;
@@ -37,6 +37,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferProvider;
+import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -70,22 +71,26 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        SingleConnectionServerSelectingSession singleConnectionSession = new SingleConnectionServerSelectingSession(getSession()
-                .getConnection());
+        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
+        try {
+            SingleConnectionServerSelectingSession singleConnectionSession = new SingleConnectionServerSelectingSession(connection);
 
-        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
+            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                    new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
 
-        cursor.next();
-        cursor.close();
+            cursor.next();
+            cursor.close();
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
-        assertEquals(new Document("_id", 999), cursor.next());
+            cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                    new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
+            assertEquals(new Document("_id", 999), cursor.next());
 
-        singleConnectionSession.connection.close();
+            singleConnectionSession.connection.close();
+        } finally {
+            connection.close();
+        }
     }
 
     private static class SingleConnectionServerSelectingSession implements ServerSelectingSession {
@@ -97,23 +102,44 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ServerConnection getConnection(final ServerSelector serverSelector) {
-            return getConnection();
+        public <T> T execute(final ServerSelectingOperation<T> operation) {
+            return operation.execute(connection);
         }
 
         @Override
-        public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
-            return new SingleConnectionServerSelectingSession(new DelayedCloseConnection(connection));
-        }
-
-        @Override
-        public ServerConnection getConnection() {
-            return new DelayedCloseConnection(connection);
+        public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
+            return new SingleConnectionSession(new DelayedCloseConnection(connection));
         }
 
         @Override
         public void close() {
-           isClosed = true;
+            isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
+        }
+    }
+
+    private static class SingleConnectionSession implements Session {
+
+        private final ServerConnection connection;
+        private boolean isClosed;
+
+        public SingleConnectionSession(final ServerConnection connection) {
+            //To change body of created methods use File | Settings | File Templates.
+            this.connection = connection;
+        }
+
+        @Override
+        public <T> T execute(final Operation<T> operation) {
+            return operation.execute(connection);
+        }
+
+        @Override
+        public void close() {
+            isClosed = true;
         }
 
         @Override
@@ -152,7 +178,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         protected BaseConnection getWrapped() {
             return wrapped;
         }
-       @Override
+
+        @Override
         public void close() {
             isClosed = true;
         }

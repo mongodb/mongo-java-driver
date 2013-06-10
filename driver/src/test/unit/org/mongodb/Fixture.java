@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Cluster;
 import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
@@ -68,6 +69,11 @@ public final class Fixture {
     public static ServerSelectingSession getSession() {
         getMongoClient();
         return mongoClient.getSession();
+    }
+
+    public static Cluster getCluster() {
+        getMongoClient();
+        return mongoClient.getCluster();
     }
 
     public static AsyncServerSelectingSession getAsyncSession() {

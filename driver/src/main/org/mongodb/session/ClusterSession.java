@@ -16,13 +16,12 @@
 
 package org.mongodb.session;
 
+import org.mongodb.ServerSelectingOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.ServerSelector;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * @since 3.0
@@ -37,29 +36,26 @@ public class ClusterSession implements ServerSelectingSession {
     }
 
     @Override
-    public ServerConnection getConnection(final ServerSelector serverSelector) {
+    public <T> T execute(final ServerSelectingOperation<T> operation) {
         isTrue("open", !isClosed());
-        notNull("serverSelector", serverSelector);
 
-        return cluster.getServer(serverSelector).getConnection();
+        ServerConnection connection = cluster.getServer(operation.getServerSelector()).getConnection();
+        try {
+            return operation.execute(connection);
+        } finally {
+            connection.close();
+        }
     }
 
     @Override
-    public ServerConnection getConnection() {
-        isTrue("open", !isClosed());
-
-        return getConnection(new PrimaryServerSelector());
-    }
-
-    @Override
-    public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
+    public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
         isTrue("open", !isClosed());
 
         if (sessionBindingType == SessionBindingType.Connection) {
-            return new SingleConnectionSession(getConnection(serverSelector));
+            return new SingleConnectionSession(cluster.getServer(operation.getServerSelector()).getConnection());
         }
         else {
-            return new SingleServerSession(cluster.getServer(serverSelector));
+            return new SingleServerSession(cluster.getServer(operation.getServerSelector()));
         }
     }
 

@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
@@ -154,12 +153,11 @@ public class DBOldTest extends DatabaseTestCase {
             DBCursor cursorBefore = collection.find().setReadPreference(ReadPreference.secondary());
             cursorBefore.hasNext();
 
-            WriteResult result = collection.insert(new BasicDBObject());
-
-            DBCursor cursorAfter = collection.find().setReadPreference(ReadPreference.secondary());
-            cursorAfter.hasNext();
-            assertNotEquals(cursorBefore.getServerAddress(), cursorAfter.getServerAddress());
-            assertEquals(result.getLastError().getServerUsed(), cursorAfter.getServerAddress());
+            for (int i = 0; i < 100; i++) {
+                DBCursor cursorAfter = collection.find().setReadPreference(ReadPreference.secondary()).batchSize(-1);
+                cursorAfter.hasNext();
+                assertEquals(cursorBefore.getServerAddress(), cursorAfter.getServerAddress());
+            }
 
         } finally {
             database.requestDone();

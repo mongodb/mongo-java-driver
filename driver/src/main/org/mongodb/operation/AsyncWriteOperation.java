@@ -30,9 +30,17 @@ import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.session.AsyncSession;
 
-public abstract class AsyncWriteOperation extends AsyncOperation {
+import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public abstract class AsyncWriteOperation {
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
+
     public AsyncWriteOperation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
     }
 
     public MongoFuture<CommandResult> execute(final AsyncSession session) {
@@ -62,7 +70,7 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
 
 
     public void execute(final AsyncServerConnection connection, final SingleResultCallback<CommandResult> callback) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
                 buffer);
         if (getWriteConcern().callGetLastError()) {
@@ -73,11 +81,11 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendAndReceiveMessage(buffer.getByteBuffers(), getResponseSettings(connection.getDescription(),
                     getLastErrorMessage.getId()), new WriteResultCallback(callback, getWrite(), getLastError, new DocumentCodec(),
-                    getNamespace(), nextMessage, connection, buffer, getBufferProvider(), getLastErrorMessage.getId()));
+                    getNamespace(), nextMessage, connection, buffer, bufferProvider, getLastErrorMessage.getId()));
         }
         else {
             connection.sendMessage(buffer.getByteBuffers(), new WriteResultCallback(callback, getWrite(), null, new DocumentCodec(),
-                    getNamespace(), nextMessage, connection, buffer, getBufferProvider()));
+                    getNamespace(), nextMessage, connection, buffer, bufferProvider));
         }
     }
 
@@ -86,4 +94,8 @@ public abstract class AsyncWriteOperation extends AsyncOperation {
     public abstract BaseWrite getWrite();
 
     public abstract WriteConcern getWriteConcern();
+
+    protected MongoNamespace getNamespace() {
+        return namespace;
+    }
 }

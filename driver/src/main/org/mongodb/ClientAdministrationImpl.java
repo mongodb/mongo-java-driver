@@ -49,16 +49,17 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, documentCodec,
-                client.getCluster().getDescription(), getBufferPool()).execute(client.getSession());
+        final CommandResult pingResult = client.getSession().execute(
+                new CommandOperation(ADMIN_DATABASE, PING_COMMAND, documentCodec, client.getCluster().getDescription(), getBufferPool()));
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public Set<String> getDatabaseNames() {
-        final CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, documentCodec,
-                client.getCluster().getDescription(), getBufferPool()).execute(client.getSession());
+        final CommandOperation operation = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, documentCodec,
+                client.getCluster().getDescription(), getBufferPool());
+        final CommandResult listDatabasesResult = client.getSession().execute(operation);
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");

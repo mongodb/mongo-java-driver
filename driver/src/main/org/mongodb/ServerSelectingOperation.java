@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb;
 
-import org.mongodb.ServerSelectingOperation;
+import org.mongodb.connection.ServerSelector;
 
-public interface ServerSelectingSession {
+public interface ServerSelectingOperation<T> extends Operation<T> {
+    ServerSelector getServerSelector();
 
-    <T> T execute(ServerSelectingOperation<T> operation);
-
-    <T> Session getBoundSession(ServerSelectingOperation<T> operation, SessionBindingType sessionBindingType);
-
-    void close();
-
-    boolean isClosed();
+    boolean isQuery();
 }

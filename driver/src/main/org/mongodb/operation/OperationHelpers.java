@@ -17,36 +17,21 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
+import org.mongodb.operation.protocol.RequestMessage;
 
-public abstract class Operation {
-    private MongoNamespace namespace;
-    private final BufferProvider bufferProvider;
+// TODO: these should move somewhere else.
+public final class OperationHelpers {
 
-    public Operation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
-        this.namespace = namespace;
-        this.bufferProvider = bufferProvider;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
-    }
-
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
-    }
-
-    // TODO: this should move somewhere else.
-    protected CommandResult createCommandResult(final Command commandOperation, final ReplyMessage<Document> replyMessage,
-                                              final Connection connection) {
+    public static CommandResult createCommandResult(final Command commandOperation, final ReplyMessage<Document> replyMessage,
+                                                    final Connection connection) {
         CommandResult commandResult = new CommandResult(commandOperation.toDocument(), connection.getServerAddress(),
                 replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
@@ -56,12 +41,28 @@ public abstract class Operation {
         return commandResult;
     }
 
-    protected static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
+    public static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
         return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
                 .getMaxMessageSize()).build();
     }
 
-    protected static ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
+    public static ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
         return ResponseSettings.builder().maxMessageSize(serverDescription.getMaxMessageSize()).responseTo(responseTo).build();
+    }
+
+
+    public static RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {
+        try {
+            return message.encode(buffer);
+        } catch (RuntimeException e) {
+            buffer.close();
+            throw e;
+        } catch (Error e) {
+            buffer.close();
+            throw e;
+        }
+    }
+
+    private OperationHelpers() {
     }
 }

@@ -47,6 +47,16 @@ final class CommandReadPreferenceHelper {
     }
 
     /**
+     * Returns true if the command is a query in disguise.
+     *
+     * @param command the command
+     * @return true if the command is a query, false otherwise.
+     */
+    static boolean isQuery(final Command command) {
+       return !isPrimaryRequired(command);
+    }
+
+    /**
      * Returns the recommended read preference for the given command when run against a cluster with the given description.
      *
      * @param command the command
@@ -58,6 +68,17 @@ final class CommandReadPreferenceHelper {
             return command.getReadPreference();
         }
 
+        boolean primaryRequired = isPrimaryRequired(command);
+
+        if (primaryRequired) {
+            return ReadPreference.primary();
+        }
+        else {
+            return command.getReadPreference();
+        }
+    }
+
+    private static boolean isPrimaryRequired(final Command command) {
         Document commandDocument = command.toDocument();
         String commandName = commandDocument.keySet().iterator().next().toLowerCase();
 
@@ -71,13 +92,7 @@ final class CommandReadPreferenceHelper {
         else {
             primaryRequired = !OBEDIENT_COMMANDS.contains(commandName);
         }
-
-        if (primaryRequired) {
-            return ReadPreference.primary();
-        }
-        else {
-            return command.getReadPreference();
-        }
+        return primaryRequired;
     }
 
     private CommandReadPreferenceHelper() {

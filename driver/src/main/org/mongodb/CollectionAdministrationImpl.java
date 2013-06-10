@@ -74,14 +74,15 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails);
         insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferProvider())
-                .execute(client.getSession());
+        client.getSession().execute(new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec,
+                client.getBufferProvider()));
     }
 
     @Override
     public List<Document> getIndexes() {
-        final QueryResult<Document> systemCollection = new QueryOperation<Document>(indexesNamespace, queryForCollectionNamespace,
-                documentCodec, documentCodec, client.getBufferProvider()).execute(client.getSession());
+        final QueryResult<Document> systemCollection = client.getSession().execute(
+                new QueryOperation<Document>(indexesNamespace, queryForCollectionNamespace, documentCodec, documentCodec,
+                        client.getBufferProvider()));
         return systemCollection.getResults();
     }
 

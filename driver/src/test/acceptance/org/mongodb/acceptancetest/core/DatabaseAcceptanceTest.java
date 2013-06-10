@@ -23,11 +23,13 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
+import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.NativeAuthenticator;
+import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.MongoServerException;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 
 import java.util.Set;
 
@@ -35,7 +37,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getBufferProvider;
-import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.getCluster;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.
@@ -177,7 +179,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToAuthenticateAfterAddingUser() {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        final Connection connection = getSession().getConnection();
+        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             new NativeAuthenticator(credential, connection, getBufferProvider()).authenticate();
@@ -191,7 +193,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldNotBeAbleToAuthenticateAfterRemovingUser() {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        final Connection connection = getSession().getConnection();
+        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             database.tools().removeUser(credential.getUserName());

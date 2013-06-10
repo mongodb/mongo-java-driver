@@ -18,12 +18,15 @@
 
 
 
+
+
 package org.mongodb
 
 import category.Slow
 import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.operation.*
+import org.mongodb.session.PrimaryServerSelector
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -32,6 +35,7 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
+import static org.mongodb.session.SessionBindingType.Server
 
 class MongoQueryCursorSpecification extends Specification {
     private MongoQueryCursor<Document> cursor;
@@ -395,7 +399,8 @@ class MongoQueryCursorSpecification extends Specification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
-        new KillCursorOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider()).execute(getSession());
+        getSession().getBoundSession(new PrimaryServerSelector(), Server).execute(
+                new KillCursorOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider()));
         cursor.next();
         cursor.next();
         then:
@@ -409,11 +414,9 @@ class MongoQueryCursorSpecification extends Specification {
     }
 
     private void makeAdditionalGetMoreCall(final ServerCursor serverCursor) {
-        new GetMoreOperation<Document>(
-                collection.getNamespace(),
-                new GetMore(serverCursor, 1, 1, 1), collection.getOptions().getDocumentCodec(),
-                getBufferProvider()
-        ).execute(getSession());
+        getSession().getBoundSession(new PrimaryServerSelector(), Server).execute(new GetMoreOperation<Document>(
+                collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1), collection.getOptions().getDocumentCodec(),
+                getBufferProvider()));
     }
 
 }

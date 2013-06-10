@@ -248,8 +248,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        QueryResult<DBObject> queryResult = new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                new DBObjectCodec(), getCollection().getBufferPool()).execute(getSession());
+        QueryResult<DBObject> queryResult = getSession().execute(
+                new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
+                        getCollection().getBufferPool()));
         return queryResult.getResults().get(0);
     }
 

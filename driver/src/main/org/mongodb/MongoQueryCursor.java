@@ -21,13 +21,14 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
+import org.mongodb.operation.GetMoreDiscardOperation;
 import org.mongodb.operation.GetMoreOperation;
+import org.mongodb.operation.GetMoreReceiveOperation;
 import org.mongodb.operation.KillCursor;
 import org.mongodb.operation.KillCursorOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
@@ -66,9 +67,9 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.decoder = decoder;
         this.find = find;
         this.bufferProvider = bufferProvider;
-        this.session = initialSession.getBoundSession(new ReadPreferenceServerSelector(find.getReadPreference()),
-                find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
-        currentResult = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferProvider).execute(session);
+        QueryOperation<T> operation = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferProvider);
+        this.session = initialSession.getBoundSession(operation, find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
+        currentResult = session.execute(operation);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -84,7 +85,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             discardRemainingGetMoreResponses();
         }
         else if (currentResult.getCursor() != null && !limitReached()) {
-            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider).execute(session);
+            session.execute(new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider));
         }
         session.close();
         currentResult = null;
@@ -178,22 +179,16 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        final GetMoreOperation<T> getMoreOperation = new GetMoreOperation<T>(namespace,
-                new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider);
         if (find.getOptions().contains(QueryOption.Exhaust)) {
-            currentResult = getMoreOperation.executeReceive(session, currentResult.getRequestId());
+            currentResult = session.execute(new GetMoreReceiveOperation<T>(decoder, currentResult.getRequestId()));
         }
         else {
-            currentResult = getMoreOperation.execute(session);
+            currentResult = session.execute(new GetMoreOperation<T>(namespace,
+                    new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider));
         }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
-    }
-
-    private void discardRemainingGetMoreResponses() {
-        new GetMoreOperation<T>(namespace, new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
-                decoder, bufferProvider).executeDiscard(session, currentResult.getRequestId());
     }
 
     @Override
@@ -206,9 +201,13 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         return "MongoQueryCursor{namespace=" + namespace + ", find=" + find + ", cursor=" + currentResult.getCursor() + '}';
     }
 
+    Session getSession() {
+        return session;
+    }
+
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider).execute(session);
+            session.execute(new KillCursorOperation(new KillCursor(currentResult.getCursor()), bufferProvider));
         }
     }
 
@@ -219,5 +218,9 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private boolean isTailableAwait() {
         return find.getOptions().containsAll(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
+    }
+
+    private void discardRemainingGetMoreResponses() {
+        session.execute(new GetMoreDiscardOperation(currentResult.getCursor().getId(), currentResult.getRequestId()));
     }
 }

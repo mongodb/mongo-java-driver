@@ -18,35 +18,37 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
+import org.mongodb.ServerSelectingOperation;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
 import org.mongodb.operation.protocol.RequestMessage;
-import org.mongodb.session.Session;
+import org.mongodb.session.PrimaryServerSelector;
 
-public abstract class WriteOperation extends Operation {
+import static org.mongodb.operation.OperationHelpers.createCommandResult;
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public abstract class WriteOperation implements ServerSelectingOperation<CommandResult> {
+
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
 
     public WriteOperation(final MongoNamespace namespace, final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
     }
 
-    public CommandResult execute(final Session session) {
-        ServerConnection connection = session.getConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
+    @Override
     public CommandResult execute(final ServerConnection connection) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             CommandResult getLastErrorResult = null;
             RequestMessage nextMessage = createRequestMessage(getMessageSettings(connection.getDescription())).encode(buffer);
@@ -79,7 +81,21 @@ public abstract class WriteOperation extends Operation {
         }
     }
 
-    public abstract BaseWrite getWrite();
+    @Override
+    public ServerSelector getServerSelector() {
+        return new PrimaryServerSelector();
+    }
+
+    @Override
+    public boolean isQuery() {
+        return false;
+    }
+
+    protected abstract BaseWrite getWrite();
 
     protected abstract RequestMessage createRequestMessage(final MessageSettings settings);
+
+    protected MongoNamespace getNamespace() {
+        return namespace;
+    }
 }

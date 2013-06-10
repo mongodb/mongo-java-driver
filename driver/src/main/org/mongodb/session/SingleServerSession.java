@@ -16,11 +16,11 @@
 
 package org.mongodb.session;
 
+import org.mongodb.Operation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerConnection;
 
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -37,9 +37,13 @@ class SingleServerSession implements Session {
     }
 
     @Override
-    public ServerConnection getConnection() {
-        isTrue("open", !isClosed());
-        return server.getConnection();
+    public <T> T execute(final Operation<T> operation) {
+        ServerConnection connection = server.getConnection();
+        try {
+            return operation.execute(connection);
+        } finally {
+            connection.close();
+        }
     }
 
     @Override

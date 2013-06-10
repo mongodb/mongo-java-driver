@@ -16,10 +16,10 @@
 
 package org.mongodb.session;
 
+import org.mongodb.Operation;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.ServerConnection;
 
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -35,9 +35,8 @@ class SingleConnectionSession implements Session {
     }
 
     @Override
-    public ServerConnection getConnection() {
-        isTrue("open", !isClosed());
-        return new DelayedCloseConnection(connection);
+    public <T> T execute(final Operation<T> operation) {
+        return operation.execute(connection);
     }
 
     @Override

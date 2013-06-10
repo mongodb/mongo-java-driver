@@ -27,13 +27,20 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.session.AsyncSession;
 
-public class AsyncGetMoreOperation<T> extends AsyncOperation {
+import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public class AsyncGetMoreOperation<T> {
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
 
     public AsyncGetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
                                  final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
     }
@@ -106,8 +113,8 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
-        final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
         connection.sendAndReceiveMessage(buffer.getByteBuffers(), getResponseSettings(connection.getDescription(), message.getId()),
@@ -160,7 +167,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
                 future.init(null, null);
             }
             else {
-                connection.receiveMessage(AsyncGetMoreOperation.getResponseSettings(connection.getDescription(), responseTo),
+                connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo),
                         new DiscardCallback(connection, future, result.getReplyHeader().getRequestId()));
             }
         }

@@ -22,9 +22,9 @@ import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
-final class PrimaryServerSelector extends ChainingServerSelector {
+public final class PrimaryServerSelector extends ChainingServerSelector {
 
-    PrimaryServerSelector() {
+    public PrimaryServerSelector() {
         super(new LatencyMinimizingServerSelector());
     }
 

@@ -19,24 +19,33 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
+import org.mongodb.ServerSelectingOperation;
 import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.ReplyMessage;
-import org.mongodb.session.ServerSelectingSession;
 
-public class CommandOperation extends Operation {
+import static org.mongodb.operation.OperationHelpers.createCommandResult;
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public class CommandOperation implements ServerSelectingOperation<CommandResult> {
     private final Command command;
     private final Codec<Document> codec;
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
+    private final ClusterDescription clusterDescription;
 
     public CommandOperation(final String database, final Command command, final Codec<Document> codec,
                             final ClusterDescription clusterDescription, final BufferProvider bufferProvider) {
-        super(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME), bufferProvider);
-        command.readPreference(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
+        this.clusterDescription = clusterDescription;
+        this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.bufferProvider = bufferProvider;
         this.command = command;
         this.codec = codec;
     }
@@ -45,19 +54,10 @@ public class CommandOperation extends Operation {
         return command;
     }
 
-    public CommandResult execute(final ServerSelectingSession session) {
-        ServerConnection connection = session.getConnection(new ReadPreferenceServerSelector(command.getReadPreference()));
-        try {
-            return execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
     public CommandResult execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = new CommandMessage(getNamespace().getFullName(), command, codec,
+            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
@@ -72,5 +72,15 @@ public class CommandOperation extends Operation {
         } finally {
             buffer.close();
         }
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new ReadPreferenceServerSelector(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
+    }
+
+    @Override
+    public boolean isQuery() {
+        return CommandReadPreferenceHelper.isQuery(command);
     }
 }

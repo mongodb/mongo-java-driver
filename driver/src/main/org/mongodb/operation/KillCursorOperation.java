@@ -16,37 +16,31 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.KillCursorsMessage;
-import org.mongodb.session.Session;
 
-public class KillCursorOperation extends Operation {
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+
+public class KillCursorOperation implements Operation<Void> {
     private final KillCursor killCursor;
+    private final BufferProvider bufferProvider;
 
     public KillCursorOperation(final KillCursor killCursor, final BufferProvider bufferProvider) {
-        super(null, bufferProvider);
+        this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
     }
 
-    public void execute(final Session session) {
-        ServerConnection connection = session.getConnection();
-        try {
-            execute(connection);
-        } finally {
-            connection.close();
-        }
-
-    }
-
-    public void execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+    public Void execute(final ServerConnection connection) {
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             final KillCursorsMessage message = new KillCursorsMessage(killCursor,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
+            return null;
         } finally {
             buffer.close();
         }

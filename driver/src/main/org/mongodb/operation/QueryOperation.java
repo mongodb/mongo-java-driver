@@ -20,41 +20,40 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.ServerSelectingOperation;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.QueryMessage;
 import org.mongodb.operation.protocol.ReplyMessage;
-import org.mongodb.session.Session;
 
-public class QueryOperation<T> extends Operation {
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public class QueryOperation<T> implements ServerSelectingOperation<QueryResult<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                           final Decoder<T> resultDecoder, final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
     }
 
-    public QueryResult<T> execute(final Session session) {
-        ServerConnection connection = session.getConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
+    @Override
     public QueryResult<T> execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final QueryMessage message = new QueryMessage(getNamespace().getFullName(), find, queryEncoder,
+            final QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
 
@@ -77,5 +76,15 @@ public class QueryOperation<T> extends Operation {
             buffer.close();
         }
 
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new ReadPreferenceServerSelector(find.getReadPreference());
+    }
+
+    @Override
+    public boolean isQuery() {
+        return true;
     }
 }

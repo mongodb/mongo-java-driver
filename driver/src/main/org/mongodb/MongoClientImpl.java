@@ -23,9 +23,8 @@ import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.session.AsyncClusterSession;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ClusterSession;
-import org.mongodb.session.MonotonicSession;
+import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerSelectingSession;
-import org.mongodb.session.Session;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -117,11 +116,11 @@ public class MongoClientImpl implements MongoClient {
         if (pinnedSession.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedSession.set(new MonotonicSession(cluster));
+        pinnedSession.set(new PinnedSession(cluster));
     }
 
     private void unpinSession() {
-        Session sessionToUnpin = this.pinnedSession.get();
+        ServerSelectingSession sessionToUnpin = this.pinnedSession.get();
         this.pinnedSession.remove();
         sessionToUnpin.close();
     }

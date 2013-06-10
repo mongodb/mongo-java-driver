@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
+import org.mongodb.Operation;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
@@ -26,51 +27,29 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.protocol.GetMoreMessage;
 import org.mongodb.operation.protocol.ReplyMessage;
-import org.mongodb.session.Session;
 
-public class GetMoreOperation<T> extends Operation {
+import static org.mongodb.operation.OperationHelpers.getMessageSettings;
+import static org.mongodb.operation.OperationHelpers.getResponseSettings;
+
+public class GetMoreOperation<T> implements Operation<QueryResult<T>> {
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
 
     public GetMoreOperation(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
                             final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
     }
 
-
-    public QueryResult<T> execute(final Session session) {
-        ServerConnection connection = session.getConnection();
-        try {
-            return execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
-    public QueryResult<T> executeReceive(final Session session, final int responseTo) {
-        ServerConnection connection = session.getConnection();
-        try {
-            return executeReceive(connection, responseTo);
-        } finally {
-            connection.close();
-        }
-    }
-
-    public void executeDiscard(final Session session, final int responseTo) {
-        ServerConnection connection = session.getConnection();
-        try {
-            executeDiscard(connection, responseTo);
-        } finally {
-            connection.close();
-        }
-    }
-
+    @Override
     public QueryResult<T> execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
+            final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
@@ -94,30 +73,6 @@ public class GetMoreOperation<T> extends Operation {
             }
         } finally {
             buffer.close();
-        }
-    }
-
-    public QueryResult<T> executeReceive(final ServerConnection connection, final int responseTo) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo));
-        try {
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
-        } finally {
-            responseBuffers.close();
-        }
-    }
-
-    public void executeDiscard(final ServerConnection connection, final int responseTo) {
-        long cursorId = getMore.getServerCursor().getId();
-        int curResponseTo = responseTo;
-        while (cursorId != 0) {
-            final ResponseBuffers responseBuffers = connection.receiveMessage(
-                    getResponseSettings(connection.getDescription(), curResponseTo));
-            try {
-               cursorId = responseBuffers.getReplyHeader().getCursorId();
-               curResponseTo = responseBuffers.getReplyHeader().getRequestId();
-            } finally {
-                responseBuffers.close();
-            }
         }
     }
 }

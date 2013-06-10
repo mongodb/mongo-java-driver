@@ -16,6 +16,7 @@
 
 package org.mongodb.session;
 
+import org.mongodb.ServerSelectingOperation;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ServerConnection;
@@ -28,61 +29,32 @@ import static org.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 @NotThreadSafe
-public class MonotonicSession implements ServerSelectingSession {
+public class PinnedSession implements ServerSelectingSession {
     private ServerSelector lastRequestedServerSelector;
     private ServerConnection connectionForReads;
     private ServerConnection connectionForWrites;
     private Cluster cluster;
     private boolean isClosed;
 
-    public MonotonicSession(final Cluster cluster) {
+    public PinnedSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
     }
 
     @Override
-    public ServerConnection getConnection(final ServerSelector serverSelector) {
+    public <T> T execute(final ServerSelectingOperation<T> operation) {
         isTrue("open", !isClosed());
-        notNull("serverSelector", serverSelector);
-        synchronized (this) {
-            ServerConnection connectionToUse;
-            if (connectionForWrites != null) {
-                connectionToUse = connectionForWrites;
-            }
-            else if (connectionForReads == null || !serverSelector.equals(lastRequestedServerSelector)) {
-                lastRequestedServerSelector = serverSelector;
-                if (connectionForReads != null) {
-                    connectionForReads.close();
-                }
-                connectionForReads = cluster.getServer(serverSelector).getConnection();
-
-                connectionToUse = connectionForReads;
-            }
-            else {
-                connectionToUse = connectionForReads;
-            }
-            return new DelayedCloseConnection(connectionToUse);
+        ServerConnection connection = getConnection(operation);
+        try {
+            return operation.execute(connection);
+        } finally {
+            connection.close();
         }
     }
 
     @Override
-    public ServerConnection getConnection() {
+    public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
         isTrue("open", !isClosed());
-        synchronized (this) {
-            if (connectionForWrites == null) {
-                connectionForWrites = cluster.getServer(new PrimaryServerSelector()).getConnection();
-                if (connectionForReads != null) {
-                    connectionForReads.close();
-                    connectionForReads = null;
-                }
-            }
-            return new DelayedCloseConnection(connectionForWrites);
-        }
-    }
-
-    @Override
-    public Session getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
-        isTrue("open", !isClosed());
-        return new SingleConnectionSession(getConnection(serverSelector));
+        return new SingleConnectionSession(getConnection(operation));
     }
 
     @Override
@@ -105,5 +77,29 @@ public class MonotonicSession implements ServerSelectingSession {
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    private <T> ServerConnection getConnection(final ServerSelectingOperation<T> operation) {
+        notNull("serverSelector", operation.getServerSelector());
+        synchronized (this) {
+            ServerConnection connectionToUse;
+            if (operation.isQuery()) {
+                if (connectionForReads == null || !operation.getServerSelector().equals(lastRequestedServerSelector)) {
+                    lastRequestedServerSelector = operation.getServerSelector();
+                    if (connectionForReads != null) {
+                        connectionForReads.close();
+                    }
+                    connectionForReads = cluster.getServer(operation.getServerSelector()).getConnection();
+                }
+                connectionToUse = connectionForReads;
+            }
+            else {
+                if (connectionForWrites == null) {
+                    connectionForWrites = cluster.getServer(new PrimaryServerSelector()).getConnection();
+                }
+                connectionToUse = connectionForWrites;
+            }
+            return new DelayedCloseConnection(connectionToUse);
+        }
     }
 }
