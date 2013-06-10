@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.session;
 
 import org.mongodb.MongoException;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.SingleResultFuture;
 
 class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
     private final AsyncConnection connection;
     private final SingleResultFuture<T> retVal;
 
-    public ConnectionClosingSingleResultCallback(final AsyncConnection connection, final SingleResultFuture<T> retVal) {
+    ConnectionClosingSingleResultCallback(final AsyncConnection connection, final SingleResultFuture<T> retVal) {
         this.connection = connection;
         this.retVal = retVal;
     }

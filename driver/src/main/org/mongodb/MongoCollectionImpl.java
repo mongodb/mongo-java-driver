@@ -653,8 +653,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
             final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
-            final MongoFuture<CommandResult> commandResultFuture = new AsyncReplaceOperation<T>(getNamespace(), replace,
-                    getDocumentCodec(), getCodec(), client.getBufferProvider()).execute(client.getAsyncSession());
+            final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
+                    new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider()));
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {
                 @Override
                 public WriteResult apply(final CommandResult commandResult) {
@@ -670,8 +670,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<T> asyncOne() {
             final MongoFuture<QueryResult<T>> queryResultFuture =
-                    new AsyncQueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                            client.getBufferProvider()).execute(client.getAsyncSession());
+                    client.getAsyncSession().execute(
+                            new AsyncQueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
+                                    client.getBufferProvider()));
             return new MappingFuture<QueryResult<T>, T>(queryResultFuture, new Function<QueryResult<T>, T>() {
                 @Override
                 public T apply(final QueryResult<T> queryResult) {
@@ -687,9 +688,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<Long> asyncCount() {
-            final MongoFuture<CommandResult> commandResultFuture = new AsyncCommandOperation(getDatabase().getName(), new Count(findOp,
-                    getName()), getDocumentCodec(), client.getCluster().getDescription(), client.getBufferProvider()).execute(client
-                    .getAsyncSession());
+            final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
+                    new AsyncCommandOperation(getDatabase().getName(), new Count(findOp, getName()), getDocumentCodec(),
+                            client.getCluster().getDescription(), client.getBufferProvider()));
             return new MappingFuture<CommandResult, Long>(commandResultFuture, new Function<CommandResult, Long>() {
                 @Override
                 public Long apply(final CommandResult commandResult) {

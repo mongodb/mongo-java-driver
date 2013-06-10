@@ -75,8 +75,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
                 callback.onResult(null, commandException);
             }
             else if (nextMessage != null) {
-                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferProvider)
-                        .execute(getConnection(), callback);
+                new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferProvider).execute(getConnection(), callback);
             }
             else {
                 callback.onResult(commandResult, null);

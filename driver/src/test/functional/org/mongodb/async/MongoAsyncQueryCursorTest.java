@@ -22,17 +22,22 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mongodb.AsyncOperation;
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.MongoException;
+import org.mongodb.ReadPreference;
+import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.AsyncSession;
@@ -50,6 +55,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferProvider;
+import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.operation.QueryOption.Exhaust;
 
@@ -123,24 +129,32 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
-        SingleConnectionAsyncSession session = new SingleConnectionAsyncSession(getAsyncSession().getConnection().get());
+        AsyncServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+                .getAsyncConnection();
 
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, new TestBlock(1)).start();
+        try {
+            SingleConnectionAsyncServerSelectingSession session = new SingleConnectionAsyncServerSelectingSession(connection);
 
-        latch.await();
-        assertThat(documentResultList, is(documentList.subList(0, 1)));
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                    new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, new TestBlock(1))
+                    .start();
 
-        documentResultList.clear();
-        CountDownLatch nextLatch = new CountDownLatch(1);
+            latch.await();
+            assertThat(documentResultList, is(documentList.subList(0, 1)));
 
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().limit(1).order(new Document("_id", -1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, new TestBlock(1,
-                nextLatch)).start();
-        nextLatch.await();
-        assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
+            documentResultList.clear();
+            CountDownLatch nextLatch = new CountDownLatch(1);
+
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                    new Find().limit(1).order(new Document("_id", -1)),
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, new TestBlock(1,
+                    nextLatch)).start();
+            nextLatch.await();
+            assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
+        } finally {
+            connection.close();
+        }
     }
 
 
@@ -175,7 +189,42 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
     }
 
-    private static final class SingleConnectionAsyncSession implements AsyncServerSelectingSession {
+    private static final class SingleConnectionAsyncServerSelectingSession implements AsyncServerSelectingSession {
+        private AsyncServerConnection connection;
+        private boolean isClosed;
+
+        public SingleConnectionAsyncServerSelectingSession(final AsyncServerConnection connection) {
+            this.connection = connection;
+        }
+
+        public <T> MongoFuture<T> execute(final AsyncServerSelectingOperation<T> operation) {
+            final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
+
+            operation.execute(connection).register(
+                    new ConnectionClosingSingleResultCallback<T>(new DelayedCloseAsyncConnection(connection), retVal));
+
+            return retVal;
+        }
+
+        @Override
+        public <T> MongoFuture<AsyncSession> getBoundSession(final AsyncServerSelectingOperation<T> operation,
+                                                             final SessionBindingType sessionBindingType) {
+            return new SingleResultFuture<AsyncSession>(
+                    new SingleConnectionAsyncSession(new DelayedCloseAsyncConnection(connection)), null);
+        }
+
+        @Override
+        public void close() {
+            isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed;
+        }
+    }
+
+    private static final class SingleConnectionAsyncSession implements AsyncSession {
         private AsyncServerConnection connection;
         private boolean isClosed;
 
@@ -183,19 +232,21 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             this.connection = connection;
         }
 
+        /**
+         * Executes the given operation.
+         *
+         * @param operation the operation to execute
+         * @param <T>       the return type of the operation
+         * @return a future for the result of the operation
+         */
         @Override
-        public MongoFuture<AsyncServerConnection> getConnection(final ServerSelector serverSelector) {
-            return getConnection();
-        }
+        public <T> MongoFuture<T> execute(final AsyncOperation<T> operation) {
+            final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
-        @Override
-        public AsyncSession getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
-            return new SingleConnectionAsyncSession(new DelayedCloseAsyncConnection(connection));
-        }
+            operation.execute(connection).register(
+                    new ConnectionClosingSingleResultCallback<T>(new DelayedCloseAsyncConnection(connection), retVal));
 
-        @Override
-        public MongoFuture<AsyncServerConnection> getConnection() {
-            return new SingleResultFuture<AsyncServerConnection>(new DelayedCloseAsyncConnection(connection), null);
+            return retVal;
         }
 
         @Override
@@ -255,6 +306,22 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         public ServerDescription getDescription() {
             isTrue("open", !isClosed());
             return wrapped.getDescription();
+        }
+    }
+
+    private static class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
+        private final AsyncConnection connection;
+        private final SingleResultFuture<T> retVal;
+
+        public ConnectionClosingSingleResultCallback(final AsyncConnection connection, final SingleResultFuture<T> retVal) {
+            this.connection = connection;
+            this.retVal = retVal;
+        }
+
+        @Override
+        public void onResult(final T result, final MongoException e) {
+            connection.close();
+            retVal.init(result, e);
         }
     }
 }

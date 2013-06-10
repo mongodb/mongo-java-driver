@@ -16,23 +16,22 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.QueryMessage;
-import org.mongodb.session.AsyncSession;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class AsyncQueryOperation<T> {
+public class AsyncQueryOperation<T> implements AsyncServerSelectingOperation<QueryResult<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
@@ -48,26 +47,7 @@ public class AsyncQueryOperation<T> {
         this.resultDecoder = resultDecoder;
     }
 
-    public MongoFuture<QueryResult<T>> execute(final AsyncSession session) {
-
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-
-        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
-            @Override
-            public void onResult(final AsyncServerConnection connection, final MongoException e) {
-                if (e != null) {
-                   retVal.init(null, e);
-                }
-                else {
-                    MongoFuture<QueryResult<T>> wrapped = execute(connection);
-                    wrapped.register(new ConnectionClosingSingleResultCallback<QueryResult<T>>(connection, retVal));
-                }
-            }
-        });
-
-        return retVal;
-    }
-
+    @Override
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
@@ -80,5 +60,15 @@ public class AsyncQueryOperation<T> {
                         new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection, buffer, message.getId()));
 
         return retVal;
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new ReadPreferenceServerSelector(find.getReadPreference());
+    }
+
+    @Override
+    public boolean isQuery() {
+        return true;
     }
 }

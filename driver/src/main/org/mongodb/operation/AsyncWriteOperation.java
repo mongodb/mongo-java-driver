@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.MongoException;
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -24,17 +24,18 @@ import org.mongodb.command.GetLastError;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
-import org.mongodb.session.AsyncSession;
+import org.mongodb.session.PrimaryServerSelector;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public abstract class AsyncWriteOperation {
+public abstract class AsyncWriteOperation implements AsyncServerSelectingOperation<CommandResult> {
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
@@ -43,25 +44,7 @@ public abstract class AsyncWriteOperation {
         this.bufferProvider = bufferProvider;
     }
 
-    public MongoFuture<CommandResult> execute(final AsyncSession session) {
-        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-
-        session.getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
-            @Override
-            public void onResult(final AsyncServerConnection connection, final MongoException e) {
-                if (e != null) {
-                    retVal.init(null, e);
-                }
-                else {
-                    MongoFuture<CommandResult> wrapped = execute(connection);
-                    wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
-                }
-            }
-        });
-
-        return retVal;
-    }
-
+    @Override
     public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
         execute(connection, new SingleResultFutureCallback<CommandResult>(retVal));
@@ -87,6 +70,16 @@ public abstract class AsyncWriteOperation {
             connection.sendMessage(buffer.getByteBuffers(), new WriteResultCallback(callback, getWrite(), null, new DocumentCodec(),
                     getNamespace(), nextMessage, connection, buffer, bufferProvider));
         }
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new PrimaryServerSelector();
+    }
+
+    @Override
+    public boolean isQuery() {
+        return false;
     }
 
     protected abstract RequestMessage createRequestMessage(final MessageSettings settings);

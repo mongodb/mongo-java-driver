@@ -16,35 +16,35 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.CommandMessage;
-import org.mongodb.session.AsyncServerSelectingSession;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class AsyncCommandOperation {
+public class AsyncCommandOperation implements AsyncServerSelectingOperation<CommandResult> {
 
     private final Command command;
     private final Codec<Document> codec;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final ClusterDescription clusterDescription;
 
     public AsyncCommandOperation(final String database, final Command command, final Codec<Document> codec,
                                  final ClusterDescription clusterDescription, final BufferProvider bufferProvider) {
+        this.clusterDescription = clusterDescription;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.bufferProvider = bufferProvider;
-        command.readPreference(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
         this.command = command;
         this.codec = codec;
     }
@@ -53,26 +53,7 @@ public class AsyncCommandOperation {
         return command;
     }
 
-    public MongoFuture<CommandResult> execute(final AsyncServerSelectingSession session) {
-        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-
-        session.getConnection(new ReadPreferenceServerSelector(command.getReadPreference()))
-                .register(new SingleResultCallback<AsyncServerConnection>() {
-                    @Override
-                    public void onResult(final AsyncServerConnection connection, final MongoException e) {
-                        if (e != null) {
-                            retVal.init(null, e);
-                        }
-                        else {
-                            MongoFuture<CommandResult> wrapped = execute(connection);
-                            wrapped.register(new ConnectionClosingSingleResultCallback<CommandResult>(connection, retVal));
-                        }
-                    }
-                });
-
-        return retVal;
-    }
-
+    @Override
     public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
@@ -85,5 +66,15 @@ public class AsyncCommandOperation {
                         new SingleResultFutureCallback<CommandResult>(retVal), command, codec, connection, buffer, message.getId()));
 
         return retVal;
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new ReadPreferenceServerSelector(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
+    }
+
+    @Override
+    public boolean isQuery() {
+        return CommandReadPreferenceHelper.isQuery(command);
     }
 }

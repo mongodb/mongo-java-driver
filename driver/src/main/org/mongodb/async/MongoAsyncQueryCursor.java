@@ -23,14 +23,15 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.AsyncGetMoreDiscardOperation;
 import org.mongodb.operation.AsyncGetMoreOperation;
+import org.mongodb.operation.AsyncGetMoreReceiveOperation;
 import org.mongodb.operation.AsyncQueryOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.AsyncSession;
@@ -43,33 +44,48 @@ import static org.mongodb.session.SessionBindingType.Server;
 public class MongoAsyncQueryCursor<T> {
     private final MongoNamespace namespace;
     private final Find find;
-    private Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
     private final BufferProvider bufferProvider;
-    private final AsyncSession session;
+    private final MongoFuture<AsyncSession> sessionFuture;
     private final AsyncBlock<? super T> block;
     private long numFetchedSoFar;
     private ServerCursor cursor;
+    private final AsyncQueryOperation<T> operation;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                                  final Decoder<T> decoder, final BufferProvider bufferProvider,
                                  final AsyncServerSelectingSession initialSession, final AsyncBlock<? super T> block) {
         this.namespace = namespace;
         this.find = find;
-        this.queryEncoder = queryEncoder;
         this.decoder = decoder;
         this.bufferProvider = bufferProvider;
         this.block = block;
-        this.session = initialSession.getBoundSession(new ReadPreferenceServerSelector(find.getReadPreference()),
+        this.operation = new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferProvider);
+        this.sessionFuture = initialSession.getBoundSession(operation,
                 find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
     }
 
     public void start() {
-        new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferProvider).execute(session)
-                .register(new QueryResultSingleResultCallback());
+        sessionFuture.register(new SingleResultCallback<AsyncSession>() {
+            @Override
+            public void onResult(final AsyncSession result, final MongoException e) {
+                if (e != null) {
+                   // TODO: report error to block
+                }
+                else {
+                    result.execute(operation).register(new QueryResultSingleResultCallback(result));
+                }
+            }
+        });
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
+        private AsyncSession session;
+
+        public QueryResultSingleResultCallback(final AsyncSession session) {
+            this.session = session;
+        }
+
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (e != null) {
@@ -99,13 +115,14 @@ public class MongoAsyncQueryCursor<T> {
             }
             else {
                 // get more results
-                AsyncGetMoreOperation<T> getMoreOperation = new AsyncGetMoreOperation<T>(namespace,
-                        new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(), numFetchedSoFar), decoder, bufferProvider);
                 if (find.getOptions().contains(QueryOption.Exhaust)) {
-                    getMoreOperation.executeReceive(session, result.getRequestId()).register(this);
+                    session.execute(new AsyncGetMoreReceiveOperation<T>(decoder, result.getRequestId())).register(this);
                 }
                 else {
-                    getMoreOperation.execute(session).register(this);
+                    session.execute(
+                            new AsyncGetMoreOperation<T>(namespace, new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
+                                    numFetchedSoFar), decoder, bufferProvider))
+                            .register(this);
                 }
             }
         }
@@ -121,9 +138,7 @@ public class MongoAsyncQueryCursor<T> {
         }
 
         private void handleExhaustCleanup(final int responseTo) {
-            MongoFuture<Void> future = new AsyncGetMoreOperation<T>(namespace, new GetMore(cursor, find.getLimit(),
-                    find.getBatchSize(),
-                    numFetchedSoFar), null, bufferProvider).executeDiscard(session, responseTo);
+            MongoFuture<Void> future = session.execute(new AsyncGetMoreDiscardOperation(cursor != null ? cursor.getId() : 0, responseTo));
             future.register(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {

@@ -17,6 +17,7 @@
 package org.mongodb.session;
 
 
+import org.mongodb.AsyncOperation;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.NotThreadSafe;
@@ -24,6 +25,7 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.SingleResultFuture;
 
@@ -32,7 +34,6 @@ import java.util.concurrent.Executor;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 /**
- *
  * @since 3.0
  */
 @NotThreadSafe
@@ -49,8 +50,45 @@ class SingleServerAsyncSession implements AsyncSession {
         this.executor = executor;
     }
 
+    /**
+     * Executes the given operation.
+     *
+     * @param operation the operation to execute
+     * @param <T>       the return type of the operation
+     * @return a future for the result of the operation
+     */
     @Override
-    public MongoFuture<AsyncServerConnection> getConnection() {
+    public <T> MongoFuture<T> execute(final AsyncOperation<T> operation) {
+        final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
+
+        getConnection().register(new SingleResultCallback<AsyncServerConnection>() {
+            @Override
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<T> wrapped = operation.execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<T>(connection, retVal));
+                }
+            }
+        });
+
+        return retVal;
+
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+    private MongoFuture<AsyncServerConnection> getConnection() {
         isTrue("open", !isClosed());
 
         final SingleResultFuture<AsyncServerConnection> retVal = new SingleResultFuture<AsyncServerConnection>();
@@ -70,16 +108,6 @@ class SingleServerAsyncSession implements AsyncSession {
         });
 
         return retVal;
-    }
-
-    @Override
-    public void close() {
-        isClosed = true;
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
     }
 
     private synchronized Server getServer() {

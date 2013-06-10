@@ -44,6 +44,6 @@ public class AsyncCommandOperationTest {
         AsyncCommandOperation operation = new AsyncCommandOperation("test",
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
                 new DocumentCodec(), clusterDescription, getBufferProvider());
-        assertEquals(primary(), operation.getCommand().getReadPreference());
+        assertEquals(new ReadPreferenceServerSelector(primary()), operation.getServerSelector());
     }
 }

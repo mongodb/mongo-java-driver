@@ -16,12 +16,14 @@
 
 package org.mongodb.session;
 
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.SingleResultFuture;
 
@@ -40,9 +42,62 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
         this.executor = executor;
     }
 
+    public <T> MongoFuture<T> execute(final AsyncServerSelectingOperation<T> operation) {
+        final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
+
+        getConnection(operation.getServerSelector()).register(new SingleResultCallback<AsyncServerConnection>() {
+            @Override
+            public void onResult(final AsyncServerConnection connection, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                }
+                else {
+                    MongoFuture<T> wrapped = operation.execute(connection);
+                    wrapped.register(new ConnectionClosingSingleResultCallback<T>(connection, retVal));
+                }
+            }
+        });
+
+        return retVal;
+    }
 
     @Override
-    public MongoFuture<AsyncServerConnection> getConnection(final ServerSelector serverSelector) {
+    public <T> MongoFuture<AsyncSession> getBoundSession(final AsyncServerSelectingOperation<T> operation,
+                                                         final SessionBindingType sessionBindingType) {
+        isTrue("open", !isClosed());
+
+        final SingleResultFuture<AsyncSession> retVal = new SingleResultFuture<AsyncSession>();
+        if (sessionBindingType == SessionBindingType.Connection) {
+            getConnection(operation.getServerSelector()).register(new SingleResultCallback<AsyncServerConnection>() {
+                @Override
+                public void onResult(final AsyncServerConnection result, final MongoException e) {
+                    if (e != null) {
+                        retVal.init(null, e);
+                    }
+                    else {
+                        retVal.init(new SingleConnectionAsyncSession(result), null);
+                    }
+                }
+            });
+        }
+        else {
+            retVal.init(new SingleServerAsyncSession(operation.getServerSelector(), cluster, executor), null);
+        }
+        return retVal;
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+
+    private MongoFuture<AsyncServerConnection> getConnection(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
         final SingleResultFuture<AsyncServerConnection> retVal = new SingleResultFuture<AsyncServerConnection>();
@@ -65,34 +120,5 @@ public class AsyncClusterSession implements AsyncServerSelectingSession {
         });
 
         return retVal;
-    }
-
-    @Override
-    public MongoFuture<AsyncServerConnection> getConnection() {
-        isTrue("open", !isClosed());
-
-        return getConnection(new PrimaryServerSelector());
-    }
-
-    @Override
-    public AsyncSession getBoundSession(final ServerSelector serverSelector, final SessionBindingType sessionBindingType) {
-        isTrue("open", !isClosed());
-
-        if (sessionBindingType == SessionBindingType.Connection) {
-            return new SingleConnectionAsyncSession(serverSelector, this);
-        }
-        else {
-            return new SingleServerAsyncSession(serverSelector, cluster, executor);
-        }
-    }
-
-    @Override
-    public void close() {
-        isClosed = true;
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
     }
 }

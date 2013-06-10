@@ -16,8 +16,7 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.ServerSelector;
+import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.operation.MongoFuture;
 
 /**
@@ -25,16 +24,16 @@ import org.mongodb.operation.MongoFuture;
  *
  * @since 3.0
  */
-public interface AsyncServerSelectingSession extends AsyncSession {
+public interface AsyncServerSelectingSession {
 
     /**
-     * Gets a connection from a server that satisfies the given server selector.
+     * Executes the given operation.
      *
-     *
-     * @param serverSelector the server selector to use when choosing a server to get a connection from.
-     * @return a future for a connection
+     * @param operation the operation to execute
+     * @param <T> the result type of the operation
+     * @return a future representing the result of executing the operation
      */
-    MongoFuture<AsyncServerConnection> getConnection(ServerSelector serverSelector);
+    <T> MongoFuture<T> execute(AsyncServerSelectingOperation<T> operation);
 
     /**
      * Gets a new session that is bound to a single server or a single connection, based on the given binding type.  In the former case,
@@ -44,9 +43,13 @@ public interface AsyncServerSelectingSession extends AsyncSession {
      * Care should be taken to not close this session until after any bound sessions that came from it are also closed.
      * </p>
      *
-     * @param serverSelector the server selector to use when binding the session
+     * @param operation     the operation whose server selector is used to bind the session
      * @param sessionBindingType the binding type
-     * @return the bound session
+     * @return a future for the bound session
      */
-    AsyncSession getBoundSession(ServerSelector serverSelector, SessionBindingType sessionBindingType);
+    <T> MongoFuture<AsyncSession> getBoundSession(AsyncServerSelectingOperation<T> operation, SessionBindingType sessionBindingType);
+
+    void close();
+
+    boolean isClosed();
 }
