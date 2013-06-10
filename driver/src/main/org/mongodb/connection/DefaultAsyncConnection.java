@@ -26,6 +26,8 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
@@ -66,37 +68,33 @@ class DefaultAsyncConnection implements AsyncConnection {
         return isClosed;
     }
 
-    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        sendOneWayMessage(buffer, new AsyncCompletionHandler() {
+        sendOneWayMessage(byteBuffers, new AsyncCompletionHandler() {
             @Override
-            public void completed(final int bytesWritten) {
-                buffer.close();
+            public void completed() {
                 callback.onResult(null, null);
             }
 
             @Override
             public void failed(final Throwable t) {
-                buffer.close();
                 callback.onResult(null, new MongoInternalException("", t));  // TODO
             }
         });
     }
 
-    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         final long start = System.nanoTime();
-        sendOneWayMessage(buffer, new AsyncCompletionHandler() {
+        sendOneWayMessage(byteBuffers, new AsyncCompletionHandler() {
             @Override
-            public void completed(final int bytesWritten) {
-                buffer.close();
+            public void completed() {
                 receiveMessage(responseSettings, start, callback);
             }
 
             @Override
             public void failed(final Throwable t) {
-                buffer.close();
                 callback.onResult(null, new MongoException("", t));  // TODO
             }
         });
@@ -113,8 +111,45 @@ class DefaultAsyncConnection implements AsyncConnection {
         fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, start, callback));
     }
 
-    private void sendOneWayMessage(final AsyncOutputBuffer buffer, final AsyncCompletionHandler handler) {
-        buffer.pipe(new AsyncWritableByteChannelAdapter(), handler);
+    private void sendOneWayMessage(final List<ByteBuf> byteBuffers, final AsyncCompletionHandler handler) {
+        final AsyncWritableByteChannel byteChannel = new AsyncWritableByteChannelAdapter();
+        final Iterator<ByteBuf> iter = byteBuffers.iterator();
+        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler() {
+            @Override
+            public void completed() {
+                if (iter.hasNext()) {
+                    pipeOneBuffer(byteChannel, iter.next(), this);
+                }
+                else {
+                    handler.completed();
+                }
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                handler.failed(t);
+            }
+        });
+    }
+
+    private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
+                               final AsyncCompletionHandler outerHandler) {
+        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler() {
+            @Override
+            public void completed() {
+                if (byteBuffer.hasRemaining()) {
+                    byteChannel.write(byteBuffer.asNIO(), this);
+                }
+                else {
+                    outerHandler.completed();
+                }
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                outerHandler.failed(t);
+            }
+        });
     }
 
     private void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
@@ -151,7 +186,7 @@ class DefaultAsyncConnection implements AsyncConnection {
     private void ensureOpen(final AsyncCompletionHandler handler) {
         try {
             if (channel != null) {
-                handler.completed(0);
+                handler.completed();
             }
             else {
                 channel = AsynchronousSocketChannel.open();
@@ -159,7 +194,7 @@ class DefaultAsyncConnection implements AsyncConnection {
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
                     @Override
                     public void completed(final Void result, final Object attachment) {
-                        handler.completed(0);
+                        handler.completed();
                     }
 
                     @Override
@@ -179,11 +214,11 @@ class DefaultAsyncConnection implements AsyncConnection {
         public void write(final ByteBuffer src, final AsyncCompletionHandler handler) {
             ensureOpen(new AsyncCompletionHandler() {
                 @Override
-                public void completed(final int bytesWritten) {
+                public void completed() {
                     channel.write(src, null, new CompletionHandler<Integer, Object>() {
                         @Override
                         public void completed(final Integer result, final Object attachment) {
-                            handler.completed(result);
+                            handler.completed();
                         }
 
                         @Override

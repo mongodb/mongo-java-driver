@@ -17,16 +17,14 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
+import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
+public class PooledByteBufferOutputBuffer extends OutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     public static final int MAX_BUFFER_SIZE = 1 << 24;
@@ -108,48 +106,21 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
     }
 
     @Override
+    public List<ByteBuf> getByteBuffers() {
+        List<ByteBuf> buffers = new ArrayList<ByteBuf>(bufferList.size());
+        for (final ByteBuf cur : bufferList) {
+            buffers.add(cur.duplicate().flip());
+        }
+        return buffers;
+    }
+
+
+    @Override
     public void pipe(final OutputStream out) throws IOException {
         for (final ByteBuf cur : bufferList) {
             cur.flip();
             out.write(cur.array(), 0, cur.limit());
         }
-    }
-
-    @Override
-    public void pipe(final GatheringByteChannel channel) throws IOException {
-        for (final ByteBuf cur : bufferList) {
-            cur.flip();
-        }
-
-        for (long bytesRead = 0; bytesRead < size();/*bytesRead incremented elsewhere*/) {
-            ByteBuffer[] byteBuffers = new ByteBuffer[bufferList.size()];
-            for (int i = 0; i < bufferList.size(); i++) {
-                byteBuffers[i] = bufferList.get(i).asNIO();
-            }
-            bytesRead += channel.write(byteBuffers);
-        }
-    }
-
-
-    @Override
-    public void pipe(final AsyncWritableByteChannel channel, final AsyncCompletionHandler handler) {
-        final Iterator<ByteBuf> iter = bufferList.iterator();
-        pipeOneBuffer(channel, iter.next(), new AsyncCompletionHandler() {
-            @Override
-            public void completed(final int bytesWritten) {
-                if (iter.hasNext()) {
-                    pipeOneBuffer(channel, iter.next(), this);
-                }
-                else {
-                    handler.completed(size());
-                }
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                handler.failed(t);
-            }
-        });
     }
 
     @Override
@@ -169,27 +140,6 @@ public class PooledByteBufferOutputBuffer extends AsyncOutputBuffer {
 
         curBufferIndex = bufferPositionPair.bufferIndex;
         position = newPosition;
-    }
-
-    private void pipeOneBuffer(final AsyncWritableByteChannel channel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler outerHandler) {
-        byteBuffer.flip();
-        channel.write(byteBuffer.asNIO(), new AsyncCompletionHandler() {
-            @Override
-            public void completed(final int bytesWritten) {
-                if (byteBuffer.hasRemaining()) {
-                    channel.write(byteBuffer.asNIO(), this);
-                }
-                else {
-                    outerHandler.completed(byteBuffer.limit());
-                }
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                outerHandler.failed(t);
-            }
-        });
     }
 
     @Override

@@ -16,13 +16,15 @@
 
 package org.mongodb.session;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
+
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -36,9 +38,9 @@ class DelayedCloseConnection extends DelayedCloseBaseConnection implements Serve
     }
 
     @Override
-    public void sendMessage(final OutputBuffer buffer) {
+    public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", !isClosed());
-        wrapped.sendMessage(buffer);
+        wrapped.sendMessage(byteBuffers);
     }
 
     @Override

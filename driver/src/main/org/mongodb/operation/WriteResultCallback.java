@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
@@ -38,15 +39,16 @@ class WriteResultCallback extends CommandResultBaseCallback {
     public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
+                               final OutputBuffer writtenBuffer,
                                final BufferProvider bufferProvider) {
-        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, bufferProvider, 0);
+        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, writtenBuffer, bufferProvider, 0);
     }
 
     public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
-                               final BufferProvider bufferProvider, final long requestId) {
-        super(getLastError, decoder, connection, requestId);
+                               final OutputBuffer writtenBuffer, final BufferProvider bufferProvider, final long requestId) {
+        super(getLastError, decoder, connection, writtenBuffer, requestId);
         this.callback = callback;
         this.writeOperation = writeOperation;
         this.getLastError = getLastError;

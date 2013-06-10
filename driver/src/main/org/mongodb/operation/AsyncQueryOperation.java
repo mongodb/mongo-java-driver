@@ -68,9 +68,9 @@ public class AsyncQueryOperation<T> extends AsyncOperation {
         final QueryMessage message = new QueryMessage(getNamespace().getFullName(), find, queryEncoder,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), message.getId()),
+        connection.sendAndReceiveMessage(buffer.getByteBuffers(), getResponseSettings(connection.getDescription(), message.getId()),
                 new QueryResultCallback<T>(
-                        new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection, message.getId()));
+                        new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection, buffer, message.getId()));
 
         return retVal;
     }

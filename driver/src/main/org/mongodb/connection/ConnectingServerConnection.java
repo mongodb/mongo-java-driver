@@ -16,7 +16,9 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
+
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -36,8 +38,8 @@ public class ConnectingServerConnection implements ServerConnection {
     }
 
     @Override
-    public void sendMessage(final OutputBuffer buffer) {
-        connection.sendMessage(buffer);
+    public void sendMessage(final List<ByteBuf> byteBuffers) {
+        connection.sendMessage(byteBuffers);
     }
 
     @Override

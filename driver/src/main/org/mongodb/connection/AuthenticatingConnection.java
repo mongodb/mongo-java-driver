@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.mongodb.MongoCredential;
 
 import java.util.List;
@@ -54,10 +54,10 @@ class AuthenticatingConnection implements Connection {
     }
 
     @Override
-    public void sendMessage(final OutputBuffer buffer) {
+    public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", wrapped != null);
         authenticator.authenticateAll();
-        wrapped.sendMessage(buffer);
+        wrapped.sendMessage(byteBuffers);
     }
 
     @Override

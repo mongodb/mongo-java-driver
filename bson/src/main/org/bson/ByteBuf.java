@@ -306,6 +306,43 @@ public interface ByteBuf extends Closeable {
      */
     ByteBuf limit(int newLimit);
 
+
+    /**
+     * Creates a new, read-only byte buffer that shares this buffer's
+     * content.
+     *
+     * <p> The content of the new buffer will be that of this buffer.  Changes
+     * to this buffer's content will be visible in the new buffer; the new
+     * buffer itself, however, will be read-only and will not allow the shared
+     * content to be modified.  The two buffers' position, limit, and mark
+     * values will be independent.
+     *
+     * <p> The new buffer's capacity, limit, position, and mark values will be
+     * identical to those of this buffer.
+     *
+     * @return  The new, read-only byte buffer
+     */
+    ByteBuf asReadOnly();
+
+
+    /**
+     * Creates a new byte buffer that shares this buffer's content.
+     *
+     * <p> The content of the new buffer will be that of this buffer.  Changes
+     * to this buffer's content will be visible in the new buffer, and vice
+     * versa; the two buffers' position, limit, and mark values will be
+     * independent.
+     *
+     * <p> The new buffer's capacity, limit, position, and mark values will be
+     * identical to those of this buffer.  The new buffer will be direct if,
+     * and only if, this buffer is direct, and it will be read-only if, and
+     * only if, this buffer is read-only.
+     * </p>
+     *
+     * @return  The new byte buffer
+     */
+     ByteBuf duplicate();
+
     /**
      * Gets the underlying NIO {@code ByteBuffer}.  Changes made directly to the returned buffer will be
      * reflected in this instance, and vice versa, so be careful.  This method should really only be used

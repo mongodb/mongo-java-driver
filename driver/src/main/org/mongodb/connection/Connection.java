@@ -16,11 +16,13 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
+
+import java.util.List;
 
 public interface Connection extends BaseConnection {
 
-    void sendMessage(OutputBuffer buffer);
+    void sendMessage(final List<ByteBuf> byteBuffers);
 
     ResponseBuffers receiveMessage(final ResponseSettings responseSettings);
 }

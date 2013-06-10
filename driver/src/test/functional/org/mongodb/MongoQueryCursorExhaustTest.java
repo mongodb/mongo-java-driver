@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.BaseConnection;
@@ -33,6 +33,7 @@ import org.mongodb.session.Session;
 import org.mongodb.session.SessionBindingType;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferProvider;
@@ -137,9 +138,9 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendMessage(final OutputBuffer buffer) {
+        public void sendMessage(final List<ByteBuf> byteBuffers) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(buffer);
+            wrapped.sendMessage(byteBuffers);
         }
 
         @Override

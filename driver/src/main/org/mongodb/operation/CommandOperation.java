@@ -60,7 +60,7 @@ public class CommandOperation extends Operation {
             final CommandMessage message = new CommandMessage(getNamespace().getFullName(), command, codec,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
-            connection.sendMessage(buffer);
+            connection.sendMessage(buffer.getByteBuffers());
             final ResponseBuffers responseBuffers = connection.receiveMessage(
                     getResponseSettings(connection.getDescription(), message.getId()));
             try {

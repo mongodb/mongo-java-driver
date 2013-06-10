@@ -60,7 +60,7 @@ public abstract class WriteOperation extends Operation {
                         MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastError,
                         codec, getMessageSettings(connection.getDescription()));
                 getLastErrorMessage.encode(buffer);
-                connection.sendMessage(buffer);
+                connection.sendMessage(buffer.getByteBuffers());
                 ResponseBuffers responseBuffers = connection.receiveMessage(
                         getResponseSettings(connection.getDescription(), getLastErrorMessage.getId()));
                 try {
@@ -71,7 +71,7 @@ public abstract class WriteOperation extends Operation {
                 }
             }
             else {
-                connection.sendMessage(buffer);
+                connection.sendMessage(buffer.getByteBuffers());
             }
             return getLastErrorResult;
         } finally {

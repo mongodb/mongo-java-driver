@@ -16,6 +16,10 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+
+import java.util.List;
+
 import static org.mongodb.assertions.Assertions.notNull;
 
 class ConnectingAsyncServerConnection implements AsyncServerConnection {
@@ -29,14 +33,14 @@ class ConnectingAsyncServerConnection implements AsyncServerConnection {
     }
 
     @Override
-    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
-        connection.sendMessage(buffer, callback);
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+        connection.sendMessage(byteBuffers, callback);
     }
 
     @Override
-    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
-        connection.sendAndReceiveMessage(buffer, responseSettings, callback);
+        connection.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
     }
 
     @Override

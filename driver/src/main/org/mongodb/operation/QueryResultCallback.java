@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
@@ -31,8 +32,8 @@ class QueryResultCallback<T> extends ResponseCallback {
     private final Decoder<T> decoder;
 
     public QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                               final AsyncServerConnection connection, final int requestId) {
-        super(connection, requestId);
+                               final AsyncServerConnection connection, final OutputBuffer writtenBuffer, final int requestId) {
+        super(connection, writtenBuffer, requestId);
         this.callback = callback;
         this.decoder = decoder;
     }

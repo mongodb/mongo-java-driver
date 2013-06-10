@@ -16,9 +16,10 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -115,10 +116,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public void sendMessage(final OutputBuffer buffer) {
+        public void sendMessage(final List<ByteBuf> byteBuffers) {
             isTrue("open", wrapped != null);
             try {
-                wrapped.sendMessage(buffer);
+                wrapped.sendMessage(byteBuffers);
             } catch (MongoException e) {
                 handleException(e);
                 throw e;

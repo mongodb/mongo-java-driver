@@ -17,11 +17,11 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
-import org.bson.io.OutputBuffer;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 // TODO: migrate all the DBPort configuration
 class DefaultSocketConnection extends DefaultConnection {
@@ -47,11 +47,9 @@ class DefaultSocketConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final OutputBuffer buffer) throws IOException {
-        try {
-            buffer.pipe(socket.getOutputStream());
-        } finally {
-            buffer.close();
+    protected void sendOneWayMessage(final List<ByteBuf> byteBufList) throws IOException {
+        for (ByteBuf cur : byteBufList) {
+            socket.getOutputStream().write(cur.array(), 0, cur.limit());
         }
     }
 

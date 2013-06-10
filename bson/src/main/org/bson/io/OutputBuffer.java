@@ -18,10 +18,12 @@
 
 package org.bson.io;
 
+import org.bson.ByteBuf;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.GatheringByteChannel;
+import java.util.List;
 
 public abstract class OutputBuffer extends OutputStream {
 
@@ -50,13 +52,23 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract void pipe(OutputStream out) throws IOException;
 
     /**
-     * Pipe the contents of the buffer into the given  channel
+     * Get a list of byte buffers that are prepared to be read from; in other words, whose position is 0 and whose limit is the number of
+     * bytes that should read.
+     * <p>
+     * Note that the byte buffers may be read-only.
+     * </p>
      *
-     * @param channel the channel to pipe to
+     * @return the non-null list of byte buffers.
      */
-    public abstract void pipe(GatheringByteChannel channel) throws IOException;
+    public abstract List<ByteBuf> getByteBuffers();
 
-    public abstract void truncateToPosition(final int newPosition);
+    /**
+     * Truncates the buffer to the given new position, which must be greater than or equal to zero and less than or equal to the current
+     * size of this buffer.
+     *
+     * @param newPosition the position to truncate this buffer to
+     */
+    public abstract void truncateToPosition(int newPosition);
 
     /**
      * mostly for testing

@@ -16,6 +16,9 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -117,16 +120,16 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
         }
 
         @Override
-        public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(buffer, callback);
+            wrapped.sendMessage(byteBuffers, callback);
         }
 
         @Override
-        public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+        public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                           final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);
+            wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
         }
 
         @Override

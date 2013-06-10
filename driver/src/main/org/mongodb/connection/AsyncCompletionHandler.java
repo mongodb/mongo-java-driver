@@ -25,7 +25,7 @@ interface AsyncCompletionHandler {
      * Invoked when an operation has completed.
      *
      */
-    void completed(int bytesWritten);
+    void completed();
 
     /**
      * Invoked when an operation fails.

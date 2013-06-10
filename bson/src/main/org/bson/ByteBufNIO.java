@@ -141,6 +141,16 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public ByteBuf asReadOnly() {
+        return new ByteBufNIO(buf.asReadOnlyBuffer());
+    }
+
+    @Override
+    public ByteBuf duplicate() {
+        return new ByteBufNIO(buf.duplicate());
+    }
+
+    @Override
     public ByteBuffer asNIO() {
         return buf;
     }

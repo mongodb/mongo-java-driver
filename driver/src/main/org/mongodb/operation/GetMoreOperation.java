@@ -73,7 +73,7 @@ public class GetMoreOperation<T> extends Operation {
             final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
-            connection.sendMessage(buffer);
+            connection.sendMessage(buffer.getByteBuffers());
             final ResponseBuffers responseBuffers = connection.receiveMessage(
                     getResponseSettings(connection.getDescription(), message.getId()));
             try {

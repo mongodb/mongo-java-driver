@@ -18,10 +18,14 @@
 
 package org.bson.io;
 
+import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
+import java.util.Arrays;
+import java.util.List;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
@@ -78,16 +82,16 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    public void pipe(final GatheringByteChannel channel) throws IOException {
-        channel.write(ByteBuffer.wrap(buffer, 0, size));
-    }
-
-    @Override
     public void truncateToPosition(final int newPosition) {
         if (newPosition > size || newPosition < 0) {
             throw new IllegalArgumentException();
         }
         size = newPosition;
+    }
+
+    @Override
+    public List<ByteBuf> getByteBuffers() {
+        return Arrays.<ByteBuf>asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, size).duplicate()));
     }
 
     private void ensure(final int more) {

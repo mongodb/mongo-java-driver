@@ -17,13 +17,13 @@
 package org.mongodb.async;
 
 import category.Async;
+import org.bson.ByteBuf;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.connection.AsyncOutputBuffer;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
@@ -223,16 +223,16 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(buffer, callback);
+            wrapped.sendMessage(byteBuffers, callback);
         }
 
         @Override
-        public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+        public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                           final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);
+            wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
         }
 
         @Override

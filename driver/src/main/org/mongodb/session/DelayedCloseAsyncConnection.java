@@ -16,13 +16,15 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.AsyncOutputBuffer;
+import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BaseConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
+
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
@@ -34,16 +36,16 @@ class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements 
     }
 
     @Override
-    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.sendMessage(buffer, callback);
+        wrapped.sendMessage(byteBuffers, callback);
     }
 
     @Override
-    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);
+        wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
     }
 
     @Override

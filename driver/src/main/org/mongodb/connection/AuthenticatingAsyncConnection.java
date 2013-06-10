@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 
@@ -55,7 +56,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
             @Override
@@ -64,14 +65,14 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
                     callback.onResult(null, e);
                 }
                 else {
-                    wrapped.sendMessage(buffer, callback);
+                    wrapped.sendMessage(byteBuffers, callback);
                 }
             }
         });
     }
 
     @Override
-    public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                       final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
@@ -81,7 +82,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
                     callback.onResult(null, e);
                 }
                 else {
-                    wrapped.sendAndReceiveMessage(buffer, responseSettings, callback);
+                    wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
                 }
             }
         });

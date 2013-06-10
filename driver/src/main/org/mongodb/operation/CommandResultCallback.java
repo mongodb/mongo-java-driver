@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.io.OutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
@@ -29,8 +30,8 @@ class CommandResultCallback extends CommandResultBaseCallback {
 
     public CommandResultCallback(final SingleResultCallback<CommandResult> callback,
                                  final Command commandOperation, final Decoder<Document> decoder,
-                                 final AsyncServerConnection connection, final long requestId) {
-        super(commandOperation, decoder, connection, requestId);
+                                 final AsyncServerConnection connection, final OutputBuffer writtenBuffer, final long requestId) {
+        super(commandOperation, decoder, connection, writtenBuffer, requestId);
         this.callback = callback;
     }
 

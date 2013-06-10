@@ -16,9 +16,10 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -113,7 +114,7 @@ public class DefaultConnectionProviderTest {
         public Connection create(final ServerAddress serverAddress) {
             return new Connection() {
                 @Override
-                public void sendMessage(final OutputBuffer buffer) {
+                public void sendMessage(final List<ByteBuf> byteBuffers) {
                     throw new UnsupportedOperationException();
                 }
 

@@ -110,10 +110,10 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final GetMoreMessage message = new GetMoreMessage(getNamespace().getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendAndReceiveMessage(buffer, getResponseSettings(connection.getDescription(), message.getId()),
+        connection.sendAndReceiveMessage(buffer.getByteBuffers(), getResponseSettings(connection.getDescription(), message.getId()),
                 new GetMoreResultCallback<T>(
                         new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(),
-                        connection, message.getId()));
+                        connection, buffer, message.getId()));
 
         return retVal;
     }
@@ -122,7 +122,7 @@ public class AsyncGetMoreOperation<T> extends AsyncOperation {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo), new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, getMore.getServerCursor().getId(), connection,
-                responseTo));
+                null, responseTo));
 
         return retVal;
     }

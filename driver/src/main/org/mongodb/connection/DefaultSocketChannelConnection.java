@@ -17,10 +17,11 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
-import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 
 // TODO: migrate all the DBPort configuration
 class DefaultSocketChannelConnection extends DefaultConnection {
@@ -44,11 +45,17 @@ class DefaultSocketChannelConnection extends DefaultConnection {
     }
 
     @Override
-    protected void sendOneWayMessage(final OutputBuffer buffer) throws IOException {
-        try {
-            buffer.pipe(socketChannel);
-        } finally {
-            buffer.close();
+    protected void sendOneWayMessage(final List<ByteBuf> byteBufList) throws IOException {
+        int totalSize = 0;
+        ByteBuffer[] byteBufferArray = new ByteBuffer[byteBufList.size()];
+        for (int i = 0; i < byteBufList.size(); i++) {
+            byteBufferArray[i] = byteBufList.get(i).asNIO();
+            totalSize += byteBufferArray[i].limit();
+        }
+
+        long bytesRead = 0;
+        while (bytesRead < totalSize) {
+            bytesRead += socketChannel.write(byteBufferArray);
         }
     }
 

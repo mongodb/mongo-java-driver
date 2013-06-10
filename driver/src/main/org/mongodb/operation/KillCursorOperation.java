@@ -46,7 +46,7 @@ public class KillCursorOperation extends Operation {
             final KillCursorsMessage message = new KillCursorsMessage(killCursor,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
-            connection.sendMessage(buffer);
+            connection.sendMessage(buffer.getByteBuffers());
         } finally {
             buffer.close();
         }

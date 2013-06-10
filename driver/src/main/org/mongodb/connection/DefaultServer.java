@@ -16,10 +16,11 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.OutputBuffer;
+import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -151,10 +152,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final OutputBuffer buffer) {
+        public void sendMessage(final List<ByteBuf> byteBuffers) {
             isTrue("open", !isClosed());
             try {
-                wrapped.sendMessage(buffer);
+                wrapped.sendMessage(byteBuffers);
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -206,16 +207,16 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(buffer, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendMessage(byteBuffers, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override
-        public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+        public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                           final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(buffer, responseSettings, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, new InvalidatingSingleResultCallback(callback));
         }
 
         @Override

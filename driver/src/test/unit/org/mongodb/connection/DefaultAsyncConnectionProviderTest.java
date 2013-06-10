@@ -16,8 +16,10 @@
 
 package org.mongodb.connection;
 
+import org.bson.ByteBuf;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -114,12 +116,12 @@ public class DefaultAsyncConnectionProviderTest {
         public AsyncConnection create(final ServerAddress serverAddress) {
             return new AsyncConnection() {
                 @Override
-                public void sendMessage(final AsyncOutputBuffer buffer, final SingleResultCallback<ResponseBuffers> callback) {
+                public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
-                public void sendAndReceiveMessage(final AsyncOutputBuffer buffer, final ResponseSettings responseSettings,
+                public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                                   final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }

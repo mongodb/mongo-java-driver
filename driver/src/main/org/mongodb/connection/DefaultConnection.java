@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
-import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
@@ -28,6 +27,7 @@ import java.io.InterruptedIOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.List;
 
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
@@ -37,8 +37,7 @@ abstract class DefaultConnection implements Connection {
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
 
-    DefaultConnection(final ServerAddress serverAddress, final DefaultConnectionSettings settings,
-                      final BufferProvider bufferProvider) {
+    DefaultConnection(final ServerAddress serverAddress, final DefaultConnectionSettings settings, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
@@ -62,10 +61,10 @@ abstract class DefaultConnection implements Connection {
         return settings;
     }
 
-    public void sendMessage(final OutputBuffer buffer) {
+    public void sendMessage(final List<ByteBuf> byteBuffers) {
         check();
         try {
-            sendOneWayMessage(buffer);
+            sendOneWayMessage(byteBuffers);
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -91,7 +90,7 @@ abstract class DefaultConnection implements Connection {
 
     protected abstract void ensureOpen();
 
-    protected abstract void sendOneWayMessage(final OutputBuffer buffer) throws IOException;
+    protected abstract void sendOneWayMessage(final List<ByteBuf> pipeline) throws IOException;
 
     protected abstract void fillAndFlipBuffer(final ByteBuf buffer) throws IOException;
 
