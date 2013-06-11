@@ -19,7 +19,6 @@ package org.mongodb.operation;
 import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
@@ -27,12 +26,10 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.CommandMessage;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class AsyncCommandOperation implements AsyncServerSelectingOperation<CommandResult> {
 
@@ -63,20 +60,10 @@ public class AsyncCommandOperation implements AsyncServerSelectingOperation<Comm
         final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendMessage(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                buffer.close();
-                if (e != null) {
-                    retVal.init(null, e);
-                }
-                else {
-                    connection.receiveMessage(getResponseSettings(connection.getDescription(), message.getId()),
-                            new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), command, codec, connection,
-                                    message.getId()));
-                }
-            }
-        });
+        connection.sendMessage(buffer.getByteBuffers(),
+                new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal,
+                        new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), command, codec, connection,
+                        message.getId())));
         return retVal;
     }
 

@@ -20,18 +20,15 @@ import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.QueryMessage;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class AsyncQueryOperation<T> implements AsyncServerSelectingOperation<QueryResult<T>> {
     private final Find find;
@@ -57,21 +54,11 @@ public class AsyncQueryOperation<T> implements AsyncServerSelectingOperation<Que
         final QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendMessage(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                buffer.close();
-                if (e != null) {
-                    retVal.init(null, e);
-                }
-                else {
-                    connection.receiveMessage(getResponseSettings(connection.getDescription(), message.getId()),
-                            new QueryResultCallback<T>(
-                                    new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection,
-                                    message.getId()));
-                }
-            }
-        });
+        connection.sendMessage(buffer.getByteBuffers(),
+                new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                        new QueryResultCallback<T>(
+                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, connection,
+                                message.getId())));
         return retVal;
     }
 

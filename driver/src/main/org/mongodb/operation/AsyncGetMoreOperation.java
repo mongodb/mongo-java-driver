@@ -18,17 +18,14 @@ package org.mongodb.operation;
 
 import org.mongodb.AsyncOperation;
 import org.mongodb.Decoder;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.GetMoreMessage;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class AsyncGetMoreOperation<T> implements AsyncOperation<QueryResult<T>> {
     private final GetMore getMore;
@@ -52,21 +49,11 @@ public class AsyncGetMoreOperation<T> implements AsyncOperation<QueryResult<T>> 
         final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                 getMessageSettings(connection.getDescription()));
         encodeMessageToBuffer(message, buffer);
-        connection.sendMessage(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                buffer.close();
-                if (e != null) {
-                    retVal.init(null, e);
-                }
-                else {
-                    connection.receiveMessage(getResponseSettings(connection.getDescription(), message.getId()),
-                            new GetMoreResultCallback<T>(
-                                    new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder,
-                                    getMore.getServerCursor().getId(), connection, message.getId()));
-                }
-            }
-        });
+        connection.sendMessage(buffer.getByteBuffers(),
+                new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                        new GetMoreResultCallback<T>(
+                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder,
+                                getMore.getServerCursor().getId(), connection, message.getId())));
         return retVal;
     }
 }
