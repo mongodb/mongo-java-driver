@@ -23,3 +23,7 @@ dependencies {
 sourceSets {
     main { java.srcDirs = ['src/main'] }
 }
+
+tasks.withType(Compile) {
+    onlyIf { JavaVersion.current().isJava7() }
+}
