@@ -47,32 +47,40 @@ public class GetMoreOperation<T> implements Operation<QueryResult<T>> {
 
     @Override
     public QueryResult<T> execute(final ServerConnection connection) {
+        return receiveMessage(connection, sendMessage(connection));
+    }
+
+    private GetMoreMessage sendMessage(final ServerConnection connection) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                     getMessageSettings(connection.getDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
-            final ResponseBuffers responseBuffers = connection.receiveMessage(
-                    getResponseSettings(connection.getDescription(), message.getId()));
-            try {
-                if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                    throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
-                }
-
-                if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                    final Document errorDocument =
-                            new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                    throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
-                }
-
-                return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
-                        connection.getServerAddress());
-            } finally {
-                responseBuffers.close();
-            }
+            return message;
         } finally {
             buffer.close();
+        }
+    }
+
+    private QueryResult<T> receiveMessage(final ServerConnection connection, final GetMoreMessage message) {
+        final ResponseBuffers responseBuffers = connection.receiveMessage(
+                getResponseSettings(connection.getDescription(), message.getId()));
+        try {
+            if (responseBuffers.getReplyHeader().isCursorNotFound()) {
+                throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
+            }
+
+            if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                final Document errorDocument =
+                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+            }
+
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
+                    connection.getServerAddress());
+        } finally {
+            responseBuffers.close();
         }
     }
 }

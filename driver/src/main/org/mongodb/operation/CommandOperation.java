@@ -55,23 +55,7 @@ public class CommandOperation implements ServerSelectingOperation<CommandResult>
     }
 
     public CommandResult execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        try {
-            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
-                    getMessageSettings(connection.getDescription()));
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
-            final ResponseBuffers responseBuffers = connection.receiveMessage(
-                    getResponseSettings(connection.getDescription(), message.getId()));
-            try {
-                ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-                return createCommandResult(command, replyMessage, connection);
-            } finally {
-                responseBuffers.close();
-            }
-        } finally {
-            buffer.close();
-        }
+        return receiveMessage(connection, sendMessage(connection));
     }
 
     @Override
@@ -82,5 +66,29 @@ public class CommandOperation implements ServerSelectingOperation<CommandResult>
     @Override
     public boolean isQuery() {
         return CommandReadPreferenceHelper.isQuery(command);
+    }
+
+    private CommandMessage sendMessage(final ServerConnection connection) {
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        try {
+            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
+            connection.sendMessage(buffer.getByteBuffers());
+            return message;
+        } finally {
+            buffer.close();
+        }
+    }
+
+    private CommandResult receiveMessage(final ServerConnection connection, final CommandMessage message) {
+        final ResponseBuffers responseBuffers = connection.receiveMessage(
+                getResponseSettings(connection.getDescription(), message.getId()));
+        try {
+            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
+            return createCommandResult(command, replyMessage, connection);
+        } finally {
+            responseBuffers.close();
+        }
     }
 }

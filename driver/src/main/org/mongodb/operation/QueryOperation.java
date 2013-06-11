@@ -51,31 +51,7 @@ public class QueryOperation<T> implements ServerSelectingOperation<QueryResult<T
 
     @Override
     public QueryResult<T> execute(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        try {
-            final QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
-                    getMessageSettings(connection.getDescription()));
-            message.encode(buffer);
-
-            connection.sendMessage(buffer.getByteBuffers());
-            final ResponseBuffers responseBuffers = connection.receiveMessage(
-                    getResponseSettings(connection.getDescription(), message.getId()));
-            try {
-                if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                    final Document errorDocument =
-                            new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                    throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
-                }
-                final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
-
-                return new QueryResult<T>(replyMessage, connection.getServerAddress());
-            } finally {
-                responseBuffers.close();
-            }
-        } finally {
-            buffer.close();
-        }
-
+        return receiveMessage(connection, sendMessage(connection));
     }
 
     @Override
@@ -86,5 +62,35 @@ public class QueryOperation<T> implements ServerSelectingOperation<QueryResult<T
     @Override
     public boolean isQuery() {
         return true;
+    }
+
+    private QueryMessage sendMessage(final ServerConnection connection) {
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        try {
+            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
+                    getMessageSettings(connection.getDescription()));
+            message.encode(buffer);
+            connection.sendMessage(buffer.getByteBuffers());
+            return message;
+        } finally {
+            buffer.close();
+        }
+    }
+
+    private QueryResult<T> receiveMessage(final ServerConnection connection, final QueryMessage message) {
+        final ResponseBuffers responseBuffers = connection.receiveMessage(
+                getResponseSettings(connection.getDescription(), message.getId()));
+        try {
+            if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                final Document errorDocument =
+                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+            }
+            final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
+
+            return new QueryResult<T>(replyMessage, connection.getServerAddress());
+        } finally {
+            responseBuffers.close();
+        }
     }
 }
