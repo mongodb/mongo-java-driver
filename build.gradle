@@ -151,9 +151,16 @@ project(':driver') {
     apply plugin: "groovy"
 
     sourceSets {
-        test { groovy.srcDirs = ['src/test/unit'] }
+        test {
+            groovy { srcDirs = ['src/test/unit'] }
+            java { srcDirs = ['src/test/unit'] }
+        }
+        functional {
+            java { srcDirs = ['src/test/functional'] }
+            groovy { srcDirs = ['src/test/functional'] }
+        }
+        //Note: no groovy/spock tests in acceptance, these are Java tests
         acceptance { java.srcDirs = ['src/test/acceptance'] }
-        functional { java.srcDirs = ['src/test/functional'] }
     }
 
     dependencies {
