@@ -207,22 +207,22 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(byteBuffers, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendMessage(byteBuffers, new InvalidatingSingleResultCallback<Void>(callback));
         }
 
         @Override
         public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
                                           final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, new InvalidatingSingleResultCallback(callback));
+            wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, new InvalidatingSingleResultCallback<ResponseBuffers>(callback));
         }
 
         @Override
         public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessage(responseSettings, new InvalidatingSingleResultCallback(callback));
+            wrapped.receiveMessage(responseSettings, new InvalidatingSingleResultCallback<ResponseBuffers>(callback));
         }
 
         @Override
@@ -244,15 +244,15 @@ class DefaultServer implements ClusterableServer {
         }
 
 
-        private final class InvalidatingSingleResultCallback implements SingleResultCallback<ResponseBuffers> {
-            private final SingleResultCallback<ResponseBuffers> callback;
+        private final class InvalidatingSingleResultCallback<T> implements SingleResultCallback<T> {
+            private final SingleResultCallback<T> callback;
 
-            public InvalidatingSingleResultCallback(final SingleResultCallback<ResponseBuffers> callback) {
+            public InvalidatingSingleResultCallback(final SingleResultCallback<T> callback) {
                 this.callback = callback;
             }
 
             @Override
-            public void onResult(final ResponseBuffers result, final MongoException e) {
+            public void onResult(final T result, final MongoException e) {
                 if (e != null) {
                     invalidate();
                 }

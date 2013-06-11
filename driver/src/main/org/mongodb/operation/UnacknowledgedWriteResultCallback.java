@@ -21,11 +21,10 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.RequestMessage;
 
-class UnacknowledgedWriteResultCallback implements SingleResultCallback<ResponseBuffers> {
+class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final SingleResultCallback<CommandResult> callback;
     private final BaseWrite writeOperation;
     private final MongoNamespace namespace;
@@ -48,7 +47,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Response
     }
 
     @Override
-    public void onResult(final ResponseBuffers result, final MongoException e) {
+    public void onResult(final Void result, final MongoException e) {
         writtenBuffer.close();
         if (e != null) {
             callback.onResult(null, e);

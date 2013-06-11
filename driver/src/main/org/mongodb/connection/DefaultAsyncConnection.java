@@ -68,7 +68,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         return isClosed;
     }
 
-    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
         isTrue("open", !isClosed());
         sendOneWayMessage(byteBuffers, new AsyncCompletionHandler() {
             @Override

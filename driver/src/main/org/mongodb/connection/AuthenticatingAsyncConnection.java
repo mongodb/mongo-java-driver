@@ -56,7 +56,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
             @Override

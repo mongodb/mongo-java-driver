@@ -116,7 +116,7 @@ public class DefaultAsyncConnectionProviderTest {
         public AsyncConnection create(final ServerAddress serverAddress) {
             return new AsyncConnection() {
                 @Override
-                public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+                public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
                     throw new UnsupportedOperationException();
                 }
 

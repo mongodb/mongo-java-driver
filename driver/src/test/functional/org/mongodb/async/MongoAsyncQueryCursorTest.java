@@ -274,7 +274,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed());
             wrapped.sendMessage(byteBuffers, callback);
         }

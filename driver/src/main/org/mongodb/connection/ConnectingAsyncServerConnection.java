@@ -33,7 +33,7 @@ class ConnectingAsyncServerConnection implements AsyncServerConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<ResponseBuffers> callback) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
         connection.sendMessage(byteBuffers, callback);
     }
 
