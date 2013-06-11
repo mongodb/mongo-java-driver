@@ -130,15 +130,14 @@ abstract class DefaultConnection implements Connection {
                     replyHeader.getMessageLength(), responseSettings.getMaxMessageSize()));
         }
 
-        BasicInputBuffer bodyInputBuffer = null;
+        ByteBuf bodyByteBuffer = null;
 
         if (replyHeader.getNumberReturned() > 0) {
-            ByteBuf bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
+            bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
             read(bodyByteBuffer);
-            bodyInputBuffer = new BasicInputBuffer(bodyByteBuffer);
         }
 
-        return new ResponseBuffers(replyHeader, bodyInputBuffer, System.nanoTime() - start);
+        return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
     }
 
     private void check() {

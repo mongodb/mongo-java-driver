@@ -19,6 +19,7 @@ package org.mongodb.operation.protocol;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
+import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.MongoInternalException;
@@ -34,25 +35,11 @@ public class ReplyMessage<T> {
     private final long elapsedNanoseconds;
     private final List<T> documents;
 
-    public ReplyMessage(final ReplyHeader replyHeader, final InputBuffer bodyInputBuffer,
-                        final Decoder<T> decoder, final long requestId, final long elapsedNanoseconds) {
-        this(replyHeader, requestId, elapsedNanoseconds);
-
-        while (documents.size() < replyHeader.getNumberReturned()) {
-            final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), bodyInputBuffer, false);
-            try {
-                documents.add(decoder.decode(reader));
-            } finally {
-                reader.close();
-            }
-        }
-    }
-
     public ReplyMessage(final ReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
         if (requestId != replyHeader.getResponseTo()) {
             throw new MongoInternalException(
                     String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                    replyHeader.getResponseTo(), requestId));
+                            replyHeader.getResponseTo(), requestId));
         }
 
         if (replyHeader.getOpCode() != RequestMessage.OpCode.OP_REPLY.getValue()) {
@@ -66,8 +53,23 @@ public class ReplyMessage<T> {
     }
 
     public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
-        this(responseBuffers.getReplyHeader(), responseBuffers.getBodyByteBuffer(), decoder, requestId,
-                responseBuffers.getElapsedNanoseconds());
+        this(responseBuffers.getReplyHeader(), requestId, responseBuffers.getElapsedNanoseconds());
+
+        if (replyHeader.getNumberReturned() > 0) {
+            InputBuffer inputBuffer = new BasicInputBuffer(responseBuffers.getBodyByteBuffer());
+            try {
+                while (documents.size() < replyHeader.getNumberReturned()) {
+                    final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
+                    try {
+                        documents.add(decoder.decode(reader));
+                    } finally {
+                        reader.close();
+                    }
+                }
+            } finally {
+                inputBuffer.close();
+            }
+        }
     }
 
     public ReplyHeader getReplyHeader() {

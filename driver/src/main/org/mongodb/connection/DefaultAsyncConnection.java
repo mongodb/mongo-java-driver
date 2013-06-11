@@ -297,7 +297,7 @@ class DefaultAsyncConnection implements AsyncConnection {
                     callback.onResult(null, e);
                 }
                 else {
-                    callback.onResult(new ResponseBuffers(replyHeader, new BasicInputBuffer(result), System.nanoTime() - start), null);
+                    callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
                 }
             }
         }

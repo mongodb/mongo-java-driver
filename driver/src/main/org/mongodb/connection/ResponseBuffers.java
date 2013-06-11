@@ -16,14 +16,17 @@
 
 package org.mongodb.connection;
 
-import org.bson.io.InputBuffer;
+import org.bson.ByteBuf;
 
-public class ResponseBuffers {
+import java.io.Closeable;
+
+public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
-    private InputBuffer bodyByteBuffer;
+    private final ByteBuf bodyByteBuffer;
     private final long elapsedNanoseconds;
+    private volatile boolean isClosed;
 
-    public ResponseBuffers(final ReplyHeader replyHeader, final InputBuffer bodyByteBuffer, final long elapsedNanoseconds) {
+    public ResponseBuffers(final ReplyHeader replyHeader, final ByteBuf bodyByteBuffer, final long elapsedNanoseconds) {
         this.replyHeader = replyHeader;
         this.bodyByteBuffer = bodyByteBuffer;
         this.elapsedNanoseconds = elapsedNanoseconds;
@@ -33,18 +36,27 @@ public class ResponseBuffers {
         return replyHeader;
     }
 
-    public InputBuffer getBodyByteBuffer() {
-        return bodyByteBuffer;
+    /**
+     * Returns a read-only buffer containing the response body.  Care should be taken to not use the returned buffer after this instance
+     * has been closed.
+     *
+     * @return a read-only buffer containing the response body
+     */
+    public ByteBuf getBodyByteBuffer() {
+        return bodyByteBuffer.asReadOnly();
     }
 
     public long getElapsedNanoseconds() {
         return elapsedNanoseconds;
     }
 
+    @Override
     public void close() {
-         if (bodyByteBuffer != null) {
-             bodyByteBuffer.close();
-             bodyByteBuffer = null;
-         }
+        if (!isClosed) {
+            if (bodyByteBuffer != null) {
+                bodyByteBuffer.close();
+            }
+            isClosed = true;
+        }
     }
 }
