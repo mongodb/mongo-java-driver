@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb
 
 import category.Slow
@@ -40,9 +42,9 @@ import static org.mongodb.Fixture.getSession
 class MongoQueryCursorSpecification extends Specification {
     private MongoQueryCursor<Document> cursor;
 
-    protected static MongoDatabase database;
-    protected MongoCollection<Document> collection;
-    protected String collectionName;
+    private static MongoDatabase database;
+    private MongoCollection<Document> collection;
+    private String collectionName;
 
     def setupSpec() {
         if (database == null) {
