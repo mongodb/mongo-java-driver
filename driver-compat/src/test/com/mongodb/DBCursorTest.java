@@ -20,6 +20,7 @@ import org.bson.BSONCallback;
 import org.bson.BSONObject;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@Ignore
 public class DBCursorTest extends DatabaseTestCase {
     private DBCursor cursor;
 
@@ -108,6 +110,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testCopy() {
         final DBCursor cursorCopy = cursor.copy();
         assertEquals(cursor.getCollection(), cursorCopy.getCollection());

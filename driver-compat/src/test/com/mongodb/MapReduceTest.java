@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class MapReduceTest extends DatabaseTestCase {
 
     private static final String MR_DATABASE = "output-" + System.nanoTime();
