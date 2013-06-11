@@ -29,7 +29,7 @@ public class InsertOperation<T> extends WriteOperation {
 
     public InsertOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
                            final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        super(namespace, bufferProvider, insert.getWriteConcern());
         this.insert = insert;
         this.encoder = encoder;
     }

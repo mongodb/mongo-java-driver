@@ -30,7 +30,7 @@ public class UpdateOperation extends WriteOperation {
 
     public UpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
                            final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        super(namespace, bufferProvider, update.getWriteConcern());
         this.update = update;
         this.queryEncoder = queryEncoder;
     }

@@ -35,7 +35,7 @@ public final class GetLastError extends Command {
         readPreference(ReadPreference.primary());
     }
 
-    public CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
+    public static CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
         MongoCommandFailureException exception = getCommandException(commandResult);
         if (exception != null) {
             throw exception;
@@ -43,7 +43,7 @@ public final class GetLastError extends Command {
         return commandResult;
     }
 
-    public MongoCommandFailureException getCommandException(final CommandResult commandResult) {
+    public static MongoCommandFailureException getCommandException(final CommandResult commandResult) {
         final Integer code = (Integer) commandResult.getResponse().get("code");
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
             return new MongoDuplicateKeyException(commandResult);

@@ -31,7 +31,7 @@ public class ReplaceOperation<T> extends WriteOperation {
 
     public ReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
                             final Encoder<T> encoder, final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        super(namespace, bufferProvider, replace.getWriteConcern());
         this.replace = replace;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;

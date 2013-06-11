@@ -30,7 +30,7 @@ public class RemoveOperation extends WriteOperation {
 
     public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
                            final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider);
+        super(namespace, bufferProvider, remove.getWriteConcern());
         this.remove = remove;
         this.queryEncoder = queryEncoder;
     }
