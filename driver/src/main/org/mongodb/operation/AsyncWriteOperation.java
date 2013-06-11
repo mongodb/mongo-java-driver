@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.AsyncServerSelectingOperation;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -53,18 +54,29 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
 
 
     public void execute(final AsyncServerConnection connection, final SingleResultCallback<CommandResult> callback) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        final RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
                 buffer);
         if (getWriteConcern().callGetLastError()) {
             final GetLastError getLastError = new GetLastError(getWriteConcern());
-            CommandMessage getLastErrorMessage =
+            final CommandMessage getLastErrorMessage =
                     new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME)
                             .getFullName(), getLastError, new DocumentCodec(), getMessageSettings(connection.getDescription()));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
-            connection.sendAndReceiveMessage(buffer.getByteBuffers(), getResponseSettings(connection.getDescription(),
-                    getLastErrorMessage.getId()), new WriteResultCallback(callback, getWrite(), getLastError, new DocumentCodec(),
-                    getNamespace(), nextMessage, connection, buffer, bufferProvider, getLastErrorMessage.getId()));
+            connection.sendMessage(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final MongoException e) {
+                    buffer.close();
+                    if (e != null) {
+                        callback.onResult(null, e);
+                    }
+                    else {
+                        connection.receiveMessage(getResponseSettings(connection.getDescription(), getLastErrorMessage.getId()),
+                                new WriteResultCallback(callback, getWrite(), getLastError, new DocumentCodec(),
+                                        getNamespace(), nextMessage, connection, bufferProvider, getLastErrorMessage.getId()));
+                    }
+                }
+            });
         }
         else {
             connection.sendMessage(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(callback, getWrite(),

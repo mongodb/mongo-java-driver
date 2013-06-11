@@ -121,12 +121,6 @@ public class DefaultAsyncConnectionProviderTest {
                 }
 
                 @Override
-                public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
-                                                  final SingleResultCallback<ResponseBuffers> callback) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
                 public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }

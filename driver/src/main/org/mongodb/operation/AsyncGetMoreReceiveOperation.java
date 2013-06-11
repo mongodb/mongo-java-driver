@@ -36,7 +36,7 @@ public class AsyncGetMoreReceiveOperation<T> implements AsyncOperation<QueryResu
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo), new GetMoreResultCallback<T>(
-                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, 0, connection, null, responseTo));
+                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, 0, connection, responseTo));
 
         return retVal;
 

@@ -83,32 +83,10 @@ class DefaultAsyncConnection implements AsyncConnection {
         });
     }
 
-    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
-                                      final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("open", !isClosed());
-        final long start = System.nanoTime();
-        sendOneWayMessage(byteBuffers, new AsyncCompletionHandler() {
-            @Override
-            public void completed() {
-                receiveMessage(responseSettings, start, callback);
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                callback.onResult(null, new MongoException("", t));  // TODO
-            }
-        });
-    }
-
     @Override
     public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
         fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, System.nanoTime(),
                 callback));
-    }
-
-    private void receiveMessage(final ResponseSettings responseSettings, final long start,
-                                final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, start, callback));
     }
 
     private void sendOneWayMessage(final List<ByteBuf> byteBuffers, final AsyncCompletionHandler handler) {

@@ -38,12 +38,6 @@ class ConnectingAsyncServerConnection implements AsyncServerConnection {
     }
 
     @Override
-    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
-                                      final SingleResultCallback<ResponseBuffers> callback) {
-        connection.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
-    }
-
-    @Override
     public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
         connection.receiveMessage(responseSettings, callback);
     }

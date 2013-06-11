@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.AsyncServerConnection;
@@ -26,12 +25,10 @@ import org.mongodb.connection.SingleResultCallback;
 abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
     private AsyncServerConnection connection;
-    private final OutputBuffer writtenBuffer;
     private long requestId;
 
-    public ResponseCallback(final AsyncServerConnection connection, final OutputBuffer writtenBuffer, final long requestId) {
+    public ResponseCallback(final AsyncServerConnection connection, final long requestId) {
         this.connection = connection;
-        this.writtenBuffer = writtenBuffer;
         this.requestId = requestId;
     }
 
@@ -49,9 +46,6 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
             throw new MongoInternalException("Callback should not be invoked more than once", null);
         }
         closed = true;
-        if (writtenBuffer != null) {
-            writtenBuffer.close();
-        }
         if (responseBuffers != null) {
             callCallback(responseBuffers, e);
         }

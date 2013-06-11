@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.bson.io.OutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
@@ -32,8 +31,8 @@ class GetMoreResultCallback<T> extends ResponseCallback {
 
     public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
                                  final long cursorId, final AsyncServerConnection connection,
-                                 final OutputBuffer writtenBuffer, final long requestId) {
-        super(connection, writtenBuffer, requestId);
+                                 final long requestId) {
+        super(connection, requestId);
         this.callback = callback;
         this.decoder = decoder;
         this.cursorId = cursorId;

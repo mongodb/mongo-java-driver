@@ -72,23 +72,6 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
-                                      final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("open", !isClosed());
-        authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                if (e != null) {
-                    callback.onResult(null, e);
-                }
-                else {
-                    wrapped.sendAndReceiveMessage(byteBuffers, responseSettings, callback);
-                }
-            }
-        });
-    }
-
-    @Override
     public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticator.asyncAuthenticateAll(new SingleResultCallback<Void>() {

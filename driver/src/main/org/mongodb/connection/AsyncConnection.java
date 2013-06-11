@@ -24,8 +24,5 @@ public interface AsyncConnection extends BaseConnection {
 
     void sendMessage(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback);
 
-    void sendAndReceiveMessage(final List<ByteBuf> byteBuffers, final ResponseSettings responseSettings,
-                               final SingleResultCallback<ResponseBuffers> callback);
-
     void receiveMessage(final ResponseSettings responseSettings, SingleResultCallback<ResponseBuffers> callback);
 }
