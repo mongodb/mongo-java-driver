@@ -28,6 +28,8 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.RequestMessage;
 
+import static org.mongodb.command.GetLastError.getCommandException;
+
 class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
     private final BaseWrite writeOperation;
@@ -68,7 +70,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
         else {
             MongoCommandFailureException commandException = null;
             if (getLastError != null) {
-                commandException = getLastError.getCommandException(commandResult);
+                commandException = getCommandException(commandResult);
             }
 
             if (commandException != null) {
