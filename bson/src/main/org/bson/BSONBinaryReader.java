@@ -304,7 +304,7 @@ public class BSONBinaryReader extends BSONReader {
         }
 
         context = context.popContext(buffer.getPosition());
-        if (context != null && context.contextType == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+        if (context.contextType == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
             context = context.popContext(buffer.getPosition()); // JavaScriptWithScope
         }
 
