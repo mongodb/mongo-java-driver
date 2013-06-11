@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.mongodb.AsyncServerSelectingOperation;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -26,7 +25,6 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
@@ -34,7 +32,6 @@ import org.mongodb.session.PrimaryServerSelector;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public abstract class AsyncWriteOperation implements AsyncServerSelectingOperation<CommandResult> {
     private final MongoNamespace namespace;
@@ -45,15 +42,9 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
         this.bufferProvider = bufferProvider;
     }
 
-    @Override
     public MongoFuture<CommandResult> execute(final AsyncServerConnection connection) {
-        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-        execute(connection, new SingleResultFutureCallback<CommandResult>(retVal));
-        return retVal;
-    }
+        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-
-    public void execute(final AsyncServerConnection connection, final SingleResultCallback<CommandResult> callback) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         final RequestMessage nextMessage = encodeMessageToBuffer(createRequestMessage(getMessageSettings(connection.getDescription())),
                 buffer);
@@ -63,25 +54,16 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
                     new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME)
                             .getFullName(), getLastError, new DocumentCodec(), getMessageSettings(connection.getDescription()));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
-            connection.sendMessage(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final MongoException e) {
-                    buffer.close();
-                    if (e != null) {
-                        callback.onResult(null, e);
-                    }
-                    else {
-                        connection.receiveMessage(getResponseSettings(connection.getDescription(), getLastErrorMessage.getId()),
-                                new WriteResultCallback(callback, getWrite(), getLastError, new DocumentCodec(),
-                                        getNamespace(), nextMessage, connection, bufferProvider, getLastErrorMessage.getId()));
-                    }
-                }
-            });
+            connection.sendMessage(buffer.getByteBuffers(),
+                    new SendMessageCallback<CommandResult>(connection, buffer, getLastErrorMessage.getId(), retVal,
+                            new WriteResultCallback(retVal, getWrite(), getLastError, new DocumentCodec(),
+                                    getNamespace(), nextMessage, connection, bufferProvider, getLastErrorMessage.getId())));
         }
         else {
-            connection.sendMessage(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(callback, getWrite(),
+            connection.sendMessage(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(retVal, getWrite(),
                     getNamespace(), nextMessage, connection, buffer, bufferProvider));
         }
+        return retVal;
     }
 
     @Override

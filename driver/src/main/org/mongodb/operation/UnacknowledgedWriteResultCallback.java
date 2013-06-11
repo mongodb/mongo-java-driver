@@ -25,7 +25,7 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.protocol.RequestMessage;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
-    private final SingleResultCallback<CommandResult> callback;
+    private final SingleResultFuture<CommandResult> future;
     private final BaseWrite writeOperation;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage;
@@ -33,11 +33,11 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final OutputBuffer writtenBuffer;
     private final BufferProvider bufferProvider;
 
-    UnacknowledgedWriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
+    UnacknowledgedWriteResultCallback(final SingleResultFuture<CommandResult> future, final BaseWrite writeOperation,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final AsyncServerConnection connection, final OutputBuffer writtenBuffer,
                                       final BufferProvider bufferProvider) {
-        this.callback = callback;
+        this.future = future;
         this.writeOperation = writeOperation;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
@@ -50,13 +50,15 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     public void onResult(final Void result, final MongoException e) {
         writtenBuffer.close();
         if (e != null) {
-            callback.onResult(null, e);
+            future.init(null, e);
         }
         else if (nextMessage != null) {
-            new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage, bufferProvider).execute(connection, callback);
+            MongoFuture<CommandResult> newFuture = new GenericAsyncWriteOperation(namespace, writeOperation, nextMessage,
+                    bufferProvider).execute(connection);
+            newFuture.register(new SingleResultFutureCallback<CommandResult>(future));
         }
         else {
-            callback.onResult(null, null);
+            future.init(null, null);
         }
     }
 }
