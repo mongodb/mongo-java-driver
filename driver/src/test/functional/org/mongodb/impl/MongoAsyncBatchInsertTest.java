@@ -39,8 +39,22 @@ import static org.mongodb.Fixture.getBufferProvider;
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
+    private List<Document> documents;
+
     @Before
     public void setUp() throws Exception {
+        byte[] hugeByteArray = new byte[1024 * 1024 * 15];
+
+        documents = new ArrayList<Document>();
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", hugeByteArray));
+
         super.setUp();
     }
 
@@ -51,15 +65,15 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
     @Test
     public void testBatchInsert() throws ExecutionException, InterruptedException {
-        byte[] hugeByteArray = new byte[1024 * 1024 * 15];
-
-        List<Document> documents = new ArrayList<Document>();
-        documents.add(new Document("bytes", hugeByteArray));
-        documents.add(new Document("bytes", hugeByteArray));
-        documents.add(new Document("bytes", hugeByteArray));
-        documents.add(new Document("bytes", hugeByteArray));
-
         final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
+        getAsyncSession().execute(
+                new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider())).get();
+        assertEquals(documents.size(), collection.count());
+    }
+
+    @Test
+    public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
+        final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.UNACKNOWLEDGED);
         getAsyncSession().execute(
                 new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider())).get();
         assertEquals(documents.size(), collection.count());

@@ -67,7 +67,7 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
                     getNamespace(), nextMessage, connection, buffer, bufferProvider, getLastErrorMessage.getId()));
         }
         else {
-            connection.sendMessage(buffer.getByteBuffers(), new WriteResultCallback(callback, getWrite(), null, new DocumentCodec(),
+            connection.sendMessage(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(callback, getWrite(),
                     getNamespace(), nextMessage, connection, buffer, bufferProvider));
         }
     }

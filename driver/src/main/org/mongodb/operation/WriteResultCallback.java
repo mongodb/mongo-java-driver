@@ -33,18 +33,9 @@ import static org.mongodb.command.GetLastError.getCommandException;
 class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
     private final BaseWrite writeOperation;
-    private final GetLastError getLastError;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferProvider bufferProvider;
-
-    public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
-                               final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
-                               final RequestMessage nextMessage, final AsyncServerConnection connection,
-                               final OutputBuffer writtenBuffer,
-                               final BufferProvider bufferProvider) {
-        this(callback, writeOperation, getLastError, decoder, namespace, nextMessage, connection, writtenBuffer, bufferProvider, 0);
-    }
 
     public WriteResultCallback(final SingleResultCallback<CommandResult> callback, final BaseWrite writeOperation,
                                final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
@@ -53,7 +44,6 @@ class WriteResultCallback extends CommandResultBaseCallback {
         super(getLastError, decoder, connection, writtenBuffer, requestId);
         this.callback = callback;
         this.writeOperation = writeOperation;
-        this.getLastError = getLastError;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.bufferProvider = bufferProvider;
@@ -64,14 +54,11 @@ class WriteResultCallback extends CommandResultBaseCallback {
         if (e != null) {
             callback.onResult(null, e);
         }
-        else if (getLastError != null && !commandResult.isOk()) {
+        else if (!commandResult.isOk()) {
             callback.onResult(null, new MongoCommandFailureException(commandResult));
         }
         else {
-            MongoCommandFailureException commandException = null;
-            if (getLastError != null) {
-                commandException = getCommandException(commandResult);
-            }
+            MongoCommandFailureException commandException = getCommandException(commandResult);
 
             if (commandException != null) {
                 callback.onResult(null, commandException);
