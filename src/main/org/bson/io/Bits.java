@@ -36,7 +36,7 @@ public class Bits {
     public static void readFully( InputStream in, byte[] b, int startOffset, int length )
         throws IOException {
 
-        if (b.length - startOffset > length) {
+        if (b.length - startOffset < length) {
             throw new IllegalArgumentException("Buffer is too small");
         }
 
