@@ -24,19 +24,25 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class AuthenticatingConnection implements Connection {
+    private final List<MongoCredential> credentialList;
+    private final BufferProvider bufferProvider;
     private volatile Connection wrapped;
-    private final CachingAuthenticator authenticator;
+    private boolean authenticated;
 
     public AuthenticatingConnection(final Connection wrapped, final List<MongoCredential> credentialList,
                                     final BufferProvider bufferProvider) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.authenticator = new CachingAuthenticator(new MongoCredentialsStore(credentialList), wrapped, bufferProvider);
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
+
+        notNull("credentialList", credentialList);
+        this.credentialList = new ArrayList<MongoCredential>(credentialList);
     }
 
     @Override
@@ -49,7 +55,7 @@ class AuthenticatingConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-        return wrapped.isClosed();
+        return wrapped == null;
     }
 
     @Override
@@ -61,14 +67,37 @@ class AuthenticatingConnection implements Connection {
     @Override
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", wrapped != null);
-        authenticator.authenticateAll();
+        authenticateAll();
         wrapped.sendMessage(byteBuffers);
     }
 
     @Override
     public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         isTrue("open", wrapped != null);
-        authenticator.authenticateAll();
+        authenticateAll();
         return wrapped.receiveMessage(responseSettings);
+    }
+
+    public void authenticateAll() {
+        if (!authenticated) {
+            for (MongoCredential cur : credentialList) {
+                createAuthenticator(cur).authenticate();
+            }
+            authenticated = true;
+        }
+    }
+
+    private Authenticator createAuthenticator(final MongoCredential credential) {
+        Authenticator authenticator;
+        if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
+            authenticator = new NativeAuthenticator(credential, wrapped, bufferProvider);
+        }
+        else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
+            authenticator = new GSSAPIAuthenticator(credential, wrapped, bufferProvider);
+        }
+        else {
+            throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
+        }
+        return authenticator;
     }
 }
