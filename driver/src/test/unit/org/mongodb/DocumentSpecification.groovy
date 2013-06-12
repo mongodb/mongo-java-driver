@@ -25,65 +25,65 @@ import java.util.regex.Pattern
 
 class DocumentSpecification extends Specification {
 
-    public void 'should return correct type for each typed method'() {
+    def 'should return correct type for each typed method'() {
         setup:
-        final Date date = new Date();
-        final ObjectId objectId = new ObjectId();
+        Date date = new Date();
+        ObjectId objectId = new ObjectId();
 
         when:
         Document doc = new Document()
-                .append("int", 1).append("long", 2L).append("double", 3.0 as double).append("string", "hi").append("boolean", true)
-                .append("objectId", objectId).append("date", date);
+                .append('int', 1).append('long', 2L).append('double', 3.0 as double).append('string', 'hi').append('boolean', true)
+                .append('objectId', objectId).append('date', date);
 
         then:
-        doc.getInteger("int") == 1;
-        doc.getLong("long") == 2L;
-        doc.getDouble("double") == 3.0;
-        doc.getString("string") == "hi";
-        doc.getBoolean("boolean") == true;
-        doc.getObjectId("objectId") == objectId;
-        doc.getDate("date") == date;
-        doc.get("objectId", ObjectId.class) == objectId;
+        doc.getInteger('int') == 1;
+        doc.getLong('long') == 2L;
+        doc.getDouble('double') == 3.0;
+        doc.getString('string') == 'hi';
+        doc.getBoolean('boolean') == true;
+        doc.getObjectId('objectId') == objectId;
+        doc.getDate('date') == date;
+        doc.get('objectId', ObjectId) == objectId;
     }
 
-    public void 'should convert valid JSON string to a Document'() {
+    def 'should convert valid JSON string to a Document'() {
         when:
-        final Document document = Document.valueOf("{ \"int\" : 1, \"string\" : \"abc\" }");
+        Document document = Document.valueOf("{ 'int' : 1, 'string' : 'abc' }");
 
         then:
         document != null;
         document.keySet().size() == 2;
-        document.getInteger("int") == 1;
-        document.getString("string") == "abc";
+        document.getInteger('int') == 1;
+        document.getString('string') == 'abc';
     }
 
-    public void 'test value of method with mode'() {
+    def 'test value of method with mode'() {
         setup:
-        final Pattern expectedPattern = Pattern.compile("abc", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        Pattern expectedPattern = Pattern.compile('abc', Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         when:
-        Document document = Document.valueOf("{\"regex\" : /abc/im }", JSONMode.JavaScript);
+        Document document = Document.valueOf("{'regex' : /abc/im }", JSONMode.JavaScript);
 
         then:
         document != null;
         document.keySet().size() == 1;
 
-        final Pattern actualPattern = (Pattern) document.get("regex");
+        Pattern actualPattern = (Pattern) document.get('regex');
         actualPattern.flags() == expectedPattern.flags();
         actualPattern.pattern() == expectedPattern.pattern();
     }
 
-    public void 'should throw an exception when parsing an invalid JSON String'() {
+    def 'should throw an exception when parsing an invalid JSON String'() {
         when:
-        Document.valueOf("{ \"int\" : 1, \"string\" : }");
+        Document.valueOf("{ 'int' : 1, 'string' : }");
 
         then:
         thrown(JSONParseException)
     }
 
-    public void 'should produce nice JSON when calling toString'() {
+    def 'should produce nice JSON when calling toString'() {
         expect:
-        new Document("int", 1).append("string", "abc").toString() == "{ \"int\" : 1, \"string\" : \"abc\" }";
+        new Document('int', 1).append('string', 'abc').toString() == "{ \"int\" : 1, \"string\" : \"abc\" }";
     }
 
 }

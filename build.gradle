@@ -71,8 +71,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
         maxParallelForks = 1
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
-                'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', "false"),
-                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', "false")
+                'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
+                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false')
         )
 
         if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()) {
@@ -86,7 +86,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
             )
         }
 
-        useJUnit() {
+        useJUnit {
             if (!JavaVersion.current().isJava7Compatible()
                     || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
                 excludeCategories 'category.Async'
@@ -120,7 +120,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     findbugs {
         ignoreFailures = true
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
-
     }
 
     tasks.withType(FindBugs) {
@@ -148,7 +147,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
 project(':bson') {}
 
 project(':driver') {
-    apply plugin: "groovy"
+    apply plugin: 'groovy'
+    apply plugin: 'codenarc'
 
     sourceSets {
         test {
@@ -188,11 +188,17 @@ project(':driver') {
         from project(':bson').sourceSets.main.output
         from sourceSets.main.output
     }
+
+    codenarc {
+        //TODO: we will need to turn this on
+        ignoreFailures = true
+    }
 }
 
 project(':driver-compat') {
     apply plugin: 'clirr'
-    apply plugin: "groovy"
+    apply plugin: 'groovy'
+    apply plugin: 'codenarc'
 
     sourceSets {
         test { groovy.srcDirs = ['src/test'] }
@@ -223,6 +229,11 @@ project(':driver-compat') {
         configFile = new File("$configDir/checkstyle-lite.xml")
     }
 
+    codenarc {
+        //TODO: we will need to turn this on
+        ignoreFailures = true
+    }
+
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
@@ -235,7 +246,7 @@ project(':driver-compat') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = "1.6"
+    gradleVersion = '1.6'
 }
 
 gradle.buildFinished { BuildResult result ->

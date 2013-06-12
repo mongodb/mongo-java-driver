@@ -23,18 +23,20 @@ import org.mongodb.DBRef
 import org.mongodb.Document
 import spock.lang.Ignore
 import spock.lang.Specification
+import spock.lang.Subject
 
 import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded
 
 class CodecsSpecification extends Specification {
-    private BSONWriter bsonWriter = Mock(BSONWriter);
+    private final BSONWriter bsonWriter = Mock();
 
-    private Codecs codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault()).build();
+    @Subject
+    private final Codecs codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault()).build();
 
     def 'should encode code with scope as java script followed by document of scope when passed in as object'() {
         setup:
-        final String javascriptCode = "<javascript code>";
-        final Object codeWithScope = new CodeWithScope(javascriptCode, new Document("the", "scope"));
+        String javascriptCode = '<javascript code>';
+        Object codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'));
 
         when:
         codecs.encode(bsonWriter, codeWithScope);
@@ -42,18 +44,18 @@ class CodecsSpecification extends Specification {
         then:
         1 * bsonWriter.writeJavaScriptWithScope(javascriptCode);
         1 * bsonWriter.writeStartDocument();
-        1 * bsonWriter.writeName("the");
-        1 * bsonWriter.writeString("scope");
+        1 * bsonWriter.writeName('the');
+        1 * bsonWriter.writeString('scope');
         1 * bsonWriter.writeEndDocument();
     }
 
     def 'should decode code with scope'() {
         setup:
-        final CodeWithScope codeWithScope = new CodeWithScope("{javascript code}", new Document("the", "scope"));
-        final BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
+        CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'));
+        BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
 
         when:
-        final Object actualCodeWithScope = codecs.decode(reader);
+        Object actualCodeWithScope = codecs.decode(reader);
 
         then:
         actualCodeWithScope == codeWithScope;
@@ -61,9 +63,9 @@ class CodecsSpecification extends Specification {
 
     def 'should encode db ref when disguised as an object'() {
         setup:
-        final String namespace = "theNamespace";
-        final String theId = "TheId";
-        final Object dbRef = new DBRef(theId, namespace);
+        String namespace = 'theNamespace';
+        String theId = 'TheId';
+        Object dbRef = new DBRef(theId, namespace);
 
         when:
         codecs.encode(bsonWriter, dbRef);
@@ -91,7 +93,7 @@ class CodecsSpecification extends Specification {
 
     def 'should be able to encode array'() {
         expect:
-        codecs.canEncode(["some string"] as String[]) == true;
+        codecs.canEncode(['some string'] as String[]) == true;
     }
 
     def 'should be able to encode list'() {
@@ -121,18 +123,18 @@ class CodecsSpecification extends Specification {
 
     def 'should be able to decode map'() {
         expect:
-        codecs.canDecode(Map.class) == true;
+        codecs.canDecode(Map) == true;
     }
 
     def 'should be able to decode hash map'() {
         expect:
-        codecs.canDecode(HashMap.class) == true;
+        codecs.canDecode(HashMap) == true;
     }
 
-    @Ignore("not supported yet")
+    @Ignore('not supported yet')
     def 'should be able to decode primitive'() {
         expect:
-        codecs.canDecode(int.class) == true;
+        codecs.canDecode(int) == true;
     }
 
 }

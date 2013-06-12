@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb
 
 import category.Slow
 import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
-import org.mongodb.operation.*
+import org.mongodb.operation.Find
+import org.mongodb.operation.GetMore
+import org.mongodb.operation.GetMoreOperation
+import org.mongodb.operation.KillCursor
+import org.mongodb.operation.KillCursorOperation
+import org.mongodb.operation.MongoCursorNotFoundException
+import org.mongodb.operation.QueryOption
+import org.mongodb.operation.ServerCursor
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -48,7 +44,7 @@ class MongoQueryCursorSpecification extends Specification {
 
     def setupSpec() {
         if (database == null) {
-            database = Fixture.getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+            database = Fixture.getMongoClient().getDatabase('DriverTest-' + System.nanoTime());
             Runtime.getRuntime().addShutdownHook(new DatabaseTestCase.ShutdownHook());
         }
     }
@@ -59,7 +55,7 @@ class MongoQueryCursorSpecification extends Specification {
         collection.tools().drop();
 
         for (int i = 0; i < 10; i++) {
-            collection.insert(new Document("_id", i));
+            collection.insert(new Document('_id', i));
         }
     }
 
@@ -72,45 +68,47 @@ class MongoQueryCursorSpecification extends Specification {
         }
     }
 
-    public void 'server cursor should not be null'() {
+    def 'server cursor should not be null'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2),
-                collection.getOptions().getDocumentCodec(),
-                collection.getCodec(),
-                getSession(),
-                getBufferProvider());
+                                                new Find().batchSize(2),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(),
+                                                getSession(),
+                                                getBufferProvider());
 
         then:
         cursor.getServerCursor() != null;
     }
 
-    public void 'test server address'() {
+    def 'test server address'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find(),
-                collection.getOptions().getDocumentCodec(),
-                collection.getCodec(),
-                getSession(),
-                getBufferProvider());
+                                                new Find(),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(),
+                                                getSession(),
+                                                getBufferProvider());
         then:
         cursor.getServerCursor() == null;
         cursor.getServerAddress() != null;
     }
 
-    public void 'should be able to retrieve the original find criteria from the cursor'() {
+    def 'should be able to retrieve the original find criteria from the cursor'() {
         when:
-        final Find find = new Find().batchSize(2);
+        Find find = new Find().batchSize(2);
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find,
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.getCriteria() == find;
     }
 
-    public void 'should get Exceptions for operations on the cursor after closing'() {
+    def 'should get Exceptions for operations on the cursor after closing'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.close();
@@ -135,9 +133,10 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(IllegalStateException)
     }
 
-    public void 'should throw an Exception when going off the end'() {
+    def 'should throw an Exception when going off the end'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.next();
@@ -148,9 +147,10 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(NoSuchElementException);
     }
 
-    public void 'test normal exhaustion'() {
+    def 'test normal exhaustion'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         int i = 0;
@@ -163,9 +163,10 @@ class MongoQueryCursorSpecification extends Specification {
         i == 10;
     }
 
-    public void 'test limit exhaustion'() {
+    def 'test limit exhaustion'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         int i = 0;
@@ -178,9 +179,10 @@ class MongoQueryCursorSpecification extends Specification {
         i == 5;
     }
 
-    public void 'test remove'() {
+    def 'test remove'() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         when:
         cursor.remove();
@@ -189,19 +191,21 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(UnsupportedOperationException)
     }
 
-    public void 'test to string'() {
+    def 'test to string'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         then:
-        cursor.toString().startsWith("MongoQueryCursor");
+        cursor.toString().startsWith('MongoQueryCursor');
     }
 
-    public void 'test sizes and num get mores'() {
+    def 'test sizes and num get mores'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.getNumGetMores() == 0;
@@ -228,61 +232,65 @@ class MongoQueryCursorSpecification extends Specification {
         cursor.getSizes().get(2) == 2;
     }
 
-    @Category(Slow.class)
-    public void 'test tailable await'() {
+    @Category(Slow)
+    def 'test tailable await'() {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
 
-        collection.insert(new Document("_id", 1).append("ts", new BSONTimestamp(5, 0)));
+        collection.insert(new Document('_id', 1).append('ts', new BSONTimestamp(5, 0)));
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .filter(new Document("ts", new Document('$gte', new BSONTimestamp(5, 0))))
+                .filter(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))))
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         cursor.hasNext();
-        cursor.next().get("_id") == 1;
+        cursor.next().get('_id') == 1;
         cursor.hasNext();
 
         when:
         new Thread(new Runnable() {
             @Override
-            public void run() {
+            void run() {
                 try {
                     Thread.sleep(500);
-                    collection.insert(new Document("_id", 2).append("ts", new BSONTimestamp(6, 0)));
+                    collection.insert(new Document('_id', 2).append('ts', new BSONTimestamp(6, 0)));
                 } catch (ignored) {
                     // all good
                 }
             }
         }).start();
 
-        // Note: this 'test is racy.  There is no guarantee that we're testing what we're trying to, which is the loop in the next'() method.
+        // Note: this 'test is racy.
+        // There is no guarantee that we're testing what we're trying to, which is the loop in the next'() method.
         then:
-        cursor.next().get("_id") == 2;
+        cursor.next().get('_id') == 2;
     }
 
-    @Category(Slow.class)
-    public void 'test tailable await interrupt'() throws InterruptedException {
+    @Category(Slow)
+    def 'test tailable await interrupt'() throws InterruptedException {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
 
-        collection.insert(new Document(" id", 1));
+        collection.insert(new Document('_id', 1));
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .batchSize(2)
                 .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        final List<Boolean> success = new ArrayList<Boolean>();
+        CountDownLatch latch = new CountDownLatch(1);
+        //TODO: there might be a more Groovy-y way to do this, may be no need to hack into an array?
+        List<Boolean> success = [];
         Thread t = new Thread(new Runnable() {
             @Override
-            public void run() {
+            void run() {
                 try {
                     cursor.next();
                     cursor.next();
@@ -302,11 +310,12 @@ class MongoQueryCursorSpecification extends Specification {
         !success.isEmpty();
     }
 
-    public void 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
+    def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
-        final ServerCursor serverCursor = cursor.getServerCursor();
+        ServerCursor serverCursor = cursor.getServerCursor();
         Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
 
         when:
@@ -316,11 +325,12 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(MongoCursorNotFoundException)
     }
 
-    public void 'should kill cursor if limit is reached on get more'() throws InterruptedException {
+    def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(3).limit(5),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
-        final ServerCursor serverCursor = cursor.getServerCursor();
+        ServerCursor serverCursor = cursor.getServerCursor();
 
         cursor.next();
         cursor.next();
@@ -335,57 +345,59 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(MongoCursorNotFoundException)
     }
 
-    public void 'test limit with get more'() {
+    def 'test limit with get more'() {
         when:
-        final List<Document> list = new ArrayList<Document>();
+        List<Document> list = [];
         collection.batchSize(2).limit(5).into(list);
 
         then:
         list.size() == 5;
     }
 
-    public void 'test limit with large documents'() {
+    def 'test limit with large documents'() {
         char[] array = 'x' * 16000
-        final String bigString = new String(array);
+        String bigString = new String(array);
 
         for (int i = 11; i < 1000; i++) {
-            collection.insert(new Document(" id", i).append("s", bigString));
+            collection.insert(new Document('_id', i).append('s', bigString));
         }
 
         when:
-        final List<Document> list = new ArrayList<Document>();
+        List<Document> list = [];
         collection.limit(300).into(list);
 
         then:
         list.size() == 300;
     }
 
-    public void 'test normal loop with get more'() {
+    def 'test normal loop with get more'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                .batchSize(2).order(new Document('_id', 1)),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
         then:
         int i = 0;
         while (cursor.hasNext()) {
-            final Document cur = cursor.next();
+            Document cur = cursor.next();
             i++;
-            cur.get("_id") == i;
+            cur.get('_id') == i;
         }
         i == 10;
         !cursor.hasNext();
     }
 
-    public void 'test next without has next with get more'() {
+    def 'test next without has next with get more'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .batchSize(2).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                .batchSize(2).order(new Document('_id', 1)),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
 
         then:
         for (int i = 0; i < 10; i++) {
-            final Document cur = cursor.next();
-            cur.get("_id") == i;
+            Document cur = cursor.next();
+            cur.get('_id') == i;
         }
         !cursor.hasNext();
         !cursor.hasNext();
@@ -397,10 +409,11 @@ class MongoQueryCursorSpecification extends Specification {
         thrown(NoSuchElementException);
     }
 
-    public void 'should throw cursor not found exception'() {
+    def 'should throw cursor not found exception'() {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(), getSession(), getBufferProvider());
         cursor.getSession().execute(new KillCursorOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider()));
         cursor.next();
         cursor.next();
@@ -414,9 +427,9 @@ class MongoQueryCursorSpecification extends Specification {
         }
     }
 
-    private void makeAdditionalGetMoreCall(final ServerCursor serverCursor) {
+    private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         cursor.getSession().execute(new GetMoreOperation<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
-                collection.getOptions().getDocumentCodec(), getBufferProvider()));
+                                                                   collection.getOptions().getDocumentCodec(), getBufferProvider()));
     }
 
 }

@@ -18,19 +18,20 @@ package org.mongodb.codecs
 
 import org.bson.BSONWriter
 import spock.lang.Specification
+import spock.lang.Subject
 
 class ArrayCodecWithObjectArraySpecification extends Specification {
-    def BSONWriter bsonWriter = Mock(BSONWriter);
-    def Codecs codecs = Mock(Codecs);
+    private final BSONWriter bsonWriter = Mock();
+    private final Codecs codecs = Mock();
 
-    //Object under test
-    private ArrayCodec arrayCodec = new ArrayCodec(codecs);
+    @Subject
+    private final ArrayCodec arrayCodec = new ArrayCodec(codecs);
 
     def 'should write start and end for array of objects and delegate encoding of object'() {
         setup:
-        final Object object1 = new Object();
-        final Object object2 = new Object();
-        final Object[] arrayOfObjects = [object1, object2];
+        Object object1 = new Object();
+        Object object2 = new Object();
+        Object[] arrayOfObjects = [object1, object2];
 
         when:
         arrayCodec.encode(bsonWriter, arrayOfObjects);
@@ -44,9 +45,9 @@ class ArrayCodecWithObjectArraySpecification extends Specification {
 
     def 'should write start & end for array of objects & delegate encoding of object when array disguised as object'() {
         setup:
-        final Object object1 = new Object();
-        final Object object2 = new Object();
-        final Object arrayOfObjects = [object1, object2] as Object[];
+        Object object1 = new Object();
+        Object object2 = new Object();
+        Object arrayOfObjects = [object1, object2] as Object[];
 
         when:
         arrayCodec.encode(bsonWriter, arrayOfObjects);

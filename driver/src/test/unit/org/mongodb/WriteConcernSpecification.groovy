@@ -22,7 +22,7 @@ import spock.lang.Unroll
 class WriteConcernSpecification extends Specification {
 
     @Unroll
-    public void 'constructors should set up write concern #wc correctly'() {
+    def 'constructors should set up write concern #wc correctly'() {
         expect:
         wc.getW() == w;
         wc.getWtimeout() == wTimeout;
@@ -42,7 +42,7 @@ class WriteConcernSpecification extends Specification {
     }
 
     @Unroll
-    public void 'constructors should set up write concern #wc correctly with wString'() {
+    def 'constructors should set up write concern #wc correctly with wString'() {
         expect:
         wc.getWString() == wString;
         wc.getWtimeout() == wTimeout;
@@ -52,12 +52,12 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                             | wString    | wTimeout | fsync | j     | continueOnErrorForInsert
-        new WriteConcern("majority")                   | "majority" | 0        | false | false | false
-        new WriteConcern("dc1", 10, false, true)       | "dc1"      | 10       | false | true  | false
-        new WriteConcern("dc1", 10, false, true, true) | "dc1"      | 10       | false | true  | true
+        new WriteConcern('majority')                   | 'majority' | 0        | false | false | false
+        new WriteConcern('dc1', 10, false, true)       | 'dc1'      | 10       | false | true  | false
+        new WriteConcern('dc1', 10, false, true, true) | 'dc1'      | 10       | false | true  | true
     }
 
-    public void 'test getters'() {
+    def 'test getters'() {
         expect:
         wc.callGetLastError() == getLastError;
         wc.raiseNetworkErrors() == raiseNetworkErrors;
@@ -65,38 +65,38 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                            | getLastError | raiseNetworkErrors | wObject
-        new WriteConcern("dc1", 10, true, true, true) | true         | true               | "dc1"
+        new WriteConcern('dc1', 10, true, true, true) | true         | true               | 'dc1'
         new WriteConcern(-1, 10, false, true, true)   | false        | false              | -1
     }
 
-    public void 'test with methods'() {
+    def 'test with methods'() {
         expect:
         WriteConcern.ACKNOWLEDGED == WriteConcern.UNACKNOWLEDGED.withW(1);
         WriteConcern.FSYNCED == WriteConcern.ACKNOWLEDGED.withFsync(true);
         WriteConcern.JOURNALED == WriteConcern.ACKNOWLEDGED.withJ(true);
-        new WriteConcern("dc1") == WriteConcern.UNACKNOWLEDGED.withW("dc1");
-        new WriteConcern("dc1", 0, true, false) == new WriteConcern("dc1").withFsync(true);
-        new WriteConcern("dc1", 0, false, true) == new WriteConcern("dc1").withJ(true);
-        new WriteConcern("dc1", 0, false, false, true) == new WriteConcern("dc1").withContinueOnErrorForInsert(true);
+        new WriteConcern('dc1') == WriteConcern.UNACKNOWLEDGED.withW('dc1');
+        new WriteConcern('dc1', 0, true, false) == new WriteConcern('dc1').withFsync(true);
+        new WriteConcern('dc1', 0, false, true) == new WriteConcern('dc1').withJ(true);
+        new WriteConcern('dc1', 0, false, false, true) == new WriteConcern('dc1').withContinueOnErrorForInsert(true);
         new WriteConcern(1, 0, false, false, true) == WriteConcern.ACKNOWLEDGED.withContinueOnErrorForInsert(true);
     }
 
-    public void 'test command'() {
+    def 'test command'() {
         expect:
         wc.getCommand() == commandDocument;
 
         where:
         wc                                | commandDocument
-        WriteConcern.UNACKNOWLEDGED       | new Document("getlasterror", 1)
-        WriteConcern.ACKNOWLEDGED         | new Document("getlasterror", 1)
-        WriteConcern.REPLICA_ACKNOWLEDGED | new Document("getlasterror", 1).append("w", 2)
-        WriteConcern.FSYNCED              | new Document("getlasterror", 1).append("fsync", true)
-        WriteConcern.JOURNALED            | new Document("getlasterror", 1).append("j", true)
-        new WriteConcern("majority")      | new Document("getlasterror", 1).append("w", "majority")
-        new WriteConcern(1, 100)          | new Document("getlasterror", 1).append("wtimeout", 100)
+        WriteConcern.UNACKNOWLEDGED       | new Document('getlasterror', 1)
+        WriteConcern.ACKNOWLEDGED         | new Document('getlasterror', 1)
+        WriteConcern.REPLICA_ACKNOWLEDGED | new Document('getlasterror', 1).append('w', 2)
+        WriteConcern.FSYNCED              | new Document('getlasterror', 1).append('fsync', true)
+        WriteConcern.JOURNALED            | new Document('getlasterror', 1).append('j', true)
+        new WriteConcern('majority')      | new Document('getlasterror', 1).append('w', 'majority')
+        new WriteConcern(1, 100)          | new Document('getlasterror', 1).append('wtimeout', 100)
     }
 
-    public void 'test equals'() {
+    def 'test equals'() {
         expect:
         wc.equals(compareTo) == expectedResult
 
@@ -112,7 +112,7 @@ class WriteConcernSpecification extends Specification {
     }
 
 
-    public void 'test constants'() {
+    def 'test constants'() {
         expect:
         constructedWriteConcern == constantWriteConcern
 
@@ -126,14 +126,14 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(2)                 | WriteConcern.REPLICA_ACKNOWLEDGED
     }
 
-    public void 'test value of'() {
+    def 'test value of'() {
         expect:
         wc == valueOf
 
         where:
         wc                        | valueOf
-        WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf("ACKNOWLEDGED")
-        WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf("acknowledged")
-        null                      | WriteConcern.valueOf("blahblah")
+        WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf('ACKNOWLEDGED')
+        WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf('acknowledged')
+        null                      | WriteConcern.valueOf('blahblah')
     }
 }
