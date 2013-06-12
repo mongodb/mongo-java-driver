@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.impl.DefaultClusterableServerFactory;
-import org.mongodb.connection.impl.DefaultConnectionFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
-import org.mongodb.connection.impl.DefaultConnectionSettings;
-import org.mongodb.connection.impl.DefaultServerSettings;
-import org.mongodb.connection.impl.DefaultSingleServerCluster;
+import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerSelector;
 
 import java.util.List;
 import java.util.concurrent.Executors;

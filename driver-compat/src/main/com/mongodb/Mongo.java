@@ -29,14 +29,13 @@ import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
 import org.mongodb.connection.impl.DefaultConnectionSettings;
-import org.mongodb.connection.impl.DefaultMultiServerCluster;
 import org.mongodb.connection.impl.DefaultServerSettings;
-import org.mongodb.connection.impl.DefaultSingleServerCluster;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
 import java.net.UnknownHostException;
@@ -69,7 +68,7 @@ public class Mongo {
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(new DefaultMultiServerCluster(createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())),
+        this(new DefaultClusterFactory().create(createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())),
                 mongoOptions);
     }
 
@@ -78,16 +77,16 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(new DefaultSingleServerCluster(serverAddress.toNew(), createClusterableServerFactory(mongoOptions.toNew())), mongoOptions);
+        this(new DefaultClusterFactory().create(serverAddress.toNew(), createClusterableServerFactory(mongoOptions.toNew())), mongoOptions);
     }
 
     public Mongo(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultSingleServerCluster(addr.toNew(), createClusterableServerFactory(createNewCredentialList(credentialsList),
+        this(new DefaultClusterFactory().create(addr.toNew(), createClusterableServerFactory(createNewCredentialList(credentialsList),
                 options.toNew())), options);
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultMultiServerCluster(createNewSeedList(seedList),
+        this(new DefaultClusterFactory().create(createNewSeedList(seedList),
                 createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())), options);
     }
 
@@ -333,14 +332,16 @@ public class Mongo {
 
     private static Cluster createCluster(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new DefaultSingleServerCluster(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)), createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
+            return new DefaultClusterFactory().create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
+                    createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
         }
         else {
             List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.connection.ServerAddress(cur));
             }
-            return new DefaultMultiServerCluster(seedList, createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
+            return new DefaultClusterFactory().create(seedList, createClusterableServerFactory(mongoURI.getCredentialList(),
+                    mongoURI.getOptions()));
         }
     }
 

@@ -40,7 +40,7 @@ import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-public final class DefaultMultiServerCluster extends DefaultCluster {
+final class DefaultMultiServerCluster extends DefaultCluster {
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 

@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.impl.DefaultMultiServerCluster;
+import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerType;
+import org.mongodb.connection.TestClusterableServerFactory;
+import org.mongodb.connection.TestServer;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,8 +46,7 @@ public class DefaultMultiClusterTest {
     @Test
     public void testDiscovery() {
         final ServerAddress serverAddress = new ServerAddress("localhost:27017");
-        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress),
-                factory);
+        final DefaultMultiServerCluster cluster = new DefaultMultiServerCluster(Arrays.asList(serverAddress), factory);
         factory.getServer(serverAddress).sendNotification(
                 ServerDescription.builder().address(serverAddress).ok(true).state(Connected)
                         .type(ServerType.ReplicaSetSecondary)

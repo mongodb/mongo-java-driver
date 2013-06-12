@@ -23,14 +23,13 @@ import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
+import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
 import org.mongodb.connection.impl.DefaultConnectionSettings;
-import org.mongodb.connection.impl.DefaultMultiServerCluster;
 import org.mongodb.connection.impl.DefaultServerSettings;
-import org.mongodb.connection.impl.DefaultSingleServerCluster;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
 import java.net.UnknownHostException;
@@ -56,7 +55,7 @@ public final class MongoClients {
 
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DefaultSingleServerCluster(serverAddress, getClusterableServerFactory(credentialList,
+        return new MongoClientImpl(options, new DefaultClusterFactory().create(serverAddress, getClusterableServerFactory(credentialList,
                 options)));
     }
 
@@ -65,7 +64,7 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DefaultMultiServerCluster(seedList,
+        return new MongoClientImpl(options, new DefaultClusterFactory().create(seedList,
                 getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
     }
 
@@ -75,7 +74,7 @@ public final class MongoClients {
 
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, new DefaultSingleServerCluster(new ServerAddress(mongoURI.getHosts().get(0)),
+            return new MongoClientImpl(options, new DefaultClusterFactory().create(new ServerAddress(mongoURI.getHosts().get(0)),
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
         else {
@@ -83,7 +82,7 @@ public final class MongoClients {
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options, new DefaultMultiServerCluster(seedList,
+            return new MongoClientImpl(options, new DefaultClusterFactory().create(seedList,
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
     }
