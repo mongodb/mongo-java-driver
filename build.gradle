@@ -206,6 +206,12 @@ project(':driver-compat') {
         testCompile 'org.objenesis:objenesis:1.3'
     }
 
+    test {
+        if (JavaVersion.current().isJava8Compatible()) {
+            jvmArgs '-Xint'
+        }
+    }
+
     clirr {
         ignoreFailures = true
         ignoredDifferenceTypes 10000

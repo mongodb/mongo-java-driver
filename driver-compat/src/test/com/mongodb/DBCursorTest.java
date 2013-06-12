@@ -37,7 +37,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@Ignore
 public class DBCursorTest extends DatabaseTestCase {
     private DBCursor cursor;
 
