@@ -46,11 +46,19 @@ public final class MongoClients {
         return create(serverAddress, MongoClientOptions.builder().build());
     }
 
-    public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DefaultSingleServerCluster(serverAddress,
-                getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
+    public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList) {
+        return create(serverAddress, credentialList, MongoClientOptions.builder().build());
     }
 
+    public static MongoClient create(final ServerAddress serverAddress, final MongoClientOptions options) {
+        return create(serverAddress, Collections.<MongoCredential>emptyList(), options);
+    }
+
+    public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                      final MongoClientOptions options) {
+        return new MongoClientImpl(options, new DefaultSingleServerCluster(serverAddress, getClusterableServerFactory(credentialList,
+                options)));
+    }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
         return create(seedList, MongoClientOptions.builder().build());

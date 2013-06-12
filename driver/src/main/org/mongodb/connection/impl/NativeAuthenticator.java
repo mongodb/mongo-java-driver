@@ -30,7 +30,7 @@ import org.mongodb.operation.CommandResult;
 
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
-public class NativeAuthenticator extends Authenticator {
+class NativeAuthenticator extends Authenticator {
     private final BufferProvider bufferProvider;
 
     public NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {

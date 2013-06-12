@@ -19,8 +19,7 @@ package org.mongodb.connection.impl;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.Connection;
 
-// TODO: take this private.  Currently only used by a test
-public abstract class Authenticator {
+abstract class Authenticator {
     private final MongoCredential credential;
     private final Connection connection;
 

@@ -29,7 +29,7 @@ public final class NativeAuthenticationHelper {
 
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
-    public static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
+    static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createAuthenticationHash(userName, password), nonce);
     }
 
@@ -46,7 +46,7 @@ public final class NativeAuthenticationHelper {
         return cmd;
     }
 
-    public static Document getNonceCommand() {
+    static Document getNonceCommand() {
         return new Document("getnonce", 1);
     }
 
@@ -73,7 +73,7 @@ public final class NativeAuthenticationHelper {
      * @param data bytes to digest
      * @return hex string of the MD5 digest
      */
-    public static String hexMD5(final byte[] data) {
+    static String hexMD5(final byte[] data) {
 
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -88,7 +88,7 @@ public final class NativeAuthenticationHelper {
         }
     }
 
-    public static String toHex(final byte[] bytes) {
+    static String toHex(final byte[] bytes) {
         StringBuilder sb = new StringBuilder();
 
         for (final byte aByte : bytes) {

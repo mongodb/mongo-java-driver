@@ -21,23 +21,26 @@ import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.MongoClient;
+import org.mongodb.MongoClientOptions;
+import org.mongodb.MongoClients;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.connection.MongoSecurityException;
+import org.mongodb.connection.MongoServerSelectionFailureException;
 import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.impl.NativeAuthenticator;
 import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.Fixture.getPrimary;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.
@@ -177,12 +180,13 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldBeAbleToAuthenticateAfterAddingUser() {
+    public void shouldBeAbleToAuthenticateAfterAddingUser() throws InterruptedException {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
         ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
-            new NativeAuthenticator(credential, connection, getBufferProvider()).authenticate();
+            MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
+            client.getDatabase("test").getCollection("test").one();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
@@ -191,15 +195,16 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldNotBeAbleToAuthenticateAfterRemovingUser() {
+    public void shouldNotBeAbleToAuthenticateAfterRemovingUser() throws InterruptedException {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
         ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             database.tools().removeUser(credential.getUserName());
             try {
-                new NativeAuthenticator(credential, connection, getBufferProvider()).authenticate();
-            } catch (MongoSecurityException e) { // NOPMD
+                MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
+                client.getDatabase("test").getCollection("test").one();
+            } catch (MongoServerSelectionFailureException e) {
                 // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
                 // the addUser to setUp, but that would require its own test class.
             }
