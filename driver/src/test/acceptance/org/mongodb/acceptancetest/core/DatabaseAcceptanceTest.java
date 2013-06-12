@@ -26,8 +26,8 @@ import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.MongoSecurityException;
-import org.mongodb.connection.NativeAuthenticator;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.impl.NativeAuthenticator;
 import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 

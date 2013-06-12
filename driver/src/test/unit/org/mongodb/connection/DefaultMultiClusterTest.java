@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.connection.impl.DefaultMultiServerCluster;
 
 import java.util.Arrays;
 import java.util.HashSet;

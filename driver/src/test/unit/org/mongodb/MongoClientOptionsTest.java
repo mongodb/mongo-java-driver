@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.junit.Test;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.AsyncDetector;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

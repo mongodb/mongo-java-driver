@@ -19,6 +19,13 @@ package org.mongodb.connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.connection.impl.DefaultClusterableServerFactory;
+import org.mongodb.connection.impl.DefaultConnectionFactory;
+import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
+import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
+import org.mongodb.connection.impl.DefaultConnectionSettings;
+import org.mongodb.connection.impl.DefaultServerSettings;
+import org.mongodb.connection.impl.DefaultSingleServerCluster;
 
 import java.util.List;
 import java.util.concurrent.Executors;

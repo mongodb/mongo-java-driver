@@ -19,6 +19,7 @@ package org.mongodb.connection;
 import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
 import java.nio.ByteBuffer;
 

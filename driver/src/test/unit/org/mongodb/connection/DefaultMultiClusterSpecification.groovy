@@ -16,8 +16,11 @@
 
 
 
+
+
 package org.mongodb.connection
 
+import org.mongodb.connection.impl.DefaultMultiServerCluster
 import spock.lang.Specification
 
 import static org.mongodb.connection.ClusterConnectionMode.Discovering

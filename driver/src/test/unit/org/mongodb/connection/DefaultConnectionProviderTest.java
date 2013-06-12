@@ -18,6 +18,8 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.junit.Test;
+import org.mongodb.connection.impl.DefaultConnectionProvider;
+import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

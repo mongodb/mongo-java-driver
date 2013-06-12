@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.PowerOfTwoBufferPool;
+import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.session.AsyncClusterSession;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ClusterSession;

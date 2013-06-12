@@ -18,10 +18,10 @@ package org.mongodb;
 
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ServerSelectingSession;
 
