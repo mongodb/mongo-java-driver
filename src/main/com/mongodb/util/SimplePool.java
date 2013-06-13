@@ -66,22 +66,27 @@ public abstract class SimplePool<T> {
      * @param t Object to add
      */
     public void done( T t ){
-        synchronized ( this ) {
-            if (_closed) {
-                cleanup(t);
-                return;
+        try {
+            synchronized ( this ) {
+                if (_closed) {
+                    cleanup(t);
+                    return;
+                }
+
+
+
+                if (!_out.remove(t)) {
+                    throw new RuntimeException("trying to put something back in the pool wasn't checked out");
+                }
+
+                _avail.add(t);
+
             }
-
-            assertConditions();
-
-            if (!_out.remove(t)) {
-                throw new RuntimeException("trying to put something back in the pool wasn't checked out");
-            }
-
-            _avail.add(t);
-
+        catch(Throwable t) {
+            throw t;
+        } finally {
+            _sem.release();
         }
-        _sem.release();
     }
 
     private void assertConditions() {
