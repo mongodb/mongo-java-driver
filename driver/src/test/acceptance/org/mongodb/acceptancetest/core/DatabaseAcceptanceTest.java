@@ -33,13 +33,16 @@ import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getPrimary;
 
 /**
@@ -185,8 +188,10 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
+            List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
+            newCredentialList.add(credential);
             MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
-            client.getDatabase("test").getCollection("test").one();
+            client.getDatabase(database.getName()).getCollection(collectionName).one();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
