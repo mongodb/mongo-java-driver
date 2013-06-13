@@ -65,16 +65,21 @@ class AuthenticatingConnection implements Connection {
     }
 
     @Override
+    public void open() {
+        isTrue("open", !isClosed());
+        wrapped.open();
+        authenticateAll();
+    }
+
+    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", wrapped != null);
-        authenticateAll();
         wrapped.sendMessage(byteBuffers);
     }
 
     @Override
     public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
         isTrue("open", wrapped != null);
-        authenticateAll();
         return wrapped.receiveMessage(responseSettings);
     }
 

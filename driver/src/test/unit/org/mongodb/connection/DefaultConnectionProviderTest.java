@@ -116,6 +116,10 @@ public class DefaultConnectionProviderTest {
         public Connection create(final ServerAddress serverAddress) {
             return new Connection() {
                 @Override
+                public void open() {
+                }
+
+                @Override
                 public void sendMessage(final List<ByteBuf> byteBuffers) {
                     throw new UnsupportedOperationException();
                 }

@@ -62,6 +62,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             if (connection == null) {
                 throw new MongoTimeoutException(String.format("Timeout waiting for a connection after %d %s", timeout, timeUnit));
             }
+            connection.open();
             return wrap(connection);
         } finally {
             waitQueueSize.decrementAndGet();
@@ -91,6 +92,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         @Override
         protected Connection createNew() {
             return connectionFactory.create(serverAddress);
+
         }
 
         @Override
@@ -121,8 +123,14 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
         @Override
         public ServerAddress getServerAddress() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed());
             return wrapped.getServerAddress();
+        }
+
+        @Override
+        public void open() {
+            isTrue("open", !isClosed());
+            wrapped.open();
         }
 
         @Override

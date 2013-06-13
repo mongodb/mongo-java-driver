@@ -38,6 +38,7 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
@@ -66,12 +67,14 @@ abstract class DefaultConnection implements Connection {
         return serverAddress;
     }
 
-    public DefaultConnectionSettings getSettings() {
-        return settings;
+    @Override
+    public void open() {
+       isTrue("open", !isClosed());
+       ensureOpen();
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers) {
-        check();
+        isTrue("open", !isClosed());
         try {
             write(byteBuffers);
         } catch (IOException e) {
@@ -82,7 +85,7 @@ abstract class DefaultConnection implements Connection {
 
     @Override
     public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
-        check();
+        isTrue("open", !isClosed());
         try {
             return receiveMessage(responseSettings, System.nanoTime());
         } catch (IOException e) {
@@ -147,10 +150,6 @@ abstract class DefaultConnection implements Connection {
         }
 
         return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
-    }
-
-    private void check() {
-        ensureOpen();
     }
 
     protected void initializeSocket(final Socket socket) throws IOException {
