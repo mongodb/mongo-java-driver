@@ -83,7 +83,7 @@ class AuthenticatingConnection implements Connection {
         return wrapped.receiveMessage(responseSettings);
     }
 
-    public void authenticateAll() {
+    private void authenticateAll() {
         if (!authenticated) {
             for (MongoCredential cur : credentialList) {
                 createAuthenticator(cur).authenticate();
