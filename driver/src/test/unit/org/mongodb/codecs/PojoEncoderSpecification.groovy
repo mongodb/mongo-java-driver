@@ -289,6 +289,6 @@ class PojoEncoderSpecification extends Specification {
     }
 
     private static final class ObjectWithMapOfMaps {
-        private final Map<String, Map<String, String>> theMap = ['theMapInsideTheMap': ['innerMapField': 'theInnerMapFieldValue']];
+        def theMap = ['theMapInsideTheMap': ['innerMapField': 'theInnerMapFieldValue']];
     }
 }

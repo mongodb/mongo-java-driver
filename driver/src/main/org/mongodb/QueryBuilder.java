@@ -21,10 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+//TODO: this is a basic conversion of the old QueryBuilder, but I believe it needs to be a) easier to use and b) a lot better documented
 public class QueryBuilder implements ConvertibleToDocument {
-    //CHECKSTYLE:OFF
-
-
     private final Document query;
     private String currentKey;
     private boolean hasNot;
@@ -37,9 +35,9 @@ public class QueryBuilder implements ConvertibleToDocument {
     }
 
     /**
-     * returns a new QueryBuilder
+     * Factory for QueryBuilder
      *
-     * @return
+     * @return a new QueryBuilder
      */
     public static QueryBuilder query() {
         return new QueryBuilder();
@@ -59,7 +57,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Adds a new key to the query if not present yet. Sets this key as the current key.
      *
      * @param key MongoDB document key
-     * @return this
+     * @return the current QueryBuilder with the key param set as the current key
      */
     public QueryBuilder put(final String key) {
         currentKey = key;
@@ -70,11 +68,11 @@ public class QueryBuilder implements ConvertibleToDocument {
     }
 
     /**
-     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable, e.g.
-     * {@code QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
+     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable, e.g. {@code
+     * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
-     * @return this
+     * @return the current QueryBuilder with the key param set as the current key
      */
     public QueryBuilder and(final String key) {
         return put(key);
@@ -252,11 +250,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param x      x coordinate
      * @param y      y coordinate
      * @param radius radius
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder withinCenter(final double x, final double y, final double radius) {
         addOperand(QueryOperators.WITHIN,
-                  new Document(QueryOperators.CENTER, new Object[]{new Double[]{x, y}, radius}));
+                   new Document(QueryOperators.CENTER, new Object[]{new Double[]{x, y}, radius}));
         return this;
     }
 
@@ -265,11 +263,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      *
      * @param x x coordinate
      * @param y y coordinate
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder near(final double x, final double y) {
         addOperand(QueryOperators.NEAR,
-                  new Double[]{x, y});
+                   new Double[]{x, y});
         return this;
     }
 
@@ -279,11 +277,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param x           x coordinate
      * @param y           y coordinate
      * @param maxDistance max distance
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance) {
         addOperand(QueryOperators.NEAR,
-                  new Double[]{x, y, maxDistance});
+                   new Double[]{x, y, maxDistance});
         return this;
     }
 
@@ -292,11 +290,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      *
      * @param longitude coordinate in decimal degrees
      * @param latitude  coordinate in decimal degrees
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude) {
         addOperand(QueryOperators.NEAR_SPHERE,
-                  new Double[]{longitude, latitude});
+                   new Double[]{longitude, latitude});
         return this;
     }
 
@@ -306,11 +304,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param longitude   coordinate in decimal degrees
      * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.NEAR_SPHERE,
-                  new Double[]{longitude, latitude, maxDistance});
+                   new Double[]{longitude, latitude, maxDistance});
         return this;
     }
 
@@ -320,12 +318,12 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param longitude   coordinate in decimal degrees
      * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder withinCenterSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.WITHIN,
-                  new Document(QueryOperators.CENTER_SPHERE,
-                                   new Object[]{new Double[]{longitude, latitude}, maxDistance}));
+                   new Document(QueryOperators.CENTER_SPHERE,
+                                new Object[]{new Double[]{longitude, latitude}, maxDistance}));
         return this;
     }
 
@@ -336,11 +334,11 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param y  the y coordinate of the first box corner.
      * @param x2 the x coordinate of the second box corner.
      * @param y2 the y coordinate of the second box corner.
-     * @return
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
-                  new Document(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
+                   new Document(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
         return this;
     }
 
@@ -348,14 +346,14 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to a $within operand, based on a bounding polygon represented by an array of points
      *
      * @param points an array of Double[] defining the vertices of the search area
-     * @return this
+     * @return the current QueryBuilder with the geo query params added
      */
     public QueryBuilder withinPolygon(final List<Double[]> points) {
         if (points == null || points.isEmpty() || points.size() < 3) {
             throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
         }
         addOperand(QueryOperators.WITHIN,
-                  new Document(QueryOperators.POLYGON, points));
+                   new Document(QueryOperators.POLYGON, points));
         return this;
     }
 
@@ -376,7 +374,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param ors the list of conditions to or together
      * @return Returns the current QueryBuilder with appended "or" operator
      */
-    @SuppressWarnings({"unchecked","rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public QueryBuilder or(final Document... ors) {
         List l = (List) query.get(QueryOperators.OR);
         if (l == null) {
@@ -387,7 +385,13 @@ public class QueryBuilder implements ConvertibleToDocument {
         return this;
     }
 
-    @SuppressWarnings({"unchecked","rawtypes"})
+    /**
+     * Equivalent to an $or operand.
+     *
+     * @param operand a QueryBuilder containing the values to OR
+     * @return Returns the current QueryBuilder with appended "or" operator
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public QueryBuilder or(final QueryBuilder operand) {
         List<Document> orOperands = (List<Document>) query.get(QueryOperators.OR);
         if (orOperands == null) {
@@ -404,7 +408,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param ands the list of conditions to and together
      * @return Returns the current QueryBuilder with appended "and" operator
      */
-    @SuppressWarnings({"unchecked","rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public QueryBuilder and(final Document... ands) {
         List l = (List) query.get(QueryOperators.AND);
         if (l == null) {
@@ -431,13 +435,14 @@ public class QueryBuilder implements ConvertibleToDocument {
         return query;
     }
 
-    private void addOperand(final String op, Object value) {
+    private void addOperand(final String op, final Object value) {
         if (op == null) {
+            Object valueToAdd = value;
             if (hasNot) {
-                value = new Document(QueryOperators.NOT, value);
+                valueToAdd = new Document(QueryOperators.NOT, value);
                 hasNot = false;
             }
-            query.put(currentKey, value);
+            query.put(currentKey, valueToAdd);
             return;
         }
 
@@ -449,12 +454,10 @@ public class QueryBuilder implements ConvertibleToDocument {
                 final Document notOperand = new Document(QueryOperators.NOT, operand);
                 query.put(currentKey, notOperand);
                 hasNot = false;
-            }
-            else {
+            } else {
                 query.put(currentKey, operand);
             }
-        }
-        else {
+        } else {
             operand = (Document) query.get(currentKey);
             if (operand.get(QueryOperators.NOT) != null) {
                 operand = (Document) operand.get(QueryOperators.NOT);
@@ -473,5 +476,4 @@ public class QueryBuilder implements ConvertibleToDocument {
     private static class NullObject {
     }
 
-    //CHECKSTYLE:ON
 }

@@ -35,7 +35,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     signing {
-        required { gradle.taskGraph.hasTask("uploadArchives") }
+        required { gradle.taskGraph.hasTask('uploadArchives') }
         sign configurations.archives
     }
 

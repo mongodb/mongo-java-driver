@@ -112,7 +112,6 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(1, 0)                     | new WriteConcern(1, 1)                      | false
     }
 
-
     def 'test constants'() {
         expect:
         constructedWriteConcern == constantWriteConcern

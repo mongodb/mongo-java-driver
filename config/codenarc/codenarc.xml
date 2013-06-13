@@ -26,7 +26,6 @@
         </rule-config>
         <exclude name="DuplicateNumberLiteral"/>
         <exclude name="DuplicateStringLiteral"/>
-
     </ruleset-ref>
     <ruleset-ref path='rulesets/exceptions.xml'/>
     <ruleset-ref path='rulesets/formatting.xml'>
