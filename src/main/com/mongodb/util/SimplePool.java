@@ -123,7 +123,7 @@ public abstract class SimplePool<T> {
             T t;
             if (toTake >= 0) {
                 t = _avail.remove(toTake);
-            } else if(allowCreate){
+            } else if(allowCreate && getTotal() < getMaxSize()){
                 t = createNewAndReleasePermitIfFailure();
             }
             _out.add(t);
