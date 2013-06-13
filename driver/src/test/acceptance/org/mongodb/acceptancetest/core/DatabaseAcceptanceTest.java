@@ -43,6 +43,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getCredentialList;
+import static org.mongodb.Fixture.getOptions;
 import static org.mongodb.Fixture.getPrimary;
 
 /**
@@ -190,7 +191,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
             newCredentialList.add(credential);
-            MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
+            MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), getOptions());
             client.getDatabase(database.getName()).getCollection(collectionName).one();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
