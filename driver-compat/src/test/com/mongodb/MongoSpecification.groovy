@@ -21,14 +21,16 @@ import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.ClusterType
 import spock.lang.Specification
+import spock.lang.Subject
 
 class MongoSpecification extends Specification {
-    private ClusterDescription clusterDescription = Mock();
-    private Cluster cluster = Mock();
+    private final ClusterDescription clusterDescription = Mock();
+    private final Cluster cluster = Mock();
 
-    private Mongo mongo= new Mongo(cluster, MongoClientOptions.builder().build());
+    @Subject
+    private final Mongo mongo = new Mongo(cluster, MongoClientOptions.builder().build());
 
-     public void 'should return replica set status if cluster type replica set and mode discovering'() {
+    def 'should return replica set status if cluster type replica set and mode discovering'() {
         //TODO: this is not really the correct way to go about this
         //we should have a test builder for the cluster if we have to mock the behaviour to get it to do what we want
         //currently we're getting null pointers for description
@@ -42,7 +44,7 @@ class MongoSpecification extends Specification {
     }
 
 
-     public void 'should return null if cluster type not replica'() {
+    def 'should return null if cluster type not replica'() {
         setup:
         cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.Sharded
@@ -52,7 +54,7 @@ class MongoSpecification extends Specification {
         mongo.getReplicaSetStatus() == null;
     }
 
-     public void 'should return null if cluster mode not discovering'() {
+    def 'should return null if cluster mode not discovering'() {
         setup:
         cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.ReplicaSet

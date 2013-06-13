@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
+import spock.lang.Subject
 
 class ReplicaSetStatusSpecification extends Specification {
-    private ClusterDescription clusterDescription = Mock();
-    private Cluster cluster = Mock();
-    private ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cluster);
+    private final ClusterDescription clusterDescription = Mock();
+    private final Cluster cluster = Mock();
+
+    @Subject
+    private final ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cluster);
 
     def setup() {
         cluster.getDescription() >> clusterDescription;
     }
 
-     public void 'should return replica set name'() {
+    def 'should return replica set name'() {
         setup:
-        final String setName = "repl0";
-        final ServerDescription serverDescription = Mock();
+        String setName = 'repl0';
+        ServerDescription serverDescription = Mock();
 
         serverDescription.getSetName() >> setName;
         clusterDescription.getAny() >> [serverDescription]
@@ -44,7 +45,7 @@ class ReplicaSetStatusSpecification extends Specification {
         replicaSetStatus.getName() == setName;
     }
 
-     public void 'should return null if no servers'() {
+    def 'should return null if no servers'() {
         setup:
         clusterDescription.getAny() >> []
 
@@ -52,7 +53,7 @@ class ReplicaSetStatusSpecification extends Specification {
         replicaSetStatus.getName() == null;
     }
 
-     public void 'should return null if master not defined'() {
+    def 'should return null if master not defined'() {
         setup:
         clusterDescription.getPrimaries() >> [];
 
@@ -60,31 +61,31 @@ class ReplicaSetStatusSpecification extends Specification {
         replicaSetStatus.getMaster() == null;
     }
 
-     public void 'should return master'() throws UnknownHostException {
+    def 'should return master'() throws UnknownHostException {
         setup:
-        final ServerDescription serverDescription = Mock();
-        serverDescription.getAddress() >> new ServerAddress("localhost").toNew()
+        ServerDescription serverDescription = Mock();
+        serverDescription.getAddress() >> new ServerAddress('localhost').toNew()
         clusterDescription.getPrimaries() >> [serverDescription]
 
         expect:
         replicaSetStatus.getMaster() != null;
     }
 
-     public void 'should test specific server for being master or not'() throws UnknownHostException {
+    def 'should test specific server for being master or not'() throws UnknownHostException {
         setup:
-        final ServerDescription primaryDescription = Mock();
-        primaryDescription.getAddress() >> new ServerAddress("localhost", 3000).toNew()
+        ServerDescription primaryDescription = Mock();
+        primaryDescription.getAddress() >> new ServerAddress('localhost', 3000).toNew()
         clusterDescription.getPrimaries() >> [primaryDescription]
 
         expect:
-        replicaSetStatus.isMaster(new ServerAddress("localhost", 3000));
-        !replicaSetStatus.isMaster(new ServerAddress("localhost", 4000));
+        replicaSetStatus.isMaster(new ServerAddress('localhost', 3000));
+        !replicaSetStatus.isMaster(new ServerAddress('localhost', 4000));
     }
 
 
-     public void 'should return max bson object size'() {
+    def 'should return max bson object size'() {
         setup:
-        final ServerDescription serverDescription = Mock()
+        ServerDescription serverDescription = Mock()
         serverDescription.getMaxDocumentSize() >> 47;
         clusterDescription.getPrimaries() >> [serverDescription];
 
