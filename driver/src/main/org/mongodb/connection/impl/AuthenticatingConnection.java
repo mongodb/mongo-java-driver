@@ -55,7 +55,7 @@ class AuthenticatingConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-        return wrapped == null;
+        return wrapped == null || wrapped.isClosed();
     }
 
     @Override
