@@ -11,7 +11,8 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
-    <!--<module name="JavadocPackage"/>-->
+    <!-- TODO: This has to be enabled at some point before we release -->
+    <module name="JavadocPackage"/>
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
@@ -49,15 +50,15 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <!--<module name="JavadocMethod"/>-->
-        <!--<module name="JavadocType"/>-->
-        <!--<module name="JavadocVariable"/>-->
-        <!--<module name="JavadocStyle"/>-->
-
         <!-- TODO: This has to be enabled at some point before we release -->
         <!--<module name="JavadocType">-->
-        <!--<property name="scope" value="public"/>-->
+            <!--<property name="scope" value="public"/>-->
         <!--</module>-->
+        <!--<module name="JavadocMethod">-->
+            <!--<property name="scope" value="public"/>-->
+        <!--</module>-->
+        <!--<module name="JavadocVariable"/>-->
+        <!--<module name="JavadocStyle"/>-->
 
 
         <!-- Checks for Naming Conventions.                  -->
