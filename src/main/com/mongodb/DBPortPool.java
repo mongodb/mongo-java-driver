@@ -163,7 +163,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         SemaphoresOut(){
             super( message );
         }
-        
+
         SemaphoresOut(int numPermits){
             super( message + " of " + numPermits);
         }
@@ -239,12 +239,12 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
         Bytes.LOGGER.log( Level.WARNING , "emptying DBPortPool to " + getServerAddress() + " b/c of error" , e );
 
-        // force close all sockets 
+        // force close all sockets
 
         List<DBPort> all = new ArrayList<DBPort>();
         while ( true ){
             try {
-                DBPort temp = get(0);
+                DBPort temp = get(0, false);
                 if ( temp == null )
                     break;
                 all.add( temp );
