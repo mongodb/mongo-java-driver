@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.mongodb.MongoClient</OriginalElement>
+  <nodes>
+    <node x="457.0" y="160.0">org.mongodb.MongoCollectionImpl.MongoCollectionStream</node>
+    <node x="517.0" y="80.0">org.mongodb.MongoQueryCursor</node>
+    <node x="144.5" y="400.0">org.mongodb.MongoClientImpl</node>
+    <node x="336.5" y="80.0">org.mongodb.MongoStream</node>
+    <node x="141.0" y="160.0">org.mongodb.MongoDatabase</node>
+    <node x="355.9230769230769" y="240.0">org.mongodb.MongoCollectionImpl</node>
+    <node x="0.0" y="320.0">org.mongodb.MongoClient</node>
+    <node x="296.0" y="160.0">org.mongodb.MongoCollection</node>
+    <node x="134.0" y="320.0">org.mongodb.MongoDatabaseImpl</node>
+    <node x="155.0" y="480.0">org.mongodb.MongoClients</node>
+    <node x="535.5" y="0.0">org.mongodb.MongoCursor</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.mongodb.MongoClients" target="org.mongodb.MongoClientImpl">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoClientImpl" target="org.mongodb.MongoClient">
+      <point x="-53.25" y="-15.0" />
+      <point x="162.25" y="375.0" />
+      <point x="57.0" y="375.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoDatabaseImpl" target="org.mongodb.MongoClientImpl">
+      <point x="40.75" y="15.0" />
+      <point x="256.25" y="375.0" />
+      <point x="233.25" y="375.0" />
+      <point x="17.75" y="-15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl" target="org.mongodb.MongoCollectionImpl.MongoCollectionStream">
+      <point x="21.125" y="-15.0" />
+      <point x="461.5480769230769" y="210.0" />
+      <point x="503.0" y="210.0" />
+      <point x="-46.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl.MongoCollectionStream" target="org.mongodb.MongoQueryCursor">
+      <point x="46.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl" target="org.mongodb.MongoDatabase">
+      <point x="-63.375" y="-15.0" />
+      <point x="377.0480769230769" y="220.0" />
+      <point x="242.25" y="220.0" />
+      <point x="33.75" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoDatabaseImpl" target="org.mongodb.MongoDatabase">
+      <point x="-40.75" y="-15.0" />
+      <point x="-33.75" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl.MongoCollectionStream" target="org.mongodb.MongoStream">
+      <point x="-46.0" y="-15.0" />
+      <point x="503.0" y="135.0" />
+      <point x="426.5" y="135.0" />
+      <point x="30.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl.MongoCollectionStream" target="org.mongodb.MongoCollectionImpl">
+      <point x="46.0" y="15.0" />
+      <point x="595.0" y="220.0" />
+      <point x="503.7980769230769" y="220.0" />
+      <point x="63.375" y="-15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoClientImpl" target="org.mongodb.MongoDatabaseImpl">
+      <point x="-17.75" y="-15.0" />
+      <point x="197.75" y="375.0" />
+      <point x="174.75" y="375.0" />
+      <point x="-40.75" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoDatabaseImpl" target="org.mongodb.MongoCollectionImpl">
+      <point x="40.75" y="-15.0" />
+      <point x="256.25" y="295.0" />
+      <point x="398.1730769230769" y="295.0" />
+      <point x="-42.25" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollection" target="org.mongodb.MongoStream">
+      <point x="0.0" y="-15.0" />
+      <point x="-30.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl" target="org.mongodb.MongoClientImpl">
+      <point x="42.25" y="15.0" />
+      <point x="482.6730769230769" y="375.0" />
+      <point x="268.75" y="375.0" />
+      <point x="53.25" y="-15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.MongoCursor">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.mongodb.MongoCollectionImpl" target="org.mongodb.MongoCollection">
+      <point x="-21.125" y="-15.0" />
+      <point x="419.2980769230769" y="210.0" />
+      <point x="366.5" y="210.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="442.0" y="164.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.mongodb.session.ServerSelectingSession</OriginalElement>
+  <nodes>
+    <node x="404.75" y="-19.0">org.mongodb.session.Session</node>
+    <node x="304.0" y="314.0">org.mongodb.session.PinnedSession</node>
+    <node x="-52.0" y="-16.0">org.mongodb.ServerSelectingOperation</node>
+    <node x="109.25" y="146.0">org.mongodb.session.ServerSelectingSession</node>
+    <node x="0.0" y="314.0">org.mongodb.session.ClusterSession</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.mongodb.session.PinnedSession" target="org.mongodb.session.ServerSelectingSession">
+      <point x="0.0" y="-70.5" />
+      <point x="444.5" y="289.0" />
+      <point x="385.25" y="289.0" />
+      <point x="92.0" y="59.0" />
+    </edge>
+    <edge source="org.mongodb.session.ClusterSession" target="org.mongodb.session.ServerSelectingSession">
+      <point x="0.0" y="-70.5" />
+      <point x="142.0" y="289.0" />
+      <point x="201.25" y="289.0" />
+      <point x="-92.0" y="59.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="303.0" y="166.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Constructors</Category>
+    <Category>Methods</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

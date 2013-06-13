@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.mongodb.MongoQueryCursor</OriginalElement>
+  <nodes>
+    <node x="-135.0" y="462.0">org.mongodb.session.Session</node>
+    <node x="373.00000000000006" y="190.0">org.mongodb.MongoQueryCursor</node>
+    <node x="908.0" y="22.0">org.mongodb.operation.GetMoreOperation</node>
+    <node x="207.00000000000006" y="-25.0">org.mongodb.operation.QueryOperation</node>
+    <node x="-193.0" y="246.0">org.mongodb.session.ServerSelectingSession</node>
+    <node x="635.0" y="44.0">org.mongodb.operation.KillCursorOperation</node>
+    <node x="-179.0" y="-5.0">org.mongodb.MongoCursor</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.operation.KillCursorOperation">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.session.Session">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.operation.QueryOperation">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.operation.GetMoreOperation">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="org.mongodb.MongoQueryCursor" target="org.mongodb.MongoCursor">
+      <point x="-159.75" y="-191.0" />
+      <point x="426.25000000000006" y="170.0" />
+      <point x="93.0" y="170.0" />
+      <point x="0.0" y="59.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="510.0" y="265.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Methods</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+
