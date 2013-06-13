@@ -88,7 +88,7 @@ class CodecsSpecification extends Specification {
 
     def 'should be able to encode map'() {
         expect:
-        codecs.canEncode(new HashMap<String, Object>()) == true;
+        codecs.canEncode(['myObj': new Object()]) == true;
     }
 
     def 'should be able to encode array'() {
@@ -98,43 +98,43 @@ class CodecsSpecification extends Specification {
 
     def 'should be able to encode list'() {
         expect:
-        codecs.canEncode(new ArrayList<String>()) == true;
+        codecs.canEncode(['List', 'of', 'Strings'])
     }
 
     def 'should be able to encode primitive'() {
         expect:
-        codecs.canEncode(1) == true;
+        codecs.canEncode(1)
     }
 
     def 'should be able to encode code with scope'() {
         expect:
-        codecs.canEncode(new CodeWithScope(null, null)) == true;
+        codecs.canEncode(new CodeWithScope(null, null))
     }
 
     def 'should be able to encode d b ref'() {
         expect:
-        codecs.canEncode(new DBRef(null, null)) == true;
+        codecs.canEncode(new DBRef(null, null))
     }
 
     def 'should be able to encode null'() {
         expect:
-        codecs.canEncode(null) == true;
+        codecs.canEncode(null)
     }
 
     def 'should be able to decode map'() {
         expect:
-        codecs.canDecode(Map) == true;
+        codecs.canDecode(Map)
     }
 
     def 'should be able to decode hash map'() {
         expect:
-        codecs.canDecode(HashMap) == true;
+        codecs.canDecode(HashMap)
     }
 
     @Ignore('not supported yet')
     def 'should be able to decode primitive'() {
         expect:
-        codecs.canDecode(int) == true;
+        codecs.canDecode(int)
     }
 
 }

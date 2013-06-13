@@ -188,11 +188,6 @@ project(':driver') {
         from project(':bson').sourceSets.main.output
         from sourceSets.main.output
     }
-
-    codenarc {
-        //TODO: we will need to turn this on
-        ignoreFailures = true
-    }
 }
 
 project(':driver-compat') {
@@ -227,11 +222,6 @@ project(':driver-compat') {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
-    }
-
-    codenarc {
-        //TODO: we will need to turn this on
-        ignoreFailures = true
     }
 
     task uberJar(type: Jar) {

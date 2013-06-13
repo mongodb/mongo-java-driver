@@ -21,20 +21,22 @@ import org.bson.BSONWriter
 import org.mongodb.DBRef
 import spock.lang.Ignore
 import spock.lang.Specification
+import spock.lang.Subject
 
 import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded
 
 class DBRefCodecSpecification extends Specification {
-    private BSONWriter bsonWriter = Mock(BSONWriter);
-    private Codecs codecs = Mock(Codecs);
+    private final BSONWriter bsonWriter = Mock();
+    private final Codecs codecs = Mock();
 
-    private DBRefCodec dbRefCodec = new DBRefCodec(codecs);
+    @Subject
+    private final DBRefCodec dbRefCodec = new DBRefCodec(codecs);
 
-    public void 'should encode db ref as string namespace and delegate encoding of id to codecs'() {
+    def 'should encode db ref as string namespace and delegate encoding of id to codecs'() {
         setup:
-        final String namespace = "theNamespace";
-        final String theId = "TheId";
-        final DBRef dbRef = new DBRef(theId, namespace);
+        String namespace = 'theNamespace';
+        String theId = 'TheId';
+        DBRef dbRef = new DBRef(theId, namespace);
 
         when:
         dbRefCodec.encode(bsonWriter, dbRef);
@@ -47,16 +49,16 @@ class DBRefCodecSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    @Ignore("decoding not implemented yet")
-    public void 'should decode code with scope'() {
+    @Ignore('decoding not implemented yet')
+    def 'should decode code with scope'() {
         setup:
-        final String namespace = "theNamespace";
-        final String theId = "TheId";
-        final DBRef dbRef = new DBRef(theId, namespace);
-        final BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(dbRef);
+        String namespace = 'theNamespace';
+        String theId = 'TheId';
+        DBRef dbRef = new DBRef(theId, namespace);
+        BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(dbRef);
 
-//        final DBRef actualDBRef = dbRefCodec.decode(reader);
+        DBRef actualDBRef = dbRefCodec.decode(reader);
 
-//        assertThat(actualDBRef, is(dbRef));
+        assertThat(actualDBRef, is(dbRef));
     }
 }

@@ -83,7 +83,7 @@ class DocumentSpecification extends Specification {
 
     def 'should produce nice JSON when calling toString'() {
         expect:
-        new Document('int', 1).append('string', 'abc').toString() == "{ \"int\" : 1, \"string\" : \"abc\" }";
+        new Document('int', 1).append('string', 'abc').toString() == '{ "int" : 1, "string" : "abc" }';
     }
 
 }

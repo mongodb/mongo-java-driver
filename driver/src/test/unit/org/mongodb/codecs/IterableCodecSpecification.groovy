@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.codecs
 
 import org.bson.BSONReader
@@ -21,32 +23,34 @@ import org.bson.BSONWriter
 import org.mongodb.Decoder
 import org.mongodb.Document
 import spock.lang.Specification
+import spock.lang.Subject
 
 import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded
 
 class IterableCodecSpecification extends Specification {
-    private BSONWriter bsonWriter = Mock(BSONWriter);
+    private final BSONWriter bsonWriter = Mock();
 
+    @Subject
     private final IterableCodec iterableCodec = new IterableCodec(Codecs.createDefault());
 
-    public void 'should encode list of strings'() {
+    def 'should encode list of strings'() {
         setup:
-        final List<String> stringList = ["Uno", "Dos", "Tres"];
+        List<String> stringList = ['Uno', 'Dos', 'Tres'];
 
         when:
         iterableCodec.encode(bsonWriter, stringList);
 
         then:
         1 * bsonWriter.writeStartArray();
-        1 * bsonWriter.writeString("Uno");
-        1 * bsonWriter.writeString("Dos");
-        1 * bsonWriter.writeString("Tres");
+        1 * bsonWriter.writeString('Uno');
+        1 * bsonWriter.writeString('Dos');
+        1 * bsonWriter.writeString('Tres');
         1 * bsonWriter.writeEndArray();
     }
 
-    public void 'should encode list of integers'() {
+    def 'should encode list of integers'() {
         setup:
-        final List<Integer> stringList = [1, 2, 3];
+        List<Integer> stringList = [1, 2, 3];
 
         when:
         iterableCodec.encode(bsonWriter, stringList);
@@ -59,14 +63,14 @@ class IterableCodecSpecification extends Specification {
         1 * bsonWriter.writeEndArray();
     }
 
-    public void 'should delegate encoding of complex types to codecs'() {
+    def 'should delegate encoding of complex types to codecs'() {
         setup:
         // different setup means this should be in a different test class
-        final Codecs mockCodecs = Mock(Codecs);
-        final IterableCodec iterableCodecWithMock = new IterableCodec(mockCodecs);
+        Codecs mockCodecs = Mock(Codecs);
+        IterableCodec iterableCodecWithMock = new IterableCodec(mockCodecs);
 
-        final Object document = new Document("field", "value");
-        final List<Object> documentList = [document];
+        Object document = new Document('field', 'value');
+        List<Object> documentList = [document];
 
         when:
         iterableCodecWithMock.encode(bsonWriter, documentList);
@@ -77,70 +81,69 @@ class IterableCodecSpecification extends Specification {
         1 * bsonWriter.writeEndArray();
     }
 
-    public void 'should decode arrays as lists of objects'() {
+    def 'should decode arrays as lists of objects'() {
         setup:
-        final Iterable expectedList = [1, 2, 3];
-        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+        Iterable expectedList = [1, 2, 3];
+        BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
         when:
-        final Iterable actualDecodedObject = iterableCodec.decode(reader);
+        Iterable actualDecodedObject = iterableCodec.decode(reader);
 
         then:
         actualDecodedObject == expectedList;
         actualDecodedObject instanceof ArrayList;
     }
 
-    public void 'should decode array of arrays'() {
+    def 'should decode array of arrays'() {
         setup:
-        final Iterable<List<Integer>> expectedList = [[1, 2], [3]];
-        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+        Iterable<List<Integer>> expectedList = [[1, 2], [3]];
+        BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
         when:
-        final Iterable actualDecodedObject = iterableCodec.decode(reader);
+        Iterable actualDecodedObject = iterableCodec.decode(reader);
 
         then:
         actualDecodedObject == expectedList;
     }
 
-    public void 'should decode array of documents'() {
+    def 'should decode array of documents'() {
         setup:
-        final Object document = new Document("field", "value");
-        final Iterable<Object> expectedList = [document];
-        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
+        Object document = new Document('field', 'value');
+        Iterable<Object> expectedList = [document];
+        BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
         when:
-        final Iterable<Object> actualDecodedObject = iterableCodec.decode(reader);
+        Iterable<Object> actualDecodedObject = iterableCodec.decode(reader);
 
         then:
         actualDecodedObject == expectedList;
     }
 
-    public void 'should be able to decode into set'() {
+    def 'should be able to decode into set'() {
         setup:
-        final IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), Codecs.createDefault());
+        IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), Codecs.createDefault());
 
-        final Iterable<Integer> expectedSet = new HashSet<Integer>([1, 2, 3]);
-        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
+        Iterable<Integer> expectedSet = new HashSet<Integer>([1, 2, 3]);
+        BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
 
         when:
-        final Iterable<Integer> actualDecodedObject = iterableCodecForSet.decode(reader);
+        Iterable<Integer> actualDecodedObject = iterableCodecForSet.decode(reader);
 
         then:
         actualDecodedObject == expectedSet;
         actualDecodedObject instanceof Set;
     }
 
-    public void 'should be able to plug in custom decoder'() {
+    def 'should be able to plug in custom decoder'() {
         setup:
         int timesDecodeCalled = 0;
 
-        final HashSet<Integer> expectedSet = new HashSet<Integer>([1]);
-        final BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedSet);
+        BSONReader reader = prepareReaderWithObjectToBeDecoded(new HashSet<Integer>([1]));
 
-        final Decoder decoder = Mock();
+        Decoder decoder = Mock();
         //this magic incantation is the stubbing
         decoder.decode(reader) >> { reader.readInt32(); timesDecodeCalled++; }
-        final IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), decoder);
+        IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), decoder);
 
         when:
         iterableCodecForSet.decode(reader);

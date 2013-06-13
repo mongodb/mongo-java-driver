@@ -21,16 +21,17 @@ import org.mongodb.Document
 import org.mongodb.codecs.validators.FieldNameValidator
 import org.mongodb.codecs.validators.QueryFieldNameValidator
 import spock.lang.Specification
+import spock.lang.Subject
 
 class MapCodecSpecification extends Specification {
-    private BSONWriter bsonWriter = Mock(BSONWriter);
+    private final BSONWriter bsonWriter = Mock();
 
+    @Subject
     private MapCodec mapCodec = new MapCodec(Codecs.createDefault(), new FieldNameValidator());
 
-    public void 'should encode string to document map'() {
+    def 'should encode string to document map'() {
         setup:
-        final Map<String, Object> map = new HashMap<String, Object>();
-        map.put("myFieldName", new Document("doc", 1));
+        Map<String, Object> map = ['myFieldName': new Document('doc', 1)];
 
         when:
         mapCodec.encode(bsonWriter, map);
@@ -38,38 +39,36 @@ class MapCodecSpecification extends Specification {
         then:
         1 * bsonWriter.writeStartDocument();
         then:
-        1 * bsonWriter.writeName("myFieldName");
+        1 * bsonWriter.writeName('myFieldName');
         then:
         1 * bsonWriter.writeStartDocument();
         then:
-        1 * bsonWriter.writeName("doc");
+        1 * bsonWriter.writeName('doc');
         then:
         1 * bsonWriter.writeInt32(1);
         then:
         2 * bsonWriter.writeEndDocument();
     }
 
-    public void 'should encode simple string to object map'() {
+    def 'should encode simple string to object map'() {
         setup:
-        final Map<String, Object> map = new HashMap<String, Object>();
-        map.put("myFieldName", "The Field");
+        Map<String, Object> map = ['myFieldName': 'The Field'];
 
         when:
         mapCodec.encode(bsonWriter, map);
 
         then:
         1 * bsonWriter.writeStartDocument();
-        1 * bsonWriter.writeName("myFieldName");
-        1 * bsonWriter.writeString("The Field");
+        1 * bsonWriter.writeName('myFieldName');
+        1 * bsonWriter.writeString('The Field');
         1 * bsonWriter.writeEndDocument();
     }
 
-    public void 'should not allow dots in keys when validator is collectible document validator'() {
+    def 'should not allow dots in keys when validator is collectible document validator'() {
         setup:
         mapCodec = new MapCodec(Codecs.createDefault(), new FieldNameValidator());
 
-        final Map<String, Integer> mapWithInvalidFieldName = new HashMap<String, Integer>();
-        mapWithInvalidFieldName.put("a.b", 1);
+        Map<String, Integer> mapWithInvalidFieldName = ['a.b': 1];
 
         when:
         mapCodec.encode(bsonWriter, mapWithInvalidFieldName);
@@ -78,20 +77,20 @@ class MapCodecSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    public void 'should allow dots in keys in nested maps when validator is query document validator'() {
+    def 'should allow dots in keys in nested maps when validator is query document validator'() {
         setup:
         mapCodec = new MapCodec(Codecs.createDefault(), new QueryFieldNameValidator());
-        final Map<String, Object> map = new HashMap<String, Object>();
-        map.put("a.b", "The Field");
+        Map<String, Object> map = ['a.b': 'The Field'];
 
         when:
         mapCodec.encode(bsonWriter, map);
 
         then:
         1 * bsonWriter.writeStartDocument();
-        1 * bsonWriter.writeName("a.b");
-        1 * bsonWriter.writeString("The Field");
+        1 * bsonWriter.writeName('a.b');
+        1 * bsonWriter.writeString('The Field');
         1 * bsonWriter.writeEndDocument();
+
     }
 
     //TODO: Trish: optimise encoding primitive types?

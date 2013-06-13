@@ -96,6 +96,7 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(1, 100)          | new Document('getlasterror', 1).append('wtimeout', 100)
     }
 
+    @SuppressWarnings('ExplicitCallToEqualsMethod')
     def 'test equals'() {
         expect:
         wc.equals(compareTo) == expectedResult

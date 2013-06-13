@@ -1,43 +1,45 @@
 /*
  * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
- * Licensed under the Apache License, Version 2.0 (the 'License');
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-
-
 package org.mongodb.codecs
 
 import org.bson.BSONWriter
-import org.mongodb.codecs.pojo.*
+import org.mongodb.codecs.pojo.Address
+import org.mongodb.codecs.pojo.Name
+import org.mongodb.codecs.pojo.ObjectWithArray
+import org.mongodb.codecs.pojo.ObjectWithMapOfStrings
+import org.mongodb.codecs.pojo.Person
 import spock.lang.Ignore
 import spock.lang.Specification
 
 import static org.junit.Assert.fail
 
 class PojoEncoderSpecification extends Specification {
-    private BSONWriter bsonWriter = Mock();
+    private final BSONWriter bsonWriter = Mock();
 
     private final Codecs codecs = Codecs.createDefault();
 
-    public void shouldEncodeSimplePojo() {
+    def shouldEncodeSimplePojo() {
         setup:
-        final PojoEncoder<SimpleObject> pojoEncoder = new PojoEncoder<SimpleObject>(codecs);
-        final String valueInSimpleObject = 'MyName';
-        
+        PojoEncoder<SimpleObject> pojoEncoder = new PojoEncoder<SimpleObject>(codecs);
+        String valueInSimpleObject = 'MyName';
+
         when:
         pojoEncoder.encode(bsonWriter, new SimpleObject(valueInSimpleObject));
-        
+
         then:
         1 * bsonWriter.writeStartDocument();
         1 * bsonWriter.writeName('name');
@@ -45,14 +47,14 @@ class PojoEncoderSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodePojoContainingOtherPojos() {
+    def shouldEncodePojoContainingOtherPojos() {
         setup:
-        final PojoEncoder<NestedObject> pojoEncoder = new PojoEncoder<NestedObject>(codecs);
-        final String anotherName = 'AnotherName';
+        PojoEncoder<NestedObject> pojoEncoder = new PojoEncoder<NestedObject>(codecs);
+        String anotherName = 'AnotherName';
 
         when:
         pojoEncoder.encode(bsonWriter, new NestedObject(new SimpleObject(anotherName)));
-        
+
         then:
         1 * bsonWriter.writeStartDocument();
         1 * bsonWriter.writeName('mySimpleObject');
@@ -62,13 +64,13 @@ class PojoEncoderSpecification extends Specification {
         2 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodePojoContainingOtherPojosAndFields() {
+    def shouldEncodePojoContainingOtherPojosAndFields() {
         setup:
-        final PojoEncoder<NestedObjectWithFields> pojoEncoder = new PojoEncoder<NestedObjectWithFields>(codecs);
+        PojoEncoder<NestedObjectWithFields> pojoEncoder = new PojoEncoder<NestedObjectWithFields>(codecs);
 
         when:
         pojoEncoder.encode(bsonWriter, new NestedObjectWithFields(98, new SimpleObject('AnotherName')));
-        
+
         then:
         1 * bsonWriter.writeStartDocument();
         1 * bsonWriter.writeName('intValue');
@@ -80,9 +82,9 @@ class PojoEncoderSpecification extends Specification {
         2 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldSupportArrays() {
+    def shouldSupportArrays() {
         setup:
-        final PojoEncoder<ObjectWithArray> pojoEncoder = new PojoEncoder<ObjectWithArray>(codecs);
+        PojoEncoder<ObjectWithArray> pojoEncoder = new PojoEncoder<ObjectWithArray>(codecs);
 
         when:
         pojoEncoder.encode(bsonWriter, new ObjectWithArray());
@@ -98,9 +100,9 @@ class PojoEncoderSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodeMapsOfPrimitiveTypes() {
+    def shouldEncodeMapsOfPrimitiveTypes() {
         setup:
-        final PojoEncoder<ObjectWithMapOfStrings> pojoEncoder = new PojoEncoder<ObjectWithMapOfStrings>(codecs);
+        PojoEncoder<ObjectWithMapOfStrings> pojoEncoder = new PojoEncoder<ObjectWithMapOfStrings>(codecs);
 
         when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfStrings());
@@ -116,14 +118,14 @@ class PojoEncoderSpecification extends Specification {
         2 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodeMapsOfObjects() {
+    def shouldEncodeMapsOfObjects() {
         setup:
-        final PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
+        PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
         //TODO: get rid of this - default object codec is a bit of a smell
         codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
 
-        final String simpleObjectValue = 'theValue';
-        
+        String simpleObjectValue = 'theValue';
+
         when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfObjects(simpleObjectValue));
 
@@ -138,9 +140,9 @@ class PojoEncoderSpecification extends Specification {
         3 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodeMapsOfMaps() {
+    def shouldEncodeMapsOfMaps() {
         setup:
-        final PojoEncoder<ObjectWithMapOfMaps> pojoEncoder = new PojoEncoder<ObjectWithMapOfMaps>(codecs);
+        PojoEncoder<ObjectWithMapOfMaps> pojoEncoder = new PojoEncoder<ObjectWithMapOfMaps>(codecs);
 
         when:
         pojoEncoder.encode(bsonWriter, new ObjectWithMapOfMaps());
@@ -156,10 +158,10 @@ class PojoEncoderSpecification extends Specification {
         3 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldNotEncodeSpecialFieldsLikeJacocoData() {
+    def shouldNotEncodeSpecialFieldsLikeJacocoData() {
         setup:
-        final PojoEncoder<JacocoDecoratedObject> pojoEncoder = new PojoEncoder<JacocoDecoratedObject>(codecs);
-        final JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject('thisName');
+        PojoEncoder<JacocoDecoratedObject> pojoEncoder = new PojoEncoder<JacocoDecoratedObject>(codecs);
+        JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject('thisName');
 
         when:
         pojoEncoder.encode(bsonWriter, jacocoDecoratedObject);
@@ -169,12 +171,12 @@ class PojoEncoderSpecification extends Specification {
         1 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldEncodeComplexPojo() {
+    def shouldEncodeComplexPojo() {
         setup:
-        final PojoEncoder<Person> pojoEncoder = new PojoEncoder<Person>(codecs);
-        final Address address = new Address();
-        final Name name = new Name();
-        final Person person = new Person(address, name);
+        PojoEncoder<Person> pojoEncoder = new PojoEncoder<Person>(codecs);
+        Address address = new Address();
+        Name name = new Name();
+        Person person = new Person(address, name);
 
         when:
         pojoEncoder.encode(bsonWriter, person);
@@ -200,10 +202,10 @@ class PojoEncoderSpecification extends Specification {
         2 * bsonWriter.writeEndDocument();
     }
 
-    public void shouldIgnoreTransientFields() {
+    def shouldIgnoreTransientFields() {
         setup:
-        final PojoEncoder<ObjWithTransientField> pojoEncoder = new PojoEncoder<ObjWithTransientField>(codecs);
-        final String value = 'some value';
+        PojoEncoder<ObjWithTransientField> pojoEncoder = new PojoEncoder<ObjWithTransientField>(codecs);
+        String value = 'some value';
 
         when:
         pojoEncoder.encode(bsonWriter, new ObjWithTransientField(value));
@@ -217,45 +219,45 @@ class PojoEncoderSpecification extends Specification {
     }
 
     @Ignore('not implemented')
-    public void shouldEncodeIds() {
+    def shouldEncodeIds() {
         setup:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
-    public void shouldThrowAnExceptionWhenItCannotEncodeAField() {
+    def shouldThrowAnExceptionWhenItCannotEncodeAField() {
         setup:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
-    public void shouldEncodeEnumsAsStrings() {
+    def shouldEncodeEnumsAsStrings() {
         setup:
         fail('Not implemented');
     }
 
-    //CHECKSTYLE:OFF
     private static class JacocoDecoratedObject {
+        @SuppressWarnings('FieldName')
         private final String $name;
 
-        public JacocoDecoratedObject(final String name) {
+        private JacocoDecoratedObject(String name) {
             this.$name = name;
         }
     }
-    //CHECKSTYLE:ON
 
     private static class SimpleObject {
         private final String name;
 
-        public SimpleObject(final String name) {
+        private SimpleObject(String name) {
             this.name = name;
         }
     }
 
     private static class ObjWithTransientField {
+        @SuppressWarnings('UnnecessaryTransientModifier')
         private final transient String transientField;
 
-        public ObjWithTransientField(final String transientField) {
+        private ObjWithTransientField(String transientField) {
             this.transientField = transientField;
         }
     }
@@ -263,7 +265,7 @@ class PojoEncoderSpecification extends Specification {
     private static class NestedObject {
         private final SimpleObject mySimpleObject;
 
-        public NestedObject(final SimpleObject mySimpleObject) {
+        private NestedObject(SimpleObject mySimpleObject) {
             this.mySimpleObject = mySimpleObject;
         }
     }
@@ -272,27 +274,21 @@ class PojoEncoderSpecification extends Specification {
         private final int intValue;
         private final SimpleObject mySimpleObject;
 
-        public NestedObjectWithFields(final int intValue, final SimpleObject mySimpleObject) {
+        private NestedObjectWithFields(int intValue, SimpleObject mySimpleObject) {
             this.intValue = intValue;
             this.mySimpleObject = mySimpleObject;
         }
     }
 
     private static final class ObjectWithMapOfObjects {
-        private final Map<String, SimpleObject> theMap = new HashMap<String, SimpleObject>();
+        private final Map<String, SimpleObject> theMap = [:];
 
-        private ObjectWithMapOfObjects(final String theValue) {
+        private ObjectWithMapOfObjects(String theValue) {
             theMap.put('first', new SimpleObject(theValue));
         }
     }
 
     private static final class ObjectWithMapOfMaps {
-        private final Map<String, Map<String, String>> theMap = new HashMap<String, Map<String, String>>();
-
-        private ObjectWithMapOfMaps() {
-            final Map<String, String> innerMap = new HashMap<String, String>();
-            innerMap.put('innerMapField', 'theInnerMapFieldValue');
-            theMap.put('theMapInsideTheMap', innerMap);
-        }
+        private final Map<String, Map<String, String>> theMap = ['theMapInsideTheMap': ['innerMapField': 'theInnerMapFieldValue']];
     }
 }
