@@ -1,12 +1,12 @@
 /**
  *      Copyright (C) 2008-2012 10gen Inc.
- *  
+ *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,22 +66,27 @@ public abstract class SimplePool<T> {
      * @param t Object to add
      */
     public void done( T t ){
-        synchronized ( this ) {
-            if (_closed) {
-                cleanup(t);
-                return;
+        try {
+            synchronized ( this ) {
+                if (_closed) {
+                    cleanup(t);
+                    return;
+                }
+
+
+
+                if (!_out.remove(t)) {
+                    throw new RuntimeException("trying to put something back in the pool wasn't checked out");
+                }
+
+                _avail.add(t);
+
             }
-
-            assertConditions();
-
-            if (!_out.remove(t)) {
-                throw new RuntimeException("trying to put something back in the pool wasn't checked out");
-            }
-
-            _avail.add(t);
-
+        catch(Throwable t) {
+            throw t;
+        } finally {
+            _sem.release();
         }
-        _sem.release();
     }
 
     private void assertConditions() {
@@ -98,15 +103,15 @@ public abstract class SimplePool<T> {
     public T get() throws InterruptedException {
 	return get(-1);
     }
-    
+
     /** Gets an object from the pool - will block if none are available
-     * @param waitTime 
+     * @param waitTime
      *        negative - forever
      *        0        - return immediately no matter what
      *        positive ms to wait
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
-    public T get(long waitTime) throws InterruptedException {
+    public T get(long waitTime, boolean allowCreate=true) throws InterruptedException {
         if (!permitAcquired(waitTime)) {
             return null;
         }
@@ -118,7 +123,7 @@ public abstract class SimplePool<T> {
             T t;
             if (toTake >= 0) {
                 t = _avail.remove(toTake);
-            } else {
+            } else if(allowCreate && getTotal() < getMaxSize()){
                 t = createNewAndReleasePermitIfFailure();
             }
             _out.add(t);
@@ -170,7 +175,7 @@ public abstract class SimplePool<T> {
     public synchronized int getTotal(){
         return _avail.size() + _out.size();
     }
-    
+
     public synchronized int getInUse(){
         return _out.size();
     }
