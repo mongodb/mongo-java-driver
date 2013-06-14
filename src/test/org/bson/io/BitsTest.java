@@ -38,7 +38,7 @@ public class BitsTest {
     public void testReadFullyWithBufferLargerThanExpected() throws IOException {
         final byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, BYTES.length);
-        assertEquals(BYTES, Arrays.copyOfRange(buffer, 0, BYTES.length));
+        assertEquals(BYTES, copyOfRange(buffer, 0, BYTES.length));
     }
 
     @Test
@@ -46,7 +46,7 @@ public class BitsTest {
         final int offset = 10;
         final byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
-        assertEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
+        assertEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class BitsTest {
         final int offset = 10;
         final byte[] buffer = new byte[offset+BYTES.length];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
-        assertEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
+        assertEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
     @Test (expectedExceptions = IllegalArgumentException.class)
@@ -96,7 +96,16 @@ public class BitsTest {
 
     @Test(expectedExceptions = ArrayIndexOutOfBoundsException.class)
     public void testReadLongWithNotEnoughData() {
-        Bits.readLong(Arrays.copyOfRange(BYTES, 24, 30), 0);
+        Bits.readLong(copyOfRange(BYTES, 24, 30), 0);
     }
 
+    private static byte[] copyOfRange(byte[] original, int from, int to) {
+        final int newLength = to - from;
+        if (newLength < 0) {
+            throw new IllegalArgumentException(from + " > " + to);
+        }
+        final byte[] copy = new byte[newLength];
+        System.arraycopy(original, from, copy, 0, Math.min(original.length - from, newLength));
+        return copy;
+    }
 }
