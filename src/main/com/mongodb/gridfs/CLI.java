@@ -21,6 +21,8 @@ package com.mongodb.gridfs;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.ReadPreference;
 import com.mongodb.util.Util;
 
 import java.io.File;
@@ -37,7 +39,7 @@ public class CLI {
      *  Dumps usage info to stdout
      */
     private static void printUsage() {
-        System.out.println("Usage : [--bucket bucketname] action");
+        System.out.println("Usage : [--db database] action");
         System.out.println("  where  action is one of:");
         System.out.println("      list                      : lists all files in the store");
         System.out.println("      put filename              : puts the file filename into the store");
@@ -45,16 +47,16 @@ public class CLI {
         System.out.println("      md5 filename              : does an md5 hash on a file in the db (for testing)");
     }
 
-    private static String host = "127.0.0.1";
     private static String db = "test";
-    
+    private static String uri = "mongodb://127.0.0.1";
     private static Mongo _mongo = null;
 
     @SuppressWarnings("deprecation")
     private static Mongo getMongo()
         throws Exception {
-        if ( _mongo == null )
-            _mongo = new MongoClient( host );
+        if ( _mongo == null )  {
+            _mongo = new MongoClient(new MongoClientURI(uri));
+        }
         return _mongo;
     }
     
@@ -73,8 +75,6 @@ public class CLI {
             return;
         }
         
-        Mongo m = null;
-
         for ( int i=0; i<args.length; i++ ){
             String s = args[i];
             
@@ -85,7 +85,13 @@ public class CLI {
             }
 
             if ( s.equals( "--host" ) ){
-                host = args[i+1];
+                uri = "mongodb://" + args[i+1];
+                i++;
+                continue;
+            }
+
+            if ( s.equals( "--uri" ) ){
+                uri = args[i+1];
                 i++;
                 continue;
             }

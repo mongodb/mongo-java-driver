@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
@@ -43,6 +45,7 @@ import com.mongodb.DBObject;
  * @dochub gridfs
  */
 public class GridFS {
+    private static final Logger LOGGER = Logger.getLogger( "com.mongodb.gridfs" );
 
     /**
      * file's chunk size
@@ -91,11 +94,16 @@ public class GridFS {
         _chunkCollection = _db.getCollection( _bucketName + ".chunks" );
 
         // ensure standard indexes as long as collections are small
-        if (_filesCollection.count() < 1000)
-            _filesCollection.ensureIndex( BasicDBObjectBuilder.start().add( "filename" , 1 ).add( "uploadDate" , 1 ).get() );
-        if (_chunkCollection.count() < 1000)
-            _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() , BasicDBObjectBuilder.start().add( "unique" , 1 ).get() );
-
+        try {
+            if (_filesCollection.count() < 1000) {
+                _filesCollection.ensureIndex( BasicDBObjectBuilder.start().add( "filename" , 1 ).add( "uploadDate" , 1 ).get() );
+            }
+            if (_chunkCollection.count() < 1000) {
+                _chunkCollection.ensureIndex( BasicDBObjectBuilder.start().add( "files_id" , 1 ).add( "n" , 1 ).get() , BasicDBObjectBuilder.start().add( "unique" , 1 ).get() );
+            }
+        } catch (MongoException e) {
+             LOGGER.info(String.format("Unable to ensure indices on GridFS collections in database %s", db.getName()));
+        }
         _filesCollection.setObjectClass( GridFSDBFile.class );
     }
 
