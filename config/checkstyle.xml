@@ -12,7 +12,7 @@
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
     <!-- TODO: This has to be enabled at some point before we release -->
-    <module name="JavadocPackage"/>
+    <!--<module name="JavadocPackage"/>-->
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->

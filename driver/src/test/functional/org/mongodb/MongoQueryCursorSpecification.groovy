@@ -26,7 +26,6 @@ import org.mongodb.operation.KillCursorOperation
 import org.mongodb.operation.MongoCursorNotFoundException
 import org.mongodb.operation.QueryOption
 import org.mongodb.operation.ServerCursor
-import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
@@ -35,25 +34,10 @@ import static org.junit.Assert.fail
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
 
-class MongoQueryCursorSpecification extends Specification {
+class MongoQueryCursorSpecification extends FunctionalSpecification {
     private MongoQueryCursor<Document> cursor;
 
-    private static MongoDatabase database;
-    private MongoCollection<Document> collection;
-    private String collectionName;
-
-    def setupSpec() {
-        if (database == null) {
-            database = Fixture.getMongoClient().getDatabase('DriverTest-' + System.nanoTime());
-            Runtime.getRuntime().addShutdownHook(new DatabaseTestCase.ShutdownHook());
-        }
-    }
-
     def setup() {
-        collectionName = getClass().getName();
-        collection = database.getCollection(collectionName);
-        collection.tools().drop();
-
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document('_id', i));
         }
@@ -62,9 +46,6 @@ class MongoQueryCursorSpecification extends Specification {
     def cleanup() {
         if (cursor != null) {
             cursor.close();
-        }
-        if (collection != null) {
-            collection.tools().drop();
         }
     }
 

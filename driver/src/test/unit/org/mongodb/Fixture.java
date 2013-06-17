@@ -41,8 +41,7 @@ public final class Fixture {
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
     private static BufferProvider bufferProvider = new PowerOfTwoBufferPool();
-    private Fixture() {
-    }
+    private Fixture() { }
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
@@ -79,15 +78,6 @@ public final class Fixture {
     public static AsyncServerSelectingSession getAsyncSession() {
         getMongoClient();
         return mongoClient.getAsyncSession();
-    }
-
-    // Note this is not safe for concurrent access - if you run multiple tests in parallel from the same class,
-    // you'll drop the DB
-    public static MongoDatabase getCleanDatabaseForTest(final Class<?> testClass) {
-        final MongoDatabase database = getMongoClient().getDatabase(testClass.getSimpleName());
-
-        database.tools().drop();
-        return database;
     }
 
     public static BufferProvider getBufferProvider() {

@@ -16,40 +16,21 @@
 
 package org.mongodb.acceptancetest.index;
 
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mongodb.Document;
+import org.mongodb.DatabaseTestCase;
 import org.mongodb.Index;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoDatabase;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getCleanDatabaseForTest;
 
-public class DropIndexAcceptanceTest {
-
-    private static MongoDatabase database;
-    private MongoCollection<Document> collection;
-
-    @BeforeClass
-    public static void setupTestSuite() {
-        database = getCleanDatabaseForTest(DropIndexAcceptanceTest.class);
-    }
-
-    @AfterClass
-    public static void teardownTestSuite() {
-        database.tools().drop();
-    }
-
+public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         //create a brand new collection for each test
         collection = database.getCollection("Collection" + System.currentTimeMillis());
         assertThat("Should be no indexes on the database at all at this stage", collection.tools().getIndexes().size(),
-                  is(0));
+                   is(0));
     }
 
     @Test
@@ -58,7 +39,7 @@ public class DropIndexAcceptanceTest {
         collection.tools().ensureIndex(new Index("theField"));
 
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
-                  is(2));
+                   is(2));
 
         // When
         collection.tools().dropIndex(new Index("theField"));
@@ -74,7 +55,7 @@ public class DropIndexAcceptanceTest {
         collection.tools().ensureIndex(new Index("aSecondIndex"));
 
         assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
-                  is(3));
+                   is(3));
 
         // When
         collection.tools().dropIndexes();
