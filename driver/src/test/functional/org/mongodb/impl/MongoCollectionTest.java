@@ -218,7 +218,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final MongoCollection<Concrete> collection = database.getCollection(collectionName, new ConcreteCodec());
+        final MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), new ConcreteCodec());
 
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);

@@ -2,22 +2,22 @@ package org.mongodb
 
 import spock.lang.Specification
 
+import static org.mongodb.Fixture.getMongoClient
+import static org.mongodb.Fixture.initialiseCollection
+
 class FunctionalSpecification extends Specification {
     protected static MongoDatabase database;
     protected MongoCollection<Document> collection;
-    protected String collectionName;
 
     def setupSpec() {
         if (database == null) {
-            database = Fixture.getMongoClient().getDatabase('DriverTest-' + System.nanoTime());
+            database = getMongoClient().getDatabase('DriverTest-' + System.nanoTime());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
     }
 
     def setup() {
-        collectionName = getClass().getName();
-        collection = database.getCollection(collectionName);
-        collection.tools().drop();
+        collection = initialiseCollection(database, getClass().getName());
     }
 
     def cleanup() {
@@ -26,8 +26,12 @@ class FunctionalSpecification extends Specification {
         }
     }
 
-    protected String getDatabaseName() {
+    String getDatabaseName() {
         database.getName();
+    }
+
+    String getCollectionName() {
+        collection.getName();
     }
 
     static class ShutdownHook extends Thread {
@@ -35,7 +39,7 @@ class FunctionalSpecification extends Specification {
         void run() {
             if (database != null) {
                 database.tools().drop();
-                Fixture.getMongoClient().close();
+                getMongoClient().close();
             }
         }
     }

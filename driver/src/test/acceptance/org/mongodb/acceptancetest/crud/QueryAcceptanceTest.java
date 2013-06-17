@@ -65,7 +65,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonCodec());
+        final MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
         personCollection.insert(new Person("Bob"));
 
         final MongoCursor<Person> results = personCollection.filter(new Document("name", "Bob")).all();
@@ -75,7 +75,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryWithType() {
-        final MongoCollection<Person> personCollection = database.getCollection(collectionName, new PersonCodec());
+        final MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
         final Person bob = new Person("Bob");
         personCollection.insert(bob);
 

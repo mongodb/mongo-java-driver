@@ -88,7 +88,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         try {
             asyncSession.execute(asyncInsertOperation).get();
             CountCommandResult countCommandResult = new CountCommandResult(asyncSession.execute(
-                    new AsyncCommandOperation(database.getName(), new Count(new Find(), collectionName), new DocumentCodec(),
+                    new AsyncCommandOperation(database.getName(), new Count(new Find(), getCollectionName()), new DocumentCodec(),
                             getCluster().getDescription(), getBufferProvider())).get());
             assertEquals(documents.size(), countCommandResult.getCount());
         } finally {

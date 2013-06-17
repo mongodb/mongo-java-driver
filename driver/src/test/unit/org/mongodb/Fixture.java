@@ -32,7 +32,8 @@ import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
 /**
- * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
+ * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecifcation.  This fixture allows
+ * Test super-classes to share functionality whilst minimising duplication.
  */
 public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
@@ -63,6 +64,20 @@ public final class Fixture {
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;
+    }
+
+    /**
+     * Will initialise a collection for testing.  This method gets the collection from the given database and drops
+     * it, so any collection passed into this method will be empty after initialisation.
+     *
+     * @param database the MongoDatabase that contains the required collection
+     * @param collectionName the name of the collection to be initialised
+     * @return the MongoCollection for collectionName
+     */
+    public static MongoCollection<Document> initialiseCollection(final MongoDatabase database, final String collectionName) {
+        MongoCollection<Document> collection = database.getCollection(collectionName);
+        collection.tools().drop();
+        return collection;
     }
 
     public static ServerSelectingSession getSession() {

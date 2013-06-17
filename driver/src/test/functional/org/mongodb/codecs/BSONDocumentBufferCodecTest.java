@@ -45,7 +45,7 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
         collection.insert(originalDocuments);
 
-        final MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(collectionName, codec);
+        final MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(getCollectionName(), codec);
         final List<BSONDocumentBuffer> docs = lazyCollection.into(new ArrayList<BSONDocumentBuffer>());
         lazyCollection.tools().drop();
         lazyCollection.insert(docs);

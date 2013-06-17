@@ -189,7 +189,7 @@ public class MongoStreamTest extends DatabaseTestCase {
 
     @Test
     public void testTypeCollection() {
-        final MongoCollection<Concrete> concreteCollection = database.getCollection(collectionName,
+        final MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(),
                 new ConcreteCodec());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));

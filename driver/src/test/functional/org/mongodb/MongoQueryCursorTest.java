@@ -197,7 +197,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testTailableAwait() {
         collection.tools().drop();
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 1000));
 
         collection.insert(new Document("_id", 1).append("ts", new BSONTimestamp(5, 0)));
 
@@ -230,7 +230,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testTailableAwaitInterrupt() throws InterruptedException {
         collection.tools().drop();
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 1000));
 
         collection.insert(new Document("_id", 1));
 

@@ -52,20 +52,20 @@ import static org.mongodb.Fixture.getPrimary;
 public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldCreateCollection() {
-        database.tools().createCollection(collectionName);
+        database.tools().createCollection(getCollectionName());
 
         final Set<String> collections = database.tools().getCollectionNames();
-        assertThat(collections.contains(collectionName), is(true));
+        assertThat(collections.contains(getCollectionName()), is(true));
     }
 
     @Test
     public void shouldCreateCappedCollection() {
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024));
+        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024));
 
         final Set<String> collections = database.tools().getCollectionNames();
-        assertThat(collections.contains(collectionName), is(true));
+        assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
         assertThat(collection.tools().isCapped(), is(true));
 
         assertThat("Should have the default index on _id", collection.tools().getIndexes().size(), is(1));
@@ -73,12 +73,12 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false));
+        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false));
 
         final Set<String> collections = database.tools().getCollectionNames();
-        assertThat(collections.contains(collectionName), is(true));
+        assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
         assertThat(collection.tools().isCapped(), is(true));
 
         assertThat("Should NOT have the default index on _id", collection.tools().getIndexes().size(), is(0));
@@ -88,12 +88,12 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
         final int maxDocuments = 5;
         database.tools()
-                .createCollection(new CreateCollectionOptions(collectionName, true, 40 * 1024, false, maxDocuments));
+                .createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false, maxDocuments));
 
         final Set<String> collections = database.tools().getCollectionNames();
-        assertThat(collections.contains(collectionName), is(true));
+        assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
         final Document collectionStatistics = collection.tools().getStatistics();
 
         assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"),
@@ -102,12 +102,12 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetCollectionNamesFromDatabase() {
-        database.tools().createCollection(collectionName);
+        database.tools().createCollection(getCollectionName());
 
         final Set<String> collections = database.tools().getCollectionNames();
 
         assertThat(collections.contains("system.indexes"), is(true));
-        assertThat(collections.contains(collectionName), is(true));
+        assertThat(collections.contains(getCollectionName()), is(true));
     }
 
     @Test
@@ -148,7 +148,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
 
         //when
-        database.tools().renameCollection(collectionName, anotherCollectionName);
+        database.tools().renameCollection(getCollectionName(), anotherCollectionName);
     }
 
     @Test
@@ -192,7 +192,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
             newCredentialList.add(credential);
             MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), getOptions());
-            client.getDatabase(database.getName()).getCollection(collectionName).one();
+            client.getDatabase(database.getName()).getCollection(getCollectionName()).one();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
