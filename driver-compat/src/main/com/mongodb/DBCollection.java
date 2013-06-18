@@ -73,6 +73,7 @@ import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
+import static com.mongodb.MongoExceptions.mapException;
 
 
 /**
@@ -390,15 +391,6 @@ public class DBCollection implements IDBCollection {
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
 
-    private CommandResult updateInternal(Update update) {
-        try {
-            return translateCommandResult(getSession().execute(
-                    new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool())));
-        } catch (org.mongodb.MongoException e) {
-            throw new MongoException(e);
-        }
-    }
-
     /**
      * Modify an existing document or documents in collection.
      * By default the method updates a single document.
@@ -431,6 +423,15 @@ public class DBCollection implements IDBCollection {
                 .writeConcern(aWriteConcern.toNew());
 
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+    }
+
+    private CommandResult updateInternal(Update update) {
+        try {
+            return translateCommandResult(getSession().execute(
+                                                              new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool())));
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 
     /**
@@ -1007,7 +1008,7 @@ public class DBCollection implements IDBCollection {
             final GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
             return toDBList(commandResult.getValue());
         } catch (MongoCommandFailureException e) {
-            throw new CommandFailureException(new CommandResult(e.getCommandResult()));
+            throw mapException(e);
         }
     }
 
@@ -1311,7 +1312,7 @@ public class DBCollection implements IDBCollection {
                     new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
                             getBufferPool()));
         } catch (MongoDuplicateKeyException exception) {
-            throw new MongoException.DuplicateKey(exception);
+            throw mapException(exception);
         }
     }
 
@@ -1535,6 +1536,7 @@ public class DBCollection implements IDBCollection {
             if (!"ns not found".equals(ex.getErrorMessage())) {
                 throw new MongoException(ex);
             }
+            //TODO: but otherwise what? Are we going to leak MongoCommandFailureExceptions?
         }
     }
 
