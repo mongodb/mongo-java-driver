@@ -21,6 +21,7 @@ package org.bson.util;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Deprecated
 public abstract class SimplePool<T> {
 
     public SimplePool( int max ){

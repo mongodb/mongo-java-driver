@@ -80,6 +80,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     /**
      * @return bytes written
      */
+    @Deprecated
     public int pipe( DataOutput out )
         throws IOException {
         out.write( _buffer , 0 , _size );

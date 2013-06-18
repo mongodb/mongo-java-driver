@@ -83,6 +83,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * @param o the object to convert
      * @return an <code>ObjectId</code> if it can be massaged, null otherwise
      */
+    @Deprecated
     public static ObjectId massageToObjectId( Object o ){
         if ( o == null )
             return null;
@@ -107,6 +108,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         this( time , _genmachine , inc );
     }
 
+    @Deprecated
     public ObjectId( Date time , int machine , int inc ){
         _time = (int)(time.getTime() / 1000);
         _machine = machine;
@@ -122,6 +124,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         this( s , false );
     }
 
+    @Deprecated
     public ObjectId( String s , boolean babble ){
 
         if ( ! isValid( s ) )
@@ -195,6 +198,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
             _inc == other._inc;
     }
 
+    @Deprecated
     public String toStringBabble(){
         return babbleToMongod( toStringMongod() );
     }
@@ -229,6 +233,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return s.substring( p * 2 , ( p * 2 ) + 2 );
     }
 
+    @Deprecated
     public static String babbleToMongod( String b ){
         if ( ! isValid( b ) )
             throw new IllegalArgumentException( "invalid object id: " + b );
@@ -306,10 +311,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return _inc;
     }
 
+    @Deprecated
     public boolean isNew(){
         return _new;
     }
 
+    @Deprecated
     public void notNew(){
         _new = false;
     }
@@ -334,6 +341,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     boolean _new;
 
+    @Deprecated
     public static int _flip( int x ){
         int z = 0;
         z |= ( ( x << 24 ) & 0xFF000000 );

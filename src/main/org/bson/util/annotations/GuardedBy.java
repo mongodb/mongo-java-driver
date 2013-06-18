@@ -47,6 +47,7 @@ import java.lang.annotation.Target;
  * <code>class-name.class</code> : The Class object for the specified class should be used as the lock object.
  * </li>
  */
+@Deprecated
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GuardedBy {

@@ -18,6 +18,7 @@
 
 package com.mongodb.util;
 
+@Deprecated
 public final class Hash {
 
     /** Creates a hash for a string.

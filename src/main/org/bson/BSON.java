@@ -297,6 +297,7 @@ public class BSON {
     static ClassMap<List<Transformer>> _decodingHooks =
         new ClassMap<List<Transformer>>();
 
+    @Deprecated
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
 
     // ----- static encode/decode -----
@@ -330,6 +331,7 @@ public class BSON {
 
     // --- coercing ---
 
+    @Deprecated
     public static int toInt( Object o ){
         if ( o == null )
             throw new NullPointerException( "can't be null" );

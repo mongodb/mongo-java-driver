@@ -25,6 +25,7 @@ import org.bson.util.*;
 import java.io.*;
 import java.util.*;
 
+@Deprecated
 public class PoolOutputBuffer extends OutputBuffer {
 
     public static final int BUF_SIZE = 1024 * 16;

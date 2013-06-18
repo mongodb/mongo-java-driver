@@ -140,5 +140,6 @@ public class BSONByteBuffer {
         return getInt( 0 );
     }
 
+    @Deprecated
     protected ByteBuffer buf;
 }

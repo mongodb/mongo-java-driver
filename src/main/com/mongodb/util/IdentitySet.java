@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 
+@Deprecated
 public class IdentitySet<T> implements Iterable<T> {
 
     public IdentitySet(){

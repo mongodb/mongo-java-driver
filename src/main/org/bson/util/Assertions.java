@@ -19,6 +19,7 @@ package org.bson.util;
 /**
  * Design by contract assertions.
  */
+@Deprecated
 public class Assertions {
     public static <T> T notNull(final String name, final T notNull) throws IllegalArgumentException {
         if (notNull == null) {

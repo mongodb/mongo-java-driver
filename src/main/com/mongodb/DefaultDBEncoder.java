@@ -42,7 +42,7 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     }
 
-    @SuppressWarnings("deprecation")
+    @Deprecated
     protected boolean putSpecial( String name , Object val ){
         if ( val instanceof DBPointer ){
             DBPointer r = (DBPointer)val;
@@ -58,6 +58,7 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         return false;
     }
 
+    @Deprecated
     protected void putDBPointer( String name , String ns , ObjectId oid ){
         _put( REF , name );
 
@@ -67,6 +68,7 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         _buf.writeInt( oid._inc() );
     }
 
+    @Deprecated
     protected void putDBRef( String name, DBRefBase ref ){
         _put( OBJECT , name );
         final int sizePos = _buf.getPosition();

@@ -21,6 +21,7 @@ package com.mongodb.util;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+@Deprecated
 public class MyAsserts {
 
     public static class MyAssert extends RuntimeException {

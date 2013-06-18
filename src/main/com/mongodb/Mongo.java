@@ -123,6 +123,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
+    @Deprecated
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
     }
@@ -417,6 +418,7 @@ public class Mongo {
      * returns a string representing the hosts used in this Mongo instance
      * @return
      */
+    @Deprecated
     public String debugString(){
         return _connector.debugString();
     }
@@ -425,6 +427,7 @@ public class Mongo {
      * Gets the current master's hostname
      * @return
      */
+    @Deprecated
     public String getConnectPoint(){
         return _connector.getConnectPoint();
     }
@@ -433,6 +436,7 @@ public class Mongo {
      * Gets the underlying TCP connector
      * @return
      */
+    @Deprecated
     public DBTCPConnector getConnector() {
         return _connector;
     }
@@ -594,6 +598,7 @@ public class Mongo {
     /**
      * Returns the mongo options.
      */
+    @Deprecated
     public MongoOptions getMongoOptions() {
         return _options;
     }
@@ -656,6 +661,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
+    @Deprecated
     public CommandResult fsync(boolean async) {
         DBObject cmd = new BasicDBObject("fsync", 1);
         if (async) {
@@ -670,6 +676,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
+    @Deprecated
     public CommandResult fsyncAndLock() {
         DBObject cmd = new BasicDBObject("fsync", 1);
         cmd.put("lock", 1);
@@ -682,6 +689,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
+    @Deprecated
     public DBObject unlock() {
         DB db = getDB(ADMIN_DATABASE_NAME);
         DBCollection col = db.getCollection("$cmd.sys.unlock");
@@ -693,6 +701,7 @@ public class Mongo {
      * @return
      * @throws MongoException
      */
+    @Deprecated
     public boolean isLocked() {
         DB db = getDB(ADMIN_DATABASE_NAME);
         DBCollection col = db.getCollection("$cmd.sys.inprog");

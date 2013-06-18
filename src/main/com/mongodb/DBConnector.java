@@ -22,6 +22,7 @@ package com.mongodb;
 /**
  * Interface that provides the ability to exchange request/response with the database
  */
+@Deprecated
 public interface DBConnector {
 
     /**

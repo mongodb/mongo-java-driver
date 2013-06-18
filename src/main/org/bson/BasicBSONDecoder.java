@@ -281,6 +281,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         return _basic.get();
     }
 
+    @Deprecated
     protected class BSONInput {
 
         public BSONInput(final InputStream in){

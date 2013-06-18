@@ -18,6 +18,7 @@
 
 package com.mongodb.util;
 
+@Deprecated
 public class TimeConstants {
     
     public static final long MS_MILLISECOND = 1;

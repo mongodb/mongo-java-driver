@@ -581,6 +581,7 @@ public abstract class DBCollection {
      * @param keys the names of the fields used in this index
      * @return a string representation of this index's fields
      */
+    @Deprecated
     public static String genIndexName( DBObject keys ){
         StringBuilder name = new StringBuilder();
         for ( String s : keys.keySet() ){
@@ -1383,6 +1384,7 @@ public abstract class DBCollection {
         _options = new Bytes.OptionHolder( _db._options );
     }
 
+    @Deprecated
     protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
         if ( o == null ){
             if ( canBeNull )
@@ -1497,6 +1499,7 @@ public abstract class DBCollection {
      * @return if this collection's database is read-only
      * @throws RuntimeException if the database is read-only and <code>strict</code> is set
      */
+    @Deprecated
     protected boolean checkReadOnly( boolean strict ){
         if ( ! _db._readOnly )
             return false;
@@ -1566,6 +1569,7 @@ public abstract class DBCollection {
      * @param path
      * @return
      */
+    @Deprecated
     protected Class getInternalClass( String path ){
         Class c = _internalClass.get( path );
         if ( c != null )
