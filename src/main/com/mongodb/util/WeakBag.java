@@ -28,6 +28,7 @@ import java.util.List;
  * if its not obvious what a weak bag should do, then, well...
  * very very not thread safe
  */
+@Deprecated
 public class WeakBag<T> implements Iterable<T> {
 
     /** Initializes a new weak bag. */

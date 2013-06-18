@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class ByteBufferHolder {
 
     public ByteBufferHolder(){

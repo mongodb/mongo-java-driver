@@ -20,6 +20,7 @@ package com.mongodb;
 /**
  * An exception representing an error reported due to a write failure.
  */
+@Deprecated
 public class WriteConcernException extends MongoException {
 
     private static final long serialVersionUID = 841056799207039974L;

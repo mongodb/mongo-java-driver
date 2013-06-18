@@ -18,6 +18,7 @@
 
 package com.mongodb.util;
 
+@Deprecated
 public final class StringParseUtil {
 
     /** Turns a string into a boolean value and returns a default value if unsuccessful.

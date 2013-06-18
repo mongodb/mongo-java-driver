@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+@Deprecated
 public class ByteBufferInputStream extends InputStream {
 
     public ByteBufferInputStream( List<ByteBuffer> lst ){

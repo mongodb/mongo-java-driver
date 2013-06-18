@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
+@Deprecated
 public abstract class SimplePool<T> {
 
     /** Initializes a new pool of objects.

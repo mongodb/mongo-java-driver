@@ -33,6 +33,7 @@ import java.util.logging.Logger;
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
  */
+@Deprecated
 public class DBApiLayer extends DB {
 
     /** The maximum number of cursors allowed */

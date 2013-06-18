@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.bson.types.*;
 
+@SuppressWarnings("deprecation")
 public class BasicBSONCallback implements BSONCallback {
 
     public BasicBSONCallback(){
@@ -170,6 +171,7 @@ public class BasicBSONCallback implements BSONCallback {
         _put( name , new CodeWScope( code, (BSONObject)scope ) );
     }
 
+    @Deprecated
     protected void _put( final String name , final Object o ){
         cur().put( name , !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o ) );
     }

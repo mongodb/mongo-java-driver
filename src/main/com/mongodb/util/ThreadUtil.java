@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class ThreadUtil {
 
     /** Creates an prints a stack trace */

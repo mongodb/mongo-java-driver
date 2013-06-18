@@ -36,6 +36,7 @@ import java.util.logging.Level;
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
+@Deprecated
 public class DBPortPool extends SimplePool<DBPort> {
 
     public String getHost() {
@@ -149,6 +150,7 @@ public class DBPortPool extends SimplePool<DBPort> {
 
     // ----
 
+    @Deprecated
     public static class NoMoreConnection extends MongoInternalException {
         private static final long serialVersionUID = -4415279469780082174L;
 
@@ -157,6 +159,7 @@ public class DBPortPool extends SimplePool<DBPort> {
 	    }
     }
 
+    @Deprecated
     public static class SemaphoresOut extends NoMoreConnection {
         private static final long serialVersionUID = -4415279469780082174L;
         private static final String message = "Concurrent requests for database connection have exceeded limit";
@@ -169,6 +172,7 @@ public class DBPortPool extends SimplePool<DBPort> {
         }
     }
 
+    @Deprecated
     public static class ConnectionWaitTimeOut extends NoMoreConnection {
         private static final long serialVersionUID = -4415279469780082174L;
         ConnectionWaitTimeOut(int timeout) {

@@ -21,6 +21,7 @@ package com.mongodb.util;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class FastStack<T>{
 
     public void push( T t ){

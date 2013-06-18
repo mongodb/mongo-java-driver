@@ -40,7 +40,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return readPrefObject;
     }
 
-
+    @Deprecated
     public List<DBObject> getTagSets() {
         List<DBObject> tags = new ArrayList<DBObject>();
         for (DBObject tagSet : _tags) {

@@ -20,6 +20,7 @@ package com.mongodb.io;
 
 import java.nio.ByteBuffer;
 
+@Deprecated
 public interface ByteBufferFactory {
     public ByteBuffer get();
 

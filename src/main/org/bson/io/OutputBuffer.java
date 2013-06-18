@@ -28,9 +28,12 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract void write(int b);
     
     public abstract int getPosition();
+    @Deprecated
     public abstract void setPosition( int position );
-    
+
+    @Deprecated
     public abstract void seekEnd();
+    @Deprecated
     public abstract void seekStart();
     
     /**
@@ -58,16 +61,19 @@ public abstract class OutputBuffer extends OutputStream {
         }
     }
 
+    @Deprecated
     public String asString(){
         return new String( toByteArray() );
     }
 
+    @Deprecated
     public String asString( String encoding )
         throws UnsupportedEncodingException {
         return new String( toByteArray() , encoding );
     }
 
 
+    @Deprecated
     public String hex(){
         final StringBuilder buf = new StringBuilder();
         try {
@@ -88,6 +94,7 @@ public abstract class OutputBuffer extends OutputStream {
         return buf.toString();
     }
 
+    @Deprecated
     public String md5(){
         final MessageDigest md5 ;
         try {
@@ -124,6 +131,7 @@ public abstract class OutputBuffer extends OutputStream {
         write( x >> 24 );
     }
 
+    @Deprecated
     public void writeIntBE( int x ){
         write( x >> 24 );
         write( x >> 16 );
@@ -131,6 +139,7 @@ public abstract class OutputBuffer extends OutputStream {
         write( x );
     }
 
+    @Deprecated
     public void writeInt( int pos , int x ){
         final int save = getPosition();
         setPosition( pos );

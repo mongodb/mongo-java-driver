@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
  */
+@Deprecated
 public class InUseConnectionBean {
 
     InUseConnectionBean(final DBPort port, long currentNanoTime) {

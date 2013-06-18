@@ -57,6 +57,7 @@ public abstract class DB {
      * @param mongo the mongo instance
      * @param name the database name
      */
+    @Deprecated
     public DB( Mongo mongo , String name ){
         _mongo = mongo;
     	_name = name;
@@ -123,6 +124,7 @@ public abstract class DB {
      * @param name the name of the collection
      * @return the collection
      */
+    @Deprecated
     protected abstract DBCollection doGetCollection( String name );
 
     /**
@@ -812,6 +814,7 @@ public abstract class DB {
     final Mongo _mongo;
     final String _name;
 
+    @Deprecated
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;
     private com.mongodb.ReadPreference _readPref;

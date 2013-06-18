@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Deprecated
 public class DBTCPConnector implements DBConnector {
 
     static Logger _logger = Logger.getLogger( Bytes.LOGGER.getName() + ".tcp" );
