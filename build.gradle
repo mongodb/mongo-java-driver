@@ -66,6 +66,10 @@ configure(subprojects.findAll { it.name != 'util' }) {
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
 
+    project.ext.buildingWith = { n ->
+        project.hasProperty(n) && project.property(n).toBoolean()
+    }
+
     /* Testing */
     tasks.withType(Test) {
         maxParallelForks = 1
@@ -75,7 +79,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false')
         )
 
-        if (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean()) {
+        if (project.buildingWith('ssl.enabled')) {
             systemProperties(
                     'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
                     'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
@@ -87,11 +91,10 @@ configure(subprojects.findAll { it.name != 'util' }) {
         }
 
         useJUnit {
-            if (!JavaVersion.current().isJava7Compatible()
-                    || (project.hasProperty('ssl.enabled') && project.property('ssl.enabled').toBoolean())) {
+            if (!JavaVersion.current().isJava7Compatible() || project.buildingWith('ssl.enabled')) {
                 excludeCategories 'category.Async'
             }
-            if (!(project.hasProperty('rs.enabled') && project.property('rs.enabled').toBoolean())) {
+            if (!project.buildingWith('rs.enabled')) {
                 excludeCategories 'category.ReplicaSet'
             }
         }
@@ -124,8 +127,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     tasks.withType(FindBugs) {
         reports {
-            xml.enabled = project.hasProperty('xmlReportsEnabled') && project.property('xmlReportsEnabled').toBoolean()
-            html.enabled = !xml.enabled
+            xml.enabled = project.buildingWith('xmlReports.enabled')
+            html.enabled = !project.buildingWith('xmlReports.enabled')
         }
     }
 
@@ -183,6 +186,12 @@ project(':driver') {
         classpath = sourceSets.acceptance.runtimeClasspath
     }
 
+
+    codenarc {
+        toolVersion = '0.18.1'
+        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
+    }
+
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
@@ -236,6 +245,11 @@ project(':driver-compat') {
 
     checkstyle {
         configFile = new File("$configDir/checkstyle-lite.xml")
+    }
+
+    codenarc {
+        toolVersion = '0.18.1'
+        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
     task uberJar(type: Jar) {
