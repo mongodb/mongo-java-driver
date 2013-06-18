@@ -28,7 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings({"rawtypes"})
 public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
     public void testMultiInsert() {
@@ -140,7 +140,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(obj.get("_id"), 3);
 
         obj = c.findOne(QueryBuilder.start("x").lessThan(2).get(), null,
-                       BasicDBObjectBuilder.start().add("y", -1).get());
+                BasicDBObjectBuilder.start().add("y", -1).get());
         assertNotNull(obj);
         assertEquals(obj.get("_id"), 5);
 

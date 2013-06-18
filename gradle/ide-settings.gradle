@@ -27,23 +27,26 @@ project('driver') {
 }
 
 project(':driver-compat') {
-    idea.module.iml {
-        withXml { provider ->
+    idea.module {
+        testSourceDirs = project.sourceSets.legacy.allSource.getSrcDirs()
+        iml {
+            withXml { provider ->
 
-            def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
-            if (node == null) {
-                node = provider.node.appendNode('component')
-            }
-            node.replaceNode {
-                component(name: 'CheckStyle-IDEA-Module') {
-                    option(name: 'configuration') {
-                        map {
-                            entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
+                def node = provider.node.component.find { it.@name == 'CheckStyle-IDEA-Module' }
+                if (node == null) {
+                    node = provider.node.appendNode('component')
+                }
+                node.replaceNode {
+                    component(name: 'CheckStyle-IDEA-Module') {
+                        option(name: 'configuration') {
+                            map {
+                                entry(key: 'active-configuration', value: 'FILE:$PROJECT_DIR$/config/checkstyle-lite.xml:Lite')
+                            }
                         }
                     }
                 }
-            }
 
+            }
         }
     }
 }
