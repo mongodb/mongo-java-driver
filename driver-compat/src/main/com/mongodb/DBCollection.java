@@ -380,10 +380,9 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final Update mongoUpdate = new Update(toDocument(query), toDocument(update))
+        final Update mongoUpdate = new Update(toDocument(query), toDocument(update), aWriteConcern.toNew())
                 .upsert(upsert)
-                .multi(multi)
-                .writeConcern(aWriteConcern.toNew());
+                .multi(multi);
 
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
@@ -414,10 +413,9 @@ public class DBCollection implements IDBCollection {
 
         final Document filter = toDocument(query, encoder, getDocumentCodec());
         final Document updateOperations = toDocument(update, encoder, getDocumentCodec());
-        final Update mongoUpdate = new Update(filter, updateOperations)
+        final Update mongoUpdate = new Update(filter, updateOperations, aWriteConcern.toNew())
                 .upsert(upsert)
-                .multi(multi)
-                .writeConcern(aWriteConcern.toNew());
+                .multi(multi);
 
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }

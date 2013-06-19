@@ -23,8 +23,9 @@ public class Update extends BaseUpdate {
     private final Document updateOperations;
     private boolean isMulti = false;
 
-    public Update(final Document filter, final Document updateOperations) {
+    public Update(final Document filter, final Document updateOperations, final WriteConcern writeConcern) {
         super(filter);
+        super.writeConcern(writeConcern);
 
         this.updateOperations = updateOperations;
     }
@@ -50,17 +51,9 @@ public class Update extends BaseUpdate {
         return this;
     }
 
-
     public Update writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
         return this;
     }
-
-    public Update writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
-        return this;
-    }
-
-
 }
 

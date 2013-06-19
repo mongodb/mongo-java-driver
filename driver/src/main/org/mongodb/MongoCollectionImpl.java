@@ -540,16 +540,21 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult modify(final Document updateOperations) {
-            final Update update = new Update(findOp.getFilter(), updateOperations).multi(getMultiFromLimit(UpdateType.modify))
-                    .writeConcern(writeConcern);
-            return new WriteResult(client.getSession().execute(
-                    new UpdateOperation(getNamespace(), update, getDocumentCodec(), client.getBufferProvider())), writeConcern);
+            final Update update = new Update(findOp.getFilter(), updateOperations, writeConcern)
+                                  .multi(getMultiFromLimit(UpdateType.modify));
+            return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(),
+                                                                                   update,
+                                                                                   getDocumentCodec(),
+                                                                                   client
+                                                                                   .getBufferProvider())),
+                                   writeConcern);
         }
 
         @Override
         public WriteResult modifyOrInsert(final Document updateOperations) {
-            final Update update = new Update(findOp.getFilter(), updateOperations).upsert(true).multi(getMultiFromLimit(UpdateType.modify))
-                    .writeConcern(writeConcern);
+            final Update update = new Update(findOp.getFilter(), updateOperations, writeConcern)
+                                  .upsert(true)
+                                  .multi(getMultiFromLimit(UpdateType.modify));
             return new WriteResult(client.getSession().execute(
                     new UpdateOperation(getNamespace(), update, getDocumentCodec(), client.getBufferProvider())), writeConcern);
         }
