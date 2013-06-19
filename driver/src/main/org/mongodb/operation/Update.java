@@ -24,8 +24,7 @@ public class Update extends BaseUpdate {
     private boolean isMulti = false;
 
     public Update(final Document filter, final Document updateOperations, final WriteConcern writeConcern) {
-        super(filter);
-        super.writeConcern(writeConcern);
+        super(filter, writeConcern);
 
         this.updateOperations = updateOperations;
     }
@@ -48,11 +47,6 @@ public class Update extends BaseUpdate {
     @Override
     public Update upsert(final boolean isUpsert) {
         super.upsert(isUpsert);
-        return this;
-    }
-
-    public Update writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
         return this;
     }
 }

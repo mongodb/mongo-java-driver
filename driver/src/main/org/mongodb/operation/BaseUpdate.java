@@ -17,12 +17,14 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
+import org.mongodb.WriteConcern;
 
 public abstract class BaseUpdate extends BaseWrite {
     private final Document filter;
     private boolean isUpsert = false;
 
-    public BaseUpdate(final Document filter) {
+    public BaseUpdate(final Document filter, final WriteConcern writeConcern) {
+        super(writeConcern);
         this.filter = filter;
     }
 

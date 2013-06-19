@@ -19,15 +19,11 @@ package org.mongodb.operation;
 import org.mongodb.WriteConcern;
 
 public abstract class BaseWrite {
-    private WriteConcern writeConcern;
+    private final WriteConcern writeConcern;
 
-    // TODO: discuss this builder pattern.  It doesn't work so well with subclasses
-    //CHECKSTYLE:OFF
-    public BaseWrite writeConcern(final WriteConcern writeConcern) {
+    protected BaseWrite(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
-        return this;
     }
-    //CHECKSTYLE:ON
 
     public WriteConcern getWriteConcern() {
         return writeConcern;

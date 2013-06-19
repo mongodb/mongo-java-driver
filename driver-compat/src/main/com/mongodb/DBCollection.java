@@ -128,10 +128,10 @@ public class DBCollection implements IDBCollection {
 
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
-    private TypeMapping typeMapping;
+    private final TypeMapping typeMapping;
 
     private final Codec<Document> documentCodec;
-    private CollectibleCodec<DBObject> codec;
+    private final CollectibleCodec<DBObject> codec;
 
     DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
         this.name = name;
@@ -272,8 +272,8 @@ public class DBCollection implements IDBCollection {
         return new WriteResult(insertInternal(insert, encoder), aWriteConcern);
     }
 
-    private Encoder<DBObject> toEncoder(DBEncoder dbEncoder) {
-        Encoder<DBObject> encoder;
+    private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
+        final Encoder<DBObject> encoder;
         if (dbEncoder != null) {
             encoder = new DBEncoderAdapter(dbEncoder);
         }
@@ -286,7 +286,7 @@ public class DBCollection implements IDBCollection {
         return encoder;
     }
 
-    private CommandResult insertInternal(final Insert<DBObject> insert, Encoder<DBObject> encoder) {
+    private CommandResult insertInternal(final Insert<DBObject> insert, final Encoder<DBObject> encoder) {
         try {
             return translateCommandResult(getSession().execute(
                     new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool())));
@@ -418,7 +418,7 @@ public class DBCollection implements IDBCollection {
         return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
     }
 
-    private CommandResult updateInternal(Update update) {
+    private CommandResult updateInternal(final Update update) {
         try {
             return translateCommandResult(getSession().execute(
                                                               new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool())));
@@ -897,9 +897,11 @@ public class DBCollection implements IDBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            getSession().execute(
-                    new CommandOperation("admin", renameCommand, getDocumentCodec(), getDB().getCluster().getDescription(),
-                            getBufferPool()));
+            getSession().execute(new CommandOperation("admin",
+                                                      renameCommand,
+                                                      getDocumentCodec(),
+                                                      getDB().getCluster().getDescription(),
+                                                      getBufferPool()));
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw new MongoException(e);
@@ -1298,7 +1300,6 @@ public class DBCollection implements IDBCollection {
     }
 
     private <T> void insertIndex(final Insert<T> insertIndexOperation, final Encoder<T> encoder) {
-        insertIndexOperation.writeConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
         try {
             getSession().execute(
                     new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
@@ -1651,7 +1652,7 @@ public class DBCollection implements IDBCollection {
         return PrimitiveCodecs.createDefault();
     }
 
-    private Document toIndexDetailsDocument(DBObject keys, DBObject options) {
+    private Document toIndexDetailsDocument(final DBObject keys, final DBObject options) {
         // TODO: Check if these are all the supported options. driver:index still not supports all options.
         // Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
         String name = null;

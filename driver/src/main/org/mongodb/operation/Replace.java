@@ -23,8 +23,7 @@ public class Replace<T> extends BaseUpdate {
     private final T replacement;
 
     public Replace(final Document filter, final T replacement, final WriteConcern writeConcern) {
-        super(filter);
-        super.writeConcern(writeConcern);
+        super(filter, writeConcern);
         this.replacement = replacement;
     }
 
@@ -40,10 +39,5 @@ public class Replace<T> extends BaseUpdate {
     @Override
     public boolean isMulti() {
         return false;
-    }
-
-    public Replace<T> writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
-        return this;
     }
 }

@@ -30,23 +30,17 @@ public class Insert<T> extends BaseWrite {
     }
 
     public Insert(final List<T> documents, final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
+        super(writeConcern);
         this.documents = documents;
     }
 
     public Insert(final Insert<T> insert, final int startPos) {
-        writeConcern(insert.getWriteConcern());
+        super(insert.getWriteConcern());
         documents = insert.getDocuments().subList(startPos, insert.getDocuments().size());
     }
 
     public List<T> getDocuments() {
         return documents;
-    }
-
-    @Override
-    public Insert<T> writeConcern(final WriteConcern writeConcern) {
-        super.writeConcern(writeConcern);
-        return this;
     }
 }
 
