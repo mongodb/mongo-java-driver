@@ -17,13 +17,11 @@
 package org.mongodb.impl;
 
 import category.Async;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
@@ -32,7 +30,6 @@ import org.mongodb.operation.AsyncInsertOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
 import org.mongodb.session.AsyncSession;
-import org.mongodb.session.SessionBindingType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +39,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.WriteConcern.ACKNOWLEDGED;
+import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
+import static org.mongodb.session.SessionBindingType.Connection;
 
 @Category(Async.class)
 public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
@@ -50,7 +50,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
     @Before
     public void setUp() throws Exception {
-        byte[] hugeByteArray = new byte[1024 * 1024 * 15];
+        final byte[] hugeByteArray = new byte[1024 * 1024 * 15];
 
         documents = new ArrayList<Document>();
         documents.add(new Document("bytes", hugeByteArray));
@@ -65,31 +65,33 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         super.setUp();
     }
 
-    @After
-    public void tearDown() {
-        super.tearDown();
-    }
-
     @Test
     public void testBatchInsert() throws ExecutionException, InterruptedException {
-        final Insert<Document> insert = new Insert<Document>(documents, WriteConcern.ACKNOWLEDGED);
-        getAsyncSession().execute(
-                new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider())).get();
+        final Insert<Document> insert = new Insert<Document>(ACKNOWLEDGED, documents);
+        getAsyncSession().execute(new AsyncInsertOperation<Document>(collection.getNamespace(),
+                                                                     insert,
+                                                                     new DocumentCodec(),
+                                                                     getBufferProvider())).get();
         assertEquals(documents.size(), collection.count());
     }
 
     // To make the assertion work for unacknowledged writes, have to bind to a single connection
     @Test
     public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
-        final Insert<Document> insert = new Insert<Document>(documents, WriteConcern.UNACKNOWLEDGED);
-        AsyncInsertOperation<Document> asyncInsertOperation = new AsyncInsertOperation<Document>(collection.getNamespace(), insert,
-                new DocumentCodec(), getBufferProvider());
-        AsyncSession asyncSession = getAsyncSession().getBoundSession(asyncInsertOperation, SessionBindingType.Connection).get();
+        final Insert<Document> insert = new Insert<Document>(UNACKNOWLEDGED, documents);
+        final AsyncInsertOperation<Document> asyncInsertOperation = new AsyncInsertOperation<Document>(collection.getNamespace(),
+                                                                                                 insert,
+                                                                                                 new DocumentCodec(),
+                                                                                                 getBufferProvider());
+        final AsyncSession asyncSession = getAsyncSession().getBoundSession(asyncInsertOperation, Connection).get();
         try {
             asyncSession.execute(asyncInsertOperation).get();
-            CountCommandResult countCommandResult = new CountCommandResult(asyncSession.execute(
-                    new AsyncCommandOperation(database.getName(), new Count(new Find(), getCollectionName()), new DocumentCodec(),
-                            getCluster().getDescription(), getBufferProvider())).get());
+            final CountCommandResult countCommandResult = new CountCommandResult(asyncSession.execute(
+                    new AsyncCommandOperation(database.getName(),
+                                              new Count(new Find(), getCollectionName()),
+                                              new DocumentCodec(),
+                                              getCluster().getDescription(),
+                                              getBufferProvider())).get());
             assertEquals(documents.size(), countCommandResult.getCount());
         } finally {
             asyncSession.close();

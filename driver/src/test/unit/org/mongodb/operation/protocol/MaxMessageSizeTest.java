@@ -20,16 +20,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.Insert;
 
-import java.util.Arrays;
-
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mongodb.Fixture.getBufferProvider;
+import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 public class MaxMessageSizeTest {
     private PooledByteBufferOutputBuffer buffer;
@@ -38,13 +37,13 @@ public class MaxMessageSizeTest {
     @Before
     public void setUp() {
         message = new InsertMessage<Document>("test.test",
-                new Insert<Document>(
-                        Arrays.asList(
-                                new Document("bytes", new byte[2048]),
-                                new Document("bytes", new byte[2048]),
-                                new Document("bytes", new byte[2048])),
-                        WriteConcern.ACKNOWLEDGED),
-                new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
+                                              new Insert<Document>(ACKNOWLEDGED,
+                                                                   asList(new Document("bytes", new byte[2048]),
+                                                                          new Document("bytes", new byte[2048]),
+                                                                          new Document("bytes", new byte[2048]))
+                                              ),
+                                              new DocumentCodec(),
+                                              MessageSettings.builder().maxMessageSize(4500).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }
 
@@ -55,7 +54,7 @@ public class MaxMessageSizeTest {
 
     @Test
     public void testMaxDocumentSize() {
-        RequestMessage next = message.encode(buffer);
+        final RequestMessage next = message.encode(buffer);
         assertNotNull(next);
         assertNull(next.encode(buffer));
     }

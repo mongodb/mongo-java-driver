@@ -23,7 +23,7 @@ public class Remove extends BaseWrite {
     private final Document filter;
     private boolean isMulti = true;
 
-    public Remove(final Document filter, final WriteConcern writeConcern) {
+    public Remove(final WriteConcern writeConcern, final Document filter) {
         super(writeConcern);
         this.filter = filter;
     }

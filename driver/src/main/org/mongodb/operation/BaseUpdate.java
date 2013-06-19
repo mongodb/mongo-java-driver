@@ -23,7 +23,7 @@ public abstract class BaseUpdate extends BaseWrite {
     private final Document filter;
     private boolean isUpsert = false;
 
-    public BaseUpdate(final Document filter, final WriteConcern writeConcern) {
+    public BaseUpdate(final WriteConcern writeConcern, final Document filter) {
         super(writeConcern);
         this.filter = filter;
     }

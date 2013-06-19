@@ -24,7 +24,6 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
-import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.Find;
@@ -35,6 +34,7 @@ import org.mongodb.operation.QueryOperation;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 @Category(ReplicaSet.class)
 public class PinnedSessionTest extends DatabaseTestCase {
@@ -48,22 +48,22 @@ public class PinnedSessionTest extends DatabaseTestCase {
 
     @Test
     public void shouldPinReadsToSameServer() throws InterruptedException {
-        MongoNamespace namespace = collection.getNamespace();
-        DocumentCodec codec = new DocumentCodec();
-        Find find = new Find().readPreference(ReadPreference.secondary()).batchSize(-1);
-        ServerAddress serverAddress = session.execute(new QueryOperation<Document>(collection.getNamespace(), find, codec, codec,
-                getBufferProvider())).getAddress();
+        final MongoNamespace namespace = collection.getNamespace();
+        final DocumentCodec codec = new DocumentCodec();
+        final Find find = new Find().readPreference(ReadPreference.secondary()).batchSize(-1);
+        final ServerAddress serverAddress = session.execute(new QueryOperation<Document>(collection.getNamespace(), find, codec, codec,
+                                                                                   getBufferProvider())).getAddress();
 
         // there is randomization in the selection, so have to try a bunch of times.
         for (int i = 0; i < 100; i++) {
             assertEquals(serverAddress, session.execute(new QueryOperation<Document>(namespace, find, codec, codec,
-                    getBufferProvider())).getAddress());
+                                                                                     getBufferProvider())).getAddress());
         }
 
         session.execute(new InsertOperation<Document>(namespace,
-                new Insert<Document>(new Document(), WriteConcern.ACKNOWLEDGED), codec, getBufferProvider()));
+                                                      new Insert<Document>(ACKNOWLEDGED, new Document()), codec, getBufferProvider()));
 
         assertEquals(serverAddress, session.execute(new QueryOperation<Document>(namespace, find, codec, codec,
-                getBufferProvider())).getAddress());
+                                                                                 getBufferProvider())).getAddress());
     }
 }

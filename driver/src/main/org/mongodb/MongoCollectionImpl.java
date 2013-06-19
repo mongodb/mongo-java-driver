@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-// CHECKSTYLE:OFF
-
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.MongoAsyncQueryCursor;
 import org.mongodb.command.Count;
@@ -27,13 +25,33 @@ import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.*;
+import org.mongodb.operation.AsyncCommandOperation;
+import org.mongodb.operation.AsyncQueryOperation;
+import org.mongodb.operation.AsyncReplaceOperation;
+import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandResult;
+import org.mongodb.operation.Find;
+import org.mongodb.operation.FindAndRemove;
+import org.mongodb.operation.FindAndReplace;
+import org.mongodb.operation.FindAndUpdate;
+import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.Remove;
+import org.mongodb.operation.RemoveOperation;
+import org.mongodb.operation.Replace;
+import org.mongodb.operation.ReplaceOperation;
+import org.mongodb.operation.SingleResultFuture;
+import org.mongodb.operation.SingleResultFutureCallback;
+import org.mongodb.operation.Update;
+import org.mongodb.operation.UpdateOperation;
 
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-
-// CHECKSTYLE:ON
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
 
@@ -510,13 +528,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult insert(final T document) {
             return new WriteResult(client.getSession().execute(new InsertOperation<T>(getNamespace(),
-                    new Insert<T>(document, writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
+                    new Insert<T>(writeConcern, document), getCodec(), client.getBufferProvider())), writeConcern);
         }
 
         @Override
         public WriteResult insert(final List<T> documents) {
             return new WriteResult(client.getSession().execute(new InsertOperation<T>(getNamespace(),
-                    new Insert<T>(documents, writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
+                    new Insert<T>(writeConcern, documents), getCodec(), client.getBufferProvider())), writeConcern);
         }
 
         @Override
@@ -532,14 +550,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult remove() {
-            final Remove remove = new Remove(findOp.getFilter(), writeConcern).multi(getMultiFromLimit(UpdateType.remove));
+            final Remove remove = new Remove(writeConcern, findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove));
             return new WriteResult(client.getSession().execute(
                     new RemoveOperation(getNamespace(), remove, getDocumentCodec(), client.getBufferProvider())), writeConcern);
         }
 
         @Override
         public WriteResult modify(final Document updateOperations) {
-            final Update update = new Update(findOp.getFilter(), updateOperations, writeConcern)
+            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations)
                                   .multi(getMultiFromLimit(UpdateType.modify));
             return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(),
                                                                                    update,
@@ -551,7 +569,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult modifyOrInsert(final Document updateOperations) {
-            final Update update = new Update(findOp.getFilter(), updateOperations, writeConcern)
+            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations)
                                   .upsert(true)
                                   .multi(getMultiFromLimit(UpdateType.modify));
             return new WriteResult(client.getSession().execute(
@@ -565,7 +583,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult replace(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern);
+            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement);
             return new WriteResult(client.getSession().execute(
                     new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
                     writeConcern);
@@ -573,7 +591,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult replaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern).upsert(true);
+            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(true);
             return new WriteResult(client.getSession().execute(
                     new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
                     writeConcern);
@@ -656,7 +674,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern).upsert(true);
+            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(true);
             final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
                     new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider()));
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {

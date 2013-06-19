@@ -233,7 +233,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
-        final Insert<DBObject> insert = new Insert<DBObject>(documents, aWriteConcern.toNew());
+        final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
         return new WriteResult(insertInternal(insert, codec), aWriteConcern);
     }
 
@@ -268,7 +268,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
-        final Insert<DBObject> insert = new Insert<DBObject>(documents, writeConcern.toNew());
+        final Insert<DBObject> insert = new Insert<DBObject>(writeConcern.toNew(), documents);
         return new WriteResult(insertInternal(insert, encoder), aWriteConcern);
     }
 
@@ -350,7 +350,7 @@ public class DBCollection implements IDBCollection {
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
         final Document filter = new Document("_id", getCodec().getId(obj));
 
-        final Replace<DBObject> replace = new Replace<DBObject>(filter, obj, wc.toNew()).upsert(true);
+        final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), getBufferPool()))), wc);
@@ -378,7 +378,7 @@ public class DBCollection implements IDBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final Update mongoUpdate = new Update(toDocument(query), toDocument(update), aWriteConcern.toNew())
+        final Update mongoUpdate = new Update(aWriteConcern.toNew(), toDocument(query), toDocument(update))
                 .upsert(upsert)
                 .multi(multi);
 
@@ -411,7 +411,7 @@ public class DBCollection implements IDBCollection {
 
         final Document filter = toDocument(query, encoder, getDocumentCodec());
         final Document updateOperations = toDocument(update, encoder, getDocumentCodec());
-        final Update mongoUpdate = new Update(filter, updateOperations, aWriteConcern.toNew())
+        final Update mongoUpdate = new Update(aWriteConcern.toNew(), filter, updateOperations)
                 .upsert(upsert)
                 .multi(multi);
 
@@ -489,7 +489,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
 
-        final Remove remove = new Remove(toDocument(query), writeConcern.toNew());
+        final Remove remove = new Remove(writeConcern.toNew(), toDocument(query));
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new RemoveOperation(getNamespace(), remove, documentCodec, getBufferPool()))), writeConcern);
@@ -506,7 +506,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final Remove remove = new Remove(filter, writeConcern.toNew());
+        final Remove remove = new Remove(writeConcern.toNew(), filter);
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool()))), writeConcern);
@@ -1243,7 +1243,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void ensureIndex(final DBObject keys, final DBObject options) {
         final Insert<Document> insertIndexOperation
-                = new Insert<Document>(toIndexDetailsDocument(keys, options), org.mongodb.WriteConcern.ACKNOWLEDGED);
+                = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, toIndexDetailsDocument(keys, options));
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1257,7 +1257,7 @@ public class DBCollection implements IDBCollection {
         final Index index = new Index(new Index.OrderedKey(name, OrderBy.ASC));
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
-        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails, org.mongodb.WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insertIndexOperation = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, indexDetails);
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1295,7 +1295,7 @@ public class DBCollection implements IDBCollection {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
-        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(toDBObject(indexDetails), org.mongodb.WriteConcern.ACKNOWLEDGED);
+        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(org.mongodb.WriteConcern.ACKNOWLEDGED, toDBObject(indexDetails));
         insertIndex(insertIndexOperation, encoder);
     }
 

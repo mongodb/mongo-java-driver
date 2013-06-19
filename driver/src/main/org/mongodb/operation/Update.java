@@ -23,8 +23,8 @@ public class Update extends BaseUpdate {
     private final Document updateOperations;
     private boolean isMulti = false;
 
-    public Update(final Document filter, final Document updateOperations, final WriteConcern writeConcern) {
-        super(filter, writeConcern);
+    public Update(final WriteConcern writeConcern, final Document filter, final Document updateOperations) {
+        super(writeConcern, filter);
 
         this.updateOperations = updateOperations;
     }

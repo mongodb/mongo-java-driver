@@ -25,11 +25,11 @@ public class Insert<T> extends BaseWrite {
     private final List<T> documents;
 
     @SuppressWarnings("unchecked")
-    public Insert(final T document, final WriteConcern writeConcern) {
-        this(Arrays.asList(document), writeConcern);
+    public Insert(final WriteConcern writeConcern, final T document) {
+        this(writeConcern, Arrays.asList(document));
     }
 
-    public Insert(final List<T> documents, final WriteConcern writeConcern) {
+    public Insert(final WriteConcern writeConcern, final List<T> documents) {
         super(writeConcern);
         this.documents = documents;
     }

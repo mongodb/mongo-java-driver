@@ -32,6 +32,8 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
 
+import static org.mongodb.WriteConcern.ACKNOWLEDGED;
+
 /**
  * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class
  * you can create indexes and drop the collection.
@@ -71,7 +73,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
-        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails, WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insertIndexOperation = new Insert<Document>(ACKNOWLEDGED, indexDetails);
 
         client.getSession().execute(new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec,
                 client.getBufferProvider()));

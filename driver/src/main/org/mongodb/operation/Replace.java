@@ -22,8 +22,8 @@ import org.mongodb.WriteConcern;
 public class Replace<T> extends BaseUpdate {
     private final T replacement;
 
-    public Replace(final Document filter, final T replacement, final WriteConcern writeConcern) {
-        super(filter, writeConcern);
+    public Replace(final WriteConcern writeConcern, final Document filter, final T replacement) {
+        super(writeConcern, filter);
         this.replacement = replacement;
     }
 
