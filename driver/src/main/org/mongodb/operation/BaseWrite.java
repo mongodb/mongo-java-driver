@@ -27,13 +27,6 @@ public abstract class BaseWrite {
         this.writeConcern = writeConcern;
         return this;
     }
-
-    public BaseWrite writeConcernIfAbsent(final WriteConcern writeConcern) {
-        if (this.writeConcern == null) {
-            this.writeConcern = writeConcern;
-        }
-        return this;
-    }
     //CHECKSTYLE:ON
 
     public WriteConcern getWriteConcern() {

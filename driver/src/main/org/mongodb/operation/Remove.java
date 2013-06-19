@@ -23,7 +23,8 @@ public class Remove extends BaseWrite {
     private final Document filter;
     private boolean isMulti = true;
 
-    public Remove(final Document filter) {
+    public Remove(final Document filter, final WriteConcern writeConcern) {
+        super.writeConcern(writeConcern);
         this.filter = filter;
     }
 
@@ -45,12 +46,6 @@ public class Remove extends BaseWrite {
     @Override
     public Remove writeConcern(final WriteConcern writeConcern) {
         super.writeConcern(writeConcern);
-        return this;
-    }
-
-    @Override
-    public Remove writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
         return this;
     }
 }

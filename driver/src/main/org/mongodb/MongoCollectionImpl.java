@@ -532,8 +532,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult remove() {
-            final Remove remove = new Remove(findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove))
-                    .writeConcern(writeConcern);
+            final Remove remove = new Remove(findOp.getFilter(), writeConcern).multi(getMultiFromLimit(UpdateType.remove));
             return new WriteResult(client.getSession().execute(
                     new RemoveOperation(getNamespace(), remove, getDocumentCodec(), client.getBufferProvider())), writeConcern);
         }

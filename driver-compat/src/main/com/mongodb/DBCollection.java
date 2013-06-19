@@ -489,7 +489,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
 
-        final Remove remove = new Remove(toDocument(query)).writeConcern(writeConcern.toNew());
+        final Remove remove = new Remove(toDocument(query), writeConcern.toNew());
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new RemoveOperation(getNamespace(), remove, documentCodec, getBufferPool()))), writeConcern);
@@ -506,7 +506,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final Remove remove = new Remove(filter).writeConcern(writeConcern.toNew());
+        final Remove remove = new Remove(filter, writeConcern.toNew());
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool()))), writeConcern);
