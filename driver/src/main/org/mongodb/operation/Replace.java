@@ -22,8 +22,9 @@ import org.mongodb.WriteConcern;
 public class Replace<T> extends BaseUpdate {
     private final T replacement;
 
-    public Replace(final Document filter, final T replacement) {
+    public Replace(final Document filter, final T replacement, final WriteConcern writeConcern) {
         super(filter);
+        super.writeConcern(writeConcern);
         this.replacement = replacement;
     }
 
@@ -45,10 +46,4 @@ public class Replace<T> extends BaseUpdate {
         super.writeConcern(writeConcern);
         return this;
     }
-
-    public Replace<T> writeConcernIfAbsent(final WriteConcern writeConcern) {
-        super.writeConcernIfAbsent(writeConcern);
-        return this;
-    }
-
 }

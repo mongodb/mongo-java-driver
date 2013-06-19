@@ -350,9 +350,7 @@ public class DBCollection implements IDBCollection {
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
         final Document filter = new Document("_id", getCodec().getId(obj));
 
-        final Replace<DBObject> replace = new Replace<DBObject>(filter, obj)
-                .upsert(true)
-                .writeConcern(wc.toNew());
+        final Replace<DBObject> replace = new Replace<DBObject>(filter, obj, wc.toNew()).upsert(true);
 
         return new WriteResult(translateCommandResult(getSession().execute(
                 new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), getBufferPool()))), wc);

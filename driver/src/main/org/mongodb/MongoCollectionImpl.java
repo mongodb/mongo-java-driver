@@ -566,7 +566,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult replace(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).writeConcern(writeConcern);
+            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern);
             return new WriteResult(client.getSession().execute(
                     new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
                     writeConcern);
@@ -574,7 +574,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult replaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
+            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern).upsert(true);
             return new WriteResult(client.getSession().execute(
                     new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
                     writeConcern);
@@ -657,7 +657,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement).upsert(true).writeConcern(writeConcern);
+            final Replace<T> replace = new Replace<T>(findOp.getFilter(), replacement, writeConcern).upsert(true);
             final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
                     new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider()));
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {
