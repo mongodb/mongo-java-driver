@@ -37,6 +37,9 @@ import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
 import org.mongodb.connection.impl.DefaultConnectionSettings;
 import org.mongodb.connection.impl.DefaultServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
+import org.mongodb.session.ClusterSession;
+import org.mongodb.session.PinnedSession;
+import org.mongodb.session.ServerSelectingSession;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -48,6 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
@@ -66,6 +70,8 @@ public class Mongo {
     private final Codec<Document> documentCodec;
     private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+
+    private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(new DefaultClusterFactory().create(createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())),
@@ -167,8 +173,8 @@ public class Mongo {
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
-        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (ServerDescription cur : cluster.getDescription().getAll()) {
+        final List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
+        for (final ServerDescription cur : cluster.getDescription().getAll()) {
             serverAddresses.add(new ServerAddress(cur.getAddress()));
         }
         return serverAddresses;
@@ -312,8 +318,8 @@ public class Mongo {
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
-        for (ServerAddress cur : seedList) {
+        final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
+        for (final ServerAddress cur : seedList) {
             retVal.add(cur.toNew());
         }
         return retVal;
@@ -323,8 +329,8 @@ public class Mongo {
         if (credentialsList == null) {
             return Collections.emptyList();
         }
-        List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
-        for (MongoCredential cur : credentialsList) {
+        final List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
+        for (final MongoCredential cur : credentialsList) {
             retVal.add(cur.toNew());
         }
         return retVal;
@@ -336,12 +342,12 @@ public class Mongo {
                     createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
         }
         else {
-            List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
-            for (String cur : mongoURI.getHosts()) {
+            final List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
+            for (final String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.connection.ServerAddress(cur));
             }
             return new DefaultClusterFactory().create(seedList, createClusterableServerFactory(mongoURI.getCredentialList(),
-                    mongoURI.getOptions()));
+                                                                                               mongoURI.getOptions()));
         }
     }
 
@@ -351,20 +357,20 @@ public class Mongo {
 
     private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialList,
                                                                            final org.mongodb.MongoClientOptions options) {
-        BufferProvider bufferProvider = new PowerOfTwoBufferPool();
-        SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
+        final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+        final SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 
-        DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
+        final DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
                 .maxSize(options.getConnectionsPerHost())
                 .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                 .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
                 .build();
-        DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
+        final DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
                 .build();
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, credentialList);
+        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, credentialList);
 
         return new DefaultClusterableServerFactory(
                 DefaultServerSettings.builder()
@@ -394,5 +400,25 @@ public class Mongo {
 
     BufferProvider getBufferProvider() {
         return bufferProvider;
+    }
+
+    ServerSelectingSession getSession() {
+        if (pinnedSession.get() != null) {
+            return pinnedSession.get();
+        }
+        return new ClusterSession(getCluster());
+    }
+
+
+    void pinSession() {
+        isTrue("request not already started", pinnedSession.get() == null);
+        pinnedSession.set(new PinnedSession(cluster));
+    }
+
+    void unpinSession() {
+        isTrue("request started", pinnedSession.get() != null);
+        final ServerSelectingSession sessionToUnpin = this.pinnedSession.get();
+        this.pinnedSession.remove();
+        sessionToUnpin.close();
     }
 }

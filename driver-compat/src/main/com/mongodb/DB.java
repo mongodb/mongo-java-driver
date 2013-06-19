@@ -33,8 +33,6 @@ import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
-import org.mongodb.session.ClusterSession;
-import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerSelectingSession;
 
 import java.util.HashSet;
@@ -42,7 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBObjects.toDocument;
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.MongoExceptions.mapException;
 
 
 @ThreadSafe
@@ -54,7 +52,6 @@ public class DB implements IDB {
     private final Codec<Document> documentCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
-    private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
 
     DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
         this.mongo = mongo;
@@ -101,8 +98,7 @@ public class DB implements IDB {
      */
     @Override
     public void requestStart() {
-        isTrue("request not already started", pinnedSession.get() == null);
-        pinnedSession.set(new PinnedSession(getMongo().getCluster()));
+        getMongo().pinSession();
     }
 
     /**
@@ -110,10 +106,7 @@ public class DB implements IDB {
      */
     @Override
     public void requestDone() {
-        isTrue("request started", pinnedSession.get() != null);
-        ServerSelectingSession session = pinnedSession.get();
-        pinnedSession.remove();
-        session.close();
+        getMongo().unpinSession();
     }
 
     /**
@@ -195,9 +188,8 @@ public class DB implements IDB {
             executeCommand(new Create(createCollectionOptions));
             return getCollection(collectionName);
         } catch (MongoCommandFailureException ex) {
-            throw new MongoException(ex);
+            throw mapException(ex);
         }
-
     }
 
     private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
@@ -309,7 +301,7 @@ public class DB implements IDB {
      * Gets another database on same server
      *
      * @param name name of the database
-     * @return
+     * @return the DB for the given name
      */
     public DB getSisterDB(final String name) {
         return mongo.getDB(name);
@@ -329,7 +321,7 @@ public class DB implements IDB {
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
         final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
-        org.mongodb.operation.CommandResult commandResult = executeCommand(getLastErrorCommand);
+        final org.mongodb.operation.CommandResult commandResult = executeCommand(getLastErrorCommand);
         return new CommandResult(commandResult);
     }
 
@@ -450,10 +442,7 @@ public class DB implements IDB {
     }
 
     ServerSelectingSession getSession() {
-        if (pinnedSession.get() != null) {
-            return pinnedSession.get();
-        }
-        return new ClusterSession(getCluster());
+        return getMongo().getSession();
     }
 
     org.mongodb.operation.CommandResult executeCommand(final Command commandOperation) {
