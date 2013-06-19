@@ -71,8 +71,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
-        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails);
-        insertIndexOperation.writeConcern(WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails, WriteConcern.ACKNOWLEDGED);
 
         client.getSession().execute(new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec,
                 client.getBufferProvider()));

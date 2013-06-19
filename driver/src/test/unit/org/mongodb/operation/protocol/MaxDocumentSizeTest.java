@@ -35,7 +35,7 @@ public class MaxDocumentSizeTest {
     @Before
     public void setUp() {
         message = new InsertMessage<Document>("test.test",
-                new Insert<Document>(new Document("bytes", new byte[2048])).writeConcern(WriteConcern.ACKNOWLEDGED),
+                new Insert<Document>(new Document("bytes", new byte[2048]), WriteConcern.ACKNOWLEDGED),
                 new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }

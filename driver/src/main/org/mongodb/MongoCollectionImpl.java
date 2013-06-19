@@ -510,13 +510,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult insert(final T document) {
             return new WriteResult(client.getSession().execute(new InsertOperation<T>(getNamespace(),
-                    new Insert<T>(document).writeConcern(writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
+                    new Insert<T>(document, writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
         }
 
         @Override
         public WriteResult insert(final List<T> documents) {
             return new WriteResult(client.getSession().execute(new InsertOperation<T>(getNamespace(),
-                    new Insert<T>(documents).writeConcern(writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
+                    new Insert<T>(documents, writeConcern), getCodec(), client.getBufferProvider())), writeConcern);
         }
 
         @Override

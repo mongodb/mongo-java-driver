@@ -233,8 +233,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
-        final Insert<DBObject> insert = new Insert<DBObject>(documents)
-                .writeConcern(aWriteConcern.toNew());
+        final Insert<DBObject> insert = new Insert<DBObject>(documents, aWriteConcern.toNew());
         return new WriteResult(insertInternal(insert, codec), aWriteConcern);
     }
 
@@ -269,8 +268,7 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
-        final Insert<DBObject> insert = new Insert<DBObject>(documents)
-                .writeConcern(this.writeConcern.toNew());
+        final Insert<DBObject> insert = new Insert<DBObject>(documents, writeConcern.toNew());
         return new WriteResult(insertInternal(insert, encoder), aWriteConcern);
     }
 
@@ -290,7 +288,6 @@ public class DBCollection implements IDBCollection {
 
     private CommandResult insertInternal(final Insert<DBObject> insert, Encoder<DBObject> encoder) {
         try {
-            insert.writeConcernIfAbsent(getWriteConcern().toNew());
             return translateCommandResult(getSession().execute(
                     new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool())));
         } catch (MongoDuplicateKeyException e) {
@@ -1248,7 +1245,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void ensureIndex(final DBObject keys, final DBObject options) {
         final Insert<Document> insertIndexOperation
-                = new Insert<Document>(toIndexDetailsDocument(keys, options));
+                = new Insert<Document>(toIndexDetailsDocument(keys, options), org.mongodb.WriteConcern.ACKNOWLEDGED);
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1262,8 +1259,7 @@ public class DBCollection implements IDBCollection {
         final Index index = new Index(new Index.OrderedKey(name, OrderBy.ASC));
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
-        final Insert<Document> insertIndexOperation
-                = new Insert<Document>(indexDetails);
+        final Insert<Document> insertIndexOperation = new Insert<Document>(indexDetails, org.mongodb.WriteConcern.ACKNOWLEDGED);
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1301,7 +1297,7 @@ public class DBCollection implements IDBCollection {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
         final Document indexDetails = toIndexDetailsDocument(keys, options);
 
-        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(toDBObject(indexDetails));
+        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(toDBObject(indexDetails), org.mongodb.WriteConcern.ACKNOWLEDGED);
         insertIndex(insertIndexOperation, encoder);
     }
 

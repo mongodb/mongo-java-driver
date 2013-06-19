@@ -42,8 +42,8 @@ public class MaxMessageSizeTest {
                         Arrays.asList(
                                 new Document("bytes", new byte[2048]),
                                 new Document("bytes", new byte[2048]),
-                                new Document("bytes", new byte[2048])))
-                        .writeConcern(WriteConcern.ACKNOWLEDGED),
+                                new Document("bytes", new byte[2048])),
+                        WriteConcern.ACKNOWLEDGED),
                 new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }

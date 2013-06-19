@@ -61,7 +61,7 @@ public class PinnedSessionTest extends DatabaseTestCase {
         }
 
         session.execute(new InsertOperation<Document>(namespace,
-                new Insert<Document>(new Document()).writeConcern(WriteConcern.ACKNOWLEDGED), codec, getBufferProvider()));
+                new Insert<Document>(new Document(), WriteConcern.ACKNOWLEDGED), codec, getBufferProvider()));
 
         assertEquals(serverAddress, session.execute(new QueryOperation<Document>(namespace, find, codec, codec,
                 getBufferProvider())).getAddress());

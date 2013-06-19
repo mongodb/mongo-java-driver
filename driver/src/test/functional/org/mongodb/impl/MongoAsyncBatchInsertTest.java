@@ -72,7 +72,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
 
     @Test
     public void testBatchInsert() throws ExecutionException, InterruptedException {
-        final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.ACKNOWLEDGED);
+        final Insert<Document> insert = new Insert<Document>(documents, WriteConcern.ACKNOWLEDGED);
         getAsyncSession().execute(
                 new AsyncInsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider())).get();
         assertEquals(documents.size(), collection.count());
@@ -81,7 +81,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
     // To make the assertion work for unacknowledged writes, have to bind to a single connection
     @Test
     public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
-        final Insert<Document> insert = new Insert<Document>(documents).writeConcern(WriteConcern.UNACKNOWLEDGED);
+        final Insert<Document> insert = new Insert<Document>(documents, WriteConcern.UNACKNOWLEDGED);
         AsyncInsertOperation<Document> asyncInsertOperation = new AsyncInsertOperation<Document>(collection.getNamespace(), insert,
                 new DocumentCodec(), getBufferProvider());
         AsyncSession asyncSession = getAsyncSession().getBoundSession(asyncInsertOperation, SessionBindingType.Connection).get();
