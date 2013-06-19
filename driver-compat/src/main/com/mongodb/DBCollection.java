@@ -291,7 +291,7 @@ public class DBCollection implements IDBCollection {
             return translateCommandResult(getSession().execute(
                     new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool())));
         } catch (MongoDuplicateKeyException e) {
-            throw new MongoException.DuplicateKey(e);
+            throw mapException(e);
         }
     }
 

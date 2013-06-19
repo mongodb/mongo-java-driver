@@ -78,7 +78,6 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(com.mongodb.MongoException.DuplicateKey)
-        //TODO: this is failing cos it's ignoring the write concern?
     }
 
     def 'should throw com.mongodb.CommandFailureException when group fails'() {
@@ -135,4 +134,5 @@ class DBCollectionSpecification extends Specification {
     //TODO: turn org exception into checked exception to see if anything's leaking
     //TODO: check the message is correct
     //TODO: check the cause is correct
+    //TODO: remove the org Exception from the cause
 }
