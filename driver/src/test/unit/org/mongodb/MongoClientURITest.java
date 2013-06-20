@@ -166,7 +166,7 @@ public class MongoClientURITest {
         assertEquals(options.getReadPreference(), ReadPreference.primary());
     }
 
-    @Test()
+    @Test
     public void testReadPreferenceOptions() {
         MongoClientURI uri = new MongoClientURI("mongodb://localhost/?readPreference=secondaryPreferred");
         assertEquals(ReadPreference.secondaryPreferred(), uri.getOptions().getReadPreference());
@@ -176,6 +176,18 @@ public class MongoClientURITest {
         final Tags firstTags = new Tags("dc", "ny").append("rack", "1");
         assertEquals(ReadPreference.secondaryPreferred(Arrays.asList(firstTags, new Tags("dc", "ny"), new Tags())),
                 uri.getOptions().getReadPreference());
+    }
+
+    @Test
+    public void testCredentials() {
+        MongoClientURI uri = new MongoClientURI("mongodb://bob:pwd@localhost");
+        assertEquals(Arrays.asList(MongoCredential.createMongoCRCredential("bob", "admin", "pwd".toCharArray())), uri.getCredentialList());
+
+        uri = new MongoClientURI("mongodb://bob:pwd@localhost/?authMechanism=PLAIN");
+        assertEquals(Arrays.asList(MongoCredential.createPlainCredential("bob", "pwd".toCharArray())), uri.getCredentialList());
+
+        uri = new MongoClientURI("mongodb://bob:@localhost/?authMechanism=GSSAPI");
+        assertEquals(Arrays.asList(MongoCredential.createGSSAPICredential("bob")), uri.getCredentialList());
     }
 
     @SuppressWarnings("deprecation")

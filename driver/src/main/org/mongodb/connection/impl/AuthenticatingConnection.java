@@ -93,16 +93,15 @@ class AuthenticatingConnection implements Connection {
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {
-        Authenticator authenticator;
-        if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAuthenticator(credential, wrapped, bufferProvider);
+        switch (credential.getMechanism()) {
+            case MONGODB_CR:
+                return new NativeAuthenticator(credential, wrapped, bufferProvider);
+            case GSSAPI:
+                return new GSSAPIAuthenticator(credential, wrapped, bufferProvider);
+            case PLAIN:
+                return new PlainAuthenticator(credential, wrapped, bufferProvider);
+            default:
+                throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }
-        else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAuthenticator(credential, wrapped, bufferProvider);
-        }
-        else {
-            throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
-        }
-        return authenticator;
     }
 }

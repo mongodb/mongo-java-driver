@@ -30,21 +30,22 @@ import javax.security.sasl.SaslException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mongodb.AuthenticationMechanism.GSSAPI;
+
 final class GSSAPIAuthenticationHelper {
 
     public static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
     public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
-    public static final String GSSAPI_MECHANISM = MongoCredential.GSSAPI_MECHANISM;
 
     public static SaslClient createSaslClient(final MongoCredential credential, final String host) {
         try {
             Map<String, Object> props = new HashMap<String, Object>();
             props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
-            SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(),
+            SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
                     SaslAuthenticator.MONGODB_PROTOCOL, host, props, null);
             if (saslClient == null) {
-                throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI_MECHANISM));
+                throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }
 
             return saslClient;

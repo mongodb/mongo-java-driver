@@ -60,7 +60,7 @@ abstract class SaslAuthenticator extends Authenticator {
 
                 res = sendSaslContinue(conversationId, response);
             }
-        } catch (SaslException e) {
+        } catch (Exception e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating " + getCredential(), e);
         } finally {
             disposeOfSaslClient(saslClient);

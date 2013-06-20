@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -27,6 +26,11 @@ import org.mongodb.annotations.Immutable;
  */
 @Immutable
 public final class MongoCredential {
+
+    /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     */
+    public static final String PLAIN_MECHANISM = "PLAIN";
 
     /**
      * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
@@ -53,6 +57,18 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the PLAIN SASL mechanism.
+     *
+     * @param userName the non-null user name
+     * @param password the non-null user password
+     * @return the credential
+     */
+    public static MongoCredential createPlainCredential(final String userName, final char[] password) {
+        return new MongoCredential(org.mongodb.MongoCredential.createPlainCredential(userName, password));
+    }
+
+
+    /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
      *
      * @param userName the user name
@@ -77,7 +93,7 @@ public final class MongoCredential {
      * @return the mechanism.
      */
     public String getMechanism() {
-        return proxied.getMechanism();
+        return proxied.getMechanism().getMechanismName();
     }
 
     /**

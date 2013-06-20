@@ -17,30 +17,26 @@
 package org.mongodb.connection.impl;
 
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
+import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 
 import javax.security.sasl.SaslClient;
 
-import static org.mongodb.AuthenticationMechanism.GSSAPI;
+import static org.mongodb.AuthenticationMechanism.PLAIN;
 
-class GSSAPIAuthenticator extends SaslAuthenticator {
-    GSSAPIAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
+public class PlainAsyncAuthenticator extends SaslAsyncAuthenticator {
+    public PlainAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
+                                   final BufferProvider bufferProvider) {
         super(credential, connection, bufferProvider);
-
-        if (getCredential().getMechanism() != GSSAPI) {
-            throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());
-        }
-    }
-
-    @Override
-    protected SaslClient createSaslClient() {
-        return GSSAPIAuthenticationHelper.createSaslClient(getCredential(), getConnection().getServerAddress().getHost());
     }
 
     @Override
     public String getMechanismName() {
-        return GSSAPIAuthenticationHelper.GSSAPI_MECHANISM_NAME;
+        return PLAIN.getMechanismName();
+    }
+
+    @Override
+    protected SaslClient createSaslClient() {
+        return PlainAuthenticationHelper.createSaslClient(getCredential(), getConnection().getServerAddress().getHost());
     }
 }

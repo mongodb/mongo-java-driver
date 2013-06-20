@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -27,7 +26,7 @@ public class MongoCredentialTest {
     public void testMongoChallengeResponseMechanism() {
         MongoCredential credential;
 
-        final String mechanism = org.mongodb.MongoCredential.MONGODB_CR_MECHANISM;
+        final String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
         final String userName = "user";
         final String database = "test";
         final char[] password = "pwd".toCharArray();
@@ -37,7 +36,6 @@ public class MongoCredentialTest {
         assertEquals(userName, credential.getUserName());
         assertEquals(database, credential.getSource());
         assertArrayEquals(password, credential.getPassword());
-        assertEquals(org.mongodb.MongoCredential.MONGODB_CR_MECHANISM, credential.getMechanism());
     }
 
     @Test
@@ -52,7 +50,21 @@ public class MongoCredentialTest {
         assertEquals(userName, credential.getUserName());
         assertEquals("$external", credential.getSource());
         assertArrayEquals(null, credential.getPassword());
-        assertEquals(org.mongodb.MongoCredential.GSSAPI_MECHANISM, credential.getMechanism());
+    }
+
+    @Test
+    public void testPlainMechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.PLAIN_MECHANISM;
+        final String userName = "user";
+        final char[] password = "pwd".toCharArray();
+        credential = MongoCredential.createPlainCredential(userName, password);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals("$external", credential.getSource());
+        assertArrayEquals(password, credential.getPassword());
     }
 
     @Test

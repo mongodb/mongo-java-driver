@@ -135,17 +135,16 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
         }
 
         private AsyncAuthenticator createAuthenticator(final MongoCredential credential) {
-            AsyncAuthenticator authenticator;
-            if (credential.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-                authenticator = new NativeAsyncAuthenticator(credential, wrapped, bufferProvider);
+            switch (credential.getMechanism()) {
+                case MONGODB_CR:
+                    return new NativeAsyncAuthenticator(credential, wrapped, bufferProvider);
+                case GSSAPI:
+                    return new GSSAPIAsyncAuthenticator(credential, wrapped, bufferProvider);
+                case PLAIN:
+                    return new PlainAsyncAuthenticator(credential, wrapped, bufferProvider);
+                default:
+                    throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
             }
-            else if (credential.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-                authenticator = new GSSAPIAsyncAuthenticator(credential, wrapped, bufferProvider);
-            }
-            else {
-                throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
-            }
-            return authenticator;
         }
     }
 
@@ -154,7 +153,7 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
 
         public AuthenticationCallback(final SingleResultCallback<T> callback) {
             this.callback = callback;
-       }
+        }
 
         @Override
         public void onResult(final Void result, final MongoException e) {
