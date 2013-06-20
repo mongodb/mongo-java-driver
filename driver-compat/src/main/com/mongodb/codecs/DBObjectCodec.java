@@ -17,12 +17,11 @@
 package com.mongodb.codecs;
 
 import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
-import com.mongodb.TypeMapping;
+import com.mongodb.DBObjectFactory;
 import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
@@ -45,22 +44,22 @@ public class DBObjectCodec implements Codec<DBObject> {
     private final PrimitiveCodecs primitiveCodecs;
     private final Validator<String> fieldNameValidator;
     private final DB db;
-    private final TypeMapping typeMapping;
+    private final DBObjectFactory objectFactory;
 
 
     public DBObjectCodec(final DB db, final PrimitiveCodecs primitiveCodecs,
-                         final Validator<String> fieldNameValidator, final TypeMapping typeMapping) {
+                         final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
         this.primitiveCodecs = primitiveCodecs;
         this.db = db;
         this.fieldNameValidator = fieldNameValidator;
-        this.typeMapping = typeMapping;
+        this.objectFactory = objectFactory;
     }
 
     public DBObjectCodec() {
-        this(null, PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), new TypeMapping(BasicDBObject.class));
+        this(null, PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), new DBObjectFactory());
     }
 
     @Override
@@ -156,7 +155,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     @Override
     public DBObject decode(final BSONReader reader) {
         final List<String> path = new ArrayList<String>(10);
-        final DBObject document = typeMapping.getNewInstance(path);
+        final DBObject document = objectFactory.getInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -174,8 +173,8 @@ public class DBObjectCodec implements Codec<DBObject> {
         return DBObject.class;
     }
 
-    private Object decodeDocument(final BSONReader reader, final List<String> path) {
-        final DBObject document = typeMapping.getNewInstance(path);
+    private Object decode(final BSONReader reader, final List<String> path) {
+        final DBObject document = objectFactory.getInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -202,7 +201,7 @@ public class DBObjectCodec implements Codec<DBObject> {
             }
 
             if (bsonType.equals(BSONType.DOCUMENT)) {
-                initialRetVal = decodeDocument(reader, path);
+                initialRetVal = decode(reader, path);
             }
             // Must be an array, since there are only two container types
             else {

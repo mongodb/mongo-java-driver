@@ -24,15 +24,11 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.Binary;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -42,6 +38,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 public class DBCollectionTest extends DatabaseTestCase {
+
     @Test
     public void testInsert() {
         final WriteResult res = collection.insert(new BasicDBObject("_id", 1).append("x", 2));
@@ -296,8 +293,79 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(doc, collection.findOne());
     }
 
+
+    @Test
+    public void testReflectionObject() {
+        collection.setObjectClass(Tweet.class);
+        collection.insert(new Tweet(1, "Lorem", new Date(12)));
+
+        assertThat(collection.count(), is(1L));
+
+        final DBObject document = collection.findOne();
+        assertThat(document, instanceOf(Tweet.class));
+        final Tweet tweet = (Tweet) document;
+
+        assertThat(tweet.getUserId(), is(1L));
+        assertThat(tweet.getMessage(), is("Lorem"));
+        assertThat(tweet.getDate(), is(new Date(12)));
+    }
+
+    @Test
+    public void testReflectionObjectAtLeve2() {
+        collection.insert(new BasicDBObject("t", new Tweet(1, "Lorem", new Date(12))));
+        collection.setInternalClass("t", Tweet.class);
+
+        final DBObject document = collection.findOne();
+        assertThat(document.get("t"), instanceOf(Tweet.class));
+
+        final Tweet tweet = (Tweet) document.get("t");
+
+        assertThat(tweet.getUserId(), is(1L));
+        assertThat(tweet.getMessage(), is("Lorem"));
+        assertThat(tweet.getDate(), is(new Date(12)));
+    }
+
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
+    }
+
+    public static class Tweet extends ReflectionDBObject {
+        private long userId;
+        private String message;
+        private Date date;
+
+        public Tweet(long userId, String message, Date date) {
+            this.userId = userId;
+            this.message = message;
+            this.date = date;
+        }
+
+        public Tweet() {
+        }
+
+        public long getUserId() {
+            return userId;
+        }
+
+        public void setUserId(long userId) {
+            this.userId = userId;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public Date getDate() {
+            return date;
+        }
+
+        public void setDate(Date date) {
+            this.date = date;
+        }
     }
 
     public static class MyEncoder implements DBEncoder {

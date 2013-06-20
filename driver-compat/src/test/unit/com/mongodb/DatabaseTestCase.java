@@ -47,6 +47,7 @@ public class DatabaseTestCase {
         collection.drop();
         collection.setReadPreference(ReadPreference.primary());
         collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        collection.setObjectClass(BasicDBObject.class);
     }
 
     @After

@@ -128,23 +128,17 @@ public class DBCollection implements IDBCollection {
 
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
-    private final TypeMapping typeMapping;
+    private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private final CollectibleCodec<DBObject> codec;
+    private CollectibleCodec<DBObject> codec;
 
     DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
         this.name = name;
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        this.typeMapping = new TypeMapping(BasicDBObject.class);
-        this.codec = new CollectibleDBObjectCodec(
-                database,
-                getPrimitiveCodecs(),
-                new ObjectIdGenerator(),
-                typeMapping
-        );
+        setObjectFactory(new DBObjectFactory());
     }
 
     /**
@@ -1535,24 +1529,25 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public DBDecoderFactory getDBDecoderFactory() {
+    public synchronized DBDecoderFactory getDBDecoderFactory() {
         return decoderFactory;
     }
 
     @Override
-    public void setDBDecoderFactory(final DBDecoderFactory factory) {
+    public synchronized void setDBDecoderFactory(final DBDecoderFactory factory) {
         this.decoderFactory = factory;
     }
 
     @Override
-    public DBEncoderFactory getDBEncoderFactory() {
+    public synchronized DBEncoderFactory getDBEncoderFactory() {
         return this.encoderFactory;
     }
 
     @Override
-    public void setDBEncoderFactory(final DBEncoderFactory factory) {
+    public synchronized  void setDBEncoderFactory(final DBEncoderFactory factory) {
         this.encoderFactory = factory;
     }
+
 
     /**
      * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
@@ -1624,29 +1619,39 @@ public class DBCollection implements IDBCollection {
     /**
      * Sets a default class for objects in this collection; null resets the class to nothing.
      *
-     * @param cls the class
+     * @param aClass the class
      */
-    public void setObjectClass(final Class<? extends DBObject> cls) {
-        typeMapping.setTopLevelClass(cls);
+    public void setObjectClass(final Class<? extends DBObject> aClass) {
+        setObjectFactory(objectFactory.update(aClass));
     }
 
     /**
      * Sets the internal class for the given path in the document hierarchy
      *
      * @param path the path to map the given Class to
-     * @param cls  the Class to map the given path to
+     * @param aClass  the Class to map the given path to
      */
-    public void setInternalClass(final String path, final Class<? extends DBObject> cls) {
-        typeMapping.setInternalClass(Arrays.asList(path.split("\\.")), cls);
+    public void setInternalClass(final String path, final Class<? extends DBObject> aClass) {
+        setObjectFactory(objectFactory.update(aClass, Arrays.asList(path.split("\\."))));
+
     }
 
-    /**
-     * Gets the type mapping for a document hierarchy.
-     *
-     * @return the type mapping
-     */
-    TypeMapping getTypeMapping() {
-        return typeMapping; //TODO Make unmodifiable
+    synchronized DBObjectFactory getObjectFactory() {
+        return this.objectFactory;
+    }
+
+    synchronized void setObjectFactory(final DBObjectFactory factory) {
+        this.objectFactory = factory;
+        updateObjectCodec();
+    }
+
+    private void updateObjectCodec() {
+        this.codec = new CollectibleDBObjectCodec(
+                getDB(),
+                getPrimitiveCodecs(),
+                new ObjectIdGenerator(),
+                getObjectFactory()
+        );
     }
 
     private PrimitiveCodecs getPrimitiveCodecs() {

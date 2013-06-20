@@ -28,21 +28,21 @@ import java.util.List;
 public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     private final DB db;
-    private final TypeMapping typeMapping;
+    private final DBObjectFactory objectFactory;
 
     public DefaultDBCallback(final DBCollection collection) {
         this.db = collection.getDB();
-        this.typeMapping = collection.getTypeMapping();
+        this.objectFactory = collection.getObjectFactory();
     }
 
     @Override
     public BSONObject create() {
-        return typeMapping.getNewInstance(new ArrayList<String>());
+        return objectFactory.getInstance();
     }
 
     @Override
     public BSONObject create(final boolean array, final List<String> path) {
-        return array ? new BasicDBList() : typeMapping.getNewInstance(path != null ? path : new ArrayList<String>());
+        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : new ArrayList<String>());
     }
 
     @Override

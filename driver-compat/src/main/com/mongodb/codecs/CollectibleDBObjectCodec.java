@@ -18,7 +18,7 @@ package com.mongodb.codecs;
 
 import com.mongodb.DB;
 import com.mongodb.DBObject;
-import com.mongodb.TypeMapping;
+import com.mongodb.DBObjectFactory;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.IdGenerator;
@@ -35,8 +35,8 @@ public class CollectibleDBObjectCodec extends DBObjectCodec implements Collectib
 
     public CollectibleDBObjectCodec(final DB database, final PrimitiveCodecs primitiveCodecs,
                                     final IdGenerator idGenerator,
-                                    final TypeMapping typeMapping) {
-        super(database, primitiveCodecs, new FieldNameValidator(), typeMapping);
+                                    final DBObjectFactory DBObjectFactory) {
+        super(database, primitiveCodecs, new FieldNameValidator(), DBObjectFactory);
         this.idGenerator = idGenerator;
     }
 
