@@ -19,6 +19,7 @@ package com.mongodb
 import org.mongodb.Document
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.MongoCommandFailureException
+import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
 import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
@@ -57,6 +58,23 @@ class DBSpecification extends Specification {
 
         then:
         thrown(com.mongodb.MongoException)
+    }
+
+    @SuppressWarnings('UnnecessaryQualifiedReference')
+    def 'should throw com.mongodb.MongoException if executeCommand fails'() {
+        setup:
+        session.execute(_) >> {
+            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                                                                                           new org.mongodb.connection.ServerAddress(),
+                                                                                           new Document(),
+                                                                                           15L))
+        }
+
+        when:
+        database.executeCommand(new Ping());
+
+        then:
+        thrown(com.mongodb.CommandFailureException)
     }
 
     //TODO: getCollectionNames declares an exception, but doesn't wrap one

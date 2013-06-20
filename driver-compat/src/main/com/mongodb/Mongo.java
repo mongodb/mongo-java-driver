@@ -211,12 +211,9 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
+        //TODO: how do I make sure the exception is wrapped correctly?
         final org.mongodb.operation.CommandResult listDatabasesResult;
-        try {
-            listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
-        } catch (org.mongodb.MongoException e) {
-            throw new MongoException(e);
-        }
+        listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
 
         @SuppressWarnings("unchecked")
         final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
@@ -408,7 +405,6 @@ public class Mongo {
         }
         return new ClusterSession(getCluster());
     }
-
 
     void pinSession() {
         isTrue("request not already started", pinnedSession.get() == null);

@@ -904,7 +904,7 @@ public class DBCollection implements IDBCollection {
                                                       getBufferPool()));
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
-            throw new MongoException(e);
+            throw mapException(e);
         }
     }
 
@@ -1525,12 +1525,13 @@ public class DBCollection implements IDBCollection {
     public void drop() {
         try {
             getDB().executeCommand(new Drop(getName()));
-        } catch (MongoCommandFailureException ex) {
-            if (!"ns not found".equals(ex.getErrorMessage())) {
-                throw new MongoException(ex);
+        } catch (CommandFailureException ex) {
+            if (!"ns not found".equals(ex.getCommandResult().getErrorMessage())) {
+                throw ex;
             }
-            //TODO: but otherwise what? Are we going to leak MongoCommandFailureExceptions?
+            //otherwise ignore this, as dropping a DB that doesn't exist is fine
         }
+        //TODO: test drop functionality
     }
 
     @Override

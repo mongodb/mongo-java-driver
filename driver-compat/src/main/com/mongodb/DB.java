@@ -445,15 +445,23 @@ public class DB implements IDB {
         return getMongo().getSession();
     }
 
-    org.mongodb.operation.CommandResult executeCommand(final Command commandOperation) {
-        commandOperation.readPreferenceIfAbsent(getReadPreference().toNew());
-        return getSession().execute(
-                new CommandOperation(getName(), commandOperation, documentCodec, getCluster().getDescription(), getBufferPool()));
+    org.mongodb.operation.CommandResult executeCommand(final Command command) {
+        command.readPreferenceIfAbsent(getReadPreference().toNew());
+        try {
+            return getSession().execute(new CommandOperation(getName(), command, documentCodec,
+                                                             getCluster().getDescription(),
+                                                             getBufferPool()));
+        } catch (MongoCommandFailureException e) {
+            throw mapException(e);
+        }
     }
 
     org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {
+        mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
-            return executeCommand(mongoCommand);
+            return getSession().execute(new CommandOperation(getName(), mongoCommand, documentCodec,
+                                                             getCluster().getDescription(),
+                                                             getBufferPool()));
         } catch (MongoCommandFailureException ex) {
             return ex.getCommandResult();
         }
