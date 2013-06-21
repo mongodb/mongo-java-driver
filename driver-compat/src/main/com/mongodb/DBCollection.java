@@ -131,7 +131,7 @@ public class DBCollection implements IDBCollection {
     private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private CollectibleCodec<DBObject> codec;
+    private CollectibleCodec<DBObject> objectCodec;
 
     DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
         this.name = name;
@@ -228,7 +228,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
-        return new WriteResult(insertInternal(insert, codec), aWriteConcern);
+        return new WriteResult(insertInternal(insert, objectCodec), aWriteConcern);
     }
 
     /**
@@ -275,7 +275,7 @@ public class DBCollection implements IDBCollection {
             encoder = new DBEncoderAdapter(encoderFactory.create());
         }
         else {
-            encoder = this.codec;
+            encoder = this.objectCodec;
         }
         return encoder;
     }
@@ -332,7 +332,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        final Object id = getCodec().getId(document);
+        final Object id = getObjectCodec().getId(document);
         if (id == null) {
             return insert(document, writeConcern);
         }
@@ -342,12 +342,12 @@ public class DBCollection implements IDBCollection {
     }
 
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
-        final Document filter = new Document("_id", getCodec().getId(obj));
+        final Document filter = new Document("_id", getObjectCodec().getId(obj));
 
         final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
 
         return new WriteResult(translateCommandResult(getSession().execute(
-                new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getCodec(), getBufferPool()))), wc);
+                new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getObjectCodec(), getBufferPool()))), wc);
     }
 
     /**
@@ -649,7 +649,7 @@ public class DBCollection implements IDBCollection {
                 .batchSize(-1);
 
         final QueryResult<DBObject> res = getSession().execute(
-                new QueryOperation<DBObject>(getNamespace(), find, documentCodec, codec, getBufferPool()));
+                new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool()));
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -1416,7 +1416,7 @@ public class DBCollection implements IDBCollection {
         }
 
         final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
-                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getCodec());
+                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getObjectCodec());
 
         final FindAndModifyCommandResult<DBObject> commandResult =
                 new FindAndModifyCommandResult<DBObject>(getSession().execute((new CommandOperation(getDB().getName(), mongoCommand,
@@ -1613,7 +1613,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public Class getObjectClass() {
-        return codec.getEncoderClass();
+        return objectCodec.getEncoderClass();
     }
 
     /**
@@ -1646,7 +1646,7 @@ public class DBCollection implements IDBCollection {
     }
 
     private void updateObjectCodec() {
-        this.codec = new CollectibleDBObjectCodec(
+        this.objectCodec = new CollectibleDBObjectCodec(
                 getDB(),
                 getPrimitiveCodecs(),
                 new ObjectIdGenerator(),
@@ -1701,8 +1701,8 @@ public class DBCollection implements IDBCollection {
         return getDB().getSession();
     }
 
-    CollectibleCodec<DBObject> getCodec() {
-        return codec;
+    CollectibleCodec<DBObject> getObjectCodec() {
+        return objectCodec;
     }
 
     MongoNamespace getNamespace() {

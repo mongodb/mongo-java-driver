@@ -93,7 +93,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
-        this.resultDecoder = collection.getCodec();
+        this.resultDecoder = collection.getObjectCodec();
         this.find = new Find(find);
     }
 
