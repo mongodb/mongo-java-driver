@@ -61,7 +61,7 @@ class DBSpecification extends Specification {
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
-    def 'should throw com.mongodb.MongoException if executeCommand fails'() {
+    def 'should not map org.mongodb.MongoCommandFailureException if executeCommand fails'() {
         setup:
         session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
