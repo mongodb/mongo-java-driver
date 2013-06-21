@@ -1519,9 +1519,9 @@ public class DBCollection implements IDBCollection {
     public void drop() {
         try {
             getDB().executeCommand(new Drop(getName()));
-        } catch (MongoCommandFailureException ex) {
+        } catch (CommandFailureException ex) {
             if (!"ns not found".equals(ex.getCommandResult().getErrorMessage())) {
-                throw mapException(ex);
+                throw ex;
             }
             //otherwise ignore this, as dropping a DB that doesn't exist is fine
         }

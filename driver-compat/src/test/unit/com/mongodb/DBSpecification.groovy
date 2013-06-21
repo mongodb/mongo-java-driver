@@ -61,7 +61,7 @@ class DBSpecification extends Specification {
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
-    def 'should not map org.mongodb.MongoCommandFailureException if executeCommand fails'() {
+    def 'should throw com.mongodb.MongoException if executeCommand fails'() {
         setup:
         session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
@@ -74,7 +74,7 @@ class DBSpecification extends Specification {
         database.executeCommand(new Ping());
 
         then:
-        thrown(MongoCommandFailureException)
+        thrown(CommandFailureException)
     }
 
     //TODO: getCollectionNames declares an exception, but doesn't wrap one

@@ -26,6 +26,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.MongoExceptions.mapException
 
 class DBCollectionSpecification extends Specification {
     private final DB database = Mock();
@@ -115,10 +116,11 @@ class DBCollectionSpecification extends Specification {
     def 'should throw com.mongodb.MongoException when drop fails'() {
         setup:
         database.executeCommand(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+            org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document(),
+                    15L));
+            throw mapException(exception)
         }
 
         when:
@@ -126,6 +128,25 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(com.mongodb.MongoException)
+    }
+
+    def 'should not throw com.mongodb.MongoException when ns not found'() {
+        setup:
+        database.executeCommand(_) >> {
+            org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(
+                    new Document(),
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document('errmsg','ns not found'),
+                    15L));
+
+            throw mapException(exception);
+        }
+
+        when:
+        collection.drop();
+
+        then:
+        notThrown(com.mongodb.MongoException)
     }
 
     //TODO: getIndexInfo declares it throws an Exception, and doesn't?
