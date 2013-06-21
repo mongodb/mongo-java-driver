@@ -447,13 +447,9 @@ public class DB implements IDB {
 
     org.mongodb.operation.CommandResult executeCommand(final Command command) {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
-        try {
-            return getSession().execute(new CommandOperation(getName(), command, documentCodec,
-                                                             getCluster().getDescription(),
-                                                             getBufferPool()));
-        } catch (MongoCommandFailureException e) {
-            throw mapException(e);
-        }
+        return getSession().execute(new CommandOperation(getName(), command, documentCodec,
+                getCluster().getDescription(),
+                getBufferPool()));
     }
 
     org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {

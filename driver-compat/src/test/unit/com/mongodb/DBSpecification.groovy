@@ -74,7 +74,7 @@ class DBSpecification extends Specification {
         database.executeCommand(new Ping());
 
         then:
-        thrown(com.mongodb.CommandFailureException)
+        thrown(MongoCommandFailureException)
     }
 
     //TODO: getCollectionNames declares an exception, but doesn't wrap one
