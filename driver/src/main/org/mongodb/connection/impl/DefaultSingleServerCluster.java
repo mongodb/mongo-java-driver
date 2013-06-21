@@ -46,7 +46,9 @@ final class DefaultSingleServerCluster extends DefaultCluster {
             this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
                 @Override
                 public void stateChanged(final ChangeEvent<ServerDescription> event) {
+                    ClusterDescription oldDescription = getDescriptionNoWaiting();
                     updateDescription(event.getNewValue());
+                    fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
                 }
 
             });

@@ -18,6 +18,7 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
@@ -32,8 +33,11 @@ import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +51,8 @@ public abstract class DefaultCluster implements Cluster {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
+    private final Set<ChangeListener<ClusterDescription>> changeListeners =
+            Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ClusterDescription>, Boolean>());
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
@@ -133,6 +139,21 @@ public abstract class DefaultCluster implements Cluster {
     }
 
     @Override
+    public void addChangeListener(final ChangeListener<ClusterDescription> changeListener) {
+        isTrue("open", !isClosed());
+
+        changeListeners.add(changeListener);
+    }
+
+    @Override
+    public void removeChangeListener(final ChangeListener<ClusterDescription> changeListener) {
+        isTrue("open", !isClosed());
+        isTrue("listener is not null", changeListener != null);
+
+        changeListeners.remove(changeListener);
+    }
+
+    @Override
     public void close() {
         if (!isClosed()) {
             isClosed = true;
@@ -154,6 +175,17 @@ public abstract class DefaultCluster implements Cluster {
         description = newDescription;
         CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
         current.countDown();
+    }
+
+    // this method is necessary so that subclasses can call fireChangeEvent with the old value of description.
+    protected ClusterDescription getDescriptionNoWaiting() {
+        return description;
+    }
+
+    protected void fireChangeEvent(final ChangeEvent<ClusterDescription> changeEvent) {
+        for (ChangeListener<ClusterDescription> listener : changeListeners) {
+            listener.stateChanged(changeEvent);
+        }
     }
 
     private ServerDescription getRandomServer(final List<ServerDescription> serverDescriptions) {
@@ -192,5 +224,5 @@ public abstract class DefaultCluster implements Cluster {
         public AsyncServerConnection getAsyncConnection() {
             return wrapped.getAsyncConnection();
         }
-   }
+    }
 }

@@ -54,6 +54,7 @@ final class DefaultMultiServerCluster extends DefaultCluster {
             for (ServerAddress serverAddress : seedList) {
                 addServer(serverAddress);
             }
+            updateDescription();
         }
     }
 
@@ -92,18 +93,22 @@ final class DefaultMultiServerCluster extends DefaultCluster {
         if (isClosed()) {
             return;
         }
+        ClusterDescription oldDescription = getDescriptionNoWaiting();
 
-        if (event.getNewValue().isReplicaSetMember()) {
-            if (event.getNewValue().isOk()) {
-                addNewHosts(event.getNewValue().getHosts());
-                addNewHosts(event.getNewValue().getPassives());
-                removeExtras(event.getNewValue());
+        synchronized (this) {
+            if (event.getNewValue().isReplicaSetMember()) {
+                if (event.getNewValue().isOk()) {
+                    addNewHosts(event.getNewValue().getHosts());
+                    addNewHosts(event.getNewValue().getPassives());
+                    removeExtras(event.getNewValue());
+                }
+                else if (event.getOldValue().isPrimary()) {
+                    invalidateAll();
+                }
             }
-            else if (event.getOldValue().isPrimary()) {
-                invalidateAll();
-            }
+            updateDescription();
         }
-        updateDescription();
+        fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
     }
 
     private void addServer(final ServerAddress serverAddress) {
@@ -112,7 +117,6 @@ final class DefaultMultiServerCluster extends DefaultCluster {
         if (!addressToServerMap.containsKey(serverAddress)) {
             ClusterableServer mongoServer = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerMap.put(serverAddress, mongoServer);
-            updateDescription();
         }
     }
 
@@ -121,7 +125,6 @@ final class DefaultMultiServerCluster extends DefaultCluster {
 
         ClusterableServer server = addressToServerMap.remove(serverAddress);
         server.close();
-        updateDescription();
     }
 
 
