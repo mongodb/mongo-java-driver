@@ -35,8 +35,8 @@ public class CollectibleDBObjectCodec extends DBObjectCodec implements Collectib
 
     public CollectibleDBObjectCodec(final DB database, final PrimitiveCodecs primitiveCodecs,
                                     final IdGenerator idGenerator,
-                                    final DBObjectFactory DBObjectFactory) {
-        super(database, primitiveCodecs, new FieldNameValidator(), DBObjectFactory);
+                                    final DBObjectFactory objectFactory) {
+        super(database, primitiveCodecs, new FieldNameValidator(), objectFactory);
         this.idGenerator = idGenerator;
     }
 

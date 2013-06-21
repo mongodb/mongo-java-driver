@@ -24,7 +24,13 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.Binary;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Date;
+import java.util.UUID;
+import java.util.Arrays;
 
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
