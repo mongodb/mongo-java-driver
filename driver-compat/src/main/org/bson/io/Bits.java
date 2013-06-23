@@ -16,7 +16,6 @@
 
 package org.bson.io;
 
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,7 @@ public class Bits {
 
     public static void readFully(final InputStream in, final byte[] buffer, final int offset, final int length)
             throws IOException {
-        if (buffer.length < length) {
+        if (buffer.length < length + offset) {
             throw new IllegalArgumentException("Buffer is too small");
         }
 
@@ -107,15 +106,5 @@ public class Bits {
         x |= (0xFFL & buffer[offset + 6]) << 48;
         x |= (0xFFL & buffer[offset + 7]) << 56;
         return x;
-    }
-
-    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-        BufferExposingByteArrayOutputStream(final int size) {
-            super(size);
-        }
-
-        byte[] getInternalBytes() {
-            return buf;
-        }
     }
 }

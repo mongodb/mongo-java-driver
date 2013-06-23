@@ -36,16 +36,38 @@ public class BitsTest {
     };
 
     @Test
-    public void testReadFully() throws IOException {
+    public void testReadFullyWithBufferLargerThanExpected() throws IOException {
         final byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, BYTES.length);
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, 0, BYTES.length));
     }
 
+    @Test
+    public void testReadFullyWithOffset() throws IOException {
+        final int offset = 10;
+        final byte[] buffer = new byte[8192];
+        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
+        assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
+    }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
+    public void testReadFullyWithBufferEqualsToExpected() throws IOException {
+        final int offset = 10;
+        final byte[] buffer = new byte[offset + BYTES.length];
+        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
+        assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testReadFullyUsingNotEnoughBigBuffer() throws IOException {
         Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], BYTES.length);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testReadFullyUsingNotEnoughBigBufferWithOffset() throws IOException {
+        final int offset = 10;
+        final byte[] buffer = new byte[BYTES.length];
+        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
     }
 
     @Test
@@ -68,7 +90,6 @@ public class BitsTest {
         assertEquals(-12, Bits.readIntBE(new byte[]{-1, -1, -1, -12}, 0));
     }
 
-
     @Test
     public void testReadLong() {
         assertEquals(Long.MAX_VALUE, Bits.readLong(BYTES, 24));
@@ -78,6 +99,5 @@ public class BitsTest {
     public void testReadLongWithNotEnoughData() {
         Bits.readLong(Arrays.copyOfRange(BYTES, 24, 30), 0);
     }
-
 
 }
