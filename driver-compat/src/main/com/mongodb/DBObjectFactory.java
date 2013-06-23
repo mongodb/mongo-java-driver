@@ -16,11 +16,14 @@
 
 package com.mongodb;
 
+import org.mongodb.annotations.Immutable;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Immutable
 public final class DBObjectFactory {
 
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
