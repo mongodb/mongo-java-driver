@@ -29,4 +29,11 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         done();
         return x;
     }
+
+    public static final DBEncoderFactory FACTORY = new DBEncoderFactory() {
+        @Override
+        public DBEncoder create() {
+            return new DefaultDBEncoder();
+        }
+    };
 }
