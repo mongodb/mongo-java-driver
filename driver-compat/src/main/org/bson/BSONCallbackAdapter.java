@@ -21,6 +21,8 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
+import static org.bson.io.Bits.readLong;
+
 class BSONCallbackAdapter extends BSONWriter {
 
     private BSONCallback bsonCallback;
@@ -97,7 +99,16 @@ class BSONCallbackAdapter extends BSONWriter {
 
     @Override
     public void writeBinaryData(final Binary binary) {
-        bsonCallback.gotBinary(getName(), binary.getType(), binary.getData());
+        if (binary.getType() == BSONBinarySubType.UuidLegacy.getValue()) {
+            bsonCallback.gotUUID(
+                    getName(),
+                    readLong(binary.getData(), 0),
+                    readLong(binary.getData(), 8)
+            );
+        } else {
+            bsonCallback.gotBinary(getName(), binary.getType(), binary.getData());
+        }
+
         setState(getNextState());
     }
 

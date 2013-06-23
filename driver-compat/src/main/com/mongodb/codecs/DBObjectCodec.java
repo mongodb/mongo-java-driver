@@ -19,15 +19,16 @@ package com.mongodb.codecs;
 import com.mongodb.BasicDBList;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
+import com.mongodb.DBObjectFactory;
 import com.mongodb.DBRef;
 import com.mongodb.DBRefBase;
-import com.mongodb.DBObjectFactory;
 import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.Symbol;
 import org.mongodb.Codec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
@@ -107,6 +108,8 @@ public class DBObjectCodec implements Codec<DBObject> {
             primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
         } else if (value != null && value.getClass().isArray()) {
             encodeArray(bsonWriter, value);
+        } else if (value instanceof Symbol) {
+            bsonWriter.writeSymbol(((Symbol) value).getSymbol());
         } else {
             primitiveCodecs.encode(bsonWriter, value);
         }

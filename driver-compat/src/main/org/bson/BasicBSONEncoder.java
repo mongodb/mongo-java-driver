@@ -68,4 +68,8 @@ public class BasicBSONEncoder implements BSONEncoder {
         }
         this.outputBuffer = out;
     }
+
+    protected OutputBuffer getOutputBuffer() {
+        return outputBuffer;
+    }
 }

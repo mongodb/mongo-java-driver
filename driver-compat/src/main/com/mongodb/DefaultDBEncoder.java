@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.DBObjectCodec;
+import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.OutputBuffer;
@@ -28,6 +30,19 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         int x = super.putObject(document);
         done();
         return x;
+    }
+
+    @Override
+    public int putObject(final BSONObject document) {
+        final OutputBuffer buffer = getOutputBuffer();
+        int startPosition = buffer.getPosition();
+        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
+        try {
+            new DBObjectCodec().encode(writer, (DBObject) document); //TODO: unchecked cast
+            return buffer.getPosition() - startPosition;
+        } finally {
+            writer.close();
+        }
     }
 
     public static final DBEncoderFactory FACTORY = new DBEncoderFactory() {

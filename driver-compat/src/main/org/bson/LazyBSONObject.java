@@ -39,7 +39,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
+
+import static org.bson.io.Bits.readLong;
 
 public class LazyBSONObject implements BSONObject {
     private final byte[] bytes;
@@ -126,8 +129,12 @@ public class LazyBSONObject implements BSONObject {
                 return reader.readString();
             case BINARY:
                 final Binary binary = reader.readBinaryData();
-                if (binary.getType() == BSON.B_GENERAL || binary.getType() == BSON.B_BINARY) {
+                final byte binaryType = binary.getType();
+                if (binaryType == BSONBinarySubType.Binary.getValue() ||
+                        binaryType == BSONBinarySubType.Binary.getValue()) {
                     return binary.getData();
+                } else if (binaryType == BSONBinarySubType.UuidLegacy.getValue()) {
+                    return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
                 } else {
                     return binary;
                 }
