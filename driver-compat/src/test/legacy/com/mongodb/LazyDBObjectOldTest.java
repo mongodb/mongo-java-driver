@@ -1,7 +1,6 @@
 package com.mongodb;
 
 
-
 import org.bson.BSONEncoder;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
@@ -18,10 +17,8 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -33,7 +30,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 
 public class LazyDBObjectOldTest extends DatabaseTestCase {
 
@@ -121,6 +117,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testEntrySet() throws IOException {
         DBObject obj = createSimpleTestDoc();
         e.putObject(obj);
@@ -136,17 +133,13 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         Object[] entrySetArray = entrySet.toArray();
         assertEquals(5, entrySetArray.length);   // kind of a lame test
 
-        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[0]);
+        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[entrySet.size()]);
         assertEquals(5, typedArray.length);
 
         typedArray = entrySet.toArray(new Map.Entry[6]);
         assertEquals(6, typedArray.length);
         assertNull(typedArray[5]);
 
-        assertTrue(entrySet.contains(new AbstractMap.SimpleEntry<String, Object>("first", 1)));
-        assertTrue(entrySet.contains(new AbstractMap.SimpleEntry<String, Object>("second", "str1")));
-        assertFalse(entrySet.contains(new AbstractMap.SimpleEntry<String, Object>("first", 2)));
-        assertFalse(entrySet.contains(new AbstractMap.SimpleEntry<String, Object>("x", 1)));
     }
 
     @Test
