@@ -27,12 +27,17 @@ public class ErrorOldTest extends DatabaseTestCase {
 
     @Test
     public void testLastError() {
-        database.resetError();
-        assertTrue(database.getLastError().get("err") == null);
-        database.forceError();
-        assertTrue(database.getLastError().get("err") != null);
-        database.resetError();
-        assertTrue(database.getLastError().get("err") == null);
+        database.requestStart();
+        try {
+            database.resetError();
+            assertTrue(database.getLastError().get("err") == null);
+            database.forceError();
+            assertTrue(database.getLastError().get("err") != null);
+            database.resetError();
+            assertTrue(database.getLastError().get("err") == null);
+        } finally {
+            database.requestDone();
+        }
     }
 
     @Test
@@ -58,24 +63,30 @@ public class ErrorOldTest extends DatabaseTestCase {
 
     @Test
     public void testPrevError() {
-        database.resetError();
+        database.requestStart();
 
-        assertTrue(database.getLastError().get("err") == null);
-        assertTrue(database.getPreviousError().get("err") == null);
+        try {
+            database.resetError();
 
-        database.forceError();
+            assertTrue(database.getLastError().get("err") == null);
+            assertTrue(database.getPreviousError().get("err") == null);
 
-        assertTrue(database.getLastError().get("err") != null);
-        assertTrue(database.getPreviousError().get("err") != null);
+            database.forceError();
 
-        database.getCollection("misc").insert(new BasicDBObject("foo", 1));
+            assertTrue(database.getLastError().get("err") != null);
+            assertTrue(database.getPreviousError().get("err") != null);
 
-        assertTrue(database.getLastError().get("err") == null);
-        assertTrue(database.getPreviousError().get("err") != null);
+            database.getCollection("misc").insert(new BasicDBObject("foo", 1));
 
-        database.resetError();
+            assertTrue(database.getLastError().get("err") == null);
+            assertTrue(database.getPreviousError().get("err") != null);
 
-        assertTrue(database.getLastError().get("err") == null);
-        assertTrue(database.getPreviousError().get("err") == null);
+            database.resetError();
+
+            assertTrue(database.getLastError().get("err") == null);
+            assertTrue(database.getPreviousError().get("err") == null);
+        } catch (Exception e) {
+            database.requestDone();
+        }
     }
 }

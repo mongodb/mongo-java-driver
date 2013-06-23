@@ -23,7 +23,6 @@ import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ConnectionProvider;
 import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.MongoSocketInterruptedReadException;
-import org.mongodb.connection.MongoTimeoutException;
 import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
@@ -36,15 +35,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class DefaultConnectionProvider implements ConnectionProvider {
-    private final SimplePool<Connection> pool;
+class DefaultConnectionProvider implements ConnectionProvider {
+    private final ConcurrentPool<UsageTrackingConnection> pool;
     private final DefaultConnectionProviderSettings settings;
-    private AtomicInteger waitQueueSize = new AtomicInteger(0);
+    private final AtomicInteger waitQueueSize = new AtomicInteger(0);
+    private final AtomicInteger generation = new AtomicInteger(0);
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
+        pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
+                new ConcurrentPool.ItemFactory<UsageTrackingConnection>() {
+            @Override
+            public UsageTrackingConnection create() {
+                UsageTrackingConnection connection = new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
+                connection.open();
+                return connection;
+            }
+
+            @Override
+            public void close(final UsageTrackingConnection connection) {
+                connection.close();
+            }
+        });
         this.settings = settings;
-        pool = new SimpleConnectionPool(serverAddress, connectionFactory);
     }
 
     @Override
@@ -58,12 +71,12 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
             }
-            final Connection connection = pool.get(timeout, timeUnit);
-            if (connection == null) {
-                throw new MongoTimeoutException(String.format("Timeout waiting for a connection after %d %s", timeout, timeUnit));
+            UsageTrackingConnection connection = pool.get(timeout, timeUnit);
+            while (shouldDiscard(connection)) {
+                pool.release(connection, true);
+                connection = pool.get(timeout, timeUnit);
             }
-            connection.open();
-            return wrap(connection);
+            return new PooledConnection(connection);
         } finally {
             waitQueueSize.decrementAndGet();
         }
@@ -74,51 +87,47 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         pool.close();
     }
 
-    private Connection wrap(final Connection connection) {
-        return new PooledConnection(connection);
+    private boolean shouldDiscard(final UsageTrackingConnection connection) {
+        final long curTime = System.currentTimeMillis();
+        return generation.get() > connection.getGeneration()
+                || expired(connection.getOpenedAt(), curTime, settings.getMaxConnectionLifeTime(TimeUnit.MILLISECONDS))
+                || expired(connection.getLastUsedAt(), curTime, settings.getMaxConnectionIdleTime(TimeUnit.MILLISECONDS));
     }
 
-    private class SimpleConnectionPool extends SimplePool<Connection> {
+    private boolean expired(final long startTime, final long curTime, final long maxTime) {
+        return maxTime != 0 && curTime - startTime > maxTime;
+    }
 
-        private final ConnectionFactory connectionFactory;
-        private final ServerAddress serverAddress;
-
-        public SimpleConnectionPool(final ServerAddress serverAddress, final ConnectionFactory connectionFactory) {
-            super(serverAddress.toString(), settings.getMaxSize());
-            this.serverAddress = serverAddress;
-            this.connectionFactory = connectionFactory;
-        }
-
-        @Override
-        protected Connection createNew() {
-            return connectionFactory.create(serverAddress);
-
-        }
-
-        @Override
-        protected void cleanup(final Connection connection) {
-            connection.close();
+    /**
+     * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that
+     * any connections created prior will be discarded.
+     *
+     * @param e the exception
+     */
+    private void incrementGenerationOnSocketException(final MongoException e) {
+        if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
+            generation.incrementAndGet();
         }
     }
 
     private class PooledConnection implements Connection {
-        private volatile Connection wrapped;
+        private volatile UsageTrackingConnection wrapped;
 
-        public PooledConnection(final Connection wrapped) {
+        public PooledConnection(final UsageTrackingConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
         @Override
         public void close() {
             if (wrapped != null) {
-                pool.release(wrapped, wrapped.isClosed());
+                pool.release(wrapped, wrapped.isClosed() || shouldDiscard(wrapped));
                 wrapped = null;
             }
         }
 
         @Override
         public boolean isClosed() {
-            return wrapped == null;
+            return wrapped == null || wrapped.isClosed();
         }
 
         @Override
@@ -139,7 +148,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             try {
                 wrapped.sendMessage(byteBuffers);
             } catch (MongoException e) {
-                handleException(e);
+                incrementGenerationOnSocketException(e);
                 throw e;
             }
         }
@@ -150,19 +159,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             try {
                 return wrapped.receiveMessage(responseSettings);
             } catch (MongoException e) {
-                handleException(e);
+                incrementGenerationOnSocketException(e);
                 throw e;
-            }
-        }
-
-        /**
-         * If there was a socket exception that wasn't some form of interrupted read, clear the pool.
-         *
-         * @param e the exception
-         */
-        private void handleException(final MongoException e) {
-            if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-                pool.clear();
             }
         }
     }

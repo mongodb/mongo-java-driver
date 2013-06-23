@@ -27,7 +27,5 @@ interface Pool<T> {
 
     void close();
 
-    void clear();
-
     void release(T t, boolean discard);
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb
 
 import spock.lang.Specification
@@ -21,7 +23,7 @@ import spock.lang.Specification
 import static org.mongodb.Fixture.getMongoClient
 import static org.mongodb.Fixture.initialiseCollection
 
-abstract class FunctionalSpecification extends Specification {
+class FunctionalSpecification extends Specification {
     protected static MongoDatabase database;
     protected MongoCollection<Document> collection;
 

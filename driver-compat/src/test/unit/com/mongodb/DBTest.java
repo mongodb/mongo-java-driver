@@ -29,7 +29,6 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -97,12 +96,11 @@ public class DBTest extends DatabaseTestCase {
         assertThat(c1.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
     }
 
-    @Test
-    public void shouldGetLastError() {
+    @Test(expected = MongoException.DuplicateKey.class)
+    public void shouldGetDuplicateKeyException() {
         final DBObject doc = new BasicDBObject("_id", 1);
         collection.insert(doc);
-        collection.insert(doc, WriteConcern.UNACKNOWLEDGED);
-        assertNotNull(database.getLastError().getException());
+        collection.insert(doc, WriteConcern.ACKNOWLEDGED);
     }
 
     @Test

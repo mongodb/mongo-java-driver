@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class PowerOfTwoBufferPool implements BufferProvider {
 
-    private final Map<Integer, SimplePool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, SimplePool<ByteBuffer>>();
+    private final Map<Integer, ConcurrentPool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, ConcurrentPool<ByteBuffer>>();
 
     public PowerOfTwoBufferPool() {
         this(24);
@@ -38,12 +38,17 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             final int size = x;
             // TODO: Determine max size of each pool.
-            powerOfTwoToPoolMap.put(size, new SimplePool<ByteBuffer>("ByteBufferPool-2^" + i, Integer.MAX_VALUE) {
-                @Override
-                protected ByteBuffer createNew() {
-                    return PowerOfTwoBufferPool.this.createNew(size);
-                }
-            });
+            powerOfTwoToPoolMap.put(size, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
+                    new ConcurrentPool.ItemFactory<ByteBuffer>() {
+                        @Override
+                        public ByteBuffer create() {
+                            return createNew(size);
+                        }
+
+                        @Override
+                        public void close(final ByteBuffer byteBuffer) {
+                        }
+                    }));
             x = x << 1;
         }
     }
@@ -58,12 +63,6 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         return new PooledByteBufNIO(byteBuffer);
     }
 
-    public void clear() {
-        for (Pool<ByteBuffer> cur : powerOfTwoToPoolMap.values()) {
-            cur.clear();
-        }
-    }
-
     private ByteBuffer createNew(final int size) {
         final ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -71,7 +70,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private void release(final ByteBuffer buffer) {
-        final SimplePool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
+        final ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
         if (pool != null) {
             pool.release(buffer);
         }

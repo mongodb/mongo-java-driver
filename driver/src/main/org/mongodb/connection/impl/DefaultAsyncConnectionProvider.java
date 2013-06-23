@@ -20,7 +20,6 @@ import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncConnectionFactory;
 import org.mongodb.connection.AsyncConnectionProvider;
-import org.mongodb.connection.MongoTimeoutException;
 import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
@@ -36,14 +35,24 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
-    private final SimplePool<AsyncConnection> pool;
+    private final ConcurrentPool<AsyncConnection> pool;
     private final DefaultConnectionProviderSettings settings;
     private AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
                                           final DefaultConnectionProviderSettings settings) {
         this.settings = settings;
-        pool = new SimpleAsyncConnectionPool(serverAddress, connectionFactory);
+        pool = new ConcurrentPool<AsyncConnection>(settings.getMaxSize(), new ConcurrentPool.ItemFactory<AsyncConnection>() {
+            @Override
+            public AsyncConnection create() {
+                return connectionFactory.create(serverAddress);
+            }
+
+            @Override
+            public void close(final AsyncConnection connection) {
+                connection.close();
+            }
+        });
     }
 
     @Override
@@ -57,11 +66,7 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
             }
-            final AsyncConnection connection = pool.get(timeout, timeUnit);
-            if (connection == null) {
-                throw new MongoTimeoutException(String.format("Timeout waiting for a connection after %d %s", timeout, timeUnit));
-            }
-            return wrap(connection);
+            return wrap(pool.get(timeout, timeUnit));
         } finally {
             waitQueueSize.decrementAndGet();
         }
@@ -77,28 +82,6 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
             return null;
         }
         return new PooledAsyncConnection(connection);
-    }
-
-    private class SimpleAsyncConnectionPool extends SimplePool<AsyncConnection> {
-
-        private final ServerAddress serverAddress;
-        private final AsyncConnectionFactory connectionFactory;
-
-        public SimpleAsyncConnectionPool(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory) {
-            super(serverAddress.toString(), settings.getMaxSize());
-            this.serverAddress = serverAddress;
-            this.connectionFactory = connectionFactory;
-        }
-
-        @Override
-        protected AsyncConnection createNew() {
-            return connectionFactory.create(serverAddress);
-        }
-
-        @Override
-        protected void cleanup(final AsyncConnection connection) {
-            connection.close();
-        }
     }
 
     private class PooledAsyncConnection implements AsyncConnection {
