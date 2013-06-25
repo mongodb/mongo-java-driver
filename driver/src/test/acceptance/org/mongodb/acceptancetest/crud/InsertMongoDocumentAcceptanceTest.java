@@ -30,10 +30,10 @@ public class InsertMongoDocumentAcceptanceTest extends DatabaseTestCase {
         final Document simpleDocument = new Document("name", "Billy");
         collection.insert(simpleDocument);
 
-        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().count(), is(1L));
 
         final Document queryFilter = new Document("name", "Billy");
-        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.filter(queryFilter).all();
+        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(queryFilter).get();
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
     }

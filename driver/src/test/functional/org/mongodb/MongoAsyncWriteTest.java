@@ -31,9 +31,9 @@ public class MongoAsyncWriteTest extends DatabaseTestCase {
     @Test
     public void testReplaceOrInsertFuture() throws ExecutionException, InterruptedException {
         Document document = new Document();
-        Future<WriteResult> resultFuture = collection.asyncReplaceOrInsert(document);
+        Future<WriteResult> resultFuture = collection.find().upsert().asyncReplace(document);
         WriteResult result = resultFuture.get();
         assertNotNull(result);
-        assertEquals(collection.one(), document);
+        assertEquals(collection.find().getOne(), document);
     }
 }

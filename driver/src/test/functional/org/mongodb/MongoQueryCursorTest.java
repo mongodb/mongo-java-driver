@@ -289,7 +289,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testLimitWithGetMore() {
         final List<Document> list = new ArrayList<Document>();
-        collection.batchSize(2).limit(5).into(list);
+        collection.find().batchSize(2).limit(5).into(list);
         assertEquals(5, list.size());
     }
 
@@ -304,7 +304,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         }
 
         final List<Document> list = new ArrayList<Document>();
-        collection.limit(300).into(list);
+        collection.find().limit(300).into(list);
         assertEquals(300, list.size());
     }
 

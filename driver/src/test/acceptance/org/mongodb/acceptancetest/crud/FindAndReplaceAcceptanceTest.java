@@ -41,10 +41,10 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
-        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.filter(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                .replaceAndGet(new Document("foo", "bar"), Get.BeforeChangeApplied);
+        final Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
+                .replaceOneAndGetOriginal(new Document("foo", "bar"));
 
         assertThat("Document, retrieved from replaceAndGet should match the document inserted before",
                 document, equalTo(documentInserted));
@@ -57,10 +57,9 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         final Document documentReplacement = new Document("_id", id).append("foo", "bar");
         collection.insert(documentInserted);
 
-        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.filter(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                .replaceAndGet(documentReplacement, Get.AfterChangeApplied);
+        final Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT)).replaceOneAndGet(documentReplacement);
 
         assertThat("Document, retrieved from replaceAndGet after change applied should match the document used as replacement",
                 document, equalTo(documentReplacement));
@@ -72,10 +71,9 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
-        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.filter(new Document(KEY, "bar"))
-                .replaceAndGet(new Document("foo", "bar"), Get.BeforeChangeApplied);
+        final Document document = collection.find(new Document(KEY, "bar")).replaceOneAndGetOriginal(new Document("foo", "bar"));
 
         assertNull("Document, retrieved from replaceAndGet should be null", document);
     }
@@ -86,16 +84,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
-        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().count(), is(1L));
 
-        final Document documentInserted2 = new Document("_id", new ObjectId())
-                .append("foo", "bar");
+        final Document documentInserted2 = new Document("_id", new ObjectId()).append("foo", "bar");
 
-        final Document document = collection
-                .filter(new Document(KEY, "bar"))
-                .replaceOrInsertAndGet(documentInserted2, Get.AfterChangeApplied);
+        final Document document = collection.find(new Document(KEY, "bar")).upsert().replaceOneAndGet(documentInserted2);
 
-        assertThat(collection.count(), is(2L));
+        assertThat(collection.find().count(), is(2L));
         assertThat("Document, retrieved from replaceOrInsertAndGet with negative filter should match the document used as replacement",
                 document, equalTo(documentInserted2));
     }

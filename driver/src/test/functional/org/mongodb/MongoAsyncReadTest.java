@@ -53,13 +53,13 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testCountFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.asyncCount().get(), is(10L));
+        assertThat(collection.find().asyncCount().get(), is(10L));
     }
 
     @Test
     public void testCountCallback() throws InterruptedException {
         final List<Long> actual = new ArrayList<Long>();
-        collection.asyncCount().register(new SingleResultCallback<Long>() {
+        collection.find().asyncCount().register(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final MongoException e) {
                 actual.add(result);
@@ -73,15 +73,15 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testOneFuture() throws ExecutionException, InterruptedException {
-        assertNull(collection.filter(new Document("_id", 11)).asyncOne().get());
-        assertThat(collection.sort(new Document("_id", 1)).asyncOne().get(), is(documentList.get(0)));
+        assertNull(collection.find(new Document("_id", 11)).asyncOne().get());
+        assertThat(collection.find().sort(new Document("_id", 1)).asyncOne().get(), is(documentList.get(0)));
     }
 
     @Test
     public void testOneCallback() throws ExecutionException, InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
         final List<Exception> exceptionList = new ArrayList<Exception>();
-        collection.filter(new Document("_id", 11)).asyncOne().register(new SingleResultCallback<Document>() {
+        collection.find(new Document("_id", 11)).asyncOne().register(new SingleResultCallback<Document>() {
             @Override
             public void onResult(final Document result, final MongoException e) {
                 documentResultList.add(result);
@@ -97,7 +97,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testForEach() throws InterruptedException {
         final List<Document> documentResultList = new ArrayList<Document>();
-        collection.sort(new Document("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
+        collection.find().sort(new Document("_id", 1)).asyncForEach(new AsyncBlock<Document>() {
             @Override
             public void done() {
                 latch.countDown();
@@ -116,7 +116,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.sort(new Document("_id", 1))
+        assertThat(collection.find().sort(new Document("_id", 1))
                 .asyncInto(new ArrayList<Document>())
                 .get(),
                 is(documentList));
@@ -124,7 +124,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testMapIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.sort(new Document("_id", 1))
+        assertThat(collection.find().sort(new Document("_id", 1))
                 .map(new Function<Document, Integer>() {
                     @Override
                     public Integer apply(final Document document) {
@@ -138,7 +138,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     @Test
     public void testIntoCallback() throws ExecutionException, InterruptedException {
         List<Document> results = new ArrayList<Document>();
-        collection.sort(new Document("_id", 1)).asyncInto(results).register(new SingleResultCallback<List<Document>>() {
+        collection.find().sort(new Document("_id", 1)).asyncInto(results).register(new SingleResultCallback<List<Document>>() {
             @Override
             public void onResult(final List<Document> result, final MongoException e) {
                 latch.countDown();

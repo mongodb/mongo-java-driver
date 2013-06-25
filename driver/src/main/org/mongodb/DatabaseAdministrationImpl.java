@@ -113,6 +113,6 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void removeUser(final String userName) {
         MongoCollection<Document> collection = client.getDatabase(databaseName).getCollection("system.users");
-        collection.filter(new Document("user", userName)).remove();
+        collection.find(new Document("user", userName)).remove();
     }
 }

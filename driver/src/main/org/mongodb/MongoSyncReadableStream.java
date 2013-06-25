@@ -16,16 +16,11 @@
 
 package org.mongodb;
 
-import java.util.List;
-
 public interface MongoSyncReadableStream<T> {
 
-    MongoCursor<T> all();
+    MongoCursor<T> get();
 
-    T one();
+    T getOne();
 
     long count();
-
-    //TODO: not always going to be a string
-    List<String> distinct(String field);
 }

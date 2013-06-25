@@ -46,11 +46,11 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
         collection.insert(originalDocuments);
 
         final MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(getCollectionName(), codec);
-        final List<BSONDocumentBuffer> docs = lazyCollection.into(new ArrayList<BSONDocumentBuffer>());
+        final List<BSONDocumentBuffer> docs = lazyCollection.find().into(new ArrayList<BSONDocumentBuffer>());
         lazyCollection.tools().drop();
         lazyCollection.insert(docs);
 
-        assertEquals(originalDocuments, collection.sort(new Document("_id", 1)).into(new ArrayList<Document>()));
+        assertEquals(originalDocuments, collection.find().sort(new Document("_id", 1)).into(new ArrayList<Document>()));
     }
 
     @Test

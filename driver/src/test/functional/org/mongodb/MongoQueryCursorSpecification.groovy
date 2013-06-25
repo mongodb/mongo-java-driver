@@ -329,7 +329,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     def 'test limit with get more'() {
         when:
         List<Document> list = [];
-        collection.batchSize(2).limit(5).into(list);
+        collection.find().batchSize(2).limit(5).into(list);
 
         then:
         list.size() == 5;
@@ -345,7 +345,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         List<Document> list = [];
-        collection.limit(300).into(list);
+        collection.find().limit(300).into(list);
 
         then:
         list.size() == 300;

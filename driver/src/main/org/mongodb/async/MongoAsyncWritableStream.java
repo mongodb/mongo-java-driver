@@ -27,5 +27,5 @@ import org.mongodb.operation.MongoFuture;
  * @since 3.0
  */
 public interface MongoAsyncWritableStream<T> {
-    MongoFuture<WriteResult> asyncReplaceOrInsert(T replacement);
+    MongoFuture<WriteResult> asyncReplace(T replacement);
 }

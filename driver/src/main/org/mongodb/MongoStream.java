@@ -32,13 +32,13 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> tail();
 
-    MongoStream<T> readPreference(ReadPreference readPreference);
+    MongoStream<T> withReadPreference(ReadPreference readPreference);
 
-    MongoStream<T> writeConcern(WriteConcern writeConcern);
+    MongoStream<T> withWriteConcern(WriteConcern writeConcern);
 
-    MongoStream<T> filter(Document filter);
+    MongoStream<T> find(Document filter);
 
-    MongoStream<T> filter(ConvertibleToDocument filter);
+    MongoStream<T> find(ConvertibleToDocument filter);
 
     MongoStream<T> sort(Document sortCriteria);
 
@@ -50,9 +50,11 @@ public interface MongoStream<T> extends MongoSyncWritableStream<T>, MongoAsyncWr
 
     MongoStream<T> noLimit();
 
-    MongoStream<T> select(Document selector);
+    MongoStream<T> fields(Document selector);
 
-    MongoStream<T> select(ConvertibleToDocument selector);
+    MongoStream<T> fields(ConvertibleToDocument selector);
+
+    MongoStream<T> upsert();
 
     /**
      * Returns a copy of the criteria for this stream.  Modifications to the copy will have no effect on the stream.

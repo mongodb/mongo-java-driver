@@ -48,7 +48,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insert(new Document("name", "Bob"));
 
         final Document query = new Document("name", "Bob");
-        final MongoCursor<Document> results = collection.filter(query).all();
+        final MongoCursor<Document> results = collection.find(query).get();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
@@ -58,7 +58,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insert(new Document("name", "Bob"));
 
         final Document query = new Document("name", "Bob");
-        final MongoCursor<Document> results = collection.filter(query).all();
+        final MongoCursor<Document> results = collection.find(query).get();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
@@ -68,7 +68,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         final MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
         personCollection.insert(new Person("Bob"));
 
-        final MongoCursor<Person> results = personCollection.filter(new Document("name", "Bob")).all();
+        final MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).get();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -79,7 +79,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         final Person bob = new Person("Bob");
         personCollection.insert(bob);
 
-        final MongoCursor<Person> results = personCollection.filter(bob).all();
+        final MongoCursor<Person> results = personCollection.find(bob).get();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -92,7 +92,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
 
         final List<Document> results = new ArrayList<Document>();
-        collection.filter(new Document("numTimesOrdered", new Document("$type", 16)))
+        collection.find(new Document("numTimesOrdered", new Document("$type", 16)))
                   .sort(new Document("numTimesOrdered", -1))
                   .into(results);
 
@@ -114,7 +114,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         final Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type",
                                                                                                        INT32.getValue())),
                                                           new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
-        collection.filter(filter)
+        collection.find(filter)
                   .sort(descending("numTimesOrdered"))
                   .into(results);
 
@@ -131,7 +131,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insert(new Document("product", "CD"));
 
         final List<Document> results = new ArrayList<Document>();
-        collection.sort(ascending("product"))
+        collection.find().sort(ascending("product"))
                   .into(results);
 
         assertThat(results.size(), is(3));
@@ -153,7 +153,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         final Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
                                                   .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
                                                   .toDocument();
-        collection.filter(filter)
+        collection.find(filter)
                   .sort(descending("numTimesOrdered"))
                   .into(results);
 

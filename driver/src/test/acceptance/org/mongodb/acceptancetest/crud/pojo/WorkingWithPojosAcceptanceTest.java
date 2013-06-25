@@ -58,8 +58,8 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
         final Person person = new Person("Ian", "Brown");
         pojoCollection.insert(person);
 
-        final Person result = pojoCollection.filter(new Document("firstName", person.getFirstName())
-                                                    .append("lastName", person.getLastName())).one();
+        final Person result = pojoCollection.find(new Document("firstName", person.getFirstName())
+                                                    .append("lastName", person.getLastName())).getOne();
         assertThat(result, is(person));
     }
 
@@ -75,7 +75,7 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
         addresses.insert(address);
 
-        final Address result = addresses.one();
+        final Address result = addresses.find().getOne();
         assertThat(result, is(address));
     }
 
@@ -86,8 +86,8 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
         final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
-        final Document personInCollection = personCollection.filter(new Document("firstName", person.getFirstName())
-                                                                    .append("lastName", person.getLastName())).one();
+        final Document personInCollection = personCollection.find(new Document("firstName", person.getFirstName())
+                                                                    .append("lastName", person.getLastName())).getOne();
 
         assertThat(personInCollection.get("ignoredValue"), is(nullValue()));
     }
@@ -96,7 +96,7 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
         final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
         final List<Document> results = new ArrayList<Document>();
-        personCollection.filter(new Document("firstName", person.getFirstName())
+        personCollection.find(new Document("firstName", person.getFirstName())
                                 .append("lastName", person.getLastName())).into(results);
 
         assertThat(results.size(), is(1));

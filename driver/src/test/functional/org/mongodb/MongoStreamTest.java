@@ -35,11 +35,11 @@ public class MongoStreamTest extends DatabaseTestCase {
             collection.insert(new Document("_id", i));
         }
 
-        for (final Document cur : collection) {
+        for (final Document cur : collection.find()) {
 //            System.out.println(cur);
         }
 
-        final MongoCursor<Document> cursor = collection.all();
+        final MongoCursor<Document> cursor = collection.find().get();
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -49,40 +49,40 @@ public class MongoStreamTest extends DatabaseTestCase {
             cursor.close();
         }
 
-        for (final Document cur : collection.filter(new Document("_id", 1))) {
+        for (final Document cur : collection.find(new Document("_id", 1))) {
 //            System.out.println(cur);
         }
 
-        for (final Document cur : collection.filter(new Document("_id", 1))
+        for (final Document cur : collection.find(new Document("_id", 1))
                 .sort(new Document("_id", 1))) {
 //            System.out.println(cur);
         }
 
 //        System.out.println();
 
-        for (final Document cur : collection.filter(query("_id").greaterThan(4)).sort(new Document("_id", 1))) {
+        for (final Document cur : collection.find(query("_id").greaterThan(4)).sort(new Document("_id", 1))) {
 //            System.out.println(cur);
         }
 
 //        System.out.println();
 
-        for (final Document cur : collection.skip(3).limit(2).sort(new Document("_id", -1))) {
+        for (final Document cur : collection.find().skip(3).limit(2).sort(new Document("_id", -1))) {
 //            System.out.println(cur);
         }
 
-        long count = collection.count();
+        long count = collection.find().count();
 //        System.out.println(count);
 
-        count = collection.filter(new Document("_id", new Document("$gt", 2))).count();
+        count = collection.find(new Document("_id", new Document("$gt", 2))).count();
 //        System.out.println(count);
 
-        Document doc = collection.one();
+        Document doc = collection.find().getOne();
 //        System.out.println(doc);
 
-        doc = collection.filter(new Document("_id", 1)).one();
+        doc = collection.find(new Document("_id", 1)).getOne();
 //        System.out.println(doc);
 
-        collection.forEach(new Block<Document>() {
+        collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document e) {
 //                System.out.println(e);
@@ -90,7 +90,7 @@ public class MongoStreamTest extends DatabaseTestCase {
             }
         });
 
-        collection.forEach(new Block<Document>() {
+        collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
 //                System.out.println(t);
@@ -98,14 +98,14 @@ public class MongoStreamTest extends DatabaseTestCase {
             }
         });
 
-        collection.forEach(new Block<Document>() {
+        collection.find().forEach(new Block<Document>() {
             public boolean run(final Document document) {
 //                System.out.println(document);
                 return true;
             }
         });
 
-        for (final Integer id : collection.map(new Function<Document, Integer>() {
+        for (final Integer id : collection.find().map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -114,7 +114,7 @@ public class MongoStreamTest extends DatabaseTestCase {
 //            System.out.println(id);
         }
 
-        List<String> list = collection.map(new Function<Document, Integer>() {
+        List<String> list = collection.find().map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -128,7 +128,7 @@ public class MongoStreamTest extends DatabaseTestCase {
 
 //        System.out.println(list);
 
-        collection.forEach(new Block<Document>() {
+        collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
 //               System.out.println(t);
@@ -136,7 +136,7 @@ public class MongoStreamTest extends DatabaseTestCase {
             }
         });
 
-        final List<Integer> idList = collection.map(new Function<Document, Integer>() {
+        final List<Integer> idList = collection.find().map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -151,40 +151,39 @@ public class MongoStreamTest extends DatabaseTestCase {
     public void testUpdate() {
         collection.insert(new Document("_id", 1));
 
-        collection.modify(new Document("$set", new Document("x", 1)));
+        collection.find().update(new Document("$set", new Document("x", 1)));
 
-        collection.filter(new Document("_id", 1))
-                .modify(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1))
+                .update(new Document("$set", new Document("x", 1)));
 
-        collection.filter(new Document("_id", 1))
-                .modify(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1))
+                .update(new Document("$set", new Document("x", 1)));
 
 
-        collection.filter(new Document("x", 1))
+        collection.find(new Document("x", 1))
                 .noLimit()
-                .modifyOrInsert(new Document("$inc", new Document("x", 1)));
+                .upsert().update(new Document("$inc", new Document("x", 1)));
 
-        collection.filter(new Document("_id", 1))
-                .modify(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1))
+                .update(new Document("$set", new Document("x", 1)));
 
-        collection.filter(new Document("_id", 2))
-                .modifyOrInsert(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 2))
+                .upsert().update(new Document("$set", new Document("x", 1)));
 
-        final Document doc = collection.filter(new Document("_id", 1))
-                .modifyAndGet(new Document("$set", new Document("x", 1)),
-                        Get.BeforeChangeApplied);
+        final Document doc = collection.find(new Document("_id", 1))
+                .updateOneAndGetOriginal(new Document("$set", new Document("x", 1)));
 //        System.out.println(doc);
     }
 
     @Test
     public void testInsertOrReplace() {
         final Document replacement = new Document("_id", 3).append("x", 2);
-        collection.replaceOrInsert(replacement);
-        assertEquals(replacement, collection.filter(new Document("_id", 3)).one());
+        collection.find().upsert().replace(replacement);
+        assertEquals(replacement, collection.find(new Document("_id", 3)).getOne());
 
         replacement.append("y", 3);
-        collection.replaceOrInsert(replacement);
-        assertEquals(replacement, collection.filter(new Document("_id", 3)).one());
+        collection.find().upsert().replace(replacement);
+        assertEquals(replacement, collection.find(new Document("_id", 3)).getOne());
     }
 
     @Test
@@ -194,7 +193,7 @@ public class MongoStreamTest extends DatabaseTestCase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-//        System.out.println(concreteCollection.filter(new Document("i", 1))
+//        System.out.println(concreteCollection.find(new Document("i", 1))
 //                .map(new Function<Concrete, ObjectId>() {
 //                    @Override
 //                    public ObjectId apply(final Concrete concrete) {
@@ -207,7 +206,7 @@ public class MongoStreamTest extends DatabaseTestCase {
 //                    }
 //                }).into(new ArrayList<String>()));
 //
-//        System.out.println(concreteCollection.filter(new Document("i", 1))
+//        System.out.println(concreteCollection.find(new Document("i", 1))
 //                .map(new Function<Concrete, ObjectId>() {
 //                    @Override
 //                    public ObjectId apply(final Concrete concrete) {

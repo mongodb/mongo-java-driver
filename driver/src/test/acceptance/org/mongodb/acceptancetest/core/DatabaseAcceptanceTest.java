@@ -129,7 +129,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         final MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
-                renamedCollection.count(), is(1L));
+                renamedCollection.find().count(), is(1L));
     }
 
     @Test(expected = MongoServerException.class)
@@ -179,8 +179,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
         final MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
-        assertThat(replacedCollection.one().get(keyInExistingCollection), is(nullValue()));
-        assertThat(replacedCollection.one().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+        assertThat(replacedCollection.find().getOne().get(keyInExistingCollection), is(nullValue()));
+        assertThat(replacedCollection.find().getOne().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
     }
 
     @Test
@@ -194,7 +194,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
             newCredentialList.add(credential);
             MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), getOptions());
-            client.getDatabase(database.getName()).getCollection(getCollectionName()).one();
+            client.getDatabase(database.getName()).getCollection(getCollectionName()).find().getOne();
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
@@ -211,7 +211,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             database.tools().removeUser(credential.getUserName());
             try {
                 MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
-                client.getDatabase("test").getCollection("test").one();
+                client.getDatabase("test").getCollection("test").find().getOne();
             } catch (MongoServerSelectionFailureException e) {
                 // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
                 // the addUser to setUp, but that would require its own test class.

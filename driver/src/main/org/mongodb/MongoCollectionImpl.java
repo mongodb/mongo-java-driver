@@ -75,66 +75,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoStream<T> batchSize(final int batchSize) {
-        return new MongoCollectionStream().batchSize(batchSize);
-    }
-
-    @Override
-    public MongoStream<T> withOptions(final EnumSet<QueryOption> queryOptions) {
-        return new MongoCollectionStream().withOptions(queryOptions);
-    }
-
-    @Override
-    public MongoStream<T> tail() {
-        return new MongoCollectionStream().tail();
-    }
-
-    @Override
-    public MongoStream<T> readPreference(final ReadPreference readPreference) {
-        return new MongoCollectionStream().readPreference(readPreference);
-    }
-
-    @Override
-    public MongoCursor<T> iterator() {
-        return all();
-    }
-
-    @Override
-    public MongoCursor<T> all() {
-        return new MongoCollectionStream().all();
-    }
-
-    @Override
-    public T one() {
-        return new MongoCollectionStream().one();
-    }
-
-    @Override
-    public long count() {
-        return new MongoCollectionStream().count();
-    }
-
-    @Override
-    public List<String> distinct(final String field) {
-        return new MongoCollectionStream().distinct(field);
-    }
-
-    @Override
-    public void forEach(final Block<? super T> block) {
-        new MongoCollectionStream().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super T>> A into(final A target) {
-        return new MongoCollectionStream().into(target);
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MongoCollectionStream().map(mapper);
-    }
-
-    @Override
     public WriteResult insert(final T document) {
         return new MongoCollectionStream().insert(document);
     }
@@ -150,153 +90,28 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoStream<T> filter(final Document filter) {
-        return new MongoCollectionStream().filter(filter);
-    }
-
-    @Override
-    public MongoStream<T> filter(final ConvertibleToDocument filter) {
-        return filter(filter.toDocument());
-    }
-
-    @Override
-    public MongoStream<T> sort(final Document sortCriteria) {
-        return new MongoCollectionStream().sort(sortCriteria);
-    }
-
-    @Override
-    public MongoStream<T> sort(final ConvertibleToDocument sortCriteria) {
-        return sort(sortCriteria.toDocument());
-    }
-
-    @Override
-    public MongoStream<T> skip(final int skip) {
-        return new MongoCollectionStream().skip(skip);
-    }
-
-    @Override
-    public MongoStream<T> limit(final int limit) {
-        return new MongoCollectionStream().limit(limit);
-    }
-
-    @Override
-    public MongoStream<T> noLimit() {
-        return new MongoCollectionStream().noLimit();
-    }
-
-    @Override
-    public MongoStream<T> select(final Document selector) {
-        return new MongoCollectionStream().select(selector);
-    }
-
-    @Override
-    public MongoStream<T> select(final ConvertibleToDocument selector) {
-        return new MongoCollectionStream().select(selector);
-    }
-
-    @Override
-    public Find getCriteria() {
-        return new MongoCollectionStream().getCriteria();
-    }
-
-    @Override
-    public MongoStream<T> writeConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionStream().writeConcern(writeConcern);
-    }
-
-    @Override
-    public WriteResult remove() {
-        return new MongoCollectionStream().remove();
-    }
-
-    @Override
-    public WriteResult modify(final Document updateOperations) {
-        return new MongoCollectionStream().modify(updateOperations);
-    }
-
-    @Override
-    public WriteResult modifyOrInsert(final Document updateOperations) {
-        return new MongoCollectionStream().modifyOrInsert(updateOperations);
-    }
-
-    @Override
-    public WriteResult modifyOrInsert(final ConvertibleToDocument updateOperations) {
-        return new MongoCollectionStream().modifyOrInsert(updateOperations);
-    }
-
-    @Override
-    public WriteResult replace(final T replacement) {
-        return new MongoCollectionStream().replace(replacement);
-    }
-
-    @Override
-    public WriteResult replaceOrInsert(final T replacement) {
-        return new MongoCollectionStream().replaceOrInsert(replacement);
-    }
-
-    @Override
-    public T modifyAndGet(final Document updateOperations, final Get beforeOrAfter) {
-        return new MongoCollectionStream().modifyAndGet(updateOperations, beforeOrAfter);
-    }
-
-    @Override
-    public T modifyAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
-        return new MongoCollectionStream().modifyAndGet(updateOperations, beforeOrAfter);
-    }
-
-    @Override
-    public T modifyOrInsertAndGet(final Document updateOperations, final Get beforeOrAfter) {
-        return new MongoCollectionStream().modifyOrInsertAndGet(updateOperations, beforeOrAfter);
-    }
-
-    @Override
-    public T modifyOrInsertAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
-        return new MongoCollectionStream().modifyOrInsertAndGet(updateOperations, beforeOrAfter);
-    }
-
-    @Override
-    public T replaceAndGet(final T replacement, final Get beforeOrAfter) {
-        return new MongoCollectionStream().replaceAndGet(replacement, beforeOrAfter);
-    }
-
-    @Override
-    public T replaceOrInsertAndGet(final T replacement, final Get beforeOrAfter) {
-        return new MongoCollectionStream().replaceOrInsertAndGet(replacement, beforeOrAfter);
-    }
-
-    @Override
-    public T removeAndGet() {
-        return new MongoCollectionStream().removeAndGet();
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
-        return new MongoCollectionStream().asyncReplaceOrInsert(replacement);
-    }
-
-    @Override
-    public MongoFuture<T> asyncOne() {
-        return new MongoCollectionStream().asyncOne();
-    }
-
-    @Override
-    public MongoFuture<Long> asyncCount() {
-        return new MongoCollectionStream().asyncCount();
-    }
-
-    @Override
-    public void asyncForEach(final AsyncBlock<? super T> block) {
-        new MongoCollectionStream().asyncForEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-        return new MongoCollectionStream().asyncInto(target);
-    }
-
-    @Override
     public CollectionAdministration tools() {
         return admin;
+    }
+
+    @Override
+    public MongoStream<T> find() {
+        return new MongoCollectionStream();
+    }
+
+    @Override
+    public MongoStream<T> find(final Document filter) {
+        return new MongoCollectionStream().find(filter);
+    }
+
+    @Override
+    public MongoStream<T> find(final ConvertibleToDocument filter) {
+        return new MongoCollectionStream().find(filter);
+    }
+
+    @Override
+    public MongoStream<T> withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoCollectionStream().withWriteConcern(writeConcern);
     }
 
     private Codec<Document> getDocumentCodec() {
@@ -350,6 +165,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private final Find findOp;
         private WriteConcern writeConcern;
         private boolean limitSet;
+        private boolean upsert;
 
         private MongoCollectionStream() {
             findOp = new Find();
@@ -357,27 +173,20 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             writeConcern = getOptions().getWriteConcern();
         }
 
-        private MongoCollectionStream(final MongoCollectionStream from) {
-            findOp = new Find(from.findOp);
-            writeConcern = from.writeConcern;
-            limitSet = from.limitSet;
-        }
-
         @Override
         public MongoCursor<T> iterator() {
-            return all();
+            return get();
         }
 
         @Override
-        public MongoStream<T> filter(final Document filter) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.filter(filter);
-            return newStream;
+        public MongoStream<T> find(final Document filter) {
+            findOp.filter(filter);
+            return this;
         }
 
         @Override
-        public MongoStream<T> filter(final ConvertibleToDocument filter) {
-            return filter(filter.toDocument());
+        public MongoStream<T> find(final ConvertibleToDocument filter) {
+            return find(filter.toDocument());
         }
 
         @Override
@@ -387,21 +196,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoStream<T> sort(final Document sortCriteria) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.order(sortCriteria);
-            return newStream;
+            findOp.order(sortCriteria);
+            return this;
         }
 
         @Override
-        public MongoStream<T> select(final Document selector) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.select(selector);
-            return newStream;
+        public MongoStream<T> fields(final Document selector) {
+            findOp.select(selector);
+            return this;
         }
 
         @Override
-        public MongoStream<T> select(final ConvertibleToDocument selector) {
-            return select(selector.toDocument());
+        public MongoStream<T> fields(final ConvertibleToDocument selector) {
+            return fields(selector.toDocument());
+        }
+
+        @Override
+        public MongoStream<T> upsert() {
+            upsert = true;
+            return this;
         }
 
         @Override
@@ -411,17 +224,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoStream<T> skip(final int skip) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.skip(skip);
-            return newStream;
+            findOp.skip(skip);
+            return this;
         }
 
         @Override
         public MongoStream<T> limit(final int limit) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.limit(limit);
-            newStream.limitSet = true;
-            return newStream;
+            findOp.limit(limit);
+            limitSet = true;
+            return this;
         }
 
         @Override
@@ -431,40 +242,36 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoStream<T> batchSize(final int batchSize) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.batchSize(batchSize);
-            return newStream;
+            findOp.batchSize(batchSize);
+            return this;
         }
 
         @Override
         public MongoStream<T> withOptions(final EnumSet<QueryOption> queryOptions) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.addOptions(queryOptions);
-            return newStream;
+            findOp.addOptions(queryOptions);
+            return this;
         }
 
         @Override
         public MongoStream<T> tail() {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
-            return newStream;
+            findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
+            return this;
         }
 
         @Override
-        public MongoStream<T> readPreference(final ReadPreference readPreference) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.findOp.readPreference(readPreference);
-            return newStream;
+        public MongoStream<T> withReadPreference(final ReadPreference readPreference) {
+            findOp.readPreference(readPreference);
+            return this;
         }
 
         @Override
-        public MongoCursor<T> all() {
+        public MongoCursor<T> get() {
             return new MongoQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getSession(),
                     client.getBufferProvider());
         }
 
         @Override
-        public T one() {
+        public T getOne() {
             final QueryResult<T> res = client.getSession().execute(
                     new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
                             client.getBufferProvider()));
@@ -481,14 +288,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public List<String> distinct(final String field) {
-            final Distinct distinctOperation = new Distinct(getName(), field, findOp);
-            return new DistinctCommandResult(getDatabase().executeCommand(distinctOperation)).getValue();
-        }
-
-        @Override
         public void forEach(final Block<? super T> block) {
-            final MongoCursor<T> cursor = all();
+            final MongoCursor<T> cursor = get();
             try {
                 while (cursor.hasNext()) {
                     if (!block.run(cursor.next())) {
@@ -519,10 +320,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoStream<T> writeConcern(final WriteConcern writeConcernForThisOperation) {
-            final MongoCollectionStream newStream = new MongoCollectionStream(this);
-            newStream.writeConcern = writeConcernForThisOperation;
-            return newStream;
+        public MongoStream<T> withWriteConcern(final WriteConcern writeConcernForThisOperation) {
+            writeConcern = writeConcernForThisOperation;
+            return this;
         }
 
         @Override
@@ -544,7 +344,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 return insert(document);
             }
             else {
-                return filter(new Document("_id", id)).replaceOrInsert(document);
+                return upsert().find(new Document("_id", id)).replace(document);
             }
         }
 
@@ -556,54 +356,62 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public WriteResult modify(final Document updateOperations) {
-            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations)
-                                  .multi(getMultiFromLimit(UpdateType.modify));
-            return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(),
-                                                                                   update,
-                                                                                   getDocumentCodec(),
-                                                                                   client
-                                                                                   .getBufferProvider())),
-                                   writeConcern);
+        public WriteResult update(final Document updateOperations) {
+            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations).upsert(upsert)
+                    .multi(getMultiFromLimit(UpdateType.modify));
+            return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(), update, getDocumentCodec(),
+                    client.getBufferProvider())), writeConcern);
         }
 
         @Override
-        public WriteResult modifyOrInsert(final Document updateOperations) {
-            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations)
-                                  .upsert(true)
-                                  .multi(getMultiFromLimit(UpdateType.modify));
-            return new WriteResult(client.getSession().execute(
-                    new UpdateOperation(getNamespace(), update, getDocumentCodec(), client.getBufferProvider())), writeConcern);
-        }
-
-        @Override
-        public WriteResult modifyOrInsert(final ConvertibleToDocument updateOperations) {
-            return modifyOrInsert(updateOperations.toDocument());
+        public WriteResult update(final ConvertibleToDocument updateOperations) {
+            return update(updateOperations.toDocument());
         }
 
         @Override
         public WriteResult replace(final T replacement) {
-            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement);
+            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(upsert);
             return new WriteResult(client.getSession().execute(
                     new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
                     writeConcern);
         }
 
         @Override
-        public WriteResult replaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(true);
-            return new WriteResult(client.getSession().execute(
-                    new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider())),
-                    writeConcern);
+        public T updateOneAndGet(final Document updateOperations) {
+            return updateOneAndGet(updateOperations, Get.AfterChangeApplied);
         }
 
         @Override
+        public T updateOneAndGet(final ConvertibleToDocument updateOperations) {
+            return updateOneAndGet(updateOperations.toDocument());
+        }
+
+        @Override
+        public T replaceOneAndGet(final T replacement) {
+            return replaceOneAndGet(replacement, Get.AfterChangeApplied);
+        }
+
+        @Override
+        public T updateOneAndGetOriginal(final Document updateOperations) {
+            return updateOneAndGet(updateOperations, Get.BeforeChangeApplied);
+        }
+
+        @Override
+        public T updateOneAndGetOriginal(final ConvertibleToDocument updateOperations) {
+            return updateOneAndGetOriginal(updateOperations.toDocument());
+        }
+
+        @Override
+        public T replaceOneAndGetOriginal(final T replacement) {
+            return replaceOneAndGet(replacement, Get.BeforeChangeApplied);
+        }
+
         //CHECKSTYLE:OFF
         //TODO: absolute disaster area
-        public T modifyAndGet(final Document updateOperations, final Get beforeOrAfter) {
+        public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
             final FindAndUpdate<T> findAndUpdate = new FindAndUpdate<T>()
                     .where(findOp.getFilter()).updateWith(updateOperations).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields())
-                    .sortBy(findOp.getOrder());
+                    .sortBy(findOp.getOrder()).upsert(upsert);
 
             //TODO: Still need to tidy up some of this command stuff, especially around return values
             final org.mongodb.command.FindAndUpdate<T> findAndUpdateCommand =
@@ -615,31 +423,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                             client.getBufferProvider()))).getValue();
         }
 
-        @Override
-        public T modifyAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
-            return modifyAndGet(updateOperations.toDocument(), beforeOrAfter);
-        }
-
-        @Override
-        public T modifyOrInsertAndGet(final Document updateOperations, final Get beforeOrAfter) {
-            final FindAndUpdate<T> findAndUpdate = new FindAndUpdate<T>().where(findOp.getFilter()).updateWith(updateOperations)
-                    .upsert(true).returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(findOp.getOrder());
-            return new FindAndModifyCommandResult<T>(
-                    client.getSession().execute(
-                            new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndUpdate<T>(findAndUpdate,
-                                    getName()), new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                                    client.getCluster().getDescription(), client.getBufferProvider()))).getValue();
-        }
-
-        @Override
-        public T modifyOrInsertAndGet(final ConvertibleToDocument updateOperations, final Get beforeOrAfter) {
-            return modifyOrInsertAndGet(updateOperations.toDocument(), beforeOrAfter);
-        }
-
-        @Override
-        public T replaceAndGet(final T replacement, final Get beforeOrAfter) {
+        public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
             final FindAndReplace<T> findAndReplace = new FindAndReplace<T>(replacement).where(findOp.getFilter())
-                    .returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(findOp.getOrder());
+                    .returnNew(asBoolean(beforeOrAfter)).select(findOp.getFields()).sortBy(findOp.getOrder()).upsert(upsert);
             return new FindAndModifyCommandResult<T>(
                     client.getSession().execute(
                             new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace,
@@ -648,18 +434,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public T replaceOrInsertAndGet(final T replacement, final Get beforeOrAfter) {
-            final FindAndReplace<T> findAndReplace = new FindAndReplace<T>(replacement).where(findOp.getFilter())
-                    .returnNew(asBoolean(beforeOrAfter)).upsert(true).select(findOp.getFields()).sortBy(findOp.getOrder());
-            return new FindAndModifyCommandResult<T>(
-                    client.getSession().execute(
-                            new CommandOperation(getDatabase().getName(), new org.mongodb.command.FindAndReplace<T>(findAndReplace,
-                                    getName()), new FindAndModifyCommandResultCodec<T>(getOptions().getPrimitiveCodecs(), getCodec()),
-                                    client.getCluster().getDescription(), client.getBufferProvider()))).getValue();
-        }
-
-        @Override
-        public T removeAndGet() {
+        public T removeOneAndGet() {
             final FindAndRemove<T> findAndRemove = new FindAndRemove<T>().where(findOp.getFilter()).select(findOp.getFields())
                     .sortBy(findOp.getOrder());
 
@@ -673,8 +448,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         //CHECKSTYLE:OFF
 
         @Override
-        public MongoFuture<WriteResult> asyncReplaceOrInsert(final T replacement) {
-            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(true);
+        public MongoFuture<WriteResult> asyncReplace(final T replacement) {
+            final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(upsert);
             final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
                     new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider()));
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {

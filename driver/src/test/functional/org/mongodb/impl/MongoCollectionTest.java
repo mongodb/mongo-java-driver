@@ -51,7 +51,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         final WriteResult res = collection.insert(documents);
-        assertEquals(10, collection.count());
+        assertEquals(10, collection.find().count());
         assertNotNull(res);
     }
 
@@ -62,8 +62,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(doc);
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
-        assertEquals(1, collection.filter(new Document("_id", doc.get("_id"))).count());
-        assertEquals(1, collection.filter(new Document("_id", doc.get("_id"))).one().size());
+        assertEquals(1, collection.find(new Document("_id", doc.get("_id"))).count());
+        assertEquals(1, collection.find(new Document("_id", doc.get("_id"))).getOne().size());
     }
 
     @Test
@@ -71,10 +71,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1));
 
-        collection.filter(new Document("_id", 1))
-                .modify(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1))
+                .update(new Document("$set", new Document("x", 1)));
 
-        assertEquals(1, collection.filter(new Document("_id", 1).append("x", 1)).count());
+        assertEquals(1, collection.find(new Document("_id", 1).append("x", 1)).count());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
         collection.insert(documents);
 
-        WriteResult res = collection.noLimit().modify(new Document("$set", new Document("x", 1)));
+        WriteResult res = collection.find().noLimit().update(new Document("$set", new Document("x", 1)));
         assertEquals(10, res.getResult().getResponse().get("n"));
     }
 
@@ -99,10 +99,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
         collection.insert(documents);
 
-        WriteResult res = collection.modify(new Document("$set", new Document("x", 1)));
+        WriteResult res = collection.find().update(new Document("$set", new Document("x", 1)));
         assertEquals(1, res.getResult().getResponse().get("n"));
 
-        res = collection.limit(1).modify(new Document("$set", new Document("x", 1)));
+        res = collection.find().limit(1).update(new Document("$set", new Document("x", 1)));
         assertEquals(1, res.getResult().getResponse().get("n"));
     }
 
@@ -111,10 +111,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1).append("x", 1));
 
-        collection.filter(new Document("_id", 1)).replace(new Document("_id", 1).append("y", 2));
+        collection.find(new Document("_id", 1)).replace(new Document("_id", 1).append("y", 2));
 
-        assertEquals(0, collection.filter(new Document("_id", 1).append("x", 1)).count());
-        assertEquals(1, collection.filter(new Document("_id", 1).append("y", 2)).count());
+        assertEquals(0, collection.find(new Document("_id", 1).append("x", 1)).count());
+        assertEquals(1, collection.find(new Document("_id", 1).append("y", 2)).count());
     }
 
     @Test
@@ -127,11 +127,11 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         collection.insert(documents);
-        collection.filter(new Document("_id", new Document("$gt", 5))).noLimit().remove();
-        assertEquals(6, collection.count());
+        collection.find(new Document("_id", new Document("$gt", 5))).noLimit().remove();
+        assertEquals(6, collection.find().count());
 
-        collection.filter(new Document("_id", new Document("$lt", 5))).remove();
-        assertEquals(1, collection.count());
+        collection.find(new Document("_id", new Document("$lt", 5))).remove();
+        assertEquals(1, collection.find().count());
     }
 
     @Test
@@ -144,8 +144,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         collection.insert(documents);
-        collection.filter(new Document("_id", new Document("$gt", 5))).limit(1).remove();
-        assertEquals(9, collection.count());
+        collection.find(new Document("_id", new Document("$gt", 5))).limit(1).remove();
+        assertEquals(9, collection.find().count());
     }
 
     @Test
@@ -154,8 +154,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 .options(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData))
                 .skip(2).limit(5).batchSize(3).select(new Document("y", 1)).filter(new Document("x", 5)).order(new Document("x", 1))
                 .readPreference(ReadPreference.secondary());
-        MongoStream<Document> stream = collection.readPreference(find.getReadPreference())
-                .skip(2).limit(5).batchSize(3).filter(find.getFilter()).select(find.getFields()).sort(find.getOrder()).tail();
+        MongoStream<Document> stream = collection.find().withReadPreference(find.getReadPreference())
+                .skip(2).limit(5).batchSize(3).find(find.getFilter()).fields(find.getFields()).sort(find.getOrder()).tail();
         assertEquals(find, stream.getCriteria());
     }
 
@@ -167,7 +167,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
             collection.insert(doc);
         }
 
-        final MongoCursor<Document> cursor = collection.all();
+        final MongoCursor<Document> cursor = collection.find().get();
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -180,12 +180,12 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testFindOne() {
 
-        assertNull(collection.one());
+        assertNull(collection.find().getOne());
 
         collection.insert(new Document("_id", 1));
         collection.insert(new Document("_id", 2));
 
-        assertNotNull(collection.one());
+        assertNotNull(collection.find().getOne());
     }
 
     @Test
@@ -196,10 +196,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
             collection.insert(doc);
         }
 
-        long count = collection.count();
+        long count = collection.find().count();
         assertEquals(11, count);
 
-        count = collection.filter(new Document("_id", 10)).count();
+        count = collection.find(new Document("_id", 10)).count();
         assertEquals(1, count);
     }
 
@@ -208,9 +208,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1).append("x", true));
 
-        final Document newDoc = collection.filter(new Document("x", true))
-                .modifyAndGet(new Document("$set", new Document("x", false)),
-                        Get.BeforeChangeApplied);
+        final Document newDoc = collection.find(new Document("x", true))
+                .updateOneAndGetOriginal(new Document("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -223,9 +222,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         final Concrete doc = new Concrete(new ObjectId(), true);
         collection.insert(doc);
 
-        final Concrete newDoc = collection.filter(new Document("x", true))
-                .modifyAndGet(new Document("$set", new Document("x", false)),
-                        Get.BeforeChangeApplied);
+        final Concrete newDoc = collection.find(new Document("x", true))
+                .updateOneAndGetOriginal(new Document("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

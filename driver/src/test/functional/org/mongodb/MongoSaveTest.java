@@ -26,7 +26,7 @@ public class MongoSaveTest extends DatabaseTestCase {
     @Test
     public void shouldInsertIfAbsent() {
         collection.save(new Document());
-        assertThat("Did not insert the document", collection.count(), is(1L));
+        assertThat("Did not insert the document", collection.find().count(), is(1L));
     }
 
     @Test
@@ -36,24 +36,24 @@ public class MongoSaveTest extends DatabaseTestCase {
 
         document.put("x", 1);
         collection.save(document);
-        assertThat("Did not replace the document", collection.one(), is(document));
+        assertThat("Did not replace the document", collection.find().getOne(), is(document));
     }
 
     @Test
     public void shouldUpsertIfAbsent() {
         final Document document = new Document("_id", 1);
         collection.save(document);
-        assertThat("Did not upsert the document", collection.one(), is(document));
+        assertThat("Did not upsert the document", collection.find().getOne(), is(document));
     }
 
     @Test
     public void shouldUpsertWithNewObjectId() {
         final Document document = new Document("_id", new ObjectId()).append("x", 1);
         collection.save(document);
-        assertThat("Did not replace the document", collection.one(), is(document));
+        assertThat("Did not replace the document", collection.find().getOne(), is(document));
 
         document.put("y", 2);
         collection.save(document);
-        assertThat("Did not replace the document", collection.one(), is(document));
+        assertThat("Did not replace the document", collection.find().getOne(), is(document));
     }
 }

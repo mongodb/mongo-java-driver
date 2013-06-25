@@ -72,7 +72,7 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
                                                                      insert,
                                                                      new DocumentCodec(),
                                                                      getBufferProvider())).get();
-        assertEquals(documents.size(), collection.count());
+        assertEquals(documents.size(), collection.find().count());
     }
 
     // To make the assertion work for unacknowledged writes, have to bind to a single connection

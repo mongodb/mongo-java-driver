@@ -27,7 +27,7 @@ public class MongoFindTest extends DatabaseTestCase {
     public void shouldThrowQueryFailureException() {
         collection.insert(new Document("loc", new double[]{0, 0}));
         try {
-            collection.filter(new Document("loc", new Document("$near", new double[]{0, 0}))).one();
+            collection.find(new Document("loc", new Document("$near", new double[]{0, 0}))).getOne();
             fail("Should be a query failure since there is no 2d index");
         } catch (MongoQueryFailureException e) {
             assertEquals(13038, e.getErrorCode());

@@ -18,13 +18,15 @@ package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
 
+import java.util.List;
+
 /**
  * Additions to this interface will not be considered to break binary compatibility.
  *
  * @param <T> The type that this collection will encode documents from and decode documents to
  */
 @ThreadSafe
-public interface MongoCollection<T> extends MongoStream<T> {
+public interface MongoCollection<T> {
     /**
      * Gets the database in which this collection resides.
      *
@@ -49,4 +51,18 @@ public interface MongoCollection<T> extends MongoStream<T> {
     CollectibleCodec<T> getCodec();
 
     CollectionAdministration tools();
+
+    MongoStream<T> find();
+
+    MongoStream<T> find(Document filter);
+
+    MongoStream<T> find(ConvertibleToDocument filter);
+
+    MongoStream<T> withWriteConcern(WriteConcern writeConcern);
+
+    WriteResult insert(T document);
+
+    WriteResult insert(List<T> document);
+
+    WriteResult save(T document);
 }
