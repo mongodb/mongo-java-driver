@@ -63,7 +63,7 @@ public class PrimitiveCodecs implements Codec<Object> {
             codec = classEncoderMap.get(value.getClass());
         }
         if (codec == null) {
-            throw new MongoException("No codec for class " + (value != null ? value.getClass().getName() : "with null value"));
+            throw new EncodingException("No codec for class " + (value != null ? value.getClass().getName() : "with null value"));
         }
         codec.encode(writer, value);  // TODO: unchecked call
     }

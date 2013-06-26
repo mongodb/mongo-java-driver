@@ -20,10 +20,10 @@ import org.bson.BSONWriter;
 import org.mongodb.DBRef;
 import org.mongodb.Encoder;
 
-public class DBRefCodec implements Encoder<DBRef> {
-    private Codecs codecs;
+public class DBRefEncoder implements Encoder<DBRef> {
+    private final Codecs codecs;
 
-    public DBRefCodec(final Codecs codecs) {
+    public DBRefEncoder(final Codecs codecs) {
         this.codecs = codecs;
     }
 

@@ -46,7 +46,17 @@ public class DocumentCodec implements Codec<Document> {
         }
         this.fieldNameValidator = fieldNameValidator;
         this.primitiveCodecs = primitiveCodecs;
-        codecs = new Codecs(primitiveCodecs, fieldNameValidator);
+        codecs = new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry());
+    }
+
+    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
+                            final EncoderRegistry encoderRegistry) {
+        if (primitiveCodecs == null) {
+            throw new IllegalArgumentException("primitiveCodecs is null");
+        }
+        this.fieldNameValidator = fieldNameValidator;
+        this.primitiveCodecs = primitiveCodecs;
+        codecs = new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry);
     }
 
     @Override

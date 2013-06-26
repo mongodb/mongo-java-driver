@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.codecs
 
 import org.bson.BSONBinaryReader
@@ -30,7 +32,7 @@ class DBRefCodecSpecification extends Specification {
     private final Codecs codecs = Mock();
 
     @Subject
-    private final DBRefCodec dbRefCodec = new DBRefCodec(codecs);
+    private final DBRefEncoder dbRefCodec = new DBRefEncoder(codecs);
 
     def 'should encode db ref as string namespace and delegate encoding of id to codecs'() {
         setup:

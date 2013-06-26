@@ -22,6 +22,7 @@ import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
 import org.mongodb.Codec;
 import org.mongodb.DBRef;
+import org.mongodb.Encoder;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 
@@ -31,25 +32,29 @@ import static java.lang.String.format;
 
 public class Codecs implements Codec<Object> {
     private final PrimitiveCodecs primitiveCodecs;
+    private final EncoderRegistry encoderRegistry;
     private final IterableCodec iterableCodec;
     private final ArrayCodec arrayCodec;
     private final MapCodec mapCodec;
-    private final DBRefCodec dbRefCodec;
+    private final DBRefEncoder dbRefEncoder;
     private final CodeWithScopeCodec codeWithScopeCodec;
     private final SimpleDocumentCodec simpleDocumentCodec;
-    private Codec<Object> defaultObjectCodec = new NoCodec();
+    private final Codec<Object> defaultObjectCodec = new NoCodec();
 
-    public Codecs(final PrimitiveCodecs primitiveCodecs) {
-        this(primitiveCodecs, new QueryFieldNameValidator());
+    public Codecs(final PrimitiveCodecs primitiveCodecs, final EncoderRegistry encoderRegistry) {
+        this(primitiveCodecs, new QueryFieldNameValidator(), encoderRegistry);
         //defaulting to the less rigorous, and maybe more common, validation - lets through $, dots etc.
     }
 
-    public Codecs(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
+    public Codecs(final PrimitiveCodecs primitiveCodecs,
+                  final Validator<String> fieldNameValidator,
+                  final EncoderRegistry encoderRegistry) {
         this.primitiveCodecs = primitiveCodecs;
+        this.encoderRegistry = encoderRegistry;
         arrayCodec = new ArrayCodec(this);
         iterableCodec = new IterableCodec(this);
         mapCodec = new MapCodec(this, fieldNameValidator);
-        dbRefCodec = new DBRefCodec(this);
+        dbRefEncoder = new DBRefEncoder(this);
         codeWithScopeCodec = new CodeWithScopeCodec(this);
         simpleDocumentCodec = new SimpleDocumentCodec(this);
     }
@@ -58,7 +63,7 @@ public class Codecs implements Codec<Object> {
         return builder().primitiveCodecs(PrimitiveCodecs.createDefault()).build();
     }
 
-    @SuppressWarnings("unchecked") // going to have some unchecked warnings because of all the casting from Object
+    @SuppressWarnings({"unchecked", "rawtypes"}) // going to have some unchecked warnings because of all the casting from Object
     public void encode(final BSONWriter bsonWriter, final Object object) {
         if (object == null || primitiveCodecs.canEncode(object.getClass())) {
             primitiveCodecs.encode(bsonWriter, object);
@@ -67,13 +72,17 @@ public class Codecs implements Codec<Object> {
         } else if (object instanceof Map) {
             encode(bsonWriter, (Map) object);
         } else if (object instanceof Iterable) {
-            encode(bsonWriter, (Iterable) object);
+            //urgh?
+            final Encoder<Iterable> codec = encoderRegistry.get(Iterable.class);
+            codec.encode(bsonWriter, (Iterable) object);
         } else if (object instanceof CodeWithScope) {
-            encode(bsonWriter, (CodeWithScope) object);
+            final Encoder<Object> codec = (Codec<Object>) encoderRegistry.get(object.getClass());
+            codec.encode(bsonWriter, object);
         } else if (object instanceof DBRef) {
             encode(bsonWriter, (DBRef) object);
         } else {
-            defaultObjectCodec.encode(bsonWriter, object);
+            final Encoder<Object> codec = (Codec<Object>) encoderRegistry.get(object.getClass());
+            codec.encode(bsonWriter, object);
         }
     }
 
@@ -91,7 +100,7 @@ public class Codecs implements Codec<Object> {
     }
 
     public void encode(final BSONWriter bsonWriter, final DBRef value) {
-        dbRefCodec.encode(bsonWriter, value);
+        dbRefEncoder.encode(bsonWriter, value);
     }
 
     public void encode(final BSONWriter bsonWriter, final CodeWithScope value) {
@@ -105,7 +114,7 @@ public class Codecs implements Codec<Object> {
     // needs to be a raw codec to support Pojo codec, but feels a bit wrong to do this
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void setDefaultObjectCodec(final Codec codec) {
-        this.defaultObjectCodec = codec;
+        encoderRegistry.register(Object.class, codec);
     }
 
     //TODO: don't like this at all.  Feels like if it has a BSON type, it's a primitive
@@ -139,7 +148,7 @@ public class Codecs implements Codec<Object> {
                || primitiveCodecs.canDecode(theClass)
                || iterableCodec.getEncoderClass().isInstance(theClass)
                || mapCodec.getEncoderClass().isAssignableFrom(theClass)
-               || dbRefCodec.getEncoderClass().isInstance(theClass)
+               || dbRefEncoder.getEncoderClass().isInstance(theClass)
                || codeWithScopeCodec.getEncoderClass().isInstance(theClass)
                || simpleDocumentCodec.getEncoderClass().isInstance(theClass);
     }
@@ -153,7 +162,7 @@ public class Codecs implements Codec<Object> {
         }
 
         public Codecs build() {
-            return new Codecs(primitiveCodecs, new QueryFieldNameValidator());
+            return new Codecs(primitiveCodecs, new QueryFieldNameValidator(), new EncoderRegistry());
         }
     }
 }
