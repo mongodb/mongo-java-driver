@@ -30,6 +30,7 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.Symbol;
 import org.mongodb.Codec;
+import org.mongodb.MongoException;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
@@ -38,6 +39,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.mongodb.MongoExceptions.mapException;
 
 @SuppressWarnings("rawtypes")
 public class DBObjectCodec implements Codec<DBObject> {
@@ -63,6 +66,7 @@ public class DBObjectCodec implements Codec<DBObject> {
         this(null, PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), new DBObjectFactory());
     }
 
+    //TODO: what about BSON Exceptions?
     @Override
     public void encode(final BSONWriter bsonWriter, final DBObject document) {
         bsonWriter.writeStartDocument();
@@ -94,24 +98,28 @@ public class DBObjectCodec implements Codec<DBObject> {
     @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         final Object value = BSON.applyEncodingHooks(initialValue);
-        if (value instanceof DBRefBase) {
-            encodeDBRef(bsonWriter, (DBRefBase) value);
-        } else if (value instanceof BasicBSONList) {
-            encodeIterable(bsonWriter, (BasicBSONList) value);
-        } else if (value instanceof DBObject) {
-            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
-        } else if (value instanceof Map) {
-            encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
-        } else if (value instanceof Iterable) {
-            encodeIterable(bsonWriter, (Iterable) value);
-        } else if (value instanceof byte[]) {
-            primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
-        } else if (value != null && value.getClass().isArray()) {
-            encodeArray(bsonWriter, value);
-        } else if (value instanceof Symbol) {
-            bsonWriter.writeSymbol(((Symbol) value).getSymbol());
-        } else {
-            primitiveCodecs.encode(bsonWriter, value);
+        try {
+            if (value instanceof DBRefBase) {
+                encodeDBRef(bsonWriter, (DBRefBase) value);
+            } else if (value instanceof BasicBSONList) {
+                encodeIterable(bsonWriter, (BasicBSONList) value);
+            } else if (value instanceof DBObject) {
+                encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
+            } else if (value instanceof Map) {
+                encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
+            } else if (value instanceof Iterable) {
+                encodeIterable(bsonWriter, (Iterable) value);
+            } else if (value instanceof byte[]) {
+                primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
+            } else if (value != null && value.getClass().isArray()) {
+                encodeArray(bsonWriter, value);
+            } else if (value instanceof Symbol) {
+                bsonWriter.writeSymbol(((Symbol) value).getSymbol());
+            } else {
+                primitiveCodecs.encode(bsonWriter, value);
+            }
+        } catch (final MongoException e) {
+            throw mapException(e);
         }
     }
 
@@ -196,26 +204,31 @@ public class DBObjectCodec implements Codec<DBObject> {
     }
 
     private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {
-        final BSONType bsonType = reader.getCurrentBSONType();
         final Object initialRetVal;
-        if (bsonType.isContainer()) {
-            if (fieldName != null) {
-                path.add(fieldName);
-            }
+        try {
+            final BSONType bsonType = reader.getCurrentBSONType();
+            if (bsonType.isContainer()) {
+                if (fieldName != null) {
+                    path.add(fieldName);
+                }
 
-            if (bsonType.equals(BSONType.DOCUMENT)) {
-                initialRetVal = decode(reader, path);
-            }
-            // Must be an array, since there are only two container types
-            else {
-                initialRetVal = readArray(reader, path);
-            }
+                if (bsonType.equals(BSONType.DOCUMENT)) {
+                    initialRetVal = decode(reader, path);
+                }
+                // Must be an array, since there are only two container types
+                else {
+                    initialRetVal = readArray(reader, path);
+                }
 
-            if (fieldName != null) {
-                path.remove(path.size() - 1);
+                if (fieldName != null) {
+                    path.remove(path.size() - 1);
+                }
+            } else {
+                initialRetVal = primitiveCodecs.decode(reader);
             }
-        } else {
-            initialRetVal = primitiveCodecs.decode(reader);
+        } catch (MongoException e) {
+            //TODO: test this
+            throw mapException(e);
         }
 
         return BSON.applyDecodingHooks(initialRetVal);
