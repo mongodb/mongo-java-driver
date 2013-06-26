@@ -3,6 +3,7 @@
  * driver home: http://github.com/mongodb/mongo-java-driver
  * mongodb home: http://www.mongodb.org/
  * javadoc: http://api.mongodb.org/java/
+ * snapshot releases: https://oss.sonatype.org/content/repositories/snapshots/org/mongodb/mongo-java-driver/
 
 ### Questions and Bug Reports
  * mailing list: http://groups.google.com/group/mongodb-user
