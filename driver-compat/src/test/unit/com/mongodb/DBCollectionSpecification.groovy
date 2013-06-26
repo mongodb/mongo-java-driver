@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -25,11 +27,12 @@ import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static com.mongodb.ReadPreference.primary
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.MongoExceptions.mapException
 
 class DBCollectionSpecification extends Specification {
-    private final DB database = Mock();
+    private final Mongo mongo = Mock()
+    private final DB database = new DB(mongo, 'myDatabase', new DocumentCodec())
     private final ServerSelectingSession session = Mock()
     private final Cluster cluster = Mock()
 
@@ -37,10 +40,11 @@ class DBCollectionSpecification extends Specification {
     private final DBCollection collection = new DBCollection('collectionName', database, new DocumentCodec())
 
     def setup() {
-        // these are here to prevent null pointers more than anything
-        database.getSession() >> { session }
-        database.getCluster() >> { cluster }
-        database.getName() >> { 'TheDatabase' }
+        mongo.getCluster() >> { cluster }
+        mongo.getSession() >> { session }
+
+        //TODO: this shouldn't be required.  I think.
+        database.setReadPreference(primary())
     }
 
     def 'should throw com.mongodb.MongoException if rename fails'() {
@@ -81,9 +85,20 @@ class DBCollectionSpecification extends Specification {
         thrown(com.mongodb.MongoException.DuplicateKey)
     }
 
+    def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException when insert fails'() {
+        setup:
+        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+
+        when:
+        collection.insert(new BasicDBObject(), ACKNOWLEDGED);
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
     def 'should throw com.mongodb.CommandFailureException when group fails'() {
         setup:
-        database.executeCommand(_) >> {
+        session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
@@ -113,14 +128,24 @@ class DBCollectionSpecification extends Specification {
         thrown(MongoException.DuplicateKey)
     }
 
+    def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException when createIndex fails'() {
+        setup:
+        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not leak') }
+
+        when:
+        collection.createIndex(new BasicDBObject());
+
+        then:
+        thrown(MongoException)
+    }
+
     def 'should throw com.mongodb.MongoException when drop fails'() {
         setup:
-        database.executeCommand(_) >> {
-            org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document(),
-                    15L));
-            throw mapException(exception)
+        session.execute(_) >> {
+            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                                                                                           new org.mongodb.connection.ServerAddress(),
+                                                                                           new Document(),
+                                                                                           15L))
         }
 
         when:
@@ -149,10 +174,32 @@ class DBCollectionSpecification extends Specification {
         notThrown(com.mongodb.MongoException)
     }
 
-    //TODO: getIndexInfo declares it throws an Exception, and doesn't?
+    def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException for findAndModify'() {
+        setup:
+        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+
+        when:
+        collection.findAndModify(new BasicDBObject(), new BasicDBObject());
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
+    def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException for getIndexInfo'() {
+        setup:
+        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+
+        when:
+        collection.getIndexInfo();
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
+    //TODO: getSession.execute is used everywhere, maybe we should put this somewhere central and catch exceptions there?
+    //TODO: should MongoInternalException map to internal exception?
     //TODO: remove doesn't declare an exception?
     //TODO: count declares it throws an exception, but doesn't?
-    //TODO: turn org exception into checked exception to see if anything's leaking
     //TODO: check the message is correct
     //TODO: check the cause is correct
     //TODO: remove the org Exception from the cause

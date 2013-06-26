@@ -51,6 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.MongoExceptions.mapException;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -174,10 +175,19 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         final List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (final ServerDescription cur : cluster.getDescription().getAll()) {
+        for (final ServerDescription cur : getClusterDescription().getAll()) {
             serverAddresses.add(new ServerAddress(cur.getAddress()));
         }
         return serverAddresses;
+    }
+
+    private ClusterDescription getClusterDescription(){
+        try {
+            return cluster.getDescription();
+        } catch (org.mongodb.MongoException e) {
+            //TODO: test this
+            throw mapException(e);
+        }
     }
 
     /**
@@ -186,7 +196,7 @@ public class Mongo {
      * @return the address
      */
     public ServerAddress getAddress() {
-        final ClusterDescription description = cluster.getDescription();
+        final ClusterDescription description = getClusterDescription();
         if (description.getPrimaries().isEmpty()) {
             return null;
         }
@@ -199,7 +209,7 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return cluster.getDescription().getType() == ReplicaSet && cluster.getDescription().getMode() == Discovering
+        return getClusterDescription().getType() == ReplicaSet && getClusterDescription().getMode() == Discovering
                 ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
     }
 

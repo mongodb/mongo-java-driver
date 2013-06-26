@@ -19,10 +19,10 @@ package com.mongodb.codecs;
 import com.mongodb.DBCollection;
 import com.mongodb.DBDecoder;
 import com.mongodb.DBObject;
+import com.mongodb.MongoInternalException;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.mongodb.Decoder;
-import org.mongodb.MongoInternalException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 
@@ -32,7 +32,7 @@ import java.io.IOException;
 public class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBDecoder decoder;
     private final DBCollection collection;
-    private BufferProvider bufferProvider;
+    private final BufferProvider bufferProvider;
 
     public DBDecoderAdapter(final DBDecoder decoder, final DBCollection collection, final BufferProvider bufferProvider) {
         this.decoder = decoder;
@@ -42,7 +42,7 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
+        final BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
         try {
             binaryWriter.pipe(reader);
             final BufferExposingByteArrayOutputStream byteArrayOutputStream =

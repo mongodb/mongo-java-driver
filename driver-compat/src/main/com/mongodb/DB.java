@@ -28,6 +28,7 @@ import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
@@ -166,8 +167,13 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query = getSession().execute(
-                new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec, getBufferPool()));
+        final QueryResult<Document> query;
+        try {
+            query = getSession().execute(
+                    new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec, getBufferPool()));
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = getName().length();
@@ -184,12 +190,8 @@ public class DB implements IDB {
     @Override
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         final CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
-        try {
-            executeCommand(new Create(createCollectionOptions));
-            return getCollection(collectionName);
-        } catch (MongoCommandFailureException ex) {
-            throw mapException(ex);
-        }
+        executeCommand(new Create(createCollectionOptions));
+        return getCollection(collectionName);
     }
 
     private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
@@ -274,7 +276,7 @@ public class DB implements IDB {
         final Command mongoCommand = new Command(toDocument(cmd))
                 .readPreference(readPrefs.toNew())
                 .addOptions(QueryOption.toSet(options));
-        return new CommandResult(executeCommandWithoutException(mongoCommand));
+        return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
     @Override
@@ -294,7 +296,7 @@ public class DB implements IDB {
         final Command mongoCommand = new Command(document)
                 .readPreference(readPrefs.toNew())
                 .addOptions(QueryOption.toSet(options));
-        return new CommandResult(executeCommandWithoutException(mongoCommand));
+        return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
     /**
@@ -369,7 +371,7 @@ public class DB implements IDB {
     @Override
     public void forceError() {
         final Command mongoCommand = new Command(new Document("forceerror", 1));
-        executeCommandWithoutException(mongoCommand);
+        executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand);
     }
 
     @Override
@@ -449,21 +451,31 @@ public class DB implements IDB {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
             return getSession().execute(new CommandOperation(getName(), command, documentCodec,
-                    getCluster().getDescription(),
-                    getBufferPool()));
-        } catch (MongoCommandFailureException e) {
+                                                             getClusterDescription(),
+                                                             getBufferPool()));
+        } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
 
-    org.mongodb.operation.CommandResult executeCommandWithoutException(final Command mongoCommand) {
+    org.mongodb.operation.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
         mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
             return getSession().execute(new CommandOperation(getName(), mongoCommand, documentCodec,
-                                                             getCluster().getDescription(),
+                                                             getClusterDescription(),
                                                              getBufferPool()));
         } catch (MongoCommandFailureException ex) {
             return ex.getCommandResult();
+        } catch (org.mongodb.MongoException ex) {
+            throw mapException(ex);
+        }
+    }
+
+    ClusterDescription getClusterDescription() {
+        try {
+            return getCluster().getDescription();
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
         }
     }
 

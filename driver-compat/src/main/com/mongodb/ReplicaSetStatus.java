@@ -18,20 +18,23 @@ package com.mongodb;
 
 
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
+import static com.mongodb.MongoExceptions.mapException;
+
 public class ReplicaSetStatus {
 
-    final Cluster cluster;
+    private final Cluster cluster;
 
     ReplicaSetStatus(final Cluster cluster) {
         this.cluster = cluster;
     }
 
     public String getName() {
-        final List<ServerDescription> any = cluster.getDescription().getAny();
+        final List<ServerDescription> any = getClusterDescription().getAny();
         return any.isEmpty() ? null : any.get(0).getSetName();
     }
 
@@ -40,7 +43,7 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public ServerAddress getMaster() {
-        final List<ServerDescription> primaries = cluster.getDescription().getPrimaries();
+        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? null : new ServerAddress(primaries.get(0).getAddress());
     }
 
@@ -61,7 +64,16 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        final List<ServerDescription> primaries = cluster.getDescription().getPrimaries();
+        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
+    }
+
+    private ClusterDescription getClusterDescription() {
+        //TODO: test and check this is OK
+        try {
+            return cluster.getDescription();
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 }

@@ -24,10 +24,13 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MongoException;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+
+import static com.mongodb.MongoExceptions.mapException;
 
 public class DBObjects {
     private DBObjects() {
@@ -46,6 +49,8 @@ public class DBObjects {
                 true);
         try {
             return documentDecoder.decode(bsonReader);
+        } catch (final MongoException e) {
+            throw mapException(e);
         } finally {
             bsonReader.close();
         }
@@ -127,7 +132,7 @@ public class DBObjects {
 
     public static BasicDBList toDBList(final List<?> source) {
         final BasicDBList dbList = new BasicDBList();
-        for (Object o : source) {
+        for (final Object o : source) {
             if (o instanceof Document) {
                 dbList.add(toDBObject((Document) o));
             } else {

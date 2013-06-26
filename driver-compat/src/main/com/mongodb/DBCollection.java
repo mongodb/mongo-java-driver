@@ -40,8 +40,6 @@ import org.mongodb.command.DropIndex;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.GroupCommandResult;
-import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
@@ -106,7 +104,8 @@ import static com.mongodb.MongoExceptions.mapException;
  * </pre>
  * </blockquote>
  * <p/>
- * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document in the collection:
+ * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document
+ * in the collection:
  * <blockquote>
  * <pre>
  *     DBObject myDoc = coll.findOne();
@@ -228,7 +227,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
-        return new WriteResult(insertInternal(insert, objectCodec), aWriteConcern);
+        return new WriteResult(insert(insert, objectCodec), aWriteConcern);
     }
 
     /**
@@ -263,7 +262,7 @@ public class DBCollection implements IDBCollection {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
         final Insert<DBObject> insert = new Insert<DBObject>(writeConcern.toNew(), documents);
-        return new WriteResult(insertInternal(insert, encoder), aWriteConcern);
+        return new WriteResult(insert(insert, encoder), aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
@@ -280,15 +279,14 @@ public class DBCollection implements IDBCollection {
         return encoder;
     }
 
-    private CommandResult insertInternal(final Insert<DBObject> insert, final Encoder<DBObject> encoder) {
+    private CommandResult insert(final Insert<DBObject> insert, final Encoder<DBObject> encoder) {
         try {
             return translateCommandResult(getSession().execute(
                     new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool())));
-        } catch (MongoDuplicateKeyException e) {
+        } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
-
 
     private CommandResult translateCommandResult(final org.mongodb.operation.CommandResult commandResult) {
         if (commandResult == null) {
@@ -300,11 +298,14 @@ public class DBCollection implements IDBCollection {
 
     /**
      * Update an existing document or insert a document depending on the parameter.
-     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value.
+     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as
+     * well as an '_id' field with a unique objectid value.
      * If the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
      * <ul>
-     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record with the fields from the document.</li>
+     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the
+     * document.</li>
+     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
+     * with the fields from the document.</li>
      * </ul>
      *
      * @param document {@link DBObject} to save to the collection.
@@ -332,22 +333,30 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        final Object id = getObjectCodec().getId(document);
-        if (id == null) {
-            return insert(document, writeConcern);
-        }
-        else {
-            return replaceOrInsert(document, writeConcern);
+        try {
+            final Object id = getObjectCodec().getId(document);
+            if (id == null) {
+                return insert(document, writeConcern);
+            }
+            else {
+                return replaceOrInsert(document, writeConcern);
+            }
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
         }
     }
 
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
-        final Document filter = new Document("_id", getObjectCodec().getId(obj));
+        try {
+            final Document filter = new Document("_id", getObjectCodec().getId(obj));
 
-        final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
+            final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
 
-        return new WriteResult(translateCommandResult(getSession().execute(
-                new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getObjectCodec(), getBufferPool()))), wc);
+            return new WriteResult(translateCommandResult(getSession().execute(
+                    new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(), getObjectCodec(), getBufferPool()))), wc);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 
     /**
@@ -476,23 +485,28 @@ public class DBCollection implements IDBCollection {
     /**
      * Remove documents from a collection.
      *
-     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all
+     *                     documents in the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      */
     @Override
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
-
         final Remove remove = new Remove(writeConcern.toNew(), toDocument(query));
-
-        return new WriteResult(translateCommandResult(getSession().execute(
-                new RemoveOperation(getNamespace(), remove, documentCodec, getBufferPool()))), writeConcern);
+        try {
+            return new WriteResult(translateCommandResult(getSession().execute(
+                                                                              new RemoveOperation(getNamespace(), remove, documentCodec,
+                                                                                                  getBufferPool()))), writeConcern);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 
     /**
      * Remove documents from a collection.
      *
-     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all
+     *                     documents in the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
@@ -502,14 +516,19 @@ public class DBCollection implements IDBCollection {
         final Document filter = toDocument(query, encoder, getDocumentCodec());
         final Remove remove = new Remove(writeConcern.toNew(), filter);
 
-        return new WriteResult(translateCommandResult(getSession().execute(
-                new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool()))), writeConcern);
+        try {
+            return new WriteResult(translateCommandResult(getSession().execute(
+                    new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool()))), writeConcern);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 
     /**
      * Select documents in collection and get a cursor to the selected documents.
      *
-     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
+     *                   documents in the collection.
      * @param projection specifies which fields MongoDB will return from the documents in the result set.
      * @param numToSkip  number of documents to skip
      * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
@@ -525,7 +544,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Select documents in collection and get a cursor to the selected documents.
      *
-     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
+     *                   documents in the collection.
      * @param projection specifies which fields MongoDB will return from the documents in the result set.
      * @param numToSkip  number of documents to skip
      * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
@@ -539,7 +559,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Select documents in collection and get a cursor to the selected documents.
      *
-     * @param query the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param query the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
+     *              documents in the collection.
      * @return A cursor to the documents that match the query criteria
      */
     @Override
@@ -550,7 +571,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Select documents in collection and get a cursor to the selected documents.
      *
-     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents in the collection.
+     * @param query      the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
+     *                   documents in the collection.
      * @param projection specifies which fields MongoDB will return from the documents in the result set.
      * @return A cursor to the documents that match the query criteria
      */
@@ -648,8 +670,15 @@ public class DBCollection implements IDBCollection {
                 .readPreference(readPreference.toNew())
                 .batchSize(-1);
 
-        final QueryResult<DBObject> res = getSession().execute(
-                new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool()));
+        final QueryResult<DBObject> res;
+
+        try {
+            res = getSession().execute(
+                    new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool()));
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
+
         if (res.getResults().isEmpty()) {
             return null;
         }
@@ -682,7 +711,8 @@ public class DBCollection implements IDBCollection {
 
     /**
      * Template method pattern.
-     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to collection.
+     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to
+     * collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @return '_id' of the document
@@ -694,7 +724,8 @@ public class DBCollection implements IDBCollection {
 
     /**
      * Template method pattern.
-     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to collection.
+     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to
+     * collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
@@ -894,7 +925,7 @@ public class DBCollection implements IDBCollection {
             getSession().execute(new CommandOperation("admin",
                                                       renameCommand,
                                                       getDocumentCodec(),
-                                                      getDB().getCluster().getDescription(),
+                                                      getDB().getClusterDescription(),
                                                       getBufferPool()));
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
@@ -993,12 +1024,8 @@ public class DBCollection implements IDBCollection {
 
 
     private DBObject group(final Command command) {
-        try {
-            final GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
-            return toDBList(commandResult.getValue());
-        } catch (MongoCommandFailureException e) {
-            throw mapException(e);
-        }
+        final GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
+        return toDBList(commandResult.getValue());
     }
 
     /**
@@ -1219,7 +1246,8 @@ public class DBCollection implements IDBCollection {
      *
      * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
      * @param name   specifies the name of the index
-     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index key or keys matches an existing value in the index
+     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index
+     *               key or keys matches an existing value in the index
      */
     @Override
     public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
@@ -1298,7 +1326,7 @@ public class DBCollection implements IDBCollection {
             getSession().execute(
                     new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
                             getBufferPool()));
-        } catch (MongoDuplicateKeyException exception) {
+        } catch (org.mongodb.MongoException exception) {
             throw mapException(exception);
         }
     }
@@ -1418,9 +1446,18 @@ public class DBCollection implements IDBCollection {
         final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
                 new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getObjectCodec());
 
-        final FindAndModifyCommandResult<DBObject> commandResult =
-                new FindAndModifyCommandResult<DBObject>(getSession().execute((new CommandOperation(getDB().getName(), mongoCommand,
-                        findAndModifyCommandResultCodec, getDB().getCluster().getDescription(), getBufferPool()))));
+        final FindAndModifyCommandResult<DBObject> commandResult;
+        try {
+            final org.mongodb.operation.CommandResult executionResult
+            = getSession().execute(new CommandOperation(getDB().getName(),
+                                                        mongoCommand,
+                                                        findAndModifyCommandResultCodec,
+                                                        getDB().getClusterDescription(),
+                                                        getBufferPool()));
+            commandResult = new FindAndModifyCommandResult<DBObject>(executionResult);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
 
         return commandResult.getValue();
     }
@@ -1563,9 +1600,14 @@ public class DBCollection implements IDBCollection {
                 new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
                 .readPreference(org.mongodb.ReadPreference.primary());
 
-        final QueryResult<Document> systemCollection = getSession().execute(
-                new QueryOperation<Document>(new MongoNamespace(database.getName(), "system.indexes"), queryForCollectionNamespace,
-                        documentCodec, documentCodec, getBufferPool()));
+        final QueryResult<Document> systemCollection;
+        try {
+            systemCollection = getSession().execute(
+                    new QueryOperation<Document>(new MongoNamespace(database.getName(), "system.indexes"), queryForCollectionNamespace,
+                            documentCodec, documentCodec, getBufferPool()));
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
 
         final List<Document> indexes = systemCollection.getResults();
         for (final Document curIndex : indexes) {

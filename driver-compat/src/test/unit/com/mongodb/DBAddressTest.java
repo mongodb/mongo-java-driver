@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -25,14 +26,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@Ignore("Doesn't work offline")
 public class DBAddressTest {
 
     @Test
     public void testConstructors() throws UnknownHostException {
         DBAddress first = new DBAddress("www.10gen.com:1000/some.host");
         assertTrue(first.sameHost("www.10gen.com:1000"));
+
         DBAddress second = new DBAddress(first, "some.other.host");
         assertEquals(first.getSocketAddress().hashCode(), second.getSocketAddress().hashCode());
+
         assertEquals("some.other.host", second.getDBName());
         DBAddress third = new DBAddress(InetAddress.getByName("localhost"), 27017, "some.db");
         assertEquals("some.db", third.getDBName());

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -21,6 +23,7 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
+import org.mongodb.connection.MongoTimeoutException
 import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
 import spock.lang.Subject
@@ -74,8 +77,65 @@ class DBSpecification extends Specification {
         database.executeCommand(new Ping());
 
         then:
-        thrown(CommandFailureException)
+        thrown(com.mongodb.CommandFailureException)
     }
 
-    //TODO: getCollectionNames declares an exception, but doesn't wrap one
+    def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
+        setup:
+        session.execute(_) >> {
+            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                                                                                           new org.mongodb.connection.ServerAddress(),
+                                                                                           new Document(),
+                                                                                           15L))
+        }
+
+        when:
+        database.getCollectionNames();
+
+        then:
+        thrown(com.mongodb.CommandFailureException)
+    }
+
+    def 'should throw com.mongodb.MongoException if command fails for a resons that is not a command failure'() {
+        setup:
+        session.execute(_) >> {
+            throw new org.mongodb.MongoInternalException('An exception that is not a MongoCommandFailureException')
+        }
+
+        when:
+        database.executeCommandAndReturnCommandResultIfCommandFailureException(new Ping())
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
+    def 'should not throw MongoCommandFailureException if command fails'() {
+        setup:
+        def expectedCommandResult = new org.mongodb.operation.CommandResult(new Document(),
+                                                                            new org.mongodb.connection.ServerAddress(),
+                                                                            new Document(),
+                                                                            15L)
+        session.execute(_) >> {
+            throw new MongoCommandFailureException(expectedCommandResult)
+        }
+
+        when:
+        org.mongodb.operation.CommandResult actualCommandResult = database.executeCommandAndReturnCommandResultIfCommandFailureException(
+                new Ping())
+
+        then:
+        actualCommandResult == expectedCommandResult
+    }
+
+    def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException for getClusterDescription'() {
+        setup:
+        cluster.getDescription() >> { throw new MongoTimeoutException('This Exception should not escape') }
+
+        when:
+        database.getClusterDescription()
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
 }

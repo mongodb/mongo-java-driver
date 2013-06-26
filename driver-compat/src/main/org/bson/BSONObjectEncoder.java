@@ -31,12 +31,12 @@ class BSONObjectEncoder implements Encoder<BSONObject> {
 
     private final PrimitiveCodecs primitiveCodecs;
 
-    public BSONObjectEncoder(PrimitiveCodecs primitiveCodecs) {
+    public BSONObjectEncoder(final PrimitiveCodecs primitiveCodecs) {
         this.primitiveCodecs = primitiveCodecs;
     }
 
     @Override
-    public void encode(BSONWriter bsonWriter, BSONObject document) {
+    public void encode(final BSONWriter bsonWriter, final BSONObject document) {
         bsonWriter.writeStartDocument();
 
         for (final String key : document.keySet()) {
@@ -63,7 +63,12 @@ class BSONObjectEncoder implements Encoder<BSONObject> {
         } else if (value instanceof Iterable) {
             encodeIterable(bsonWriter, (Iterable) value);
         } else if (value instanceof byte[]) {
-            primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
+            try {
+                //TODO - test and tidy
+                primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
+            } catch (MongoException e) {
+                throw new IllegalArgumentException("Can't serialize " + value.getClass(), e);
+            }
         } else if (value != null && value.getClass().isArray()) {
             encodeArray(bsonWriter, value);
         } else if (value instanceof Symbol) {

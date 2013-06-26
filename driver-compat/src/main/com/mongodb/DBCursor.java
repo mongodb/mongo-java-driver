@@ -35,9 +35,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static com.mongodb.DBObjects.toDocument;
+import static com.mongodb.MongoExceptions.mapException;
 
 /**
- * An iterator over database results. Doing a <code>find()</code> query on a collection returns a <code>DBCursor</code>
+ * An iterator over database results. Doing a <code>find()</code> query on a collection returns a {@code DBCursor}
  * thus
  * <p/>
  * <blockquote><pre>
@@ -46,10 +47,10 @@ import static com.mongodb.DBObjects.toDocument;
  *     DBObject obj = cursor.next();
  * </pre></blockquote>
  * <p/>
- * <p><b>Warning:</b> Calling <code>toArray</code> or <code>length</code> on a DBCursor will irrevocably turn it into an
+ * <p><b>Warning:</b> Calling <code>toArray</code> or {@code length} on a DBCursor will irrevocably turn it into an
  * array.  This means that, if the cursor was iterating over ten million results (which it was lazily fetching from the
  * database), suddenly there will be a ten-million element array in memory.  Before converting to an array, make sure
- * that there are a reasonable number of results using <code>skip()</code> and <code>limit()</code>. <p>For example, to
+ * that there are a reasonable number of results using <code>skip()</code> and {@code limit()}. <p>For example, to
  * get an array of the 1000-1100th elements of a cursor, use
  * <p/>
  * <blockquote><pre>
@@ -113,7 +114,13 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
 
         if (cursor == null) {
-            query();
+            try {
+                cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
+                                                        getSession(), getCollection().getBufferPool());
+            } catch (org.mongodb.MongoException e) {
+                throw mapException(e);
+            }
+            //        sizes.add(results.size());
         }
 
         return cursor.hasNext();
@@ -196,7 +203,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     /**
      * Informs the database of indexed fields of the collection in order to improve performance.
      *
-     * @param indexKeys a <code>DBObject</code> with fields and direction
+     * @param indexKeys a {@code DBObject} with fields and direction
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final DBObject indexKeys) {
@@ -230,27 +237,32 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     /**
      * Returns an object containing basic information about the execution of the query that created this cursor This
-     * creates a <code>DBObject</code> with a number of fields, including but not limited to:
+     * creates a {@code DBObject} with a number of fields, including but not limited to:
      * cursor : cursor type
      * nScanned number of records examined by the database for this query
      * n : the number of records that the database returned
      * millis : how long it took the database to execute the query
      *
-     * @return a <code>DBObject</code> containing the explain output for this DBCursor's query
+     * @return a {@code DBObject} containing the explain output for this DBCursor's query
      * @throws MongoException
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
-        Find copy = new Find(find);
+        final Find copy = new Find(find);
         copy.explain();
         if (copy.getLimit() > 0) {
             // need to pass a negative batchSize as limit for explain
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        QueryResult<DBObject> queryResult = getSession().execute(
-                new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
-                        getCollection().getBufferPool()));
+        QueryResult<DBObject> queryResult = null;
+        try {
+            queryResult = getSession().execute(
+                    new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
+                            getCollection().getBufferPool()));
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
         return queryResult.getResults().get(0);
     }
 
@@ -585,12 +597,6 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
 
         return currentObject;
-    }
-
-   private void query() {
-        cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                getSession(), getCollection().getBufferPool());
-//        sizes.add(results.size());
     }
 
     public ServerSelectingSession getSession() {
