@@ -16,19 +16,33 @@
 
 package com.mongodb.codecs
 
+import org.bson.BSONReader
 import org.bson.BSONWriter
+import org.mongodb.codecs.EncodingException
 import spock.lang.Specification
 import spock.lang.Subject
 
 class DBObjectCodecSpecification extends Specification {
-    BSONWriter bsonWriter = Mock();
 
     @Subject
     DBObjectCodec dbObjectCodec = new DBObjectCodec();
 
     def 'should convert EncodingException for a missing codec into old com Exceptions for writeValue'() {
+        BSONWriter bsonWriter = Mock();
+
         when:
         dbObjectCodec.writeValue(bsonWriter, new Object())
+
+        then:
+        thrown(com.mongodb.MongoException)
+    }
+
+    def 'should convert EncodingException for a missing codec into old com Exceptions for readValue'() {
+        BSONReader bsonReader = Mock();
+        bsonReader._() >> { throw new EncodingException('New layer Exception that should not leak') }
+
+        when:
+        dbObjectCodec.readValue(bsonReader, 'fieldName', [])
 
         then:
         thrown(com.mongodb.MongoException)

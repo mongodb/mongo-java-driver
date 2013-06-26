@@ -227,7 +227,6 @@ public class DBObjectCodec implements Codec<DBObject> {
                 initialRetVal = primitiveCodecs.decode(reader);
             }
         } catch (MongoException e) {
-            //TODO: test this
             throw mapException(e);
         }
 
