@@ -54,13 +54,13 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropItself() {
-        final DB db = getMongoClient().getDB("test-" + System.nanoTime());
+        final String databaseName = "drop-test-" + System.nanoTime();
+        final DB db = getMongoClient().getDB(databaseName);
         db.createCollection("tmp", new BasicDBObject());
-        assertThat(getClient().getDatabaseNames(), hasItem(db.getName()));
+        assertThat(getClient().getDatabaseNames(), hasItem(databaseName));
         db.dropDatabase();
-        assertThat(getClient().getDatabaseNames(), not(hasItem(db.getName())));
+        assertThat(getClient().getDatabaseNames(), not(hasItem(databaseName)));
     }
-
 
     @Test
     public void shouldGetCollectionNames() {

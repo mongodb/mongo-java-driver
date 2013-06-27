@@ -146,14 +146,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     }
 
-    /**
-     * This was broken recently. Adding test.
-     */
-    @Test
-    public void testDropDatabase() throws Exception {
-        getClient().getDB("com_mongodb_unittest_dropDatabaseTest").dropDatabase();
-    }
-
     @Test
     public void testDropIndexAllIndexes() {
         final DBCollection c = collection;

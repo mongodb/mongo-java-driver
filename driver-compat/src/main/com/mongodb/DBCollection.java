@@ -1562,7 +1562,6 @@ public class DBCollection implements IDBCollection {
             }
             //otherwise ignore this, as dropping a DB that doesn't exist is fine
         }
-        //TODO: test drop functionality
     }
 
     @Override
