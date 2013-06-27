@@ -17,10 +17,12 @@
 package com.mongodb;
 
 import com.mongodb.codecs.CollectibleDBObjectCodec;
+import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBEncoderAdapter;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Index;
@@ -1443,8 +1445,12 @@ public class DBCollection implements IDBCollection {
             }
         }
 
+        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                : getObjectCodec();
+
         final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
-                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), getObjectCodec());
+                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
 
         final FindAndModifyCommandResult<DBObject> commandResult;
         try {
