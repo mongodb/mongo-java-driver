@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.Codec;
+import org.mongodb.Decoder;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 
@@ -24,18 +24,18 @@ import org.mongodb.codecs.PrimitiveCodecs;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class FindAndModifyCommandResultCodec<T> extends DocumentCodec {
 
-    private final Codec<T> codec;
+    private final Decoder<T> decoder;
 
-    public FindAndModifyCommandResultCodec(final PrimitiveCodecs primitiveCodecs, final Codec<T>
-            codec) {
+    public FindAndModifyCommandResultCodec(final PrimitiveCodecs primitiveCodecs, final Decoder<T>
+            decoder) {
         super(primitiveCodecs);
-        this.codec = codec;
+        this.decoder = decoder;
     }
 
     @Override
-    protected Codec getDocumentCodecForField(final String fieldName) {
+    protected Decoder getDecoderForField(final String fieldName) {
         if (fieldName.equals("value")) {
-            return codec;
+            return decoder;
         }
         return new DocumentCodec(getPrimitiveCodecs());
     }

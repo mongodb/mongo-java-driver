@@ -20,6 +20,7 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.mongodb.Codec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
@@ -107,7 +108,7 @@ public class DocumentCodec implements Codec<Document> {
     private Object readValue(final BSONReader reader, final String fieldName) {
         final BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
-            return getDocumentCodecForField(fieldName).decode(reader);
+            return getDecoderForField(fieldName).decode(reader);
         } else {
             return codecs.decode(reader);
         }
@@ -122,7 +123,7 @@ public class DocumentCodec implements Codec<Document> {
         return primitiveCodecs;
     }
 
-    protected Codec<Document> getDocumentCodecForField(final String fieldName) {
+    protected Decoder<Document> getDecoderForField(final String fieldName) {
         return this;
     }
 }
