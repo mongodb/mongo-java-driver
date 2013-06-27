@@ -344,6 +344,7 @@ public class BSONBinaryWriter extends BSONWriter {
             int size = inputBuffer.readInt32();
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
+            reader.setState(BSONReader.State.TYPE);
         } else {
             super.pipe(reader);
         }

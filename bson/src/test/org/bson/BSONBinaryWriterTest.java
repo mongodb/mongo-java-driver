@@ -555,4 +555,39 @@ public class BSONBinaryWriterTest {
         }
         assertArrayEquals(bytes, newWriter.getBuffer().toByteArray());
     }
+
+    @Test
+    public void testPipeNestedDocument() {
+        writer.writeStartDocument();
+        writer.writeStartDocument("value");
+        writer.writeBoolean("a", true);
+        writer.writeEndDocument();
+        writer.writeInt32("b", 2);
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        final BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        reader1.readStartDocument();
+        reader1.readName();
+
+        newWriter.pipe(reader1); //pipe {'a':true} to writer
+
+        assertEquals(BSONType.INT32, reader1.readBSONType()); //continue reading from the same reader
+        assertEquals("b", reader1.readName());
+        assertEquals(2, reader1.readInt32());
+
+        final BSONBinaryReader reader2 = new BSONBinaryReader(
+                new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer().toByteArray()))),
+                true
+        );
+
+        reader2.readStartDocument(); //checking what writer piped
+        assertEquals(BSONType.BOOLEAN, reader2.readBSONType());
+        assertEquals("a", reader2.readName());
+        assertEquals(true, reader2.readBoolean());
+        reader2.readEndDocument();
+    }
+
 }
