@@ -20,8 +20,6 @@ import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.MongoAsyncQueryCursor;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
-import org.mongodb.command.Distinct;
-import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.connection.SingleResultCallback;
@@ -76,17 +74,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public WriteResult insert(final T document) {
-        return new MongoCollectionStream().insert(document);
+        return new MongoCollectionView().insert(document);
     }
 
     @Override
     public WriteResult insert(final List<T> documents) {
-        return new MongoCollectionStream().insert(documents);
+        return new MongoCollectionView().insert(documents);
     }
 
     @Override
     public WriteResult save(final T document) {
-        return new MongoCollectionStream().save(document);
+        return new MongoCollectionView().save(document);
     }
 
     @Override
@@ -95,23 +93,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoStream<T> find() {
-        return new MongoCollectionStream();
+    public MongoView<T> find() {
+        return new MongoCollectionView();
     }
 
     @Override
-    public MongoStream<T> find(final Document filter) {
-        return new MongoCollectionStream().find(filter);
+    public MongoView<T> find(final Document filter) {
+        return new MongoCollectionView().find(filter);
     }
 
     @Override
-    public MongoStream<T> find(final ConvertibleToDocument filter) {
-        return new MongoCollectionStream().find(filter);
+    public MongoView<T> find(final ConvertibleToDocument filter) {
+        return new MongoCollectionView().find(filter);
     }
 
     @Override
-    public MongoStream<T> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionStream().withWriteConcern(writeConcern);
+    public MongoView<T> withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoCollectionView().withWriteConcern(writeConcern);
     }
 
     private Codec<Document> getDocumentCodec() {
@@ -161,13 +159,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         abstract boolean isMultiByDefault();
     }
 
-    private final class MongoCollectionStream implements MongoStream<T> {
+    private final class MongoCollectionView implements MongoView<T> {
         private final Find findOp;
         private WriteConcern writeConcern;
         private boolean limitSet;
         private boolean upsert;
 
-        private MongoCollectionStream() {
+        private MongoCollectionView() {
             findOp = new Find();
             findOp.readPreference(getOptions().getReadPreference());
             writeConcern = getOptions().getWriteConcern();
@@ -179,87 +177,82 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoStream<T> find(final Document filter) {
+        public MongoView<T> find(final Document filter) {
             findOp.filter(filter);
             return this;
         }
 
         @Override
-        public MongoStream<T> find(final ConvertibleToDocument filter) {
+        public MongoView<T> find(final ConvertibleToDocument filter) {
             return find(filter.toDocument());
         }
 
         @Override
-        public MongoStream<T> sort(final ConvertibleToDocument sortCriteria) {
+        public MongoView<T> sort(final ConvertibleToDocument sortCriteria) {
             return sort(sortCriteria.toDocument());
         }
 
         @Override
-        public MongoStream<T> sort(final Document sortCriteria) {
+        public MongoView<T> sort(final Document sortCriteria) {
             findOp.order(sortCriteria);
             return this;
         }
 
         @Override
-        public MongoStream<T> fields(final Document selector) {
+        public MongoView<T> fields(final Document selector) {
             findOp.select(selector);
             return this;
         }
 
         @Override
-        public MongoStream<T> fields(final ConvertibleToDocument selector) {
+        public MongoView<T> fields(final ConvertibleToDocument selector) {
             return fields(selector.toDocument());
         }
 
         @Override
-        public MongoStream<T> upsert() {
+        public MongoView<T> upsert() {
             upsert = true;
             return this;
         }
 
         @Override
-        public Find getCriteria() {
-            return new Find(findOp);
-        }
-
-        @Override
-        public MongoStream<T> skip(final int skip) {
+        public MongoView<T> skip(final int skip) {
             findOp.skip(skip);
             return this;
         }
 
         @Override
-        public MongoStream<T> limit(final int limit) {
+        public MongoView<T> limit(final int limit) {
             findOp.limit(limit);
             limitSet = true;
             return this;
         }
 
         @Override
-        public MongoStream<T> noLimit() {
+        public MongoView<T> noLimit() {
             return limit(0);
         }
 
         @Override
-        public MongoStream<T> batchSize(final int batchSize) {
+        public MongoView<T> batchSize(final int batchSize) {
             findOp.batchSize(batchSize);
             return this;
         }
 
         @Override
-        public MongoStream<T> withOptions(final EnumSet<QueryOption> queryOptions) {
+        public MongoView<T> withOptions(final EnumSet<QueryOption> queryOptions) {
             findOp.addOptions(queryOptions);
             return this;
         }
 
         @Override
-        public MongoStream<T> tail() {
+        public MongoView<T> tail() {
             findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
             return this;
         }
 
         @Override
-        public MongoStream<T> withReadPreference(final ReadPreference readPreference) {
+        public MongoView<T> withReadPreference(final ReadPreference readPreference) {
             findOp.readPreference(readPreference);
             return this;
         }
@@ -320,7 +313,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoStream<T> withWriteConcern(final WriteConcern writeConcernForThisOperation) {
+        public MongoView<T> withWriteConcern(final WriteConcern writeConcernForThisOperation) {
             writeConcern = writeConcernForThisOperation;
             return this;
         }

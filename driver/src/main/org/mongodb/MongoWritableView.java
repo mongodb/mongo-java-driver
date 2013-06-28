@@ -18,7 +18,7 @@ package org.mongodb;
 
 import java.util.List;
 
-public interface MongoSyncWritableStream<T> {
+public interface MongoWritableView<T> {
     WriteResult insert(T document);
 
     WriteResult insert(List<T> document);

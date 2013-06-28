@@ -19,7 +19,7 @@ package org.mongodb.acceptancetest.crud;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoStream;
+import org.mongodb.MongoView;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -106,7 +106,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
 
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        final MongoStream<Document> resultsOfSearchingByFilter = collection.find(filter);
+        final MongoView<Document> resultsOfSearchingByFilter = collection.find(filter);
         assertThat(resultsOfSearchingByFilter.count(), is(3L));
 
         final Document documentRetrieved = collection.find(filter).removeOneAndGet();

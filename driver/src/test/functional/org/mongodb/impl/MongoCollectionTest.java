@@ -23,17 +23,11 @@ import org.junit.Test;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.Get;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoStream;
-import org.mongodb.ReadPreference;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryOption;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -146,17 +140,6 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(documents);
         collection.find(new Document("_id", new Document("$gt", 5))).limit(1).remove();
         assertEquals(9, collection.find().count());
-    }
-
-    @Test
-    public void testFindCriteria() {
-        Find find = new Find()
-                .options(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData))
-                .skip(2).limit(5).batchSize(3).select(new Document("y", 1)).filter(new Document("x", 5)).order(new Document("x", 1))
-                .readPreference(ReadPreference.secondary());
-        MongoStream<Document> stream = collection.find().withReadPreference(find.getReadPreference())
-                .skip(2).limit(5).batchSize(3).find(find.getFilter()).fields(find.getFields()).sort(find.getOrder()).tail();
-        assertEquals(find, stream.getCriteria());
     }
 
     @Test

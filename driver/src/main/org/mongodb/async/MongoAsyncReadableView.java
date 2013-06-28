@@ -23,7 +23,7 @@ import org.mongodb.operation.MongoFuture;
  *
  * @param <T> the document type to read
  */
-public interface MongoAsyncReadableStream<T> {
+public interface MongoAsyncReadableView<T> {
 
     MongoFuture<T> asyncOne();
 

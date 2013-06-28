@@ -20,9 +20,7 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoStream;
-
-import java.util.List;
+import org.mongodb.MongoView;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -34,7 +32,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         final int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoStream<Document> filteredCollection = collection.find(new Document("_id", 3));
+        final MongoView<Document> filteredCollection = collection.find(new Document("_id", 3));
 
         assertThat(filteredCollection.count(), is(1L));
         for (final Document document : filteredCollection) {

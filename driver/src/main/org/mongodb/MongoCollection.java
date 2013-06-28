@@ -52,13 +52,13 @@ public interface MongoCollection<T> {
 
     CollectionAdministration tools();
 
-    MongoStream<T> find();
+    MongoView<T> find();
 
-    MongoStream<T> find(Document filter);
+    MongoView<T> find(Document filter);
 
-    MongoStream<T> find(ConvertibleToDocument filter);
+    MongoView<T> find(ConvertibleToDocument filter);
 
-    MongoStream<T> withWriteConcern(WriteConcern writeConcern);
+    MongoView<T> withWriteConcern(WriteConcern writeConcern);
 
     WriteResult insert(T document);
 

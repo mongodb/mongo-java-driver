@@ -27,7 +27,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.QueryBuilder.query;
 
-public class MongoStreamTest extends DatabaseTestCase {
+public class MongoViewTest extends DatabaseTestCase {
 
     @Test
     public void testFind() {
