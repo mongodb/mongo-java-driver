@@ -80,7 +80,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
         collection.insert(documents);
 
-        WriteResult res = collection.find().noLimit().update(new Document("$set", new Document("x", 1)));
+        WriteResult res = collection.find().limit(0).update(new Document("$set", new Document("x", 1)));
         assertEquals(10, res.getResult().getResponse().get("n"));
     }
 
@@ -121,7 +121,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
 
         collection.insert(documents);
-        collection.find(new Document("_id", new Document("$gt", 5))).noLimit().remove();
+        collection.find(new Document("_id", new Document("$gt", 5))).remove();
         assertEquals(6, collection.find().count());
 
         collection.find(new Document("_id", new Document("$lt", 5))).remove();

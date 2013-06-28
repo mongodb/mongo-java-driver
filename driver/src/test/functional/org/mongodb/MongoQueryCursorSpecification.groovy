@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.mongodb
 
 import category.Slow
@@ -329,7 +331,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     def 'test limit with get more'() {
         when:
         List<Document> list = [];
-        collection.find().batchSize(2).limit(5).into(list);
+        collection.find().withBatchSize(2).limit(5).into(list);
 
         then:
         list.size() == 5;

@@ -50,6 +50,7 @@ import org.mongodb.operation.UpdateOperation;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
 
@@ -229,12 +230,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> noLimit() {
-            return limit(0);
-        }
-
-        @Override
-        public MongoView<T> batchSize(final int batchSize) {
+        public MongoView<T> withBatchSize(final int batchSize) {
             findOp.batchSize(batchSize);
             return this;
         }
@@ -246,8 +242,47 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> tail() {
-            findOp.addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
+        public MongoView<T> withHint(final String indexName) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withHint(final Document index) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withHint(final ConvertibleToDocument index) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withIsolation() {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withoutDuplicates() {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withMaxScan(final long count) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withMaxTime(final long maxTime, final TimeUnit timeUnit) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withMin(final Document max) {
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withMax(final Document max) {
             return this;
         }
 

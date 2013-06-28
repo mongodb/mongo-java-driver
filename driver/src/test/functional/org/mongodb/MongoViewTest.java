@@ -39,7 +39,7 @@ public class MongoViewTest extends DatabaseTestCase {
 //            System.out.println(cur);
         }
 
-        final MongoCursor<Document> cursor = collection.find().get();
+        MongoCursor<Document> cursor = collection.find().get();
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -143,6 +143,21 @@ public class MongoViewTest extends DatabaseTestCase {
             }
         }).into(new ArrayList<Integer>());
 
+        collection.find().sort(Sort.ascending("x")).skip(4).limit(5).getOne();
+        cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000).
+                withMin(new Document("price", 0.99)).withMax(new Document("price", 9.99)).withHint("price")
+                .get();
+//        cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000)
+//                .get(new QueryOptions().min(new Document("price", 0.99)).max(new Document("price", 9.99)).hint("price"));
+
+        try {
+            while (cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
+        cursor.close();
 //        System.out.println(idList);
     }
 
@@ -153,25 +168,15 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find().update(new Document("$set", new Document("x", 1)));
 
-        collection.find(new Document("_id", 1))
-                .update(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
 
-        collection.find(new Document("_id", 1))
-                .update(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("x", 1)).limit(0).upsert().update(new Document("$inc", new Document("x", 1)));
 
+        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
+        collection.find(new Document("_id", 2)).upsert().update(new Document("$set", new Document("x", 1)));
+        final Document doc = collection.find(new Document("_id", 1)).updateOneAndGetOriginal(new Document("$set", new Document("x", 1)));
 
-        collection.find(new Document("x", 1))
-                .noLimit()
-                .upsert().update(new Document("$inc", new Document("x", 1)));
-
-        collection.find(new Document("_id", 1))
-                .update(new Document("$set", new Document("x", 1)));
-
-        collection.find(new Document("_id", 2))
-                .upsert().update(new Document("$set", new Document("x", 1)));
-
-        final Document doc = collection.find(new Document("_id", 1))
-                .updateOneAndGetOriginal(new Document("$set", new Document("x", 1)));
 //        System.out.println(doc);
     }
 
