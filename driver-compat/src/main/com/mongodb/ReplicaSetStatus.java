@@ -68,13 +68,6 @@ public class ReplicaSetStatus {
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
     }
 
-    @Override
-    public String toString() {
-        return "ReplicaSetStatus{"
-                + cluster.getDescription().getAll()
-                + '}';
-    }
-
     private ClusterDescription getClusterDescription() {
         //TODO: test and check this is OK
         try {

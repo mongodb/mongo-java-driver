@@ -31,8 +31,8 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.session.ServerSelectingSession;
 
@@ -275,7 +275,7 @@ public class DB implements IDB {
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
         final Command mongoCommand = new Command(toDocument(cmd))
                 .readPreference(readPrefs.toNew())
-                .addOptions(QueryOption.toSet(options));
+                .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
@@ -295,7 +295,7 @@ public class DB implements IDB {
         final Document document = toDocument(cmd, encoder, documentCodec);
         final Command mongoCommand = new Command(document)
                 .readPreference(readPrefs.toNew())
-                .addOptions(QueryOption.toSet(options));
+                .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 

@@ -23,4 +23,6 @@ public interface MongoReadableView<T> {
     T getOne();
 
     long count();
+
+    MongoIterable<T> mapReduce(String map, String reduce);
 }

@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.QueryOptions;
 import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
@@ -23,21 +24,18 @@ import java.util.EnumSet;
 public abstract class Query {
     private ReadPreference readPreference;
     //CHECKSTYLE:OFF
-    protected int batchSize;  // TODO: make private
     //CHECKSTYLE:ON
     private int skip;
     private int limit;
-    private EnumSet<QueryOption> flags = EnumSet.noneOf(QueryOption.class);
-
+    private QueryOptions options = new QueryOptions();
     public Query() {
     }
 
     public Query(final Query from) {
         readPreference = from.readPreference;
-        batchSize = from.batchSize;
         skip = from.skip;
         limit = from.limit;
-        flags = from.flags;
+        options = new QueryOptions(from.options);
     }
 
     //CHECKSTYLE:OFF
@@ -65,35 +63,43 @@ public abstract class Query {
     }
 
     public Query batchSize(final int batchSize) {
-        this.batchSize = batchSize;
+        this.getOptions().batchSize(batchSize);
         return this;
     }
 
-    public Query addOptions(final EnumSet<QueryOption> options) {
-        if (options == null) {
+    public Query addFlags(final EnumSet<QueryFlag> flags) {
+        if (flags == null) {
             throw new IllegalArgumentException();
         }
-        this.flags.addAll(options);
+        this.options.addFlags(flags);
         return this;
     }
 
-    public Query options(final EnumSet<QueryOption> options) {
+    public Query flags(final EnumSet<QueryFlag> flags) {
+        if (flags == null) {
+            throw new IllegalArgumentException();
+        }
+        this.options.flags(flags);
+        return this;
+    }
+
+    public Query options(final QueryOptions options) {
         if (options == null) {
             throw new IllegalArgumentException();
         }
-        this.flags = options;
+        this.options = options;
         return this;
     }
     //CHECKSTYLE:ON
 
 
-    public EnumSet<QueryOption> getOptions() {
+    public EnumSet<QueryFlag> getFlags() {
         if (readPreference != null && readPreference.isSlaveOk()) {
-            EnumSet<QueryOption> retVal = EnumSet.copyOf(flags);
-            retVal.add(QueryOption.SlaveOk);
+            EnumSet<QueryFlag> retVal = EnumSet.copyOf(options.getFlags());
+            retVal.add(QueryFlag.SlaveOk);
             return retVal;
         } else {
-            return flags;
+            return options.getFlags();
         }
     }
 
@@ -102,7 +108,7 @@ public abstract class Query {
     }
 
     public int getBatchSize() {
-        return batchSize;
+        return options.getBatchSize();
     }
 
     public int getSkip() {
@@ -111,6 +117,10 @@ public abstract class Query {
 
     public int getLimit() {
         return limit;
+    }
+
+    public QueryOptions getOptions() {
+        return options;
     }
 
     /**
@@ -153,10 +163,9 @@ public abstract class Query {
 
         final Query that = (Query) o;
 
-        if (batchSize != that.batchSize) return false;
         if (limit != that.limit) return false;
         if (skip != that.skip) return false;
-        if (!flags.equals(that.flags)) return false;
+        if (!options.equals(that.options)) return false;
         if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) return false;
 
         return true;
@@ -166,10 +175,9 @@ public abstract class Query {
     @Override
     public int hashCode() {
         int result = readPreference != null ? readPreference.hashCode() : 0;
-        result = 31 * result + batchSize;
         result = 31 * result + skip;
         result = 31 * result + limit;
-        result = 31 * result + flags.hashCode();
+        result = 31 * result + options.hashCode();
         return result;
     }
 }

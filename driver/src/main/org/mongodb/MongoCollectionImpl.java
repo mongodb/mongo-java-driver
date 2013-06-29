@@ -22,6 +22,7 @@ import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
+import org.mongodb.command.MapReduceCommand;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
 import org.mongodb.operation.AsyncQueryOperation;
@@ -36,7 +37,6 @@ import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
@@ -48,9 +48,7 @@ import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
 
@@ -200,19 +198,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> fields(final Document selector) {
+        public MongoView<T> project(final Document selector) {
             findOp.select(selector);
             return this;
         }
 
         @Override
-        public MongoView<T> fields(final ConvertibleToDocument selector) {
-            return fields(selector.toDocument());
+        public MongoView<T> project(final ConvertibleToDocument selector) {
+            return project(selector.toDocument());
         }
 
         @Override
         public MongoView<T> upsert() {
             upsert = true;
+            return this;
+        }
+
+        @Override
+        public MongoView<T> withQueryOptions(final QueryOptions queryOptions) {
+            findOp.options(queryOptions);
             return this;
         }
 
@@ -226,63 +230,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoView<T> limit(final int limit) {
             findOp.limit(limit);
             limitSet = true;
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withBatchSize(final int batchSize) {
-            findOp.batchSize(batchSize);
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withOptions(final EnumSet<QueryOption> queryOptions) {
-            findOp.addOptions(queryOptions);
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withHint(final String indexName) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withHint(final Document index) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withHint(final ConvertibleToDocument index) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withIsolation() {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withoutDuplicates() {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withMaxScan(final long count) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withMaxTime(final long maxTime, final TimeUnit timeUnit) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withMin(final Document max) {
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withMax(final Document max) {
             return this;
         }
 
@@ -316,6 +263,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoIterable<T> mapReduce(final String map, final String reduce) {
+            final CommandResult commandResult = getDatabase().executeCommand(new MapReduceCommand(findOp, getName(), map, reduce));
+            return new MappedReducedIterable<T>(commandResult);
+        }
+
+        @Override
         public void forEach(final Block<? super T> block) {
             final MongoCursor<T> cursor = get();
             try {
@@ -344,7 +297,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-            return new MongoIterableCollection<T, U>(this, mapper);
+            return new MappingIterable<T, U>(this, mapper);
         }
 
         @Override
@@ -569,84 +522,4 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
-    private static class MongoIterableCollection<U, V> implements MongoIterable<V> {
-
-        private final MongoIterable<U> iterable;
-        private final Function<U, V> mapper;
-
-        public MongoIterableCollection(final MongoIterable<U> iterable, final Function<U, V> mapper) {
-            this.iterable = iterable;
-            this.mapper = mapper;
-        }
-
-        @Override
-        public MongoCursor<V> iterator() {
-            return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
-        }
-
-        @Override
-        public void forEach(final Block<? super V> block) {
-            iterable.forEach(new Block<U>() {
-                @Override
-                public boolean run(final U document) {
-                    return block.run(mapper.apply(document));
-                }
-            });
-
-        }
-
-        @Override
-        public <A extends Collection<? super V>> A into(final A target) {
-            forEach(new Block<V>() {
-                @Override
-                public boolean run(final V v) {
-                    target.add(v);
-                    return true;
-                }
-            });
-            return target;
-        }
-
-        @Override
-        public <W> MongoIterable<W> map(final Function<V, W> mapper) {
-            return new MongoIterableCollection<V, W>(this, mapper);
-        }
-
-        @Override
-        public void asyncForEach(final AsyncBlock<? super V> block) {
-            iterable.asyncForEach(new AsyncBlock<U>() {
-                @Override
-                public void done() {
-                    block.done();
-                }
-
-                @Override
-                public boolean run(final U u) {
-                    return block.run(mapper.apply(u));
-                }
-            });
-        }
-
-        @Override
-        public <A extends Collection<? super V>> MongoFuture<A> asyncInto(final A target) {
-            final SingleResultFuture<A> future = new SingleResultFuture<A>();
-            asyncInto(target, new SingleResultFutureCallback<A>(future));
-            return future;
-        }
-
-        private <A extends Collection<? super V>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
-            asyncForEach(new AsyncBlock<V>() {
-                @Override
-                public void done() {
-                    callback.onResult(target, null);
-                }
-
-                @Override
-                public boolean run(final V v) {
-                    target.add(v);
-                    return true;
-                }
-            });
-        }
-    }
 }

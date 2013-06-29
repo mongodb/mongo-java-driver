@@ -22,20 +22,20 @@ import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 
-public class QueryOptionTest {
+public class QueryFlagTest {
     @Test
     public void testToSet() {
-        assertEquals(EnumSet.noneOf(QueryOption.class), QueryOption.toSet(0));
-        assertEquals(EnumSet.of(QueryOption.Tailable), QueryOption.toSet(2));
-        assertEquals(EnumSet.of(QueryOption.Tailable, QueryOption.SlaveOk), QueryOption.toSet(6));
-        assertEquals(EnumSet.allOf(QueryOption.class), QueryOption.toSet(0xFE));
+        assertEquals(EnumSet.noneOf(QueryFlag.class), QueryFlag.toSet(0));
+        assertEquals(EnumSet.of(QueryFlag.Tailable), QueryFlag.toSet(2));
+        assertEquals(EnumSet.of(QueryFlag.Tailable, QueryFlag.SlaveOk), QueryFlag.toSet(6));
+        assertEquals(EnumSet.allOf(QueryFlag.class), QueryFlag.toSet(0xFE));
     }
 
     @Test
     public void testFromSet() {
-        assertEquals(0, QueryOption.fromSet(EnumSet.noneOf(QueryOption.class)));
-        assertEquals(2, QueryOption.fromSet(EnumSet.of(QueryOption.Tailable)));
-        assertEquals(6, QueryOption.fromSet(EnumSet.of(QueryOption.Tailable, QueryOption.SlaveOk)));
-        assertEquals(0xFE, QueryOption.fromSet(EnumSet.allOf(QueryOption.class)));
+        assertEquals(0, QueryFlag.fromSet(EnumSet.noneOf(QueryFlag.class)));
+        assertEquals(2, QueryFlag.fromSet(EnumSet.of(QueryFlag.Tailable)));
+        assertEquals(6, QueryFlag.fromSet(EnumSet.of(QueryFlag.Tailable, QueryFlag.SlaveOk)));
+        assertEquals(0xFE, QueryFlag.fromSet(EnumSet.allOf(QueryFlag.class)));
     }
 }

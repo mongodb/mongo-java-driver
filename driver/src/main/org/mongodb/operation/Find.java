@@ -97,14 +97,8 @@ public class Find extends Query {
     }
 
     @Override
-    public Find addOptions(final EnumSet<QueryOption> options) {
-        super.addOptions(options);
-        return this;
-    }
-
-    @Override
-    public Find options(final EnumSet<QueryOption> options) {
-        super.options(options);
+    public Find addFlags(final EnumSet<QueryFlag> flags) {
+        super.addFlags(flags);
         return this;
     }
 

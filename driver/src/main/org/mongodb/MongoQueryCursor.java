@@ -26,8 +26,8 @@ import org.mongodb.operation.GetMoreOperation;
 import org.mongodb.operation.GetMoreReceiveOperation;
 import org.mongodb.operation.KillCursor;
 import org.mongodb.operation.KillCursorOperation;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.session.ServerSelectingSession;
@@ -68,7 +68,8 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.find = find;
         this.bufferProvider = bufferProvider;
         QueryOperation<T> operation = new QueryOperation<T>(namespace, find, queryEncoder, decoder, this.bufferProvider);
-        this.session = initialSession.getBoundSession(operation, find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
+        this.session = initialSession.getBoundSession(operation, find.getOptions().getFlags().contains(QueryFlag.Exhaust)
+                ? Connection : Server);
         currentResult = session.execute(operation);
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -81,7 +82,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             return;
         }
         closed = true;
-        if (find.getOptions().contains(QueryOption.Exhaust)) {
+        if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
             discardRemainingGetMoreResponses();
         }
         else if (currentResult.getCursor() != null && !limitReached()) {
@@ -179,7 +180,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        if (find.getOptions().contains(QueryOption.Exhaust)) {
+        if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
             currentResult = session.execute(new GetMoreReceiveOperation<T>(decoder, currentResult.getRequestId()));
         }
         else {
@@ -217,7 +218,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private boolean isTailableAwait() {
-        return find.getOptions().containsAll(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData));
+        return find.getOptions().getFlags().containsAll(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData));
     }
 
     private void discardRemainingGetMoreResponses() {

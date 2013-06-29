@@ -26,7 +26,7 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.session.Session;
@@ -58,7 +58,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
+                new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
 
         int count = 0;
@@ -76,7 +76,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             SingleConnectionServerSelectingSession singleConnectionSession = new SingleConnectionServerSelectingSession(connection);
 
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                    new Find().addOptions(EnumSet.of(QueryOption.Exhaust)),
+                    new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
                     collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
 
             cursor.next();

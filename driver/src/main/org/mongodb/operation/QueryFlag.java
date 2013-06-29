@@ -24,7 +24,7 @@ import java.util.EnumSet;
  * @since 3.0
  * @mongodb.driver.manual Wire Protocol   // TODO: fix this link
  */
-public enum QueryOption {
+public enum QueryFlag {
     /**
      * Tailable means cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's
      * position. You can resume using the cursor later, from where it was located, if more data were received. Like any
@@ -73,11 +73,11 @@ public enum QueryOption {
     /**
      *
      * @param queryOptions the query options as a bit set
-     * @return The set of QueryOption specified by the bits set in queryOptions
+     * @return The set of QueryFlag specified by the bits set in queryOptions
      */
-    public static EnumSet<QueryOption> toSet(final int queryOptions) {
-        EnumSet<QueryOption> retVal = EnumSet.noneOf(QueryOption.class);
-        for (QueryOption flag : QueryOption.values()) {
+    public static EnumSet<QueryFlag> toSet(final int queryOptions) {
+        EnumSet<QueryFlag> retVal = EnumSet.noneOf(QueryFlag.class);
+        for (QueryFlag flag : QueryFlag.values()) {
             if ((queryOptions & flag.getBit()) != 0) {
                 retVal.add(flag);
             }
@@ -88,12 +88,12 @@ public enum QueryOption {
     /**
      * Returns an integer with the bits set for the options included in the given set.
      *
-     * @param queryOptionSet the set of query options
+     * @param queryFlagSet the set of query options
      * @return an integer with all bits set for the options included in the given set
      */
-    public static int fromSet(final EnumSet<QueryOption> queryOptionSet) {
+    public static int fromSet(final EnumSet<QueryFlag> queryFlagSet) {
         int retVal = 0;
-        for (QueryOption flag : queryOptionSet) {
+        for (QueryFlag flag : queryFlagSet) {
             retVal |= flag.getBit();
         }
         return retVal;
@@ -108,7 +108,7 @@ public enum QueryOption {
         return bit;
     }
 
-    private QueryOption(final int bit) {
+    private QueryFlag(final int bit) {
         this.bit = bit;
     }
 

@@ -15,6 +15,8 @@
  */
 
 
+
+
 package org.mongodb
 
 import category.Slow
@@ -26,7 +28,7 @@ import org.mongodb.operation.GetMoreOperation
 import org.mongodb.operation.KillCursor
 import org.mongodb.operation.KillCursorOperation
 import org.mongodb.operation.MongoCursorNotFoundException
-import org.mongodb.operation.QueryOption
+import org.mongodb.operation.QueryFlag
 import org.mongodb.operation.ServerCursor
 
 import java.util.concurrent.CountDownLatch
@@ -226,7 +228,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .filter(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))))
                 .batchSize(2)
-                .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
+                .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(), getSession(), getBufferProvider());
 
@@ -264,7 +266,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .batchSize(2)
-                .addOptions(EnumSet.of(QueryOption.Tailable, QueryOption.AwaitData)),
+                .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(), getSession(), getBufferProvider());
 
@@ -331,7 +333,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     def 'test limit with get more'() {
         when:
         List<Document> list = [];
-        collection.find().withBatchSize(2).limit(5).into(list);
+        collection.find().withQueryOptions(new QueryOptions().batchSize(2)).limit(5).into(list);
 
         then:
         list.size() == 5;

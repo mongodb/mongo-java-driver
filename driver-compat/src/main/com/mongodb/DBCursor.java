@@ -22,8 +22,8 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryOption;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.session.ServerSelectingSession;
 
@@ -86,7 +86,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                         .where(toDocument(query))
                         .select(DBObjects.toFieldSelectorDocument(fields))
                         .readPreference(readPreference.toNew())
-                        .addOptions(QueryOption.toSet(collection.getOptions())));
+                        .addFlags(QueryFlag.toSet(collection.getOptions())));
     }
 
     private DBCursor(final DBCollection collection, final Find find) {
@@ -160,7 +160,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBCursor addOption(final int option) {
-        find.addOptions(QueryOption.toSet(option));
+        find.addFlags(QueryFlag.toSet(option));
         return this;
     }
 
@@ -170,7 +170,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @param options
      */
     public DBCursor setOptions(final int options) {
-        find.options(QueryOption.toSet(options));
+        find.flags(QueryFlag.toSet(options));
         return this;
     }
 
@@ -178,7 +178,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * resets the query options
      */
     public DBCursor resetOptions() {
-        find.options(QueryOption.toSet(collection.getOptions()));
+        find.flags(QueryFlag.toSet(collection.getOptions()));
         return this;
     }
 
@@ -188,7 +188,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public int getOptions() {
-        return QueryOption.fromSet(find.getOptions());
+        return QueryFlag.fromSet(find.getOptions().getFlags());
     }
 
     /**
@@ -315,7 +315,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return
      */
     public DBCursor batchSize(final int n) {
-        find.batchSize(n);
+        find.getOptions().batchSize(n);
         return this;
     }
 

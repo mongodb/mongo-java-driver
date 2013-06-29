@@ -30,7 +30,7 @@ import org.mongodb.operation.AsyncQueryOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ServerCursor;
 import org.mongodb.session.AsyncServerSelectingSession;
@@ -62,7 +62,7 @@ public class MongoAsyncQueryCursor<T> {
         this.block = block;
         this.operation = new AsyncQueryOperation<T>(namespace, find, queryEncoder, decoder, bufferProvider);
         this.sessionFuture = initialSession.getBoundSession(operation,
-                find.getOptions().contains(QueryOption.Exhaust) ? Connection : Server);
+                find.getOptions().getFlags().contains(QueryFlag.Exhaust) ? Connection : Server);
     }
 
     public void start() {
@@ -115,7 +115,7 @@ public class MongoAsyncQueryCursor<T> {
             }
             else {
                 // get more results
-                if (find.getOptions().contains(QueryOption.Exhaust)) {
+                if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
                     session.execute(new AsyncGetMoreReceiveOperation<T>(decoder, result.getRequestId())).register(this);
                 }
                 else {
@@ -128,7 +128,7 @@ public class MongoAsyncQueryCursor<T> {
         }
 
         private void close(final int responseTo) {
-            if (find.getOptions().contains(QueryOption.Exhaust)) {
+            if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
                 handleExhaustCleanup(responseTo);
             }
             else {

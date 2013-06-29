@@ -20,7 +20,7 @@ import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
 import org.mongodb.operation.Query;
-import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;
 
@@ -29,7 +29,7 @@ public class Command extends Query implements ConvertibleToDocument {
 
     public Command(final Document commandDocument) {
         this.command = commandDocument;
-        batchSize = -1;
+        getOptions().batchSize(-1);
     }
 
     @Override
@@ -40,8 +40,8 @@ public class Command extends Query implements ConvertibleToDocument {
 
 
     @Override
-    public Command addOptions(final EnumSet<QueryOption> options) {
-        super.addOptions(options);
+    public Command addFlags(final EnumSet<QueryFlag> flags) {
+        super.addFlags(flags);
         return this;
     }
 

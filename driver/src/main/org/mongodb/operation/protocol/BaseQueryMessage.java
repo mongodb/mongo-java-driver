@@ -18,7 +18,7 @@ package org.mongodb.operation.protocol;
 
 import org.bson.io.OutputBuffer;
 import org.mongodb.operation.Query;
-import org.mongodb.operation.QueryOption;
+import org.mongodb.operation.QueryFlag;
 
 public abstract class BaseQueryMessage extends RequestMessage {
 
@@ -27,7 +27,7 @@ public abstract class BaseQueryMessage extends RequestMessage {
     }
 
     protected void writeQueryPrologue(final Query query, final OutputBuffer buffer) {
-        buffer.writeInt(QueryOption.fromSet(query.getOptions()));
+        buffer.writeInt(QueryFlag.fromSet(query.getOptions().getFlags()));
         buffer.writeCString(getCollectionName());
 
         buffer.writeInt(query.getSkip());

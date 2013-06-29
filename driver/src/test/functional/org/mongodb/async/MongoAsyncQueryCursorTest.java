@@ -57,7 +57,7 @@ import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.operation.QueryOption.Exhaust;
+import static org.mongodb.operation.QueryFlag.Exhaust;
 
 @Category(Async.class)
 public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
@@ -108,7 +108,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getAsyncSession(),
                 new TestBlock()).start();
 
@@ -119,7 +119,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getAsyncSession(),
                 new TestBlock()).start();
 
@@ -136,7 +136,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             SingleConnectionAsyncServerSelectingSession session = new SingleConnectionAsyncServerSelectingSession(connection);
 
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                    new Find().batchSize(2).limit(5).addOptions(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                    new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                     collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, new TestBlock(1))
                     .start();
 

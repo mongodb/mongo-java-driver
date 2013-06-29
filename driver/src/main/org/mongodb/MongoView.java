@@ -18,10 +18,6 @@ package org.mongodb;
 
 import org.mongodb.async.MongoAsyncReadableView;
 import org.mongodb.async.MongoAsyncWritableView;
-import org.mongodb.operation.QueryOption;
-
-import java.util.EnumSet;
-import java.util.concurrent.TimeUnit;
 
 public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableView<T>,
         MongoReadableView<T>, MongoAsyncReadableView<T>, MongoIterable<T> {
@@ -38,42 +34,15 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableVi
 
     MongoView<T> limit(int limit);
 
-    MongoView<T> fields(Document selector);
+    MongoView<T> project(Document selector);
 
-    MongoView<T> fields(ConvertibleToDocument selector);
+    MongoView<T> project(ConvertibleToDocument selector);
 
     MongoView<T> upsert();
 
-    /**
-     * To isolate an update from other concurrent updates, by using the "$isolated" special field.
-     */
-    MongoView<T> withIsolation();
-
-    MongoView<T> withOptions(EnumSet<QueryOption> options);
-
-    MongoView<T> withBatchSize(int batchSize);
-
-    /**
-     * Uses "$snapshot".
-     */
-    MongoView<T> withoutDuplicates();
-
-    MongoView<T> withMaxScan(long count);
-
-    MongoView<T> withMaxTime(long maxTime, TimeUnit timeUnit);
-
-    MongoView<T> withHint(String indexName);
-
-    MongoView<T> withHint(Document index);
-
-    MongoView<T> withHint(ConvertibleToDocument index);
-
-    MongoView<T> withMin(Document max);
-
-    MongoView<T> withMax(Document max);
+    MongoView<T> withQueryOptions(QueryOptions options);
 
     MongoView<T> withReadPreference(ReadPreference readPreference);
 
     MongoView<T> withWriteConcern(WriteConcern writeConcern);
-
 }
