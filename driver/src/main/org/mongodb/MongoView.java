@@ -26,17 +26,21 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableVi
 
     MongoView<T> find(ConvertibleToDocument filter);
 
+
     MongoView<T> sort(Document sortCriteria);
 
     MongoView<T> sort(ConvertibleToDocument sortCriteria);
+
 
     MongoView<T> skip(int skip);
 
     MongoView<T> limit(int limit);
 
+
     MongoView<T> project(Document selector);
 
     MongoView<T> project(ConvertibleToDocument selector);
+
 
     MongoView<T> upsert();
 
