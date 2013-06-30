@@ -20,6 +20,7 @@ import org.mongodb.async.AsyncBlock;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.ServerCursor;
+import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,15 +39,10 @@ class MappedReducedIterable<T> implements MongoIterable<T> {
 
     @Override
     public void forEach(final Block<? super T> block) {
-        final MongoCursor<T> cursor = iterator();
-        try {
-            while (cursor.hasNext()) {
-                if (!block.run(cursor.next())) {
-                    break;
-                }
+        for (T document : getResults()) {
+            if (!block.run(document)) {
+                break;
             }
-        } finally {
-            cursor.close();
         }
     }
 
@@ -69,17 +65,26 @@ class MappedReducedIterable<T> implements MongoIterable<T> {
 
     @Override
     public void asyncForEach(final AsyncBlock<? super T> block) {
-        throw new UnsupportedOperationException();
+        for (T document : getResults()) {
+            if (!block.run(document)) {
+                break;
+            }
+        }
+        block.done();
     }
 
     @Override
     public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-        throw new UnsupportedOperationException();
+        return new SingleResultFuture<A>(into(target), null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Iterable<T> getResults() {
+        return ((Iterable<T>) commandResult.getResponse().get("results"));
     }
 
     private class MappedReducedCursor implements MongoCursor<T> {
-        @SuppressWarnings("unchecked")
-        private final Iterator<T> iterator = ((Iterable<T>) commandResult.getResponse().get("results")).iterator();
+        private final Iterator<T> iterator = getResults().iterator();
         @Override
         public void close() {
         }
