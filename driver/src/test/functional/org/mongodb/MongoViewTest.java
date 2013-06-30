@@ -36,56 +36,56 @@ public class MongoViewTest extends DatabaseTestCase {
         }
 
         for (final Document cur : collection.find()) {
-//            System.out.println(cur);
+            System.out.println(cur);
         }
 
         MongoCursor<Document> cursor = collection.find().get();
         try {
             while (cursor.hasNext()) {
                 cursor.next();
-//                System.out.println(cursor.next());
+                System.out.println(cursor.next());
             }
         } finally {
             cursor.close();
         }
 
         for (final Document cur : collection.find(new Document("_id", 1))) {
-//            System.out.println(cur);
+            System.out.println(cur);
         }
 
         for (final Document cur : collection.find(new Document("_id", 1))
                 .sort(new Document("_id", 1))) {
-//            System.out.println(cur);
+            System.out.println(cur);
         }
 
-//        System.out.println();
+        System.out.println();
 
         for (final Document cur : collection.find(query("_id").greaterThan(4)).sort(new Document("_id", 1))) {
-//            System.out.println(cur);
+            System.out.println(cur);
         }
 
-//        System.out.println();
+        System.out.println();
 
         for (final Document cur : collection.find().skip(3).limit(2).sort(new Document("_id", -1))) {
-//            System.out.println(cur);
+            System.out.println(cur);
         }
 
         long count = collection.find().count();
-//        System.out.println(count);
+        System.out.println(count);
 
         count = collection.find(new Document("_id", new Document("$gt", 2))).count();
-//        System.out.println(count);
+        System.out.println(count);
 
         Document doc = collection.find().getOne();
-//        System.out.println(doc);
+        System.out.println(doc);
 
         doc = collection.find(new Document("_id", 1)).getOne();
-//        System.out.println(doc);
+        System.out.println(doc);
 
         collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document e) {
-//                System.out.println(e);
+                System.out.println(e);
                 return true;
             }
         });
@@ -93,14 +93,14 @@ public class MongoViewTest extends DatabaseTestCase {
         collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
-//                System.out.println(t);
+                System.out.println(t);
                 return true;
             }
         });
 
         collection.find().forEach(new Block<Document>() {
             public boolean run(final Document document) {
-//                System.out.println(document);
+                System.out.println(document);
                 return true;
             }
         });
@@ -111,7 +111,7 @@ public class MongoViewTest extends DatabaseTestCase {
                 return (Integer) document.get("_id");
             }
         })) {
-//            System.out.println(id);
+            System.out.println(id);
         }
 
         List<String> list = collection.find().map(new Function<Document, Integer>() {
@@ -126,12 +126,12 @@ public class MongoViewTest extends DatabaseTestCase {
             }
         }).into(new ArrayList<String>());
 
-//        System.out.println(list);
+        System.out.println(list);
 
         collection.find().forEach(new Block<Document>() {
             @Override
             public boolean run(final Document t) {
-//               System.out.println(t);
+                System.out.println(t);
                 return true;
             }
         });
@@ -144,21 +144,19 @@ public class MongoViewTest extends DatabaseTestCase {
         }).into(new ArrayList<Integer>());
 
         collection.find().sort(Sort.ascending("x")).skip(4).limit(5).getOne();
-//        cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000).
-//                withMin(new Document("price", 0.99)).withMax(new Document("price", 9.99)).withHint("price")
-//                .get();
-//        cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000)
-//                .get(new QueryOptions().min(new Document("price", 0.99)).max(new Document("price", 9.99)).hint("price"));
+        cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000)
+                .withQueryOptions(new QueryOptions().min(new Document("price", 0.99)).max(new Document("price", 9.99)).hint("price"))
+                .get();
 
-//        try {
-//            while (cursor.hasNext()) {
-//                System.out.println(cursor.next());
-//            }
-//        } finally {
-//            cursor.close();
-//        }
-//        cursor.close();
-//        System.out.println(idList);
+        try {
+            while (cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
+        cursor.close();
+        System.out.println(idList);
     }
 
 
@@ -177,7 +175,7 @@ public class MongoViewTest extends DatabaseTestCase {
         collection.find(new Document("_id", 2)).upsert().update(new Document("$set", new Document("x", 1)));
         final Document doc = collection.find(new Document("_id", 1)).updateOneAndGetOriginal(new Document("$set", new Document("x", 1)));
 
-//        System.out.println(doc);
+        System.out.println(doc);
     }
 
     @Test
@@ -198,26 +196,26 @@ public class MongoViewTest extends DatabaseTestCase {
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
-//        System.out.println(concreteCollection.find(new Document("i", 1))
-//                .map(new Function<Concrete, ObjectId>() {
-//                    @Override
-//                    public ObjectId apply(final Concrete concrete) {
-//                        return concrete.getId();
-//                    }
-//                }).map(new Function<ObjectId, String>() {
-//                    @Override
-//                    public String apply(final ObjectId o) {
-//                        return o.toString();
-//                    }
-//                }).into(new ArrayList<String>()));
-//
-//        System.out.println(concreteCollection.find(new Document("i", 1))
-//                .map(new Function<Concrete, ObjectId>() {
-//                    @Override
-//                    public ObjectId apply(final Concrete concrete) {
-//                        return concrete.getId();
-//                    }
-//                }).into(new ArrayList<ObjectId>()));
+        System.out.println(concreteCollection.find(new Document("i", 1))
+                .map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.getId();
+                    }
+                }).map(new Function<ObjectId, String>() {
+                    @Override
+                    public String apply(final ObjectId o) {
+                        return o.toString();
+                    }
+                }).into(new ArrayList<String>()));
+
+        System.out.println(concreteCollection.find(new Document("i", 1))
+                .map(new Function<Concrete, ObjectId>() {
+                    @Override
+                    public ObjectId apply(final Concrete concrete) {
+                        return concrete.getId();
+                    }
+                }).into(new ArrayList<ObjectId>()));
     }
 }
 
