@@ -34,11 +34,6 @@ import java.util.List;
 public interface Connection extends BaseConnection {
 
     /**
-     * Open the connection.  This method can be called multiple times, and all but the first should be a no-op.
-     */
-    void open();
-
-    /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      * <p>
      * This method blocks until all bytes have been written.  This method is not thread safe: only one thread at a time can have an active

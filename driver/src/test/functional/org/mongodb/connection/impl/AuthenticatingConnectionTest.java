@@ -42,7 +42,6 @@ public class AuthenticatingConnectionTest {
         source = System.getProperty("org.mongodb.test.source", "admin");
         connection = new DefaultSocketChannelConnection(new ServerAddress(host), DefaultConnectionSettings.builder().build(),
                 new PowerOfTwoBufferPool());
-        connection.open();
     }
 
     @After
@@ -53,24 +52,20 @@ public class AuthenticatingConnectionTest {
     @Test
     @Ignore
     public void testMongoCRAuthentication() {
-        AuthenticatingConnection authenticatingConnection = new AuthenticatingConnection(connection,
+        new AuthenticatingConnection(connection,
                 Arrays.asList(MongoCredential.createMongoCRCredential(userName, source, password.toCharArray())), getBufferProvider());
-        authenticatingConnection.open();
     }
 
     @Test
     @Ignore
     public void tesPlainAuthentication() {
-        AuthenticatingConnection authenticatingConnection = new AuthenticatingConnection(connection,
-                Arrays.asList(MongoCredential.createPlainCredential(userName, password.toCharArray())), getBufferProvider());
-        authenticatingConnection.open();
+        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, password.toCharArray())),
+                getBufferProvider());
     }
 
     @Test
     @Ignore
     public void tesGSSAPIAuthentication() {
-        AuthenticatingConnection authenticatingConnection = new AuthenticatingConnection(connection,
-                Arrays.asList(MongoCredential.createGSSAPICredential(userName)), getBufferProvider());
-        authenticatingConnection.open();
+        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createGSSAPICredential(userName)), getBufferProvider());
     }
 }

@@ -54,10 +54,6 @@ public class TestConnectionFactory implements ConnectionFactory {
         }
 
         @Override
-        public void open() {
-        }
-
-        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers) {
             if (throwOnSend != null) {
                 throw throwOnSend;

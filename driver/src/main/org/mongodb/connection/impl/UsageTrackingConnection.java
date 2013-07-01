@@ -30,15 +30,16 @@ import static org.mongodb.assertions.Assertions.isTrue;
  * A connection that tracks when it was opened and when it was last used.
  */
 class UsageTrackingConnection implements Connection {
-    private volatile long openedAt = Long.MAX_VALUE;
-    private volatile long lastUsedAt = Long.MAX_VALUE;
+    private final long openedAt;
+    private volatile long lastUsedAt;
     private final int generation;
     private volatile Connection wrapped;
-    private volatile boolean isOpen;
 
     UsageTrackingConnection(final Connection wrapped, final int generation) {
         this.wrapped = wrapped;
         this.generation = generation;
+        openedAt = System.currentTimeMillis();
+        lastUsedAt = openedAt;
     }
 
     @Override
@@ -59,16 +60,6 @@ class UsageTrackingConnection implements Connection {
     }
 
     @Override
-    public void open() {
-        if (!isOpen) {
-            wrapped.open();
-            isOpen = true;
-            openedAt = System.currentTimeMillis();
-            lastUsedAt = openedAt;
-        }
-    }
-
-    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         wrapped.sendMessage(byteBuffers);
         lastUsedAt = System.currentTimeMillis();
@@ -83,6 +74,7 @@ class UsageTrackingConnection implements Connection {
 
     /**
      * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
+     *
      * @return the generation.
      */
     int getGeneration() {
@@ -91,6 +83,7 @@ class UsageTrackingConnection implements Connection {
 
     /**
      * Returns the time at which this connection was opened, or {@code Long.MAX_VALUE} if it has not yet been opened.
+     *
      * @return the time when this connection was opened, in milliseconds since the epoch.
      */
     long getOpenedAt() {
@@ -99,6 +92,7 @@ class UsageTrackingConnection implements Connection {
 
     /**
      * Returns the time at which this connection was last used, or {@code Long.MAX_VALUE} if it has not yet been used.
+     *
      * @return the time when this connection was last used, in milliseconds since the epoch.
      */
     long getLastUsedAt() {

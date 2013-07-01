@@ -164,12 +164,6 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public void open() {
-            isTrue("open", !isClosed());
-            wrapped.open();
-        }
-
-        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers) {
             isTrue("open", !isClosed());
             wrapped.sendMessage(byteBuffers);

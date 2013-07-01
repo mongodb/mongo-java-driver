@@ -43,6 +43,7 @@ class AuthenticatingConnection implements Connection {
 
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
+        authenticateAll();
     }
 
     @Override
@@ -60,26 +61,19 @@ class AuthenticatingConnection implements Connection {
 
     @Override
     public ServerAddress getServerAddress() {
-        isTrue("open", wrapped != null);
+        isTrue("open", !isClosed());
         return wrapped.getServerAddress();
     }
 
     @Override
-    public void open() {
-        isTrue("open", !isClosed());
-        wrapped.open();
-        authenticateAll();
-    }
-
-    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers) {
-        isTrue("open", wrapped != null);
+        isTrue("open", !isClosed());
         wrapped.sendMessage(byteBuffers);
     }
 
     @Override
     public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
-        isTrue("open", wrapped != null);
+        isTrue("open", !isClosed());
         return wrapped.receiveMessage(responseSettings);
     }
 

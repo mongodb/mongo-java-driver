@@ -91,7 +91,6 @@ class IsMasterServerStateNotifier implements ServerStateNotifier {
         try {
             if (connection == null) {
                 connection = connectionFactory.create(serverAddress);
-                connection.open();
             }
             try {
                 final CommandResult commandResult = new CommandOperation("admin",

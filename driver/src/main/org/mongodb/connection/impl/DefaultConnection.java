@@ -67,12 +67,6 @@ abstract class DefaultConnection implements Connection {
         return serverAddress;
     }
 
-    @Override
-    public void open() {
-       isTrue("open", !isClosed());
-       ensureOpen();
-    }
-
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", !isClosed());
         try {
@@ -99,8 +93,6 @@ abstract class DefaultConnection implements Connection {
             throw new MongoInternalException("Unexpected runtime exception", e);
         }
     }
-
-    protected abstract void ensureOpen();
 
     protected abstract void write(final List<ByteBuf> buffers) throws IOException;
 
@@ -152,7 +144,7 @@ abstract class DefaultConnection implements Connection {
         return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
     }
 
-    protected void initializeSocket(final Socket socket) throws IOException {
+    protected final void initializeSocket(final Socket socket) throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeoutMS());
         socket.setKeepAlive(settings.isKeepAlive());

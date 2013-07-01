@@ -29,19 +29,14 @@ import java.util.List;
 
 // TODO: migrate all the DBPort configuration
 class DefaultSocketChannelConnection extends DefaultConnection {
-    private volatile SocketChannel socketChannel;
+    private final SocketChannel socketChannel;
 
     public DefaultSocketChannelConnection(final ServerAddress address, final DefaultConnectionSettings settings,
                                           final BufferProvider bufferProvider) {
         super(address, settings, bufferProvider);
-    }
-
-    protected void ensureOpen() {
         try {
-            if (socketChannel == null) {
-                socketChannel = SocketChannel.open();
-                initializeSocket(socketChannel.socket());
-            }
+            socketChannel = SocketChannel.open();
+            initializeSocket(socketChannel.socket());
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getServerAddress(), e);
@@ -79,10 +74,9 @@ class DefaultSocketChannelConnection extends DefaultConnection {
         try {
             if (socketChannel != null) {
                 socketChannel.close();
-                socketChannel = null;
-                super.close();
             }
-        } catch (IOException e) {  //NOPMD
+            super.close();
+        } catch (IOException e) {
             // ignore
         }
     }

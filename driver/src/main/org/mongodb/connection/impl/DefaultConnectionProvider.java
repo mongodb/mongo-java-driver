@@ -47,9 +47,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
                 new ConcurrentPool.ItemFactory<UsageTrackingConnection>() {
             @Override
             public UsageTrackingConnection create() {
-                UsageTrackingConnection connection = new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
-                connection.open();
-                return connection;
+                return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
             }
 
             @Override
@@ -134,12 +132,6 @@ class DefaultConnectionProvider implements ConnectionProvider {
         public ServerAddress getServerAddress() {
             isTrue("open", !isClosed());
             return wrapped.getServerAddress();
-        }
-
-        @Override
-        public void open() {
-            isTrue("open", !isClosed());
-            wrapped.open();
         }
 
         @Override

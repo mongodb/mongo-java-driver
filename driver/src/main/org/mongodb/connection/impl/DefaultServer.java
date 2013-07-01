@@ -168,17 +168,6 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void open() {
-            isTrue("open", !isClosed());
-            try {
-                wrapped.open();
-            } catch (MongoException e) {
-                handleException();
-                throw e;
-            }
-        }
-
-        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers) {
             isTrue("open", !isClosed());
             try {

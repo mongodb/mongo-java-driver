@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.Fixture
@@ -32,39 +34,17 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.generation == 1
     }
 
-    def 'openAt should default to max long'() {
-        when:
-        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-
-        then:
-        connection.openedAt == Long.MAX_VALUE
-    }
-
-    def 'lastUsedAt should default to max long'() {
-        when:
-        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-
-        then:
-        connection.lastUsedAt == Long.MAX_VALUE
-    }
-
     def 'openAt should be set on open'() {
-        setup:
-        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-
         when:
-        connection.open()
+        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
 
         then:
         connection.openedAt <= System.currentTimeMillis()
     }
 
     def 'lastUsedAt should be set on open'() {
-        setup:
-        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-
         when:
-        connection.open()
+        def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -73,7 +53,6 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendMessage'() {
         setup:
         def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-        connection.open()
         Thread.sleep(5);
 
         when:
@@ -86,7 +65,6 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on receiveMessage'() {
         setup:
         def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
-        connection.open()
 
         when:
         connection.receiveMessage(ResponseSettings.builder().responseTo(1).maxMessageSize(500).build())

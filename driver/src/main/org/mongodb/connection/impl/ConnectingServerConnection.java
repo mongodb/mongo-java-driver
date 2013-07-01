@@ -46,11 +46,6 @@ class ConnectingServerConnection implements ServerConnection {
     }
 
     @Override
-    public void open() {
-        connection.open();
-    }
-
-    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         connection.sendMessage(byteBuffers);
     }
