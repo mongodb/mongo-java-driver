@@ -192,7 +192,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1).append("x", true));
 
         final Document newDoc = collection.find(new Document("x", true))
-                .updateOneAndGetOriginal(new Document("$set", new Document("x", false)));
+                .getOneAndUpdate(new Document("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -206,7 +206,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(doc);
 
         final Concrete newDoc = collection.find(new Document("x", true))
-                .updateOneAndGetOriginal(new Document("$set", new Document("x", false)));
+                .getOneAndUpdate(new Document("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

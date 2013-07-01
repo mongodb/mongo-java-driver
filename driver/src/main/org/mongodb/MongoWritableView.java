@@ -27,9 +27,15 @@ public interface MongoWritableView<T> {
 
     WriteResult remove();
 
+    WriteResult removeOne();
+
     WriteResult update(Document updateOperations);
 
     WriteResult update(ConvertibleToDocument updateOperations);
+
+    WriteResult updateOne(Document updateOperations);
+
+    WriteResult updateOne(ConvertibleToDocument updateOperations);
 
     WriteResult replace(T replacement);
 
@@ -39,11 +45,11 @@ public interface MongoWritableView<T> {
 
     T replaceOneAndGet(T replacement);
 
-    T updateOneAndGetOriginal(Document updateOperations);
+    T getOneAndUpdate(Document updateOperations);
 
-    T updateOneAndGetOriginal(ConvertibleToDocument updateOperations);
+    T getOneAndUpdate(ConvertibleToDocument updateOperations);
 
-    T replaceOneAndGetOriginal(T replacement);
+    T getOneAndReplace(T replacement);
 
-    T removeOneAndGet();
+    T getOneAndRemove();
 }

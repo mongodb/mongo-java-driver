@@ -147,24 +147,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new MongoNamespace(getDatabase().getName(), getName());
     }
 
-    private enum UpdateType {
-        modify {
-            @Override
-            boolean isMultiByDefault() {
-                return false;
-            }
-        },
-
-        remove {
-            @Override
-            boolean isMultiByDefault() {
-                return true;
-            }
-        };
-
-        abstract boolean isMultiByDefault();
-    }
-
     private final class MongoCollectionView implements MongoView<T> {
         private final Find findOp;
         private WriteConcern writeConcern;
@@ -338,7 +320,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult remove() {
-            final Remove remove = new Remove(writeConcern, findOp.getFilter()).multi(getMultiFromLimit(UpdateType.remove));
+            final Remove remove = new Remove(writeConcern, findOp.getFilter()).multi(getMultiFromLimit());
+            return new WriteResult(client.getSession().execute(
+                    new RemoveOperation(getNamespace(), remove, getDocumentCodec(), client.getBufferProvider())), writeConcern);
+        }
+
+        @Override
+        public WriteResult removeOne() {
+            final Remove remove = new Remove(writeConcern, findOp.getFilter()).multi(false);
             return new WriteResult(client.getSession().execute(
                     new RemoveOperation(getNamespace(), remove, getDocumentCodec(), client.getBufferProvider())), writeConcern);
         }
@@ -346,7 +335,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult update(final Document updateOperations) {
             final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations).upsert(upsert)
-                    .multi(getMultiFromLimit(UpdateType.modify));
+                    .multi(getMultiFromLimit());
             return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(), update, getDocumentCodec(),
                     client.getBufferProvider())), writeConcern);
         }
@@ -354,6 +343,18 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult update(final ConvertibleToDocument updateOperations) {
             return update(updateOperations.toDocument());
+        }
+
+        @Override
+        public WriteResult updateOne(final Document updateOperations) {
+            final Update update = new Update(writeConcern, findOp.getFilter(), updateOperations).upsert(upsert).multi(false);
+            return new WriteResult(client.getSession().execute(new UpdateOperation(getNamespace(), update, getDocumentCodec(),
+                    client.getBufferProvider())), writeConcern);
+        }
+
+        @Override
+        public WriteResult updateOne(final ConvertibleToDocument updateOperations) {
+            return updateOne(updateOperations.toDocument());
         }
 
         @Override
@@ -380,17 +381,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public T updateOneAndGetOriginal(final Document updateOperations) {
+        public T getOneAndUpdate(final Document updateOperations) {
             return updateOneAndGet(updateOperations, Get.BeforeChangeApplied);
         }
 
         @Override
-        public T updateOneAndGetOriginal(final ConvertibleToDocument updateOperations) {
-            return updateOneAndGetOriginal(updateOperations.toDocument());
+        public T getOneAndUpdate(final ConvertibleToDocument updateOperations) {
+            return getOneAndUpdate(updateOperations.toDocument());
         }
 
         @Override
-        public T replaceOneAndGetOriginal(final T replacement) {
+        public T getOneAndReplace(final T replacement) {
             return replaceOneAndGet(replacement, Get.BeforeChangeApplied);
         }
 
@@ -422,7 +423,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public T removeOneAndGet() {
+        public T getOneAndRemove() {
             final FindAndRemove<T> findAndRemove = new FindAndRemove<T>().where(findOp.getFilter()).select(findOp.getFields())
                     .sortBy(findOp.getOrder());
 
@@ -484,7 +485,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             });
         }
 
-        private boolean getMultiFromLimit(final UpdateType updateType) {
+        private boolean getMultiFromLimit() {
             if (limitSet) {
                 if (findOp.getLimit() == 1) {
                     return false;
@@ -496,7 +497,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                     throw new IllegalArgumentException("Update currently only supports a limit of either none or 1");
                 }
             }
-            else return updateType.isMultiByDefault();
+            else {
+                return true;
+            }
         }
 
         @Override

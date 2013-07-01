@@ -45,7 +45,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
 
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        final Document documentRetrieved = collection.find(filter).removeOneAndGet();
+        final Document documentRetrieved = collection.find(filter).getOneAndRemove();
 
         // then
         assertThat("Document should have been deleted from the collection", collection.find().count(), is(0L));
@@ -66,7 +66,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
 
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        final Document documentRetrieved = collection.find(filter).removeOneAndGet();
+        final Document documentRetrieved = collection.find(filter).getOneAndRemove();
 
         // then
         assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
@@ -86,7 +86,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
 
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        final Document documentRetrieved = collection.find(filter).removeOneAndGet();
+        final Document documentRetrieved = collection.find(filter).getOneAndRemove();
 
         // then
         assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
@@ -109,7 +109,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
         final MongoView<Document> resultsOfSearchingByFilter = collection.find(filter);
         assertThat(resultsOfSearchingByFilter.count(), is(3L));
 
-        final Document documentRetrieved = collection.find(filter).removeOneAndGet();
+        final Document documentRetrieved = collection.find(filter).getOneAndRemove();
 
         // then
         assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
@@ -133,7 +133,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
         final Document documentRetrieved = collection.find(filter)
                                                .sort(new Document(secondKey, 1))
-                                               .removeOneAndGet();
+                                               .getOneAndRemove();
 
         // then
         assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
@@ -145,7 +145,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldReturnNullIfNoDocumentRemoved() {
         // when
         final Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        final Document documentRetrieved = collection.find(filter).removeOneAndGet();
+        final Document documentRetrieved = collection.find(filter).getOneAndRemove();
 
         // then
         assertThat(documentRetrieved, is(nullValue()));

@@ -173,7 +173,7 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
         collection.find(new Document("_id", 2)).upsert().update(new Document("$set", new Document("x", 1)));
-        final Document doc = collection.find(new Document("_id", 1)).updateOneAndGetOriginal(new Document("$set", new Document("x", 1)));
+        final Document doc = collection.find(new Document("_id", 1)).getOneAndUpdate(new Document("$set", new Document("x", 1)));
 
         System.out.println(doc);
     }

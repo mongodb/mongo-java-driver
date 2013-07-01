@@ -20,7 +20,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.Get;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -44,7 +43,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.find().count(), is(1L));
 
         final Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                .replaceOneAndGetOriginal(new Document("foo", "bar"));
+                .getOneAndReplace(new Document("foo", "bar"));
 
         assertThat("Document, retrieved from replaceAndGet should match the document inserted before",
                 document, equalTo(documentInserted));
@@ -73,7 +72,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.find(new Document(KEY, "bar")).replaceOneAndGetOriginal(new Document("foo", "bar"));
+        final Document document = collection.find(new Document(KEY, "bar")).getOneAndReplace(new Document("foo", "bar"));
 
         assertNull("Document, retrieved from replaceAndGet should be null", document);
     }
