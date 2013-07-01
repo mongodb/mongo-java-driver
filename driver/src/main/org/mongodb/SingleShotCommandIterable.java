@@ -19,22 +19,20 @@ package org.mongodb;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.MongoFuture;
-import org.mongodb.operation.ServerCursor;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;
-import java.util.Iterator;
 
-class MappedReducedIterable<T> implements MongoIterable<T> {
+class SingleShotCommandIterable<T> implements MongoIterable<T> {
     private CommandResult commandResult;
 
-    public MappedReducedIterable(final CommandResult commandResult) {
+    public SingleShotCommandIterable(final CommandResult commandResult) {
         this.commandResult = commandResult;
     }
 
     @Override
     public MongoCursor<T> iterator() {
-        return new MappedReducedCursor();
+        return new SingleShotCursor<T>(getResults());
     }
 
     @Override
@@ -83,30 +81,4 @@ class MappedReducedIterable<T> implements MongoIterable<T> {
         return ((Iterable<T>) commandResult.getResponse().get("results"));
     }
 
-    private class MappedReducedCursor implements MongoCursor<T> {
-        private final Iterator<T> iterator = getResults().iterator();
-        @Override
-        public void close() {
-        }
-
-        @Override
-        public boolean hasNext() {
-            return iterator.hasNext();
-        }
-
-        @Override
-        public T next() {
-            return iterator.next();
-        }
-
-        @Override
-        public ServerCursor getServerCursor() {
-            return null;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
 }

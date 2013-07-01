@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.MongoAsyncQueryCursor;
+import org.mongodb.command.AggregateCommand;
 import org.mongodb.command.Count;
 import org.mongodb.command.CountCommandResult;
 import org.mongodb.command.FindAndModifyCommandResult;
@@ -47,6 +48,7 @@ import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -84,6 +86,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public WriteResult save(final T document) {
         return new MongoCollectionView().save(document);
+    }
+
+    @Override
+    public MongoPipeline<T> pipe() {
+        return new MongoCollectionPipeline();
     }
 
     @Override
@@ -265,7 +272,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoIterable<T> mapReduce(final String map, final String reduce) {
             final CommandResult commandResult = getDatabase().executeCommand(new MapReduceCommand(findOp, getName(), map, reduce));
-            return new MappedReducedIterable<T>(commandResult);
+            return new SingleShotCommandIterable<T>(commandResult);
         }
 
         @Override
@@ -522,4 +529,112 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
+    private class MongoCollectionPipeline implements MongoPipeline<T> {
+        private final List<Document> pipeline;
+
+        private MongoCollectionPipeline() {
+            pipeline = new ArrayList<Document>();
+        }
+
+        public MongoCollectionPipeline(final MongoCollectionPipeline from) {
+            pipeline = new ArrayList<Document>(from.pipeline);
+        }
+
+        @Override
+        public MongoPipeline<T> sort(final Document sortCriteria) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$sort", sortCriteria));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> skip(final long skip) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$skip", skip));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> limit(final long limit) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$limit", limit));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> match(final Document match) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$match", match));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> project(final Document projection) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$project", projection));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> group(final Document group) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$group", group));
+            return newPipeline;
+        }
+
+        @Override
+        public MongoPipeline<T> unwind(final String field) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$unwind", field));
+            return newPipeline;
+        }
+
+        @Override
+        public <U> MongoIterable<U> map(final Function<T, U> mapper) {
+            return new MappingIterable<T, U>(this, mapper);
+        }
+
+        @Override
+        public void asyncForEach(final AsyncBlock<? super T> block) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public MongoCursor<T> iterator() {
+            final CommandResult commandResult = getDatabase().executeCommand(new AggregateCommand(getNamespace(), pipeline));
+            return new SingleShotCursor<T>((Iterable<T>) commandResult.getResponse().get("result"));
+        }
+
+        @Override
+        public void forEach(final Block<? super T> block) {
+            MongoCursor<T> cursor = iterator();
+            try {
+                while (cursor.hasNext()) {
+                    if (!block.run(cursor.next())) {
+                        break;
+                    }
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        @Override
+        public <A extends Collection<? super T>> A into(final A target) {
+            forEach(new Block<T>() {
+                @Override
+                public boolean run(final T t) {
+                    target.add(t);
+                    return true;
+                }
+            });
+            return target;
+        }
+    }
 }

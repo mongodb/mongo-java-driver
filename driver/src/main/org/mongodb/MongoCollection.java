@@ -65,4 +65,6 @@ public interface MongoCollection<T> {
     WriteResult insert(List<T> document);
 
     WriteResult save(T document);
+
+    MongoPipeline<T> pipe();
 }
