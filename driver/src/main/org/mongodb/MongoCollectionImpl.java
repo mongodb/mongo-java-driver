@@ -541,6 +541,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoPipeline<T> find(final Document criteria) {
+            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
+            newPipeline.pipeline.add(new Document("$match", criteria));
+            return newPipeline;
+        }
+
+        @Override
         public MongoPipeline<T> sort(final Document sortCriteria) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
             newPipeline.pipeline.add(new Document("$sort", sortCriteria));
@@ -558,13 +565,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoPipeline<T> limit(final long limit) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
             newPipeline.pipeline.add(new Document("$limit", limit));
-            return newPipeline;
-        }
-
-        @Override
-        public MongoPipeline<T> match(final Document match) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$match", match));
             return newPipeline;
         }
 

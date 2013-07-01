@@ -112,8 +112,8 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldMatchDocuments() {
-        List<Document> matched = collection.pipe().match(new Document("_id", "10012")).into(new ArrayList<Document>());
+    public void shouldFindDocuments() {
+        List<Document> matched = collection.pipe().find(new Document("_id", "10012")).into(new ArrayList<Document>());
         assertEquals(documents.subList(1, 2), matched);
     }
 

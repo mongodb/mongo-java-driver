@@ -17,13 +17,13 @@
 package org.mongodb;
 
 public interface MongoPipeline<T> extends MongoIterable<T> {
+    MongoPipeline<T> find(Document criteria);
+
     MongoPipeline<T> sort(Document id);
 
     MongoPipeline<T> skip(long skip);
 
     MongoPipeline<T> limit(long limit);
-
-    MongoPipeline<T> match(Document match);
 
     MongoPipeline<T> project(Document projection);
 
