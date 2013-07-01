@@ -16,7 +16,15 @@
 
 package com.mongodb;
 
+import org.bson.types.Code;
+import org.mongodb.Document;
+import org.mongodb.command.Command;
+import org.mongodb.operation.MapReduce;
+import org.mongodb.operation.MapReduceOutput;
+
 import java.util.Map;
+
+import static com.mongodb.DBObjects.toDocument;
 
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
@@ -325,5 +333,56 @@ public class MapReduceCommand {
         MERGE,
         REDUCE,
         INLINE
+    }
+
+    public Command toNew() {
+        final MapReduce mapReduce;
+        if (outputType == OutputType.INLINE) {
+            mapReduce = new MapReduce(new Code(map), new Code(reduce));
+        } else {
+            final MapReduceOutput output = new MapReduceOutput(outputCollection)
+                    .database(outputDB);
+            switch (outputType) {
+                case MERGE:
+                    output.action(MapReduceOutput.Action.MERGE);
+                    break;
+                case REDUCE:
+                    output.action(MapReduceOutput.Action.REDUCE);
+                    break;
+                case REPLACE:
+                    output.action(MapReduceOutput.Action.REPLACE);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected action on target collection");
+            }
+            //TODO: sharded?
+            //TODO: non-atomic?
+            mapReduce = new MapReduce(new Code(map), new Code(reduce), output);
+        }
+
+        if (query != null) {
+            mapReduce.filter(toDocument(query));
+        }
+
+        if (finalize != null) {
+            mapReduce.finalize(new Code(finalize));
+        }
+
+        if (sort != null) {
+            mapReduce.sort(toDocument(sort));
+        }
+
+        mapReduce.limit(limit);
+
+        if (scope != null) {
+            mapReduce.scope(new Document(scope));
+        }
+        if (verbose) {
+            mapReduce.verbose();
+        }
+        //TODO: jsMode?
+
+        return new org.mongodb.command.MapReduce(mapReduce, this.mapReduce);
+
     }
 }

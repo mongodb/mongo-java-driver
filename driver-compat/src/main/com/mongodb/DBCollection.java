@@ -42,6 +42,8 @@ import org.mongodb.command.DropIndex;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.GroupCommandResult;
+import org.mongodb.command.MapReduceCommandResult;
+import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
@@ -1142,22 +1144,29 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
-        //TODO Check that implementation is correct.
-        final DBObject commandDocument = command.toDBObject();
-        // if type in inline, then query options like slaveOk is fine
-        final CommandResult res;
-        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
-            res = database.command(
-                    commandDocument,
-                    getOptions(),
-                    command.getReadPreference() != null ? command.getReadPreference() : getReadPreference()
-            );
+
+        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                : getObjectCodec();
+
+        final MapReduceCommandResultCodec<DBObject> mapReduceCodec =
+                new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
+
+
+        final MapReduceCommandResult<DBObject> commandResult;
+        try {
+            final org.mongodb.operation.CommandResult executionResult
+                    = getSession().execute(new CommandOperation(getDB().getName(),
+                    command.toNew(),
+                    mapReduceCodec,
+                    getDB().getClusterDescription(),
+                    getBufferPool()));
+            commandResult = new MapReduceCommandResult<DBObject>(executionResult);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
         }
-        else {
-            res = database.command(commandDocument);
-        }
-        res.throwOnError();
-        return new MapReduceOutput(this, commandDocument, res);
+
+        return new MapReduceOutput(this, commandResult);
     }
 
     /**

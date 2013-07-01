@@ -18,6 +18,10 @@
 
 package com.mongodb;
 
+import org.mongodb.command.MapReduceCommandResult;
+
+import static com.mongodb.DBObjects.toDBObject;
+
 /**
  * Represents the result of a map/reduce operation
  *
@@ -25,24 +29,14 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
-    private final CommandResult commandResult;
-    private final Iterable<DBObject> results;
+    private final MapReduceCommandResult<DBObject> commandResult;
     private final DBCollection collection;
-    private final DBObject command;
 
-    @SuppressWarnings("unchecked")
-    public MapReduceOutput(final DBCollection inputCollection, final DBObject command, final CommandResult commandResult) {
+    MapReduceOutput(final DBCollection collection, final MapReduceCommandResult<DBObject> commandResult) {
         this.commandResult = commandResult;
-        this.command = command;
-        if (commandResult.containsField("results")) {
-            // means we called command with OutputType.INLINE
-            collection = null;
-            results = (Iterable<DBObject>) commandResult.get("results");
-        } else {
-            this.collection = determineOutputCollection(inputCollection, commandResult);
-            this.collection.setReadPreference(ReadPreference.primary());
-            this.results = collection.find();
-        }
+        this.collection = commandResult.isInline()
+                ? null
+                : getTargetCollection(collection, commandResult.getTargetDatabaseName(), commandResult.getTargetCollectionName());
     }
 
     /**
@@ -51,7 +45,7 @@ public class MapReduceOutput {
      * @return
      */
     public Iterable<DBObject> results() {
-        return results;
+        return commandResult.isInline() ? commandResult.getValue() : getOutputCollection().find();
     }
 
     /**
@@ -60,8 +54,8 @@ public class MapReduceOutput {
      * @throws MongoException
      */
     public void drop() {
-        if (collection != null) {
-            collection.drop();
+        if (!commandResult.isInline()) {
+            getOutputCollection().drop();
         }
     }
 
@@ -76,42 +70,28 @@ public class MapReduceOutput {
 
     @Deprecated
     public BasicDBObject getRaw() {
-        return commandResult;
+        return getCommandResult();
     }
 
     public CommandResult getCommandResult() {
-        return commandResult;
+        return new CommandResult(commandResult);
     }
 
     public DBObject getCommand() {
-        return command;
+        return toDBObject(commandResult.getCommand());
     }
 
     public ServerAddress getServerUsed() {
-        return commandResult.getServerUsed();
+        return new ServerAddress(commandResult.getAddress());
     }
 
     public String toString() {
         return commandResult.toString();
     }
 
-    private DBCollection determineOutputCollection(final DBCollection inputCollection, final CommandResult commandResult) {
-        final Object result = commandResult.get("result");
-        if (result instanceof String) {
-            // we have only infomation about collection name,
-            // that means that outputCollection in the same database with inputCollection
-            final String collectionName = (String) result;
-            return inputCollection.getDB().getCollection(collectionName);
-        } else if (result instanceof BasicDBObject) {
-            // we have complex object,
-            // if specified we will use another database for output collection
-            final BasicDBObject output = (BasicDBObject) result;
-            final DB db = output.containsField("db")
-                    ? inputCollection.getDB().getSisterDB(output.getString("db"))
-                    : inputCollection.getDB();
-            return db.getCollection(output.getString("collection"));
-        } else {
-            throw new IllegalStateException("Unexpected output target for Map-Reduce command");
-        }
+    private static DBCollection getTargetCollection(final DBCollection collection,
+                                                    final String databaseName, final String collectionName) {
+        final DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
+        return database.getCollection(collectionName);
     }
 }
