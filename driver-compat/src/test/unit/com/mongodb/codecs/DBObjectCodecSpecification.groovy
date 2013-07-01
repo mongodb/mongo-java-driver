@@ -27,7 +27,7 @@ class DBObjectCodecSpecification extends Specification {
     @Subject
     DBObjectCodec dbObjectCodec = new DBObjectCodec();
 
-    def 'should convert EncodingException for a missing codec into old com Exceptions for writeValue'() {
+    def 'should convert EncodingException for a missing codec into old com.mongodb.Exceptions for writeValue'() {
         BSONWriter bsonWriter = Mock();
 
         when:
@@ -37,7 +37,7 @@ class DBObjectCodecSpecification extends Specification {
         thrown(com.mongodb.MongoException)
     }
 
-    def 'should convert EncodingException for a missing codec into old com Exceptions for readValue'() {
+    def 'should convert EncodingException for a missing codec into old com.mongodb.MongoException when reading a value'() {
         BSONReader bsonReader = Mock();
         bsonReader._() >> { throw new EncodingException('New layer Exception that should not leak') }
 
