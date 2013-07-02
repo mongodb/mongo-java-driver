@@ -398,8 +398,6 @@ public class BasicBSONDecoder implements BSONDecoder {
 
         public String readCStr() throws IOException {
 
-            boolean isAscii = true;
-
             // short circuit 1 byte strings
             _random[0] = read();
             if (_random[0] == 0) {
@@ -413,18 +411,47 @@ public class BasicBSONDecoder implements BSONDecoder {
             }
 
             _stringBuffer.reset();
-            _stringBuffer.write(_random, 0, 2);
 
-            isAscii = _isAscii(_random[0]) && _isAscii(_random[1]);
+            /*
+             * This may be obscure enough to warrant an explanation:
+             * 
+             * The byte type is in the range [-128, 127] and ASCII codes are
+             * in the range [0, 127]. Therefore, all we have to do to tell
+             * if b is an ASCII code is compare with zero:
+             * 
+             * boolean isAscii( byte b ) { return b >= 0; }
+             * 
+             * Since we only need to know if there was a byte outside of the
+             * ASCII code range at the end, we can store the bitwise OR of all
+             * bytes. The sign bit will be 1 (i.e. negative) if and only if a
+             * negative byte was encountered.
+             * 
+             * Note: According to the Java language specification, bitwise
+             * operations on bytes imply a cast to int.
+             */
+            int bits = _random[0] | _random[1];
+
+            int offset = 2;
+            int size = _random.length;
 
             byte b;
-            while ((b = read()) != 0) {
-                _stringBuffer.write( b );
-                isAscii = isAscii && _isAscii( b );
+            while ( ( b = read() ) != 0 ) {
+                bits |= b;
+
+                if ( offset >= size ) {
+                    _stringBuffer.write( _random, 0, offset );
+
+                    offset = 0;
+                }
+
+                _random[offset++] = b;
             }
 
+            if ( offset > 0 )
+                _stringBuffer.write( _random, 0, offset );
+
             String out = null;
-            if ( isAscii ){
+            if ( bits >= 0 ) {
                 out = _stringBuffer.asAscii();
             }
             else {
@@ -504,10 +531,6 @@ public class BasicBSONDecoder implements BSONDecoder {
     private static final int MAX_STRING = ( 32 * 1024 * 1024 );
 
     private static final String DEFAULT_ENCODING = "UTF-8";
-
-    private static final boolean _isAscii( final byte b ){
-        return b >=0 && b <= 127;
-    }
 
     static final String[] ONE_BYTE_STRINGS = new String[128];
     static void _fillRange( byte min, byte max ){

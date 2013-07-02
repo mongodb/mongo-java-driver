@@ -59,6 +59,12 @@ public class DBPort {
      * the default port
      */
     public static final int PORT = 27017;
+
+    /**
+     * the network socket input buffer size
+     */
+    public static int BUFFER_SIZE = 65536;
+
     static final boolean USE_NAGLE = false;
     
     static final long CONN_RETRY_TIME_MS = 15000;
@@ -225,7 +231,7 @@ public class DBPort {
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setKeepAlive( _options.socketKeepAlive );
                 _socket.setSoTimeout( _options.socketTimeout );
-                _in = new BufferedInputStream( _socket.getInputStream() );
+                _in = new BufferedInputStream( _socket.getInputStream() , BUFFER_SIZE );
                 _out = _socket.getOutputStream();
                 successfullyConnected = true;
             }
