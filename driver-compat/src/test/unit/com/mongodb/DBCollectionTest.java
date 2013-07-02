@@ -92,8 +92,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testUpdate() {
         final WriteResult res = collection.update(new BasicDBObject("_id", 1),
-                                                  new BasicDBObject("$set", new BasicDBObject("x", 2)),
-                                                  true, false);
+                new BasicDBObject("$set", new BasicDBObject("x", 2)),
+                true, false);
         assertNotNull(res);
         assertEquals(1L, collection.count());
         assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
@@ -163,16 +163,16 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testcreateIndexWithDBEncoder() {
         collection.createIndex(
-                              new BasicDBObject("a", 1),
-                              new BasicDBObject("unique", false),
-                              new MyIndexDBEncoder(collection.getFullName())
-                              );
+                new BasicDBObject("a", 1),
+                new BasicDBObject("unique", false),
+                new MyIndexDBEncoder(collection.getFullName())
+        );
 
 
         final DBObject document = new BasicDBObject("name", "z_1")
-                                  .append("ns", collection.getFullName())
-                                  .append("key", new BasicDBObject("z", 1))
-                                  .append("unique", true);
+                .append("ns", collection.getFullName())
+                .append("key", new BasicDBObject("z", 1))
+                .append("unique", true);
 
         assertThat(collection.getIndexInfo(), hasItem(hasSubdocument(document)));
     }
@@ -193,13 +193,13 @@ public class DBCollectionTest extends DatabaseTestCase {
         final DBObject document = new BasicDBObject("x", 1);
         collection.insert(document);
         collection.update(
-                         new BasicDBObject("x", 1),
-                         new BasicDBObject("y", false),
-                         true,
-                         false,
-                         WriteConcern.ACKNOWLEDGED,
-                         new MyEncoder()
-                         );
+                new BasicDBObject("x", 1),
+                new BasicDBObject("y", false),
+                true,
+                false,
+                WriteConcern.ACKNOWLEDGED,
+                new MyEncoder()
+        );
 
         assertEquals(2, collection.count());
         assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
@@ -221,9 +221,9 @@ public class DBCollectionTest extends DatabaseTestCase {
 
         collection.insert(doc1);
         final DBObject newDoc = collection.findAndModify(
-                                                        new BasicDBObject("x", true),
-                                                        doc2
-                                                        );
+                new BasicDBObject("x", true),
+                doc2
+        );
         assertEquals(doc1, newDoc);
         assertEquals(doc2, collection.findOne());
     }
@@ -235,14 +235,14 @@ public class DBCollectionTest extends DatabaseTestCase {
         final DBObject doc = new BasicDBObject("_id", 2).append("p", "foo");
 
         final DBObject newDoc = collection.findAndModify(
-                                                        new BasicDBObject("p", "bar"),
-                                                        null,
-                                                        null,
-                                                        false,
-                                                        doc,
-                                                        false,
-                                                        true
-                                                        );
+                new BasicDBObject("p", "bar"),
+                null,
+                null,
+                false,
+                doc,
+                false,
+                true
+        );
         assertNull(newDoc);
         assertEquals(doc, collection.findOne(null, null, new BasicDBObject("_id", -1)));
     }
@@ -251,9 +251,9 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testFindAndUpdate() {
         collection.insert(new BasicDBObject("_id", 1).append("x", true));
         final DBObject newDoc = collection.findAndModify(
-                                                        new BasicDBObject("x", true),
-                                                        new BasicDBObject("$set", new BasicDBObject("x", false))
-                                                        );
+                new BasicDBObject("x", true),
+                new BasicDBObject("$set", new BasicDBObject("x", false))
+        );
         assertNotNull(newDoc);
         assertEquals(new BasicDBObject("_id", 1).append("x", true), newDoc);
         assertEquals(new BasicDBObject("_id", 1).append("x", false), collection.findOne());
@@ -263,14 +263,14 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void findAndUpdateAndReturnNew() {
         collection.insert(new BasicDBObject("_id", 1).append("x", true));
         final DBObject newDoc = collection.findAndModify(
-                                                        new BasicDBObject("x", false),
-                                                        null,
-                                                        null,
-                                                        false,
-                                                        new BasicDBObject("$set", new BasicDBObject("x", false)),
-                                                        true,
-                                                        true
-                                                        );
+                new BasicDBObject("x", false),
+                null,
+                null,
+                false,
+                new BasicDBObject("$set", new BasicDBObject("x", false)),
+                true,
+                true
+        );
         assertNotNull(newDoc);
         assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
     }
@@ -297,6 +297,24 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(uuid, collection.findOne().get("uuid"));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDotKeysArrayFail() {
+        //JAVA-794
+        DBObject obj = new BasicDBObject("x", 1)
+                .append("y", 2)
+                .append("array", new Object[]{new BasicDBObject("foo.bar", "baz")});
+        collection.insert(obj);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDotKeysListFail() {
+        //JAVA-794
+        DBObject obj = new BasicDBObject("x", 1)
+                .append("y", 2)
+                .append("array", Arrays.asList(new BasicDBObject("foo.bar", "baz")));
+        collection.insert(obj);
+    }
+
     @Test
     public void testPathToClassMapDecoding() {
         collection.setObjectClass(TopLevelDBObject.class);
@@ -304,9 +322,9 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.setInternalClass("a.b", NestedTwoDBObject.class);
 
         final DBObject doc = new TopLevelDBObject()
-                             .append("a", new NestedOneDBObject()
-                                          .append("b", Arrays.asList(new NestedTwoDBObject()))
-                                          .append("c", new BasicDBObject()));
+                .append("a", new NestedOneDBObject()
+                        .append("b", Arrays.asList(new NestedTwoDBObject()))
+                        .append("c", new BasicDBObject()));
         collection.save(doc);
         assertEquals(doc, collection.findOne());
     }
@@ -404,8 +422,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
         public static DBObject getConstantObject() {
             return new BasicDBObject()
-                   .append("_id", 1)
-                   .append("s", "foo");
+                    .append("_id", 1)
+                    .append("s", "foo");
         }
     }
 
