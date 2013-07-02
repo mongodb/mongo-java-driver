@@ -325,6 +325,29 @@ public class MapReduceTest extends DatabaseTestCase {
         );
     }
 
+    @Test
+    public void testMapReduceOutputLegacyConstructor() {
+        final MapReduceOutput realOutput = collection.mapReduce(new MapReduceCommand(
+                collection,
+                DEFAULT_MAP,
+                DEFAULT_REDUCE,
+                DEFAULT_COLLECTION,
+                MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject()
+        ));
+
+        final MapReduceOutput output = new MapReduceOutput(
+                collection,
+                realOutput.getCommand(),
+                realOutput.getCommandResult()
+        );
+
+        assertEquals(realOutput.getCommand(), output.getCommand());
+        assertEquals(realOutput.getCommandResult(), output.getCommandResult());
+        assertEquals(realOutput.getOutputCollection(), output.getOutputCollection());
+        assertEquals(realOutput.getServerUsed(), output.getServerUsed());
+    }
+
     private List<DBObject> toList(final Iterable<DBObject> results) {
         return results instanceof DBCursor ? ((DBCursor) results).toArray() : (List<DBObject>) results;
     }

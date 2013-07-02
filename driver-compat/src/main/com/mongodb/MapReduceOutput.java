@@ -21,6 +21,7 @@ package com.mongodb;
 import org.mongodb.command.MapReduceCommandResult;
 
 import static com.mongodb.DBObjects.toDBObject;
+import static com.mongodb.DBObjects.toDocument;
 
 /**
  * Represents the result of a map/reduce operation
@@ -37,6 +38,10 @@ public class MapReduceOutput {
         this.collection = commandResult.isInline()
                 ? null
                 : getTargetCollection(collection, commandResult.getTargetDatabaseName(), commandResult.getTargetCollectionName());
+    }
+
+    public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
+        this(collection, createMapReduceCommandResult(command, commandResult));
     }
 
     /**
@@ -93,5 +98,14 @@ public class MapReduceOutput {
                                                     final String databaseName, final String collectionName) {
         final DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
         return database.getCollection(collectionName);
+    }
+
+    private static MapReduceCommandResult<DBObject> createMapReduceCommandResult(DBObject command, CommandResult commandResult) {
+        return new MapReduceCommandResult<DBObject>(new org.mongodb.operation.CommandResult(
+                toDocument(command),
+                commandResult.getServerUsed().toNew(),
+                toDocument(commandResult),
+                0
+        ));
     }
 }
