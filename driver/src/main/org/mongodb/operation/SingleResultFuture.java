@@ -21,18 +21,27 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.SingleResultCallback;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-// TODO: Should this be public?
+import static org.mongodb.assertions.Assertions.notNull;
+
+/**
+ * This class is not part of the public API.  Changes that affect binary compatibility may be made without notice.
+ *
+ * @param <T> the future type
+ * @since 3.0
+ */
 @ThreadSafe
 public class SingleResultFuture<T> implements MongoFuture<T> {
     private T result;
     private MongoException exception;
     private boolean isDone;
     private boolean isCancelled;
-    private SingleResultCallback<T> callback;
+    private final List<SingleResultCallback<T>> callbacks = new ArrayList<SingleResultCallback<T>>();
 
     public SingleResultFuture() {
     }
@@ -60,7 +69,7 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
 
         notifyAll();
 
-        if (callback != null) {
+        for (SingleResultCallback<T> callback : callbacks) {
             callback.onResult(result, exception);
         }
     }
@@ -99,10 +108,7 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
 
     @Override
     public synchronized T get(final long timeout, final TimeUnit unit) throws TimeoutException {
-        if (unit == null) {
-            throw new IllegalArgumentException("Time unit can not be null");
-
-        }
+        notNull("timeUnit", unit);
         if (!isDone()) {
             try {
                 wait(unit.toMillis(timeout));
@@ -126,25 +132,20 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
     }
 
     @Override
-    public synchronized void register(final SingleResultCallback<T> newCallback) {
-        if (callback != null) {
-            throw new IllegalStateException("Can not register more than one callback");
-        }
-
-        if (newCallback == null) {
+    public synchronized void register(final SingleResultCallback<T> callback) {
+        if (callback == null) {
             throw new IllegalArgumentException("Callback can not be null");
-        }
-
-        callback = newCallback;
-
-        if (!isDone()) {
-            return;
         }
 
         if (isCancelled()) {
             throw new CancellationException();
         }
 
-        newCallback.onResult(result, exception);
+        if (isDone()) {
+            callback.onResult(result, exception);
+        }
+        else {
+            callbacks.add(callback);
+        }
     }
 }

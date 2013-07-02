@@ -157,29 +157,6 @@ public class SingleResultFutureTest {
     }
 
     @Test
-    public void testMultipleCallbacks() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-
-        future.register(new SingleResultCallback<Integer>() {
-            @Override
-            public void onResult(final Integer result, final MongoException e) {
-            }
-        });
-
-        try {
-            future.register(new SingleResultCallback<Integer>() {
-                @Override
-                public void onResult(final Integer result, final MongoException e) {
-                }
-            });
-            fail();
-        } catch (IllegalStateException e) { // NOPMD
-            // all good
-        }
-    }
-
-
-    @Test
     public void testCallbackRegisteredAfterInit() throws InterruptedException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -211,5 +188,40 @@ public class SingleResultFutureTest {
         future.init(1, null);
 
         latch.await();
+    }
+
+    @Test
+    public void testMultipleCallbacksRegisteredBeforeInit() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        final CountDownLatch latch = new CountDownLatch(2);
+
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+                latch.countDown();
+            }
+        });
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+                latch.countDown();
+            }
+        });
+
+        future.init(1, null);
+
+        latch.await();
+    }
+
+    @Test(expected = CancellationException.class)
+    public void testCallbackRegisteredAfterCancel() throws InterruptedException {
+        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        future.cancel(true);
+
+        future.register(new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final MongoException e) {
+            }
+        });
     }
 }
