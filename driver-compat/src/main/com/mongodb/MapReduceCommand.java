@@ -328,14 +328,14 @@ public class MapReduceCommand {
      * <li>REDUCE - Reduce the job output with the existing contents of outputCollection collection</li>
      * </ul>
      */
-    public static enum OutputType {
+    public enum OutputType {
         REPLACE,
         MERGE,
         REDUCE,
         INLINE
     }
 
-    public Command toNew() {
+    Command toNew() {
         final MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {
             mapReduce = new MapReduce(new Code(map), new Code(reduce));
