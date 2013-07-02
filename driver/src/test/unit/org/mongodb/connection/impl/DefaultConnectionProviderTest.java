@@ -120,6 +120,7 @@ public class DefaultConnectionProviderTest {
         TimeoutTrackingConnectionGetter timeoutTrackingGetter = new TimeoutTrackingConnectionGetter(pool);
         WaitQueueFullTrackingConnectionGetter waitQueueFullTrackingGetter = new WaitQueueFullTrackingConnectionGetter(pool);
         new Thread(timeoutTrackingGetter).start();
+        Thread.sleep(10);
         new Thread(waitQueueFullTrackingGetter).start();
 
         waitQueueFullTrackingGetter.latch.await();
