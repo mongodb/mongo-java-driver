@@ -313,16 +313,15 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     public boolean equals( Object o ){
-        if ( ! ( o instanceof BSONObject ) )
+        if ( ! ( ( o instanceof BSONObject ) || ( o instanceof Map )) )
             return false;
 
-        BSONObject other = (BSONObject)o;
-        if ( ! keySet().equals( other.keySet() ) )
+        if ( ! keySet().equals( getKeySet( o ) ) )
             return false;
 
         for ( String key : keySet() ){
             Object a = get( key );
-            Object b = other.get( key );
+            Object b = getValue( o, key );
 
             if ( a == null ){
                 if ( b != null )
@@ -349,6 +348,28 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
             }
         }
         return true;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private Set<String> getKeySet( Object o ) {
+        if ( o instanceof BSONObject ) {
+            return ( (BSONObject) o ).keySet();
+        } else if ( o instanceof Map ) {
+            return ( (Map) o ).keySet();
+        } else {
+            throw new IllegalArgumentException( "object must be BSONObject or Map" );
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    private Object getValue( Object o, String key ) {
+        if ( o instanceof BSONObject ) {
+            return ( (BSONObject) o ).get( key );
+        } else if ( o instanceof Map ) {
+            return ( (Map) o ).get( key );
+        } else {
+            throw new IllegalArgumentException( "object must be BSONObject or Map" );
+        }
     }
 
 }
