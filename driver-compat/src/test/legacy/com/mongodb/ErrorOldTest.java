@@ -85,7 +85,7 @@ public class ErrorOldTest extends DatabaseTestCase {
 
             assertTrue(database.getLastError().get("err") == null);
             assertTrue(database.getPreviousError().get("err") == null);
-        } catch (Exception e) {
+        } finally {
             database.requestDone();
         }
     }
