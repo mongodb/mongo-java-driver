@@ -225,6 +225,20 @@ public class MongoClientURI {
     }
 
     /**
+     * Gets the credentials.
+     *
+     * @return the credentials
+     */
+    public MongoCredential getCredentials() {
+        if (proxied.getCredentialList().isEmpty()) {
+            return null;
+        }
+        else {
+            return new MongoCredential(proxied.getCredentialList().get(0));
+        }
+    }
+
+    /**
      * Gets the options
      *
      * @return the MongoClientOptions based on this URI.
