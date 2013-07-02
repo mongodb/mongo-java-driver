@@ -22,10 +22,16 @@ import org.bson.BSONCallback;
 
 import com.mongodb.DBObject;
 
+import java.util.EnumSet;
+
 /**
  *   Helper methods for JSON serialization and de-serialization
  */
 public class JSON {
+
+    public static enum Feature {
+        ALLOW_COMMENTS
+    }
 
     /**
      *  Serializes an object into its JSON form.
@@ -63,21 +69,44 @@ public class JSON {
      * @return the object
      */
     public static Object parse( String s ){
-	return parse(s, null);
+	return parse(s, null, null);
+    }
+
+    /**
+     *  Parses a JSON string representing a JSON value
+     *
+     * @param s the string to parse
+     * @param c the BSONCallback to use
+     * @return the object
+     */
+    public static Object parse( String s, BSONCallback c ){
+        return parse(s, c, null);
+    }
+    /**
+     *  Parses a JSON string representing a JSON value
+     *
+     * @param s the string to parse
+     * @param f the set of Features for parsing
+     * @return the object
+     */
+    public static Object parse( String s, EnumSet<Feature> f ){
+        return parse(s, null, f);
     }
 
     /**
      * Parses a JSON string representing a JSON value
      *
      * @param s the string to parse
+     * @param c the BSONCallback to use
+     * @param f the set of Features for parsing
      * @return the object
      */
-    public static Object parse( String s, BSONCallback c ){
+    public static Object parse( String s, BSONCallback c, EnumSet<Feature> f ){
         if (s == null || (s=s.trim()).equals("")) {
             return (DBObject)null;
         }
 
-        JSONParser p = new JSONParser(s, c);
+        JSONParser p = new JSONParser(s, c, f);
         return p.parse();
     }
 
@@ -118,20 +147,36 @@ class JSONParser {
     String s;
     int pos = 0;
     BSONCallback _callback;
+    EnumSet<JSON.Feature> _featureSet;
 
     /**
      * Create a new parser.
      */
     public JSONParser(String s) {
-	this(s, null);
+	this(s, null, null);
     }
 
     /**
      * Create a new parser.
      */
     public JSONParser(String s, BSONCallback callback) {
+        this(s, callback, null);
+    }
+
+    /**
+     * Create a new parser.
+     */
+    public JSONParser(String s, EnumSet<JSON.Feature> featureSet) {
+        this(s, null, featureSet);
+    }
+
+    /**
+     * Create a new parser.
+     */
+    public JSONParser(String s, BSONCallback callback, EnumSet<JSON.Feature> featureSet) {
         this.s = s;
-	_callback = (callback == null) ? new JSONCallback() : callback;
+	    _callback = (callback == null) ? new JSONCallback() : callback;
+        _featureSet = (featureSet == null) ? EnumSet.noneOf(JSON.Feature.class) : featureSet;
     }
 
 
@@ -194,6 +239,14 @@ class JSONParser {
         case '{':
             value = parseObject(name);
             break;
+        // comment
+        case '/':
+            parseComment();
+            current = get();
+            if (current != (char)-1) {
+                value = parse(name);
+            }
+            break;
         default:
             throw new JSONParseException(s, pos);
         }
@@ -217,32 +270,48 @@ class JSONParser {
      * @throws JSONParseException if invalid JSON is found
      */
     protected Object parseObject(String name){
-	if (name != null) {
-	    _callback.objectStart(name);
-	} else {
-	    _callback.objectStart();
-	}
-
+        if (name != null) {
+            _callback.objectStart(name);
+        } else {
+            _callback.objectStart();
+        }
         read('{');
-        char current = get();
-        while(get() != '}') {
-            String key = parseString(false);
-            read(':');
-            Object value = parse(key);
-	    doCallback(key, value);
 
-            if((current = get()) == ',') {
-                read(',');
+        ObjectToken expected = ObjectToken.KEY;
+        String key="";
+
+        while(get() != '}') {
+            // comment
+            if (check('/')) {
+                parseComment();
             }
             else {
-                break;
+                switch(expected) {
+                    case KEY:
+                        key = parseString(false);
+                        expected = ObjectToken.COLON;
+                        break;
+                    case COLON:
+                        read(':');
+                        expected = ObjectToken.VALUE;
+                        break;
+                    case VALUE:
+                        Object value = parse(key);
+                        doCallback(key, value);
+                        expected = ObjectToken.COMMA;
+                        break;
+                    case COMMA:
+                        read(',');
+                        expected = ObjectToken.KEY;
+                        break;
+                }
             }
         }
         read('}');
 
         return _callback.objectDone();
     }
-    
+
     protected void doCallback(String name, Object value) {
 	if (value == null) {
 	    _callback.gotNull(name);
@@ -529,30 +598,86 @@ class JSONParser {
 	} else {
 	    _callback.arrayStart();
 	}
-
         read('[');
 
-	int i = 0;
-        char current = get();
-        while( current != ']' ) {
-	    String elemName = String.valueOf(i++);
-            Object elem = parse(elemName);
-	    doCallback(elemName, elem);
-
-            if((current = get()) == ',') {
-                read(',');
-            }
-            else if(current == ']') {
-                break;
+        int i = 0;
+        ArrayToken expected = ArrayToken.OBJECT;
+        while(get() != ']') {
+            // comment
+            if (check('/')) {
+                parseComment();
             }
             else {
-                throw new JSONParseException(s, pos);
+                switch(expected) {
+                    case OBJECT:
+                        String elemName = String.valueOf(i++);
+                        Object elem = parse(elemName);
+                        doCallback(elemName, elem);
+                        expected = ArrayToken.COMMA;
+                        break;
+                    case COMMA:
+                        read(',');
+                        expected = ArrayToken.OBJECT;
+                        if (check(']')) {
+                            throw new JSONParseException(s, pos);
+                        }
+                        break;
+                }
             }
         }
 
         read(']');
 
         return _callback.arrayDone();
+    }
+
+    /**
+     * Advances the pointer through a comment.
+     *
+     * @throws JSONParseException if commenting is not allowed or has invalid format
+     */
+    public void parseComment() {
+        if (_featureSet.contains(JSON.Feature.ALLOW_COMMENTS)) {
+            read('/'); read('*');
+
+            while(true) {
+                try {
+                    // potential end of comment
+                    if (check('*')) {
+                        read();
+                        // definite end of comment
+                        if (check('/')) {
+                            read();
+                            break;
+                        }
+                    }
+                    else if (check((char)-1)) {
+                        throw new JSONParseException(s, pos);
+                    }
+                    else {
+                        read();
+                    }
+                }
+                catch(IllegalStateException e) {
+                    throw new JSONParseException(s, pos);
+                }
+            }
+
+        }
+        else {
+            throw new JSONParseException(s, pos);
+        }
+    }
+
+    enum ObjectToken {
+        KEY,
+        COLON,
+        VALUE,
+        COMMA
+    }
+    enum ArrayToken {
+        OBJECT,
+        COMMA
     }
 
 }
