@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MongoClientImpl implements MongoClient {
+class MongoClientImpl implements MongoClient {
 
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
@@ -40,7 +40,7 @@ public class MongoClientImpl implements MongoClient {
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
+    MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
         this.clientOptions = clientOptions;
         this.cluster = cluster;
     }
