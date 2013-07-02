@@ -21,15 +21,19 @@ public class MapReduceCommandResultCodec<T> extends DocumentCodec {
     @Override
     protected Object readValue(final BSONReader reader, final String fieldName) {
         if ("results".equals(fieldName)) {
-            final List<T> list = new ArrayList<T>();
-            reader.readStartArray();
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-                list.add(decoder.decode(reader));
-            }
-            reader.readEndArray();
-            return list;
+            return readArray(reader);
         } else {
             return super.readValue(reader, fieldName);
         }
+    }
+
+    private List<T> readArray(final BSONReader reader) {
+        final List<T> list = new ArrayList<T>();
+        reader.readStartArray();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            list.add(decoder.decode(reader));
+        }
+        reader.readEndArray();
+        return list;
     }
 }
