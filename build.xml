@@ -365,9 +365,9 @@ limitations under the License.
 
     <target name="check-binary-compatibility" depends="jar">
 
-        <property name="jar.baseline" value="mongo-${build.conf.compatibility.baseline.version}.jar"/>
+        <property name="jar.baseline" value="${ant.project.name}-${build.conf.compatibility.baseline.version}.jar"/>
 
-        <get src="${build.conf.url.libbase}/${ant.project.name}/${jar.baseline}" dest="${jar.baseline}"
+        <get src="${build.conf.url.libbase}/${build.conf.compatibility.baseline.version}/${jar.baseline}" dest="${jar.baseline}"
              verbose="true" usetimestamp="true"/>
 
         <clirr failOnBinError="no" failOnSrcError="no">
