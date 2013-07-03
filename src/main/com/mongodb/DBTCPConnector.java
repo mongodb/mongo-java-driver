@@ -565,8 +565,7 @@ public class DBTCPConnector implements DBConnector {
         if ( _connectionStatus != null ) {
             buf.append( "set : " ).append( _mongo._authority.getServerAddresses() );
         } else {
-            ServerAddress master = getAddress();
-            buf.append( master ).append( " " ).append( master != null ? master.getSocketAddress() : null );
+            buf.append(getAddress());
         }
 
         return buf.toString();

@@ -65,7 +65,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
         sb.append(", updaterIntervalMS: ").append(updaterIntervalMS);
         sb.append(", updaterIntervalNoMasterMS: ").append(updaterIntervalNoMasterMS);
         sb.append(", slaveAcceptableLatencyMS: ").append(slaveAcceptableLatencyMS);
-        sb.append(", inetAddrCacheMS: ").append(inetAddrCacheMS);
         sb.append(", latencySmoothFactor: ").append(latencySmoothFactor);
         sb.append("}");
 
@@ -586,19 +585,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
             _lastPrimarySignal = lastPrimarySignal;
         }
 
-        private void updateAddr() {
-            try {
-                if (_addr.updateInetAddress()) {
-                    // address changed, need to use new ports
-                    _port = new DBPort(_addr, null, _mongoOptions);
-                    _mongo.getConnector().updatePortPool(_addr);
-                    _logger.get().log(Level.INFO, "Address of host " + _addr.toString() + " changed to " + _addr.getSocketAddress().toString());
-                }
-            } catch (UnknownHostException ex) {
-                _logger.get().log(Level.WARNING, null, ex);
-            }
-        }
-
         void update(Set<UpdatableReplicaSetNode> seenNodes) {
             CommandResult res = update();
             if (res == null || !isOk()) {
@@ -712,7 +698,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
             for ( ServerAddress addr : initial ){
                 _all.add( new UpdatableReplicaSetNode( addr, _all,  _logger, _mongo, _mongoOptions, _lastPrimarySignal ) );
             }
-            _nextResolveTime = System.currentTimeMillis() + inetAddrCacheMS;
         }
 
         @Override
@@ -723,8 +708,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
 
                     try {
                         updateAll();
-
-                        updateInetAddresses();
 
                         ReplicaSet replicaSet = new ReplicaSet(createNodeList(), _random, slaveAcceptableLatencyMS);
                         _replicaSetHolder.set(replicaSet);
@@ -774,16 +757,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
             return nodeList;
         }
 
-        private void updateInetAddresses() {
-            long now = System.currentTimeMillis();
-            if (inetAddrCacheMS > 0 && _nextResolveTime < now) {
-                _nextResolveTime = now + inetAddrCacheMS;
-                for (UpdatableReplicaSetNode node : _all) {
-                    node.updateAddr();
-                }
-            }
-        }
-
         private void closeAllNodes() {
             for (UpdatableReplicaSetNode node : _all) {
                 try {
@@ -793,7 +766,6 @@ public class ReplicaSetStatus extends ConnectionStatus {
         }
 
         private final List<UpdatableReplicaSetNode> _all;
-        private volatile long _nextResolveTime;
         private final Random _random = new Random();
     }
 
@@ -838,11 +810,9 @@ public class ReplicaSetStatus extends ConnectionStatus {
 
     private final AtomicReference<String> _lastPrimarySignal = new AtomicReference<String>();
     final static int slaveAcceptableLatencyMS;
-    final static int inetAddrCacheMS;
 
     static {
         slaveAcceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
-        inetAddrCacheMS = Integer.parseInt(System.getProperty("com.mongodb.inetAddrCacheMS", "300000"));
     }
 
 }

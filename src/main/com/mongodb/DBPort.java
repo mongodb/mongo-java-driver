@@ -75,10 +75,8 @@ public class DBPort {
     DBPort( ServerAddress addr, DBPortPool pool, MongoOptions options ){
         _options = options;
         _sa = addr;
-        _addr = addr.getSocketAddress();
+        _addr = addr;
         _pool = pool;
-
-        _hashCode = _addr.hashCode();
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
         _decoder = _options.dbDecoderFactory.create();
@@ -220,7 +218,7 @@ public class DBPort {
         do {
             try {
                 _socket = _options.socketFactory.createSocket();
-                _socket.connect( _addr , _options.connectTimeout );
+                _socket.connect( _addr.getSocketAddress() , _options.connectTimeout );
 
                 _socket.setTcpNoDelay( ! USE_NAGLE );
                 _socket.setKeepAlive( _options.socketKeepAlive );
@@ -253,7 +251,7 @@ public class DBPort {
 
     @Override
     public int hashCode(){
-        return _hashCode;
+        return _addr.hashCode();
     }
     
     /**
@@ -344,9 +342,8 @@ public class DBPort {
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 
-    final int _hashCode;
     final ServerAddress _sa;
-    final InetSocketAddress _addr;
+    final ServerAddress _addr;
     final DBPortPool _pool;
     final MongoOptions _options;
     final Logger _logger;

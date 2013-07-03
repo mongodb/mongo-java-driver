@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import org.bson.util.annotations.Immutable;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -25,8 +27,9 @@ import java.net.UnknownHostException;
 /**
  * mongo server address
  */
+@Immutable
 public class ServerAddress {
-    
+
     /**
      * Creates a ServerAddress with default host and port
      * @throws UnknownHostException
@@ -35,7 +38,7 @@ public class ServerAddress {
         throws UnknownHostException {
         this( defaultHost() , defaultPort() );
     }
-    
+
     /**
      * Creates a ServerAddress with default port
      * @param host hostname
@@ -59,7 +62,7 @@ public class ServerAddress {
         host = host.trim();
         if ( host.length() == 0 )
             host = defaultHost();
-        
+
         int idx = host.indexOf( ":" );
         if ( idx > 0 ){
             if ( port != defaultPort() )
@@ -70,7 +73,6 @@ public class ServerAddress {
 
         _host = host;
         _port = port;
-        updateInetAddress();
     }
 
     /**
@@ -95,11 +97,10 @@ public class ServerAddress {
      * @param addr inet socket address containing hostname and port
      */
     public ServerAddress( InetSocketAddress addr ){
-        _address = addr;
-        _host = _address.getHostName();
-        _port = _address.getPort();
+        _host = addr.getHostName();
+        _port = addr.getPort();
     }
-    
+
     // --------
     // equality, etc...
     // --------
@@ -118,28 +119,29 @@ public class ServerAddress {
             host = host.substring( 0 , idx );
         }
 
-        return 
+        return
             _port == port &&
             _host.equalsIgnoreCase( host );
     }
 
     @Override
-    public boolean equals( Object other ){
-        if ( other instanceof ServerAddress ){
-            ServerAddress a = (ServerAddress)other;
-            return 
-                a._port == _port &&
-                a._host.equals( _host );
-        }
-        if ( other instanceof InetSocketAddress ){
-            return _address.equals( other );
-        }
-        return false;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ServerAddress that = (ServerAddress) o;
+
+        if (_port != that._port) return false;
+        if (!_host.equals(that._host)) return false;
+
+        return true;
     }
 
     @Override
-    public int hashCode(){
-        return _host.hashCode() + _port;
+    public int hashCode() {
+        int result = _host.hashCode();
+        result = 31 * result + _port;
+        return result;
     }
 
     /**
@@ -157,23 +159,23 @@ public class ServerAddress {
     public int getPort(){
         return _port;
     }
-    
+
     /**
      * Gets the underlying socket address
      * @return socket address
+     * @throws MongoException.Network if the host can not be resolved
      */
-    public InetSocketAddress getSocketAddress(){
-        return _address;
+    public InetSocketAddress getSocketAddress() throws UnknownHostException {
+        return new InetSocketAddress(InetAddress.getByName(_host), _port);
     }
 
     @Override
     public String toString(){
-        return _address.toString();
+        return _host + ":" + _port;
     }
 
     final String _host;
     final int _port;
-    volatile InetSocketAddress _address;
 
     // --------
     // static helpers
@@ -192,16 +194,5 @@ public class ServerAddress {
      */
     public static int defaultPort(){
         return DBPort.PORT;
-    }
-
-    /**
-     * attempts to update the internal InetAddress by resolving the host name.
-     * @return true if host resolved to a new IP that is different from old one, false otherwise
-     * @throws UnknownHostException
-     */
-    boolean updateInetAddress() throws UnknownHostException {
-        InetSocketAddress oldAddress = _address;
-        _address = new InetSocketAddress( InetAddress.getByName(_host) , _port );
-        return !_address.equals(oldAddress);
     }
 }
