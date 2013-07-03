@@ -36,7 +36,9 @@
         <exclude name='SpaceAfterClosingBrace'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
-    <ruleset-ref path='rulesets/groovyism.xml'/>
+    <ruleset-ref path='rulesets/groovyism.xml'>
+        <exclude name="ExplicitCallToCompareToMethod"/>
+     </ruleset-ref>
     <ruleset-ref path='rulesets/junit.xml'/>
     <ruleset-ref path='rulesets/logging.xml'/>
     <ruleset-ref path='rulesets/naming.xml'>
