@@ -47,7 +47,8 @@ public class ServerDescriptionTest {
 
     @Test
     public void testDefaults() throws UnknownHostException {
-        ServerDescription serverDescription = ServerDescription.builder().address(new ServerAddress()).state(Connected)
+        ServerDescription serverDescription = ServerDescription.builder().address(new ServerAddress())
+                .state(Connected)
                 .build();
 
         assertEquals(new ServerAddress(), serverDescription.getAddress());
@@ -73,6 +74,7 @@ public class ServerDescriptionTest {
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
+        assertEquals(new ServerVersion(), serverDescription.getVersion());
     }
 
     @Test
@@ -89,7 +91,8 @@ public class ServerDescriptionTest {
                 .hosts(new HashSet<String>(Arrays.asList("localhost:27017", "localhost:27018")))
                 .passives(new HashSet<String>(Arrays.asList("localhost:27019")))
                 .ok(true)
-                .state(Connected);
+                .state(Connected)
+                .version(new ServerVersion(Arrays.asList(2, 4, 1)));
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());
         assertTrue(builder.build().toString().startsWith("ServerDescription"));

@@ -52,7 +52,7 @@ class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ConnectionProvider connectionProvider;
     private final AsyncConnectionProvider asyncConnectionProvider;
-    private final IsMasterServerStateNotifier stateNotifier;
+    private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
@@ -76,7 +76,7 @@ class DefaultServer implements ClusterableServer {
         this.connectionProvider = connectionProvider;
         this.asyncConnectionProvider = asyncConnectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new IsMasterServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatConnectionFactory,
+        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatConnectionFactory,
                 bufferProvider);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                 settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);

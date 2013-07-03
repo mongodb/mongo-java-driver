@@ -54,6 +54,7 @@ public class ServerDescription {
     private final long averagePingTimeNanos;
     private final boolean ok;
     private final ServerConnectionState state;
+    private final ServerVersion version;
 
     public static class Builder {
         private ServerAddress address;
@@ -69,6 +70,7 @@ public class ServerDescription {
         private long averagePingTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
+        private ServerVersion version = new ServerVersion();
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -136,10 +138,16 @@ public class ServerDescription {
             return this;
         }
 
+        public Builder version(final ServerVersion version) {
+            notNull("version", version);
+            this.version = version;
+            return this;
+        }
+
         public ServerDescription build() {
             return new ServerDescription(this);
         }
-        // CHECKSTYLE:OFF
+        // CHECKSTYLE:ON
     }
 
     public static int getDefaultMaxDocumentSize() {
@@ -211,10 +219,10 @@ public class ServerDescription {
      * or @code{ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
      * those types.
      *
-     * @param tags the tags
+     * @param desiredTags the tags
      * @return true if this server has the given tags
      */
-    public boolean hasTags(final Tags tags) {
+    public boolean hasTags(final Tags desiredTags) {
         if (!ok) {
             return false;
         }
@@ -223,7 +231,7 @@ public class ServerDescription {
             return true;
         }
 
-        for (Map.Entry<String, String> tag : tags.entrySet()) {
+        for (Map.Entry<String, String> tag : desiredTags.entrySet()) {
             if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
                 return false;
             }
@@ -248,34 +256,71 @@ public class ServerDescription {
         return type;
     }
 
+    public ServerVersion getVersion() {
+        return version;
+    }
+
     public long getAveragePingTimeNanos() {
         return averagePingTimeNanos;
     }
 
     /**
      * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the average ping time.
+     *
      * @param o the object to compare to
      * @return true if this instance is equals to @code{o}
      */
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final ServerDescription that = (ServerDescription) o;
 
-        if (type != that.type) return false;
-        if (maxDocumentSize != that.maxDocumentSize) return false;
-        if (maxMessageSize != that.maxMessageSize) return false;
-        if (ok != that.ok) return false;
-        if (!hosts.equals(that.hosts)) return false;
-        if (!passives.equals(that.passives)) return false;
-        if (!arbiters.equals(that.arbiters)) return false;
-        if (primary != null ? !primary.equals(that.primary) : that.primary != null) return false;
-        if (!address.equals(that.address)) return false;
-        if (setName != null ? !setName.equals(that.setName) : that.setName != null) return false;
-        if (!tags.equals(that.tags)) return false;
-        if (state != that.state) return false;
+        if (maxDocumentSize != that.maxDocumentSize) {
+            return false;
+        }
+        if (maxMessageSize != that.maxMessageSize) {
+            return false;
+        }
+        if (ok != that.ok) {
+            return false;
+        }
+        if (!address.equals(that.address)) {
+            return false;
+        }
+        if (!arbiters.equals(that.arbiters)) {
+            return false;
+        }
+        if (!hosts.equals(that.hosts)) {
+            return false;
+        }
+        if (!passives.equals(that.passives)) {
+            return false;
+        }
+        if (primary != null ? !primary.equals(that.primary) : that.primary != null) {
+            return false;
+        }
+        if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
+            return false;
+        }
+        if (state != that.state) {
+            return false;
+        }
+        if (!tags.equals(that.tags)) {
+            return false;
+        }
+        if (type != that.type) {
+            return false;
+        }
+        if (!version.equals(that.version)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -293,6 +338,7 @@ public class ServerDescription {
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
+        result = 31 * result + version.hashCode();
         return result;
     }
 
@@ -312,6 +358,7 @@ public class ServerDescription {
                 + ", averagePingTimeNanos=" + averagePingTimeNanos
                 + ", ok=" + ok
                 + ", state=" + state
+                + ", version=" + version
                 + '}';
     }
 
@@ -319,6 +366,7 @@ public class ServerDescription {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
         state = notNull("state", builder.state);
+        version = notNull("version", builder.version);
         hosts = builder.hosts;
         passives = builder.passives;
         arbiters = builder.arbiters;
