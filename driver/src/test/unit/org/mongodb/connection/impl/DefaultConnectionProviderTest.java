@@ -112,20 +112,21 @@ public class DefaultConnectionProviderTest {
                 DefaultConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxWaitTime(50, TimeUnit.MILLISECONDS)
+                        .maxWaitTime(500, TimeUnit.MILLISECONDS)
                         .build());
 
         pool.get();
 
         TimeoutTrackingConnectionGetter timeoutTrackingGetter = new TimeoutTrackingConnectionGetter(pool);
-        WaitQueueFullTrackingConnectionGetter waitQueueFullTrackingGetter = new WaitQueueFullTrackingConnectionGetter(pool);
+
         new Thread(timeoutTrackingGetter).start();
         Thread.sleep(10);
-        new Thread(waitQueueFullTrackingGetter).start();
-
-        waitQueueFullTrackingGetter.latch.await();
-
-        assertTrue(waitQueueFullTrackingGetter.gotWaitQueueFull);
+        try {
+            pool.get();
+            fail();
+        } catch (MongoWaitQueueFullException e){
+            //all good
+        }
     }
 
     @Test
@@ -226,25 +227,4 @@ public class DefaultConnectionProviderTest {
             latch.countDown();
         }
     }
-
-    private static class WaitQueueFullTrackingConnectionGetter implements Runnable {
-        private final ConnectionProvider connectionProvider;
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private volatile boolean gotWaitQueueFull;
-
-        public WaitQueueFullTrackingConnectionGetter(final ConnectionProvider connectionProvider) {
-            this.connectionProvider = connectionProvider;
-        }
-
-        @Override
-        public void run() {
-            try {
-                connectionProvider.get();
-            } catch (MongoWaitQueueFullException e) {
-                gotWaitQueueFull = true;
-            }
-            latch.countDown();
-        }
-    }
-
 }
