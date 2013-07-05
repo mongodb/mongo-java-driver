@@ -121,7 +121,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     findbugs {
-        ignoreFailures = true
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
     }
 
