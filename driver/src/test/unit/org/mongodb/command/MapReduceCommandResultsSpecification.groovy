@@ -6,7 +6,7 @@ import org.mongodb.operation.CommandResult
 import spock.lang.Specification
 import spock.lang.Subject
 
-class MapReduceCommandResultSpecification extends Specification {
+class MapReduceCommandResultsSpecification extends Specification {
 
     def setupSpec() {
         Map.metaClass.asType = { Class type ->
@@ -17,11 +17,11 @@ class MapReduceCommandResultSpecification extends Specification {
     }
 
     @Subject
-    private MapReduceCommandResult<Document> commandResult
+    private CommandResult commandResult
 
     def 'should extract correct value from "results" field'() {
         when:
-        commandResult = new MapReduceCommandResult<>(new CommandResult(
+        commandResult = new MapReduceInlineCommandResult<>(new CommandResult(
                 [:] as Document,
                 new ServerAddress(),
                 ['results': [new Document('a', 1), new Document('b', 2)]] as Document,
@@ -29,8 +29,7 @@ class MapReduceCommandResultSpecification extends Specification {
         ));
 
         then:
-        commandResult.isInline()
-        commandResult.getValue() instanceof Iterable<Document>
+        commandResult.getResults() instanceof Iterable<Document>
     }
 
     def 'should extract collectionName from result'() {
@@ -43,7 +42,7 @@ class MapReduceCommandResultSpecification extends Specification {
         ));
 
         then:
-        commandResult.getTargetCollectionName() == 'foo'
+        commandResult.getCollectionName() == 'foo'
     }
 
     def 'should extract databaseName and collectionName from result'() {
@@ -56,8 +55,8 @@ class MapReduceCommandResultSpecification extends Specification {
         ));
 
         then:
-        commandResult.getTargetCollectionName() == 'foo'
-        commandResult.getTargetDatabaseName() == 'bar'
+        commandResult.getCollectionName() == 'foo'
+        commandResult.getDatabaseName() == 'bar'
     }
 
     def 'should return null if there is no database name in result'() {
@@ -70,23 +69,7 @@ class MapReduceCommandResultSpecification extends Specification {
         ));
 
         then:
-        commandResult.getTargetDatabaseName() == null
-    }
-
-    def 'should throw on getting collectionName for result with inlined data'(){
-        setup:
-        commandResult = new MapReduceCommandResult<>(new CommandResult(
-                [:] as Document,
-                new ServerAddress(),
-                ['results': [new Document('a', 1), new Document('b', 2)]] as Document,
-                0
-        ));
-
-        when:
-        commandResult.getTargetCollectionName()
-
-        then:
-        thrown(IllegalAccessError)
+        commandResult.getDatabaseName() == null
     }
 
 }

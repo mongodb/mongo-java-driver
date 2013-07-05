@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import org.mongodb.command.MapReduceCommandResult;
+import org.mongodb.command.MapReduceInlineCommandResult;
 
 import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.DBObjects.toDocument;
@@ -30,18 +31,45 @@ import static com.mongodb.DBObjects.toDocument;
  */
 public class MapReduceOutput {
 
-    private final MapReduceCommandResult<DBObject> commandResult;
+    private final org.mongodb.operation.CommandResult commandResult;
     private final DBCollection collection;
 
-    MapReduceOutput(final DBCollection collection, final MapReduceCommandResult<DBObject> commandResult) {
+    MapReduceOutput(final DBCollection collection, final MapReduceCommandResult commandResult) {
         this.commandResult = commandResult;
-        this.collection = commandResult.isInline()
-                ? null
-                : getTargetCollection(collection, commandResult.getTargetDatabaseName(), commandResult.getTargetCollectionName());
+        this.collection = getTargetCollection(
+                collection,
+                commandResult.getDatabaseName(),
+                commandResult.getCollectionName()
+        );
+    }
+
+    MapReduceOutput(final DBCollection collection, final MapReduceInlineCommandResult<DBObject> commandResult) {
+        this.collection = null;
+        this.commandResult = commandResult;
     }
 
     public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
-        this(collection, createMapReduceCommandResult(command, commandResult));
+
+        final org.mongodb.operation.CommandResult result = new org.mongodb.operation.CommandResult(
+                toDocument(command),
+                commandResult.getServerUsed().toNew(),
+                toDocument(commandResult),
+                0
+        );
+
+        if (commandResult.containsField("results")) {
+            this.collection = null;
+            this.commandResult = new MapReduceInlineCommandResult<DBObject>(result);
+        } else {
+            final MapReduceCommandResult mapReduceCommandResult = new MapReduceCommandResult(result);
+            this.collection = getTargetCollection(
+                    collection,
+                    mapReduceCommandResult.getDatabaseName(),
+                    mapReduceCommandResult.getCollectionName()
+            );
+            this.commandResult = mapReduceCommandResult;
+        }
+
     }
 
     /**
@@ -49,8 +77,11 @@ public class MapReduceOutput {
      *
      * @return
      */
+    @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-        return commandResult.isInline() ? commandResult.getValue() : getOutputCollection().find();
+        return commandResult instanceof MapReduceInlineCommandResult
+                ? ((MapReduceInlineCommandResult) commandResult).getResults()
+                : getOutputCollection().find();
     }
 
     /**
@@ -59,8 +90,8 @@ public class MapReduceOutput {
      * @throws MongoException
      */
     public void drop() {
-        if (!commandResult.isInline()) {
-            getOutputCollection().drop();
+        if (collection != null) {
+            collection.drop();
         }
     }
 
@@ -100,12 +131,4 @@ public class MapReduceOutput {
         return database.getCollection(collectionName);
     }
 
-    private static MapReduceCommandResult<DBObject> createMapReduceCommandResult(DBObject command, CommandResult commandResult) {
-        return new MapReduceCommandResult<DBObject>(new org.mongodb.operation.CommandResult(
-                toDocument(command),
-                commandResult.getServerUsed().toNew(),
-                toDocument(commandResult),
-                0
-        ));
-    }
 }

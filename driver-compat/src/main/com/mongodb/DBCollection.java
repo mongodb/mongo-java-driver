@@ -44,6 +44,7 @@ import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
+import org.mongodb.command.MapReduceInlineCommandResult;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
@@ -1152,21 +1153,21 @@ public class DBCollection implements IDBCollection {
         final MapReduceCommandResultCodec<DBObject> mapReduceCodec =
                 new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
 
+        final org.mongodb.operation.CommandResult executionResult;
 
-        final MapReduceCommandResult<DBObject> commandResult;
         try {
-            final org.mongodb.operation.CommandResult executionResult
-                    = getSession().execute(new CommandOperation(getDB().getName(),
+            executionResult = getSession().execute(new CommandOperation(getDB().getName(),
                     command.toNew(),
                     mapReduceCodec,
                     getDB().getClusterDescription(),
                     getBufferPool()));
-            commandResult = new MapReduceCommandResult<DBObject>(executionResult);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
 
-        return new MapReduceOutput(this, commandResult);
+        return command.getOutputType() == MapReduceCommand.OutputType.INLINE
+                ? new MapReduceOutput(this, new MapReduceInlineCommandResult<DBObject>(executionResult))
+                : new MapReduceOutput(this, new MapReduceCommandResult(executionResult));
     }
 
     /**
@@ -1684,8 +1685,8 @@ public class DBCollection implements IDBCollection {
     /**
      * Sets the internal class for the given path in the document hierarchy
      *
-     * @param path the path to map the given Class to
-     * @param aClass  the Class to map the given path to
+     * @param path   the path to map the given Class to
+     * @param aClass the Class to map the given path to
      */
     public void setInternalClass(final String path, final Class<? extends DBObject> aClass) {
         setObjectFactory(objectFactory.update(aClass, Arrays.asList(path.split("\\."))));
