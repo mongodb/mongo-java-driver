@@ -4,7 +4,11 @@ import org.bson.types.Code;
 import org.mongodb.Document;
 
 /**
- * A class that groups arguments for a map/reduce operation.
+ * A class that groups arguments for a map-reduce operation.
+ * <p/>
+ * This class follows a builder pattern.
+ *
+ * @mongodb.driver.manual core/map-reduce Map-Reduce
  */
 public class MapReduce {
     private final Code mapFunction;
@@ -34,7 +38,9 @@ public class MapReduce {
     }
 
     /**
-     * Constructs a new instance of the {@code MapReduce} with result to be inlined into response.
+     * Constructs a new instance of the {@code MapReduce}.
+     * Operation will be performed in memory and the resulting documents will be returned
+     * as a part of the response to the command call without storing them in third-party collection.
      *
      * @param mapFunction    a JavaScript function that associates or “maps” a value with a key and emits the key and value pair.
      * @param reduceFunction a JavaScript function that “reduces” to a single object all the values associated with a particular key.
@@ -48,9 +54,17 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'finalize' argument to the command.
+     * Add a finalize function to the command.
+     * <p/>
+     * The finalize function receives as its arguments a key value and the reducedValue from the reduce function.
+     * Be aware that:
+     * <ul>
+     * <li>The finalize function should not access the database for any reason.</li>
+     * <li>The finalize function should be pure, or have no impact outside of the function (i.e. side effects.)</li>
+     * <li>The finalize function can access the variables defined in the scope parameter.</li>
+     * </ul>
      *
-     * @param finalize a JavaScript function that follows the reduce method and modifies the output.
+     * @param finalize a JavaScript function
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
     public MapReduce finalize(final Code finalize) {
@@ -61,9 +75,11 @@ public class MapReduce {
     //CHECKSTYLE:OFF
 
     /**
-     * Add a 'query' argument to the command.
+     * Add a filter to the command.
+     * It specifies the selection criteria using query operators for
+     * determining the documents input to the map function.
      *
-     * @param filter the selection criteria using query operators for determining the documents input to the map function.
+     * @param filter the selection criteria document.
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
     public MapReduce filter(final Document filter) {
@@ -72,9 +88,12 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'sort' argument to the command.
+     * Sorts the input documents.
+     * This option is useful for optimization. For example, specify the sort key
+     * to be the same as the emit key so that there are fewer reduce operations.
+     * The sort key must be in an existing index for this collection.
      *
-     * @param sortCriteria sorts the input documents. This option is useful for optimization.
+     * @param sortCriteria sort criteria document
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
     public MapReduce sort(final Document sortCriteria) {
@@ -83,9 +102,9 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'scope' argument to the command.
+     * Add global variables that will be accessible in the map, reduce and the finalize functions.
      *
-     * @param scope specifies global variables that are accessible in the map , reduce and the finalize functions
+     * @param scope scope document
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
     public MapReduce scope(final Document scope) {
@@ -94,9 +113,9 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'limit' argument to the command.
+     * Specify a maximum number of documents to return from the input collection.
      *
-     * @param limit specifies a maximum number of documents to return from the collection.
+     * @param limit limit value
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
     public MapReduce limit(final int limit) {

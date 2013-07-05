@@ -1,7 +1,14 @@
 package org.mongodb.operation;
 
 /**
- * A class that represents 'out' argument for a map/reduce operation.
+ * Specifies the location of the result of the map-reduce operation.
+ * You can output to a collection, output to a collection with an action, or output inline.
+ * You may output to a collection when performing map reduce operations on the primary members of the set;
+ * on secondary members you may only use the <b>inline</b> output.
+ * <p/>
+ * This class follows a builder pattern.
+ *
+ * @mongodb.driver.manual reference/command/mapReduce/#out-options Out Options for Map-Reduce
  */
 public class MapReduceOutput {
 
@@ -50,7 +57,7 @@ public class MapReduceOutput {
     /**
      * Add a 'sharded' flag.
      * <p/>
-     * If speficied and you have enabled sharding on output database, the map-reduce operation will
+     * If specified and you have enabled sharding on output database, the map-reduce operation will
      * shard the output collection using the _id field as the shard key.
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
