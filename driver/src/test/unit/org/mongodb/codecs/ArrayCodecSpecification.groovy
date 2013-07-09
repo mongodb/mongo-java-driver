@@ -36,9 +36,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -51,9 +55,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -66,9 +74,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt64(1);
+        then:
         1 * bsonWriter.writeInt64(2);
+        then:
         1 * bsonWriter.writeInt64(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -81,9 +93,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt64(1);
+        then:
         1 * bsonWriter.writeInt64(2);
+        then:
         1 * bsonWriter.writeInt64(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -96,8 +112,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeBoolean(true);
+        then:
         1 * bsonWriter.writeBoolean(false);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -110,8 +129,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeBoolean(true);
+        then:
         1 * bsonWriter.writeBoolean(false);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -143,8 +165,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.1);
+        then:
         1 * bsonWriter.writeDouble(2.2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -157,8 +182,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.1);
+        then:
         1 * bsonWriter.writeDouble(2.2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -171,8 +199,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.4F);
+        then:
         1 * bsonWriter.writeDouble(2.6F);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -185,8 +216,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.4F);
+        then:
         1 * bsonWriter.writeDouble(2.6F);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -199,8 +233,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeInt32(4);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -213,8 +250,11 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeInt32(4);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -227,9 +267,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('1');
+        then:
         1 * bsonWriter.writeString('2');
+        then:
         1 * bsonWriter.writeString('3');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -242,9 +286,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('1');
+        then:
         1 * bsonWriter.writeString('2');
+        then:
         1 * bsonWriter.writeString('3');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 

@@ -41,9 +41,13 @@ class CodeWithScopeSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeJavaScriptWithScope(javascriptCode);
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('the');
+        then:
         1 * bsonWriter.writeString('scope');
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 

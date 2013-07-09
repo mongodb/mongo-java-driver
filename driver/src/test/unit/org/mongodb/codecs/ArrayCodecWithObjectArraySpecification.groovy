@@ -38,8 +38,11 @@ class ArrayCodecWithObjectArraySpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * codecs.encode(bsonWriter, object1);
+        then:
         1 * codecs.encode(bsonWriter, object2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -55,8 +58,11 @@ class ArrayCodecWithObjectArraySpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * codecs.encode(bsonWriter, object1);
+        then:
         1 * codecs.encode(bsonWriter, object2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 

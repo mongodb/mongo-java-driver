@@ -40,9 +40,13 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('Uno');
+        then:
         1 * bsonWriter.writeString('Dos');
+        then:
         1 * bsonWriter.writeString('Tres');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -55,9 +59,13 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
@@ -75,7 +83,9 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * mockCodecs.encode(bsonWriter, document);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 

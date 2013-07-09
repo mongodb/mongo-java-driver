@@ -43,9 +43,13 @@ class DBRefCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeString('$ref', namespace);
+        then:
         1 * bsonWriter.writeName('$id');
+        then:
         1 * codecs.encode(bsonWriter, theId);
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 

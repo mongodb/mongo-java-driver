@@ -43,9 +43,13 @@ class CodecsSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeJavaScriptWithScope(javascriptCode);
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('the');
+        then:
         1 * bsonWriter.writeString('scope');
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 
@@ -72,9 +76,13 @@ class CodecsSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeString('$ref', namespace);
+        then:
         1 * bsonWriter.writeName('$id');
+        then:
         1 * bsonWriter.writeString(theId);
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 

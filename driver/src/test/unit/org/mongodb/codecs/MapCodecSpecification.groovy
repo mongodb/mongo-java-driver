@@ -59,8 +59,11 @@ class MapCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('myFieldName');
+        then:
         1 * bsonWriter.writeString('The Field');
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 
@@ -87,8 +90,11 @@ class MapCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('a.b');
+        then:
         1 * bsonWriter.writeString('The Field');
+        then:
         1 * bsonWriter.writeEndDocument();
 
     }
