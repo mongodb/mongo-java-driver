@@ -21,13 +21,12 @@ import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.operation.MongoServerException;
 
 /**
- * A general exception raised in Mongo
- *
- * @author antoine
+ * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
 public class MongoException extends RuntimeException {
-
     private static final long serialVersionUID = -4415279469780082174L;
+
+    private final int code;
 
     public MongoException(final org.mongodb.MongoException e) {
         super("Chained exception", e);
@@ -78,7 +77,7 @@ public class MongoException extends RuntimeException {
     /**
      * Creates a MongoException from a BSON object representing an error
      *
-     * @param o
+     * @param o a BSONObject representing the MongoException to be thrown.
      */
     public MongoException(final BSONObject o) {
         this(ServerError.getCode(o), ServerError.getMsg(o, "UNKNOWN"));
@@ -104,8 +103,9 @@ public class MongoException extends RuntimeException {
      * Subclass of MongoException representing a network-related exception
      */
     public static class Network extends MongoException {
-
         private static final long serialVersionUID = -4415279469780082174L;
+
+        private final java.io.IOException _ioe;
 
         /**
          * @param msg the message
@@ -124,7 +124,6 @@ public class MongoException extends RuntimeException {
             _ioe = ioe;
         }
 
-        final java.io.IOException _ioe;
     }
 
     /**
@@ -135,12 +134,14 @@ public class MongoException extends RuntimeException {
         private static final long serialVersionUID = -4415279469780082174L;
 
         /**
-         * Chaining the exception
+         * Chaining the exception - this constructor will take all relevant values from the original MongoDuplicateKeyException and put
+         * them into this DuplicateKey, but all reference to the MongoDuplicateKeyException will be removed from the stack trace.  This
+         * is so that we don't leak the exceptions from the org.mongodb layer.
          *
-         * @param e
+         * @param e the exception from the new Java layer
          */
         public DuplicateKey(final MongoDuplicateKeyException e) {
-            super(e.getCommandResult().getErrorCode(), e.getMessage(), e);
+            super(e.getCommandResult().getErrorCode(), e.getMessage(), e.getCause());
         }
 
         /**
@@ -175,7 +176,7 @@ public class MongoException extends RuntimeException {
         /**
          * Get the cursor id that wasn't found.
          *
-         * @return
+         * @return the ID of the cursor
          */
         public long getCursorId() {
             return cursorId;
@@ -184,7 +185,7 @@ public class MongoException extends RuntimeException {
         /**
          * The server address where the cursor is.
          *
-         * @return
+         * @return the ServerAddress representing the server the cursor was on.
          */
         public ServerAddress getServerAddress() {
             return serverAddress;
@@ -194,11 +195,10 @@ public class MongoException extends RuntimeException {
     /**
      * Gets the exception code
      *
-     * @return
+     * @return the error code.
      */
     public int getCode() {
         return code;
     }
 
-    final int code;
 }

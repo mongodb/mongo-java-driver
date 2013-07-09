@@ -16,17 +16,29 @@
 
 package com.mongodb;
 
+import org.mongodb.MongoInterruptedException;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.connection.MongoSocketException;
+import org.mongodb.operation.MongoCursorNotFoundException;
+import org.mongodb.operation.ServerCursor;
+
+import java.io.IOException;
 
 public class MongoExceptions {
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
+        final Throwable cause = e.getCause();
         if (e instanceof MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
         } else if (e instanceof MongoCommandFailureException) {
-            return new CommandFailureException(new CommandResult(((MongoCommandFailureException) e).getCommandResult()));
+            return new CommandFailureException(new CommandResult(((MongoCommandFailureException) e).getCommandResult()), e.getMessage());
+        } else if (e instanceof MongoCursorNotFoundException) {
+            final ServerCursor serverCursor = ((MongoCursorNotFoundException) e).getCursor();
+            return new MongoException.CursorNotFound(serverCursor.getId(), new ServerAddress(serverCursor.getAddress()));
+        } else if ((e instanceof MongoSocketException || e instanceof MongoInterruptedException) && cause instanceof IOException) {
+            return new MongoException.Network(e.getMessage(), (IOException) cause);
         }
 
-        return new MongoException(e.getMessage(), e.getCause());
+        return new MongoException(e.getMessage(), cause);
     }
 }

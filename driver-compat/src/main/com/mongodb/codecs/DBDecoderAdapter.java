@@ -51,7 +51,7 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
             return decoder.decode(byteArrayOutputStream.getInternalBytes(), collection);
         } catch (IOException e) {
             // impossible with a byte array output stream
-            throw new MongoInternalException("impossible", e);
+            throw new MongoInternalException("An unlikely IOException thrown.", e);
         } finally {
             binaryWriter.close();
         }

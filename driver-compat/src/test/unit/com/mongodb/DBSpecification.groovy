@@ -18,10 +18,13 @@ package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.codecs.DocumentCodec
+import org.mongodb.command.Command
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.MongoTimeoutException
+import org.mongodb.operation.MongoCursorNotFoundException
+import org.mongodb.operation.ServerCursor
 import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
 import spock.lang.Subject
@@ -62,6 +65,20 @@ class DBSpecification extends Specification {
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
+    def 'should throw com.mongodb.MongoException.CursorNotFound if cursor not found'() {
+        given:
+        session.execute(_) >> {
+            throw new MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
+        }
+
+        when:
+        database.executeCommand(new Command());
+
+        then:
+        thrown(com.mongodb.MongoException.CursorNotFound)
+    }
+
+    @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if executeCommand fails'() {
         given:
         session.execute(_) >> {
@@ -78,6 +95,7 @@ class DBSpecification extends Specification {
         thrown(com.mongodb.CommandFailureException)
     }
 
+    @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
         given:
         session.execute(_) >> {
@@ -94,6 +112,7 @@ class DBSpecification extends Specification {
         thrown(com.mongodb.CommandFailureException)
     }
 
+    @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if command fails for a resons that is not a command failure'() {
         given:
         session.execute(_) >> {
@@ -125,6 +144,7 @@ class DBSpecification extends Specification {
         actualCommandResult == expectedCommandResult
     }
 
+    @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException for getClusterDescription'() {
         given:
         cluster.getDescription() >> { throw new MongoTimeoutException('This Exception should not escape') }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.connection
 
 import org.mongodb.connection.impl.DefaultClusterFactory
@@ -75,7 +71,7 @@ class DefaultMultiClusterSpecification extends Specification {
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {
-                 changeEvent = event
+                changeEvent = event
             }
         })
 

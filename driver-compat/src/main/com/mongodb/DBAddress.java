@@ -19,10 +19,13 @@ package com.mongodb;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static java.lang.String.format;
+
 /**
  * Represents a database address
  */
 public class DBAddress extends ServerAddress {
+    private final String _db;
 
     /**
      * Creates a new address
@@ -46,7 +49,7 @@ public class DBAddress extends ServerAddress {
      * @throws UnknownHostException
      * @see MongoClientURI
      */
-    public DBAddress(String urlFormat) throws UnknownHostException {
+    public DBAddress(final String urlFormat) throws UnknownHostException {
         super(_getHostSection(urlFormat));
 
         _check(urlFormat, "urlFormat");
@@ -56,24 +59,24 @@ public class DBAddress extends ServerAddress {
         _check(_db, "db");
     }
 
-    static String _getHostSection(String urlFormat) {
+    static String _getHostSection(final String urlFormat) {
         if (urlFormat == null) {
             throw new NullPointerException("urlFormat can't be null");
         }
 
-        int idx = urlFormat.indexOf("/");
+        final int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
             return urlFormat.substring(0, idx);
         }
         return null;
     }
 
-    static String _getDBSection(String urlFormat) {
+    static String _getDBSection(final String urlFormat) {
         if (urlFormat == null) {
             throw new NullPointerException("urlFormat can't be null");
         }
 
-        int idx = urlFormat.indexOf("/");
+        final int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
             return urlFormat.substring(idx + 1);
         }
@@ -86,11 +89,11 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
-     * @param other        an existing <code>DBAddress</code> that gives the host and port
+     * @param other        an existing {@code DBAddress} that gives the host and port
      * @param databaseName the database to which to connect
      * @throws UnknownHostException
      */
-    public DBAddress(DBAddress other, String databaseName) throws UnknownHostException {
+    public DBAddress(final DBAddress other, final String databaseName) throws UnknownHostException {
         this(other.getHost(), other.getPort(), databaseName);
     }
 
@@ -99,7 +102,7 @@ public class DBAddress extends ServerAddress {
      * @param databaseName database name
      * @throws UnknownHostException
      */
-    public DBAddress(String host, String databaseName) throws UnknownHostException {
+    public DBAddress(final String host, final String databaseName) throws UnknownHostException {
         this(host, defaultPort(), databaseName);
     }
 
@@ -109,7 +112,7 @@ public class DBAddress extends ServerAddress {
      * @param databaseName database name
      * @throws UnknownHostException
      */
-    public DBAddress(String host, int port, String databaseName) throws UnknownHostException {
+    public DBAddress(final String host, final int port, final String databaseName) throws UnknownHostException {
         super(host, port);
         _db = databaseName.trim();
     }
@@ -119,13 +122,13 @@ public class DBAddress extends ServerAddress {
      * @param port         database port
      * @param databaseName database name
      */
-    public DBAddress(InetAddress inetAddress, int port, String databaseName) {
+    public DBAddress(final InetAddress inetAddress, final int port, final String databaseName) {
         super(inetAddress, port);
         _check(databaseName, "name");
         _db = databaseName.trim();
     }
 
-    static void _check(String thing, String name) {
+    static void _check(String thing, final String name) {
         if (thing == null) {
             throw new NullPointerException(name + " can't be null ");
         }
@@ -142,9 +145,9 @@ public class DBAddress extends ServerAddress {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
         if (other instanceof DBAddress) {
-            DBAddress a = (DBAddress) other;
+            final DBAddress a = (DBAddress) other;
             return a.getPort() == getPort() &&
                     a._db.equals(_db) &&
                     a.getHost().equals(getHost());
@@ -156,17 +159,17 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
-     * creates a DBAddress pointing to a different database on the same server
+     * Creates a DBAddress pointing to a different database on the same server.
      *
      * @param name database name
      * @return the DBAddress for the given name with the same host and port as this
      * @throws MongoException
      */
-    public DBAddress getSister(String name) {
+    public DBAddress getSister(final String name) {
         try {
             return new DBAddress(getHost(), getPort(), name);
         } catch (UnknownHostException uh) {
-            throw new MongoInternalException("shouldn't be possible", uh);
+            throw new MongoInternalException(format("UnknownHostException thrown for %s:%s.", getHost(), getPort()), uh);
         }
     }
 
@@ -189,5 +192,4 @@ public class DBAddress extends ServerAddress {
         return super.toString() + "/" + _db;
     }
 
-    final String _db;
 }
