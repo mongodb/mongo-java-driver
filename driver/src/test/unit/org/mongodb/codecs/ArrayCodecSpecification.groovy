@@ -28,7 +28,7 @@ class ArrayCodecSpecification extends Specification {
     private final ArrayCodec arrayCodec  = new ArrayCodec(null);
 
     def 'should encode array of ints'() {
-        setup:
+        given:
         int[] arrayOfInts = [1, 2, 3];
 
         when:
@@ -43,7 +43,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of ints when it is disguised as an object'() {
-        setup:
+        given:
         Object arrayOfInts = [1, 2, 3] as int[];
 
         when:
@@ -58,7 +58,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of longs'() {
-        setup:
+        given:
         long[] array = [1, 2, 3];
 
         when:
@@ -73,7 +73,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of longs when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1, 2, 3] as long[];
 
         when:
@@ -88,7 +88,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of boolean'() {
-        setup:
+        given:
         boolean[] array = [true, false];
 
         when:
@@ -102,7 +102,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of boolean when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [true, false] as boolean[];
 
         when:
@@ -116,7 +116,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of byte'() {
-        setup:
+        given:
         byte[] array = [1, 2];
 
         when:
@@ -127,7 +127,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of byte when it is disguised as an object'() {
-        setup:
+        given:
         byte[] byteArray = [1, 2];
 
         when:
@@ -149,7 +149,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of double when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1.1, 2.2] as double[];
 
         when:
@@ -163,7 +163,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of float'() {
-        setup:
+        given:
         float[] array = [1.4F, 2.6F];
 
         when:
@@ -177,7 +177,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of float when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1.4F, 2.6F] as float[];
 
         when:
@@ -191,7 +191,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of short'() {
-        setup:
+        given:
         short[] array = [3, 4];
 
         when:
@@ -205,7 +205,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of short when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [3, 4] as short[];
 
         when:
@@ -219,7 +219,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of strings'() {
-        setup:
+        given:
         String[] arrayOfStrings = ['1', '2', '3'];
 
         when:
@@ -234,7 +234,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of strings when it is disguised as an object'() {
-        setup:
+        given:
         Object arrayOfStrings = ['1', '2', '3'] as String[];
 
         when:

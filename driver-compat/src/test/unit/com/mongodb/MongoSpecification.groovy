@@ -34,7 +34,7 @@ class MongoSpecification extends Specification {
         //TODO: this is not really the correct way to go about this
         //we should have a test builder for the cluster if we have to mock the behaviour to get it to do what we want
         //currently we're getting null pointers for description
-        setup:
+        given:
         cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.ReplicaSet
         clusterDescription.getMode() >> ClusterConnectionMode.Discovering
@@ -45,7 +45,7 @@ class MongoSpecification extends Specification {
 
 
     def 'should return null if cluster type not replica'() {
-        setup:
+        given:
         cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.Sharded
         clusterDescription.getMode() >> ClusterConnectionMode.Discovering
@@ -55,7 +55,7 @@ class MongoSpecification extends Specification {
     }
 
     def 'should return null if cluster mode not discovering'() {
-        setup:
+        given:
         cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.ReplicaSet
         clusterDescription.getMode() >> ClusterConnectionMode.Direct

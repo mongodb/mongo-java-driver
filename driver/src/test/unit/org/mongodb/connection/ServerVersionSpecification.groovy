@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.connection
 
 import spock.lang.Specification
@@ -35,7 +33,6 @@ class ServerVersionSpecification extends Specification {
         when:
         new ServerVersion(null)
 
-
         then:
         thrown(IllegalArgumentException)
     }
@@ -44,13 +41,11 @@ class ServerVersionSpecification extends Specification {
         when:
         new ServerVersion([2, 5, 1, 0])
 
-
         then:
         thrown(IllegalStateException)
 
         when:
         new ServerVersion([2, 5])
-
 
         then:
         thrown(IllegalStateException)
@@ -65,7 +60,7 @@ class ServerVersionSpecification extends Specification {
     }
 
     def 'should have immutable version array'() {
-        setup:
+        given:
         def version = new ServerVersion([2, 4, 1])
 
         when:

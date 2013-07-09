@@ -34,7 +34,7 @@ class ReplicaSetStatusSpecification extends Specification {
     }
 
     def 'should return replica set name'() {
-        setup:
+        given:
         String setName = 'repl0';
         ServerDescription serverDescription = Mock();
 
@@ -46,7 +46,7 @@ class ReplicaSetStatusSpecification extends Specification {
     }
 
     def 'should return null if no servers'() {
-        setup:
+        given:
         clusterDescription.getAny() >> []
 
         expect:
@@ -54,7 +54,7 @@ class ReplicaSetStatusSpecification extends Specification {
     }
 
     def 'should return null if master not defined'() {
-        setup:
+        given:
         clusterDescription.getPrimaries() >> [];
 
         expect:
@@ -62,7 +62,7 @@ class ReplicaSetStatusSpecification extends Specification {
     }
 
     def 'should return master'() throws UnknownHostException {
-        setup:
+        given:
         ServerDescription serverDescription = Mock();
         serverDescription.getAddress() >> new ServerAddress('localhost').toNew()
         clusterDescription.getPrimaries() >> [serverDescription]
@@ -72,7 +72,7 @@ class ReplicaSetStatusSpecification extends Specification {
     }
 
     def 'should test specific server for being master or not'() throws UnknownHostException {
-        setup:
+        given:
         ServerDescription primaryDescription = Mock();
         primaryDescription.getAddress() >> new ServerAddress('localhost', 3000).toNew()
         clusterDescription.getPrimaries() >> [primaryDescription]
@@ -84,7 +84,7 @@ class ReplicaSetStatusSpecification extends Specification {
 
 
     def 'should return max bson object size'() {
-        setup:
+        given:
         ServerDescription serverDescription = Mock()
         serverDescription.getMaxDocumentSize() >> 47;
         clusterDescription.getPrimaries() >> [serverDescription];

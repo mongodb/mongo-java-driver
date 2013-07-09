@@ -33,7 +33,7 @@ class PojoEncoderSpecification extends Specification {
     private final Codecs codecs = Codecs.createDefault();
 
     def shouldEncodeSimplePojo() {
-        setup:
+        given:
         PojoEncoder<SimpleObject> pojoEncoder = new PojoEncoder<SimpleObject>(codecs);
         String valueInSimpleObject = 'MyName';
 
@@ -48,7 +48,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodePojoContainingOtherPojos() {
-        setup:
+        given:
         PojoEncoder<NestedObject> pojoEncoder = new PojoEncoder<NestedObject>(codecs);
         String anotherName = 'AnotherName';
 
@@ -65,7 +65,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodePojoContainingOtherPojosAndFields() {
-        setup:
+        given:
         PojoEncoder<NestedObjectWithFields> pojoEncoder = new PojoEncoder<NestedObjectWithFields>(codecs);
 
         when:
@@ -83,7 +83,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldSupportArrays() {
-        setup:
+        given:
         PojoEncoder<ObjectWithArray> pojoEncoder = new PojoEncoder<ObjectWithArray>(codecs);
 
         when:
@@ -101,7 +101,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodeMapsOfPrimitiveTypes() {
-        setup:
+        given:
         PojoEncoder<ObjectWithMapOfStrings> pojoEncoder = new PojoEncoder<ObjectWithMapOfStrings>(codecs);
 
         when:
@@ -119,7 +119,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodeMapsOfObjects() {
-        setup:
+        given:
         PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
         //TODO: get rid of this - default object codec is a bit of a smell
         codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
@@ -141,7 +141,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodeMapsOfMaps() {
-        setup:
+        given:
         PojoEncoder<ObjectWithMapOfMaps> pojoEncoder = new PojoEncoder<ObjectWithMapOfMaps>(codecs);
 
         when:
@@ -159,7 +159,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldNotEncodeSpecialFieldsLikeJacocoData() {
-        setup:
+        given:
         PojoEncoder<JacocoDecoratedObject> pojoEncoder = new PojoEncoder<JacocoDecoratedObject>(codecs);
         JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject('thisName');
 
@@ -172,7 +172,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldEncodeComplexPojo() {
-        setup:
+        given:
         PojoEncoder<Person> pojoEncoder = new PojoEncoder<Person>(codecs);
         Address address = new Address();
         Name name = new Name();
@@ -203,7 +203,7 @@ class PojoEncoderSpecification extends Specification {
     }
 
     def shouldIgnoreTransientFields() {
-        setup:
+        given:
         PojoEncoder<ObjWithTransientField> pojoEncoder = new PojoEncoder<ObjWithTransientField>(codecs);
         String value = 'some value';
 
@@ -220,19 +220,19 @@ class PojoEncoderSpecification extends Specification {
 
     @Ignore('not implemented')
     def shouldEncodeIds() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def shouldThrowAnExceptionWhenItCannotEncodeAField() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def shouldEncodeEnumsAsStrings() {
-        setup:
+        given:
         fail('Not implemented');
     }
 

@@ -40,7 +40,7 @@ class DefaultMultiClusterSpecification extends Specification {
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
     def 'should correct report description when the cluster first starts'() {
-        setup:
+        given:
         Cluster cluster = new DefaultClusterFactory().create([SERVER_ADDRESS], factory);
 
         when:
@@ -54,7 +54,7 @@ class DefaultMultiClusterSpecification extends Specification {
     }
 
     def 'should discover all servers in the cluster'() {
-        setup:
+        given:
         Cluster cluster = new DefaultClusterFactory().create([SERVER_ADDRESS], factory);
 
         when:
@@ -69,7 +69,7 @@ class DefaultMultiClusterSpecification extends Specification {
     }
 
     def 'should fire change event on cluster change'() {
-        setup:
+        given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create([SERVER_ADDRESS], factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
@@ -91,7 +91,7 @@ class DefaultMultiClusterSpecification extends Specification {
     }
 
     def 'should remove change listener'() {
-        setup:
+        given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create([SERVER_ADDRESS], factory)
         def listener = new ChangeListener<ClusterDescription>() {

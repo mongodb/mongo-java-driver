@@ -32,7 +32,7 @@ class CodeWithScopeSpecification extends Specification {
     private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(Codecs.createDefault());
 
     def 'should encode code with scope as java script followed by document of scope'() {
-        setup:
+        given:
         String javascriptCode = '<javascript code>';
         CodeWithScope codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'));
 
@@ -48,7 +48,7 @@ class CodeWithScopeSpecification extends Specification {
     }
 
     def 'should decode code with scope'() {
-        setup:
+        given:
         CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'));
         BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
 

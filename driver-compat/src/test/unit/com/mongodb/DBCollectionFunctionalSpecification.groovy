@@ -24,7 +24,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     }
 
     def 'should use top-leve class for findAndModify'() {
-        setup:
+        given:
         collection.setObjectClass(ClassA)
 
         when:
@@ -36,7 +36,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     }
 
     def 'should use internal classes for findAndModify'() {
-        setup:
+        given:
         collection.setInternalClass('a', ClassA);
         collection.setInternalClass('b', ClassB);
 
@@ -49,7 +49,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     }
 
     def 'should should provided decoder factory for findAndModify'() {
-        setup:
+        given:
         DBDecoder decoder = Mock()
         DBDecoderFactory factory = Mock()
         factory.create() >> decoder

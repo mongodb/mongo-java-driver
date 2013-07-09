@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -40,7 +38,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
     def 'should fire change event on cluster change'() {
-        setup:
+        given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create(SERVER_ADDRESS, factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {

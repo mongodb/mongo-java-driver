@@ -32,7 +32,7 @@ class PojoCodecEncodingSpecification extends Specification {
     private final PojoCodec<Object> pojoCodec = new PojoCodec<Object>(Codecs.createDefault(), null);
 
     def 'should encode simple pojo'() {
-        setup:
+        given:
         String valueInSimpleObject = 'MyName';
 
         when:
@@ -46,7 +46,7 @@ class PojoCodecEncodingSpecification extends Specification {
     }
 
     def 'should encode pojo containing other pojos'() {
-        setup:
+        given:
         String anotherName = 'AnotherName';
 
         when:
@@ -114,7 +114,7 @@ class PojoCodecEncodingSpecification extends Specification {
     }
 
     def 'should encode maps of objects'() {
-        setup:
+        given:
         String simpleObjectValue = 'theValue';
 
         when:
@@ -147,7 +147,7 @@ class PojoCodecEncodingSpecification extends Specification {
     }
 
     def 'should not encode special fields like jacoco data'() {
-        setup:
+        given:
         JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject('thisName');
 
         when:
@@ -160,19 +160,19 @@ class PojoCodecEncodingSpecification extends Specification {
 
     @Ignore('not implemented')
     def 'should encode ids'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def 'should throw an exception when it cannot encode a field'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def 'should encode enums as strings'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 

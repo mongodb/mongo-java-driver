@@ -28,7 +28,7 @@ class ArrayCodecWithObjectArraySpecification extends Specification {
     private final ArrayCodec arrayCodec = new ArrayCodec(codecs);
 
     def 'should write start and end for array of objects and delegate encoding of object'() {
-        setup:
+        given:
         Object object1 = new Object();
         Object object2 = new Object();
         Object[] arrayOfObjects = [object1, object2];
@@ -44,7 +44,7 @@ class ArrayCodecWithObjectArraySpecification extends Specification {
     }
 
     def 'should write start & end for array of objects & delegate encoding of object when array disguised as object'() {
-        setup:
+        given:
         Object object1 = new Object();
         Object object2 = new Object();
         Object arrayOfObjects = [object1, object2] as Object[];

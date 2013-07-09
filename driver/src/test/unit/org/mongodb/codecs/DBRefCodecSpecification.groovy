@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.codecs
 
 import org.bson.BSONBinaryReader
@@ -35,7 +33,7 @@ class DBRefCodecSpecification extends Specification {
     private final DBRefEncoder dbRefCodec = new DBRefEncoder(codecs);
 
     def 'should encode db ref as string namespace and delegate encoding of id to codecs'() {
-        setup:
+        given:
         String namespace = 'theNamespace';
         String theId = 'TheId';
         DBRef dbRef = new DBRef(theId, namespace);
@@ -53,7 +51,7 @@ class DBRefCodecSpecification extends Specification {
 
     @Ignore('decoding not implemented yet')
     def 'should decode code with scope'() {
-        setup:
+        given:
         String namespace = 'theNamespace';
         String theId = 'TheId';
         DBRef dbRef = new DBRef(theId, namespace);

@@ -34,7 +34,7 @@ class CodecsSpecification extends Specification {
     private final Codecs codecs = Codecs.builder().primitiveCodecs(PrimitiveCodecs.createDefault()).build();
 
     def 'should encode code with scope as java script followed by document of scope when passed in as object'() {
-        setup:
+        given:
         String javascriptCode = '<javascript code>';
         Object codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'));
 
@@ -50,7 +50,7 @@ class CodecsSpecification extends Specification {
     }
 
     def 'should decode code with scope'() {
-        setup:
+        given:
         CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'));
         BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
 
@@ -62,7 +62,7 @@ class CodecsSpecification extends Specification {
     }
 
     def 'should encode db ref when disguised as an object'() {
-        setup:
+        given:
         String namespace = 'theNamespace';
         String theId = 'TheId';
         Object dbRef = new DBRef(theId, namespace);
