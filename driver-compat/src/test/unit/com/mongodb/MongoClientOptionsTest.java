@@ -20,6 +20,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 
 public class MongoClientOptionsTest {
@@ -28,15 +31,16 @@ public class MongoClientOptionsTest {
     public void testBuilderDefaults() {
         final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         final MongoClientOptions options = builder.build();
-        assertEquals(null, options.getDescription());
+        assertNull(options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
         assertEquals(100, options.getConnectionsPerHost());
         assertEquals(10000, options.getConnectTimeout());
         assertEquals(0, options.getMaxAutoConnectRetryTime());
         assertEquals(ReadPreference.primary(), options.getReadPreference());
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
-        assertEquals(false, options.isSocketKeepAlive());
-        assertEquals(false, options.isAutoConnectRetry());
+        assertFalse(options.isSocketKeepAlive());
+        assertFalse(options.isAutoConnectRetry());
+        assertFalse(options.isSSLEnabled());
     }
 
     @Test
@@ -94,17 +98,19 @@ public class MongoClientOptionsTest {
         builder.maxAutoConnectRetryTime(300);
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
+        builder.SSLEnabled(true);
 
         final MongoClientOptions options = builder.build();
 
         assertEquals("test", options.getDescription());
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
         assertEquals(WriteConcern.JOURNAL_SAFE, options.getWriteConcern());
-        assertEquals(true, options.isAutoConnectRetry());
+        assertTrue(options.isAutoConnectRetry());
         assertEquals(500, options.getConnectionsPerHost());
         assertEquals(100, options.getConnectTimeout());
         assertEquals(300, options.getMaxAutoConnectRetryTime());
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
-        assertEquals(true, options.isSocketKeepAlive());
+        assertTrue(options.isSocketKeepAlive());
+        assertTrue(options.isSSLEnabled());
     }
 }

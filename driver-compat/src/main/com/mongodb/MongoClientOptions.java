@@ -170,6 +170,17 @@ public class MongoClientOptions {
         }
 
         /**
+         *  Sets whether to use SSL.
+         *
+         * @return {@code this}
+         * @see MongoClientOptions#isSSLEnabled()
+         */
+        public Builder SSLEnabled(final boolean aSSLEnabled) {
+            proxied.SSLEnabled(aSSLEnabled);
+            return this;
+        }
+
+        /**
          * Sets the read preference.
          *
          * @param readPreference read preference
@@ -325,6 +336,16 @@ public class MongoClientOptions {
      */
     public long getMaxAutoConnectRetryTime() {
         return proxied.getMaxAutoConnectRetryTime();
+    }
+
+
+    /**
+     * Whether to use SSL. The default is {@code false}.
+     *
+     * @return true if SSL should be used
+     */
+    public boolean isSSLEnabled() {
+        return proxied.isSSLEnabled();
     }
 
     /**
