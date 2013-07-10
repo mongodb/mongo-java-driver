@@ -18,7 +18,6 @@ package com.mongodb
 
 import spock.lang.Subject
 
-
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
     @Subject
@@ -29,7 +28,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
     def 'should use provided decoder factory'() {
-        setup:
+        given:
         DBDecoder decoder = Mock()
         DBDecoderFactory factory = Mock()
         factory.create() >> decoder
@@ -44,7 +43,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
     def 'should use provided in collection decoder factory'() {
-        setup:
+        given:
         DBDecoder decoder = Mock()
         DBDecoderFactory factory = Mock()
         factory.create() >> decoder

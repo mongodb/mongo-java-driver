@@ -37,7 +37,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
-        setup:
+        given:
         serverSelectingSession.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
@@ -48,7 +48,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in hasNext'() {
-        setup:
+        given:
         Session session = Mock()
         serverSelectingSession.getBoundSession(_, _) >> { session }
         session.execute(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }

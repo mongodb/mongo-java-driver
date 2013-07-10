@@ -26,7 +26,7 @@ import java.util.regex.Pattern
 class DocumentSpecification extends Specification {
 
     def 'should return correct type for each typed method'() {
-        setup:
+        given:
         Date date = new Date();
         ObjectId objectId = new ObjectId();
 
@@ -58,7 +58,7 @@ class DocumentSpecification extends Specification {
     }
 
     def 'test value of method with mode'() {
-        setup:
+        given:
         Pattern expectedPattern = Pattern.compile('abc', Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         when:

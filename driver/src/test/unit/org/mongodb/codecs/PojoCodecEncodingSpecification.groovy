@@ -32,7 +32,7 @@ class PojoCodecEncodingSpecification extends Specification {
     private final PojoCodec<Object> pojoCodec = new PojoCodec<Object>(Codecs.createDefault(), null);
 
     def 'should encode simple pojo'() {
-        setup:
+        given:
         String valueInSimpleObject = 'MyName';
 
         when:
@@ -40,13 +40,16 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('name');
+        then:
         1 * bsonWriter.writeString(valueInSimpleObject);
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 
     def 'should encode pojo containing other pojos'() {
-        setup:
+        given:
         String anotherName = 'AnotherName';
 
         when:
@@ -54,10 +57,15 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('mySimpleObject');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('name');
+        then:
         1 * bsonWriter.writeString(anotherName);
+        then:
         2 * bsonWriter.writeEndDocument();
     }
 
@@ -67,12 +75,19 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('intValue');
+        then:
         1 * bsonWriter.writeInt32(98);
+        then:
         1 * bsonWriter.writeName('mySimpleObject');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('name');
+        then:
         1 * bsonWriter.writeString('AnotherName');
+        then:
         2 * bsonWriter.writeEndDocument();
     }
 
@@ -104,17 +119,22 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('theMap');
+        then:
         1 * bsonWriter.writeStartDocument();
+
         1 * bsonWriter.writeName('first');
         1 * bsonWriter.writeString('the first value');
         1 * bsonWriter.writeName('second');
         1 * bsonWriter.writeString('the second value');
+
+        then:
         2 * bsonWriter.writeEndDocument();
     }
 
     def 'should encode maps of objects'() {
-        setup:
+        given:
         String simpleObjectValue = 'theValue';
 
         when:
@@ -122,12 +142,19 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('theMap');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('first');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('name');
+        then:
         1 * bsonWriter.writeString(simpleObjectValue);
+        then:
         3 * bsonWriter.writeEndDocument();
     }
 
@@ -137,17 +164,24 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('theMap');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('theMapInsideTheMap');
+        then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('innerMapField');
+        then:
         1 * bsonWriter.writeString('theInnerMapFieldValue');
+        then:
         3 * bsonWriter.writeEndDocument();
     }
 
     def 'should not encode special fields like jacoco data'() {
-        setup:
+        given:
         JacocoDecoratedObject jacocoDecoratedObject = new JacocoDecoratedObject('thisName');
 
         when:
@@ -155,24 +189,25 @@ class PojoCodecEncodingSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 
     @Ignore('not implemented')
     def 'should encode ids'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def 'should throw an exception when it cannot encode a field'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 
     @Ignore('not implemented')
     def 'should encode enums as strings'() {
-        setup:
+        given:
         fail('Not implemented');
     }
 

@@ -30,7 +30,7 @@ class MapCodecSpecification extends Specification {
     private MapCodec mapCodec = new MapCodec(Codecs.createDefault(), new FieldNameValidator());
 
     def 'should encode string to document map'() {
-        setup:
+        given:
         Map<String, Object> map = ['myFieldName': new Document('doc', 1)];
 
         when:
@@ -51,7 +51,7 @@ class MapCodecSpecification extends Specification {
     }
 
     def 'should encode simple string to object map'() {
-        setup:
+        given:
         Map<String, Object> map = ['myFieldName': 'The Field'];
 
         when:
@@ -59,13 +59,16 @@ class MapCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('myFieldName');
+        then:
         1 * bsonWriter.writeString('The Field');
+        then:
         1 * bsonWriter.writeEndDocument();
     }
 
     def 'should not allow dots in keys when validator is collectible document validator'() {
-        setup:
+        given:
         mapCodec = new MapCodec(Codecs.createDefault(), new FieldNameValidator());
 
         Map<String, Integer> mapWithInvalidFieldName = ['a.b': 1];
@@ -78,7 +81,7 @@ class MapCodecSpecification extends Specification {
     }
 
     def 'should allow dots in keys in nested maps when validator is query document validator'() {
-        setup:
+        given:
         mapCodec = new MapCodec(Codecs.createDefault(), new QueryFieldNameValidator());
         Map<String, Object> map = ['a.b': 'The Field'];
 
@@ -87,8 +90,11 @@ class MapCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartDocument();
+        then:
         1 * bsonWriter.writeName('a.b');
+        then:
         1 * bsonWriter.writeString('The Field');
+        then:
         1 * bsonWriter.writeEndDocument();
 
     }

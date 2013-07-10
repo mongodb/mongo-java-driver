@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.codecs
 
 import org.bson.BSONReader
@@ -34,7 +32,7 @@ class IterableCodecSpecification extends Specification {
     private final IterableCodec iterableCodec = new IterableCodec(Codecs.createDefault());
 
     def 'should encode list of strings'() {
-        setup:
+        given:
         List<String> stringList = ['Uno', 'Dos', 'Tres'];
 
         when:
@@ -42,14 +40,18 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('Uno');
+        then:
         1 * bsonWriter.writeString('Dos');
+        then:
         1 * bsonWriter.writeString('Tres');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode list of integers'() {
-        setup:
+        given:
         List<Integer> stringList = [1, 2, 3];
 
         when:
@@ -57,14 +59,18 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should delegate encoding of complex types to codecs'() {
-        setup:
+        given:
         // different setup means this should be in a different test class
         Codecs mockCodecs = Mock(Codecs);
         IterableCodec iterableCodecWithMock = new IterableCodec(mockCodecs);
@@ -77,12 +83,14 @@ class IterableCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * mockCodecs.encode(bsonWriter, document);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should decode arrays as lists of objects'() {
-        setup:
+        given:
         Iterable expectedList = [1, 2, 3];
         BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
@@ -95,7 +103,7 @@ class IterableCodecSpecification extends Specification {
     }
 
     def 'should decode array of arrays'() {
-        setup:
+        given:
         Iterable<List<Integer>> expectedList = [[1, 2], [3]];
         BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
 
@@ -107,7 +115,7 @@ class IterableCodecSpecification extends Specification {
     }
 
     def 'should decode array of documents'() {
-        setup:
+        given:
         Object document = new Document('field', 'value');
         Iterable<Object> expectedList = [document];
         BSONReader reader = prepareReaderWithObjectToBeDecoded(expectedList);
@@ -120,7 +128,7 @@ class IterableCodecSpecification extends Specification {
     }
 
     def 'should be able to decode into set'() {
-        setup:
+        given:
         IterableCodec iterableCodecForSet = new IterableCodec(Codecs.createDefault(), new HashSetFactory(), Codecs.createDefault());
 
         Iterable<Integer> expectedSet = new HashSet<Integer>([1, 2, 3]);
@@ -135,7 +143,7 @@ class IterableCodecSpecification extends Specification {
     }
 
     def 'should be able to plug in custom decoder'() {
-        setup:
+        given:
         int timesDecodeCalled = 0;
 
         BSONReader reader = prepareReaderWithObjectToBeDecoded(new HashSet<Integer>([1]));

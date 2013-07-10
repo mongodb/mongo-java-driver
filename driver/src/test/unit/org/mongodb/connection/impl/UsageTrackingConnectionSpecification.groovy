@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.connection.impl
 
 import org.mongodb.Fixture
@@ -51,7 +47,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     }
 
     def 'lastUsedAt should be set on sendMessage'() {
-        setup:
+        given:
         def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
         Thread.sleep(5);
 
@@ -63,7 +59,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     }
 
     def 'lastUsedAt should be set on receiveMessage'() {
-        setup:
+        given:
         def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
 
         when:

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.connection.impl
 
 import org.mongodb.Document
@@ -52,7 +50,7 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
     }
 
     def 'should return server version'() {
-        setup:
+        given:
         def expectedVersion = new ServerVersion((database.executeCommand(new Command(new Document('buildinfo', 1)))
                 .getResponse().get('versionArray') as List<Integer>).subList(0, 3))
         when:

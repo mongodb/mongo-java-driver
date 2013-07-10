@@ -28,7 +28,7 @@ class ArrayCodecSpecification extends Specification {
     private final ArrayCodec arrayCodec  = new ArrayCodec(null);
 
     def 'should encode array of ints'() {
-        setup:
+        given:
         int[] arrayOfInts = [1, 2, 3];
 
         when:
@@ -36,14 +36,18 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of ints when it is disguised as an object'() {
-        setup:
+        given:
         Object arrayOfInts = [1, 2, 3] as int[];
 
         when:
@@ -51,14 +55,18 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(1);
+        then:
         1 * bsonWriter.writeInt32(2);
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of longs'() {
-        setup:
+        given:
         long[] array = [1, 2, 3];
 
         when:
@@ -66,14 +74,18 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt64(1);
+        then:
         1 * bsonWriter.writeInt64(2);
+        then:
         1 * bsonWriter.writeInt64(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of longs when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1, 2, 3] as long[];
 
         when:
@@ -81,14 +93,18 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt64(1);
+        then:
         1 * bsonWriter.writeInt64(2);
+        then:
         1 * bsonWriter.writeInt64(3);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of boolean'() {
-        setup:
+        given:
         boolean[] array = [true, false];
 
         when:
@@ -96,13 +112,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeBoolean(true);
+        then:
         1 * bsonWriter.writeBoolean(false);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of boolean when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [true, false] as boolean[];
 
         when:
@@ -110,13 +129,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeBoolean(true);
+        then:
         1 * bsonWriter.writeBoolean(false);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of byte'() {
-        setup:
+        given:
         byte[] array = [1, 2];
 
         when:
@@ -127,7 +149,7 @@ class ArrayCodecSpecification extends Specification {
     }
 
     def 'should encode array of byte when it is disguised as an object'() {
-        setup:
+        given:
         byte[] byteArray = [1, 2];
 
         when:
@@ -143,13 +165,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.1);
+        then:
         1 * bsonWriter.writeDouble(2.2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of double when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1.1, 2.2] as double[];
 
         when:
@@ -157,13 +182,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.1);
+        then:
         1 * bsonWriter.writeDouble(2.2);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of float'() {
-        setup:
+        given:
         float[] array = [1.4F, 2.6F];
 
         when:
@@ -171,13 +199,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.4F);
+        then:
         1 * bsonWriter.writeDouble(2.6F);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of float when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [1.4F, 2.6F] as float[];
 
         when:
@@ -185,13 +216,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeDouble(1.4F);
+        then:
         1 * bsonWriter.writeDouble(2.6F);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of short'() {
-        setup:
+        given:
         short[] array = [3, 4];
 
         when:
@@ -199,13 +233,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeInt32(4);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of short when it is disguised as an object'() {
-        setup:
+        given:
         Object array = [3, 4] as short[];
 
         when:
@@ -213,13 +250,16 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeInt32(3);
+        then:
         1 * bsonWriter.writeInt32(4);
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of strings'() {
-        setup:
+        given:
         String[] arrayOfStrings = ['1', '2', '3'];
 
         when:
@@ -227,14 +267,18 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('1');
+        then:
         1 * bsonWriter.writeString('2');
+        then:
         1 * bsonWriter.writeString('3');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 
     def 'should encode array of strings when it is disguised as an object'() {
-        setup:
+        given:
         Object arrayOfStrings = ['1', '2', '3'] as String[];
 
         when:
@@ -242,9 +286,13 @@ class ArrayCodecSpecification extends Specification {
 
         then:
         1 * bsonWriter.writeStartArray();
+        then:
         1 * bsonWriter.writeString('1');
+        then:
         1 * bsonWriter.writeString('2');
+        then:
         1 * bsonWriter.writeString('3');
+        then:
         1 * bsonWriter.writeEndArray();
     }
 

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -48,7 +46,7 @@ class DBSpecification extends Specification {
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if createCollection fails'() {
-        setup:
+        given:
         session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
@@ -65,7 +63,7 @@ class DBSpecification extends Specification {
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if executeCommand fails'() {
-        setup:
+        given:
         session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
@@ -81,7 +79,7 @@ class DBSpecification extends Specification {
     }
 
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
-        setup:
+        given:
         session.execute(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
@@ -97,7 +95,7 @@ class DBSpecification extends Specification {
     }
 
     def 'should throw com.mongodb.MongoException if command fails for a resons that is not a command failure'() {
-        setup:
+        given:
         session.execute(_) >> {
             throw new org.mongodb.MongoInternalException('An exception that is not a MongoCommandFailureException')
         }
@@ -110,7 +108,7 @@ class DBSpecification extends Specification {
     }
 
     def 'should not throw MongoCommandFailureException if command fails'() {
-        setup:
+        given:
         def expectedCommandResult = new org.mongodb.operation.CommandResult(new Document(),
                                                                             new org.mongodb.connection.ServerAddress(),
                                                                             new Document(),
@@ -128,7 +126,7 @@ class DBSpecification extends Specification {
     }
 
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException for getClusterDescription'() {
-        setup:
+        given:
         cluster.getDescription() >> { throw new MongoTimeoutException('This Exception should not escape') }
 
         when:
