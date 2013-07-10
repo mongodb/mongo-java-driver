@@ -26,10 +26,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/**
- *  A concurrent pool of items.  Internally, it tracks pooled items using an implementation of a concurrent {@code Deque} and a count of
- *  in-use items using an {@code AtomicInteger}.  Permits are granted using a fair {@code Semaphore}.
- */
 class ConcurrentPool<T> implements Pool<T> {
 
     private final int maxSize;
