@@ -37,7 +37,7 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     private final ConcurrentPool<AsyncConnection> pool;
     private final DefaultConnectionProviderSettings settings;
-    private AtomicInteger waitQueueSize = new AtomicInteger(0);
+    private final AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
                                           final DefaultConnectionProviderSettings settings) {
@@ -64,7 +64,9 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
     public AsyncConnection get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-                throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
+                throw new MongoWaitQueueFullException(String.format("Too many threads are already waiting for a connection. "
+                                                                    + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
+                                                                    settings.getMaxWaitQueueSize()));
             }
             return wrap(pool.get(timeout, timeUnit));
         } finally {

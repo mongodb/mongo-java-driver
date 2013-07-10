@@ -19,7 +19,10 @@ package com.mongodb;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.command.MongoWriteConcernException;
 import org.mongodb.connection.MongoSocketException;
+import org.mongodb.connection.MongoTimeoutException;
+import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.ServerCursor;
 
@@ -30,11 +33,19 @@ public class MongoExceptions {
         final Throwable cause = e.getCause();
         if (e instanceof MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
-        } else if (e instanceof MongoCommandFailureException) {
-            return new CommandFailureException(new CommandResult(((MongoCommandFailureException) e).getCommandResult()), e.getMessage());
+        } else if (e instanceof MongoWriteConcernException) {
+            return new WriteConcernException(new CommandResult(((MongoCommandFailureException) e).getCommandResult()), e.getMessage());
+        } else if (e instanceof org.mongodb.MongoInternalException) {
+            return new MongoInternalException(e.getMessage(), e.getCause());
+        } else if (e instanceof MongoTimeoutException) {
+            return new ConnectionWaitTimeOut(e.getMessage());
+        } else if (e instanceof MongoWaitQueueFullException) {
+            return new SemaphoresOut(e.getMessage());
         } else if (e instanceof MongoCursorNotFoundException) {
             final ServerCursor serverCursor = ((MongoCursorNotFoundException) e).getCursor();
             return new MongoException.CursorNotFound(serverCursor.getId(), new ServerAddress(serverCursor.getAddress()));
+        } else if (e instanceof MongoCommandFailureException) {
+            return new CommandFailureException(new CommandResult(((MongoCommandFailureException) e).getCommandResult()), e.getMessage());
         } else if ((e instanceof MongoSocketException || e instanceof MongoInterruptedException) && cause instanceof IOException) {
             return new MongoException.Network(e.getMessage(), (IOException) cause);
         }

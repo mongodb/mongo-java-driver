@@ -67,7 +67,9 @@ class DefaultConnectionProvider implements ConnectionProvider {
     public Connection get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-                throw new MongoWaitQueueFullException("Too many threads are already waiting for a connection");
+                throw new MongoWaitQueueFullException(String.format("Too many threads are already waiting for a connection. "
+                                                                    + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
+                                                                    settings.getMaxWaitQueueSize()));
             }
             UsageTrackingConnection connection = pool.get(timeout, timeUnit);
             while (shouldDiscard(connection)) {
