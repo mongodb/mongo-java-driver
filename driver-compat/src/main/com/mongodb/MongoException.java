@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.mongodb.command.MongoDuplicateKeyException;
+import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.MongoServerException;
 
 /**
@@ -171,6 +172,10 @@ public class MongoException extends RuntimeException {
             super(-5, "cursor " + cursorId + " not found on server " + serverAddress);
             this.cursorId = cursorId;
             this.serverAddress = serverAddress;
+        }
+
+        CursorNotFound(final MongoCursorNotFoundException e) {
+            this(e.getCursor().getId(), new ServerAddress(e.getCursor().getAddress()));
         }
 
         /**

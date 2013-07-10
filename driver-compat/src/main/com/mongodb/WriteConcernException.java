@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.mongodb.command.MongoWriteConcernException;
+
 /**
  * An exception representing an error reported due to a write failure.
  */
@@ -36,6 +38,10 @@ public class WriteConcernException extends MongoException {
     public WriteConcernException(final CommandResult commandResult, final String message) {
         super(ServerError.getCode(commandResult), message);
         this.commandResult = commandResult;
+    }
+
+    WriteConcernException(final MongoWriteConcernException e) {
+        this(new CommandResult(e.getCommandResult()), e.getMessage());
     }
 
     /**
