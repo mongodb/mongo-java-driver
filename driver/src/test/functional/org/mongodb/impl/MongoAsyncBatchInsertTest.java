@@ -23,9 +23,7 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Count;
-import org.mongodb.command.CountCommandResult;
-import org.mongodb.operation.AsyncCommandOperation;
+import org.mongodb.command.AsyncCountOperation;
 import org.mongodb.operation.AsyncInsertOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
@@ -38,7 +36,6 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getAsyncSession;
 import static org.mongodb.Fixture.getBufferProvider;
-import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
 import static org.mongodb.session.SessionBindingType.Connection;
@@ -86,13 +83,9 @@ public class MongoAsyncBatchInsertTest extends DatabaseTestCase {
         final AsyncSession asyncSession = getAsyncSession().getBoundSession(asyncInsertOperation, Connection).get();
         try {
             asyncSession.execute(asyncInsertOperation).get();
-            final CountCommandResult countCommandResult = new CountCommandResult(asyncSession.execute(
-                    new AsyncCommandOperation(database.getName(),
-                                              new Count(new Find(), getCollectionName()),
-                                              new DocumentCodec(),
-                                              getCluster().getDescription(),
-                                              getBufferProvider())).get());
-            assertEquals(documents.size(), countCommandResult.getCount());
+            long count =  asyncSession.execute(new AsyncCountOperation(new Find(), collection.getNamespace(), new DocumentCodec(),
+                    getBufferProvider())).get();
+            assertEquals(documents.size(), count);
         } finally {
             asyncSession.close();
         }

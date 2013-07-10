@@ -17,12 +17,17 @@
 package org.mongodb.command;
 
 import org.mongodb.Document;
+import org.mongodb.MongoNamespace;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.Query;
 
 public final class Count extends Command {
-    public Count(final Find find, final String collectionName) {
-        super(asDocument(find, collectionName));
+    private final MongoNamespace namespace;
+
+    public Count(final Find find, final MongoNamespace namespace) {
+        super(asDocument(find, namespace.getCollectionName()));
         readPreference(find.getReadPreference());
+        this.namespace = namespace;
     }
 
     private static Document asDocument(final Find find, final String collectionName) {
@@ -42,4 +47,17 @@ public final class Count extends Command {
         return document;
     }
 
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public Query skip(final int skip) {
+        throw new UnsupportedOperationException("Set skip on the instance of Find passed to the constructor");
+    }
+
+    @Override
+    public Query limit(final int limit) {
+        throw new UnsupportedOperationException("Set skip on the instance of Find passed to the constructor");
+    }
 }

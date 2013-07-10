@@ -19,13 +19,12 @@ package org.mongodb;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.async.MongoAsyncQueryCursor;
 import org.mongodb.command.AggregateCommand;
-import org.mongodb.command.Count;
-import org.mongodb.command.CountCommandResult;
+import org.mongodb.command.AsyncCountOperation;
+import org.mongodb.command.CountOperation;
 import org.mongodb.command.FindAndModifyCommandResult;
 import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.MapReduceCommand;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.AsyncCommandOperation;
 import org.mongodb.operation.AsyncQueryOperation;
 import org.mongodb.operation.AsyncReplaceOperation;
 import org.mongodb.operation.CommandOperation;
@@ -248,7 +247,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public long count() {
-            return new CountCommandResult(getDatabase().executeCommand(new Count(findOp, getName()))).getCount();
+            return client.getSession().execute(new CountOperation(findOp, getNamespace(), getDocumentCodec(), client.getBufferProvider()));
         }
 
         @Override
@@ -474,15 +473,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<Long> asyncCount() {
-            final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
-                    new AsyncCommandOperation(getDatabase().getName(), new Count(findOp, getName()), getDocumentCodec(),
-                            client.getCluster().getDescription(), client.getBufferProvider()));
-            return new MappingFuture<CommandResult, Long>(commandResultFuture, new Function<CommandResult, Long>() {
-                @Override
-                public Long apply(final CommandResult commandResult) {
-                    return new CountCommandResult(commandResult).getCount();
-                }
-            });
+            return client.getAsyncSession().execute(new AsyncCountOperation(findOp, getNamespace(), getDocumentCodec(), client.getBufferProvider()
+            ));
         }
 
         private boolean getMultiFromLimit() {

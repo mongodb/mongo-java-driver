@@ -197,6 +197,17 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testCount() {
+        for (int i = 0; i < 10; i++) {
+            collection.insert(new BasicDBObject("_id", i));
+        }
+        assertEquals(10, collection.getCount());
+        assertEquals(5, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5))));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 100, 1));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 4, 0));
+    }
+
+    @Test
     public void testUpdateWithDBEncoder() {
         final DBObject document = new BasicDBObject("x", 1);
         collection.insert(document);

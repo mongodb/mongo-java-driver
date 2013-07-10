@@ -20,10 +20,7 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Count;
-import org.mongodb.command.CountCommandResult;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.command.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
@@ -35,7 +32,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 public class MongoBatchInsertTest extends DatabaseTestCase {
 
@@ -51,12 +47,9 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
 
         final Insert<Document> insert = new Insert<Document>(ACKNOWLEDGED, documents);
         getSession().execute(new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider()));
-        assertEquals(documents.size(),
-                     new CountCommandResult(getSession().execute(new CommandOperation(getDatabaseName(),
-                                                                                      new Count(new Find(), getCollectionName()),
-                                                                                      new DocumentCodec(),
-                                                                                      new ClusterDescription(Direct),
-                                                                                      getBufferProvider()))).getCount());
+        assertEquals((long) documents.size(),
+                (long) getSession().execute(new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(),
+                        getBufferProvider())));
     }
 
 }

@@ -30,7 +30,8 @@ import static org.mongodb.connection.ClusterConnectionMode.Direct;
 /**
  * Help for managing read preferences for commands.
  */
-final class CommandReadPreferenceHelper {
+// TODO: Move me
+public final class CommandReadPreferenceHelper {
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
 
     static {
@@ -52,7 +53,7 @@ final class CommandReadPreferenceHelper {
      * @param command the command
      * @return true if the command is a query, false otherwise.
      */
-    static boolean isQuery(final Command command) {
+    public static boolean isQuery(final Command command) {
        return !isPrimaryRequired(command);
     }
 
@@ -63,7 +64,7 @@ final class CommandReadPreferenceHelper {
      * @param clusterDescription the cluster description
      * @return the recommended read preference for the given command when run against a cluster with the given description
      */
-    static ReadPreference getCommandReadPreference(final Command command, final ClusterDescription clusterDescription) {
+    public static ReadPreference getCommandReadPreference(final Command command, final ClusterDescription clusterDescription) {
         if (clusterDescription.getMode() == Direct || clusterDescription.getType() != ClusterType.ReplicaSet) {
             return command.getReadPreference();
         }

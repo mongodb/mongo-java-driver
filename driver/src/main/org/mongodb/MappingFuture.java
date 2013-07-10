@@ -28,7 +28,8 @@ import java.util.concurrent.TimeoutException;
  * @param <U> the type mapped from
  * @param <V> the type mapped to
  */
-class MappingFuture<U, V> implements MongoFuture<V> {
+// TODO: take this private?
+public class MappingFuture<U, V> implements MongoFuture<V> {
     private final MongoFuture<U> mappedFuture;
     private Function<U, V> function;
 

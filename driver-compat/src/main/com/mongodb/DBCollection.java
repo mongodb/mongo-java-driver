@@ -36,8 +36,7 @@ import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Command;
-import org.mongodb.command.Count;
-import org.mongodb.command.CountCommandResult;
+import org.mongodb.command.CountOperation;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.Drop;
@@ -896,11 +895,9 @@ public class DBCollection implements IDBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        final Count countCommand = new Count(new Find(toDocument(query)), getName());
-        countCommand.limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
+        Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
 
-
-        return new CountCommandResult(getDB().executeCommand(countCommand)).getCount();
+        return getSession().execute(new CountOperation(find, getNamespace(), getDocumentCodec(), getBufferPool()));
     }
 
     /**
