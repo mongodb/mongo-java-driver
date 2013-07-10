@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.MongoInterruptedException;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.MongoWriteConcernException;
@@ -46,7 +45,9 @@ public class MongoExceptions {
             return new MongoException.CursorNotFound((MongoCursorNotFoundException) e);
         } else if (e instanceof MongoCommandFailureException) {
             return new CommandFailureException((MongoCommandFailureException) e);
-        } else if ((e instanceof MongoSocketException || e instanceof MongoInterruptedException) && cause instanceof IOException) {
+        } else if (e instanceof org.mongodb.MongoInterruptedException) {
+            return new MongoInterruptedException((org.mongodb.MongoInterruptedException) e);
+        } else if (e instanceof MongoSocketException && cause instanceof IOException) {
             return new MongoException.Network(e.getMessage(), (IOException) cause);
         }
 

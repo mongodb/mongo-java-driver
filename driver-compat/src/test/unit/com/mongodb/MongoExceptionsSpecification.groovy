@@ -32,22 +32,7 @@ import static com.mongodb.MongoExceptions.mapException
 
 class MongoExceptionsSpecification extends Specification {
 
-    def 'should convert InterruptedExceptions that are InterruptedIOExceptions into Network Exceptions'() {
-        given:
-        String expectedMessage = 'Interrupted IO Exception in the new architecture'
-        def cause = new InterruptedIOException('The cause')
-
-        when:
-        MongoException actualException = mapException(new MongoInterruptedException(expectedMessage, cause))
-
-        then:
-        actualException instanceof MongoException.Network
-        actualException.getCause() == cause
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert InterruptedExceptions that are not InterruptedIOExceptions into MongoException'() {
+    def 'should convert InterruptedExceptions that are not InterruptedIOExceptions into MongoInterruptedException'() {
         given:
         String expectedMessage = 'Interrupted Exception in the new architecture'
         def cause = new InterruptedException('The cause')
@@ -56,8 +41,7 @@ class MongoExceptionsSpecification extends Specification {
         MongoException actualException = mapException(new MongoInterruptedException(expectedMessage, cause))
 
         then:
-        !(actualException instanceof MongoException.Network)
-        actualException instanceof MongoException
+        actualException instanceof com.mongodb.MongoInterruptedException
         actualException.getCause() == cause
         actualException.getMessage() == expectedMessage
         assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
