@@ -1,24 +1,25 @@
 language: java
+jdk: 
+- oraclejdk7
 
-jdk:
-  - oraclejdk7
-
-notifications:
-  email:
-    recipients:
-      - jeff.yemin@10gen.com
-      - trisha.gee@10gen.com
-      - uladzimir.mihura@10gen.com
+notifications: 
+  email: 
+    recipients: 
+    - jeff.yemin@10gen.com
+    - trisha.gee@10gen.com
+    - uladzimir.mihura@10gen.com
     on_success: change
     on_failure: always
+  flowdock:
+    secure: "Ziw1Be2tV0QAYuiYDrepfdNH/oBfNhnXFMji3AdRi6MePVpc6CtOOT/b9Fra\nQgMMrX3AHk/QIDo6QQx9/aVB3FS1fzOPGQkSsEZmiljZU7wZCct1sSSyttf/\nsRG0lyTnmgFNTHyTSDT3JbXAkyF/vJmG/JJJoBUZhmFxzR2fM0Q="
 
-services:
-  - mongodb
+services: 
+- mongodb
 
-branches:
-  only:
-    - master
-    - 3.0.x
+branches: 
+  only: 
+  - master
+  - 3.0.x
 
-install: "./gradlew -q assemble"
-script: "./gradlew -q check"
+install: ./gradlew -q assemble
+script: ./gradlew -q check
