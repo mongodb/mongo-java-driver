@@ -107,7 +107,7 @@ class BasicBSONEncoderSpecification extends Specification {
         ['js': new CodeWScope('i++', ['njs': new CodeWScope('j++', ['j': 0] as BSONObject)] as BSONObject)] | [55, 0, 0, 0, 15, 106, 115, 0, 46, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 34, 0, 0, 0, 15, 110, 106, 115, 0, 24, 0, 0, 0, 4, 0, 0, 0, 106, 43, 43, 0, 12, 0, 0, 0, 16, 106, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 
-    @SuppressWarnings(['SpaceBeforeOpeningBrace', 'SpaceBeforeClosingBrace'])
+    @SuppressWarnings(['SpaceBeforeClosingBrace', 'SpaceAfterOpeningBrace'])
     def 'should throw IllegalArgumentException while encoding unknown class'() {
         given:
         def instanceOfCustomClass = new Object() {}
