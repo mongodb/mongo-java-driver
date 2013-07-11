@@ -17,104 +17,51 @@
 package com.mongodb
 
 import org.mongodb.Document
-import org.mongodb.MongoInterruptedException
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.MongoDuplicateKeyException
 import org.mongodb.command.MongoWriteConcernException
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.MongoTimeoutException
 import org.mongodb.connection.MongoWaitQueueFullException
+import org.mongodb.connection.ServerAddress
 import org.mongodb.operation.MongoCursorNotFoundException
 import org.mongodb.operation.ServerCursor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static com.mongodb.MongoExceptions.mapException
 
 class MongoExceptionsSpecification extends Specification {
+    private final static String MESSAGE = 'New style exception'
+    private final static int ERROR_CODE = 500
 
-    def 'should convert InterruptedExceptions that are not InterruptedIOExceptions into MongoInterruptedException'() {
-        given:
-        String expectedMessage = 'Interrupted Exception in the new architecture'
-        def cause = new InterruptedException('The cause')
+    @Unroll
+    def 'should convert #exceptionToBeMapped into #exceptionForCompatibilityApi'() {
+        expect:
+        MongoException actualException = mapException(exceptionToBeMapped)
+        actualException.class == exceptionForCompatibilityApi
+        actualException.getCause() == exceptionToBeMapped.getCause()
+        actualException.getCode() == errorCode
+        actualException.getMessage() == exceptionToBeMapped.getMessage()
+        !(actualException.getCause() instanceof org.mongodb.MongoException)
+        !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
 
-        when:
-        MongoException actualException = mapException(new MongoInterruptedException(expectedMessage, cause))
-
-        then:
-        actualException instanceof com.mongodb.MongoInterruptedException
-        actualException.getCause() == cause
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert IOExceptions into MongoException.Network'() {
-        given:
-        String expectedMessage = 'IO Exception in the new architecture'
-        def cause = new IOException('The cause')
-
-        when:
-        MongoException actualException = mapException(new MongoSocketReadException(expectedMessage,
-                                                                                   new org.mongodb.connection.ServerAddress(), cause))
-
-        then:
-        actualException instanceof MongoException.Network
-        actualException.getCause() == cause
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert SocketExceptions that are not IOExceptions into MongoException'() {
-        given:
-        String expectedMessage = 'Exception in the new architecture'
-
-        when:
-        MongoException actualException = mapException(new MongoSocketReadException(expectedMessage,
-                                                                                   new org.mongodb.connection.ServerAddress()))
-
-        then:
-        !(actualException instanceof MongoException.Network)
-        actualException instanceof MongoException
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert MongoDuplicateKeyException into DuplicateKeyException'() {
-        given:
-        int expectedErrorCode = 500
-        String expectedMessage = "Command failed with response { \"code\" : $expectedErrorCode } " +
-                "on server ServerAddress{host='127.0.0.1', port=27017}"
-
-        when:
-        MongoException actualException = mapException(new MongoDuplicateKeyException(commandResultWithErrorCode(expectedErrorCode)))
-
-        then:
-        actualException instanceof MongoException.DuplicateKey
-        actualException.getMessage() == expectedMessage
-        actualException.getCode() == expectedErrorCode
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert MongoCommandFailureException into CommandFailureException'() {
-        given:
-        int expectedErrorCode = 501
-        String expectedMessage = "Command failed with response { \"code\" : $expectedErrorCode } " +
-                "on server ServerAddress{host='127.0.0.1', port=27017}"
-
-        def newStyleException = new MongoCommandFailureException(commandResultWithErrorCode(expectedErrorCode))
-        when:
-        MongoException actualException = mapException(newStyleException)
-
-        then:
-        actualException instanceof CommandFailureException
-        actualException.getMessage() == expectedMessage
-        actualException.getCode() == expectedErrorCode
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
+        where:
+        exceptionToBeMapped                                                                   | exceptionForCompatibilityApi | errorCode
+        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException    | -4
+        new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoException.Network       | -2
+        new MongoDuplicateKeyException(commandResultWithErrorCode(ERROR_CODE))                | MongoException.DuplicateKey  | ERROR_CODE
+        new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException      | ERROR_CODE
+        new org.mongodb.MongoInternalException(MESSAGE)                                       | MongoInternalException       | -4
+        new MongoWriteConcernException(commandResultWithErrorCode(ERROR_CODE))                | WriteConcernException        | ERROR_CODE
+        new MongoTimeoutException(MESSAGE)                                                    | ConnectionWaitTimeOut        | -3
+        new MongoWaitQueueFullException(MESSAGE)                                              | SemaphoresOut                | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {
         given:
         long cursorId = 123L
-        org.mongodb.connection.ServerAddress serverAddress = new org.mongodb.connection.ServerAddress()
+        ServerAddress serverAddress = new ServerAddress()
         String expectedMessage = "cursor $cursorId not found on server $serverAddress"
 
         when:
@@ -128,75 +75,31 @@ class MongoExceptionsSpecification extends Specification {
         actualAsCursorNotFound.getServerAddress().getHost() == serverAddress.getHost()
         actualAsCursorNotFound.getServerAddress().getPort() == serverAddress.getPort()
 
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
+        !(actualException.getCause() instanceof org.mongodb.MongoException)
+        !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
-    def 'should convert org.mongodb.MongoInternalException into com.mongodb.MongoInternalException'() {
+    def 'should convert SocketExceptions that are not IOExceptions into MongoException'() {
         given:
-        String expectedMessage = 'Internal Exception thrown'
+        String expectedMessage = 'Exception in the new architecture'
 
         when:
-        MongoException actualException = mapException(new org.mongodb.MongoInternalException(expectedMessage))
+        MongoException actualException = mapException(new MongoSocketReadException(expectedMessage, new ServerAddress()))
 
         then:
-        actualException instanceof MongoInternalException
+        !(actualException instanceof MongoException.Network)
+        actualException instanceof MongoException
         actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert MongoWriteConcernException into com.mongodb.WriteConcernException'() {
-        given:
-        int expectedErrorCode = 500
-        String expectedMessage = "Command failed with response { \"code\" : $expectedErrorCode } " +
-                "on server ServerAddress{host='127.0.0.1', port=27017}"
-
-        when:
-        MongoException actualException = mapException(new MongoWriteConcernException(commandResultWithErrorCode(expectedErrorCode)))
-
-        then:
-        actualException instanceof WriteConcernException
-        actualException.getMessage() == expectedMessage
-        actualException.getCode() == expectedErrorCode
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert MongoTimeoutException into com.mongodb.ConnectionWaitTimeOut'() {
-        given:
-        String expectedMessage = 'A timeout exception was throwm'
-
-        when:
-        MongoException actualException = mapException(new MongoTimeoutException(expectedMessage))
-
-        then:
-        actualException instanceof ConnectionWaitTimeOut
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
-    }
-
-    def 'should convert MongoWaitQueueFullException into com.mongodb.SemaphoresOut'() {
-        given:
-        String expectedMessage = 'A queue full exception was throwm'
-
-        when:
-        MongoException actualException = mapException(new MongoWaitQueueFullException(expectedMessage))
-
-        then:
-        actualException instanceof SemaphoresOut
-        actualException.getMessage() == expectedMessage
-        assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(actualException)
+        !(actualException.getCause() instanceof org.mongodb.MongoException)
+        !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
     private static org.mongodb.operation.CommandResult commandResultWithErrorCode(int expectedErrorCode) {
         new org.mongodb.operation.CommandResult(new Document(),
-                                                new org.mongodb.connection.ServerAddress(),
+                                                new ServerAddress(),
                                                 new Document
                                                 ('code', expectedErrorCode),
                                                 15L)
-    }
-
-    private static void assertExceptionFromNewArchitectureIsNotVisibleOnStackTrace(MongoException actualException) {
-        assert !(actualException.getCause() instanceof org.mongodb.MongoException)
-        assert !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
 }
