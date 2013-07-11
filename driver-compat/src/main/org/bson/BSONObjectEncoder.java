@@ -73,6 +73,8 @@ class BSONObjectEncoder implements Encoder<BSONObject> {
             encodeArray(bsonWriter, value);
         } else if (value instanceof Symbol) {
             bsonWriter.writeSymbol(((Symbol) initialValue).getSymbol());
+        } else if (value instanceof Character) {
+            bsonWriter.writeString(Character.toString((Character) value));
         } else if (value instanceof CodeWScope) {
             encodeCodeWScope(bsonWriter, (CodeWScope) value);
         } else {

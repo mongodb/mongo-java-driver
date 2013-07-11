@@ -46,7 +46,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     @Override
     public int putObject(final BSONObject document) {
-        int startPosition = outputBuffer.getPosition();
+        final int startPosition = outputBuffer.getPosition();
         final BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, false);
         try {
             new BSONObjectEncoder(PrimitiveCodecs.createDefault()).encode(writer, document);
