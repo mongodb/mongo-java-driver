@@ -229,12 +229,6 @@ project(':driver-compat') {
         classpath = sourceSets.legacy.runtimeClasspath
     }
 
-    tasks.withType(Test) {
-        if (JavaVersion.current().isJava8Compatible()) {
-            jvmArgs '-Xint'
-        }
-    }
-
     clirr {
         ignoreFailures = true
         ignoredDifferenceTypes 10000
