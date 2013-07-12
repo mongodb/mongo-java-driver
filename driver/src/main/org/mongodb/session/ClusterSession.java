@@ -20,6 +20,7 @@ import org.mongodb.ServerSelectingOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ServerConnection;
+import org.mongodb.operation.OperationConnectionProvider;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
@@ -57,6 +58,10 @@ public class ClusterSession implements ServerSelectingSession {
         else {
             return new SingleServerSession(cluster.getServer(operation.getServerSelector()));
         }
+    }
+
+    OperationConnectionProvider createOperationChannelProvider(final OperationChannelProviderCreationOptions options) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
