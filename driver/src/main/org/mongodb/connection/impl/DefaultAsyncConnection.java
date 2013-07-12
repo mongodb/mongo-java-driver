@@ -16,19 +16,6 @@
 
 package org.mongodb.connection.impl;
 
-import org.bson.ByteBuf;
-import org.bson.io.BasicInputBuffer;
-import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.MongoSocketOpenException;
-import org.mongodb.connection.ReplyHeader;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
-import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.SingleResultCallback;
-
 import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
@@ -36,6 +23,20 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.Iterator;
 import java.util.List;
+
+import org.bson.ByteBuf;
+import org.bson.io.BasicInputBuffer;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.MongoSocketOpenException;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.ReplyHeader;
+import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ResponseSettings;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SingleResultCallback;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
@@ -55,6 +56,10 @@ class DefaultAsyncConnection implements AsyncConnection {
     @Override
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     @Override
@@ -138,7 +143,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         });
     }
 
-    private void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
+    void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
         channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, callback));
     }
 
@@ -156,20 +161,18 @@ class DefaultAsyncConnection implements AsyncConnection {
             if (!dst.hasRemaining()) {
                 dst.flip();
                 callback.onResult(dst, null);
-            }
-            else {
+            } else {
                 channel.read(dst.asNIO(), null, new BasicCompletionHandler(dst, callback));
             }
         }
 
         @Override
         public void failed(final Throwable t, final Void attachment) {
-            // TODO: need a proper subclass for the exception
-            callback.onResult(null, new MongoException("Exception reading from channel", t));
+            callback.onResult(null, new MongoSocketReadException("Exception reading from channel", getServerAddress(), t));
         }
     }
 
-    private void ensureOpen(final AsyncCompletionHandler handler) {
+    void ensureOpen(final AsyncCompletionHandler handler) {
         try {
             if (channel != null) {
                 handler.completed();
@@ -241,7 +244,7 @@ class DefaultAsyncConnection implements AsyncConnection {
             }
             else {
                 ReplyHeader replyHeader;
-                BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
+                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
                 try {
                     replyHeader = new ReplyHeader(headerInputBuffer);
                 } finally {

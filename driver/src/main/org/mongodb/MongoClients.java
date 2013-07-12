@@ -125,7 +125,7 @@ public final class MongoClients {
         DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
                 options.isAsyncEnabled()
                         ? new DefaultAsyncConnectionProviderFactory(connectionProviderSettings,
-                        new DefaultAsyncConnectionFactory(bufferProvider, credentialList))
+                        new DefaultAsyncConnectionFactory(sslSettings, bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(
                 ServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).

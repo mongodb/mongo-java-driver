@@ -18,8 +18,6 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoException;
 
-import java.io.IOException;
-
 /**
  * Unchecked exception thrown when the driver gets an IOException from the underlying Socket, or reaches end of stream
  * prematurely.
@@ -28,8 +26,8 @@ public abstract class MongoSocketException extends MongoException {
     private static final long serialVersionUID = -82458642694036972L;
     private final ServerAddress serverAddress;
 
-    public MongoSocketException(final String message, final ServerAddress serverAddress, final IOException e) {
-        super(message, e);
+    public MongoSocketException(final String message, final ServerAddress serverAddress, final Throwable t) {
+        super(message, t);
         this.serverAddress = serverAddress;
     }
 

@@ -16,8 +16,6 @@
 
 package org.mongodb.connection;
 
-import java.io.IOException;
-
 /**
  * This exception is thrown when there is an exception reading a response from a Socket.
  */
@@ -28,7 +26,7 @@ public class MongoSocketReadException extends MongoSocketException {
         super(message, address);
     }
 
-    public MongoSocketReadException(final String message, final ServerAddress address, final IOException e) {
-        super(message, address, e);
+    public MongoSocketReadException(final String message, final ServerAddress address, final Throwable t) {
+        super(message, address, t);
     }
 }

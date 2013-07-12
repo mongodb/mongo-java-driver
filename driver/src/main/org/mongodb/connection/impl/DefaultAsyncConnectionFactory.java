@@ -14,27 +14,43 @@
  * limitations under the License.
  */
 
+
 package org.mongodb.connection.impl;
+
+
+import java.util.List;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncConnectionFactory;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 
-import java.util.List;
 
 public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
+    private SSLSettings sslSettings;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultAsyncConnectionFactory(final BufferProvider bufferProvider, final List<MongoCredential> credentialList) {
+    public DefaultAsyncConnectionFactory(final SSLSettings sslSettings, final BufferProvider bufferProvider,
+        final List<MongoCredential> credentialList) {
+        this.sslSettings = sslSettings;
         this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
     }
 
     @Override
     public AsyncConnection create(final ServerAddress serverAddress) {
-        return new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferProvider), credentialList, bufferProvider);
+        AsyncConnection connection;
+        if (sslSettings.isEnabled()) {
+            connection = new AuthenticatingAsyncConnection(new DefaultSSLAsyncConnection(serverAddress, bufferProvider), credentialList,
+                bufferProvider);
+        } else {
+            connection = new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferProvider), credentialList,
+                bufferProvider);
+        }
+        return connection;
     }
+
 }
