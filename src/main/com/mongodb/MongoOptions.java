@@ -55,6 +55,7 @@ public class MongoOptions {
         cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
         writeConcern = options.getWriteConcern();
         slaveOk = false; // default to false, as readPreference field will be responsible
+        alwaysUseMBeans = options.isAlwaysUseMBeans();
     }
 
     public void reset(){
@@ -68,6 +69,7 @@ public class MongoOptions {
         maxAutoConnectRetryTime = 0;
         slaveOk = false;
         readPreference = null;
+        writeConcern = null;
         safe = false;
         w = 0;
         wtimeout = 0;
@@ -93,6 +95,7 @@ public class MongoOptions {
         m.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
         m.slaveOk = slaveOk;
         m.readPreference = readPreference;
+        m.writeConcern = writeConcern;
         m.safe = safe;
         m.w = w;
         m.wtimeout = wtimeout;
