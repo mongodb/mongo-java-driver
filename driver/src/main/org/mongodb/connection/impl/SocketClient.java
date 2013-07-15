@@ -20,7 +20,6 @@ package org.mongodb.connection.impl;
 
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
@@ -28,18 +27,24 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 
 import org.bson.ByteBuf;
+import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.ServerAddress;
 
 
 public class SocketClient {
     private SocketChannel client = null;
     private Selector selector = null;
-    private InetSocketAddress address = null;
+    private ServerAddress address = null;
+    private BufferProvider bufferProvider;
+    private final BlockingQueue<AsyncCompletionHandler> callbacks = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
 
-    private SSLContext sslContext;
     private SSLHandler sslHandler = null;
 
     private boolean initConnDone = false;
@@ -48,110 +53,41 @@ public class SocketClient {
     private final NIOSocketInputStream socketInputStream;
     private final NIOSocketOutputStream socketOutputStream;
 
-    public SocketClient(final InetSocketAddress address) {
+    public SocketClient(final ServerAddress address, final BufferProvider bufferProvider) throws SSLException {
         this.address = address;
+        this.bufferProvider = bufferProvider;
         socketInputStream = new NIOSocketInputStream(this);
         socketOutputStream = new NIOSocketOutputStream(this);
     }
 
-    public SocketClient(final SocketChannel client, final Selector key) {
-        this.client = client;
-        initConnDone = true;
-        selector = key;
-        socketInputStream = new NIOSocketInputStream(this);
-        socketOutputStream = new NIOSocketOutputStream(this);
-    }
-
-    public void setSSLContext(final SSLContext context) {
-        this.sslContext = context;
-    }
-
-    protected void buildSSLHandler(final SSLContext context, final boolean clientmode) throws IOException {
-        if (context != null && client != null) {
-            setSSLContext(context);
-            final SSLEngine sslEngine = sslContext.createSSLEngine(client.socket().getInetAddress().getHostName(),
-                client.socket().getPort());
-            sslEngine.setUseClientMode(clientmode);
-            sslHandler = new SSLHandler(sslEngine, client);
-            //sslHandler.doHandshake();
-            //System.out.println(((!clientmode)? "Server ": "Client ") + "Handshake done");
+    protected void buildSSLHandler() throws IOException {
+        if (sslHandler == null) {
+            sslHandler = new SSLHandler(this, bufferProvider, client);
         }
+
     }
 
     public void connect(final AsyncCompletionHandler handler) throws IOException {
-
         if (initConnDone) {
             throw new IOException("Socket Already connected");
         }
 
         client = SocketChannel.open();
         client.configureBlocking(false);
-        client.connect(address);
+        client.connect(address.getSocketAddress());
 
-        new Thread() {
-            public void run() {
-                try {
-                    selector = Selector.open();
-                    client.register(selector, SelectionKey.OP_CONNECT);
-
-                    while (!isClosed) {
-                        if (selector.select() == 0) {
-                            continue;
-                        }
-                        final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
-                        while (it.hasNext()) {
-                            final SelectionKey key = it.next();
-                            it.remove();
-                            if (!key.isValid()) {
-                                continue;
-                            }
-                            if (key.isValid() && key.isConnectable()) {
-                                if (client.finishConnect()) {
-                                    if (sslContext != null) {
-                                        // Do the SSL handshake stuff ;
-                                        buildSSLHandler(sslContext, true);
-                                    }
-                                    client.register(selector, SelectionKey.OP_READ);
-                                    initConnDone = true;
-                                    handler.completed();
-                                }
-                            }
-                            if (key.isValid() && key.isReadable()) {
-                                unblockRead();
-                                if (client.isOpen()) {
-                                    client.register(selector, SelectionKey.OP_READ);
-                                }
-                            }
-                            if (key.isValid() && key.isWritable()) {
-                                unblockWrite();
-                                if (client.isOpen()) {
-                                    client.register(selector, SelectionKey.OP_READ);
-                                }
-                            }
-                        }
-                    }
-
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        selector.close();
-                        client.close();
-                        socketInputStream.close();
-                        socketOutputStream.close();
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        }.start();
+        new Thread(new NIOListener(handler)).start();
     }
 
-    protected void unblockRead() {
-        socketInputStream.notifyRead();
+    protected void readChannel() {
+        try {
+            final AsyncCompletionHandler handler = callbacks.poll(100, TimeUnit.MILLISECONDS);
+            if (handler != null) {
+                handler.completed();
+            }
+        } catch (InterruptedException e) {
+            // no readers yet.  that's ok.  ish.
+        }
     }
 
 
@@ -163,7 +99,6 @@ public class SocketClient {
         if (sslHandler != null) {
             return sslHandler.doWrite(socketOutputStream.getByteBuffer());
         } else {
-            //Write the non SSL bit of the transfer
             final ByteBuffer buff = socketOutputStream.getByteBuffer();
             final int out = buff.remaining();
             while (buff.hasRemaining()) {
@@ -215,8 +150,8 @@ public class SocketClient {
             out = sslHandler.doRead(buffer);
         } else {
             out = client.read(buffer);
-            buffer.flip();
         }
+        buffer.flip();
         if (out < 0) {
             close();
         } else {
@@ -244,9 +179,94 @@ public class SocketClient {
 
     public void read(final ByteBuf byteBuf, final CompletionHandler<Integer, Void> callback) {
         try {
-            callback.completed(readToBuffer(byteBuf.asNIO()), null);
-        } catch (IOException e) {
-            callback.failed(e, null);
+            callbacks.offer(new AsyncCompletionHandler() {
+                @Override
+                public void completed() {
+                    try {
+                        final ByteBuffer buffer = byteBuf.asNIO();
+                        final int read = readToBuffer(buffer);
+                        callback.completed(read, null);
+                    } catch (IOException e) {
+                        throw new MongoSocketReadException(e.getMessage(), address, e);
+                    }
+                }
+
+                @Override
+                public void failed(final Throwable t) {
+                    callback.failed(t, null);
+                }
+            }, 1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new MongoSocketReadException(e.getMessage(), address, e);
+        }
+    }
+
+    public ServerAddress getServerAddress() {
+        return address;
+    }
+
+    private class NIOListener implements Runnable {
+        private final AsyncCompletionHandler handler;
+
+        public NIOListener(final AsyncCompletionHandler handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+            try {
+                selector = Selector.open();
+                client.register(selector, SelectionKey.OP_CONNECT);
+
+                while (!isClosed) {
+                    if (selector.select() == 0) {
+                        continue;
+                    }
+                    final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+                    while (it.hasNext()) {
+                        final SelectionKey key = it.next();
+                        it.remove();
+                        if (!key.isValid()) {
+                            continue;
+                        }
+                        if (key.isValid() && key.isConnectable()) {
+                            if (client.finishConnect()) {
+                                buildSSLHandler();
+                                client.register(selector, SelectionKey.OP_READ);
+                                initConnDone = true;
+                                handler.completed();
+                            }
+                        }
+                        if (key.isValid() && key.isReadable()) {
+                            readChannel();
+                            if (client.isOpen()) {
+                                client.register(selector, SelectionKey.OP_READ);
+                            }
+                        }
+                        if (key.isValid() && key.isWritable()) {
+                            unblockWrite();
+                            if (client.isOpen()) {
+                                client.register(selector, SelectionKey.OP_READ);
+                            }
+                        }
+                    }
+                }
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } finally {
+                try {
+                    selector.close();
+                    client.close();
+                    socketInputStream.close();
+                    socketOutputStream.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+            }
         }
     }
 }

@@ -1,15 +1,9 @@
 package org.mongodb.connection.impl;
 
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.channels.CompletionHandler;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.List;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.bson.ByteBuf;
 import org.mongodb.MongoInternalException;
@@ -23,34 +17,6 @@ import org.mongodb.connection.SingleResultCallback;
 
 class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
     private SocketClient socketClient;
-    private static final SSLContext SSL_CONTEXT;
-
-    static {
-        try {
-            SSL_CONTEXT = SSLContext.getInstance("TLS");
-            final KeyStore ks = KeyStore.getInstance("JKS");
-            final KeyStore ts = KeyStore.getInstance("JKS");
-
-            final char[] passphrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
-
-            final String keyStoreFile = System.getProperty("javax.net.ssl.trustStore");
-            ks.load(new FileInputStream(keyStoreFile), passphrase);
-            ts.load(new FileInputStream(keyStoreFile), passphrase);
-
-            final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(ks, passphrase);
-
-            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            tmf.init(ts);
-
-            SSL_CONTEXT.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
     public DefaultSSLAsyncConnection(final ServerAddress serverAddress, final BufferProvider bufferProvider) {
         super(serverAddress, bufferProvider);
     }
@@ -107,8 +73,7 @@ class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
             if (socketClient != null) {
                 handler.completed();
             } else {
-                socketClient = new SocketClient(getServerAddress().getSocketAddress());
-                socketClient.setSSLContext(SSL_CONTEXT);
+                socketClient = new SocketClient(getServerAddress(), getBufferProvider());
                 socketClient.connect(handler);
             }
         } catch (IOException e) {
