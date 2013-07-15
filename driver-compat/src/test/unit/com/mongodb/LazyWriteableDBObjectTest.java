@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.LazyBSONCallback;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -76,5 +78,24 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
         map.put("q", 4);
         document.putAll(map);
         assertThat(document.keySet(), hasItems("w", "q", "a"));
+    }
+
+    @Test
+    public void testCallbackCreateObject() {
+        final LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
+        final Object document = callback.createObject(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0}, 0);
+
+        assertThat(document, instanceOf(LazyWriteableDBObject.class));
+    }
+
+    @Test
+    public void testCallbackCreateDBRef() {
+        final LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
+        final Object document = callback.createObject(new byte[]{
+                28, 0, 0, 0, 16, 36, 105, 100, 0, 1, 0, 0, 0, 2,
+                36, 114, 101, 102, 0, 4, 0, 0, 0, 97, 46, 98, 0, 0
+        }, 0);
+
+        assertThat(document, instanceOf(DBRef.class));
     }
 }
