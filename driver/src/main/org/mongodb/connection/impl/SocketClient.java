@@ -34,6 +34,7 @@ import javax.net.ssl.SSLException;
 
 import org.bson.ByteBuf;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.ServerAddress;
 
@@ -60,7 +61,7 @@ public class SocketClient {
         socketOutputStream = new NIOSocketOutputStream(this);
     }
 
-    protected void buildSSLHandler() throws IOException {
+    protected void buildSSLHandler() {
         if (sslHandler == null) {
             sslHandler = new SSLHandler(this, bufferProvider, client);
         }
@@ -215,58 +216,55 @@ public class SocketClient {
         @Override
         public void run() {
             try {
-                selector = Selector.open();
-                client.register(selector, SelectionKey.OP_CONNECT);
+                try {
+                    selector = Selector.open();
+                    client.register(selector, SelectionKey.OP_CONNECT);
 
-                while (!isClosed) {
-                    if (selector.select() == 0) {
-                        continue;
-                    }
-                    final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
-                    while (it.hasNext()) {
-                        final SelectionKey key = it.next();
-                        it.remove();
-                        if (!key.isValid()) {
+                    while (!isClosed) {
+                        if (selector.select() == 0) {
                             continue;
                         }
-                        if (key.isValid() && key.isConnectable()) {
-                            if (client.finishConnect()) {
-                                buildSSLHandler();
-                                client.register(selector, SelectionKey.OP_READ);
-                                initConnDone = true;
-                                handler.completed();
+                        final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+                        while (it.hasNext()) {
+                            final SelectionKey key = it.next();
+                            it.remove();
+                            if (!key.isValid()) {
+                                continue;
                             }
-                        }
-                        if (key.isValid() && key.isReadable()) {
-                            readChannel();
-                            if (client.isOpen()) {
-                                client.register(selector, SelectionKey.OP_READ);
+                            if (key.isValid() && key.isConnectable()) {
+                                if (client.finishConnect()) {
+                                    buildSSLHandler();
+                                    client.register(selector, SelectionKey.OP_READ);
+                                    initConnDone = true;
+                                    handler.completed();
+                                }
                             }
-                        }
-                        if (key.isValid() && key.isWritable()) {
-                            unblockWrite();
-                            if (client.isOpen()) {
-                                client.register(selector, SelectionKey.OP_READ);
+                            if (key.isValid() && key.isReadable()) {
+                                readChannel();
+                                if (client.isOpen()) {
+                                    client.register(selector, SelectionKey.OP_READ);
+                                }
+                            }
+                            if (key.isValid() && key.isWritable()) {
+                                unblockWrite();
+                                if (client.isOpen()) {
+                                    client.register(selector, SelectionKey.OP_READ);
+                                }
                             }
                         }
                     }
-                }
-
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } finally {
-                try {
+                } finally {
                     selector.close();
                     client.close();
                     socketInputStream.close();
                     socketOutputStream.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
                 }
-
+            } catch (ClosedChannelException e) {
+                throw new MongoSocketOpenException(e.getMessage(), getServerAddress(), e);
+            } catch (IOException e) {
+                throw new MongoSocketOpenException(e.getMessage(), getServerAddress(), e);
             }
+
         }
     }
 }

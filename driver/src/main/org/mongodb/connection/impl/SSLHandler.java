@@ -36,13 +36,13 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.MongoSocketOpenException;
 
 
 public class SSLHandler {
 
     private SSLEngine sslEngine;
     private SocketChannel channel;
-
     private ByteBuffer netSendBuffer = null;
 
     private ByteBuffer netRecvBuffer = null;
@@ -81,8 +81,7 @@ public class SSLHandler {
         }
     }
 
-    public SSLHandler(final SocketClient socketClient, final BufferProvider bufferProvider, final SocketChannel channel)
-        throws SSLException {
+    public SSLHandler(final SocketClient socketClient, final BufferProvider bufferProvider, final SocketChannel channel) {
         this.socketClient = socketClient;
         this.bufferProvider = bufferProvider;
         this.channel = channel;
@@ -93,7 +92,11 @@ public class SSLHandler {
         this.netSendBuffer = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
         this.netRecvBuffer = ByteBuffer.allocate(sslEngine.getSession().getPacketBufferSize());
 
-        sslEngine.beginHandshake();
+        try {
+            sslEngine.beginHandshake();
+        } catch (SSLException e) {
+            throw new MongoSocketOpenException(e.getMessage(), socketClient.getServerAddress(), e);
+        }
     }
 
     public void stop() throws IOException {
@@ -159,95 +162,90 @@ public class SSLHandler {
         return count;
     }
 
-    private int readAndUnwrap(final ByteBuffer buff) throws IOException {
-           Status status = Status.OK;
-           if (!channel.isOpen()) {
-               return -1;
-               //throw new IOException ("Engine is closed");
-           }
-           boolean needRead;
-           if (remaining > 0) {
-               netRecvBuffer.compact();
-               netRecvBuffer.flip();
-               needRead = false;
-           } else {
-               netRecvBuffer.clear();
-               needRead = true;
-           }
+    private int readAndUnwrap(ByteBuffer buff) throws IOException {
+        Status status = Status.OK;
+        if (!channel.isOpen()) {
+            return -1;
+        }
+        boolean needRead = true;
 
-           int x = 0;
-           do {
-               if (needRead) {
+        if (remaining > 0) {
+            netRecvBuffer.compact();
+            netRecvBuffer.flip();
+            needRead = false;
+        } else {
+            netRecvBuffer.clear();
+            needRead = true;
+        }
 
-                   x = channel.read(netRecvBuffer);
-                   if (x == -1) {
-                       return x;
-                       //throw new IOException ("connection closed for reading");
-                   }
-                   netRecvBuffer.flip();
-               }
-               status = sslEngine.unwrap(netRecvBuffer, buff).getStatus();
-               if (x == 0 && netRecvBuffer.position() == 0) {
-                   netRecvBuffer.clear();
-               }
-               if (x == 0 && handShakeDone) {
-                   return 0;
-               }
-               //status = r.result.getStatus();
-               if (status == Status.BUFFER_UNDERFLOW) {
-                   // Not enogh data read from the channel need to read more from the socket
-                   needRead = true;
-               } else if (status == Status.BUFFER_OVERFLOW) {
-                   // Buffer over flow, the caller does not have enough buffer space in the buff
-                   // re do the call after freeing the current data in the buffer
+        int x = 0;
+        do {
+            if (needRead) {
+                x = channel.read(netRecvBuffer);
+                if (x == -1) {
+                    return x;
+                }
+                netRecvBuffer.flip();
+            }
+            if (buff.limit() < netRecvBuffer.limit()) {
+                buff = bufferProvider.get(netRecvBuffer.limit()).asNIO();
+            }
+            status = sslEngine.unwrap(netRecvBuffer, buff).getStatus();
+            if (x == 0 && netRecvBuffer.position() == 0) {
+                netRecvBuffer.clear();
+            }
+            if (x == 0 && handShakeDone) {
+                return 0;
+            }
+            if (status == Status.BUFFER_UNDERFLOW) {
+                needRead = true;
+            } else if (status == Status.BUFFER_OVERFLOW) {
+                break;
+            } else if (status == Status.CLOSED) {
+                buff.flip();
+                return -1;
+            }
+        } while (status != Status.OK);
 
-                   break;
-               } else if (status == Status.CLOSED) {
-                   buff.flip();
-                   return -1;
-                   //throw new IOException("SSLEngine Closed");
-
-               }
-           } while (status != Status.OK);
-
-           remaining = netRecvBuffer.remaining();
-           return buff.position();
-       }
+        remaining = netRecvBuffer.remaining();
+        return buff.position();
+    }
 
     private void doHandshake() throws IOException {
 
-           handShakeDone = false;
-           final ByteBuffer tmpBuff = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
-           HandshakeStatus status = sslEngine.getHandshakeStatus();
-           while (status != HandshakeStatus.FINISHED && status != HandshakeStatus.NOT_HANDSHAKING) {
-               switch (status) {
-                   case NEED_TASK:
+        handShakeDone = false;
+        final ByteBuffer tmpBuff = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
+        HandshakeStatus status = sslEngine.getHandshakeStatus();
+        while (status != HandshakeStatus.FINISHED && status != HandshakeStatus.NOT_HANDSHAKING) {
+            switch (status) {
+                case NEED_TASK:
 
-                       final Executor exec = Executors.newSingleThreadExecutor();
-                       Runnable task;
+                    final Executor exec = Executors.newSingleThreadExecutor();
+                    Runnable task;
 
-                       while ((task = sslEngine.getDelegatedTask()) != null) {
-                           exec.execute(task);
-                       }
-                       break;
-                   case NEED_WRAP:
-                       tmpBuff.clear();
-                       tmpBuff.flip();
-                       if (wrapAndWrite(tmpBuff) < 0) {
-                           throw new IOException("SSLHandshake failed");
-                       }
-                       break;
+                    while ((task = sslEngine.getDelegatedTask()) != null) {
+                        exec.execute(task);
+                    }
+                    break;
+                case NEED_WRAP:
+                    tmpBuff.clear();
+                    tmpBuff.flip();
+                    if (wrapAndWrite(tmpBuff) < 0) {
+                        throw new IOException("SSLHandshake failed");
+                    }
+                    break;
 
-                   case NEED_UNWRAP:
-                       tmpBuff.clear();
-                       if (readAndUnwrap(tmpBuff) < 0) {
-                           throw new IOException("SSLHandshake failed");
-                       }
-                       assert tmpBuff.position() == 0;
-                       break;
-                   default:
-               }
-               status = sslEngine.getHandshakeStatus();
-           }
-           handShakeDone = true;
-       }}
+                case NEED_UNWRAP:
+                    tmpBuff.clear();
+                    if (readAndUnwrap(tmpBuff) < 0) {
+                        throw new IOException("SSLHandshake failed");
+                    }
+                    assert tmpBuff.position() == 0;
+                    break;
+                default:
+            }
+            status = sslEngine.getHandshakeStatus();
+        }
+        handShakeDone = true;
+    }
+}
