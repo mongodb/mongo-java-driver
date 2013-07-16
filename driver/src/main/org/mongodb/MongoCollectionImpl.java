@@ -186,14 +186,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> project(final Document selector) {
+        public MongoView<T> fields(final Document selector) {
             findOp.select(selector);
             return this;
         }
 
         @Override
-        public MongoView<T> project(final ConvertibleToDocument selector) {
-            return project(selector.toDocument());
+        public MongoView<T> fields(final ConvertibleToDocument selector) {
+            return fields(selector.toDocument());
         }
 
         @Override

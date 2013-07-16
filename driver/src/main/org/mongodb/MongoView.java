@@ -37,9 +37,9 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableVi
     MongoView<T> limit(int limit);
 
 
-    MongoView<T> project(Document selector);
+    MongoView<T> fields(Document selector);
 
-    MongoView<T> project(ConvertibleToDocument selector);
+    MongoView<T> fields(ConvertibleToDocument selector);
 
 
     MongoView<T> upsert();
