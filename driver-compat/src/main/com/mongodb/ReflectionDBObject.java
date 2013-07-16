@@ -214,7 +214,7 @@ public abstract class ReflectionDBObject implements DBObject {
             }
         }
 
-        public Class<? extends DBObject> getInternalClass(final List<String> path) {
+        Class<? extends DBObject> getInternalClass(final List<String> path) {
             final String cur = path.get(0);
 
             final FieldInfo fi = fields.get(cur);
