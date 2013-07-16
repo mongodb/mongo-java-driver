@@ -35,8 +35,11 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.bson.ByteBuf;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.MongoSocketWriteException;
 
 
 public class SSLHandler {
@@ -114,60 +117,60 @@ public class SSLHandler {
         return out;
     }
 
-    protected int doRead(final ByteBuffer buff) throws IOException {
+    protected ByteBuf doRead(final ByteBuf buff) throws IOException {
 
-        assert buff.position() == 0;
-        if (readAndUnwrap(buff) >= 0) {
+        final ByteBuf byteBuf = readAndUnwrap(buff);
+        if (byteBuf != null && byteBuf.position() >= 0) {
             doHandshake();
         } else {
-            return -1;
+            return null;
         }
-        return buff.position();
 
+        return byteBuf;
     }
 
-    private int wrapAndWrite(final ByteBuffer buff) throws IOException {
-
-        Status status;
-
-        netSendBuffer.clear();
-        do {
-            status = sslEngine.wrap(buff, netSendBuffer).getStatus();
-            if (status == Status.BUFFER_OVERFLOW) {
-                // There data in the net buffer therefore need to send out the data
-                flush();
+    private int wrapAndWrite(final ByteBuffer buff) {
+        try {
+            Status status;
+            netSendBuffer.clear();
+            do {
+                status = sslEngine.wrap(buff, netSendBuffer).getStatus();
+                if (status == Status.BUFFER_OVERFLOW) {
+                    // There data in the net buffer therefore need to send out the data
+                    flush();
+                }
+            } while (status == Status.BUFFER_OVERFLOW);
+            if (status == Status.CLOSED) {
+                throw new MongoSocketWriteException("SSLEngine Closed", socketClient.getServerAddress());
             }
-        } while (status == Status.BUFFER_OVERFLOW);
-        if (status == Status.CLOSED) {
-            throw new IOException("SSLEngine Closed");
-
+            return flush();
+        } catch (IOException e) {
+            throw new MongoSocketWriteException(e.getMessage(), socketClient.getServerAddress(), e);
         }
-        return flush();
-
     }
 
     private int flush() throws IOException {
         netSendBuffer.flip();
         int count = 0;
-        while (netSendBuffer.hasRemaining()) {
+        while (netSendBuffer.hasRemaining() && count != -1) {
             final int x = channel.write(netSendBuffer);
             if (x >= 0) {
                 count += x;
             } else {
                 count = x;
-                break;
             }
         }
         netSendBuffer.compact();
         return count;
     }
 
-    private int readAndUnwrap(ByteBuffer buff) throws IOException {
-        Status status = Status.OK;
+    private ByteBuf readAndUnwrap(final ByteBuf provided) {
+        ByteBuf buff = provided;
+        Status status;
         if (!channel.isOpen()) {
-            return -1;
+            throw new MongoSocketReadException("Channel is closed", socketClient.getServerAddress());
         }
-        boolean needRead = true;
+        boolean needRead;
 
         if (remaining > 0) {
             netRecvBuffer.compact();
@@ -179,42 +182,47 @@ public class SSLHandler {
         }
 
         int x = 0;
-        do {
-            if (needRead) {
-                x = channel.read(netRecvBuffer);
-                if (x == -1) {
-                    return x;
+        try {
+            do {
+                if (needRead) {
+                    x = channel.read(netRecvBuffer);
+                    if (x == -1) {
+                        return buff;
+                    }
+                    netRecvBuffer.flip();
                 }
-                netRecvBuffer.flip();
-            }
-            if (buff.limit() < netRecvBuffer.limit()) {
-                buff = bufferProvider.get(netRecvBuffer.limit()).asNIO();
-            }
-            status = sslEngine.unwrap(netRecvBuffer, buff).getStatus();
-            if (x == 0 && netRecvBuffer.position() == 0) {
-                netRecvBuffer.clear();
-            }
-            if (x == 0 && handShakeDone) {
-                return 0;
-            }
-            if (status == Status.BUFFER_UNDERFLOW) {
-                needRead = true;
-            } else if (status == Status.BUFFER_OVERFLOW) {
-                break;
-            } else if (status == Status.CLOSED) {
-                buff.flip();
-                return -1;
-            }
-        } while (status != Status.OK);
+                if (buff.limit() < netRecvBuffer.limit()) {
+                    buff.close();
+                    buff = bufferProvider.get(netRecvBuffer.limit());
+                }
+                status = sslEngine.unwrap(netRecvBuffer, buff.asNIO()).getStatus();
+                if (x == 0 && netRecvBuffer.position() == 0) {
+                    netRecvBuffer.clear();
+                }
+                if (x == 0 && handShakeDone) {
+                    return buff;
+                }
+                if (status == Status.BUFFER_UNDERFLOW) {
+                    needRead = true;
+                } else if (status == Status.BUFFER_OVERFLOW) {
+                    break;
+                } else if (status == Status.CLOSED) {
+                    buff.flip();
+                    return null;
+                }
+            } while (status != Status.OK);
+        } catch (IOException e) {
+            throw new MongoSocketReadException(e.getMessage(), socketClient.getServerAddress(), e);
+        }
 
         remaining = netRecvBuffer.remaining();
-        return buff.position();
+        return buff;
     }
 
-    private void doHandshake() throws IOException {
+    private void doHandshake() {
 
         handShakeDone = false;
-        final ByteBuffer tmpBuff = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
+        ByteBuf tmpBuff = bufferProvider.get(sslEngine.getSession().getApplicationBufferSize());
         HandshakeStatus status = sslEngine.getHandshakeStatus();
         while (status != HandshakeStatus.FINISHED && status != HandshakeStatus.NOT_HANDSHAKING) {
             switch (status) {
@@ -230,17 +238,17 @@ public class SSLHandler {
                 case NEED_WRAP:
                     tmpBuff.clear();
                     tmpBuff.flip();
-                    if (wrapAndWrite(tmpBuff) < 0) {
-                        throw new IOException("SSLHandshake failed");
+                    if (wrapAndWrite(tmpBuff.asNIO()) < 0) {
+                        throw new MongoSocketOpenException("SSLHandshake failed", socketClient.getServerAddress());
                     }
                     break;
 
                 case NEED_UNWRAP:
                     tmpBuff.clear();
-                    if (readAndUnwrap(tmpBuff) < 0) {
-                        throw new IOException("SSLHandshake failed");
+                    tmpBuff = readAndUnwrap(tmpBuff);
+                    if (tmpBuff == null || tmpBuff.position() != 0) {
+                        throw new MongoSocketOpenException("SSLHandshake failed", socketClient.getServerAddress());
                     }
-                    assert tmpBuff.position() == 0;
                     break;
                 default:
             }

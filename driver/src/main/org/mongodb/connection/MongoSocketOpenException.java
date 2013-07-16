@@ -22,6 +22,10 @@ package org.mongodb.connection;
 public class MongoSocketOpenException extends MongoSocketException {
     private static final long serialVersionUID = 4176754100200191238L;
 
+    public MongoSocketOpenException(final String message, final ServerAddress address) {
+        super(message, address);
+    }
+
     public MongoSocketOpenException(final String message, final ServerAddress address, final Throwable t) {
         super(message, address, t);
     }

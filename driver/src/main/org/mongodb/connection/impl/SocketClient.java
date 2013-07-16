@@ -51,13 +51,11 @@ public class SocketClient {
     private boolean initConnDone = false;
     private boolean isClosed = false;
 
-    private final NIOSocketInputStream socketInputStream;
     private final NIOSocketOutputStream socketOutputStream;
 
     public SocketClient(final ServerAddress address, final BufferProvider bufferProvider) throws SSLException {
         this.address = address;
         this.bufferProvider = bufferProvider;
-        socketInputStream = new NIOSocketInputStream(this);
         socketOutputStream = new NIOSocketOutputStream(this);
     }
 
@@ -124,7 +122,6 @@ public class SocketClient {
                 sslHandler.stop();
             }
             client.close();
-            socketInputStream.close();
             socketOutputStream.close();
             initConnDone = false;
             if (selector != null) {
@@ -145,12 +142,14 @@ public class SocketClient {
     }
 
 
-    protected int readToBuffer(final ByteBuffer buffer) throws IOException {
+    protected ByteBuf readToBuffer(final ByteBuf toFill) throws IOException {
+        ByteBuf buffer = toFill;
         final int out;
         if (sslHandler != null) {
-            out = sslHandler.doRead(buffer);
+            buffer = sslHandler.doRead(buffer);
+            out = buffer.position();
         } else {
-            out = client.read(buffer);
+            out = client.read(buffer.asNIO());
         }
         buffer.flip();
         if (out < 0) {
@@ -158,7 +157,7 @@ public class SocketClient {
         } else {
             client.register(selector, SelectionKey.OP_READ, this);
         }
-        return out;
+        return buffer;
     }
 
     public int write(final ByteBuffer byteBuffer) throws IOException {
@@ -178,15 +177,13 @@ public class SocketClient {
 
     }
 
-    public void read(final ByteBuf byteBuf, final CompletionHandler<Integer, Void> callback) {
+    public void read(final ByteBuf byteBuf, final CompletionHandler<ByteBuf, Void> callback) {
         try {
             callbacks.offer(new AsyncCompletionHandler() {
                 @Override
                 public void completed() {
                     try {
-                        final ByteBuffer buffer = byteBuf.asNIO();
-                        final int read = readToBuffer(buffer);
-                        callback.completed(read, null);
+                        callback.completed(readToBuffer(byteBuf), null);
                     } catch (IOException e) {
                         throw new MongoSocketReadException(e.getMessage(), address, e);
                     }
@@ -256,7 +253,6 @@ public class SocketClient {
                 } finally {
                     selector.close();
                     client.close();
-                    socketInputStream.close();
                     socketOutputStream.close();
                 }
             } catch (ClosedChannelException e) {

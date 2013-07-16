@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+
 package org.mongodb.connection.impl;
+
 
 import java.io.IOException;
 import java.net.StandardSocketOptions;
@@ -40,6 +42,7 @@ import org.mongodb.connection.SingleResultCallback;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
+
 
 class DefaultAsyncConnection implements AsyncConnection {
 
@@ -99,7 +102,11 @@ class DefaultAsyncConnection implements AsyncConnection {
     @Override
     public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
         fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, System.nanoTime(),
-                callback));
+            callback));
+    }
+
+    void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
+        channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, callback));
     }
 
     private void sendOneWayMessage(final List<ByteBuf> byteBuffers, final AsyncCompletionHandler handler) {
@@ -110,8 +117,7 @@ class DefaultAsyncConnection implements AsyncConnection {
             public void completed() {
                 if (iter.hasNext()) {
                     pipeOneBuffer(byteChannel, iter.next(), this);
-                }
-                else {
+                } else {
                     handler.completed();
                 }
             }
@@ -124,14 +130,13 @@ class DefaultAsyncConnection implements AsyncConnection {
     }
 
     private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler outerHandler) {
+        final AsyncCompletionHandler outerHandler) {
         byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler() {
             @Override
             public void completed() {
                 if (byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), this);
-                }
-                else {
+                } else {
                     outerHandler.completed();
                 }
             }
@@ -141,10 +146,6 @@ class DefaultAsyncConnection implements AsyncConnection {
                 outerHandler.failed(t);
             }
         });
-    }
-
-    void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
-        channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, callback));
     }
 
     private final class BasicCompletionHandler implements CompletionHandler<Integer, Void> {
@@ -176,8 +177,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         try {
             if (channel != null) {
                 handler.completed();
-            }
-            else {
+            } else {
                 channel = AsynchronousSocketChannel.open();
                 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
@@ -231,7 +231,7 @@ class DefaultAsyncConnection implements AsyncConnection {
         private final long start;
 
         public ResponseHeaderCallback(final ResponseSettings responseSettings, final long start,
-                                      final SingleResultCallback<ResponseBuffers> callback) {
+            final SingleResultCallback<ResponseBuffers> callback) {
             this.responseSettings = responseSettings;
             this.callback = callback;
             this.start = start;
@@ -241,42 +241,43 @@ class DefaultAsyncConnection implements AsyncConnection {
         public void onResult(final ByteBuf result, final MongoException e) {
             if (e != null) {
                 callback.onResult(null, e);
-            }
-            else {
-                ReplyHeader replyHeader;
-                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
-                try {
-                    replyHeader = new ReplyHeader(headerInputBuffer);
-                } finally {
-                    headerInputBuffer.close();
-                }
+            } else {
+                final ReplyHeader replyHeader = new ReplyHeader(new BasicInputBuffer(result));
+                final int remaining = replyHeader.getMessageLength() - REPLY_HEADER_LENGTH;
 
                 if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
-                    callback.onResult(null, new MongoInternalException(
-                            String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                                    replyHeader.getResponseTo(), responseSettings.getResponseTo())));
+                    callback.onResult(null, new MongoInternalException(String.format(
+                        "The responseTo (%d) in the response does not match the requestId (%d) in the request", replyHeader.getResponseTo(),
+                        responseSettings.getResponseTo())));
                 }
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
-                }
-                else {
+                } else {
                     if (replyHeader.getMessageLength() > responseSettings.getMaxMessageSize()) {
-                        callback.onResult(null,
-                                new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
-                                replyHeader.getMessageLength(), responseSettings.getMaxMessageSize())));
+                        callback.onResult(null, new MongoInternalException(String.format(
+                            "Unexpectedly large message length of %d exceeds maximum of %d", replyHeader.getMessageLength(),
+                            responseSettings.getMaxMessageSize())));
                     }
 
-                    fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
-                            new ResponseBodyCallback(replyHeader));
+                    if (replyHeader.getMessageLength() == result.limit()) {
+                        callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
+                    } else {
+                        final ByteBuf byteBuf = bufferProvider.get(replyHeader.getMessageLength());
+                        byteBuf.asNIO().put(result.asNIO());
+                        result.close();
+                        fillAndFlipBuffer(bufferProvider.get(remaining), new ResponseBodyCallback(byteBuf, replyHeader));
+                    }
                 }
             }
         }
 
         private class ResponseBodyCallback implements SingleResultCallback<ByteBuf> {
+            private final ByteBuf buffered;
             private final ReplyHeader replyHeader;
 
-            public ResponseBodyCallback(final ReplyHeader replyHeader) {
+            public ResponseBodyCallback(final ByteBuf result, final ReplyHeader replyHeader) {
+                buffered = result;
                 this.replyHeader = replyHeader;
             }
 
@@ -284,9 +285,9 @@ class DefaultAsyncConnection implements AsyncConnection {
             public void onResult(final ByteBuf result, final MongoException e) {
                 if (e != null) {
                     callback.onResult(null, e);
-                }
-                else {
-                    callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
+                } else {
+                    buffered.asNIO().put(result.asNIO());
+                    callback.onResult(new ResponseBuffers(replyHeader, buffered, System.nanoTime() - start), null);
                 }
             }
         }

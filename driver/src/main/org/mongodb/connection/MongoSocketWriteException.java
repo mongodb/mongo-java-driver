@@ -24,6 +24,10 @@ import java.io.IOException;
 public class MongoSocketWriteException extends MongoSocketException {
     private static final long serialVersionUID = 5088061954415484493L;
 
+    public MongoSocketWriteException(final String message, final ServerAddress address) {
+        super(message, address);
+    }
+
     public MongoSocketWriteException(final String message, final ServerAddress address, final IOException e) {
         super(message, address, e);
     }
