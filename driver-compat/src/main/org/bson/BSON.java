@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings({"rawtypes"})
 public class BSON {
 
     public static final byte EOO = 0;
@@ -78,44 +78,44 @@ public class BSON {
         FLAG_LOOKUP['u'] = Pattern.UNICODE_CASE;
     }
 
-    private static volatile boolean _encodeHooks = false;
-    private static volatile boolean _decodeHooks = false;
-    private static final ClassMap<List<Transformer>> _encodingHooks = new ClassMap<List<Transformer>>();
-    private static final ClassMap<List<Transformer>> _decodingHooks = new ClassMap<List<Transformer>>();
+    private static volatile boolean encodeHooks = false;
+    private static volatile boolean decodeHooks = false;
+    private static final ClassMap<List<Transformer>> encodingHooks = new ClassMap<List<Transformer>>();
+    private static final ClassMap<List<Transformer>> decodingHooks = new ClassMap<List<Transformer>>();
 
     public static boolean hasEncodeHooks() {
-        return _encodeHooks;
+        return encodeHooks;
     }
 
     public static boolean hasDecodeHooks() {
-        return _decodeHooks;
+        return decodeHooks;
     }
 
     public static void addEncodingHook(final Class c, final Transformer t) {
-        _encodeHooks = true;
-        List<Transformer> l = _encodingHooks.get(c);
+        encodeHooks = true;
+        List<Transformer> l = encodingHooks.get(c);
         if (l == null) {
             l = new CopyOnWriteArrayList<Transformer>();
-            _encodingHooks.put(c, l);
+            encodingHooks.put(c, l);
         }
         l.add(t);
     }
 
     public static void addDecodingHook(final Class c, final Transformer t) {
-        _decodeHooks = true;
-        List<Transformer> l = _decodingHooks.get(c);
+        decodeHooks = true;
+        List<Transformer> l = decodingHooks.get(c);
         if (l == null) {
             l = new CopyOnWriteArrayList<Transformer>();
-            _decodingHooks.put(c, l);
+            decodingHooks.put(c, l);
         }
         l.add(t);
     }
 
     public static Object applyEncodingHooks(Object o) {
-        if (!hasEncodeHooks() || o == null || _encodingHooks.size() == 0) {
+        if (!hasEncodeHooks() || o == null || encodingHooks.size() == 0) {
             return o;
         }
-        final List<Transformer> l = _encodingHooks.get(o.getClass());
+        final List<Transformer> l = encodingHooks.get(o.getClass());
         if (l != null) {
             for (final Transformer t : l) {
                 o = t.transform(o);
@@ -125,11 +125,11 @@ public class BSON {
     }
 
     public static Object applyDecodingHooks(Object o) {
-        if (!hasDecodeHooks() || o == null || _decodingHooks.size() == 0) {
+        if (!hasDecodeHooks() || o == null || decodingHooks.size() == 0) {
             return o;
         }
 
-        final List<Transformer> l = _decodingHooks.get(o.getClass());
+        final List<Transformer> l = decodingHooks.get(o.getClass());
         if (l != null) {
             for (final Transformer t : l) {
                 o = t.transform(o);
@@ -142,22 +142,22 @@ public class BSON {
      * Returns the encoding hook(s) associated with the specified class
      */
     public static List<Transformer> getEncodingHooks(final Class c) {
-        return _encodingHooks.get(c);
+        return encodingHooks.get(c);
     }
 
     /**
      * Clears *all* encoding hooks.
      */
     public static void clearEncodingHooks() {
-        _encodeHooks = false;
-        _encodingHooks.clear();
+        encodeHooks = false;
+        encodingHooks.clear();
     }
 
     /**
      * Remove all encoding hooks for a specific class.
      */
     public static void removeEncodingHooks(final Class c) {
-        _encodingHooks.remove(c);
+        encodingHooks.remove(c);
     }
 
     /**
@@ -171,22 +171,22 @@ public class BSON {
      * Returns the decoding hook(s) associated with the specific class
      */
     public static List<Transformer> getDecodingHooks(final Class c) {
-        return _decodingHooks.get(c);
+        return decodingHooks.get(c);
     }
 
     /**
      * Clears *all* decoding hooks.
      */
     public static void clearDecodingHooks() {
-        _decodeHooks = false;
-        _decodingHooks.clear();
+        decodeHooks = false;
+        decodingHooks.clear();
     }
 
     /**
      * Remove all decoding hooks for a specific class.
      */
     public static void removeDecodingHooks(final Class c) {
-        _decodingHooks.remove(c);
+        decodingHooks.remove(c);
     }
 
     /**
@@ -286,5 +286,30 @@ public class BSON {
         }
 
         return buf.toString();
+    }
+
+    /**
+     * Provides an integer representation of Boolean or Number.
+     * If argument is {@link Boolean}, then {@code 1} for {@code true} will be returned or @{code 0} otherwise.
+     * If argument is {@code Number}, then {@link Number#intValue()} will be called.
+     *
+     * @param number
+     * @return integer value
+     * @throws IllegalArgumentException if the argument is {@code null} or not {@link Boolean} or {@link Number}
+     */
+    public static int toInt(final Object number) {
+        if (number == null) {
+            throw new IllegalArgumentException("Argument shouldn't be null");
+        }
+
+        if (number instanceof Number) {
+            return ((Number) number).intValue();
+        }
+
+        if (number instanceof Boolean) {
+            return ((Boolean) number) ? 1 : 0;
+        }
+
+        throw new IllegalArgumentException("Can't convert: " + number.getClass().getName() + " to int");
     }
 }

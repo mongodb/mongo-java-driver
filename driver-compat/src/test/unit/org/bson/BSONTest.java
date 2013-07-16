@@ -28,4 +28,13 @@ public class BSONTest {
         final byte[] encoded = BSON.encode(inputDoc);
         assertEquals(inputDoc, BSON.decode(encoded));
     }
+
+    @Test
+    public void testToInt() {
+        assertEquals(1, BSON.toInt(Boolean.TRUE));
+        assertEquals(0, BSON.toInt(Boolean.FALSE));
+        assertEquals(12, BSON.toInt(12.23f));
+        assertEquals(21, BSON.toInt(21.32d));
+        assertEquals(13, BSON.toInt(13));
+    }
 }
