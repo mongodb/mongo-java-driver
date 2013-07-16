@@ -1693,6 +1693,14 @@ public class DBCollection implements IDBCollection {
 
     }
 
+    @Override
+    public String toString() {
+        return "DBCollection{" +
+                "database=" + database +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
     synchronized DBObjectFactory getObjectFactory() {
         return this.objectFactory;
     }

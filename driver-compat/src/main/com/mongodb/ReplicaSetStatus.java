@@ -76,4 +76,13 @@ public class ReplicaSetStatus {
             throw mapException(e);
         }
     }
+
+
+    @Override
+    public String toString() {
+        return "ReplicaSetStatus{" +
+                "name=" + getName() +
+                ", cluster=" + getClusterDescription() +
+                '}';
+    }
 }

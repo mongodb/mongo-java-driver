@@ -109,4 +109,9 @@ public class DBRefBase {
         result = 31 * result + proxied.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return String.format("{\"$ref\":\"%s\",\"$id\":\"%s\"}", proxied.getRef(), proxied.getId());
+    }
 }

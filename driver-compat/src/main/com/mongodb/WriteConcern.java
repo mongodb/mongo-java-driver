@@ -479,6 +479,13 @@ public class WriteConcern implements Serializable {
         public Majority(final int wtimeout, final boolean fsync, final boolean j) {
             super("majority", wtimeout, fsync, j);
         }
+
+        @Override
+        public String toString() {
+            return "WriteConcern.Majority{" +
+                    "command=" + getCommand() +
+                    "}";
+        }
     }
 
     static {

@@ -439,6 +439,13 @@ public class DB implements IDB {
         return optionHolder.get();
     }
 
+    @Override
+    public String toString() {
+        return "DB{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+
     Cluster getCluster() {
         return getMongo().getCluster();
     }

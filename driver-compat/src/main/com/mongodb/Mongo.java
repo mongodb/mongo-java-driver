@@ -324,6 +324,14 @@ public class Mongo {
         return optionHolder.get();
     }
 
+    @Override
+    public String toString() {
+        return "Mongo{" +
+                "VERSION='" + VERSION + '\'' +
+                ", options=" + getOptions() +
+                '}';
+    }
+
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
         final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (final ServerAddress cur : seedList) {

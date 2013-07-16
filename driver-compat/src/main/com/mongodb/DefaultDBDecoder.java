@@ -45,6 +45,11 @@ public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
         return (DBObject) callback.get();
     }
 
+    @Override
+    public String toString() {
+        return String.format("Decoder{class=%s}", getClass().getName());
+    }
+
     public static final DBDecoderFactory FACTORY = new DBDecoderFactory() {
         @Override
         public DBDecoder create() {
