@@ -1693,6 +1693,26 @@ public class DBCollection implements IDBCollection {
 
     }
 
+    /**
+     * Convenience method to generate an index name from the set of fields it is over.
+     * @param keys the names of the fields used in this index
+     * @return a string representation of this index's fields
+     */
+    public static String genIndexName(final DBObject keys) {
+        final StringBuilder sb = new StringBuilder();
+        for (String s : keys.keySet()) {
+            if (sb.length() > 0){
+                sb.append('_');
+            }
+            sb.append(s).append('_');
+            final Object value = keys.get(s);
+            if (value instanceof Number || value instanceof String) {
+                sb.append(value.toString().replace(' ', '_'));
+            }
+        }
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         return "DBCollection{" +
