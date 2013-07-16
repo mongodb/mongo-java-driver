@@ -97,7 +97,20 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public boolean containsField(final String s) {
-        return keySet().contains(s);
+        final BSONReader reader = getBSONReader();
+        try {
+            reader.readStartDocument();
+            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                if (reader.readName().equals(s)) {
+                    return true;
+                } else {
+                    reader.skipValue();
+                }
+            }
+        } finally {
+            reader.close();
+        }
+        return false;
     }
 
     @Override

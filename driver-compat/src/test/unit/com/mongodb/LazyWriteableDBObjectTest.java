@@ -26,6 +26,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -46,6 +47,14 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
         document.put("w", 3);
         assertTrue(document.containsField("w"));
         assertEquals(3, document.get("w"));
+    }
+
+    @Test
+    public void testContainsField() {
+        document.put("g", 2);
+        assertTrue(document.containsField("a"));
+        assertTrue(document.containsField("g"));
+        assertFalse(document.containsField("z"));
     }
 
     @Test

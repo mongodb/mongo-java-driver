@@ -64,6 +64,11 @@ public class LazyWriteableDBObject extends LazyDBObject {
     }
 
     @Override
+    public boolean containsField(String s) {
+        return writable.containsKey(s) || super.containsField(s);
+    }
+
+    @Override
     public Object get(final String key) {
         return writable.containsKey(key) ? writable.get(key) : super.get(key);
     }
