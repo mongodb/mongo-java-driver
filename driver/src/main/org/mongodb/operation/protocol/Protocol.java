@@ -16,6 +16,17 @@
 
 package org.mongodb.operation.protocol;
 
+/**
+ * An interface for the execution of a MongoDB wire protocol conversation
+ *
+ * @param <T> the return value of the Protocol response message
+ * @since 3.0
+ */
 public interface Protocol<T> {
+    /**
+     * Execute the protocol.
+     *
+     * @return the response from execution of the protocol
+     */
     T execute();
 }
