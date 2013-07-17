@@ -24,3 +24,4 @@
 
 ### Java 8 Compatibility
 ![Compatibility Badge](https://java.net/downloads/adoptopenjdk/compat.svg)
+<img src="https://java.net/downloads/adoptopenjdk/compat.svg" alt="Compatibility Badge" style="max-width: 100px;">
