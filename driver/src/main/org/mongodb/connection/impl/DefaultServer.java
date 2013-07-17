@@ -31,7 +31,6 @@ import org.mongodb.connection.ConnectionProvider;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 
@@ -83,7 +82,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public ServerConnection getConnection() {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
 
         return new DefaultServerConnection(connectionProvider.get());
@@ -154,7 +153,7 @@ class DefaultServer implements ClusterableServer {
 
     }
 
-    private class DefaultServerConnection implements ServerConnection {
+    private class DefaultServerConnection implements Connection {
         private Connection wrapped;
 
         public DefaultServerConnection(final Connection wrapped) {
@@ -200,11 +199,6 @@ class DefaultServer implements ClusterableServer {
         @Override
         public boolean isClosed() {
             return wrapped == null;
-        }
-
-        @Override
-        public ServerDescription getDescription() {
-            return description;
         }
     }
 

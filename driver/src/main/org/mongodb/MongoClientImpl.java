@@ -24,7 +24,7 @@ import org.mongodb.session.AsyncClusterSession;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +36,7 @@ class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
     private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
-    private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
+    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -97,7 +97,7 @@ class MongoClientImpl implements MongoClient {
         return new AsyncClusterSession(cluster, executorService);
     }
 
-    public ServerSelectingSession getSession() {
+    public Session getSession() {
         if (pinnedSession.get() != null) {
             return pinnedSession.get();
         }
@@ -120,7 +120,7 @@ class MongoClientImpl implements MongoClient {
     }
 
     private void unpinSession() {
-        ServerSelectingSession sessionToUnpin = this.pinnedSession.get();
+        Session sessionToUnpin = this.pinnedSession.get();
         this.pinnedSession.remove();
         sessionToUnpin.close();
     }

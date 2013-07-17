@@ -18,17 +18,12 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
-import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
-
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 class NativeAuthenticator extends Authenticator {
     private final BufferProvider bufferProvider;
@@ -41,15 +36,13 @@ class NativeAuthenticator extends Authenticator {
     @Override
     public void authenticate() {
         try {
-            CommandResult nonceResponse = new CommandOperation(getCredential().getSource(),
-                    new Command(NativeAuthenticationHelper.getNonceCommand()),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
-                    .execute(new ConnectingServerConnection(getConnection()));
-            new CommandOperation(getCredential().getSource(),
-                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                            getCredential().getPassword(), (String) nonceResponse.getResponse().get("nonce"))),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), bufferProvider)
-                    .execute(new ConnectingServerConnection(getConnection()));
+            CommandResult nonceResponse = CommandHelper.executeCommand(getCredential().getSource(),
+                    new Command(NativeAuthenticationHelper.getNonceCommand()), new DocumentCodec(), getConnection(), bufferProvider);
+
+            CommandHelper.executeCommand(getCredential().getSource(),
+                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(), getCredential().getPassword(),
+                            nonceResponse.getResponse().getString("nonce"))),
+                    new DocumentCodec(), getConnection(), bufferProvider);
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

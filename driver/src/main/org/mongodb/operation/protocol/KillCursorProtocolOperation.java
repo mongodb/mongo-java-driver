@@ -14,35 +14,45 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.operation.protocol;
 
-import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.protocol.KillCursorsMessage;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.KillCursor;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
-public class KillCursorOperation implements Operation<Void> {
+public class KillCursorProtocolOperation implements ProtocolOperation<Void> {
     private final KillCursor killCursor;
+    private final ServerDescription serverDescription;
+    private final Connection connection;
+    private boolean closeConnection;
     private final BufferProvider bufferProvider;
 
-    public KillCursorOperation(final KillCursor killCursor, final BufferProvider bufferProvider) {
+    public KillCursorProtocolOperation(final KillCursor killCursor, final BufferProvider bufferProvider,
+                                       final ServerDescription serverDescription, final Connection connection,
+                                       final boolean closeConnection) {
         this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
+        this.serverDescription = serverDescription;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
     }
 
-    public Void execute(final ServerConnection connection) {
+    public Void execute() {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final KillCursorsMessage message = new KillCursorsMessage(killCursor,
-                    getMessageSettings(connection.getDescription()));
+            final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
             return null;
         } finally {
             buffer.close();
+            if (closeConnection) {
+                connection.close();
+            }
         }
     }
 }

@@ -46,10 +46,11 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         documents.add(new Document("bytes", hugeByteArray));
 
         final Insert<Document> insert = new Insert<Document>(ACKNOWLEDGED, documents);
-        getSession().execute(new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider()));
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
+                false).execute();
         assertEquals((long) documents.size(),
-                (long) getSession().execute(new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(),
-                        getBufferProvider())));
+                (long) new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(),
+                        getBufferProvider(), getSession(), false).execute());
     }
 
 }

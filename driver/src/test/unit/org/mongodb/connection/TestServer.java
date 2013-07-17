@@ -68,7 +68,7 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public ServerConnection getConnection() {
+    public Connection getConnection() {
         throw new UnsupportedOperationException();
     }
 

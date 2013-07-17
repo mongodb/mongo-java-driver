@@ -28,8 +28,8 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoServerSelectionFailureException;
-import org.mongodb.connection.ServerConnection;
 import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
@@ -188,7 +188,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldBeAbleToAuthenticateAfterAddingUser() throws InterruptedException {
         //TODO Cleanup needed. connection and newCredentialList are redundant.
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
+        Connection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
@@ -205,7 +205,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldNotBeAbleToAuthenticateAfterRemovingUser() throws InterruptedException {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
+        Connection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             database.tools().removeUser(credential.getUserName());

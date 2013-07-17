@@ -16,27 +16,32 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Operation;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.protocol.ProtocolOperation;
 
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class GetMoreDiscardOperation implements Operation<Void> {
+public class GetMoreDiscardOperation implements ProtocolOperation<Void> {
     private final long cursorId;
     private final int responseTo;
+    private final ServerDescription serverDescription;
+    private final Connection connection;
 
-    public GetMoreDiscardOperation(final long cursorId, final int responseTo) {
+    public GetMoreDiscardOperation(final long cursorId, final int responseTo, final ServerDescription serverDescription,
+                                   final Connection connection) {
         this.cursorId = cursorId;
         this.responseTo = responseTo;
+        this.serverDescription = serverDescription;
+        this.connection = connection;
     }
 
-    public Void execute(final ServerConnection connection) {
+    public Void execute() {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
-            final ResponseBuffers responseBuffers = connection.receiveMessage(
-                    getResponseSettings(connection.getDescription(), curResponseTo));
+            final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(serverDescription, curResponseTo));
             try {
                 curCursorId = responseBuffers.getReplyHeader().getCursorId();
                 curResponseTo = responseBuffers.getReplyHeader().getRequestId();

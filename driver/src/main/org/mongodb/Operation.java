@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.ServerConnection;
-
 public interface Operation<T> {
-    T execute(final ServerConnection connection);
+    T execute();
 }

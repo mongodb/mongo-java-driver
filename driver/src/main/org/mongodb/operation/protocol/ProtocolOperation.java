@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.operation.protocol;
 
-import org.mongodb.ServerSelectingOperation;
-
-public interface ServerSelectingSession {
-
-    <T> T execute(ServerSelectingOperation<T> operation);
-
-    <T> Session getBoundSession(ServerSelectingOperation<T> operation, SessionBindingType sessionBindingType);
-
-    void close();
-
-    boolean isClosed();
+public interface ProtocolOperation<T> {
+    T execute();
 }

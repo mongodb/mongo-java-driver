@@ -24,10 +24,12 @@ import org.mongodb.MappingFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.AsyncCommandOperation;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoFuture;
+import org.mongodb.operation.ReadPreferenceServerSelector;
 
 public class AsyncCountOperation extends BaseCountOperation implements AsyncServerSelectingOperation<Long> {
 
@@ -47,5 +49,15 @@ public class AsyncCountOperation extends BaseCountOperation implements AsyncServ
                 return getCount(commandResult);
             }
         });
+    }
+
+    @Override
+    public ServerSelector getServerSelector() {
+        return new ReadPreferenceServerSelector(getCount().getReadPreference());
+    }
+
+    @Override
+    public boolean isQuery() {
+        return true;
     }
 }

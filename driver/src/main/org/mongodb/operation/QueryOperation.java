@@ -19,78 +19,36 @@ package org.mongodb.operation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ServerSelectingOperation;
-import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.MongoQueryCursor;
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.protocol.QueryMessage;
-import org.mongodb.operation.protocol.ReplyMessage;
+import org.mongodb.session.Session;
 
-import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
-
-public class QueryOperation<T> implements ServerSelectingOperation<QueryResult<T>> {
+public class QueryOperation<T> implements Operation<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
+    private final Session session;
+    private final boolean closeSession;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider) {
+                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
+                          final Session session, final boolean closeSession) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
+        this.session = session;
+        this.closeSession = closeSession;
     }
 
     @Override
-    public QueryResult<T> execute(final ServerConnection connection) {
-        return receiveMessage(connection, sendMessage(connection));
-    }
-
-    @Override
-    public ServerSelector getServerSelector() {
-        return new ReadPreferenceServerSelector(find.getReadPreference());
-    }
-
-    @Override
-    public boolean isQuery() {
-        return true;
-    }
-
-    private QueryMessage sendMessage(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        try {
-            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
-                    getMessageSettings(connection.getDescription()));
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
-            return message;
-        } finally {
-            buffer.close();
-        }
-    }
-
-    private QueryResult<T> receiveMessage(final ServerConnection connection, final QueryMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(connection.getDescription(), message.getId()));
-        try {
-            if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                final Document errorDocument =
-                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
-            }
-            final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
-
-            return new QueryResult<T>(replyMessage, connection.getServerAddress());
-        } finally {
-            responseBuffers.close();
-        }
+    public MongoCursor<T> execute() {
+         return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, bufferProvider, session, closeSession);
     }
 }

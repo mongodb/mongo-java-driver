@@ -19,29 +19,46 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.RequestMessage;
-import org.mongodb.operation.protocol.UpdateMessage;
+import org.mongodb.connection.Connection;
+import org.mongodb.operation.protocol.UpdateProtocolOperation;
+import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.Session;
 
-public class UpdateOperation extends WriteOperation {
+public class UpdateOperation implements Operation<CommandResult> {
+    private final MongoNamespace namespace;
     private final Update update;
     private final Encoder<Document> queryEncoder;
+    private final BufferProvider bufferProvider;
+    private final Session session;
+    private final boolean closeSession;
 
     public UpdateOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                           final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider, update.getWriteConcern());
+                           final BufferProvider bufferProvider, final Session session,
+                           final boolean closeSession) {
+        this.namespace = namespace;
         this.update = update;
         this.queryEncoder = queryEncoder;
+        this.bufferProvider = bufferProvider;
+        this.session = session;
+        this.closeSession = closeSession;
     }
 
     @Override
-    protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
-    }
-
-    @Override
-    public Update getWrite() {
-        return update;
+    public CommandResult execute() {
+        ServerConnectionProvider provider = session.createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        Connection connection = provider.getConnection();
+        try {
+            return new UpdateProtocolOperation(namespace, update, queryEncoder, bufferProvider, provider.getServerDescription(),
+                    provider.getConnection(), true).execute();
+        } finally {
+            connection.close();
+            if (closeSession) {
+                session.close();
+            }
+        }
     }
 }

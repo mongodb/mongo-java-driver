@@ -17,6 +17,8 @@
 package org.mongodb.connection;
 
 public final class ResponseSettings {
+    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+
     private final int responseTo;
     private final int maxMessageSize;
 
@@ -26,7 +28,7 @@ public final class ResponseSettings {
 
     public static final class Builder {
         private int responseTo;
-        private int maxMessageSize;
+        private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
 
         // CHECKSTYLE:OFF
         public Builder responseTo(final int responseTo) {

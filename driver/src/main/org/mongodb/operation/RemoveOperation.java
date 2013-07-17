@@ -19,29 +19,46 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.DeleteMessage;
-import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.RequestMessage;
+import org.mongodb.connection.Connection;
+import org.mongodb.operation.protocol.RemoveProtocolOperation;
+import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.Session;
 
-public class RemoveOperation extends WriteOperation {
+public class RemoveOperation implements Operation<CommandResult> {
+    private final MongoNamespace namespace;
     private final Remove remove;
     private final Encoder<Document> queryEncoder;
+    private final BufferProvider bufferProvider;
+    private final Session session;
+    private final boolean closeSession;
 
     public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                           final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider, remove.getWriteConcern());
+                           final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
+        this.namespace = namespace;
         this.remove = remove;
         this.queryEncoder = queryEncoder;
+        this.bufferProvider = bufferProvider;
+        this.session = session;
+        this.closeSession = closeSession;
     }
 
     @Override
-    protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
+    public CommandResult execute() {
+        ServerConnectionProvider provider = session.createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        Connection connection = provider.getConnection();
+        try {
+            return new RemoveProtocolOperation(namespace, remove, queryEncoder, bufferProvider, provider.getServerDescription(),
+                    provider.getConnection(), true).execute();
+        } finally {
+            connection.close();
+            if (closeSession) {
+                session.close();
+            }
+        }
     }
 
-    @Override
-    public Remove getWrite() {
-        return remove;
-    }
 }

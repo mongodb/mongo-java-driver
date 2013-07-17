@@ -16,19 +16,18 @@
 
 package org.mongodb.session;
 
-import org.mongodb.ServerSelectingOperation;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.OperationConnectionProvider;
-
-import static org.mongodb.assertions.Assertions.isTrue;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.ServerConnectionProvider;
 
 /**
  * @since 3.0
  */
 @ThreadSafe
-public class ClusterSession implements ServerSelectingSession {
+public class ClusterSession implements Session {
     private Cluster cluster;
     private volatile boolean isClosed;
 
@@ -37,31 +36,19 @@ public class ClusterSession implements ServerSelectingSession {
     }
 
     @Override
-    public <T> T execute(final ServerSelectingOperation<T> operation) {
-        isTrue("open", !isClosed());
+    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+        final Server server = cluster.getServer(options.getServerSelector());
+        return new ServerConnectionProvider() {
+            @Override
+            public ServerDescription getServerDescription() {
+                return server.getDescription();
+            }
 
-        ServerConnection connection = cluster.getServer(operation.getServerSelector()).getConnection();
-        try {
-            return operation.execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
-    @Override
-    public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
-        isTrue("open", !isClosed());
-
-        if (sessionBindingType == SessionBindingType.Connection) {
-            return new SingleConnectionSession(cluster.getServer(operation.getServerSelector()).getConnection());
-        }
-        else {
-            return new SingleServerSession(cluster.getServer(operation.getServerSelector()));
-        }
-    }
-
-    OperationConnectionProvider createOperationChannelProvider(final OperationChannelProviderCreationOptions options) {
-        throw new UnsupportedOperationException();
+            @Override
+            public Connection getConnection() {
+                return server.getConnection();
+            }
+        };
     }
 
     @Override

@@ -20,17 +20,18 @@ import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
+import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.operation.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
-import org.mongodb.session.SessionBindingType;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -59,7 +60,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                 new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getSession(), getBufferProvider());
+                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getSession(), false);
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -71,20 +72,21 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        ServerConnection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
+        Server server = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()));
+        Connection connection = server.getConnection();
         try {
-            SingleConnectionServerSelectingSession singleConnectionSession = new SingleConnectionServerSelectingSession(connection);
+            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);
 
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
 
             cursor.next();
             cursor.close();
 
             cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), singleConnectionSession, getBufferProvider());
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
             assertEquals(new Document("_id", 999), cursor.next());
 
             singleConnectionSession.connection.close();
@@ -93,48 +95,14 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
     }
 
-    private static class SingleConnectionServerSelectingSession implements ServerSelectingSession {
-        private ServerConnection connection;
-        private boolean isClosed;
-
-        public SingleConnectionServerSelectingSession(final ServerConnection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public <T> T execute(final ServerSelectingOperation<T> operation) {
-            return operation.execute(connection);
-        }
-
-        @Override
-        public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
-            return new SingleConnectionSession(new DelayedCloseConnection(connection));
-        }
-
-        @Override
-        public void close() {
-            isClosed = true;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return isClosed;
-        }
-    }
-
     private static class SingleConnectionSession implements Session {
-
-        private final ServerConnection connection;
+        private ServerDescription description;
+        private Connection connection;
         private boolean isClosed;
 
-        public SingleConnectionSession(final ServerConnection connection) {
-            //To change body of created methods use File | Settings | File Templates.
+        public SingleConnectionSession(final ServerDescription description, final Connection connection) {
+            this.description = description;
             this.connection = connection;
-        }
-
-        @Override
-        public <T> T execute(final Operation<T> operation) {
-            return operation.execute(connection);
         }
 
         @Override
@@ -146,14 +114,29 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         public boolean isClosed() {
             return isClosed;
         }
+
+        @Override
+        public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+            return new ServerConnectionProvider() {
+                @Override
+                public ServerDescription getServerDescription() {
+                    return description;
+                }
+
+                @Override
+                public Connection getConnection() {
+                    return new DelayedCloseConnection(connection);
+                }
+            };
+        }
     }
 
-    private static class DelayedCloseConnection implements ServerConnection {
-        private ServerConnection wrapped;
+    private static class DelayedCloseConnection implements Connection {
+        private Connection wrapped;
         private boolean isClosed;
 
 
-        public DelayedCloseConnection(final ServerConnection wrapped) {
+        public DelayedCloseConnection(final Connection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -187,12 +170,6 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         @Override
         public boolean isClosed() {
             return isClosed;
-        }
-
-        @Override
-        public ServerDescription getDescription() {
-            isTrue("open", !isClosed());
-            return wrapped.getDescription();
         }
     }
 }

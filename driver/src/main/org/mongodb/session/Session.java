@@ -16,11 +16,12 @@
 
 package org.mongodb.session;
 
-import org.mongodb.Operation;
+import org.mongodb.operation.ServerConnectionProvider;
 
-public interface Session {
+import java.io.Closeable;
 
-    <T> T execute(Operation<T> operation);
+public interface Session extends Closeable {
+    ServerConnectionProvider createServerConnectionProvider(ServerConnectionProviderOptions options);
 
     void close();
 

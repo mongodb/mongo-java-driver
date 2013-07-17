@@ -20,10 +20,8 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 
 public class BaseCountOperation {
     private final Count count;
@@ -35,14 +33,6 @@ public class BaseCountOperation {
         this.count = new Count(find, namespace);
         this.codec = codec;
         this.bufferProvider = bufferProvider;
-    }
-
-    public ServerSelector getServerSelector() {
-        return new ReadPreferenceServerSelector(count.getReadPreference());
-    }
-
-    public boolean isQuery() {
-        return true;
     }
 
     public Count getCount() {

@@ -14,39 +14,43 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.operation.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ServerSelectingOperation;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.protocol.CommandMessage;
-import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.ReplyMessage;
-import org.mongodb.operation.protocol.RequestMessage;
-import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.BaseWrite;
+import org.mongodb.operation.CommandResult;
 
 import static org.mongodb.command.GetLastError.parseGetLastErrorResponse;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public abstract class WriteOperation implements ServerSelectingOperation<CommandResult> {
+public abstract class WriteProtocolOperation implements ProtocolOperation<CommandResult> {
 
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final ServerDescription serverDescription;
+    private final Connection connection;
+    private final boolean closeConnection;
     private final GetLastError getLastErrorCommand;
 
-    public WriteOperation(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern) {
+    public WriteProtocolOperation(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
+                                  final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
+        this.serverDescription = serverDescription;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
+
         if (writeConcern.callGetLastError()) {
             getLastErrorCommand = new GetLastError(writeConcern);
         }
@@ -55,15 +59,20 @@ public abstract class WriteOperation implements ServerSelectingOperation<Command
         }
     }
 
-    @Override
-    public CommandResult execute(final ServerConnection connection) {
-        return receiveMessage(connection, sendMessage(connection));
+    public CommandResult execute() {
+        try {
+            return receiveMessage(sendMessage());
+        } finally {
+            if (closeConnection) {
+                connection.close();
+            }
+        }
     }
 
-    private CommandMessage sendMessage(final ServerConnection connection) {
+    private CommandMessage sendMessage() {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            RequestMessage nextMessage = createRequestMessage(getMessageSettings(connection.getDescription())).encode(buffer);
+            RequestMessage nextMessage = createRequestMessage(getMessageSettings(serverDescription)).encode(buffer);
             while (nextMessage != null) {
                 nextMessage = nextMessage.encode(buffer);
             }
@@ -71,7 +80,7 @@ public abstract class WriteOperation implements ServerSelectingOperation<Command
             if (getLastErrorCommand != null) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                         MongoNamespace.COMMAND_COLLECTION_NAME).getFullName(), getLastErrorCommand,
-                        new DocumentCodec(), getMessageSettings(connection.getDescription()));
+                        new DocumentCodec(), getMessageSettings(serverDescription));
                 getLastErrorMessage.encode(buffer);
             }
             connection.sendMessage(buffer.getByteBuffers());
@@ -81,28 +90,18 @@ public abstract class WriteOperation implements ServerSelectingOperation<Command
         }
     }
 
-    private CommandResult receiveMessage(final ServerConnection connection, final RequestMessage requestMessage) {
+    private CommandResult receiveMessage(final RequestMessage requestMessage) {
         if (requestMessage == null) {
             return null;
         }
         ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(connection.getDescription(), requestMessage.getId()));
+                getResponseSettings(serverDescription, requestMessage.getId()));
         try {
             return parseGetLastErrorResponse(createCommandResult(getLastErrorCommand,
                     new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), requestMessage.getId()), connection));
         } finally {
             responseBuffers.close();
         }
-    }
-
-    @Override
-    public ServerSelector getServerSelector() {
-        return new PrimaryServerSelector();
-    }
-
-    @Override
-    public boolean isQuery() {
-        return false;
     }
 
     protected abstract BaseWrite getWrite();

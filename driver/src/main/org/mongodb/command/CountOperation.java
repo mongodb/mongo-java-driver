@@ -19,23 +19,38 @@ package org.mongodb.command;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ServerSelectingOperation;
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.ReadPreferenceServerSelector;
+import org.mongodb.operation.ServerConnectionProvider;
+import org.mongodb.operation.protocol.CommandProtocolOperation;
+import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.Session;
 
-public class CountOperation extends BaseCountOperation implements ServerSelectingOperation<Long> {
+public class CountOperation extends BaseCountOperation implements Operation<Long> {
+
+    private final Session session;
+    private final boolean closeSession;
 
     public CountOperation(final Find find, final MongoNamespace namespace, final Codec<Document> codec,
-                          final BufferProvider bufferProvider) {
+                          final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         super(find, namespace, codec, bufferProvider);
+        this.session = session;
+        this.closeSession = closeSession;
     }
 
-
-    @Override
-    public Long execute(final ServerConnection connection) {
-        return getCount(new CommandOperation(getCount().getNamespace().getDatabaseName(), getCount(), getCodec(), null,
-                getBufferProvider()).execute(connection));
+    public Long execute() {
+        try {
+            ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
+                    new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(getCount().getReadPreference())));
+            return getCount(new CommandProtocolOperation(getCount().getNamespace().getDatabaseName(), getCount(), getCodec(),
+                    getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true)
+                    .execute());
+        } finally {
+            if (closeSession) {
+                session.close();
+            }
+        }
     }
 }

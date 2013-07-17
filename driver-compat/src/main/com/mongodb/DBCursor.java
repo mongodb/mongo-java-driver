@@ -24,8 +24,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryResult;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -120,7 +119,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         if (cursor == null) {
             try {
                 cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                                                        getSession(), getCollection().getBufferPool());
+                        getCollection().getBufferPool(), getSession(), true);
             } catch (org.mongodb.MongoException e) {
                 throw mapException(e);
             }
@@ -259,15 +258,12 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        QueryResult<DBObject> queryResult = null;
         try {
-            queryResult = getSession().execute(
-                    new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
-                            getCollection().getBufferPool()));
+            return new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
+                            getCollection().getBufferPool(), getSession(), true).execute().next();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
-        return queryResult.getResults().get(0);
     }
 
     /**
@@ -603,7 +599,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         return currentObject;
     }
 
-    public ServerSelectingSession getSession() {
+    public Session getSession() {
         return getCollection().getSession();
     }
 

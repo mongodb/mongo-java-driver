@@ -19,10 +19,9 @@ package org.mongodb.session;
 import org.bson.ByteBuf;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
-import org.mongodb.connection.ServerConnection;
-import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
@@ -30,10 +29,10 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
-class DelayedCloseConnection extends DelayedCloseBaseConnection implements ServerConnection {
-    private ServerConnection wrapped;
+class DelayedCloseConnection extends DelayedCloseBaseConnection implements Connection {
+    private Connection wrapped;
 
-    public DelayedCloseConnection(final ServerConnection wrapped) {
+    public DelayedCloseConnection(final Connection wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -52,11 +51,5 @@ class DelayedCloseConnection extends DelayedCloseBaseConnection implements Serve
     @Override
     protected BaseConnection getWrapped() {
         return wrapped;
-    }
-
-    @Override
-    public ServerDescription getDescription() {
-        isTrue("open", !isClosed());
-        return wrapped.getDescription();
     }
 }

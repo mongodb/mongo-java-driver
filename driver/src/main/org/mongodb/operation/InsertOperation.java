@@ -18,27 +18,45 @@ package org.mongodb.operation;
 
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.InsertMessage;
-import org.mongodb.operation.protocol.MessageSettings;
-import org.mongodb.operation.protocol.RequestMessage;
+import org.mongodb.connection.Connection;
+import org.mongodb.operation.protocol.InsertProtocolOperation;
+import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.Session;
 
-public class InsertOperation<T> extends WriteOperation {
+public class InsertOperation<T> implements Operation<CommandResult> {
+    private final MongoNamespace namespace;
     private final Insert<T> insert;
     private final Encoder<T> encoder;
+    private final BufferProvider bufferProvider;
+    private final Session session;
+    private final boolean closeSession;
 
     public InsertOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
-                           final BufferProvider bufferProvider) {
-        super(namespace, bufferProvider, insert.getWriteConcern());
+                           final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
+        this.namespace = namespace;
         this.insert = insert;
         this.encoder = encoder;
+        this.bufferProvider = bufferProvider;
+        this.session = session;
+        this.closeSession = closeSession;
     }
 
-    protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
-    }
-
-    public Insert<T> getWrite() {
-        return insert;
+    @Override
+    public CommandResult execute() {
+        ServerConnectionProvider provider = session.createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        Connection connection = provider.getConnection();
+        try {
+            return new InsertProtocolOperation<T>(namespace, insert, encoder, bufferProvider, provider.getServerDescription(),
+                    provider.getConnection(), true).execute();
+        } finally {
+            connection.close();
+            if (closeSession) {
+                session.close();
+            }
+        }
     }
 }

@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
+
+
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.connection.Cluster
-import org.mongodb.session.ServerSelectingSession
+import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -30,7 +34,7 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 class DBCollectionSpecification extends Specification {
     private final Mongo mongo = Mock()
     private final DB database = new DB(mongo, 'myDatabase', new DocumentCodec())
-    private final ServerSelectingSession session = Mock()
+    private final Session session = Mock()
     private final Cluster cluster = Mock()
 
     @Subject

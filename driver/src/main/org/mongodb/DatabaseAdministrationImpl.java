@@ -24,7 +24,6 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryResult;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -53,21 +52,20 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        client.getSession().execute(
-                new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getCluster().getDescription(),
-                        client.getBufferProvider()));
+        new CommandOperation(databaseName, DROP_DATABASE, documentCodec, client.getCluster().getDescription(),
+                client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final QueryResult<Document> query = client.getSession().execute(
-                new QueryOperation<Document>(namespacesCollection, FIND_ALL, documentCodec, documentCodec, client.getBufferProvider()));
+        final MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, FIND_ALL, documentCodec,
+                documentCodec, client.getBufferProvider(), client.getSession(), false).execute();
 
         final HashSet<String> collections = new HashSet<String>();
         final int lengthOfDatabaseName = databaseName.length();
-        for (final Document namespace : query.getResults()) {
-            final String collectionName = (String) namespace.get("name");
+        while (cursor.hasNext()) {
+            final String collectionName = (String) cursor.next().get("name");
             if (!collectionName.contains("$")) {
                 final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
                 collections.add(collectionNameWithoutDatabasePrefix);
@@ -83,9 +81,8 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        final CommandResult commandResult = client.getSession().execute(
-                new CommandOperation(databaseName, new Create(createCollectionOptions), documentCodec,
-                        client.getCluster().getDescription(), client.getBufferProvider()));
+        final CommandResult commandResult = new CommandOperation(databaseName, new Create(createCollectionOptions), documentCodec,
+                        client.getCluster().getDescription(), client.getBufferProvider(), client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }
 
@@ -97,8 +94,8 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
         final RenameCollection rename = new RenameCollection(renameCollectionOptions, databaseName);
-        final CommandResult commandResult = client.getSession().execute(
-                new CommandOperation("admin", rename, documentCodec, client.getCluster().getDescription(), client.getBufferProvider()));
+        final CommandResult commandResult = new CommandOperation("admin", rename, documentCodec, client.getCluster().getDescription(),
+                client.getBufferProvider(), client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }
 

@@ -19,6 +19,7 @@ package com.mongodb;
 import org.mongodb.Codec;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Command;
@@ -33,8 +34,7 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryResult;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -167,24 +167,23 @@ public class DB implements IDB {
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
-        final QueryResult<Document> query;
         try {
-            query = getSession().execute(
-                    new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec, getBufferPool()));
+            MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
+                    getBufferPool(), getSession(), false).execute();
+
+            final HashSet<String> collections = new HashSet<String>();
+            final int lengthOfDatabaseName = getName().length();
+            while (cursor.hasNext()) {
+                final String collectionName = cursor.next().getString("name");
+                if (!collectionName.contains("$")) {
+                    final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                    collections.add(collectionNameWithoutDatabasePrefix);
+                }
+            }
+            return collections;
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
-
-        final HashSet<String> collections = new HashSet<String>();
-        final int lengthOfDatabaseName = getName().length();
-        for (final Document namespace : query.getResults()) {
-            final String collectionName = (String) namespace.get("name");
-            if (!collectionName.contains("$")) {
-                final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
-                collections.add(collectionNameWithoutDatabasePrefix);
-            }
-        }
-        return collections;
     }
 
     @Override
@@ -430,16 +429,15 @@ public class DB implements IDB {
         return getMongo().getCluster();
     }
 
-    ServerSelectingSession getSession() {
+    Session getSession() {
         return getMongo().getSession();
     }
 
     org.mongodb.operation.CommandResult executeCommand(final Command command) {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
-            return getSession().execute(new CommandOperation(getName(), command, documentCodec,
-                                                             getClusterDescription(),
-                                                             getBufferPool()));
+            return new CommandOperation(getName(), command, documentCodec, getClusterDescription(), getBufferPool(),
+                    getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -448,9 +446,8 @@ public class DB implements IDB {
     org.mongodb.operation.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
         mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
-            return getSession().execute(new CommandOperation(getName(), mongoCommand, documentCodec,
-                                                             getClusterDescription(),
-                                                             getBufferPool()));
+            return new CommandOperation(getName(), mongoCommand, documentCodec, getClusterDescription(), getBufferPool(), getSession(),
+                    false).execute();
         } catch (MongoCommandFailureException ex) {
             return ex.getCommandResult();
         } catch (org.mongodb.MongoException ex) {

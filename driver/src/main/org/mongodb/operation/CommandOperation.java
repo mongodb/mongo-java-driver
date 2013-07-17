@@ -18,33 +18,31 @@ package org.mongodb.operation;
 
 import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
-import org.mongodb.ServerSelectingOperation;
+import org.mongodb.Operation;
 import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerConnection;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.protocol.CommandMessage;
-import org.mongodb.operation.protocol.ReplyMessage;
+import org.mongodb.operation.protocol.CommandProtocolOperation;
+import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.Session;
 
-import static org.mongodb.operation.OperationHelpers.createCommandResult;
-import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
-
-public class CommandOperation implements ServerSelectingOperation<CommandResult> {
+public class CommandOperation implements Operation<CommandResult> {
     private final Command command;
     private final Codec<Document> codec;
-    private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final String database;
     private final ClusterDescription clusterDescription;
+    private final Session session;
+    private final boolean closeSession;
 
     public CommandOperation(final String database, final Command command, final Codec<Document> codec,
-                            final ClusterDescription clusterDescription, final BufferProvider bufferProvider) {
+                            final ClusterDescription clusterDescription, final BufferProvider bufferProvider,
+                            final Session session, final boolean closeSession) {
+        this.database = database;
         this.clusterDescription = clusterDescription;
-        this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.session = session;
+        this.closeSession = closeSession;
         this.bufferProvider = bufferProvider;
         this.command = command;
         this.codec = codec;
@@ -54,41 +52,24 @@ public class CommandOperation implements ServerSelectingOperation<CommandResult>
         return command;
     }
 
-    public CommandResult execute(final ServerConnection connection) {
-        return receiveMessage(connection, sendMessage(connection));
+    public CommandResult execute() {
+        ServerConnectionProvider provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(isQuery(),
+                getServerSelector()));
+        try {
+            return new CommandProtocolOperation(database, command, codec, bufferProvider, provider.getServerDescription(),
+                    provider.getConnection(), true).execute();
+        } finally {
+            if (closeSession) {
+                session.close();
+            }
+        }
     }
 
-    @Override
-    public ServerSelector getServerSelector() {
+    private ServerSelector getServerSelector() {
         return new ReadPreferenceServerSelector(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
     }
 
-    @Override
-    public boolean isQuery() {
+    private boolean isQuery() {
         return CommandReadPreferenceHelper.isQuery(command);
-    }
-
-    private CommandMessage sendMessage(final ServerConnection connection) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        try {
-            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
-                    getMessageSettings(connection.getDescription()));
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
-            return message;
-        } finally {
-            buffer.close();
-        }
-    }
-
-    private CommandResult receiveMessage(final ServerConnection connection, final CommandMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(connection.getDescription(), message.getId()));
-        try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-            return createCommandResult(command, replyMessage, connection);
-        } finally {
-            responseBuffers.close();
-        }
     }
 }

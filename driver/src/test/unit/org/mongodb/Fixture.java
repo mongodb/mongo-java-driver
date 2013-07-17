@@ -23,7 +23,7 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.session.AsyncServerSelectingSession;
-import org.mongodb.session.ServerSelectingSession;
+import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.List;
@@ -80,7 +80,7 @@ public final class Fixture {
         return collection;
     }
 
-    public static ServerSelectingSession getSession() {
+    public static Session getSession() {
         getMongoClient();
         return mongoClient.getSession();
     }

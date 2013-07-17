@@ -14,12 +14,27 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.session;
 
 import org.mongodb.connection.ServerSelector;
 
-public interface ServerSelectingOperation<T> extends Operation<T> {
-    ServerSelector getServerSelector();
+/**
+ * @since 3.0
+ */
+public class ServerConnectionProviderOptions {
+    private final boolean isQuery;
+    private final ServerSelector serverSelector;
 
-    boolean isQuery();
+    public ServerConnectionProviderOptions(final boolean query, final ServerSelector serverSelector) {
+        isQuery = query;
+        this.serverSelector = serverSelector;
+    }
+
+    public boolean isQuery() {
+        return isQuery;
+    }
+
+    public ServerSelector getServerSelector() {
+        return serverSelector;
+    }
 }

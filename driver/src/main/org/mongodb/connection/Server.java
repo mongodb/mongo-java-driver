@@ -45,7 +45,7 @@ public interface Server {
      *
      * @return a connection this server
      */
-    ServerConnection getConnection();
+    Connection getConnection();
 
     /**
      * Gets an asynchronous connection to this server.  The connection should be closed after the caller is done with it.

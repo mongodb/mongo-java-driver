@@ -16,45 +16,31 @@
 
 package org.mongodb.session;
 
-import org.mongodb.ServerSelectingOperation;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ServerConnection;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
+import org.mongodb.operation.ServerConnectionProvider;
 
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * @since 3.0
  */
 @NotThreadSafe
-public class PinnedSession implements ServerSelectingSession {
+public class PinnedSession implements Session {
     private ServerSelector lastRequestedServerSelector;
-    private ServerConnection connectionForReads;
-    private ServerConnection connectionForWrites;
+    private Server serverForReads;
+    private Server serverForWrites;
+    private Connection connectionForReads;
+    private Connection connectionForWrites;
     private Cluster cluster;
     private boolean isClosed;
 
     public PinnedSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
-    }
-
-    @Override
-    public <T> T execute(final ServerSelectingOperation<T> operation) {
-        isTrue("open", !isClosed());
-        ServerConnection connection = getConnection(operation);
-        try {
-            return operation.execute(connection);
-        } finally {
-            connection.close();
-        }
-    }
-
-    @Override
-    public <T> Session getBoundSession(final ServerSelectingOperation<T> operation, final SessionBindingType sessionBindingType) {
-        isTrue("open", !isClosed());
-        return new SingleConnectionSession(getConnection(operation));
     }
 
     @Override
@@ -79,27 +65,44 @@ public class PinnedSession implements ServerSelectingSession {
         return isClosed;
     }
 
-    private <T> ServerConnection getConnection(final ServerSelectingOperation<T> operation) {
-        notNull("serverSelector", operation.getServerSelector());
+    @Override
+    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+        notNull("options", options);
+        notNull("serverSelector", options.getServerSelector());
         synchronized (this) {
-            ServerConnection connectionToUse;
-            if (operation.isQuery()) {
-                if (connectionForReads == null || !operation.getServerSelector().equals(lastRequestedServerSelector)) {
-                    lastRequestedServerSelector = operation.getServerSelector();
+            final Server serverToUse;
+            final Connection connectionToUse;
+            if (options.isQuery()) {
+                if (connectionForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
+                    lastRequestedServerSelector = options.getServerSelector();
                     if (connectionForReads != null) {
                         connectionForReads.close();
                     }
-                    connectionForReads = cluster.getServer(operation.getServerSelector()).getConnection();
+                    serverForReads = cluster.getServer(options.getServerSelector());
+                    connectionForReads = serverForReads.getConnection();
                 }
+                serverToUse = serverForReads;
                 connectionToUse = connectionForReads;
             }
             else {
                 if (connectionForWrites == null) {
-                    connectionForWrites = cluster.getServer(new PrimaryServerSelector()).getConnection();
+                    serverForWrites = cluster.getServer(new PrimaryServerSelector());
+                    connectionForWrites = serverForWrites.getConnection();
                 }
+                serverToUse = serverForWrites;
                 connectionToUse = connectionForWrites;
             }
-            return new DelayedCloseConnection(connectionToUse);
+            return new ServerConnectionProvider() {
+                @Override
+                public ServerDescription getServerDescription() {
+                    return serverToUse.getDescription();
+                }
+
+                @Override
+                public Connection getConnection() {
+                    return new DelayedCloseConnection(connectionToUse);
+                }
+            };
         }
     }
 }

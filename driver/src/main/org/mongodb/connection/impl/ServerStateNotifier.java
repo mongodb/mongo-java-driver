@@ -23,7 +23,6 @@ import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
-import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.MongoSocketException;
@@ -32,7 +31,6 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.Tags;
-import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CommandResult;
 
 import java.util.Collections;
@@ -44,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 import static org.mongodb.connection.ServerConnectionState.Unconnected;
@@ -94,16 +91,13 @@ class ServerStateNotifier implements Runnable {
                 connection = connectionFactory.create(serverAddress);
             }
             try {
-                final CommandResult isMasterResult = new CommandOperation("admin",
-                        new Command(new Document("ismaster", 1)), new DocumentCodec(), new ClusterDescription(Direct), bufferProvider)
-                        .execute(new ConnectingServerConnection(connection));
+                final CommandResult isMasterResult = CommandHelper.executeCommand("admin", new Command(new Document("ismaster", 1)),
+                        new DocumentCodec(), connection, bufferProvider);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
-                final CommandResult buildInfoResult = new CommandOperation("admin",
-                        new Command(new Document("buildinfo", 1)), new DocumentCodec(), new ClusterDescription(Direct), bufferProvider)
-                        .execute(new ConnectingServerConnection(connection));
-
+                final CommandResult buildInfoResult = CommandHelper.executeCommand("admin", new Command(new Document("buildinfo", 1)),
+                        new DocumentCodec(), connection, bufferProvider);
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {

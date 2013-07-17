@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.operation.MongoQueryFailureException
-import org.mongodb.session.ServerSelectingSession
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
+import sun.security.pkcs11.Session
 
 import static com.mongodb.ReadPreference.PRIMARY
 
 class DBCursorSpecification extends Specification {
-    private final ServerSelectingSession serverSelectingSession = Mock()
+    private final org.mongodb.session.Session serverSelectingSession = Mock()
     private final DBCollection collection = Mock();
 
     @Subject

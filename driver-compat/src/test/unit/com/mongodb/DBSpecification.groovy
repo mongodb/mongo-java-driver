@@ -23,16 +23,16 @@ import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.MongoTimeoutException
+import org.mongodb.session.Session
 import org.mongodb.operation.MongoCursorNotFoundException
 import org.mongodb.operation.ServerCursor
-import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.primary
 
 class DBSpecification extends Specification {
-    private final ServerSelectingSession session = Mock()
+    private final Session session = Mock()
     private final Cluster cluster = Mock()
     private final Mongo mongo = Mock()
 
