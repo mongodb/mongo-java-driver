@@ -324,6 +324,57 @@ public class Mongo {
         return optionHolder.get();
     }
 
+    /**
+     * Forces the master server to fsync the RAM data to disk
+     * This is done automatically by the server at intervals, but can be forced for better reliability.
+     * @param async if true, the fsync will be done asynchronously on the server.
+     * @return result of the command execution
+     * @throws MongoException
+     */
+    public CommandResult fsync(boolean async) {
+        final DBObject command = new BasicDBObject("fsync", 1);
+        if (async) {
+            command.put("async", 1);
+        }
+        return getDB(ADMIN_DATABASE_NAME).command(command);
+    }
+
+    /**
+     * Forces the master server to fsync the RAM data to disk, then lock all writes.
+     * The database will be read-only after this command returns.
+     * @return result of the command execution
+     * @throws MongoException
+     */
+    public CommandResult fsyncAndLock() {
+        final DBObject command = new BasicDBObject("fsync", 1);
+        command.put("lock", 1);
+        return getDB(ADMIN_DATABASE_NAME).command(command);
+    }
+
+
+    /**
+     * Unlocks the database, allowing the write operations to go through.
+     * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
+     * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
+     * @throws MongoException
+     */
+    public DBObject unlock() {
+        return getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.unlock").findOne();
+    }
+
+    /**
+     * Returns true if the database is locked (read-only), false otherwise.
+     * @return result of the command execution
+     * @throws MongoException
+     */
+    public boolean isLocked() {
+        final DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");
+        final BasicDBObject result = (BasicDBObject) inprogCollection.findOne();
+        return result.containsField("fsyncLock")
+                ? result.getInt("fsyncLock") == 1
+                : false;
+    }
+
     @Override
     public String toString() {
         return "Mongo{" +

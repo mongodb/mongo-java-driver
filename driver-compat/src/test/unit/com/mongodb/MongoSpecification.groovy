@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import org.bson.BSONObject
+import org.bson.BasicBSONObject
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
@@ -23,19 +25,29 @@ import org.mongodb.connection.ClusterType
 import spock.lang.Specification
 import spock.lang.Subject
 
+@SuppressWarnings('UnnecessaryParenthesesForMethodCallWithClosure')
 class MongoSpecification extends Specification {
-    private final ClusterDescription clusterDescription = Mock();
-    private final Cluster cluster = Mock();
+    private final ClusterDescription clusterDescription = Mock()
+    private final Cluster cluster = Mock() {
+        getDescription() >> clusterDescription
+    }
 
     @Subject
-    private final Mongo mongo = new Mongo(cluster, MongoClientOptions.builder().build());
+    private Mongo mongo = new Mongo(cluster, MongoClientOptions.builder().build());
+
+    def setupSpec() {
+        Map.metaClass.asType = { Class type ->
+            if (type == BSONObject) {
+                return new BasicBSONObject(delegate)
+            }
+        }
+    }
 
     def 'should return replica set status if cluster type replica set and mode discovering'() {
         //TODO: this is not really the correct way to go about this
         //we should have a test builder for the cluster if we have to mock the behaviour to get it to do what we want
         //currently we're getting null pointers for description
         given:
-        cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.ReplicaSet
         clusterDescription.getMode() >> ClusterConnectionMode.Discovering
 
@@ -46,7 +58,6 @@ class MongoSpecification extends Specification {
 
     def 'should return null if cluster type not replica'() {
         given:
-        cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.Sharded
         clusterDescription.getMode() >> ClusterConnectionMode.Discovering
 
@@ -56,12 +67,62 @@ class MongoSpecification extends Specification {
 
     def 'should return null if cluster mode not discovering'() {
         given:
-        cluster.getDescription() >> clusterDescription
         clusterDescription.getType() >> ClusterType.ReplicaSet
         clusterDescription.getMode() >> ClusterConnectionMode.Direct
 
         expect:
         mongo.getReplicaSetStatus() == null;
+    }
+
+    def 'should send fsync commands in expected form'() {
+        given:
+        DB db = Mock()
+        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build()]) {
+            getDB('admin') >> db
+        }
+
+        when:
+        mongo.fsync(false)
+
+        then:
+        1 * db.command(['fsync': 1] as DBObject)
+
+        when:
+        mongo.fsync(true)
+
+        then:
+        1 * db.command(['fsync': 1, 'async': 1] as DBObject)
+    }
+
+    def 'should lock and unlock as server'() {
+        given:
+        DBCollection unlockCollection = Mock()
+        DBCollection inprogCollection = Mock()
+        DB db = Mock() {
+            getCollection('$cmd.sys.unlock') >> unlockCollection
+            getCollection('$cmd.sys.inprog') >> inprogCollection
+        }
+        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build()]) {
+            getDB('admin') >> db
+        }
+
+        when:
+        mongo.fsyncAndLock()
+
+        then:
+        1 * db.command(['fsync': 1, 'lock': 1] as DBObject)
+
+        when:
+        mongo.isLocked()
+
+        then:
+        1 * inprogCollection.findOne() >> new BasicDBObject('fsyncLock', 1)
+
+        when:
+        mongo.unlock()
+
+        then:
+        1 * unlockCollection.findOne()
     }
 
 }
