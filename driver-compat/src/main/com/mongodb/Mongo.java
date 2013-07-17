@@ -383,6 +383,27 @@ public class Mongo {
                 '}';
     }
 
+    /**
+     * Gets the maximum size for a BSON object supported by the current master server.
+     * Note that this value may change over time depending on which server is master.
+     *
+     * @return the maximum size, or 0 if not obtained from servers yet.
+     * @throws MongoException
+     */
+    public int getMaxBsonObjectSize() {
+        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
+        return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
+    }
+
+    /**
+     * Gets a {@code String} representation of current connection point, i.e. master.
+     * @return server address in a host:port form
+     */
+    public String getConnectPoint(){
+        final ServerAddress master = getAddress();
+        return master != null ? String.format("%s:%d", master.getHost(), master.getPort()) : null;
+    }
+
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
         final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (final ServerAddress cur : seedList) {
