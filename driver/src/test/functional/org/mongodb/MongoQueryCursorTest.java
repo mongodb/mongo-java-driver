@@ -24,11 +24,11 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.GetMoreOperation;
+import org.mongodb.operation.GetMoreProtocol;
 import org.mongodb.operation.KillCursor;
 import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.protocol.KillCursorProtocolOperation;
+import org.mongodb.operation.protocol.KillCursorProtocol;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -344,7 +344,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     public void shouldThrowCursorNotFoundException() {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getSession(), false);
-        new KillCursorProtocolOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
                 cursor.getServerConnectionProvider().getServerDescription(), cursor.getServerConnectionProvider().getConnection(),
                 true).execute();
         cursor.next();
@@ -360,7 +360,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
 
     private void makeAdditionalGetMoreCall() {
-        new GetMoreOperation<Document>(collection.getNamespace(), new GetMore(cursor.getServerCursor(), 1, 1, 1),
+        new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(cursor.getServerCursor(), 1, 1, 1),
                 collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.getServerConnectionProvider()
                 .getServerDescription(), cursor.getServerConnectionProvider().getConnection(), true).execute();
     }

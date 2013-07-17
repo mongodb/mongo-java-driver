@@ -22,17 +22,17 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.GetMoreDiscardOperation;
-import org.mongodb.operation.GetMoreOperation;
+import org.mongodb.operation.GetMoreDiscardProtocol;
+import org.mongodb.operation.GetMoreProtocol;
 import org.mongodb.operation.KillCursor;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerConnectionProvider;
 import org.mongodb.operation.ServerCursor;
-import org.mongodb.operation.protocol.GetMoreReceiveProtocolOperation;
-import org.mongodb.operation.protocol.KillCursorProtocolOperation;
-import org.mongodb.operation.protocol.QueryProtocolOperation;
+import org.mongodb.operation.protocol.GetMoreReceiveProtocol;
+import org.mongodb.operation.protocol.KillCursorProtocol;
+import org.mongodb.operation.protocol.QueryProtocol;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
@@ -76,7 +76,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
                 new ReadPreferenceServerSelector(find.getReadPreference())));
         Connection connection = provider.getConnection();
         exhaustConnection = isExhaust() ? connection : null;
-        QueryProtocolOperation<T> operation = new QueryProtocolOperation<T>(namespace, find, queryEncoder, decoder, this.bufferProvider,
+        QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder, this.bufferProvider,
                 provider.getServerDescription(), connection, !isExhaust());
         currentResult = operation.execute();
         currentIterator = currentResult.getResults().iterator();
@@ -94,7 +94,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             discardRemainingGetMoreResponses();
         }
         else if (currentResult.getCursor() != null && !limitReached()) {
-            new KillCursorProtocolOperation(new KillCursor(currentResult.getCursor()), bufferProvider,
+            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider,
                     provider.getServerDescription(), getConnection(), !isExhaust()).execute();
         }
         if (exhaustConnection != null) {
@@ -195,11 +195,11 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         if (isExhaust()) {
-            currentResult = new GetMoreReceiveProtocolOperation<T>(decoder, currentResult.getRequestId(), provider.getServerDescription(),
+            currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId(), provider.getServerDescription(),
                     getConnection()).execute();
         }
         else {
-            currentResult = new GetMoreOperation<T>(namespace,
+            currentResult = new GetMoreProtocol<T>(namespace,
                     new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider,
                     provider.getServerDescription(), getConnection(), true).execute();
         }
@@ -224,7 +224,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            new KillCursorProtocolOperation(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
+            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
                     provider.getConnection(), !isExhaust()).execute();
         }
     }
@@ -239,7 +239,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void discardRemainingGetMoreResponses() {
-        new GetMoreDiscardOperation(currentResult.getCursor().getId(), currentResult.getRequestId(), provider.getServerDescription(),
+        new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(), provider.getServerDescription(),
                 getConnection()).execute();
     }
 

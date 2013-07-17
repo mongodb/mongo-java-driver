@@ -16,31 +16,31 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.operation.MongoQueryFailureException
-import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
-import sun.security.pkcs11.Session
 
 import static com.mongodb.ReadPreference.PRIMARY
 
 class DBCursorSpecification extends Specification {
-    private final org.mongodb.session.Session serverSelectingSession = Mock()
+    private final org.mongodb.session.Session session = Mock()
     private final DBCollection collection = Mock();
 
     @Subject
     private final DBCursor dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), PRIMARY);
 
     def setup() {
-        collection.getSession() >> { serverSelectingSession }
+        collection.getSession() >> { session }
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
         given:
-        serverSelectingSession.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         dbCursor.explain()
@@ -51,9 +51,7 @@ class DBCursorSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in hasNext'() {
         given:
-        Session session = Mock()
-        serverSelectingSession.getBoundSession(_, _) >> { session }
-        session.execute(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }
+        session.createServerConnectionProvider(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }
 
         when:
         dbCursor.hasNext()

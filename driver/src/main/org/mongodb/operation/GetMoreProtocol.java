@@ -14,49 +14,47 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.protocol;
+package org.mongodb.operation;
 
-import org.mongodb.Codec;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.Command;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.CommandResult;
+import org.mongodb.operation.protocol.GetMoreMessage;
+import org.mongodb.operation.protocol.Protocol;
+import org.mongodb.operation.protocol.ReplyMessage;
 
-import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class CommandProtocolOperation implements ProtocolOperation<CommandResult> {
-    private final Command command;
-    private final Codec<Document> codec;
-    private final MongoNamespace namespace;
-    private final BufferProvider bufferProvider;
-    private final ServerDescription serverDescription;
+public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
+    private final GetMore getMore;
+    private final Decoder<T> resultDecoder;
+    private ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
+    private final MongoNamespace namespace;
+    private final BufferProvider bufferProvider;
 
-    public CommandProtocolOperation(final String database, final Command command, final Codec<Document> codec,
-                                    final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                    final Connection connection, final boolean closeConnection) {
+    public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
+                           final BufferProvider bufferProvider, final ServerDescription serverDescription, final Connection connection,
+                           final boolean closeConnection) {
+        this.namespace = namespace;
+        this.bufferProvider = bufferProvider;
+        this.getMore = getMore;
+        this.resultDecoder = resultDecoder;
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.closeConnection = closeConnection;
-        this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
-        this.bufferProvider = bufferProvider;
-        this.command = command;
-        this.codec = codec;
     }
 
-    public Command getCommand() {
-        return command;
-    }
-
-    public CommandResult execute() {
+    @Override
+    public QueryResult<T> execute() {
         try {
             return receiveMessage(sendMessage());
         } finally {
@@ -66,10 +64,10 @@ public class CommandProtocolOperation implements ProtocolOperation<CommandResult
         }
     }
 
-    private CommandMessage sendMessage() {
+    private GetMoreMessage sendMessage() {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
+            final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
@@ -79,12 +77,22 @@ public class CommandProtocolOperation implements ProtocolOperation<CommandResult
         }
     }
 
-    private CommandResult receiveMessage(final CommandMessage message) {
+    private QueryResult<T> receiveMessage(final GetMoreMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(
                 getResponseSettings(serverDescription, message.getId()));
         try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-            return createCommandResult(command, replyMessage, connection);
+            if (responseBuffers.getReplyHeader().isCursorNotFound()) {
+                throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
+            }
+
+            if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                final Document errorDocument =
+                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+            }
+
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
+                    connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

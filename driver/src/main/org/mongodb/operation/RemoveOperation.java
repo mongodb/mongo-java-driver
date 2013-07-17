@@ -22,7 +22,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.operation.protocol.RemoveProtocolOperation;
+import org.mongodb.operation.protocol.RemoveProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
@@ -51,7 +51,7 @@ public class RemoveOperation implements Operation<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            return new RemoveProtocolOperation(namespace, remove, queryEncoder, bufferProvider, provider.getServerDescription(),
+            return new RemoveProtocol(namespace, remove, queryEncoder, bufferProvider, provider.getServerDescription(),
                     provider.getConnection(), true).execute();
         } finally {
             connection.close();

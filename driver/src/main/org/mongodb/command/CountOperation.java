@@ -24,7 +24,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.ServerConnectionProvider;
-import org.mongodb.operation.protocol.CommandProtocolOperation;
+import org.mongodb.operation.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
@@ -44,7 +44,7 @@ public class CountOperation extends BaseCountOperation implements Operation<Long
         try {
             ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
                     new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(getCount().getReadPreference())));
-            return getCount(new CommandProtocolOperation(getCount().getNamespace().getDatabaseName(), getCount(), getCodec(),
+            return getCount(new CommandProtocol(getCount().getNamespace().getDatabaseName(), getCount(), getCodec(),
                     getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true)
                     .execute());
         } finally {

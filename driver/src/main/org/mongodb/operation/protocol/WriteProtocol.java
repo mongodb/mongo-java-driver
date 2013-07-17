@@ -34,7 +34,7 @@ import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public abstract class WriteProtocolOperation implements ProtocolOperation<CommandResult> {
+public abstract class WriteProtocol implements Protocol<CommandResult> {
 
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
@@ -43,8 +43,8 @@ public abstract class WriteProtocolOperation implements ProtocolOperation<Comman
     private final boolean closeConnection;
     private final GetLastError getLastErrorCommand;
 
-    public WriteProtocolOperation(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
-                                  final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+    public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
+                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.serverDescription = serverDescription;

@@ -21,7 +21,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.operation.protocol.InsertProtocolOperation;
+import org.mongodb.operation.protocol.InsertProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
@@ -50,7 +50,7 @@ public class InsertOperation<T> implements Operation<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            return new InsertProtocolOperation<T>(namespace, insert, encoder, bufferProvider, provider.getServerDescription(),
+            return new InsertProtocol<T>(namespace, insert, encoder, bufferProvider, provider.getServerDescription(),
                     provider.getConnection(), true).execute();
         } finally {
             connection.close();

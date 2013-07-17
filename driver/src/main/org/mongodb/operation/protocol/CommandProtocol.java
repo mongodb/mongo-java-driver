@@ -16,48 +16,47 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.Decoder;
+import org.mongodb.Codec;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.MongoQueryFailureException;
-import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.CommandResult;
 
+import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class QueryProtocolOperation<T> implements ProtocolOperation<QueryResult<T>> {
-    private final Find find;
-    private final Encoder<Document> queryEncoder;
-    private final Decoder<T> resultDecoder;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
-    private boolean closeConnection;
+public class CommandProtocol implements Protocol<CommandResult> {
+    private final Command command;
+    private final Codec<Document> codec;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final ServerDescription serverDescription;
+    private final Connection connection;
+    private final boolean closeConnection;
 
-    public QueryProtocolOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                                  final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
-                                  final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        this.namespace = namespace;
-        this.bufferProvider = bufferProvider;
-        this.find = find;
-        this.queryEncoder = queryEncoder;
-        this.resultDecoder = resultDecoder;
+    public CommandProtocol(final String database, final Command command, final Codec<Document> codec,
+                           final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                           final Connection connection, final boolean closeConnection) {
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.closeConnection = closeConnection;
+        this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.bufferProvider = bufferProvider;
+        this.command = command;
+        this.codec = codec;
     }
 
-    @Override
-    public QueryResult<T> execute() {
+    public Command getCommand() {
+        return command;
+    }
+
+    public CommandResult execute() {
         try {
             return receiveMessage(sendMessage());
         } finally {
@@ -67,10 +66,10 @@ public class QueryProtocolOperation<T> implements ProtocolOperation<QueryResult<
         }
     }
 
-    private QueryMessage sendMessage() {
+    private CommandMessage sendMessage() {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
+            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
@@ -80,18 +79,12 @@ public class QueryProtocolOperation<T> implements ProtocolOperation<QueryResult<
         }
     }
 
-    private QueryResult<T> receiveMessage(final QueryMessage message) {
+    private CommandResult receiveMessage(final CommandMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(
                 getResponseSettings(serverDescription, message.getId()));
         try {
-            if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                final Document errorDocument =
-                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
-            }
-            final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
-
-            return new QueryResult<T>(replyMessage, connection.getServerAddress());
+            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
+            return createCommandResult(command, replyMessage, connection);
         } finally {
             responseBuffers.close();
         }

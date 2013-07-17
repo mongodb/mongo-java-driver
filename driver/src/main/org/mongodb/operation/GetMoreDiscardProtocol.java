@@ -14,37 +14,41 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation.protocol;
+package org.mongodb.operation;
 
-import org.mongodb.Decoder;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.QueryResult;
+import org.mongodb.operation.protocol.Protocol;
 
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
-public class GetMoreReceiveProtocolOperation<T> implements ProtocolOperation<QueryResult<T>> {
-
-    private final Decoder<T> resultDecoder;
+public class GetMoreDiscardProtocol implements Protocol<Void> {
+    private final long cursorId;
     private final int responseTo;
     private final ServerDescription serverDescription;
     private final Connection connection;
 
-    public GetMoreReceiveProtocolOperation(final Decoder<T> resultDecoder, final int responseTo, final ServerDescription serverDescription,
-                                           final Connection connection) {
-        this.resultDecoder = resultDecoder;
+    public GetMoreDiscardProtocol(final long cursorId, final int responseTo, final ServerDescription serverDescription,
+                                  final Connection connection) {
+        this.cursorId = cursorId;
         this.responseTo = responseTo;
         this.serverDescription = serverDescription;
         this.connection = connection;
     }
 
-    public QueryResult<T> execute() {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(serverDescription, responseTo));
-        try {
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
-        } finally {
-            responseBuffers.close();
+    public Void execute() {
+        long curCursorId = cursorId;
+        int curResponseTo = responseTo;
+        while (curCursorId != 0) {
+            final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(serverDescription, curResponseTo));
+            try {
+                curCursorId = responseBuffers.getReplyHeader().getCursorId();
+                curResponseTo = responseBuffers.getReplyHeader().getRequestId();
+            } finally {
+                responseBuffers.close();
+            }
         }
+        return null;
     }
 }

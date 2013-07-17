@@ -16,30 +16,32 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.Update;
 
-public class InsertProtocolOperation<T> extends WriteProtocolOperation {
-    private final Insert<T> insert;
-    private final Encoder<T> encoder;
+public class UpdateProtocol extends WriteProtocol {
+    private final Update update;
+    private final Encoder<Document> queryEncoder;
 
-    public InsertProtocolOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
-                                   final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                   final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, insert.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.insert = insert;
-        this.encoder = encoder;
+    public UpdateProtocol(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
+                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                          final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, update.getWriteConcern(), serverDescription, connection, closeConnection);
+        this.update = update;
+        this.queryEncoder = queryEncoder;
     }
 
+    @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
+        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
     }
 
-    public Insert<T> getWrite() {
-        return insert;
-    }
-}
+    @Override
+    public Update getWrite() {
+        return update;
+    }}

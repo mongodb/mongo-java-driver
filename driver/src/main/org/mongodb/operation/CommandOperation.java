@@ -23,7 +23,7 @@ import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.protocol.CommandProtocolOperation;
+import org.mongodb.operation.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
@@ -53,10 +53,10 @@ public class CommandOperation implements Operation<CommandResult> {
     }
 
     public CommandResult execute() {
-        ServerConnectionProvider provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(isQuery(),
-                getServerSelector()));
         try {
-            return new CommandProtocolOperation(database, command, codec, bufferProvider, provider.getServerDescription(),
+            ServerConnectionProvider provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(isQuery(),
+                    getServerSelector()));
+            return new CommandProtocol(database, command, codec, bufferProvider, provider.getServerDescription(),
                     provider.getConnection(), true).execute();
         } finally {
             if (closeSession) {

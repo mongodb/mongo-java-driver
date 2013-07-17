@@ -22,7 +22,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.operation.protocol.UpdateProtocolOperation;
+import org.mongodb.operation.protocol.UpdateProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
@@ -52,7 +52,7 @@ public class UpdateOperation implements Operation<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            return new UpdateProtocolOperation(namespace, update, queryEncoder, bufferProvider, provider.getServerDescription(),
+            return new UpdateProtocol(namespace, update, queryEncoder, bufferProvider, provider.getServerDescription(),
                     provider.getConnection(), true).execute();
         } finally {
             connection.close();

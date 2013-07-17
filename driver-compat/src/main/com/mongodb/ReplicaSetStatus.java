@@ -77,7 +77,6 @@ public class ReplicaSetStatus {
         }
     }
 
-
     @Override
     public String toString() {
         return "ReplicaSetStatus{" +

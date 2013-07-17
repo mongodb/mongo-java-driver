@@ -19,6 +19,8 @@
 
 
 
+
+
 package org.mongodb
 
 import category.Slow
@@ -26,12 +28,12 @@ import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.operation.Find
 import org.mongodb.operation.GetMore
-import org.mongodb.operation.GetMoreOperation
+import org.mongodb.operation.GetMoreProtocol
 import org.mongodb.operation.KillCursor
 import org.mongodb.operation.MongoCursorNotFoundException
 import org.mongodb.operation.QueryFlag
 import org.mongodb.operation.ServerCursor
-import org.mongodb.operation.protocol.KillCursorProtocolOperation
+import org.mongodb.operation.protocol.KillCursorProtocol
 
 import java.util.concurrent.CountDownLatch
 
@@ -399,7 +401,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
                 collection.getOptions().getDocumentCodec(),
                 collection.getCodec(), getBufferProvider(), getSession(), false);
-        new KillCursorProtocolOperation(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
                 cursor.serverConnectionProvider.serverDescription, cursor.serverConnectionProvider.getConnection(), true).execute();
         cursor.next();
         cursor.next();
@@ -414,7 +416,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        new GetMoreOperation<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
+        new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
                 collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.serverConnectionProvider.serverDescription,
                 cursor.serverConnectionProvider.getConnection(), true).execute();
     }

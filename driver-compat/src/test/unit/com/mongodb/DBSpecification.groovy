@@ -22,6 +22,8 @@ import org.mongodb.command.Command
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
+import org.mongodb.connection.ClusterConnectionMode
+import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
 import org.mongodb.session.Session
 import org.mongodb.operation.MongoCursorNotFoundException
@@ -42,7 +44,6 @@ class DBSpecification extends Specification {
     def setup() {
         mongo.getCluster() >> { cluster }
         mongo.getSession() >> { session }
-
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())
     }
@@ -50,7 +51,8 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if createCollection fails'() {
         given:
-        session.execute(_) >> {
+        cluster.getDescription() >> {new ClusterDescription(ClusterConnectionMode.Direct)}
+        session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
@@ -67,12 +69,13 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoCursorNotFoundException if cursor not found'() {
         given:
-        session.execute(_) >> {
+        cluster.getDescription() >> {new ClusterDescription(ClusterConnectionMode.Direct)}
+        session.createServerConnectionProvider(_) >> {
             throw new MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
         }
 
         when:
-        database.executeCommand(new Command());
+        database.executeCommand(new Command(new Document("isMaster", 1)));
 
         then:
         thrown(com.mongodb.MongoCursorNotFoundException)
@@ -81,7 +84,8 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if executeCommand fails'() {
         given:
-        session.execute(_) >> {
+        cluster.getDescription() >> {new ClusterDescription(ClusterConnectionMode.Direct)}
+        session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
@@ -98,7 +102,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
         given:
-        session.execute(_) >> {
+        session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
@@ -115,7 +119,8 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if command fails for a resons that is not a command failure'() {
         given:
-        session.execute(_) >> {
+        cluster.getDescription() >> {new ClusterDescription(ClusterConnectionMode.Direct)}
+        session.createServerConnectionProvider(_) >> {
             throw new org.mongodb.MongoInternalException('An exception that is not a MongoCommandFailureException')
         }
 
@@ -132,7 +137,8 @@ class DBSpecification extends Specification {
                                                                             new org.mongodb.connection.ServerAddress(),
                                                                             new Document(),
                                                                             15L)
-        session.execute(_) >> {
+        cluster.getDescription() >> {new ClusterDescription(ClusterConnectionMode.Direct)}
+        session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(expectedCommandResult)
         }
 

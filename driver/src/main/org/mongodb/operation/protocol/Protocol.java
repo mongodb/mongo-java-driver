@@ -16,6 +16,6 @@
 
 package org.mongodb.operation.protocol;
 
-public interface ProtocolOperation<T> {
+public interface Protocol<T> {
     T execute();
 }

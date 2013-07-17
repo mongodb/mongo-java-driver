@@ -1147,11 +1147,11 @@ public class DBCollection implements IDBCollection {
         final org.mongodb.operation.CommandResult executionResult;
 
         try {
-            executionResult = getSession().execute(new CommandOperation(getDB().getName(),
+            executionResult = new CommandOperation(getDB().getName(),
                     command.toNew(),
                     mapReduceCodec,
                     getDB().getClusterDescription(),
-                    getBufferPool()));
+                    getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

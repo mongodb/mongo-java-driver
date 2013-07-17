@@ -18,22 +18,27 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.connection.Cluster
+import org.mongodb.connection.ClusterConnectionMode
+import org.mongodb.connection.ClusterDescription
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static com.mongodb.MongoExceptions.mapException
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 
 class DBCollectionSpecification extends Specification {
-    private final Mongo mongo = Mock()
-    private final DB database = new DB(mongo, 'myDatabase', new DocumentCodec())
+//    private final Mongo mongo = Mock()
+    private final DB database = Mock()
     private final Session session = Mock()
     private final Cluster cluster = Mock()
 
@@ -41,8 +46,11 @@ class DBCollectionSpecification extends Specification {
     private final DBCollection collection = new DBCollection('collectionName', database, new DocumentCodec())
 
     def setup() {
-        mongo.getCluster() >> { cluster }
-        mongo.getSession() >> { session }
+        database.getSession() >> { session }
+        database.getCluster() >> { cluster }
+        database.getName() >> { 'TheDatabase' }
+        database.getClusterDescription() >> { cluster.getDescription() }
+        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
 
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())
@@ -50,7 +58,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.MongoException if rename fails'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoException('The error from the new Java layer') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoException('The error from the new Java layer') }
 
         when:
         collection.rename('newCollectionName');
@@ -61,7 +69,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.MongoException when update fails'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoException('The error from the new Java layer') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoException('The error from the new Java layer') }
 
         when:
         collection.update(new BasicDBObject(), new BasicDBObject(), false, false, ACKNOWLEDGED);
@@ -72,11 +80,11 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
-        session.execute(_) >> {
+        session.createServerConnectionProvider(_) >> {
             throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
-                                                                                         new org.mongodb.connection.ServerAddress(),
-                                                                                         new Document(),
-                                                                                         15L))
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document(),
+                    15L))
         }
 
         when:
@@ -88,7 +96,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException when insert fails'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         collection.insert(new BasicDBObject(), ACKNOWLEDGED);
@@ -99,11 +107,13 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.CommandFailureException when group fails'() {
         given:
-        session.execute(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+        database.executeCommand(_) >> {
+            Exception exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document(),
+                    15L))
+
+            throw mapException(exception)
         }
 
         when:
@@ -115,11 +125,11 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
-        session.execute(_) >> {
+        session.createServerConnectionProvider(_) >> {
             throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
-                                                                                         new org.mongodb.connection.ServerAddress(),
-                                                                                         new Document(),
-                                                                                         15L))
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document(),
+                    15L))
         }
 
         when:
@@ -131,7 +141,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException when createIndex fails'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not leak') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not leak') }
 
         when:
         collection.createIndex(new BasicDBObject());
@@ -142,11 +152,12 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.MongoException when drop fails'() {
         given:
-        session.execute(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+        database.executeCommand(_) >> {
+            Exception exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+                    new org.mongodb.connection.ServerAddress(),
+                    new Document(),
+                    15L))
+            throw mapException(exception)
         }
 
         when:
@@ -162,7 +173,7 @@ class DBCollectionSpecification extends Specification {
             org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.operation.CommandResult(
                     new Document(),
                     new org.mongodb.connection.ServerAddress(),
-                    new Document('errmsg','ns not found'),
+                    new Document('errmsg', 'ns not found'),
                     15L));
 
             throw mapException(exception);
@@ -177,7 +188,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException for findAndModify'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         collection.findAndModify(new BasicDBObject(), new BasicDBObject());
@@ -188,7 +199,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException for getIndexInfo'() {
         given:
-        session.execute(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         collection.getIndexInfo();

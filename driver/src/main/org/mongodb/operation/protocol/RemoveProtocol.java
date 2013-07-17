@@ -22,26 +22,27 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.Update;
+import org.mongodb.operation.Remove;
 
-public class UpdateProtocolOperation extends WriteProtocolOperation {
-    private final Update update;
+public class RemoveProtocol extends WriteProtocol {
+    private final Remove remove;
     private final Encoder<Document> queryEncoder;
 
-    public UpdateProtocolOperation(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                                   final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                   final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, update.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.update = update;
+    public RemoveProtocol(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
+                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                          final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, remove.getWriteConcern(), serverDescription, connection, closeConnection);
+        this.remove = remove;
         this.queryEncoder = queryEncoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
+        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
     }
 
     @Override
-    public Update getWrite() {
-        return update;
-    }}
+    public Remove getWrite() {
+        return remove;
+    }
+}

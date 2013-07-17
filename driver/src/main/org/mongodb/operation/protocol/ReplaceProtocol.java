@@ -22,27 +22,29 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.Remove;
+import org.mongodb.operation.Replace;
 
-public class RemoveProtocolOperation extends WriteProtocolOperation {
-    private final Remove remove;
+public class ReplaceProtocol<T> extends WriteProtocol {
+    private final Replace<T> replace;
     private final Encoder<Document> queryEncoder;
+    private final Encoder<T> encoder;
 
-    public RemoveProtocolOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                                   final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                   final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, remove.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.remove = remove;
+    public ReplaceProtocol(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
+                           final Encoder<T> encoder, final BufferProvider bufferProvider,
+                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, replace.getWriteConcern(), serverDescription, connection, closeConnection);
+        this.replace = replace;
         this.queryEncoder = queryEncoder;
+        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
     }
 
     @Override
-    public Remove getWrite() {
-        return remove;
+    public Replace<T> getWrite() {
+        return replace;
     }
 }

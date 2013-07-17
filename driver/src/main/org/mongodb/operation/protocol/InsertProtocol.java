@@ -16,35 +16,30 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.Replace;
+import org.mongodb.operation.Insert;
 
-public class ReplaceProtocolOperation<T> extends WriteProtocolOperation {
-    private final Replace<T> replace;
-    private final Encoder<Document> queryEncoder;
+public class InsertProtocol<T> extends WriteProtocol {
+    private final Insert<T> insert;
     private final Encoder<T> encoder;
 
-    public ReplaceProtocolOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
-                                    final Encoder<T> encoder, final BufferProvider bufferProvider,
-                                    final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, replace.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.replace = replace;
-        this.queryEncoder = queryEncoder;
+    public InsertProtocol(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
+                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                          final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, insert.getWriteConcern(), serverDescription, connection, closeConnection);
+        this.insert = insert;
         this.encoder = encoder;
     }
 
-    @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
+        return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
-    @Override
-    public Replace<T> getWrite() {
-        return replace;
+    public Insert<T> getWrite() {
+        return insert;
     }
 }

@@ -24,16 +24,16 @@ import org.mongodb.operation.KillCursor;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
-public class KillCursorProtocolOperation implements ProtocolOperation<Void> {
+public class KillCursorProtocol implements Protocol<Void> {
     private final KillCursor killCursor;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private boolean closeConnection;
     private final BufferProvider bufferProvider;
 
-    public KillCursorProtocolOperation(final KillCursor killCursor, final BufferProvider bufferProvider,
-                                       final ServerDescription serverDescription, final Connection connection,
-                                       final boolean closeConnection) {
+    public KillCursorProtocol(final KillCursor killCursor, final BufferProvider bufferProvider,
+                              final ServerDescription serverDescription, final Connection connection,
+                              final boolean closeConnection) {
         this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
         this.serverDescription = serverDescription;
