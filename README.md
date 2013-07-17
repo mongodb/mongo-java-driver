@@ -21,3 +21,6 @@
 
 ### Build status:
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
+
+### Java 8 Compatibility
+![Compatibility Badge](https://java.net/downloads/adoptopenjdk/compat.svg)
