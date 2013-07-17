@@ -1,5 +1,5 @@
 /**
- * Copyright [2012] [Gihan Munasinghe ayeshka@gmail.com ]
+ * Copyright 2013 10gen.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Contributions:
+ *      Gihan Munasinghe    ayeshka@gmail.com
  */
 
 
@@ -39,6 +41,9 @@ import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.ServerAddress;
 
 
+/**
+ * Heavily modified version of https://github.com/buksy/java-nio-socket/blob/master/src/org/nio/socket/SocketClient.java
+ */
 public class SocketClient {
     private SocketChannel client = null;
     private Selector selector = null;
@@ -164,7 +169,6 @@ public class SocketClient {
         if (sslHandler != null) {
             return sslHandler.doWrite(byteBuffer);
         } else {
-            //Write the non SSL bit of the transfer
             final int out = byteBuffer.remaining();
             while (byteBuffer.hasRemaining()) {
                 final int x = client.write(byteBuffer);

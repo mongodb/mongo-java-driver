@@ -97,19 +97,6 @@ public class NIOSocketOutputStream extends OutputStream {
                 cond.await();
             }
 
-            //            synchronized (this) {
-            //                try {
-            //                    while(isWriteWait) {
-            //                        wait();
-            //                        if(streamClosed) {
-            //                            throw new IOException("Write stream closed");
-            //                        }
-            //                    }
-            //                } catch (InterruptedException e) {
-            //                    // TODO Auto-generated catch block
-            //                    e.printStackTrace();
-            //                }
-            //            }
             client.doWrite();
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
