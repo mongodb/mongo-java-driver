@@ -19,6 +19,7 @@ package org.mongodb.connection.impl;
 import org.bson.ByteBuf;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionProvider;
@@ -107,6 +108,7 @@ public class DefaultConnectionProviderTest {
     }
 
     @Test
+    @Ignore
     public void shouldThrowOnWaitQueueFull() throws InterruptedException {
         pool = new DefaultConnectionProvider(getPrimary(), connectionFactory,
                 DefaultConnectionProviderSettings.builder()
