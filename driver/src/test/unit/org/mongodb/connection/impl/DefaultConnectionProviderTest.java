@@ -112,15 +112,14 @@ public class DefaultConnectionProviderTest {
                 DefaultConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxWaitTime(500, TimeUnit.MILLISECONDS)
+                        .maxWaitTime(1000, TimeUnit.MILLISECONDS)
                         .build());
 
         pool.get();
 
         TimeoutTrackingConnectionGetter timeoutTrackingGetter = new TimeoutTrackingConnectionGetter(pool);
-
+        Thread.sleep(100);
         new Thread(timeoutTrackingGetter).start();
-        Thread.sleep(10);
         try {
             pool.get();
             fail();
@@ -223,8 +222,9 @@ public class DefaultConnectionProviderTest {
                 connectionProvider.get();
             } catch (MongoTimeoutException e) {
                 gotTimeout = true;
+            } finally {
+                latch.countDown();
             }
-            latch.countDown();
         }
     }
 }
