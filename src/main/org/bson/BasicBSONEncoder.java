@@ -201,6 +201,9 @@ public class BasicBSONEncoder implements BSONEncoder {
             return;
         
         if ( DEBUG ) System.out.println( "\t put thing : " + name );
+
+        if ( name.contains( "\0" ) )
+            throw new IllegalArgumentException( "Document field names can't have a NULL character. (Bad Key: '" + name + "')" );
         
         if ( name.equals( "$where") && val instanceof String ){
             _put( CODE , name );
