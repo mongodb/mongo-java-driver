@@ -147,12 +147,10 @@ public class SocketClient {
     }
 
 
-    protected ByteBuf readToBuffer(final ByteBuf toFill) throws IOException {
-        ByteBuf buffer = toFill;
+    protected int readToBuffer(final ByteBuf buffer) throws IOException {
         final int out;
         if (sslHandler != null) {
-            buffer = sslHandler.doRead(buffer);
-            out = buffer.position();
+            out = sslHandler.doRead(buffer);
         } else {
             out = client.read(buffer.asNIO());
         }
@@ -162,7 +160,7 @@ public class SocketClient {
         } else {
             client.register(selector, SelectionKey.OP_READ, this);
         }
-        return buffer;
+        return out;
     }
 
     public int write(final ByteBuffer byteBuffer) throws IOException {
@@ -181,13 +179,14 @@ public class SocketClient {
 
     }
 
-    public void read(final ByteBuf byteBuf, final CompletionHandler<ByteBuf, Void> callback) {
+    public void read(final ByteBuf byteBuf, final CompletionHandler<Integer, Void> callback) {
         try {
             callbacks.offer(new AsyncCompletionHandler() {
                 @Override
                 public void completed() {
                     try {
-                        callback.completed(readToBuffer(byteBuf), null);
+                        final int read = readToBuffer(byteBuf);
+                        callback.completed(read, null);
                     } catch (IOException e) {
                         throw new MongoSocketReadException(e.getMessage(), address, e);
                     }

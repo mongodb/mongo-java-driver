@@ -242,8 +242,13 @@ class DefaultAsyncConnection implements AsyncConnection {
             if (e != null) {
                 callback.onResult(null, e);
             } else {
-                final ReplyHeader replyHeader = new ReplyHeader(new BasicInputBuffer(result));
-                final int remaining = replyHeader.getMessageLength() - REPLY_HEADER_LENGTH;
+                ReplyHeader replyHeader;
+                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
+                try {
+                    replyHeader = new ReplyHeader(headerInputBuffer);
+                } finally {
+                    headerInputBuffer.close();
+                }
 
                 if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
                     callback.onResult(null, new MongoInternalException(String.format(
@@ -260,24 +265,16 @@ class DefaultAsyncConnection implements AsyncConnection {
                             responseSettings.getMaxMessageSize())));
                     }
 
-                    if (replyHeader.getMessageLength() == result.limit()) {
-                        callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
-                    } else {
-                        final ByteBuf byteBuf = bufferProvider.get(replyHeader.getMessageLength());
-                        byteBuf.asNIO().put(result.asNIO());
-                        result.close();
-                        fillAndFlipBuffer(bufferProvider.get(remaining), new ResponseBodyCallback(byteBuf, replyHeader));
-                    }
+                    fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(
+                        replyHeader));
                 }
             }
         }
 
         private class ResponseBodyCallback implements SingleResultCallback<ByteBuf> {
-            private final ByteBuf buffered;
             private final ReplyHeader replyHeader;
 
-            public ResponseBodyCallback(final ByteBuf result, final ReplyHeader replyHeader) {
-                buffered = result;
+            public ResponseBodyCallback(final ReplyHeader replyHeader) {
                 this.replyHeader = replyHeader;
             }
 
@@ -286,8 +283,7 @@ class DefaultAsyncConnection implements AsyncConnection {
                 if (e != null) {
                     callback.onResult(null, e);
                 } else {
-                    buffered.asNIO().put(result.asNIO());
-                    callback.onResult(new ResponseBuffers(replyHeader, buffered, System.nanoTime() - start), null);
+                    callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
                 }
             }
         }
