@@ -34,7 +34,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
-import org.bson.ByteBuf;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
@@ -84,13 +83,9 @@ public class SocketClient {
     }
 
     protected void readChannel() {
-        try {
-            final AsyncCompletionHandler handler = callbacks.poll(100, TimeUnit.MILLISECONDS);
-            if (handler != null) {
-                handler.completed();
-            }
-        } catch (InterruptedException e) {
-            // no readers yet.  that's ok.  ish.
+        final AsyncCompletionHandler handler = callbacks.poll();
+        if (handler != null) {
+            handler.completed();
         }
     }
 
@@ -147,12 +142,12 @@ public class SocketClient {
     }
 
 
-    protected int readToBuffer(final ByteBuf buffer) throws IOException {
+    protected int readToBuffer(final ByteBuffer buffer) throws IOException {
         final int out;
         if (sslHandler != null) {
             out = sslHandler.doRead(buffer);
         } else {
-            out = client.read(buffer.asNIO());
+            out = client.read(buffer);
         }
         buffer.flip();
         if (out < 0) {
@@ -179,7 +174,7 @@ public class SocketClient {
 
     }
 
-    public void read(final ByteBuf byteBuf, final CompletionHandler<Integer, Void> callback) {
+    public void read(final ByteBuffer byteBuf, final CompletionHandler<Integer, Void> callback) {
         try {
             callbacks.offer(new AsyncCompletionHandler() {
                 @Override
@@ -197,7 +192,11 @@ public class SocketClient {
                     callback.failed(t, null);
                 }
             }, 1, TimeUnit.SECONDS);
+            client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
+            selector.wakeup();
         } catch (InterruptedException e) {
+            throw new MongoSocketReadException(e.getMessage(), address, e);
+        } catch (IOException e) {
             throw new MongoSocketReadException(e.getMessage(), address, e);
         }
     }
@@ -252,6 +251,7 @@ public class SocketClient {
                                 }
                             }
                         }
+                        readChannel();
                     }
                 } finally {
                     selector.close();

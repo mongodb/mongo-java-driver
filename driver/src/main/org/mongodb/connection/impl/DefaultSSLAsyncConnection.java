@@ -45,7 +45,7 @@ class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
 
     @Override
     void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
-        socketClient.read(buffer, new BasicCompletionHandler(buffer, callback));
+        socketClient.read(buffer.asNIO(), new BasicCompletionHandler(buffer, callback));
     }
 
     private final class BasicCompletionHandler implements CompletionHandler<Integer, Void> {
