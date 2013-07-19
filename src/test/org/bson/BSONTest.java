@@ -82,6 +82,14 @@ public class BSONTest extends Assert {
         
         _test( new BasicBSONObject( "x" , 4 ) , 12 , "d1ed8dbf79b78fa215e2ded74548d89d" );
     }
+
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testNullKeysFail() {
+        BSONEncoder e = new BasicBSONEncoder();
+        OutputBuffer buf = new BasicOutputBuffer();
+        e.set( buf );
+        e.putObject( new BasicBSONObject( "foo\0bar","baz" ) );
+    }
     
     @Test
     public void testArray()

@@ -1444,10 +1444,12 @@ public abstract class DBCollection {
      * @exception IllegalArgumentException if the key is not valid.
      */
     private void validateKey(String s ) {
+        if ( s.contains( "\0" ) )
+            throw new IllegalArgumentException( "Document field names can't have a NULL character. (Bad Key: '" + s + "')" );
         if ( s.contains( "." ) )
-            throw new IllegalArgumentException( "fields stored in the db can't have . in them. (Bad Key: '" + s + "')" );
+            throw new IllegalArgumentException( "Document field names can't have a . in them. (Bad Key: '" + s + "')" );
         if ( s.startsWith( "$" ) )
-            throw new IllegalArgumentException( "fields stored in the db can't start with '$' (Bad Key: '" + s + "')" );
+            throw new IllegalArgumentException( "Document field names can't start with '$' (Bad Key: '" + s + "')" );
     }
 
     /**
