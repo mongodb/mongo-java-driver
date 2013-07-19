@@ -346,6 +346,26 @@ public class DBCollectionTest extends TestCase {
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
         c.insert(obj);
     }
+
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testNullKeysFail() {
+        DBCollection c = _db.getCollection("testnullkeysFail");
+        c.drop();
+
+        DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo\0bar","baz").get();
+        c.insert(obj);
+    }
+
+    @Test( expectedExceptions = IllegalArgumentException.class )
+    public void testNullKeysFailWhenNested() {
+        DBCollection c = _db.getCollection("testnullkeysFailWhenNested");
+        c.drop();
+
+        final BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("foo\0bar","baz"));
+        DBObject obj = BasicDBObjectBuilder.start().add("x", list).get();
+        c.insert(obj);
+    }
     
     @Test
     public void testLazyDocKeysPass() {
