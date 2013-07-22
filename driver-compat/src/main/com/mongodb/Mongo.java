@@ -66,6 +66,9 @@ public class Mongo {
     private volatile WriteConcern writeConcern;
     private volatile ReadPreference readPreference;
 
+    private final MongoClientOptions options;
+    private final List<MongoCredential> credentialsList;
+
     private final Bytes.OptionHolder optionHolder;
 
     private final Codec<Document> documentCodec;
@@ -75,36 +78,47 @@ public class Mongo {
     private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(new DefaultClusterFactory().create(createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())),
-                mongoOptions);
+        this(new DefaultClusterFactory().create(
+                createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())
+        ), mongoOptions, Collections.<MongoCredential>emptyList());
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
-        this(createCluster(mongoURI.toNew()), mongoURI.getOptions());
+        this(createCluster(mongoURI.toNew()), mongoURI.getOptions(), Collections.<MongoCredential>emptyList());
     }
 
-    Mongo(final ServerAddress serverAddress, final MongoClientOptions mongoOptions) {
-        this(new DefaultClusterFactory().create(serverAddress.toNew(), createClusterableServerFactory(mongoOptions.toNew())), mongoOptions);
+    Mongo(final ServerAddress serverAddress, final MongoClientOptions options) {
+        this(new DefaultClusterFactory().create(
+                serverAddress.toNew(), createClusterableServerFactory(options.toNew())
+        ), options, Collections.<MongoCredential>emptyList());
     }
 
-    public Mongo(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultClusterFactory().create(addr.toNew(), createClusterableServerFactory(createNewCredentialList(credentialsList),
-                options.toNew())), options);
+    Mongo(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        this(new DefaultClusterFactory().create(
+                addr.toNew(),
+                createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())
+        ), options, credentialsList);
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultClusterFactory().create(createNewSeedList(seedList),
-                createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())), options);
+        this(new DefaultClusterFactory().create(
+                createNewSeedList(seedList),
+                createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())
+        ), options, credentialsList);
     }
 
-    Mongo(final Cluster cluster, final MongoClientOptions options) {
+    Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
-        this.readPreference = options.getReadPreference() != null ?
-                options.getReadPreference() : ReadPreference.primary();
-        this.writeConcern = options.getWriteConcern() != null ?
-                options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
+        this.options = options;
+        this.readPreference = options.getReadPreference() != null
+                ? options.getReadPreference()
+                : ReadPreference.primary();
+        this.writeConcern = options.getWriteConcern() != null
+                ? options.getWriteConcern()
+                : WriteConcern.UNACKNOWLEDGED;
         this.optionHolder = new Bytes.OptionHolder(null);
+        this.credentialsList = Collections.unmodifiableList(credentialsList);
     }
 
     /**
@@ -181,7 +195,7 @@ public class Mongo {
         return serverAddresses;
     }
 
-    private ClusterDescription getClusterDescription(){
+    private ClusterDescription getClusterDescription() {
         try {
             return cluster.getDescription();
         } catch (org.mongodb.MongoException e) {
@@ -327,6 +341,7 @@ public class Mongo {
     /**
      * Forces the master server to fsync the RAM data to disk
      * This is done automatically by the server at intervals, but can be forced for better reliability.
+     *
      * @param async if true, the fsync will be done asynchronously on the server.
      * @return result of the command execution
      * @throws MongoException
@@ -342,6 +357,7 @@ public class Mongo {
     /**
      * Forces the master server to fsync the RAM data to disk, then lock all writes.
      * The database will be read-only after this command returns.
+     *
      * @return result of the command execution
      * @throws MongoException
      */
@@ -355,6 +371,7 @@ public class Mongo {
     /**
      * Unlocks the database, allowing the write operations to go through.
      * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
+     *
      * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
      * @throws MongoException
      */
@@ -364,6 +381,7 @@ public class Mongo {
 
     /**
      * Returns true if the database is locked (read-only), false otherwise.
+     *
      * @return result of the command execution
      * @throws MongoException
      */
@@ -397,9 +415,10 @@ public class Mongo {
 
     /**
      * Gets a {@code String} representation of current connection point, i.e. master.
+     *
      * @return server address in a host:port form
      */
-    public String getConnectPoint(){
+    public String getConnectPoint() {
         final ServerAddress master = getAddress();
         return master != null ? String.format("%s:%d", master.getHost(), master.getPort()) : null;
     }
@@ -427,14 +446,13 @@ public class Mongo {
         if (mongoURI.getHosts().size() == 1) {
             return new DefaultClusterFactory().create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
                     createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
-        }
-        else {
+        } else {
             final List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
             for (final String cur : mongoURI.getHosts()) {
                 seedList.add(new org.mongodb.connection.ServerAddress(cur));
             }
             return new DefaultClusterFactory().create(seedList, createClusterableServerFactory(mongoURI.getCredentialList(),
-                                                                                               mongoURI.getOptions()));
+                    mongoURI.getOptions()));
         }
     }
 
@@ -494,6 +512,14 @@ public class Mongo {
             return pinnedSession.get();
         }
         return new ClusterSession(getCluster());
+    }
+
+    MongoClientOptions getMongoClientOptions() {
+        return options;
+    }
+
+    List<MongoCredential> getCredentialsList() {
+        return credentialsList;
     }
 
     void pinSession() {

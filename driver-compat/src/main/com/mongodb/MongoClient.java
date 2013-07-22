@@ -181,6 +181,27 @@ public class MongoClient extends Mongo {
         this(seeds, new MongoClientOptions.Builder().build());
     }
 
+    /**
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.
+     * <p/>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *              sharded cluster. \
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @since 2.11.0
+     */
+    public MongoClient(List<ServerAddress> seeds, List<MongoCredential> credentialsList) {
+        this(seeds, credentialsList, new MongoClientOptions.Builder().build());
+    }
+
 
     /**
      * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master
@@ -233,5 +254,25 @@ public class MongoClient extends Mongo {
      */
     public MongoClient(final MongoClientURI uri) throws UnknownHostException {
         super(uri);
+    }
+
+    /**
+     * Gets the options that this client uses to connect to server.
+     * Please, note that {@link MongoClientOptions} is immutable.
+     *
+     * @return the options
+     */
+    public MongoClientOptions getMongoClientOptions() {
+        return super.getMongoClientOptions();
+    }
+
+    /**
+     * Gets the list of credentials that this client authenticates all connections with
+     *
+     * @return the list of credentials
+     * @since 2.11.0
+     */
+    public List<MongoCredential> getCredentialsList() {
+        return super.getCredentialsList();
     }
 }
