@@ -533,4 +533,51 @@ public class Mongo {
         this.pinnedSession.remove();
         sessionToUnpin.close();
     }
+
+    /**
+     * Mongo.Holder can be used as a static place to hold several instances of Mongo.
+     * Security is not enforced at this level, and needs to be done on the application side.
+     */
+    public static class Holder {
+
+        private static final Holder INSTANCE = new Holder();
+        private final ConcurrentMap<String, Mongo> clients = new ConcurrentHashMap<String, Mongo>();
+
+        public static Holder singleton() {
+            return INSTANCE;
+        }
+
+        /**
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
+         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         *
+         * @param uri the Mongo URI
+         * @return the client
+         * @throws MongoException
+         * @throws UnknownHostException
+         */
+        public Mongo connect(final MongoClientURI uri) throws UnknownHostException {
+
+            final String key = toKey(uri);
+
+            Mongo client = clients.get(key);
+
+            if (client == null) {
+                final Mongo newbie = new MongoClient(uri);
+                client = clients.putIfAbsent(key, newbie);
+                if (client == null) {
+                    client = newbie;
+                } else {
+                    newbie.close();
+                }
+            }
+
+            return client;
+        }
+
+        private String toKey(final MongoClientURI uri) {
+            return uri.toString();
+        }
+
+    }
 }
