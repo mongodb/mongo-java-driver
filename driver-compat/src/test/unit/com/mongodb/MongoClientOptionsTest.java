@@ -41,6 +41,8 @@ public class MongoClientOptionsTest {
         assertFalse(options.isSocketKeepAlive());
         assertFalse(options.isAutoConnectRetry());
         assertFalse(options.isSSLEnabled());
+        assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
+        assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
     }
 
     @Test
@@ -83,6 +85,20 @@ public class MongoClientOptionsTest {
             // NOPMD all good
         }
 
+        try {
+            builder.dbDecoderFactory(null);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // NOPMD all good
+        }
+
+        try {
+            builder.dbEncoderFactory(null);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // NOPMD all good
+        }
+
     }
 
 
@@ -99,6 +115,10 @@ public class MongoClientOptionsTest {
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
+        builder.dbDecoderFactory(LazyDBDecoder.FACTORY);
+
+        final DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
+        builder.dbEncoderFactory(encoderFactory);
 
         final MongoClientOptions options = builder.build();
 
@@ -112,5 +132,14 @@ public class MongoClientOptionsTest {
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertTrue(options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());
+        assertEquals(LazyDBDecoder.FACTORY, options.getDbDecoderFactory());
+        assertEquals(encoderFactory, options.getDbEncoderFactory());
+    }
+
+    private static class MyDBEncoderFactory implements DBEncoderFactory{
+        @Override
+        public DBEncoder create() {
+            return new DefaultDBEncoder();
+        }
     }
 }

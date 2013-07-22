@@ -31,6 +31,22 @@ import org.mongodb.annotations.Immutable;
 public class MongoClientOptions {
 
     private final org.mongodb.MongoClientOptions proxied;
+    private final DBDecoderFactory dbDecoderFactory;
+    private final DBEncoderFactory dbEncoderFactory;
+
+    MongoClientOptions(final org.mongodb.MongoClientOptions proxied) {
+        this.proxied = proxied;
+
+        this.dbDecoderFactory = DefaultDBDecoder.FACTORY;
+        this.dbEncoderFactory = DefaultDBEncoder.FACTORY;
+    }
+
+    private MongoClientOptions(final Builder builder) {
+        this.proxied = builder.proxied.build();
+
+        this.dbDecoderFactory = builder.dbDecoderFactory;
+        this.dbEncoderFactory = builder.dbEncoderFactory;
+    }
 
     /**
      * Creates a builder instance.
@@ -44,184 +60,6 @@ public class MongoClientOptions {
 
     public org.mongodb.MongoClientOptions toNew() {
         return proxied;
-    }
-
-    /**
-     * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction
-     * through chaining.
-     *
-     * @since 2.10.0
-     */
-    public static class Builder {
-        private final org.mongodb.MongoClientOptions.Builder proxied = new org.mongodb.MongoClientOptions.Builder();
-
-        /**
-         * Sets the description.
-         *
-         * @param description the description of this MongoClient
-         * @return {@code this}
-         * @see com.mongodb.MongoClientOptions#getDescription()
-         */
-        public Builder description(final String description) {
-            proxied.description(description);
-            return this;
-        }
-
-        /**
-         * Sets the maximum number of connections per host.
-         *
-         * @param connectionsPerHost maximum number of connections
-         * @return {@code this}
-         * @throws IllegalArgumentException if <code>connnectionsPerHost < 1</code>
-         * @see com.mongodb.MongoClientOptions#getConnectionsPerHost()
-         */
-        public Builder connectionsPerHost(final int connectionsPerHost) {
-            proxied.connectionsPerHost(connectionsPerHost);
-            return this;
-        }
-
-        /**
-         * Sets the multiplier for number of threads allowed to block waiting for a connection.
-         *
-         * @param threadsAllowedToBlockForConnectionMultiplier
-         *         the multiplier
-         * @return {@code this}
-         * @throws IllegalArgumentException if <code>threadsAllowedToBlockForConnectionMultiplier < 1</code>
-         * @see com.mongodb.MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
-         */
-        public Builder threadsAllowedToBlockForConnectionMultiplier(
-                                                                   final int
-                                                                   threadsAllowedToBlockForConnectionMultiplier) {
-            proxied.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
-            return this;
-        }
-
-        /**
-         * Sets the maximum time that a thread will block waiting for a connection.
-         *
-         * @param maxWaitTime the maximum wait time
-         * @return {@code this}
-         * @throws IllegalArgumentException if <code>maxWaitTime < 0</code>
-         * @see com.mongodb.MongoClientOptions#getMaxWaitTime()
-         */
-        public Builder maxWaitTime(final int maxWaitTime) {
-            proxied.maxWaitTime(maxWaitTime);
-            return this;
-        }
-
-        /**
-         * Sets the connection timeout.
-         *
-         * @param connectTimeout the connection timeout
-         * @return {@code this}
-         * @see com.mongodb.MongoClientOptions#getConnectTimeout()
-         */
-        public Builder connectTimeout(final int connectTimeout) {
-            proxied.connectTimeout(connectTimeout);
-            return this;
-        }
-
-        /**
-         * Sets the socket timeout.
-         *
-         * @param socketTimeout the socket timeout
-         * @return {@code this}
-         * @see com.mongodb.MongoClientOptions#getSocketTimeout()
-         */
-        public Builder socketTimeout(final int socketTimeout) {
-            proxied.socketTimeout(socketTimeout);
-            return this;
-        }
-
-        /**
-         * Sets whether socket keep alive is enabled.
-         *
-         * @param socketKeepAlive keep alive
-         * @return {@code this}
-         * @see com.mongodb.MongoClientOptions#isSocketKeepAlive()
-         */
-        public Builder socketKeepAlive(final boolean socketKeepAlive) {
-            proxied.socketKeepAlive(socketKeepAlive);
-            return this;
-        }
-
-        /**
-         * Sets whether auto connect retry is enabled.
-         *
-         * @param autoConnectRetry auto connect retry
-         * @return {@code this}
-         * @see MongoClientOptions#isAutoConnectRetry()
-         */
-        public Builder autoConnectRetry(final boolean autoConnectRetry) {
-            proxied.autoConnectRetry(autoConnectRetry);
-            return this;
-        }
-
-        /**
-         * Sets the maximum auto connect retry time.
-         *
-         * @param maxAutoConnectRetryTime the maximum auto connect retry time
-         * @return {@code this}
-         * @see MongoClientOptions#getMaxAutoConnectRetryTime()
-         */
-        public Builder maxAutoConnectRetryTime(final long maxAutoConnectRetryTime) {
-            proxied.maxAutoConnectRetryTime(maxAutoConnectRetryTime);
-            return this;
-        }
-
-        /**
-         *  Sets whether to use SSL.
-         *
-         * @return {@code this}
-         * @see MongoClientOptions#isSSLEnabled()
-         */
-        public Builder SSLEnabled(final boolean aSSLEnabled) {
-            proxied.SSLEnabled(aSSLEnabled);
-            return this;
-        }
-
-        /**
-         * Sets the read preference.
-         *
-         * @param readPreference read preference
-         * @return {@code this}
-         * @see MongoClientOptions#getReadPreference()
-         */
-        public Builder readPreference(final ReadPreference readPreference) {
-            if (readPreference == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            proxied.readPreference(readPreference.toNew());
-            return this;
-        }
-
-        /**
-         * Sets the write concern.
-         *
-         * @param writeConcern the write concern
-         * @return {@code this}
-         * @see MongoClientOptions#getWriteConcern()
-         */
-        public Builder writeConcern(final WriteConcern writeConcern) {
-            if (writeConcern == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            proxied.writeConcern(writeConcern.toNew());
-            return this;
-        }
-
-        /**
-         * Build an instance of MongoClientOptions.
-         *
-         * @return the options from this builder
-         */
-        public MongoClientOptions build() {
-            return new MongoClientOptions(this);
-        }
-
-        org.mongodb.MongoClientOptions.Builder getProxied() {
-            return proxied;
-        }
     }
 
     /**
@@ -338,7 +176,6 @@ public class MongoClientOptions {
         return proxied.getMaxAutoConnectRetryTime();
     }
 
-
     /**
      * Whether to use SSL. The default is {@code false}.
      *
@@ -372,11 +209,263 @@ public class MongoClientOptions {
         return new WriteConcern(proxied.getWriteConcern());
     }
 
-    MongoClientOptions(final org.mongodb.MongoClientOptions proxied) {
-        this.proxied = proxied;
+    /**
+     * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
+     *
+     * @return the decoder factory
+     */
+    public DBDecoderFactory getDbDecoderFactory() {
+        return dbDecoderFactory;
     }
 
-    private MongoClientOptions(final Builder builder) {
-        proxied = builder.proxied.build();
+    /**
+     * Override the encoder factory. Default is for the standard Mongo Java driver configuration.
+     *
+     * @return the encoder factory
+     */
+    public DBEncoderFactory getDbEncoderFactory() {
+        return dbEncoderFactory;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        MongoClientOptions that = (MongoClientOptions) o;
+
+        if (!dbDecoderFactory.equals(that.dbDecoderFactory)) {
+            return false;
+        }
+        if (!dbEncoderFactory.equals(that.dbEncoderFactory)) {
+            return false;
+        }
+        if (!proxied.equals(that.proxied)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = proxied.hashCode();
+        result = 31 * result + dbDecoderFactory.hashCode();
+        result = 31 * result + dbEncoderFactory.hashCode();
+        return result;
+    }
+
+    /**
+     * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction
+     * through chaining.
+     *
+     * @since 2.10.0
+     */
+    public static class Builder {
+        private final org.mongodb.MongoClientOptions.Builder proxied = new org.mongodb.MongoClientOptions.Builder();
+        private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
+        private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
+
+        /**
+         * Sets the description.
+         *
+         * @param description the description of this MongoClient
+         * @return {@code this}
+         * @see com.mongodb.MongoClientOptions#getDescription()
+         */
+        public Builder description(final String description) {
+            proxied.description(description);
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of connections per host.
+         *
+         * @param connectionsPerHost maximum number of connections
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>connnectionsPerHost < 1</code>
+         * @see com.mongodb.MongoClientOptions#getConnectionsPerHost()
+         */
+        public Builder connectionsPerHost(final int connectionsPerHost) {
+            proxied.connectionsPerHost(connectionsPerHost);
+            return this;
+        }
+
+        /**
+         * Sets the multiplier for number of threads allowed to block waiting for a connection.
+         *
+         * @param threadsAllowedToBlockForConnectionMultiplier
+         *         the multiplier
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>threadsAllowedToBlockForConnectionMultiplier < 1</code>
+         * @see com.mongodb.MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
+         */
+        public Builder threadsAllowedToBlockForConnectionMultiplier(
+                final int
+                        threadsAllowedToBlockForConnectionMultiplier) {
+            proxied.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
+            return this;
+        }
+
+        /**
+         * Sets the maximum time that a thread will block waiting for a connection.
+         *
+         * @param maxWaitTime the maximum wait time
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>maxWaitTime < 0</code>
+         * @see com.mongodb.MongoClientOptions#getMaxWaitTime()
+         */
+        public Builder maxWaitTime(final int maxWaitTime) {
+            proxied.maxWaitTime(maxWaitTime);
+            return this;
+        }
+
+        /**
+         * Sets the connection timeout.
+         *
+         * @param connectTimeout the connection timeout
+         * @return {@code this}
+         * @see com.mongodb.MongoClientOptions#getConnectTimeout()
+         */
+        public Builder connectTimeout(final int connectTimeout) {
+            proxied.connectTimeout(connectTimeout);
+            return this;
+        }
+
+        /**
+         * Sets the socket timeout.
+         *
+         * @param socketTimeout the socket timeout
+         * @return {@code this}
+         * @see com.mongodb.MongoClientOptions#getSocketTimeout()
+         */
+        public Builder socketTimeout(final int socketTimeout) {
+            proxied.socketTimeout(socketTimeout);
+            return this;
+        }
+
+        /**
+         * Sets whether socket keep alive is enabled.
+         *
+         * @param socketKeepAlive keep alive
+         * @return {@code this}
+         * @see com.mongodb.MongoClientOptions#isSocketKeepAlive()
+         */
+        public Builder socketKeepAlive(final boolean socketKeepAlive) {
+            proxied.socketKeepAlive(socketKeepAlive);
+            return this;
+        }
+
+        /**
+         * Sets whether auto connect retry is enabled.
+         *
+         * @param autoConnectRetry auto connect retry
+         * @return {@code this}
+         * @see MongoClientOptions#isAutoConnectRetry()
+         */
+        public Builder autoConnectRetry(final boolean autoConnectRetry) {
+            proxied.autoConnectRetry(autoConnectRetry);
+            return this;
+        }
+
+        /**
+         * Sets the maximum auto connect retry time.
+         *
+         * @param maxAutoConnectRetryTime the maximum auto connect retry time
+         * @return {@code this}
+         * @see MongoClientOptions#getMaxAutoConnectRetryTime()
+         */
+        public Builder maxAutoConnectRetryTime(final long maxAutoConnectRetryTime) {
+            proxied.maxAutoConnectRetryTime(maxAutoConnectRetryTime);
+            return this;
+        }
+
+        /**
+         * Sets whether to use SSL.
+         *
+         * @return {@code this}
+         * @see MongoClientOptions#isSSLEnabled()
+         */
+        public Builder SSLEnabled(final boolean aSSLEnabled) {
+            proxied.SSLEnabled(aSSLEnabled);
+            return this;
+        }
+
+        /**
+         * Sets the read preference.
+         *
+         * @param readPreference read preference
+         * @return {@code this}
+         * @see MongoClientOptions#getReadPreference()
+         */
+        public Builder readPreference(final ReadPreference readPreference) {
+            if (readPreference == null) {
+                throw new IllegalArgumentException("null is not a legal value");
+            }
+            proxied.readPreference(readPreference.toNew());
+            return this;
+        }
+
+        /**
+         * Sets the write concern.
+         *
+         * @param writeConcern the write concern
+         * @return {@code this}
+         * @see MongoClientOptions#getWriteConcern()
+         */
+        public Builder writeConcern(final WriteConcern writeConcern) {
+            if (writeConcern == null) {
+                throw new IllegalArgumentException("null is not a legal value");
+            }
+            proxied.writeConcern(writeConcern.toNew());
+            return this;
+        }
+
+        /**
+         * Sets the decoder factory.
+         *
+         * @param dbDecoderFactory the decoder factory
+         * @return {@code this}
+         * @see MongoClientOptions#getDbDecoderFactory()
+         */
+        public Builder dbDecoderFactory(final DBDecoderFactory dbDecoderFactory) {
+            if (dbDecoderFactory == null) {
+                throw new IllegalArgumentException("null is not a legal value");
+            }
+            this.dbDecoderFactory = dbDecoderFactory;
+            return this;
+        }
+
+        /**
+         * Sets the encoder factory.
+         *
+         * @param dbEncoderFactory the encoder factory
+         * @return {@code this}
+         * @see MongoClientOptions#getDbEncoderFactory()
+         */
+        public Builder dbEncoderFactory(final DBEncoderFactory dbEncoderFactory) {
+            if (dbEncoderFactory == null) {
+                throw new IllegalArgumentException("null is not a legal value");
+            }
+            this.dbEncoderFactory = dbEncoderFactory;
+            return this;
+        }
+
+        /**
+         * Build an instance of MongoClientOptions.
+         *
+         * @return the options from this builder
+         */
+        public MongoClientOptions build() {
+            return new MongoClientOptions(this);
+        }
+
+        org.mongodb.MongoClientOptions.Builder getProxied() {
+            return proxied;
+        }
     }
 }
