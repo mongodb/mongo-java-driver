@@ -10,7 +10,6 @@ import org.mongodb.MongoInternalException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
-import org.mongodb.connection.MongoSocketWriteException;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 
@@ -26,14 +25,7 @@ class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
         ensureOpen(new AsyncCompletionHandler() {
             @Override
             public void completed() {
-                try {
-                    for (final ByteBuf byteBuffer : byteBuffers) {
-                        socketClient.write(byteBuffer.asNIO());
-                    }
-                } catch (IOException e) {
-                    throw new MongoSocketWriteException(e.getMessage(), getServerAddress(), e);
-                }
-                callback.onResult(null, null);
+                socketClient.write(byteBuffers, callback);
             }
 
             @Override

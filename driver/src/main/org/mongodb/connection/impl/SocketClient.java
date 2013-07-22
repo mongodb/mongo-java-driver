@@ -29,15 +29,19 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
+import org.bson.ByteBuf;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.MongoSocketWriteException;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SingleResultCallback;
 
 
 /**
@@ -48,7 +52,8 @@ public class SocketClient {
     private Selector selector = null;
     private ServerAddress address = null;
     private BufferProvider bufferProvider;
-    private final BlockingQueue<AsyncCompletionHandler> callbacks = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
+    private final BlockingQueue<AsyncCompletionHandler> waitingReads = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
+    private final BlockingQueue<AsyncCompletionHandler> waitingWrites = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
 
     private SSLHandler sslHandler = null;
 
@@ -83,7 +88,14 @@ public class SocketClient {
     }
 
     protected void readChannel() {
-        final AsyncCompletionHandler handler = callbacks.poll();
+        final AsyncCompletionHandler handler = waitingReads.poll();
+        if (handler != null) {
+            handler.completed();
+        }
+    }
+
+    protected void writeChannel() {
+        final AsyncCompletionHandler handler = waitingWrites.poll();
         if (handler != null) {
             handler.completed();
         }
@@ -130,13 +142,13 @@ public class SocketClient {
         }
     }
 
-    protected void triggerWrite() throws IOException {
+    protected void triggerWrite() {
         if (isConnected()) {
             try {
                 client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
                 selector.wakeup();
             } catch (ClosedChannelException e) {
-                throw new IOException("Connection Closed ");
+                throw new MongoSocketWriteException("Connection Closed", getServerAddress(), e);
             }
         }
     }
@@ -176,7 +188,7 @@ public class SocketClient {
 
     public void read(final ByteBuffer byteBuf, final CompletionHandler<Integer, Void> callback) {
         try {
-            callbacks.offer(new AsyncCompletionHandler() {
+            waitingReads.offer(new AsyncCompletionHandler() {
                 @Override
                 public void completed() {
                     try {
@@ -203,6 +215,27 @@ public class SocketClient {
 
     public ServerAddress getServerAddress() {
         return address;
+    }
+
+    public void write(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        waitingWrites.offer(new AsyncCompletionHandler() {
+            @Override
+            public void completed() {
+                try {
+                    for (final ByteBuf byteBuffer : byteBuffers) {
+                        write(byteBuffer.asNIO());
+                    }
+                    callback.onResult(null, null);
+                } catch (IOException e) {
+                    callback.onResult(null, new MongoSocketWriteException(e.getMessage(), getServerAddress(), e));
+                }
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+            }
+        });
+        triggerWrite();
     }
 
     private class NIOListener implements Runnable {
@@ -245,13 +278,14 @@ public class SocketClient {
                                 }
                             }
                             if (key.isValid() && key.isWritable()) {
-                                unblockWrite();
+                                writeChannel();
                                 if (client.isOpen()) {
                                     client.register(selector, SelectionKey.OP_READ);
                                 }
                             }
                         }
                         readChannel();
+                        writeChannel();
                     }
                 } finally {
                     selector.close();
