@@ -60,12 +60,9 @@ public class SocketClient {
     private boolean initConnDone = false;
     private boolean isClosed = false;
 
-    private final NIOSocketOutputStream socketOutputStream;
-
     public SocketClient(final ServerAddress address, final BufferProvider bufferProvider) throws SSLException {
         this.address = address;
         this.bufferProvider = bufferProvider;
-        socketOutputStream = new NIOSocketOutputStream(this);
     }
 
     protected void buildSSLHandler() {
@@ -102,27 +99,6 @@ public class SocketClient {
     }
 
 
-    protected void unblockWrite() {
-        socketOutputStream.notifyWrite();
-    }
-
-    protected int doWrite() throws IOException {
-        if (sslHandler != null) {
-            return sslHandler.doWrite(socketOutputStream.getByteBuffer());
-        } else {
-            final ByteBuffer buff = socketOutputStream.getByteBuffer();
-            final int out = buff.remaining();
-            while (buff.hasRemaining()) {
-                final int x = client.write(buff);
-                if (x < 0) {
-                    return x;
-                }
-            }
-            return out;
-        }
-    }
-
-
     public boolean isConnected() {
         return (initConnDone && client != null && client.isConnected());
     }
@@ -134,7 +110,6 @@ public class SocketClient {
                 sslHandler.stop();
             }
             client.close();
-            socketOutputStream.close();
             initConnDone = false;
             if (selector != null) {
                 selector.wakeup();
@@ -290,7 +265,6 @@ public class SocketClient {
                 } finally {
                     selector.close();
                     client.close();
-                    socketOutputStream.close();
                 }
             } catch (ClosedChannelException e) {
                 throw new MongoSocketOpenException(e.getMessage(), getServerAddress(), e);
