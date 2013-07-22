@@ -1,5 +1,5 @@
 /**
- * Copyright [2012] [Gihan Munasinghe ayeshka@gmail.com ]
+ * Copyright 2013 10gen.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
+ *  Contributions:
+ *      Gihan Munasinghe    ayeshka@gmail.com
  */
 
 
@@ -37,7 +39,6 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.MongoSocketWriteException;
@@ -53,12 +54,10 @@ public class SSLHandler {
     private ByteBuffer unwrappedBuffer = null;
 
     private int remaining = 0;
-    private int remainingUnwrapped = 0;
 
     private boolean handShakeDone = false;
 
     private final SocketClient socketClient;
-    private final BufferProvider bufferProvider;
     private static final SSLContext SSL_CONTEXT;
 
     static {
@@ -87,9 +86,8 @@ public class SSLHandler {
         }
     }
 
-    public SSLHandler(final SocketClient socketClient, final BufferProvider bufferProvider, final SocketChannel channel) {
+    public SSLHandler(final SocketClient socketClient, final SocketChannel channel) {
         this.socketClient = socketClient;
-        this.bufferProvider = bufferProvider;
         this.channel = channel;
 
         sslEngine = SSL_CONTEXT.createSSLEngine(socketClient.getServerAddress().getHost(), socketClient.getServerAddress().getPort());
@@ -147,9 +145,7 @@ public class SSLHandler {
         } catch (BufferUnderflowException e) {
             e.printStackTrace();
         }
-        remainingUnwrapped = remaining(unwrappedBuffer);
         return read;
-
     }
 
     private int wrapAndWrite(final ByteBuffer buff) {

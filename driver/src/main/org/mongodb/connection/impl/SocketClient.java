@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
 import org.bson.ByteBuf;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.MongoSocketWriteException;
@@ -51,7 +50,6 @@ public class SocketClient {
     private SocketChannel client = null;
     private Selector selector = null;
     private ServerAddress address = null;
-    private BufferProvider bufferProvider;
     private final BlockingQueue<AsyncCompletionHandler> waitingReads = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
     private final BlockingQueue<AsyncCompletionHandler> waitingWrites = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
 
@@ -60,14 +58,13 @@ public class SocketClient {
     private boolean initConnDone = false;
     private boolean isClosed = false;
 
-    public SocketClient(final ServerAddress address, final BufferProvider bufferProvider) throws SSLException {
+    public SocketClient(final ServerAddress address) throws SSLException {
         this.address = address;
-        this.bufferProvider = bufferProvider;
     }
 
     protected void buildSSLHandler() {
         if (sslHandler == null) {
-            sslHandler = new SSLHandler(this, bufferProvider, client);
+            sslHandler = new SSLHandler(this, client);
         }
 
     }

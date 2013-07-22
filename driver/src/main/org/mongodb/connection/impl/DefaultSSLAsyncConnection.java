@@ -65,7 +65,7 @@ class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
             if (socketClient != null) {
                 handler.completed();
             } else {
-                socketClient = new SocketClient(getServerAddress(), getBufferProvider());
+                socketClient = new SocketClient(getServerAddress());
                 socketClient.connect(handler);
             }
         } catch (IOException e) {
