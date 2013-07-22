@@ -231,7 +231,7 @@ project(':driver-compat') {
 
     clirr {
         ignoreFailures = true
-        ignoredDifferenceTypes 10000
+        ignoredDifferenceTypes 10000, 7011, 8000
         ignoredPackages 'org.mongodb'
         baseline 'org.mongodb:mongo-java-driver:2.11.1'
     }
