@@ -206,6 +206,29 @@ public class DBRefTest extends TestCase {
         assertFalse(fetchedRefs.keySet().contains("$id"));
         assertEquals(fetched, entity);
     }
+    
+    @Test
+    public void testInvalidDBRefs() {
+        DBCollection badrefs = _db.getCollection("badrefs");
+        badrefs.drop();
+        
+        // no $ref
+        _db.eval("db.badrefs.save({'$id': 1})");
+        // no $id
+        _db.eval("db.badrefs.save({'$ref': 'imaref'})");
+        // $id before $ref
+        _db.eval("db.badrefs.save({'$id': 1, '$ref': 'imaref'})");
+        // $ref first, $id third
+        _db.eval("db.badrefs.save({'$ref': 'imaref', 'other': 123, '$id': 'imanid'})");
+        // $ref is not a string
+        _db.eval("db.badrefs.save({'$ref': 123, '$id': 'imanid'})");
+        // $ref and $id are 2nd and 3rd
+        _db.eval("db.badrefs.save({'other': 123, '$ref': 'imaref', '$id': 'imanid'})");
+        
+        for(DBObject mustNotBeDBRef : badrefs.find()) {
+            assertFalse(mustNotBeDBRef instanceof DBRef);
+        }
+    }
 
     DB _db;
 

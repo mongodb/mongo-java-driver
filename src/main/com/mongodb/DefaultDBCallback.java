@@ -23,6 +23,7 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.types.ObjectId;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -72,8 +73,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
             lastName = _nameStack.removeLast();
         }
         if ( ! ( o instanceof List ) && lastName != null &&
-             o.containsField( "$ref" ) &&
-             o.containsField( "$id" ) ){
+             isValidDBRef(o) ){
             return cur().put(lastName, new DBRef( _db, o ) );
         }
 
@@ -147,6 +147,20 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     public void reset(){
         _nameStack = new LinkedList<String>();
         super.reset();
+    }
+    
+    private boolean isValidDBRef(BSONObject obj) {
+        boolean isValid = false;
+        if(obj instanceof BasicDBObject) {
+            BasicDBObject bsonObj = (BasicDBObject)obj;
+            Iterator<String> keyIterator = bsonObj.keySet().iterator();
+            if(keyIterator.hasNext() && keyIterator.next().equals("$ref")) {
+                if(keyIterator.hasNext() && keyIterator.next().equals("$id"))
+                    isValid = (bsonObj.get("$ref") instanceof String);
+            }
+        }
+        
+        return isValid;
     }
 
     private LinkedList<String> _nameStack;
