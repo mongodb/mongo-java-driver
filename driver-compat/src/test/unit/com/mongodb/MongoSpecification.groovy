@@ -16,8 +16,6 @@
 
 package com.mongodb
 
-import org.bson.BSONObject
-import org.bson.BasicBSONObject
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
@@ -36,11 +34,7 @@ class MongoSpecification extends Specification {
     private Mongo mongo = new Mongo(cluster, MongoClientOptions.builder().build(), []);
 
     def setupSpec() {
-        Map.metaClass.asType = { Class type ->
-            if (type == BSONObject) {
-                return new BasicBSONObject(delegate)
-            }
-        }
+        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
     }
 
     def 'should return replica set status if cluster type replica set and mode discovering'() {
@@ -85,13 +79,13 @@ class MongoSpecification extends Specification {
         mongo.fsync(false)
 
         then:
-        1 * db.command(['fsync': 1] as DBObject)
+        1 * db.command(~['fsync': 1])
 
         when:
         mongo.fsync(true)
 
         then:
-        1 * db.command(['fsync': 1, 'async': 1] as DBObject)
+        1 * db.command(~['fsync': 1, 'async': 1])
     }
 
     def 'should lock and unlock as server'() {
@@ -110,7 +104,7 @@ class MongoSpecification extends Specification {
         mongo.fsyncAndLock()
 
         then:
-        1 * db.command(['fsync': 1, 'lock': 1] as DBObject)
+        1 * db.command(~['fsync': 1, 'lock': 1])
 
         when:
         mongo.isLocked()

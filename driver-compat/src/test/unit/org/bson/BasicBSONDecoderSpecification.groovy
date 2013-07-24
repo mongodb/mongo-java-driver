@@ -16,6 +16,7 @@
 
 package org.bson
 
+import com.mongodb.BasicDBObject
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -37,11 +38,7 @@ class BasicBSONDecoderSpecification extends Specification {
     private final BSONDecoder bsonDecoder = new BasicBSONDecoder();
 
     def setupSpec() {
-        Map.metaClass.asType = { Class type ->
-            if (type == BSONObject) {
-                return new BasicBSONObject(delegate)
-            }
-        }
+        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
         Pattern.metaClass.equals = { Pattern other ->
             delegate.pattern() == other.pattern() && delegate.flags() == other.flags()
         }
@@ -55,7 +52,7 @@ class BasicBSONDecoderSpecification extends Specification {
         BSONObject document = bsonDecoder.readObject(is)
 
         then:
-        document == ['a': 1] as BSONObject
+        document == ~['a': 1]
     }
 
     @Unroll
@@ -86,7 +83,7 @@ class BasicBSONDecoderSpecification extends Specification {
         ['r': Pattern.compile('[a]*', Pattern.CASE_INSENSITIVE)] | [15, 0, 0, 0, 11, 114, 0, 91, 97, 93, 42, 0, 105, 0, 0]
         ['js1': new Code('var i = 0')]                           | [24, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
         ['s': 'c']                                               | [14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0]
-        ['js2': new CodeWScope('i++', ['x': 1] as BSONObject)]   | [34, 0, 0, 0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16, 120, 0, 1, 0, 0, 0, 0, 0]
+        ['js2': new CodeWScope('i++', ~['x': 1])]                | [34, 0, 0, 0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16, 120, 0, 1, 0, 0, 0, 0, 0]
         ['i1': -12]                                              | [13, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 0]
         ['i2': Integer.MIN_VALUE]                                | [13, 0, 0, 0, 16, 105, 50, 0, 0, 0, 0, -128, 0]
         ['i3': 0]                                                | [13, 0, 0, 0, 16, 105, 51, 0, 0, 0, 0, 0, 0]
@@ -103,11 +100,11 @@ class BasicBSONDecoderSpecification extends Specification {
         document == bsonDecoder.readObject((byte[]) bytes)
 
         where:
-        document                                                                                            | bytes
-        ['a': ['d1': ['b': true] as BSONObject, 'd2': ['b': false] as BSONObject] as BSONObject]            | [39, 0, 0, 0, 3, 97, 0, 31, 0, 0, 0, 3, 100, 49, 0, 9, 0, 0, 0, 8, 98, 0, 1, 0, 3, 100, 50, 0, 9, 0, 0, 0, 8, 98, 0, 0, 0, 0, 0]
-        ['a': [['b1': true] as BSONObject, ['b2': false] as BSONObject]]                                    | [39, 0, 0, 0, 4, 97, 0, 31, 0, 0, 0, 3, 48, 0, 10, 0, 0, 0, 8, 98, 49, 0, 1, 0, 3, 49, 0, 10, 0, 0, 0, 8, 98, 50, 0, 0, 0, 0, 0]
-        ['a': [[1, 2]]]                                                                                     | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 4, 48, 0, 19, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 0, 0, 0]
-        ['js': new CodeWScope('i++', ['njs': new CodeWScope('j++', ['j': 0] as BSONObject)] as BSONObject)] | [55, 0, 0, 0, 15, 106, 115, 0, 46, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 34, 0, 0, 0, 15, 110, 106, 115, 0, 24, 0, 0, 0, 4, 0, 0, 0, 106, 43, 43, 0, 12, 0, 0, 0, 16, 106, 0, 0, 0, 0, 0, 0, 0, 0]
+        document                                                                  | bytes
+        ['a': ~['d1': ~['b': true], 'd2': ~['b': false]]]                         | [39, 0, 0, 0, 3, 97, 0, 31, 0, 0, 0, 3, 100, 49, 0, 9, 0, 0, 0, 8, 98, 0, 1, 0, 3, 100, 50, 0, 9, 0, 0, 0, 8, 98, 0, 0, 0, 0, 0]
+        ['a': [~['b1': true], ~['b2': false]]]                                    | [39, 0, 0, 0, 4, 97, 0, 31, 0, 0, 0, 3, 48, 0, 10, 0, 0, 0, 8, 98, 49, 0, 1, 0, 3, 49, 0, 10, 0, 0, 0, 8, 98, 50, 0, 0, 0, 0, 0]
+        ['a': [[1, 2]]]                                                           | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 4, 48, 0, 19, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 0, 0, 0]
+        ['js': new CodeWScope('i++', ~['njs': new CodeWScope('j++', ~['j': 0])])] | [55, 0, 0, 0, 15, 106, 115, 0, 46, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 34, 0, 0, 0, 15, 110, 106, 115, 0, 24, 0, 0, 0, 4, 0, 0, 0, 106, 43, 43, 0, 12, 0, 0, 0, 16, 106, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 
     @Unroll
