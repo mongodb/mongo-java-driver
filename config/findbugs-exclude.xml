@@ -16,7 +16,7 @@
         </Class>
     </Match>
     <Match>
-        <Class name="com.mongodb.codecs.DocumentCodec">
+        <Class name="com.mongodb.DBRef">
             <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
         </Class>
     </Match>

@@ -21,7 +21,6 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.DBObjectFactory;
 import com.mongodb.DBRef;
-import com.mongodb.DBRefBase;
 import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
@@ -99,8 +98,8 @@ public class DBObjectCodec implements Codec<DBObject> {
     protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         final Object value = BSON.applyEncodingHooks(initialValue);
         try {
-            if (value instanceof DBRefBase) {
-                encodeDBRef(bsonWriter, (DBRefBase) value);
+            if (value instanceof DBRef) {
+                encodeDBRef(bsonWriter, (DBRef) value);
             } else if (value instanceof BasicBSONList) {
                 encodeIterable(bsonWriter, (BasicBSONList) value);
             } else if (value instanceof DBObject) {
@@ -145,7 +144,7 @@ public class DBObjectCodec implements Codec<DBObject> {
         bsonWriter.writeEndArray();
     }
 
-    private void encodeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef) {
+    private void encodeDBRef(final BSONWriter bsonWriter, final DBRef dbRef) {
         bsonWriter.writeStartDocument();
 
         bsonWriter.writeString("$ref", dbRef.getRef());

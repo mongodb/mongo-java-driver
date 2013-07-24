@@ -17,7 +17,7 @@
 package com.mongodb.util;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBRefBase;
+import com.mongodb.DBRef;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
@@ -116,7 +116,7 @@ public class JSONSerializersTest {
         // test  DB_OBJECT implicit in preceding tests
 
         // test  DB_REF_BASE
-        DBRefBase dbref = new DBRefBase(null, "test.test", "4d83ab59a39562db9c1ae2af");
+        DBRef dbref = new DBRef(null, "test.test", "4d83ab59a39562db9c1ae2af");
         buf = new StringBuilder();
         serializer.serialize(dbref, buf);
         assertEquals("{ \"$ref\" : \"test.test\" , \"$id\" : \"4d83ab59a39562db9c1ae2af\"}", buf.toString());
