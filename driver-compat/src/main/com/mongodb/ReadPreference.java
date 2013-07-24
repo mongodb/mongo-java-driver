@@ -80,6 +80,11 @@ public class ReadPreference {
         return proxied.getName();
     }
 
+    @Override
+    public String toString() {
+        return proxied.toString();
+    }
+
     /**
      * @return ReadPreference which reads from primary only
      */
