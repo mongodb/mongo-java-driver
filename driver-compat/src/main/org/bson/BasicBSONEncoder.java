@@ -31,6 +31,7 @@ import org.bson.types.Symbol;
 import java.lang.reflect.Array;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -307,12 +308,12 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeEndArray();
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     protected void putMap(final String name, final Map map) {
         putName(name);
         bsonWriter.writeStartDocument();
-        for (final Object key : map.keySet()) {
-            putObjectField((String) key, map.get(key));
+        for (Map.Entry entry : (Set<Map.Entry>) map.entrySet()) {
+            putObjectField((String) entry.getKey(), entry.getValue());
         }
         bsonWriter.writeEndDocument();
     }
