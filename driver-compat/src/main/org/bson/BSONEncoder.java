@@ -18,13 +18,49 @@ package org.bson;
 
 import org.bson.io.OutputBuffer;
 
+/**
+ * An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays.
+ * The {@code BSONEncoder} walks down through the object graph and writes corresponding
+ * {@code byte} sequences into underlying {@code OutputBuffer}.
+ * <p/>
+ * This class is a part of legacy APi. Please check {@link org.mongodb.Encoder} for a new one.
+ */
 public interface BSONEncoder {
 
-    byte[] encode(final BSONObject o);
+    /**
+     * Encode a document into byte array.
+     * This is a shortcut method which creates a new {@link OutputBuffer},
+     * invokes the other 3 methods in a corresponding sequence:
+     * <ul>
+     * <li>{@link #set(org.bson.io.OutputBuffer)}</li>
+     * <li>{@link #putObject(BSONObject)}</li>
+     * <li>{@link #done()}</li>
+     * </ul>
+     * <p/>
+     * and returns the contents of the {@code OutputBuffer}.
+     *
+     * @param document the document to be encoded
+     * @return a byte sequence
+     */
+    byte[] encode(final BSONObject document);
 
-    int putObject(final BSONObject o);
+    /**
+     * Encoder and write a document into underlying buffer.
+     *
+     * @param document the document to be encoded
+     * @return number of bytes written
+     */
+    int putObject(final BSONObject document);
 
+    /**
+     * Free the resources.
+     */
     void done();
 
-    void set(final OutputBuffer out);
+    /**
+     * Sets the buffer to wrich the result of encoding will be written.
+     *
+     * @param buffer the buffer to be used to write a byte sequences to
+     */
+    void set(final OutputBuffer buffer);
 }

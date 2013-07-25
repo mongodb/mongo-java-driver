@@ -92,6 +92,26 @@ class BasicBSONEncoderSpecification extends Specification {
         aClass = document.find { true }.value.getClass()
     }
 
+    @Unroll
+    def 'should encode #aClass array'() {
+        expect:
+        bytes as byte[] == bsonEncoder.encode(new BasicBSONObject(document))
+
+        where:
+        document                                                        | bytes
+        ['a': [1, 2] as int[]]                                          | [27, 0, 0, 0, 4, 97, 0, 19, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 0, 0]
+        ['a': [1, 2] as long[]]                                         | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 18, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 18, 49, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ['a': [1, 2] as float[]]                                        | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 1, 48, 0, 0, 0, 0, 0, 0, 0, -16, 63, 1, 49, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0]
+        ['a': [1, 2] as short[]]                                        | [27, 0, 0, 0, 4, 97, 0, 19, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 0, 0]
+        ['a': [1, 2] as double[]]                                       | [35, 0, 0, 0, 4, 97, 0, 27, 0, 0, 0, 1, 48, 0, 0, 0, 0, 0, 0, 0, -16, 63, 1, 49, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0]
+        ['a': [true, false] as boolean[]]                               | [21, 0, 0, 0, 4, 97, 0, 13, 0, 0, 0, 8, 48, 0, 1, 8, 49, 0, 0, 0, 0]
+        ['a': ['x', 'y'] as String[]]                                   | [31, 0, 0, 0, 4, 97, 0, 23, 0, 0, 0, 2, 48, 0, 2, 0, 0, 0, 120, 0, 2, 49, 0, 2, 0, 0, 0, 121, 0, 0, 0]
+        ['a': [1, 'y'] as Object[]]                                     | [29, 0, 0, 0, 4, 97, 0, 21, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 2, 49, 0, 2, 0, 0, 0, 121, 0, 0, 0]
+        ['a': [new ObjectId('50d3332018c6a1d8d1662b61')] as ObjectId[]] | [28, 0, 0, 0, 4, 97, 0, 20, 0, 0, 0, 7, 48, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102, 43, 97, 0, 0]
+
+        aClass = document.get('a').getClass()
+    }
+
     def 'should encode complex structures'() {
         expect:
         bytes as byte[] == bsonEncoder.encode(~document)
