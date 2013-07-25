@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
  * obj.put( "foo", "bar" );
  * </pre></blockquote>
  */
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings({"rawtypes"})
 public class BasicDBObject extends BasicBSONObject implements DBObject {
     private static final long serialVersionUID = -4415279469780082174L;
 
@@ -85,11 +86,26 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     /**
      * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want
      * to risk losing fields.
+     *
      * @return true if this has been marked as a partial object
      */
     @Override
     public boolean isPartialObject() {
         return isPartialObject;
+    }
+
+    /**
+     * Returns a JSON serialization of this object
+     * <p/>
+     * The output will look like:
+     * <code>
+     * {"a":1, "b":["x","y","z"]}
+     * </code>
+     *
+     * @return JSON serialization
+     */
+    public String toString() {
+        return JSON.serialize(this);
     }
 
     /**
@@ -112,8 +128,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
             final Object val = get(field);
             if (val instanceof BasicDBObject) {
                 newCopy.put(field, ((BasicDBObject) val).copy());
-            }
-            else if (val instanceof BasicDBList) {
+            } else if (val instanceof BasicDBList) {
                 newCopy.put(field, ((BasicDBList) val).copy());
             }
         }

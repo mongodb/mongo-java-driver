@@ -45,6 +45,11 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         }
     }
 
+    @Override
+    public String toString() {
+        return String.format("DBEncoder{class=%s}", getClass().getName());
+    }
+
     public static final DBEncoderFactory FACTORY = new DBEncoderFactory() {
         @Override
         public DBEncoder create() {
