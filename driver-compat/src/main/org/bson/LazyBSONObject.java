@@ -16,7 +16,6 @@
 
 package org.bson;
 
-import org.bson.io.BSONByteBuffer;
 import org.bson.io.BasicInputBuffer;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -58,14 +57,6 @@ public class LazyBSONObject implements BSONObject {
         this.bytes = bytes;
         this.callback = callback;
         this.offset = offset;
-    }
-
-    public LazyBSONObject(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
-        this(buffer.array(), 0, callback);
-    }
-
-    public LazyBSONObject(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
-        this(buffer.array(), offset, callback);
     }
 
     @Override
