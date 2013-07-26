@@ -21,12 +21,17 @@ import java.util.List;
 public class LazyBSONCallback extends EmptyBSONCallback {
     private Object root;
 
-    public Object getRoot() {
+    private Object getRoot() {
         return root;
     }
 
-    public void setRoot(final Object root) {
+    private void setRoot(final Object root) {
         this.root = root;
+    }
+
+    @Override
+    public void reset() {
+        this.root = null;
     }
 
     @Override

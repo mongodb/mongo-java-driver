@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
@@ -33,7 +33,8 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
     @Override
     public Object createObject(final byte[] bytes, final int offset) {
         final LazyDBObject document = new LazyDBObject(bytes, offset, this);
-        if (document.keySet().containsAll(Arrays.asList("$id", "$ref"))) {
+        final Iterator<String> iterator = document.keySet().iterator();
+        if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
             return new DBRef(db, document);
         }
         return document;

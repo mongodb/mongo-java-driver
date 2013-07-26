@@ -34,8 +34,9 @@ import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -106,7 +107,7 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public Set<String> keySet() {
-        final Set<String> keys = new HashSet<String>();
+        final Set<String> keys = new LinkedHashSet<String>();
         final BSONReader reader = getBSONReader();
         try {
             reader.readStartDocument();
@@ -150,7 +151,7 @@ public class LazyBSONObject implements BSONObject {
             case BOOLEAN:
                 return reader.readBoolean();
             case DATE_TIME:
-                return reader.readDateTime();
+                return new Date(reader.readDateTime());
             case REGULAR_EXPRESSION:
                 final RegularExpression regularExpression = reader.readRegularExpression();
                 return Pattern.compile(
@@ -180,15 +181,20 @@ public class LazyBSONObject implements BSONObject {
         }
     }
 
-    Object readArray(final BSONBinaryReader reader) {
+    private Object readArray(final BSONBinaryReader reader) {
         final int position = reader.getBuffer().getPosition();
         reader.skipValue();
         return callback.createArray(bytes, offset + position);
     }
 
-    Object readDocument(final BSONBinaryReader reader) {
+    private Object readDocument(final BSONBinaryReader reader) {
         final int position = reader.getBuffer().getPosition();
-        reader.skipValue();
+        reader.readStartDocument();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            reader.skipName();
+            reader.skipValue();
+        }
+        reader.readEndDocument();
         return callback.createObject(bytes, offset + position);
     }
 
@@ -219,7 +225,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public Set<Map.Entry<String, Object>> entrySet() {
-        final Set<Map.Entry<String, Object>> entries = new HashSet<Map.Entry<String, Object>>();
+        final Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
         final BSONBinaryReader reader = getBSONReader();
         try {
             reader.readStartDocument();
@@ -239,15 +245,40 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        LazyBSONObject that = (LazyBSONObject) o;
-        return Arrays.equals(this.bytes, that.bytes);
+        final LazyBSONObject other = (LazyBSONObject) o;
+
+        if (this.bytes == other.bytes && this.offset == other.offset) {
+            return true;
+        }
+        if (this.bytes == null || other.bytes == null) {
+            return false;
+        }
+
+        if (this.bytes.length == 0 || other.bytes.length == 0) {
+            return false;
+        }
+
+        //comparing document length
+        final int length = this.bytes[this.offset];
+        if (other.bytes[other.offset] != length) {
+            return false;
+        }
+
+        //comparing document contents
+        for (int i = 0; i < length; i++) {
+            if (this.bytes[this.offset + i] != other.bytes[other.offset + i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -286,10 +317,10 @@ public class LazyBSONObject implements BSONObject {
     @Override
     @SuppressWarnings("rawtypes")
     public Map toMap() {
-        final Map<String, Object> map = new HashMap<String, Object>();
+        final Map<String, Object> map = new LinkedHashMap<String, Object>();
         for (Map.Entry<String, Object> entry : entrySet()) {
             map.put(entry.getKey(), entry.getValue());
         }
-        return map;
+        return Collections.unmodifiableMap(map);
     }
 }
