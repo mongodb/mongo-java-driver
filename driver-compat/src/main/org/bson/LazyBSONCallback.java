@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import org.bson.types.ObjectId;
-
 import java.util.List;
 
 public class LazyBSONCallback extends EmptyBSONCallback {
@@ -48,9 +46,5 @@ public class LazyBSONCallback extends EmptyBSONCallback {
     @SuppressWarnings("rawtypes")
     public List createArray(final byte[] bytes, final int offset) {
         return new LazyBSONList(bytes, offset, this);
-    }
-
-    public Object createDBRef(final String ns, final ObjectId id) {
-        return new BasicBSONObject("$ns", ns).append("$id", id);
     }
 }

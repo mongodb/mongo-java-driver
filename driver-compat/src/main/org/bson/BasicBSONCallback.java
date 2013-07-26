@@ -170,10 +170,6 @@ public class BasicBSONCallback implements BSONCallback {
         put(name, id);
     }
 
-    public void gotDBRef(final String name, final String ns, final ObjectId id) {
-        put(name, new BasicBSONObject("$ns", ns).append("$id", id));
-    }
-
     @Deprecated
     public void gotBinaryArray(final String name, final byte[] data) {
         gotBinary(name, BSON.B_GENERAL, data);
