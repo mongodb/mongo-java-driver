@@ -83,7 +83,7 @@ class MongoClientURISpecification extends Specification {
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5;
         options.getMaxWaitTime() == 150;
         options.getSocketTimeout() == 5500;
-        options.isAutoConnectRetry() == true;
+        options.isAutoConnectRetry();
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
         options.getReadPreference() == ReadPreference.secondaryPreferred();
 
@@ -114,8 +114,8 @@ class MongoClientURISpecification extends Specification {
         options.getMaxWaitTime() == 120000;
         options.getConnectTimeout() == 10000;
         options.getSocketTimeout() == 0;
-        options.isSocketKeepAlive() == false;
-        options.isAutoConnectRetry() == false;
+        !options.isSocketKeepAlive();
+        !options.isAutoConnectRetry();
         options.getMaxAutoConnectRetryTime() == 0;
         options.getDescription() == null;
         options.getReadPreference() == ReadPreference.primary();

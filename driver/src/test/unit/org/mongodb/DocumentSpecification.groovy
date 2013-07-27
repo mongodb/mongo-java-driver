@@ -40,7 +40,7 @@ class DocumentSpecification extends Specification {
         doc.getLong('long') == 2L;
         doc.getDouble('double') == 3.0;
         doc.getString('string') == 'hi';
-        doc.getBoolean('boolean') == true;
+        doc.getBoolean('boolean');
         doc.getObjectId('objectId') == objectId;
         doc.getDate('date') == date;
         doc.get('objectId', ObjectId) == objectId;

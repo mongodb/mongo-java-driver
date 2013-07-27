@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection
+package org.mongodb.connection.impl
 
-import org.mongodb.connection.impl.DefaultClusterFactory
+import org.mongodb.connection.ChangeEvent
+import org.mongodb.connection.ChangeListener
+import org.mongodb.connection.Cluster
+import org.mongodb.connection.ClusterDescription
+import org.mongodb.connection.ServerAddress
+import org.mongodb.connection.ServerDescription
+import org.mongodb.connection.TestClusterableServerFactory
 import spock.lang.Specification
 
 import static org.mongodb.connection.ClusterConnectionMode.Discovering
