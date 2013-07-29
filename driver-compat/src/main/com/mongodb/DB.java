@@ -384,21 +384,6 @@ public class DB implements IDB {
     }
 
     @Override
-    public boolean authenticate(final String username, final char[] password) {
-        return false;  // TODO: Implement authentication!!!!
-    }
-
-    @Override
-    public boolean isAuthenticated() {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public CommandResult authenticateCommand(final String username, final char[] password) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
     public WriteResult addUser(final String username, final char[] passwd) {
         throw new UnsupportedOperationException("Not implemented yet!");
     }

@@ -96,12 +96,6 @@ public interface IDB {
 
     void dropDatabase();
 
-    boolean isAuthenticated();
-
-    boolean authenticate(String username, char[] password);
-
-    CommandResult authenticateCommand(String username, char[] password);
-
     WriteResult addUser(String username, char[] passwd);
 
     WriteResult addUser(String username, char[] passwd, boolean readOnly);
