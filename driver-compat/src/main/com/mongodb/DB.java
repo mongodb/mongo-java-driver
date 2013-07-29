@@ -379,11 +379,6 @@ public class DB implements IDB {
     }
 
     @Override
-    public void setReadOnly(final Boolean b) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
     public WriteResult addUser(final String username, final char[] passwd) {
         throw new UnsupportedOperationException("Not implemented yet!");
     }

@@ -71,8 +71,6 @@ public interface IDB {
 
     String getName();
 
-    void setReadOnly(Boolean b);
-
     Set<String> getCollectionNames();
 
     boolean collectionExists(String collectionName);
