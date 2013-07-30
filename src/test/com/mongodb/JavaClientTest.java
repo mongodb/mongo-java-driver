@@ -732,7 +732,6 @@ public class JavaClientTest extends TestCase {
             assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx", "e".toCharArray());
-            assertEquals(1, usersCollection.find().count());
         }
         finally {
             m.close();
@@ -742,6 +741,7 @@ public class JavaClientTest extends TestCase {
         db = m.getDB("admin");
 
         try {
+            assertEquals(1, m.getDB("admin").getCollection("system.users").find().count());
             assertNotNull(db.getAuthenticationCredentials());
             assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
         }
