@@ -333,9 +333,15 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
                     return false;
             }
             else if ( a instanceof Number && b instanceof Number ){
-                if ( ((Number)a).doubleValue() !=
-                     ((Number)b).doubleValue() )
+                Number aNumber = (Number) a;
+                Number bNumber = (Number) b;
+                if (aNumber instanceof Double || bNumber instanceof Double) {
+                    if (aNumber.doubleValue() != bNumber.doubleValue()) {
+                        return false;
+                    }
+                } else if (aNumber.longValue() != bNumber.longValue()) {
                     return false;
+                }
             }
             else if ( a instanceof Pattern && b instanceof Pattern ){
                 Pattern p1 = (Pattern) a;
