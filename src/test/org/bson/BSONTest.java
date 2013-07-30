@@ -18,10 +18,14 @@
 
 package org.bson;
 
+import static org.testng.Assert.assertNotEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Vector;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.CodeWScope;
@@ -250,6 +254,27 @@ public class BSONTest extends Assert {
         BSON.removeDecodingHook( Date.class, tf );
         assertFalse( BSON.getDecodingHooks( Date.class ).contains( tf ) );
 
+    }
+    
+    @Test
+    public void testEquals() {
+        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L),
+                "longs should not be equal");
+
+        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D),
+                "doubles should not be equal");
+        
+        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F),
+                "floats should not be equal");
+        
+        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D),
+                "doubles should be equal");
+        
+        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F),
+                "floats should be equal");
+        
+        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L),
+                "int and long should be equal");
     }
 
     private class TestDate {
