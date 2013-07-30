@@ -131,43 +131,43 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     public void gotBoolean(final String name, final boolean v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotDouble(final String name, final double v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotInt(final String name, final int v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotLong(final String name, final long v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotDate(final String name, final long millis) {
-        put(name, new Date(millis));
+        _put(name, new Date(millis));
     }
 
     public void gotRegex(final String name, final String pattern, final String flags) {
-        put(name, Pattern.compile(pattern, BSON.regexFlags(flags)));
+        _put(name, Pattern.compile(pattern, BSON.regexFlags(flags)));
     }
 
     public void gotString(final String name, final String v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotSymbol(final String name, final String v) {
-        put(name, v);
+        _put(name, v);
     }
 
     public void gotTimestamp(final String name, final int time, final int inc) {
-        put(name, new BSONTimestamp(time, inc));
+        _put(name, new BSONTimestamp(time, inc));
     }
 
     public void gotObjectId(final String name, final ObjectId id) {
-        put(name, id);
+        _put(name, id);
     }
 
     @Deprecated
@@ -177,25 +177,25 @@ public class BasicBSONCallback implements BSONCallback {
 
     public void gotBinary(final String name, final byte type, final byte[] data) {
         if (type == BSON.B_GENERAL || type == BSON.B_BINARY) {
-            put(name, data);
+            _put(name, data);
         } else {
-            put(name, new Binary(type, data));
+            _put(name, new Binary(type, data));
         }
     }
 
     public void gotUUID(final String name, final long part1, final long part2) {
-        put(name, new UUID(part1, part2));
+        _put(name, new UUID(part1, part2));
     }
 
     public void gotCode(final String name, final String code) {
-        put(name, new Code(code));
+        _put(name, new Code(code));
     }
 
     public void gotCodeWScope(final String name, final String code, final Object scope) {
-        put(name, new CodeWScope(code, (BSONObject) scope));
+        _put(name, new CodeWScope(code, (BSONObject) scope));
     }
 
-    protected void put(final String name, final Object o) {
+    protected void _put(final String name, final Object o) {
         cur().put(name, !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o));
     }
 

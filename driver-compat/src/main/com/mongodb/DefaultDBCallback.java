@@ -55,7 +55,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         final String name = curName();
         BSONObject document = (BSONObject) super.objectDone();
         if (document.containsField("$ref") && document.containsField("$id")) {
-            put(name, new DBRef(db, document));
+            _put(name, new DBRef(db, document));
         }
 
         return document;
