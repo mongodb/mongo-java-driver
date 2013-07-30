@@ -19,7 +19,6 @@ package org.mongodb.connection.impl;
 import org.bson.ByteBuf;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
@@ -27,37 +26,30 @@ import org.mongodb.connection.ServerAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestConnectionFactory implements ConnectionFactory {
-    private List<TestConnection> connections = new ArrayList<TestConnection>();
+class TestConnectionFactory implements ConnectionFactory {
+    private List<TestConnection> createdConnections = new ArrayList<TestConnection>();
+
     @Override
     public Connection create(final ServerAddress serverAddress) {
         TestConnection connection = new TestConnection(serverAddress);
-        connections.add(connection);
+        createdConnections.add(connection);
         return connection;
     }
 
-    public List<TestConnection> getConnections() {
-        return connections;
+    List<TestConnection> getCreatedConnections() {
+        return createdConnections;
     }
 
     public static class TestConnection implements Connection {
         private final ServerAddress serverAddress;
         private boolean closed;
-        private MongoSocketException throwOnSend;
 
         public TestConnection(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;
         }
 
-        public void throwOnSend(final MongoSocketException e) {
-            throwOnSend = e;
-        }
-
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers) {
-            if (throwOnSend != null) {
-                throw throwOnSend;
-            }
         }
 
         @Override
