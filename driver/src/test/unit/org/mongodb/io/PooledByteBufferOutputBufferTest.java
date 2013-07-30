@@ -16,6 +16,7 @@
 
 package org.mongodb.io;
 
+import org.bson.BSONSerializationException;
 import org.junit.Test;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
@@ -77,6 +78,12 @@ public class PooledByteBufferOutputBufferTest {
         assertTrue(Arrays.equals(new byte[]{-20, 3, 0, 0}, Arrays.copyOfRange(bytes, randomBytes.length + 4, randomBytes.length + 8)));
         final byte[] a21 = Arrays.copyOfRange(bytes, randomBytes.length + 8, bytes.length);
         assertTrue(Arrays.equals(randomBytesTwo, a21));
+    }
+
+    @Test(expected = BSONSerializationException.class)
+    public void testNullCharacterInCString() {
+        final PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
+        buf.writeCString("hell\u0000world");
     }
 
     private byte[] getRandomBytes(final int len) {

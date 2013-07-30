@@ -18,6 +18,7 @@
 
 package org.bson.io;
 
+import org.bson.BSONSerializationException;
 import org.bson.ByteBuf;
 
 import java.io.ByteArrayOutputStream;
@@ -130,6 +131,10 @@ public abstract class OutputBuffer extends OutputStream {
         for (int i = 0; i < len;/*i gets incremented*/) {
             final int c = Character.codePointAt(str, i);
 
+            if (c == 0x0) {
+                throw new BSONSerializationException(
+                        String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
+            }
             if (c < 0x80) {
                 write((byte) c);
                 total += 1;
