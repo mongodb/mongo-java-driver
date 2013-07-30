@@ -617,7 +617,10 @@ public abstract class DB {
      *
      * @return {@code true} if authenticated, {@code false} otherwise
      * @dochub authenticate
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
+     *             will authentificate all connections to server
      */
+    @Deprecated
     public boolean isAuthenticated() {
         return getAuthenticationCredentials() != null;
     }
@@ -637,8 +640,11 @@ public abstract class DB {
      * @throws IllegalStateException if authentiation test has already succeeded with different credentials
      * @dochub authenticate
      * @see #authenticateCommand(String, char[])
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
+     *             will authentificate all connections to server
      */
-    public boolean authenticate(String username, char[] password ){
+    @Deprecated
+    public boolean authenticate(String username, char[] password) {
         return authenticateCommandHelper(username, password).failure == null;
     }
 
@@ -657,8 +663,11 @@ public abstract class DB {
      * @throws IllegalStateException if authentiation test has already succeeded with different credentials
      * @dochub authenticate
      * @see #authenticate(String, char[])
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
+     *             will authentificate all connections to server
      */
-    public synchronized CommandResult authenticateCommand(String username, char[] password ){
+    @Deprecated
+    public synchronized CommandResult authenticateCommand(String username, char[] password) {
         CommandResultPair commandResultPair = authenticateCommandHelper(username, password);
         if (commandResultPair.failure != null) {
             throw commandResultPair.failure;
