@@ -41,4 +41,10 @@ public class FieldNameValidatorTest {
         fieldNameValidator.validate("$1");
     }
 
+    @Test
+    public void testDatabaseReferenceFieldNames() {
+        fieldNameValidator.validate("$id");
+        fieldNameValidator.validate("$ref");
+        fieldNameValidator.validate("$db");
+    }
 }

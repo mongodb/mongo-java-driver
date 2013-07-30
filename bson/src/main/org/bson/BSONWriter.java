@@ -36,8 +36,6 @@ public abstract class BSONWriter implements Closeable {
     private State state;
     private Context context;
     private String currentName;
-    private boolean checkElementNames;
-    private boolean checkUpdateDocument;
     private int serializationDepth;
     private boolean closed;
 
@@ -277,8 +275,6 @@ public abstract class BSONWriter implements Closeable {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
-        checkElementName(name);
-
         this.currentName = name;
         state = State.VALUE;
     }
@@ -445,38 +441,6 @@ public abstract class BSONWriter implements Closeable {
     public void writeUndefined(final String name) {
         writeName(name);
         writeUndefined();
-    }
-
-    /**
-     * Checks that the element name is valid.
-     *
-     * @param name The element name to be checked.
-     * @throws BSONSerializationException if element name is not valid.
-     */
-    protected void checkElementName(final String name) {
-        if (checkUpdateDocument) {
-            checkElementNames = (name.charAt(0) != '$');
-            checkUpdateDocument = false;
-            return;
-        }
-
-        if (checkElementNames) {
-            if (name.charAt(0) == '$') {
-                // a few element names starting with $ have to be allowed for historical reasons
-                if (!(name.equals("$code") || name.equals("$db") //NOPMD
-                      || name.equals("$ref") || name.equals("$scope")
-                      || name.equals("$id"))) {
-                    //NOPMD collapsing these if statements will not aid readability
-                    final String message = format(
-                            "Element name '%s' is not valid because it starts with a '$'" + ".", name);
-                    throw new BSONSerializationException(message);
-                }
-            }
-            if (name.indexOf('.') != -1) {
-                final String message = format("Element name '%s' is not valid because it contains a '.'.", name);
-                throw new BSONSerializationException(message);
-            }
-        }
     }
 
     protected State getNextState() {
