@@ -22,7 +22,11 @@ import com.mongodb.util.management.jmx.JMXMBeanServer;
  *
  * This class is used to insulate the rest of the driver from the possibility that JMX is not available,
  * as currently is the case on Android VM
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public class MBeanServerFactory {
     static {
         MBeanServer tmp;

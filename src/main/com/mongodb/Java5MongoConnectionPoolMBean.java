@@ -20,7 +20,11 @@ package com.mongodb;
  * A standard MBean interface for a Mongo connection pool, for use on Java 5 virtual machines.
  * <p>
  * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public interface Java5MongoConnectionPoolMBean {
     /**
      * Gets the name of the pool.

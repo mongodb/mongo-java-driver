@@ -19,7 +19,11 @@ import com.mongodb.InUseConnectionBean;
 
 /**
  * A bean representing connection pool statistics.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public class ConnectionPoolStatisticsBean {
     private final int total;
     private final int inUse;

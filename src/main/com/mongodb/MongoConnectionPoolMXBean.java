@@ -22,7 +22,11 @@ import com.mongodb.util.ConnectionPoolStatisticsBean;
  * A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.
  * <p>
  * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public interface MongoConnectionPoolMXBean {
     /**
      * Gets the name of the pool.

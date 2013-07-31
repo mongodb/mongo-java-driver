@@ -20,7 +20,11 @@ package com.mongodb;
 /**
  * This class exists only so that on Java 5 the driver can create instances of a standard MBean,
  * therefore keeping compatibility with the JMX implementation in the Java 5 JMX class libraries.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 class Java5MongoConnectionPool extends DBPortPool implements Java5MongoConnectionPoolMBean {
 
     Java5MongoConnectionPool(ServerAddress addr, MongoOptions options) {

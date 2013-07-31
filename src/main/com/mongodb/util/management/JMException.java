@@ -19,7 +19,11 @@ package com.mongodb.util.management;
 /**
  *
  * This class is NOT part of the public API.  It may change at any time without notification.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public class JMException extends Exception {
     static final long serialVersionUID = -2052972874393271421L;
 

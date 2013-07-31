@@ -43,8 +43,10 @@ import java.util.Set;
  * <pre>   java -cp mongo.jar com.mongodb.util.tools.ConnectionPoolStat --help}</pre>
  *
  * @mongodb.driver.manual reference/mongostat  mongostat
- *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public class ConnectionPoolStat {
 
     /**

@@ -18,7 +18,11 @@ package com.mongodb.util.management;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
+ *
+ * @deprecated This class will be removed in 3.x versions of the driver,
+ *             so please remove it from your compile time dependencies.
  */
+@Deprecated
 public class NullMBeanServer implements MBeanServer {
     @Override
     public boolean isRegistered(String mBeanName) {
