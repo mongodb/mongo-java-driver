@@ -54,3 +54,5 @@ src/test/ed/webtests/webtest-local.bash
 *.iml
 .idea
 atlassian-ide-plugin.xml
+
+out/*
