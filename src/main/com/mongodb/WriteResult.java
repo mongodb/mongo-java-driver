@@ -80,7 +80,10 @@ public class WriteResult {
      * @param concern the concern
      * @return
      * @throws MongoException
+     * @deprecated Please invoke write operation with appropriate {@code WriteConcern}
+     *             and then use {@link #getLastError()} method.
      */
+    @Deprecated
     public synchronized CommandResult getLastError(WriteConcern concern){
         if ( _lastErrorResult != null ) {
             // do we have a satisfying concern?
