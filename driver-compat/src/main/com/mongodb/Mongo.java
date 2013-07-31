@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
 import org.mongodb.connection.BufferProvider;

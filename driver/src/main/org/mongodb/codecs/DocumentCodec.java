@@ -42,22 +42,25 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
-        if (primitiveCodecs == null) {
-            throw new IllegalArgumentException("primitiveCodecs is null");
-        }
-        this.fieldNameValidator = fieldNameValidator;
-        this.primitiveCodecs = primitiveCodecs;
-        codecs = new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry());
+        this(primitiveCodecs, fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry()));
     }
 
     protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
                             final EncoderRegistry encoderRegistry) {
+        this(primitiveCodecs, fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry));
+    }
+
+    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
+                            final Codecs codecs) {
         if (primitiveCodecs == null) {
             throw new IllegalArgumentException("primitiveCodecs is null");
         }
+        if (codecs == null) {
+            throw new IllegalArgumentException("codecs is null");
+        }
         this.fieldNameValidator = fieldNameValidator;
         this.primitiveCodecs = primitiveCodecs;
-        codecs = new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry);
+        this.codecs = codecs;
     }
 
     @Override
@@ -121,6 +124,10 @@ public class DocumentCodec implements Codec<Document> {
 
     protected PrimitiveCodecs getPrimitiveCodecs() {
         return primitiveCodecs;
+    }
+
+    protected Codecs getCodecs() {
+        return codecs;
     }
 
     protected Decoder<Document> getDecoderForField(final String fieldName) {

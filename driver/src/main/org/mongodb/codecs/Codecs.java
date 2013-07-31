@@ -76,12 +76,12 @@ public class Codecs implements Codec<Object> {
             final Encoder<Iterable> codec = encoderRegistry.get(Iterable.class);
             codec.encode(bsonWriter, (Iterable) object);
         } else if (object instanceof CodeWithScope) {
-            final Encoder<Object> codec = (Codec<Object>) encoderRegistry.get(object.getClass());
+            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
             codec.encode(bsonWriter, object);
         } else if (object instanceof DBRef) {
             encode(bsonWriter, (DBRef) object);
         } else {
-            final Encoder<Object> codec = (Codec<Object>) encoderRegistry.get(object.getClass());
+            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
             codec.encode(bsonWriter, object);
         }
     }

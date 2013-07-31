@@ -25,7 +25,7 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
     @Override
     public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
         set(outputBuffer);
-        int x = super.putObject(document);
+        int x = putObject(document);
         done();
         return x;
     }

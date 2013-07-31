@@ -17,27 +17,20 @@
 package com.mongodb.codecs;
 
 import com.mongodb.DBRef;
-import org.bson.BSONWriter;
-import org.mongodb.MongoException;
+import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.EncoderRegistry;
 import org.mongodb.codecs.PrimitiveCodecs;
-
-import static com.mongodb.MongoExceptions.mapException;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 
 public class DocumentCodec extends org.mongodb.codecs.DocumentCodec {
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        super(primitiveCodecs);
+        super(primitiveCodecs, new QueryFieldNameValidator(), constructCodecsWithDBRefMapping(primitiveCodecs));
     }
 
-    protected void writeValue(final BSONWriter bsonWriter, Object value) {
-        if (value instanceof DBRef) {
-            final DBRef dbRef = (DBRef) value;
-            value = new org.mongodb.DBRef(dbRef.getId(), dbRef.getRef());
-        }
-        try {
-            super.writeValue(bsonWriter, value);
-        } catch (MongoException e) {
-            //TODO: test this
-            throw mapException(e);
-        }
+    private static Codecs constructCodecsWithDBRefMapping(final PrimitiveCodecs primitiveCodecs) {
+        final EncoderRegistry encoderRegistry = new EncoderRegistry();
+        final Codecs codecs = new Codecs(primitiveCodecs, encoderRegistry);
+        encoderRegistry.register(DBRef.class, new DBRefEncoder(codecs));
+        return codecs;
     }
 }
