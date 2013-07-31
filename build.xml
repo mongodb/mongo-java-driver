@@ -142,7 +142,7 @@ limitations under the License.
             includeantruntime="false"
             memoryMaximumSize="256M"
             >
-            <compilerarg value="-Xlint:all,-rawtypes"/>
+            <compilerarg value="-Xlint:all,-rawtypes,-deprecation"/>
         </javac>
 
     </target>
@@ -281,7 +281,7 @@ limitations under the License.
                 debug="on"
                 includeantruntime="false">
             <classpath refid="test.classpath"/>
-            <compilerarg value="-Xlint:all,-rawtypes"/>
+            <compilerarg value="-Xlint:all,-rawtypes,-deprecation"/>
         </javac>
     </target>
 
