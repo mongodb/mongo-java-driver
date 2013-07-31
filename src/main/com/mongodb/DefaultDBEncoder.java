@@ -42,22 +42,21 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     }
 
-    @SuppressWarnings("deprecation")
     protected boolean putSpecial( String name , Object val ){
-        if ( val instanceof DBPointer ){
-            DBPointer r = (DBPointer)val;
-            putDBPointer( name , r._ns , (ObjectId)r._id );
+        if (val instanceof DBRefBase) {
+            putDBRef(name, (DBRefBase) val);
             return true;
+        } else {
+            return false;
         }
-
-        if ( val instanceof DBRefBase ){
-            putDBRef( name, (DBRefBase)val );
-            return true;
-        }
-
-        return false;
     }
 
+    /**
+     * @deprecated Please see {@link DBPointer}.
+     *             You can override {@link #putDBRef(String, DBRefBase)} if you need
+     *             a specific behaviour while decoding database references.
+     */
+    @Deprecated
     protected void putDBPointer( String name , String ns , ObjectId oid ){
         _put( REF , name );
 

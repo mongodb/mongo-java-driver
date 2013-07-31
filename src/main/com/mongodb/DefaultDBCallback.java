@@ -50,12 +50,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public void gotDBRef( String name , String ns , ObjectId id ){
         if ( id.equals( Bytes.COLLECTION_REF_ID ) )
             cur().put( name , _collection );
         else
-            cur().put( name , new DBPointer( (DBObject)cur() , name , _db , ns , id ) );
+            cur().put(name, new DBRef(_db, ns, id));
     }
 
     @Override

@@ -21,7 +21,7 @@ package com.mongodb;
 import org.bson.types.ObjectId;
 
 /**
- * @deprecated
+ * @deprecated BSON type DBPointer(0x0c) is deprecated. Please use a {@link com.mongodb.DBRef} instead.
  */
 @Deprecated
 public class DBPointer extends DBRefBase {

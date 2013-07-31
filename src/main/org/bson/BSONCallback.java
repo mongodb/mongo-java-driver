@@ -52,7 +52,15 @@ public interface BSONCallback {
 
     void gotTimestamp( String name , int time , int inc );
     void gotObjectId( String name , ObjectId id );
-    void gotDBRef( String name , String ns , ObjectId id );
+
+    /**
+     * Invoked when {@link org.bson.BSONDecoder} encountered a DBPointer(0x0c) type field in a byte sequence.
+     *
+     * @param name the name of the field
+     * @param ns   the namespace to which reference is pointing to
+     * @param id   the if of the object to which reference is pointing to
+     */
+    void gotDBRef(String name, String ns, ObjectId id);
     
     /**
      * 
