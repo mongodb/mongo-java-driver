@@ -1498,7 +1498,10 @@ public abstract class DBCollection {
      * @param strict if an exception should be thrown if the database is read-only
      * @return if this collection's database is read-only
      * @throws RuntimeException if the database is read-only and <code>strict</code> is set
+     *
+     * @deprecated See {@link DB#setReadOnly(Boolean)}
      */
+    @Deprecated
     protected boolean checkReadOnly( boolean strict ){
         if ( ! _db._readOnly )
             return false;

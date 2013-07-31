@@ -422,8 +422,11 @@ public abstract class DB {
      * Important note: this is a convenience setting that is only known on the client side and not persisted.
      *
      * @param b if the database should be read-only
+     * @deprecated Avoid making database read-only via this method.
+     *             Connect with a user credentials that has a read-only access to a server instead.
      */
-    public void setReadOnly( Boolean b ){
+    @Deprecated
+    public void setReadOnly(Boolean b) {
         _readOnly = b;
     }
 
@@ -884,6 +887,11 @@ public abstract class DB {
     final Mongo _mongo;
     final String _name;
 
+
+    /**
+     * @deprecated See {@link #setReadOnly(Boolean)}
+     */
+    @Deprecated
     protected boolean _readOnly = false;
     private com.mongodb.WriteConcern _concern;
     private com.mongodb.ReadPreference _readPref;
