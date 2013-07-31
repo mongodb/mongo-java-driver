@@ -21,7 +21,10 @@ package com.mongodb;
 
 /**
  * Interface that provides the ability to exchange request/response with the database
+ *
+ * @deprecated This class is NOT part of the public API. It will be dropped in 3.x releases.
  */
+@Deprecated
 public interface DBConnector {
 
     /**

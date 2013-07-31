@@ -32,7 +32,10 @@ import java.util.logging.Logger;
 /** Database API
  * This cannot be directly instantiated, but the functions are available
  * through instances of Mongo.
+ *
+ * @deprecated This class is NOT part of the public API. It will be dropped in 3.x releases.
  */
+@Deprecated
 public class DBApiLayer extends DB {
 
     /** The maximum number of cursors allowed */

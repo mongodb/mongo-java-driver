@@ -432,7 +432,9 @@ public class Mongo {
     /**
      * Gets the underlying TCP connector
      * @return
+     * @deprecated {@link DBTCPConnector} is NOT part of the public API. It will be dropped in 3.x releases.
      */
+    @Deprecated
     public DBTCPConnector getConnector() {
         return _connector;
     }
