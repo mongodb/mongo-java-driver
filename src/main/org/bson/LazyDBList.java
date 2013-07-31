@@ -10,8 +10,9 @@ import com.mongodb.util.JSON;
 
 /**
  * @author scotthernandez
- *
+ * @deprecated Please use {@link com.mongodb.LazyDBList} instead.
  */
+@Deprecated
 public class LazyDBList extends LazyBSONList implements DBObject {
     private static final long serialVersionUID = -4415279469780082174L;
 

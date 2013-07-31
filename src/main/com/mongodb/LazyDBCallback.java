@@ -16,6 +16,7 @@
 package com.mongodb;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.bson.LazyBSONCallback;
@@ -43,6 +44,11 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
             return new DBRef( _db, o );
         }
         return o;
+    }
+
+    @Override
+    public List createArray(byte[] data, int offset) {
+        return new LazyDBList(data, offset, this);
     }
 
     public Object createDBRef( String ns, ObjectId id ){

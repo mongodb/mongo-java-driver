@@ -19,8 +19,6 @@
 package com.mongodb;
 
 // Mongo
-
-import org.bson.LazyDBList;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;

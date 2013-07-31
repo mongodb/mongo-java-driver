@@ -64,7 +64,7 @@ public class LazyBSONCallback extends EmptyBSONCallback {
 
     @SuppressWarnings("rawtypes")
 	public List createArray( byte[] data, int offset ){
-        return new LazyDBList( data, offset, this );
+        return new LazyBSONList( data, offset, this );
     }
 
     public Object createDBRef( String ns, ObjectId id ){
