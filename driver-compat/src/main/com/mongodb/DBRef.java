@@ -25,10 +25,7 @@ import org.bson.BSONObject;
  *
  * @mongodb.driver.manual applications/database-references Database References
  */
-public class DBRef extends org.mongodb.DBRef {
-
-    private final DB db;
-
+public class DBRef extends DBRefBase {
     /**
      * Creates a DBRef
      *
@@ -36,7 +33,7 @@ public class DBRef extends org.mongodb.DBRef {
      * @param o  a BSON object representing the reference
      */
     public DBRef(final DB db, final BSONObject o) {
-        this(db, o.get("$ref").toString(), o.get("$id"));
+        super(db, o.get("$ref").toString(), o.get("$id"));
     }
 
     /**
@@ -47,36 +44,7 @@ public class DBRef extends org.mongodb.DBRef {
      * @param id the object id
      */
     public DBRef(final DB db, final String ns, final Object id) {
-        super(id, ns);
-        this.db = db;
-    }
-
-    /**
-     * Gets the database
-     *
-     * @return the database
-     */
-    public DB getDB() {
-        return db;
-    }
-
-
-    @Override
-    public String toString() {
-        return String.format("{\"$ref\":\"%s\",\"$id\":\"%s\"}", getRef(), getId());
-    }
-
-    /**
-     * Fetches the referenced object from the database
-     *
-     * @return the document that this references.
-     * @throws MongoException
-     */
-    public DBObject fetch() {
-        if (db == null) {
-            throw new RuntimeException("There is no database associated with this reference");
-        }
-        return db.getCollection(getRef()).findOne(getId());
+        super(db, ns, id);
     }
 
     /**

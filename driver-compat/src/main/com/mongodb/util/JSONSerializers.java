@@ -19,7 +19,7 @@ package com.mongodb.util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
 import com.mongodb.DBObject;
-import com.mongodb.DBRef;
+import com.mongodb.DBRefBase;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -94,7 +94,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(Code.class, new CodeSerializer(serializer));
         serializer.addObjectSerializer(CodeWScope.class, new CodeWScopeSerializer(serializer));
         serializer.addObjectSerializer(DBObject.class, new DBObjectSerializer(serializer));
-        serializer.addObjectSerializer(DBRef.class, new DBRefSerializer(serializer));
+        serializer.addObjectSerializer(DBRefBase.class, new DBRefBaseSerializer(serializer));
         serializer.addObjectSerializer(Iterable.class, new IterableSerializer(serializer));
         serializer.addObjectSerializer(Map.class, new MapSerializer(serializer));
         serializer.addObjectSerializer(MaxKey.class, new MaxKeySerializer(serializer));
@@ -256,15 +256,15 @@ public class JSONSerializers {
 
     }
 
-    private static class DBRefSerializer extends CompoundObjectSerializer {
+    private static class DBRefBaseSerializer extends CompoundObjectSerializer {
 
-        DBRefSerializer(ObjectSerializer serializer) {
+        DBRefBaseSerializer(ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
         public void serialize(Object obj, StringBuilder buf) {
-            DBRef ref = (DBRef) obj;
+            DBRefBase ref = (DBRefBase) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$ref", ref.getRef());
             temp.put("$id", ref.getId());
