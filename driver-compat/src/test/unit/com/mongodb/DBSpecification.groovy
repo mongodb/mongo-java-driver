@@ -65,7 +65,7 @@ class DBSpecification extends Specification {
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
-    def 'should throw com.mongodb.MongoException.CursorNotFound if cursor not found'() {
+    def 'should throw com.mongodb.MongoCursorNotFoundException if cursor not found'() {
         given:
         session.execute(_) >> {
             throw new MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
@@ -75,7 +75,7 @@ class DBSpecification extends Specification {
         database.executeCommand(new Command());
 
         then:
-        thrown(com.mongodb.MongoException.CursorNotFound)
+        thrown(com.mongodb.MongoCursorNotFoundException)
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')

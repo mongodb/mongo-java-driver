@@ -19,7 +19,6 @@ package com.mongodb
 import org.mongodb.Document
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.MongoCommandFailureException
-import org.mongodb.command.MongoDuplicateKeyException
 import org.mongodb.connection.Cluster
 import org.mongodb.session.ServerSelectingSession
 import spock.lang.Specification
@@ -67,10 +66,10 @@ class DBCollectionSpecification extends Specification {
         thrown(com.mongodb.MongoException)
     }
 
-    def 'should throw MongoException.DuplicateKey when insert fails'() {
+    def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
         session.execute(_) >> {
-            throw new MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
+            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                          new org.mongodb.connection.ServerAddress(),
                                                                                          new Document(),
                                                                                          15L))
@@ -80,7 +79,7 @@ class DBCollectionSpecification extends Specification {
         collection.insert(new BasicDBObject(), ACKNOWLEDGED);
 
         then:
-        thrown(com.mongodb.MongoException.DuplicateKey)
+        thrown(com.mongodb.MongoDuplicateKeyException)
     }
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException when insert fails'() {
@@ -110,10 +109,10 @@ class DBCollectionSpecification extends Specification {
         thrown(com.mongodb.CommandFailureException)
     }
 
-    def 'should throw MongoException.DuplicateKey when createIndex fails'() {
+    def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
         session.execute(_) >> {
-            throw new MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
+            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.operation.CommandResult(new Document(),
                                                                                          new org.mongodb.connection.ServerAddress(),
                                                                                          new Document(),
                                                                                          15L))
@@ -123,7 +122,7 @@ class DBCollectionSpecification extends Specification {
         collection.createIndex(new BasicDBObject());
 
         then:
-        thrown(MongoException.DuplicateKey)
+        thrown(com.mongodb.MongoDuplicateKeyException)
     }
 
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException when createIndex fails'() {
