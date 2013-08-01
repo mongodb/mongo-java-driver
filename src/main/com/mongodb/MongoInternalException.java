@@ -40,7 +40,7 @@ public class MongoInternalException extends MongoException {
      * @param t the throwable cause
      */
     public MongoInternalException( String msg , Throwable t ){
-        super( msg , MongoException._massage( t ) );
+        super(msg, t);
     }
 
 }

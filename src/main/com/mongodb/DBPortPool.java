@@ -149,28 +149,53 @@ public class DBPortPool extends SimplePool<DBPort> {
 
     // ----
 
-    public static class NoMoreConnection extends MongoInternalException {
+    /**
+     * @deprecated This class will be dropped in 3.x versions.
+     *             Please catch {@link MongoClientException} instead.
+     */
+    @Deprecated
+    public static class NoMoreConnection extends MongoClientException {
+
         private static final long serialVersionUID = -4415279469780082174L;
 
-        NoMoreConnection( String msg ){
-	        super( msg );
-	    }
+        /**
+         * Constructs a new instance with the given message.
+         *
+         * @param msg the message
+         */
+        public NoMoreConnection(String msg) {
+            super(msg);
+        }
     }
 
-    public static class SemaphoresOut extends NoMoreConnection {
+    /**
+     * @deprecated This class will be dropped in 3.x versions.
+     *             Please catch {@link MongoWaitQueueFullException} instead.
+     */
+    @Deprecated
+    public static class SemaphoresOut extends MongoWaitQueueFullException {
+
         private static final long serialVersionUID = -4415279469780082174L;
+
         private static final String message = "Concurrent requests for database connection have exceeded limit";
         SemaphoresOut(){
             super( message );
         }
-        
+
         SemaphoresOut(int numPermits){
             super( message + " of " + numPermits);
         }
     }
 
-    public static class ConnectionWaitTimeOut extends NoMoreConnection {
+    /**
+     * @deprecated This class will be dropped in 3.x versions.
+     *             Please catch {@link MongoTimeoutException} instead.
+     */
+    @Deprecated
+    public static class ConnectionWaitTimeOut extends MongoTimeoutException {
+
         private static final long serialVersionUID = -4415279469780082174L;
+
         ConnectionWaitTimeOut(int timeout) {
             super("Connection wait timeout after " + timeout + " ms");
         }
