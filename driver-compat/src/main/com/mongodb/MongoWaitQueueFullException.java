@@ -20,6 +20,11 @@ public class MongoWaitQueueFullException extends MongoClientException {
 
     private static final long serialVersionUID = 1482094507852255793L;
 
+    /**
+     * Constructs a new instance with the given message.
+     *
+     * @param message the message
+     */
     MongoWaitQueueFullException(final String message) {
         super(message);
     }

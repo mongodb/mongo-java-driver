@@ -29,14 +29,14 @@ public class MongoSocketException extends MongoException {
      * @param msg the message
      * @param ioe the cause
      */
-    public MongoSocketException(final String msg, final IOException ioe) {
+    MongoSocketException(final String msg, final IOException ioe) {
         super(-2, msg, ioe);
     }
 
     /**
      * @param ioe the cause
      */
-    public MongoSocketException(final IOException ioe) {
+    MongoSocketException(final IOException ioe) {
         super(ioe.toString(), ioe);
     }
 }
