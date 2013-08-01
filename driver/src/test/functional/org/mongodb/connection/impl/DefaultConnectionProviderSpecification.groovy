@@ -47,6 +47,22 @@ class DefaultConnectionProviderSpecification extends Specification {
         1 * connectionFactory.create(SERVER_ADDRESS)
     }
 
+    def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
+        given:
+        pool = new DefaultConnectionProvider(SERVER_ADDRESS,
+                                             connectionFactory,
+                                             DefaultConnectionProviderSettings.builder()
+                                                     .maxSize(1)
+                                                     .maxWaitQueueSize(1)
+                                                     .build());
+
+        when:
+        pool.get().close();
+
+        then:
+        !connectionFactory.getCreatedConnections().get(0).isClosed();
+    }
+
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
         pool = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
@@ -112,7 +128,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         pool = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
                                              DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(5, MILLISECONDS).build());
+                                                     .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
         pool.get().close();
@@ -123,7 +139,6 @@ class DefaultConnectionProviderSpecification extends Specification {
         2 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    //TODO: this test doesn't make a lot of sense, if you remove the sleep the test still passes
     def 'should expire connection after max life time on close'() throws InterruptedException {
         given:
         pool = new DefaultConnectionProvider(SERVER_ADDRESS,
@@ -131,11 +146,11 @@ class DefaultConnectionProviderSpecification extends Specification {
                                              DefaultConnectionProviderSettings.builder()
                                                      .maxSize(1)
                                                      .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(5, MILLISECONDS).build());
+                                                     .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
         Connection connection = pool.get();
-        Thread.sleep(10);
+        Thread.sleep(50);
         connection.close();
 
         then:
@@ -153,8 +168,6 @@ class DefaultConnectionProviderSpecification extends Specification {
 
         when:
         Connection connection = pool.get();
-        //TODO: not sure of the purpose of sendMessage?  Test still passes without it
-        connection.sendMessage(null);
         connection.close();
         Thread.sleep(50);
         pool.get();
@@ -170,11 +183,9 @@ class DefaultConnectionProviderSpecification extends Specification {
                                              DefaultConnectionProviderSettings.builder()
                                                      .maxSize(1)
                                                      .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(5, MILLISECONDS).build());
+                                                     .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
-        //TODO: not sure this test is asserting what it says - isClosed will be true since this connection has been closed, not
-        //necessarily because it expired
         pool.get().close();
         Thread.sleep(50);
         pool.get();
@@ -205,15 +216,13 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should expire all connections after exception'() throws InterruptedException {
         given:
         int numberOfConnectionsCreated = 0;
-        Connection mockConnection = Mock(Connection) {
-            //TODO: the thing is, even if you don't throw this exception the test still passes
-            sendMessage(_) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
-        }
 
         ConnectionFactory mockConnectionFactory = Mock()
         mockConnectionFactory.create(_) >> {
             numberOfConnectionsCreated++
-            mockConnection
+            Mock(Connection) {
+                sendMessage(_) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
+            }
         }
 
         pool = new DefaultConnectionProvider(SERVER_ADDRESS,
@@ -221,7 +230,7 @@ class DefaultConnectionProviderSpecification extends Specification {
                                              DefaultConnectionProviderSettings.builder()
                                                      .maxSize(2)
                                                      .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(5, MILLISECONDS).build());
+                                                     .build());
         when:
         Connection c1 = pool.get();
         Connection c2 = pool.get();
@@ -232,7 +241,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         then:
         thrown(MongoSocketWriteException)
 
-        when:
+        and:
         c1.close();
         c2.close();
         pool.get();
@@ -240,4 +249,5 @@ class DefaultConnectionProviderSpecification extends Specification {
         then:
         numberOfConnectionsCreated == 3
     }
+
 }
