@@ -1,7 +1,6 @@
 language: java
 jdk: 
- - oraclejdk7
- - openjdk6
+- oraclejdk7
 
 notifications: 
   email: 
