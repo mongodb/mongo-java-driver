@@ -16,8 +16,9 @@
 
 package com.mongodb;
 
-public class MongoTimeoutException extends NoMoreConnection {
-    private static final long serialVersionUID = -4415279469780082174L;
+public class MongoTimeoutException extends MongoClientException {
+
+    private static final long serialVersionUID = -3016560214331826577L;
 
     MongoTimeoutException(final String message) {
         super(message);

@@ -16,8 +16,9 @@
 
 package com.mongodb;
 
-public class MongoWaitQueueFullException extends NoMoreConnection {
-    private static final long serialVersionUID = -4415279469780082174L;
+public class MongoWaitQueueFullException extends MongoClientException {
+
+    private static final long serialVersionUID = 1482094507852255793L;
 
     MongoWaitQueueFullException(final String message) {
         super(message);
