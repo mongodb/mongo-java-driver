@@ -72,7 +72,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         try {
             collection.insert(doc, WriteConcern.ACKNOWLEDGED);
             fail("should throw DuplicateKey exception");
-        } catch (MongoException.DuplicateKey e) {
+        } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCode(), is(11000));
         }
     }
@@ -84,7 +84,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         try {
             collection.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
             fail("should throw DuplicateKey exception");
-        } catch (MongoException.DuplicateKey e) {
+        } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCode(), is(11000));
         }
     }

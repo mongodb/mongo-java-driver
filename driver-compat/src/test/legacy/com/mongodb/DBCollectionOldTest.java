@@ -58,7 +58,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(true, c.isCapped());
     }
 
-    @Test(expected = MongoException.DuplicateKey.class)
+    @Test(expected = MongoDuplicateKeyException.class)
     public void testDuplicateKeyException() {
         final DBCollection c = collection;
 
@@ -370,7 +370,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         Exception failed = null;
         try {
             c.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
-        } catch (MongoException.DuplicateKey e) {
+        } catch (MongoDuplicateKeyException e) {
             failed = e;
         }
         assertNotNull(failed);

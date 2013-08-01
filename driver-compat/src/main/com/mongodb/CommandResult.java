@@ -116,7 +116,7 @@ public class CommandResult extends BasicDBObject {
             case 11000:
             case 11001:
             case 12582:
-                return new MongoException.DuplicateKey(code, message);
+                return new MongoDuplicateKeyException(this);
             default:
                 return new MongoException(code, message);
         }

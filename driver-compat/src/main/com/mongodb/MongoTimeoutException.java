@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
-public class SemaphoresOut extends NoMoreConnection {
+public class MongoTimeoutException extends NoMoreConnection {
     private static final long serialVersionUID = -4415279469780082174L;
 
-    SemaphoresOut(final String message) {
+    MongoTimeoutException(final String message) {
         super(message);
     }
 }

@@ -96,7 +96,7 @@ public class DBTest extends DatabaseTestCase {
         assertThat(c1.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
     }
 
-    @Test(expected = MongoException.DuplicateKey.class)
+    @Test(expected = MongoDuplicateKeyException.class)
     public void shouldGetDuplicateKeyException() {
         final DBObject doc = new BasicDBObject("_id", 1);
         collection.insert(doc);

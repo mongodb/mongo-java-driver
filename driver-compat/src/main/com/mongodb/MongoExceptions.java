@@ -17,38 +17,31 @@
 package com.mongodb;
 
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.command.MongoWriteConcernException;
-import org.mongodb.connection.MongoSocketException;
-import org.mongodb.connection.MongoTimeoutException;
-import org.mongodb.connection.MongoWaitQueueFullException;
-import org.mongodb.operation.MongoCursorNotFoundException;
-import org.mongodb.operation.ServerCursor;
 
 import java.io.IOException;
 
 public class MongoExceptions {
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
         final Throwable cause = e.getCause();
-        if (e instanceof MongoDuplicateKeyException) {
-            return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
+        if (e instanceof org.mongodb.command.MongoDuplicateKeyException) {
+            return new MongoDuplicateKeyException((org.mongodb.command.MongoDuplicateKeyException) e);
         } else if (e instanceof MongoWriteConcernException) {
             return new WriteConcernException((MongoWriteConcernException) e);
         } else if (e instanceof org.mongodb.MongoInternalException) {
             return new MongoInternalException((org.mongodb.MongoInternalException) e);
-        } else if (e instanceof MongoTimeoutException) {
-            return new ConnectionWaitTimeOut(e.getMessage());
-        } else if (e instanceof MongoWaitQueueFullException) {
-            return new SemaphoresOut(e.getMessage());
-        } else if (e instanceof MongoCursorNotFoundException) {
-            final ServerCursor serverCursor = ((MongoCursorNotFoundException) e).getCursor();
-            return new MongoException.CursorNotFound((MongoCursorNotFoundException) e);
+        } else if (e instanceof org.mongodb.connection.MongoTimeoutException) {
+            return new MongoTimeoutException(e.getMessage());
+        } else if (e instanceof org.mongodb.connection.MongoWaitQueueFullException) {
+            return new MongoWaitQueueFullException(e.getMessage());
+        } else if (e instanceof org.mongodb.operation.MongoCursorNotFoundException) {
+            return new MongoCursorNotFoundException((org.mongodb.operation.MongoCursorNotFoundException) e);
         } else if (e instanceof MongoCommandFailureException) {
             return new CommandFailureException((MongoCommandFailureException) e);
         } else if (e instanceof org.mongodb.MongoInterruptedException) {
             return new MongoInterruptedException((org.mongodb.MongoInterruptedException) e);
-        } else if (e instanceof MongoSocketException && cause instanceof IOException) {
-            return new MongoException.Network(e.getMessage(), (IOException) cause);
+        } else if (e instanceof org.mongodb.connection.MongoSocketException && cause instanceof IOException) {
+            return new MongoSocketException(e.getMessage(), (IOException) cause);
         }
 
         return new MongoException(e.getMessage(), cause);

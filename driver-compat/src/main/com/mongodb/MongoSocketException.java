@@ -16,10 +16,27 @@
 
 package com.mongodb;
 
-public class ConnectionWaitTimeOut extends NoMoreConnection {
+import java.io.IOException;
+
+/**
+ * Subclass of {@link MongoException} representing a network-related exception
+ */
+public class MongoSocketException extends MongoException {
+
     private static final long serialVersionUID = -4415279469780082174L;
 
-    ConnectionWaitTimeOut(final String message) {
-        super(message);
+    /**
+     * @param msg the message
+     * @param ioe the cause
+     */
+    public MongoSocketException(final String msg, final IOException ioe) {
+        super(-2, msg, ioe);
+    }
+
+    /**
+     * @param ioe the cause
+     */
+    public MongoSocketException(final IOException ioe) {
+        super(ioe.toString(), ioe);
     }
 }
