@@ -19,46 +19,26 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.operation.protocol.RemoveProtocol;
-import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
-public class RemoveOperation implements Operation<CommandResult> {
-    private final MongoNamespace namespace;
+import static org.mongodb.assertions.Assertions.notNull;
+
+public class RemoveOperation extends WriteOperationBase {
     private final Remove remove;
     private final Encoder<Document> queryEncoder;
-    private final BufferProvider bufferProvider;
-    private final Session session;
-    private final boolean closeSession;
 
     public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
                            final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        this.namespace = namespace;
-        this.remove = remove;
-        this.queryEncoder = queryEncoder;
-        this.bufferProvider = bufferProvider;
-        this.session = session;
-        this.closeSession = closeSession;
+        super(namespace, remove.getWriteConcern(), bufferProvider, session, closeSession);
+        this.remove = notNull("remove", remove);
+        this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
-    public CommandResult execute() {
-        ServerConnectionProvider provider = session.createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-        Connection connection = provider.getConnection();
-        try {
-            return new RemoveProtocol(namespace, remove, queryEncoder, bufferProvider, provider.getServerDescription(),
-                    provider.getConnection(), true).execute();
-        } finally {
-            connection.close();
-            if (closeSession) {
-                session.close();
-            }
-        }
+    protected RemoveProtocol getProtocol(final ServerConnectionProvider provider) {
+        return new RemoveProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), provider.getServerDescription(),
+                provider.getConnection(), true);
     }
-
 }

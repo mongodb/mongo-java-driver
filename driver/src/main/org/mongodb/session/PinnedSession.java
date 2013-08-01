@@ -24,6 +24,7 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.ServerConnectionProvider;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -39,6 +40,11 @@ public class PinnedSession implements Session {
     private Cluster cluster;
     private boolean isClosed;
 
+    /**
+     * Create a new session with the given cluster.
+     *
+     * @param cluster the cluster, which may not be null
+     */
     public PinnedSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
     }
@@ -69,6 +75,8 @@ public class PinnedSession implements Session {
     public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
+        isTrue("open", !isClosed());
+
         synchronized (this) {
             final Server serverToUse;
             final Connection connectionToUse;

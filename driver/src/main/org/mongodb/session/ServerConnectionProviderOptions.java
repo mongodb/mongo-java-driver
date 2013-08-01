@@ -18,6 +18,8 @@ package org.mongodb.session;
 
 import org.mongodb.connection.ServerSelector;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 /**
  * @since 3.0
  */
@@ -27,7 +29,7 @@ public class ServerConnectionProviderOptions {
 
     public ServerConnectionProviderOptions(final boolean query, final ServerSelector serverSelector) {
         isQuery = query;
-        this.serverSelector = serverSelector;
+        this.serverSelector = notNull("serverSelector", serverSelector);
     }
 
     public boolean isQuery() {

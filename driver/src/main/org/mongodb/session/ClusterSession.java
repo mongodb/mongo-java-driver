@@ -23,6 +23,9 @@ import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.ServerConnectionProvider;
 
+import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
+
 /**
  * @since 3.0
  */
@@ -31,12 +34,21 @@ public class ClusterSession implements Session {
     private Cluster cluster;
     private volatile boolean isClosed;
 
+    /**
+     * Create a new session with the given cluster.
+     *
+     * @param cluster the cluster, which may not be null
+     */
     public ClusterSession(final Cluster cluster) {
-        this.cluster = cluster;
+        this.cluster = notNull("cluster", cluster);
     }
 
     @Override
     public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+        notNull("options", options);
+        notNull("serverSelector", options.getServerSelector());
+        isTrue("open", !isClosed);
+
         final Server server = cluster.getServer(options.getServerSelector());
         return new ServerConnectionProvider() {
             @Override

@@ -20,6 +20,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -35,6 +37,7 @@ import spock.lang.Subject
 import static com.mongodb.MongoExceptions.mapException
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static org.mongodb.Fixture.getBufferProvider
 
 class DBCollectionSpecification extends Specification {
 //    private final Mongo mongo = Mock()
@@ -50,6 +53,7 @@ class DBCollectionSpecification extends Specification {
         database.getCluster() >> { cluster }
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription() }
+        database.getBufferPool() >> {getBufferProvider()}
         cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
 
         //TODO: this shouldn't be required.  I think.

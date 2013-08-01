@@ -22,33 +22,29 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryCursor;
-import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.Session;
 
-public class QueryOperation<T> implements Operation<MongoCursor<T>> {
+import static org.mongodb.assertions.Assertions.notNull;
+
+public class QueryOperation<T> extends OperationBase<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
-    private final Session session;
-    private final boolean closeSession;
     private final MongoNamespace namespace;
-    private final BufferProvider bufferProvider;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                           final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
                           final Session session, final boolean closeSession) {
-        this.namespace = namespace;
-        this.bufferProvider = bufferProvider;
-        this.find = find;
-        this.queryEncoder = queryEncoder;
-        this.resultDecoder = resultDecoder;
-        this.session = session;
-        this.closeSession = closeSession;
+        super(bufferProvider, session, closeSession);
+        this.namespace = notNull("namespace", namespace);
+        this.find = notNull("find", find);
+        this.queryEncoder = notNull("queryEncoder", queryEncoder);
+        this.resultDecoder = notNull("resultDecoder", resultDecoder);
     }
 
     @Override
     public MongoCursor<T> execute() {
-         return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, bufferProvider, session, closeSession);
+         return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getBufferProvider(), getSession(), isCloseSession());
     }
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -25,13 +27,14 @@ import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
-import org.mongodb.session.Session
 import org.mongodb.operation.MongoCursorNotFoundException
 import org.mongodb.operation.ServerCursor
+import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.primary
+import static org.mongodb.Fixture.getBufferProvider
 
 class DBSpecification extends Specification {
     private final Session session = Mock()
@@ -44,6 +47,7 @@ class DBSpecification extends Specification {
     def setup() {
         mongo.getCluster() >> { cluster }
         mongo.getSession() >> { session }
+        mongo.getBufferProvider() >> { getBufferProvider() }
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())
     }

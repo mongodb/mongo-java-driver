@@ -18,45 +18,26 @@ package org.mongodb.operation;
 
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.operation.protocol.InsertProtocol;
-import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
-public class InsertOperation<T> implements Operation<CommandResult> {
-    private final MongoNamespace namespace;
+import static org.mongodb.assertions.Assertions.notNull;
+
+public class InsertOperation<T> extends WriteOperationBase {
     private final Insert<T> insert;
     private final Encoder<T> encoder;
-    private final BufferProvider bufferProvider;
-    private final Session session;
-    private final boolean closeSession;
 
     public InsertOperation(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
                            final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        this.namespace = namespace;
-        this.insert = insert;
-        this.encoder = encoder;
-        this.bufferProvider = bufferProvider;
-        this.session = session;
-        this.closeSession = closeSession;
+        super(namespace, insert.getWriteConcern(), bufferProvider, session, closeSession);
+        this.insert = notNull("insert", insert);
+        this.encoder = notNull("encoder", encoder);
     }
 
     @Override
-    public CommandResult execute() {
-        ServerConnectionProvider provider = session.createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-        Connection connection = provider.getConnection();
-        try {
-            return new InsertProtocol<T>(namespace, insert, encoder, bufferProvider, provider.getServerDescription(),
-                    provider.getConnection(), true).execute();
-        } finally {
-            connection.close();
-            if (closeSession) {
-                session.close();
-            }
-        }
+    protected InsertProtocol<T> getProtocol(final ServerConnectionProvider provider) {
+        return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), provider.getServerDescription(),
+                provider.getConnection(), true);
     }
 }

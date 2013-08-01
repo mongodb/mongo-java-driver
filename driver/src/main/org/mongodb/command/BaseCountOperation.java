@@ -23,7 +23,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 
-public class BaseCountOperation {
+public abstract class BaseCountOperation {
     private final Count count;
     private final Codec<Document> codec;
     private final BufferProvider bufferProvider;

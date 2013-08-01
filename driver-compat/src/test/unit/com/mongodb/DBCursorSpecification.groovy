@@ -18,24 +18,35 @@
 
 
 
+
+
 package com.mongodb
 
+import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Document
+import org.mongodb.MongoNamespace
+import org.mongodb.codecs.PrimitiveCodecs
 import org.mongodb.operation.MongoQueryFailureException
+import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.PRIMARY
+import static org.mongodb.Fixture.getBufferProvider
 
 class DBCursorSpecification extends Specification {
-    private final org.mongodb.session.Session session = Mock()
+    private final Session session = Mock()
     private final DBCollection collection = Mock();
 
     @Subject
     private final DBCursor dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), PRIMARY);
 
     def setup() {
+        collection.getDocumentCodec() >> { new DocumentCodec(PrimitiveCodecs.createDefault()) }
+        collection.getNamespace() >> { new MongoNamespace("test", "test") }
         collection.getSession() >> { session }
+        collection.getBufferPool() >> {getBufferProvider()}
+
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
