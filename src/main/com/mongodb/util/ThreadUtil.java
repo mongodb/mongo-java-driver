@@ -22,6 +22,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class ThreadUtil {
 
     /** Creates an prints a stack trace */

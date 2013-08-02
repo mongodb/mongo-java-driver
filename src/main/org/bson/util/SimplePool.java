@@ -21,6 +21,10 @@ package org.bson.util;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
+ */
+@Deprecated
 public abstract class SimplePool<T> {
 
     public SimplePool( int max ){

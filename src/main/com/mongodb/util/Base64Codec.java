@@ -44,7 +44,9 @@ package com.mongodb.util;
  * Original Thanks to "commons" project in ws.apache.org for this code.
  * http://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/
  * </p>
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
  */
+@Deprecated
 public class Base64Codec {
 
     private static final int BYTES_PER_UNENCODED_BLOCK = 3;

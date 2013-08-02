@@ -18,6 +18,10 @@
 
 package com.mongodb.util;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class StringBuilderPool extends SimplePool<StringBuilder> {
 
     /** Initializes a pool of a given number of StringBuilders, each of a certain size.

@@ -18,6 +18,10 @@
 
 package com.mongodb.util;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class TimeConstants {
     
     public static final long MS_MILLISECOND = 1;

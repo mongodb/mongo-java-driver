@@ -18,7 +18,10 @@ package org.bson.util;
 
 /**
  * Design by contract assertions.
+ *
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
+@Deprecated
 public class Assertions {
     public static <T> T notNull(final String name, final T notNull) throws IllegalArgumentException {
         if (notNull == null) {

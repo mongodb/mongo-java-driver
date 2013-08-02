@@ -27,9 +27,12 @@ import java.lang.annotation.*;
  * <p>
  * Immutable objects are inherently thread-safe; they may be passed between threads or
  * published without synchronization.
+ *
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface Immutable {
 }

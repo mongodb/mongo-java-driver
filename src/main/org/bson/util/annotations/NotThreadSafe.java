@@ -19,9 +19,12 @@ import java.lang.annotation.*;
  * that might otherwise be assumed to be thread-safe, despite the fact that it is a bad
  * idea to assume a class is thread-safe without good reason.
  * @see ThreadSafe
+ *
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface NotThreadSafe {
 }

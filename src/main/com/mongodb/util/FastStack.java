@@ -21,6 +21,10 @@ package com.mongodb.util;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class FastStack<T>{
 
     public void push( T t ){

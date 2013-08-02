@@ -20,6 +20,10 @@ package com.mongodb.util;
 
 import java.util.TreeMap;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class OptionMap extends TreeMap<String,String> {
     
     private static final long serialVersionUID = -4415279469780082174L;

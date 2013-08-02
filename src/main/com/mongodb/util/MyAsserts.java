@@ -21,6 +21,10 @@ package com.mongodb.util;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class MyAsserts {
 
     public static class MyAssert extends RuntimeException {

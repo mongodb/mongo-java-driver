@@ -19,9 +19,11 @@ import java.lang.annotation.*;
  * may put the object into an invalid state, regardless of the interleaving of those actions
  * by the runtime, and without requiring any additional synchronization or coordination on the
  * part of the caller.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface ThreadSafe {
 }
