@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+
 package com.mongodb;
+
 
 import org.bson.BSONObject;
 import org.mongodb.operation.MongoServerException;
+
 
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
@@ -31,8 +34,7 @@ public class MongoException extends RuntimeException {
         super("Chained exception", e);
         if (e instanceof MongoServerException) {
             code = ((MongoServerException) e).getErrorCode();
-        }
-        else {
+        } else {
             code = -1;
         }
     }
@@ -47,7 +49,7 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param code the error code
-     * @param msg  the message
+     * @param msg the message
      */
     public MongoException(final int code, final String msg) {
         super(msg);
@@ -56,7 +58,7 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param msg the message
-     * @param t   the throwable cause
+     * @param t the throwable cause
      */
     public MongoException(final String msg, final Throwable t) {
         super(msg, t);
@@ -65,8 +67,8 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param code the error code
-     * @param msg  the message
-     * @param t    the throwable cause
+     * @param msg the message
+     * @param t the throwable cause
      */
     public MongoException(final int code, final String msg, final Throwable t) {
         super(msg, t);
@@ -91,4 +93,19 @@ public class MongoException extends RuntimeException {
         return code;
     }
 
+    /**
+     * @deprecated This class will be dropped in 3.x versions.
+     */
+    public static class DuplicateKey extends MongoDuplicateKeyException {
+
+        private static final long serialVersionUID = -4415279469780082174L;
+
+        public DuplicateKey(final org.mongodb.command.MongoDuplicateKeyException e) {
+            super(e);
+        }
+
+        public DuplicateKey(final CommandResult commandResult) {
+            super(commandResult);
+        }
+    }
 }

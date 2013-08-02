@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+
 package com.mongodb;
 
-import com.mongodb.codecs.CollectibleDBObjectCodec;
-import com.mongodb.codecs.DBDecoderAdapter;
-import com.mongodb.codecs.DBEncoderAdapter;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
@@ -65,10 +68,9 @@ import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.session.ServerSelectingSession;
 import org.mongodb.util.FieldHelpers;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.mongodb.codecs.CollectibleDBObjectCodec;
+import com.mongodb.codecs.DBDecoderAdapter;
+import com.mongodb.codecs.DBEncoderAdapter;
 
 import static com.mongodb.DBObjects.toDBList;
 import static com.mongodb.DBObjects.toDBObject;
@@ -1288,7 +1290,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void ensureIndex(final String name) {
-        final Index index = new Index(new Index.OrderedKey(name, OrderBy.ASC));
+        final Index index = new Index.Builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         final Insert<Document> insertIndexOperation = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, indexDetails);
@@ -1633,8 +1635,8 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public void dropIndex(final DBObject keys) {
-        final List<Index.Key> keysFromDBObject = getKeysFromDBObject(keys);
-        final Index indexToDrop = new Index(keysFromDBObject.toArray(new Index.Key[keysFromDBObject.size()]));
+        final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(keys);
+        final Index indexToDrop = new Index.Builder().addKeys(keysFromDBObject).build();
         final DropIndex dropIndex = new DropIndex(getName(), indexToDrop.getName());
         getDB().executeCommand(dropIndex);
     }
@@ -1693,26 +1695,6 @@ public class DBCollection implements IDBCollection {
 
     }
 
-    /**
-     * Convenience method to generate an index name from the set of fields it is over.
-     * @param keys the names of the fields used in this index
-     * @return a string representation of this index's fields
-     */
-    public static String genIndexName(final DBObject keys) {
-        final StringBuilder sb = new StringBuilder();
-        for (String s : keys.keySet()) {
-            if (sb.length() > 0){
-                sb.append('_');
-            }
-            sb.append(s).append('_');
-            final Object value = keys.get(s);
-            if (value instanceof Number || value instanceof String) {
-                sb.append(value.toString().replace(' ', '_'));
-            }
-        }
-        return sb.toString();
-    }
-
     @Override
     public String toString() {
         return "DBCollection{" +
@@ -1746,35 +1728,49 @@ public class DBCollection implements IDBCollection {
     private Document toIndexDetailsDocument(final DBObject keys, final DBObject options) {
         // TODO: Check if these are all the supported options. driver:index still not supports all options.
         // Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
-        String name = null;
+        String indexName = null;
         boolean unique = false;
+        boolean dropDups = false;
+        boolean sparse = false;
+        boolean background = false;
+        int expireAfterSeconds = -1;
 
         if (options != null) {
-            if (options.get("name") != null) {
-                name = (String) options.get("name");
-            }
-            if (options.get("unique") != null) {
-                unique = FieldHelpers.asBoolean(options.get("unique"));
+            indexName = (String) options.get("name");
+            unique = FieldHelpers.asBoolean(options.get("unique"));
+            dropDups = FieldHelpers.asBoolean(options.get("dropDups"));
+            sparse = FieldHelpers.asBoolean(options.get("sparse"));
+            background = FieldHelpers.asBoolean(options.get("background"));
+            if (options.get("expireAfterSeconds") != null) {
+                expireAfterSeconds = Integer.parseInt(options.get("expireAfterSeconds").toString());
             }
         }
-        final List<Index.Key> keyList = getKeysFromDBObject(keys);
-        final Index index = new Index(name, unique, keyList.toArray(new Index.Key[keyList.size()]));
+
+        final List<Index.Key<?>> keyList = getKeysFromDBObject(keys);
+        final Index index = new Index.Builder()
+            .name(indexName)
+            .unique(unique)
+            .dropDups(dropDups)
+            .sparse(sparse)
+            .background(background)
+            .expireAfterSeconds(expireAfterSeconds)
+            .addKeys(keyList)
+            .build();
+
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         return indexDetails;
     }
 
-    private List<Index.Key> getKeysFromDBObject(final DBObject fields) {
-        final List<Index.Key> keys = new ArrayList<Index.Key>();
+    private List<Index.Key<?>> getKeysFromDBObject(final DBObject fields) {
+        final List<Index.Key<?>> keys = new ArrayList<Index.Key<?>>();
         for (final String key : fields.keySet()) {
             final Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
-            }
-            else if (keyType.equals("2d")) {
+            } else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
-            }
-            else {
+            } else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
 

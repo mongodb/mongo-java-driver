@@ -14,58 +14,57 @@
  * limitations under the License.
  */
 
+
 package org.mongodb;
 
+
+import java.util.List;
+
 import static org.mongodb.OrderBy.ASC;
+
 
 /**
  * Represents an index to create on the database.  Used as an argument in ensureIndex
  */
 public class Index implements ConvertibleToDocument {
-    private final boolean unique;
     private final String name;
-    private final Document keys = new Document();
+    /**
+     * Ensures that the indexed key value is unique
+     */
+    private final boolean unique;
 
-    public Index(final Key<?>... keys) {
-        for (final Key<?> key : keys) {
-            addKey(key);
-        }
-        unique = false;
-        name = generateIndexName();
-    }
+    /**
+     * Tells the unique index to drop duplicates silently when creating; only the first will be kept
+     */
+    private final boolean dropDups;
 
-    public Index(final String name, final Key<?>... keys) {
-        this(name, false, keys);
-    }
+    /**
+     * Create the index in the background
+     */
+    private final boolean background;
 
-    public Index(final String name, final boolean unique, final Key<?>... keys) {
-        for (final Key<?> key : keys) {
-            addKey(key);
-        }
+    /**
+     * Create the index with the sparse option
+     */
+    private final boolean sparse;
+
+    /**
+     * defines the time to live for documents in the collection
+     */
+    private final int expireAfterSeconds;
+
+    private final Document keys;
+
+    public Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
+        final int expireAfterSeconds, final Document keys) {
+        this.name = name;
         this.unique = unique;
-        this.name = name != null ? name : generateIndexName();
-    }
+        this.dropDups = dropDups;
+        this.sparse = sparse;
 
-    public Index(final String... keyNames) {
-        for (final String key : keyNames) {
-            addKey(key, ASC);
-        }
-        unique = false;
-        name = generateIndexName();
-    }
-
-    public Index(final String key) {
-        this(key, ASC, false);
-    }
-
-    public Index(final String key, final OrderBy orderBy) {
-        this(key, orderBy, false);
-    }
-
-    public Index(final String key, final OrderBy orderBy, final boolean unique) {
-        addKey(key, orderBy);
-        this.unique = unique;
-        this.name = generateIndexName();
+        this.background = background;
+        this.expireAfterSeconds = expireAfterSeconds;
+        this.keys = keys;
     }
 
     public String getName() {
@@ -77,38 +76,23 @@ public class Index implements ConvertibleToDocument {
         final Document indexDetails = new Document();
         indexDetails.append("name", name);
         indexDetails.append("key", keys);
-        indexDetails.append("unique", unique);
+        if (unique) {
+            indexDetails.append("unique", unique);
+        }
+        if (sparse) {
+            indexDetails.append("sparse", sparse);
+        }
+        if (dropDups) {
+            indexDetails.append("dropDups", dropDups);
+        }
+        if (background) {
+            indexDetails.append("background", background);
+        }
+        if (expireAfterSeconds != -1) {
+            indexDetails.append("expireAfterSeconds", expireAfterSeconds);
+        }
 
         return indexDetails;
-    }
-
-    private void addKey(final Key<?> key) {
-        keys.append(key.getFieldName(), key.getValue());
-    }
-
-    private void addKey(final String fieldName, final OrderBy orderBy) {
-        keys.append(fieldName, orderBy.getIntRepresentation());
-    }
-
-    /**
-     * Convenience method to generate an index name from the set of fields it is over.
-     *
-     * @return a string representation of this index's fields
-     */
-    private String generateIndexName() {
-        final StringBuilder indexName = new StringBuilder();
-        for (final String keyNames : this.keys.keySet()) {
-            if (indexName.length() != 0) {
-                indexName.append('_');
-            }
-            indexName.append(keyNames).append('_');
-            //is this ever anything other than an int?
-            final Object ascOrDescValue = this.keys.get(keyNames);
-            if (ascOrDescValue instanceof Number || ascOrDescValue instanceof String) {
-                indexName.append(ascOrDescValue.toString().replace(' ', '_'));
-            }
-        }
-        return indexName.toString();
     }
 
     /**
@@ -156,5 +140,146 @@ public class Index implements ConvertibleToDocument {
         String getFieldName();
 
         T getValue();
+    }
+
+    public static class Builder {
+        private String name;
+        private boolean unique = false;
+        private boolean dropDups = false;
+        private boolean background = false;
+        private boolean sparse = false;
+        private int expireAfterSeconds = -1;
+        private final Document keys = new Document();
+
+        /**
+         * Sets the name of the index.
+         */
+        public Builder name(final String indexName) {
+            this.name = indexName;
+            return this;
+        }
+
+        /**
+         * Ensures that the indexed key value is unique
+         */
+        public Builder unique() {
+            unique = true;
+            return this;
+        }
+
+        public Builder unique(final boolean value) {
+            this.unique = value;
+            return this;
+        }
+
+        /**
+         * Tells the unique index to drop duplicates silently when creating; only the first will be kept
+         */
+        public Builder dropDups() {
+            dropDups = true;
+            return this;
+        }
+
+        public Builder dropDups(final boolean value) {
+            this.dropDups = value;
+            return this;
+        }
+
+        /**
+         * Create the index in the background
+         */
+        public Builder background() {
+            background = true;
+            return this;
+        }
+
+        public Builder background(final boolean value) {
+            this.background = value;
+            return this;
+        }
+
+        /**
+         * Create the index with the sparse option
+         */
+        public Builder sparse() {
+            sparse = true;
+            return this;
+        }
+
+        public Builder sparse(final boolean value) {
+            this.sparse = value;
+            return this;
+        }
+
+        /**
+         * Defines the time to live for documents in the collection
+         */
+        public Builder expireAfterSeconds(final int seconds) {
+            expireAfterSeconds = seconds;
+            return this;
+        }
+
+        public Builder addKey(final String key) {
+            return addKey(key, ASC);
+        }
+
+        public Builder addKeys(final String... keyNames) {
+            for (final String keyName : keyNames) {
+                addKey(keyName);
+            }
+            return this;
+        }
+
+        public Builder addKey(final String key, final OrderBy orderBy) {
+            keys.put(key, orderBy.getIntRepresentation());
+            return this;
+        }
+
+        public Builder addKey(final Key<?> key) {
+            keys.put(key.getFieldName(), key.getValue());
+            return this;
+        }
+
+        public Builder addKeys(final Key<?>... newKeys) {
+            for (final Key<?> key : newKeys) {
+                addKey(key);
+            }
+            return this;
+        }
+
+        public Builder addKeys(final List<Key<?>> newKeys) {
+            for (final Key<?> key : newKeys) {
+                addKey(key);
+            }
+            return this;
+        }
+
+        /**
+         * Convenience method to generate an index name from the set of fields it is over.
+         *
+         * @return a string representation of this index's fields
+         */
+        private String generateIndexName() {
+            final StringBuilder indexName = new StringBuilder();
+            for (final String keyNames : this.keys.keySet()) {
+                if (indexName.length() != 0) {
+                    indexName.append('_');
+                }
+                indexName.append(keyNames).append('_');
+                //is this ever anything other than an int?
+                final Object ascOrDescValue = this.keys.get(keyNames);
+                if (ascOrDescValue instanceof Number || ascOrDescValue instanceof String) {
+                    indexName.append(ascOrDescValue.toString().replace(' ', '_'));
+                }
+            }
+            return indexName.toString();
+        }
+
+        public Index build() {
+            if (name == null) {
+                name = generateIndexName();
+            }
+            return new Index(name, unique, dropDups, sparse, background, expireAfterSeconds, keys);
+        }
     }
 }
