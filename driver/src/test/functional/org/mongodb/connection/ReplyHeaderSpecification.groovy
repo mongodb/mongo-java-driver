@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection
 
 import org.bson.io.BasicInputBuffer
@@ -25,40 +27,46 @@ import org.mongodb.MongoInternalException
 class ReplyHeaderSpecification extends FunctionalSpecification {
 
     def 'should parse reply header'() {
-        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        outputBuffer.writeInt(36);
-        outputBuffer.writeInt(45);
-        outputBuffer.writeInt(23);
-        outputBuffer.writeInt(1);
-        outputBuffer.writeInt(1);
-        outputBuffer.writeLong(9000);
-        outputBuffer.writeInt(4);
-        outputBuffer.writeInt(30);
+        def outputBuffer = new BasicOutputBuffer();
+        outputBuffer.with {
+            writeInt(36)
+            writeInt(45)
+            writeInt(23)
+            writeInt(1)
+            writeInt(1)
+            writeLong(9000)
+            writeInt(4)
+            writeInt(30)
+        }
         InputBuffer buffer = new BasicInputBuffer(outputBuffer.byteBuffers.get(0));
 
         when:
         def replyHeader = new ReplyHeader(buffer);
 
         then:
-        replyHeader.messageLength == 36
-        replyHeader.requestId == 45
-        replyHeader.responseTo == 23
-        replyHeader.responseFlags == 1
-        replyHeader.cursorId == 9000
-        replyHeader.startingFrom == 4
-        replyHeader.numberReturned == 30
+        replyHeader.with {
+            messageLength == 36
+            requestId == 45
+            responseTo == 23
+            responseFlags == 1
+            cursorId == 9000
+            startingFrom == 4
+            numberReturned == 30
+        }
     }
 
     def 'should throw MongoInternalException on incorrect opCode'() {
-        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        outputBuffer.writeInt(36);
-        outputBuffer.writeInt(45);
-        outputBuffer.writeInt(23);
-        outputBuffer.writeInt(2);
-        outputBuffer.writeInt(0);
-        outputBuffer.writeLong(2);
-        outputBuffer.writeInt(0);
-        outputBuffer.writeInt(0);
+        def outputBuffer = new BasicOutputBuffer();
+        outputBuffer.with {
+            writeInt(36)
+            writeInt(45)
+            writeInt(23)
+            writeInt(2)
+            writeInt(0)
+            writeLong(2)
+            writeInt(0)
+            writeInt(0)
+        }
         InputBuffer buffer = new BasicInputBuffer(outputBuffer.byteBuffers.get(0));
 
         when:
