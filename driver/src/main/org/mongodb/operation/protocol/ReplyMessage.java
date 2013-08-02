@@ -42,10 +42,6 @@ public class ReplyMessage<T> {
                             replyHeader.getResponseTo(), requestId));
         }
 
-        if (replyHeader.getOpCode() != RequestMessage.OpCode.OP_REPLY.getValue()) {
-            throw new MongoInternalException(String.format("Invalid opCode for a reply message: %d", replyHeader.getOpCode()));
-        }
-
         this.replyHeader = replyHeader;
         this.elapsedNanoseconds = elapsedNanoseconds;
 

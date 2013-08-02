@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.bson.io.InputBuffer;
+import org.mongodb.MongoInternalException;
 
 public class ReplyHeader {
     /**
@@ -26,11 +27,11 @@ public class ReplyHeader {
 
     private static final int CURSOR_NOT_FOUND_RESPONSE_FLAG = 1;
     private static final int QUERY_FAILURE_RESPONSE_FLAG = 2;
+    private static final int OP_REPLY_OP_CODE = 1;
 
     private final int messageLength;
     private final int requestId;
     private final int responseTo;
-    private final int opCode;
     private final int responseFlags;
     private final long cursorId;
     private final int startingFrom;
@@ -40,7 +41,12 @@ public class ReplyHeader {
         messageLength = headerInputBuffer.readInt32();
         requestId = headerInputBuffer.readInt32();
         responseTo = headerInputBuffer.readInt32();
-        opCode = headerInputBuffer.readInt32();  // TODO: check for validity
+        int opCode = headerInputBuffer.readInt32();
+        if (opCode != OP_REPLY_OP_CODE) {
+            throw new MongoInternalException(
+                    String.format("The opCode (%d) in the response does not match the expected opCode (%d)",
+                            opCode, OP_REPLY_OP_CODE));
+        }
         responseFlags = headerInputBuffer.readInt32();
         cursorId = headerInputBuffer.readInt64();
         startingFrom = headerInputBuffer.readInt32();
@@ -57,10 +63,6 @@ public class ReplyHeader {
 
     public int getResponseTo() {
         return responseTo;
-    }
-
-    public int getOpCode() {
-        return opCode;
     }
 
     public int getResponseFlags() {
