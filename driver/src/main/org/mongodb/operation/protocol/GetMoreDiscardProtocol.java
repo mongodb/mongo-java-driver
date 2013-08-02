@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.operation.protocol;
 
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.protocol.Protocol;
 
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 

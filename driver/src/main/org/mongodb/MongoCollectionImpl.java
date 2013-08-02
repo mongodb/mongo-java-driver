@@ -37,7 +37,6 @@ import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.Replace;
@@ -46,6 +45,7 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
+import org.mongodb.operation.protocol.QueryResult;
 
 import java.util.ArrayList;
 import java.util.Collection;

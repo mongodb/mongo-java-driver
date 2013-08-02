@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.AsyncOperation;
 import org.mongodb.Decoder;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.operation.protocol.QueryResult;
 
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 

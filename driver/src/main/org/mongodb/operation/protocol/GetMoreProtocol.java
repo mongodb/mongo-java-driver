@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.operation.protocol;
 
 import org.mongodb.Decoder;
 import org.mongodb.Document;
@@ -25,9 +25,10 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.protocol.GetMoreMessage;
-import org.mongodb.operation.protocol.Protocol;
-import org.mongodb.operation.protocol.ReplyMessage;
+import org.mongodb.operation.GetMore;
+import org.mongodb.operation.MongoCursorNotFoundException;
+import org.mongodb.operation.MongoQueryFailureException;
+import org.mongodb.operation.ServerCursor;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;

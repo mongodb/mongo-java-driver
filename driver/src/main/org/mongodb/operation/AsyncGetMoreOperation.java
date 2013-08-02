@@ -23,6 +23,7 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.protocol.GetMoreMessage;
+import org.mongodb.operation.protocol.QueryResult;
 
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;

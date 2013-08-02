@@ -28,7 +28,6 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.MongoQueryFailureException;
-import org.mongodb.operation.QueryResult;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;

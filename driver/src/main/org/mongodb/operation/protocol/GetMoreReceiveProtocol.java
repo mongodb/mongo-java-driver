@@ -20,7 +20,6 @@ import org.mongodb.Decoder;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.QueryResult;
 
 import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 

@@ -24,6 +24,7 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.protocol.QueryResult;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 class QueryResultCallback<T> extends ResponseCallback {

@@ -22,6 +22,7 @@ import org.mongodb.MongoInternalException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.protocol.QueryResult;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 class GetMoreResultCallback<T> extends ResponseCallback {

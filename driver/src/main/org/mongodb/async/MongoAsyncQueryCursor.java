@@ -31,8 +31,8 @@ import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.QueryResult;
 import org.mongodb.operation.ServerCursor;
+import org.mongodb.operation.protocol.QueryResult;
 import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.AsyncSession;
 
