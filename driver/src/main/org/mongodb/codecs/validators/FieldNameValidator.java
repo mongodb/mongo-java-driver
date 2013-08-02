@@ -29,7 +29,7 @@ public class FieldNameValidator implements Validator<String> {
             throw new IllegalArgumentException(format("Fields stored in the db can't have . in them. "
                                                       + "(Bad Key: '%s')", value));
         }
-        if (value.startsWith("$") && !(value.equals("$ref") || value.equals("$id") || value.equals("$db"))) {
+        if (value.startsWith("$")) {
             throw new IllegalArgumentException(format("Fields stored in the db can't start with '$' "
                                                       + "(Bad Key: '%s')", value));
         }

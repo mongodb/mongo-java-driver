@@ -40,11 +40,4 @@ public class FieldNameValidatorTest {
     public void testFieldNameStartsWithDollarValidation() {
         fieldNameValidator.validate("$1");
     }
-
-    @Test
-    public void testDatabaseReferenceFieldNames() {
-        fieldNameValidator.validate("$id");
-        fieldNameValidator.validate("$ref");
-        fieldNameValidator.validate("$db");
-    }
 }

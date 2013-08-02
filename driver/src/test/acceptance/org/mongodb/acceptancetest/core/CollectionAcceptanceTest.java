@@ -16,6 +16,8 @@
 
 package org.mongodb.acceptancetest.core;
 
+import org.bson.types.Binary;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
@@ -23,9 +25,15 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.WriteConcern;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
@@ -94,6 +102,36 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         newCollection.tools().drop();
 
         assertThat(database.tools().getCollectionNames().contains(collectionName), is(false));
+    }
+
+    @Test
+    public void shouldAcceptDocumentsWithAllValidValueTypes() {
+        Document doc = new Document();
+        doc.append("_id", new ObjectId());
+        doc.append("bool", true);
+        doc.append("int", 3);
+        doc.append("short", (short) 4);
+        doc.append("long", 5L);
+        doc.append("byte array", new byte[] {1, 2, 3});
+        doc.append("int array", new int[] {4, 5, 6});
+        doc.append("list", Arrays.asList(7, 8, 9));
+        doc.append("doc list", Arrays.asList(new Document("x", 1), new Document("x", 2)));
+//        doc.append("db ref", new DBRef(new ObjectId(), "test.test"));  // see JAVA-918
+        doc.append("binary", new Binary((byte) 42, new byte[] {10, 11, 12}));
+
+        collection.insert(doc);
+        Document found = collection.one();
+        assertNotNull(found);
+        assertEquals(ObjectId.class, found.get("_id").getClass());
+        assertEquals(Boolean.class, found.get("bool").getClass());
+        assertEquals(Integer.class, found.get("int").getClass());
+        assertEquals(Integer.class, found.get("short").getClass());
+        assertEquals(Long.class, found.get("long").getClass());
+        assertEquals(byte[].class, found.get("byte array").getClass());
+        assertTrue(found.get("int array") instanceof List);
+        assertTrue(found.get("list") instanceof List);
+        assertTrue(found.get("doc list") instanceof List);
+        assertEquals(Binary.class, found.get("binary").getClass());
     }
 
     @Test(expected = IllegalArgumentException.class)
