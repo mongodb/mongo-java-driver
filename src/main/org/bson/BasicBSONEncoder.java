@@ -480,6 +480,11 @@ public class BasicBSONEncoder implements BSONEncoder {
         for ( int i=0; i<len; ){
             int c = Character.codePointAt( str , i );
 
+            if (c == 0x0) {
+                throw new BSONException(
+                        String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
+            }
+
             if ( c < 0x80 ){
                 _buf.write( (byte)c );
                 total += 1;
