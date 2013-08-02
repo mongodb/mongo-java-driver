@@ -82,7 +82,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
      * @param o the object to convert
      * @return an <code>ObjectId</code> if it can be massaged, null otherwise
+     *
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
+    @Deprecated
     public static ObjectId massageToObjectId( Object o ){
         if ( o == null )
             return null;
@@ -107,6 +110,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         this( time , _genmachine , inc );
     }
 
+    /**
+     * @deprecated {@code ObjectId}'s constructed this way do not conform to
+     *             the <a href="http://docs.mongodb.org/manual/reference/object-id/">spec</a>.
+     *             Please use {@link org.bson.types.ObjectId#ObjectId(byte[])} instead.
+     */
+    @Deprecated
     public ObjectId( Date time , int machine , int inc ){
         _time = (int)(time.getTime() / 1000);
         _machine = machine;
@@ -122,6 +131,14 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         this( s , false );
     }
 
+    /**
+     * Constructs a new instance of {@code ObjectId} from a string.
+     * @param s the string representation of ObjectId. Can contains only [0-9]|[a-f]|[A-F] characters.
+     * @param babble if {@code true} - convert to 'babble' objectId format
+     *
+     * @deprecated 'babble' format is deprecated. Please use {@link #ObjectId(String)} instead.
+     */
+    @Deprecated
     public ObjectId( String s , boolean babble ){
 
         if ( ! isValid( s ) )
@@ -156,8 +173,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * @param time time in seconds
      * @param machine machine ID
      * @param inc incremental value
+     * @deprecated {@code ObjectId}'s constructed this way are not conform
+     *             the <a href="http://docs.mongodb.org/manual/reference/object-id/">spec</a>.
+     *             Please use {@link org.bson.types.ObjectId#ObjectId(byte[])} instead.
      */
-    public ObjectId( int time , int machine , int inc ){
+    @Deprecated
+    public ObjectId(int time, int machine, int inc) {
         _time = time;
         _machine = machine;
         _inc = inc;
@@ -195,10 +216,35 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
             _inc == other._inc;
     }
 
+    /**
+     * @deprecated 'babble' format is deprecated. Please use {@link #toHexString()} instead.
+     */
+    @Deprecated
     public String toStringBabble(){
         return babbleToMongod( toStringMongod() );
     }
 
+    /**
+     * Converts this instance into a 24-byte hexadecimal string representation.
+     *
+     * @return a string representation of the ObjectId in hexadecimal format
+     */
+    public String toHexString() {
+        final StringBuilder buf = new StringBuilder(24);
+
+        for (final byte b : toByteArray()) {
+            buf.append(String.format("%02x", b & 0xff));
+        }
+
+        return buf.toString();
+    }
+
+    /**
+     * @return a string representation of the ObjectId in hexadecimal format
+     *
+     * @deprecated Please use {@link #toHexString()} instead.
+     */
+    @Deprecated
     public String toStringMongod(){
         byte b[] = toByteArray();
 
@@ -229,6 +275,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return s.substring( p * 2 , ( p * 2 ) + 2 );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     public static String babbleToMongod( String b ){
         if ( ! isValid( b ) )
             throw new IllegalArgumentException( "invalid object id: " + b );
@@ -274,56 +324,164 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return _compareUnsigned( _inc , id._inc );
     }
 
-    public int getMachine(){
+    /**
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     */
+    public int getMachineIdentifier() {
         return _machine;
     }
 
     /**
-     * Gets the time of this ID, in milliseconds
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @deprecated Please use {@code #getMachineIdentifier()} instead.
      */
+    @Deprecated
+    public int getMachine() {
+        return _machine;
+    }
+
+    /**
+     * Gets the timestamp as a {@code Date} instance.
+     *
+     * @return the Date
+     */
+    public Date getDate() {
+        return new Date(_time * 1000L);
+    }
+
+    /**
+     * Gets the time of this ID, in milliseconds
+     *
+     * @deprecated Please use {@link #getDate()} instead.
+     */
+    @Deprecated
     public long getTime(){
         return _time * 1000L;
     }
 
     /**
-     * Gets the time of this ID, in seconds
+     * Gets the timestamp (number of seconds since the Unix epoch).
+     *
+     * @return the timestamp
      */
-    public int getTimeSecond(){
+    public int getTimestamp() {
         return _time;
     }
 
-    public int getInc(){
+    /**
+     * Gets the time of this ID, in seconds.
+     * @deprecated Please use {@link #getTimestamp()} instead.
+     */
+    @Deprecated
+    public int getTimeSecond() {
+        return _time;
+    }
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     */
+    public int getCounter() {
         return _inc;
     }
 
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     * @see org.bson.types.ObjectId#getCounter()
+     * @deprecated Please use the {@link #getCounter()} instead.
+     */
+    @Deprecated
+    public int getInc() {
+        return _inc;
+    }
+
+    /**
+     * Gets the timestamp.
+     *
+     * @return the timestamp
+     * @see org.bson.types.ObjectId#getTimestamp()
+     * @deprecated Please use {@link #getTimestamp()} instead.
+     */
+    @Deprecated
     public int _time(){
         return _time;
     }
+
+    /**
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @see org.bson.types.ObjectId#getMachineIdentifier()
+     * @deprecated Please use {@link #getMachineIdentifier()} instead.
+     */
+    @Deprecated
     public int _machine(){
         return _machine;
     }
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     * @see org.bson.types.ObjectId#getCounter()
+     * @deprecated Please use {@link #getCounter()} instead.
+     */
+    @Deprecated
     public int _inc(){
         return _inc;
     }
 
-    public boolean isNew(){
+    /**
+     * @deprecated 'new' flag breaks the immutability of the {@code ObjectId} class
+     *             and will be dropped in 3.x versions of the driver
+     */
+    @Deprecated
+    public boolean isNew() {
         return _new;
     }
 
+    /**
+     * @deprecated 'new' flag breaks the immutability of the {@code ObjectId} class
+     *             and will be dropped in 3.x versions of the driver
+     */
+    @Deprecated
     public void notNew(){
         _new = false;
     }
 
     /**
-     * Gets the generated machine ID, identifying the machine / process / class loader
+     * Gets the machine identifier.
+     *
+     * @return the machine identifier
+     * @see org.bson.types.ObjectId#getMachineIdentifier()
+     * @deprecated Please use {@link #getMachineIdentifier()} instead.
      */
+    @Deprecated
     public static int getGenMachineId() {
         return _genmachine;
     }
 
     /**
-     * Gets the current value of the auto increment
+     * Gets the current value of the auto-incrementing counter.
      */
+    public static int getCurrentCounter() {
+        return _nextInc.get();
+    }
+
+    /**
+     * Gets the current value of the auto-incrementing counter.
+     *
+     * @deprecated Please use {@link #getCurrentCounter()} instead.
+     */
+    @Deprecated
     public static int getCurrentInc() {
         return _nextInc.get();
     }
@@ -334,6 +492,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     boolean _new;
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     public static int _flip( int x ){
         int z = 0;
         z |= ( ( x << 24 ) & 0xFF000000 );
