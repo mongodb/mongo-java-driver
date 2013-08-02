@@ -21,8 +21,14 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
 import org.bson.BSONWriter;
 import org.bson.io.OutputBuffer;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -42,6 +49,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DBCollectionTest extends DatabaseTestCase {
@@ -360,6 +368,62 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertThat(tweet.getMessage(), is("Lorem"));
         assertThat(tweet.getDate(), is(new Date(12)));
     }
+
+    @Test
+    public void shouldAcceptDocumentsWithAllValidValueTypes() {
+        BasicDBObject doc = new BasicDBObject();
+        doc.append("_id", new ObjectId());
+        doc.append("bool", true);
+        doc.append("int", 3);
+        doc.append("short", (short) 4);
+        doc.append("long", 5L);
+        doc.append("str", "Hello MongoDB");
+        doc.append("float", 6.0f);
+        doc.append("double", 1.1);
+        doc.append("date", new Date());
+        doc.append("ts", new BSONTimestamp(5, 1));
+        doc.append("pattern", Pattern.compile(".*"));
+        doc.append("minKey", new MinKey());
+        doc.append("maxKey", new MaxKey());
+        doc.append("js", new Code("code"));
+//        doc.append("jsWithScope", new CodeWithScope("code", new Document()));
+        doc.append("null", null);
+        doc.append("uuid", UUID.randomUUID());
+        doc.append("db ref", new com.mongodb.DBRef(collection.getDB(), "test", new ObjectId()));
+        doc.append("binary", new Binary((byte) 42, new byte[] {10, 11, 12}));
+        doc.append("byte array", new byte[] {1, 2, 3});
+        doc.append("int array", new int[] {4, 5, 6});
+        doc.append("list", Arrays.asList(7, 8, 9));
+        doc.append("doc list", Arrays.asList(new Document("x", 1), new Document("x", 2)));
+
+        collection.insert(doc);
+        DBObject found = collection.findOne();
+        assertNotNull(found);
+        assertEquals(ObjectId.class, found.get("_id").getClass());
+        assertEquals(Boolean.class, found.get("bool").getClass());
+        assertEquals(Integer.class, found.get("int").getClass());
+        assertEquals(Integer.class, found.get("short").getClass());
+        assertEquals(Long.class, found.get("long").getClass());
+        assertEquals(String.class, found.get("str").getClass());
+        assertEquals(Double.class, found.get("float").getClass());
+        assertEquals(Double.class, found.get("double").getClass());
+        assertEquals(Date.class, found.get("date").getClass());
+        assertEquals(BSONTimestamp.class, found.get("ts").getClass());
+        assertEquals(Pattern.class, found.get("pattern").getClass());
+        assertEquals(MinKey.class, found.get("minKey").getClass());
+        assertEquals(MaxKey.class, found.get("maxKey").getClass());
+        assertEquals(Code.class, found.get("js").getClass());
+//        assertEquals(CodeWithScope.class, found.get("jsWithScope").getClass());
+        assertNull(found.get("null"));
+        assertEquals(UUID.class, found.get("uuid").getClass());
+        assertEquals(DBRef.class, found.get("db ref").getClass());
+        assertEquals(Binary.class, found.get("binary").getClass());
+        assertEquals(byte[].class, found.get("byte array").getClass());
+        assertTrue(found.get("int array") instanceof List);
+        assertTrue(found.get("list") instanceof List);
+        assertTrue(found.get("doc list") instanceof List);
+    }
+
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
