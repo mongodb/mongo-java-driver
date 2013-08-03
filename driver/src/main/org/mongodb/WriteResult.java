@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.CommandResult;
-
 /**
  *
  * @since 3.0

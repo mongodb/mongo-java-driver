@@ -16,6 +16,7 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Command;
@@ -23,7 +24,6 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
-import org.mongodb.operation.CommandResult;
 
 class NativeAuthenticator extends Authenticator {
     private final BufferProvider bufferProvider;

@@ -17,7 +17,7 @@
 package org.mongodb.session;
 
 import org.mongodb.AsyncServerSelectingOperation;
-import org.mongodb.operation.MongoFuture;
+import org.mongodb.MongoFuture;
 
 /**
  * A provider of asynchronous connections to servers based on a server selector.

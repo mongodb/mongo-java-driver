@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.operation.CommandResult;
+import org.mongodb.CommandResult;
 
 public class MongoDuplicateKeyException extends MongoWriteConcernException {
     private static final long serialVersionUID = 3661905154229799985L;

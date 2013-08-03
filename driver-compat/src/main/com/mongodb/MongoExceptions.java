@@ -35,8 +35,8 @@ public class MongoExceptions {
             return new MongoTimeoutException(e.getMessage());
         } else if (e instanceof org.mongodb.connection.MongoWaitQueueFullException) {
             return new MongoWaitQueueFullException(e.getMessage());
-        } else if (e instanceof org.mongodb.operation.MongoCursorNotFoundException) {
-            return new MongoCursorNotFoundException((org.mongodb.operation.MongoCursorNotFoundException) e);
+        } else if (e instanceof org.mongodb.MongoCursorNotFoundException) {
+            return new MongoCursorNotFoundException((org.mongodb.MongoCursorNotFoundException) e);
         } else if (e instanceof MongoCommandFailureException) {
             return new CommandFailureException((MongoCommandFailureException) e);
         } else if (e instanceof org.mongodb.MongoInterruptedException) {

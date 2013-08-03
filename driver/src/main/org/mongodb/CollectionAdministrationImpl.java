@@ -22,7 +22,6 @@ import org.mongodb.command.CollStats;
 import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;

@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.operation.MongoFuture;
 
 public interface AsyncOperation<T> {
     MongoFuture<T> execute(AsyncServerConnection connection);

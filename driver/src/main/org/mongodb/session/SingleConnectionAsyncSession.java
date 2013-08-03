@@ -17,8 +17,8 @@
 package org.mongodb.session;
 
 import org.mongodb.AsyncOperation;
+import org.mongodb.MongoFuture;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.SingleResultFuture;
 
 class SingleConnectionAsyncSession implements AsyncSession {

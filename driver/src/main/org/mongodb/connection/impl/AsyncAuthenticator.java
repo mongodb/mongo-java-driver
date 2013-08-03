@@ -16,10 +16,10 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.CommandResult;
 
 abstract class AsyncAuthenticator {
     private final MongoCredential credential;

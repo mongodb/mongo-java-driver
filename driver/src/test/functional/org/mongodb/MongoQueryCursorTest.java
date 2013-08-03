@@ -24,10 +24,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.KillCursor;
-import org.mongodb.operation.MongoCursorNotFoundException;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.protocol.GetMoreProtocol;
+import org.mongodb.operation.protocol.KillCursor;
 import org.mongodb.operation.protocol.KillCursorProtocol;
 
 import java.util.ArrayList;

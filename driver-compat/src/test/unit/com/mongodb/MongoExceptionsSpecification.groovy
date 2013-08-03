@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
+import org.mongodb.ServerCursor
 import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.MongoWriteConcernException
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.ServerAddress
-import org.mongodb.operation.ServerCursor
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -63,7 +65,7 @@ class MongoExceptionsSpecification extends Specification {
 
         when:
         MongoException actualException = mapException(
-                new org.mongodb.operation.MongoCursorNotFoundException(new ServerCursor(cursorId, serverAddress))
+                new org.mongodb.MongoCursorNotFoundException(new ServerCursor(cursorId, serverAddress))
         )
 
         then:
@@ -93,8 +95,8 @@ class MongoExceptionsSpecification extends Specification {
         !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
-    private static org.mongodb.operation.CommandResult commandResultWithErrorCode(int expectedErrorCode) {
-        new org.mongodb.operation.CommandResult(new Document(),
+    private static org.mongodb.CommandResult commandResultWithErrorCode(int expectedErrorCode) {
+        new org.mongodb.CommandResult(new Document(),
                 new ServerAddress(),
                 new Document
                 ('code', expectedErrorCode),

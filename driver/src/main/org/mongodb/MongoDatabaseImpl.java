@@ -20,7 +20,6 @@ import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.command.Command;
 import org.mongodb.operation.CommandOperation;
-import org.mongodb.operation.CommandResult;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;

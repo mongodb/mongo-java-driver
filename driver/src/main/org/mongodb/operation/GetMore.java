@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.ServerCursor;
+
 public class GetMore {
     private final int limit;
     private final int batchSize;

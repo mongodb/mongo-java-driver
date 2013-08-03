@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.operation.CommandResult;
 
 // TODO: should also check for ok?
 final class ErrorHandling {

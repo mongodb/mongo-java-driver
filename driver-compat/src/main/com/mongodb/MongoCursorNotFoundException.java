@@ -26,7 +26,7 @@ public class MongoCursorNotFoundException extends MongoException {
     private final long cursorId;
     private final ServerAddress serverAddress;
 
-    MongoCursorNotFoundException(final org.mongodb.operation.MongoCursorNotFoundException e) {
+    MongoCursorNotFoundException(final org.mongodb.MongoCursorNotFoundException e) {
         this(e.getCursor().getId(), new ServerAddress(e.getCursor().getAddress()));
     }
 

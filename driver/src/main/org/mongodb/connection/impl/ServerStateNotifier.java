@@ -16,6 +16,7 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
@@ -31,7 +32,6 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.Tags;
-import org.mongodb.operation.CommandResult;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -17,8 +17,10 @@
 package org.mongodb.operation;
 
 import org.mongodb.Decoder;
+import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
+import org.mongodb.ServerCursor;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;

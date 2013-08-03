@@ -42,7 +42,7 @@ public class CommandResult extends BasicDBObject {
         put("serverUsed", srv.toString());
     }
 
-    CommandResult(final org.mongodb.operation.CommandResult commandResult) {
+    CommandResult(final org.mongodb.CommandResult commandResult) {
         this(toDBObject(commandResult.getResponse()), new ServerAddress(commandResult.getAddress()));
     }
 

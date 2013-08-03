@@ -16,8 +16,8 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.ServerCursor;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.ServerCursor;
 
 import java.util.List;
 

@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -27,7 +28,6 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.BaseWrite;
-import org.mongodb.operation.CommandResult;
 
 import static org.mongodb.command.GetLastError.parseGetLastErrorResponse;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;

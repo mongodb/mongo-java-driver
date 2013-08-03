@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.AsyncOperation;
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;

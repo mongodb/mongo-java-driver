@@ -17,6 +17,7 @@
 package org.mongodb.connection.impl;
 
 import org.mongodb.Codec;
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
@@ -25,7 +26,6 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;

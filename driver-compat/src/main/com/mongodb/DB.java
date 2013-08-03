@@ -322,7 +322,7 @@ public class DB implements IDB {
     @Override
     public CommandResult getLastError(final WriteConcern concern) {
         final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
-        final org.mongodb.operation.CommandResult commandResult = executeCommand(getLastErrorCommand);
+        final org.mongodb.CommandResult commandResult = executeCommand(getLastErrorCommand);
         return new CommandResult(commandResult);
     }
 
@@ -433,7 +433,7 @@ public class DB implements IDB {
         return getMongo().getSession();
     }
 
-    org.mongodb.operation.CommandResult executeCommand(final Command command) {
+    org.mongodb.CommandResult executeCommand(final Command command) {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
             return new CommandOperation(getName(), command, documentCodec, getClusterDescription(), getBufferPool(),
@@ -443,7 +443,7 @@ public class DB implements IDB {
         }
     }
 
-    org.mongodb.operation.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
+    org.mongodb.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
         mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
             return new CommandOperation(getName(), mongoCommand, documentCodec, getClusterDescription(), getBufferPool(), getSession(),

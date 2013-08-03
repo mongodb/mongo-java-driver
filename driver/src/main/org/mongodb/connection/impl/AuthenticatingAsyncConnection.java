@@ -17,6 +17,7 @@
 package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.connection.AsyncConnection;
@@ -25,7 +26,6 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.CommandResult;
 
 import java.util.ArrayList;
 import java.util.Iterator;

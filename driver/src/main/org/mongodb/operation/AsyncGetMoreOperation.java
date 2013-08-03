@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.AsyncOperation;
 import org.mongodb.Decoder;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;

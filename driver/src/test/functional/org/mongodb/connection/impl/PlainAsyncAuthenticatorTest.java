@@ -20,13 +20,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.CommandResult;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

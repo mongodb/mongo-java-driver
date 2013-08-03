@@ -18,7 +18,9 @@ package org.mongodb.operation;
 
 import org.mongodb.AsyncServerSelectingOperation;
 import org.mongodb.Codec;
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;

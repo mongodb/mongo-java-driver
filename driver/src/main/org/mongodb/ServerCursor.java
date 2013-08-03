@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
 import org.mongodb.connection.ServerAddress;
 

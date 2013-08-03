@@ -20,7 +20,6 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.KillCursor;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 

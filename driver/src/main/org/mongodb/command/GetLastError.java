@@ -16,9 +16,9 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandResult;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.CommandResult;
 
 import java.util.Arrays;
 import java.util.List;

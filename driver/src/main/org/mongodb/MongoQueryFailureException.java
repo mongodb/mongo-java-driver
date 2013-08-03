@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.Document;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.operation.MongoServerException;
 
 public class MongoQueryFailureException extends MongoServerException {
     private static final long serialVersionUID = -5113350133297015801L;

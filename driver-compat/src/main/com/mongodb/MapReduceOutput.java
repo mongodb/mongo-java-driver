@@ -31,7 +31,7 @@ import static com.mongodb.DBObjects.toDocument;
  */
 public class MapReduceOutput {
 
-    private final org.mongodb.operation.CommandResult commandResult;
+    private final org.mongodb.CommandResult commandResult;
     private final DBCollection collection;
 
     MapReduceOutput(final DBCollection collection, final MapReduceCommandResult commandResult) {
@@ -50,7 +50,7 @@ public class MapReduceOutput {
 
     public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
 
-        final org.mongodb.operation.CommandResult result = new org.mongodb.operation.CommandResult(
+        final org.mongodb.CommandResult result = new org.mongodb.CommandResult(
                 toDocument(command),
                 commandResult.getServerUsed().toNew(),
                 toDocument(commandResult),

@@ -22,7 +22,6 @@ import org.mongodb.command.ListDatabases;
 import org.mongodb.command.Ping;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
-import org.mongodb.operation.CommandResult;
 
 import java.util.Collections;
 import java.util.HashSet;

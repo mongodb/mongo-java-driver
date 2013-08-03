@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.Document;
 import org.mongodb.connection.ServerAddress;
 
 public class CommandResult {

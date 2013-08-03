@@ -16,8 +16,8 @@
 
 package org.mongodb.command;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.operation.CommandResult;
 
 import java.util.List;
 

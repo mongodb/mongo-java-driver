@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-public class KillCursor {
-    private final ServerCursor serverCursor;
+import org.mongodb.connection.SingleResultCallback;
 
-    public KillCursor(final ServerCursor serverCursor) {
-        this.serverCursor = serverCursor;
-    }
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-    public ServerCursor getServerCursor() {
-        return serverCursor;
-    }
+public interface MongoFuture<T> extends Future<T>  {
+
+    @Override
+    T get();
+
+    @Override
+    T get(long timeout, TimeUnit unit) throws TimeoutException;
+
+    void register(SingleResultCallback<T> newCallback);
 }

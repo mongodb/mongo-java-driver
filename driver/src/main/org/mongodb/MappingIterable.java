@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoFuture;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 

@@ -17,7 +17,6 @@
 package org.mongodb.operation.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.KillCursor;
 
 public class KillCursorsMessage extends RequestMessage {
     private final KillCursor killCursor;

@@ -16,9 +16,13 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
+import org.mongodb.MongoCursorNotFoundException
+import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.Command
 import org.mongodb.command.MongoCommandFailureException
@@ -27,8 +31,6 @@ import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
-import org.mongodb.operation.MongoCursorNotFoundException
-import org.mongodb.operation.ServerCursor
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
@@ -57,7 +59,7 @@ class DBSpecification extends Specification {
         given:
         cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
                                                                                            15L))
@@ -90,7 +92,7 @@ class DBSpecification extends Specification {
         given:
         cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
                                                                                            15L))
@@ -107,7 +109,7 @@ class DBSpecification extends Specification {
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.operation.CommandResult(new Document(),
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
                                                                                            new org.mongodb.connection.ServerAddress(),
                                                                                            new Document(),
                                                                                            15L))
@@ -137,7 +139,7 @@ class DBSpecification extends Specification {
 
     def 'should not throw MongoCommandFailureException if command fails'() {
         given:
-        def expectedCommandResult = new org.mongodb.operation.CommandResult(new Document(),
+        def expectedCommandResult = new org.mongodb.CommandResult(new Document(),
                                                                             new org.mongodb.connection.ServerAddress(),
                                                                             new Document(),
                                                                             15L)
@@ -147,7 +149,7 @@ class DBSpecification extends Specification {
         }
 
         when:
-        org.mongodb.operation.CommandResult actualCommandResult = database.executeCommandAndReturnCommandResultIfCommandFailureException(
+        org.mongodb.CommandResult actualCommandResult = database.executeCommandAndReturnCommandResultIfCommandFailureException(
                 new Ping())
 
         then:

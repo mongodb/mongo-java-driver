@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.ServerCursor;
-
 class MongoMappingCursor<T, U> implements MongoCursor<U> {
     private final MongoCursor<T> proxied;
     private final Function<T, U> mapper;

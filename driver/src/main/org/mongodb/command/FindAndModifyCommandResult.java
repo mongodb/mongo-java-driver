@@ -16,7 +16,7 @@
 
 package org.mongodb.command;
 
-import org.mongodb.operation.CommandResult;
+import org.mongodb.CommandResult;
 
 public final class FindAndModifyCommandResult<T> extends CommandResult {
 

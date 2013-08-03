@@ -20,6 +20,7 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
+import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;

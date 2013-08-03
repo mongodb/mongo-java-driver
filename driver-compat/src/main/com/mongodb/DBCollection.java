@@ -295,7 +295,7 @@ public class DBCollection implements IDBCollection {
         }
     }
 
-    private CommandResult translateCommandResult(final org.mongodb.operation.CommandResult commandResult) {
+    private CommandResult translateCommandResult(final org.mongodb.CommandResult commandResult) {
         if (commandResult == null) {
             return null;
         }
@@ -1144,7 +1144,7 @@ public class DBCollection implements IDBCollection {
         final MapReduceCommandResultCodec<DBObject> mapReduceCodec =
                 new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
 
-        final org.mongodb.operation.CommandResult executionResult;
+        final org.mongodb.CommandResult executionResult;
 
         try {
             executionResult = new CommandOperation(getDB().getName(),
@@ -1454,7 +1454,7 @@ public class DBCollection implements IDBCollection {
 
         final FindAndModifyCommandResult<DBObject> commandResult;
         try {
-            final org.mongodb.operation.CommandResult executionResult = new CommandOperation(getDB().getName(), mongoCommand,
+            final org.mongodb.CommandResult executionResult = new CommandOperation(getDB().getName(), mongoCommand,
                     findAndModifyCommandResultCodec, getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
             commandResult = new FindAndModifyCommandResult<DBObject>(executionResult);
         } catch (org.mongodb.MongoException e) {
@@ -1641,7 +1641,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public CommandResult getStats() {
-        final org.mongodb.operation.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
+        final org.mongodb.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
         return new CommandResult(commandResult);
     }
 

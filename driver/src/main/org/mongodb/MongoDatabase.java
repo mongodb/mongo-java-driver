@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.command.Command;
-import org.mongodb.operation.CommandResult;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.

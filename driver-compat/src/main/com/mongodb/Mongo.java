@@ -432,7 +432,7 @@ public class Mongo {
      */
     public List<String> getDatabaseNames() {
         //TODO: how do I make sure the exception is wrapped correctly?
-        final org.mongodb.operation.CommandResult listDatabasesResult;
+        final org.mongodb.CommandResult listDatabasesResult;
         listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
 
         @SuppressWarnings("unchecked")

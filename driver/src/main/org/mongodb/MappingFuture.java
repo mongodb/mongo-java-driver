@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.MongoFuture;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

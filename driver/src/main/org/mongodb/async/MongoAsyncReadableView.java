@@ -16,7 +16,7 @@
 
 package org.mongodb.async;
 
-import org.mongodb.operation.MongoFuture;
+import org.mongodb.MongoFuture;
 
 /**
  * Interface describing the asynchronous read operations.

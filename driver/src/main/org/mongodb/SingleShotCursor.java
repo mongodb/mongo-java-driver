@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.ServerCursor;
-
 import java.util.Iterator;
 
 class SingleShotCursor<T> implements MongoCursor<T> {

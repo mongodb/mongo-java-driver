@@ -17,6 +17,7 @@
 package org.mongodb.connection.impl;
 
 import org.bson.types.Binary;
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
@@ -28,7 +29,6 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
-import org.mongodb.operation.CommandResult;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;

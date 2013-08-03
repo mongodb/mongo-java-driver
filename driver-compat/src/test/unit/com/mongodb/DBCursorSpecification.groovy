@@ -20,13 +20,15 @@
 
 
 
+
+
 package com.mongodb
 
 import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Document
 import org.mongodb.MongoNamespace
+import org.mongodb.MongoQueryFailureException
 import org.mongodb.codecs.PrimitiveCodecs
-import org.mongodb.operation.MongoQueryFailureException
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject

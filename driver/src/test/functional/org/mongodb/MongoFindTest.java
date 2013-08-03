@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.junit.Test;
-import org.mongodb.operation.MongoQueryFailureException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

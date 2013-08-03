@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.SingleResultCallback;

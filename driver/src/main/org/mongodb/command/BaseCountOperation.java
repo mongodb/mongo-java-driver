@@ -17,10 +17,10 @@
 package org.mongodb.command;
 
 import org.mongodb.Codec;
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 
 public abstract class BaseCountOperation {

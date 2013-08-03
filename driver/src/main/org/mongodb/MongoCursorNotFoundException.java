@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.connection.SingleResultCallback;
+/**
+ * Exception thrown when a getmore is executed but the cursorId is no longer available on the server
+ */
+public class MongoCursorNotFoundException extends MongoException {
+    private static final long serialVersionUID = 7890793341600725191L;
+    private final ServerCursor cursor;
 
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+    public MongoCursorNotFoundException(final ServerCursor cursor) {
+        super("The cursor was not found: " + cursor);
+        this.cursor = cursor;
+    }
 
-public interface MongoFuture<T> extends Future<T>  {
-
-    @Override
-    T get();
-
-    @Override
-    T get(long timeout, TimeUnit unit) throws TimeoutException;
-
-    void register(SingleResultCallback<T> newCallback);
+    public ServerCursor getCursor() {
+        return cursor;
+    }
 }

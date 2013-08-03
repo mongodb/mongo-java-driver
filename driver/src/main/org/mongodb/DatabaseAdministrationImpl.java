@@ -21,7 +21,6 @@ import org.mongodb.command.DropDatabase;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.CommandOperation;
-import org.mongodb.operation.CommandResult;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
 

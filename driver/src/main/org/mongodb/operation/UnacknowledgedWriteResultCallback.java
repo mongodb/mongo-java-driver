@@ -17,7 +17,9 @@
 package org.mongodb.operation;
 
 import org.bson.io.OutputBuffer;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;

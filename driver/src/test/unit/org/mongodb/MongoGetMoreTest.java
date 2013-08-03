@@ -19,7 +19,6 @@ package org.mongodb;
 import org.junit.Test;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.GetMore;
-import org.mongodb.operation.ServerCursor;
 
 import java.net.UnknownHostException;
 

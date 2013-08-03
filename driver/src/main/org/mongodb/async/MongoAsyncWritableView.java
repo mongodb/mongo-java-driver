@@ -16,8 +16,8 @@
 
 package org.mongodb.async;
 
+import org.mongodb.MongoFuture;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.MongoFuture;
 
 /**
  * Asynchronous write operations.

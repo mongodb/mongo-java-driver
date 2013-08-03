@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.operation.protocol;
 
-import org.mongodb.MongoException;
+import org.mongodb.ServerCursor;
 
-/**
- * Exception thrown when a getmore is executed but the cursorId is no longer available on the server
- */
-public class MongoCursorNotFoundException extends MongoException {
-    private static final long serialVersionUID = 7890793341600725191L;
-    private final ServerCursor cursor;
+public class KillCursor {
+    private final ServerCursor serverCursor;
 
-    public MongoCursorNotFoundException(final ServerCursor cursor) {
-        super("The cursor was not found: " + cursor);
-        this.cursor = cursor;
+    public KillCursor(final ServerCursor serverCursor) {
+        this.serverCursor = serverCursor;
     }
 
-    public ServerCursor getCursor() {
-        return cursor;
+    public ServerCursor getServerCursor() {
+        return serverCursor;
     }
 }
