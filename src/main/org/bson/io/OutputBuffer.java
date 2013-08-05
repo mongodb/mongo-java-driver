@@ -28,9 +28,23 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract void write(int b);
     
     public abstract int getPosition();
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public abstract void setPosition( int position );
-    
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public abstract void seekEnd();
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public abstract void seekStart();
     
     /**
@@ -58,16 +72,27 @@ public abstract class OutputBuffer extends OutputStream {
         }
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public String asString(){
         return new String( toByteArray() );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public String asString( String encoding )
         throws UnsupportedEncodingException {
         return new String( toByteArray() , encoding );
     }
 
-
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public String hex(){
         final StringBuilder buf = new StringBuilder();
         try {
@@ -88,6 +113,11 @@ public abstract class OutputBuffer extends OutputStream {
         return buf.toString();
     }
 
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public String md5(){
         final MessageDigest md5 ;
         try {
@@ -116,7 +146,7 @@ public abstract class OutputBuffer extends OutputStream {
         
         return com.mongodb.util.Util.toHex( md5.digest() );
     }
-    
+
     public void writeInt( int x ){
         write( x >> 0 );
         write( x >> 8 );
@@ -124,6 +154,10 @@ public abstract class OutputBuffer extends OutputStream {
         write( x >> 24 );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public void writeIntBE( int x ){
         write( x >> 24 );
         write( x >> 16 );
@@ -131,6 +165,10 @@ public abstract class OutputBuffer extends OutputStream {
         write( x );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public void writeInt( int pos , int x ){
         final int save = getPosition();
         setPosition( pos );

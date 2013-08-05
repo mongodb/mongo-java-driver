@@ -45,15 +45,29 @@ public class BasicOutputBuffer extends OutputBuffer {
     public int getPosition(){
         return _cur;
     }
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
     @Override
+    @Deprecated
     public void setPosition( int position ){
         _cur = position;
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
     @Override
+    @Deprecated
     public void seekEnd(){
         _cur = _size;
     }
+
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     @Override
     public void seekStart(){
         _cur = 0;
@@ -79,7 +93,9 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     /**
      * @return bytes written
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
      */
+    @Deprecated
     public int pipe( DataOutput out )
         throws IOException {
         out.write( _buffer , 0 , _size );
@@ -101,12 +117,20 @@ public class BasicOutputBuffer extends OutputBuffer {
         _buffer = n;
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
     @Override
+    @Deprecated
     public String asString(){
         return new String( _buffer , 0 , _size );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
     @Override
+    @Deprecated
     public String asString( String encoding )
         throws UnsupportedEncodingException {
         return new String( _buffer , 0 , _size , encoding );

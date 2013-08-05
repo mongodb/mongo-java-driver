@@ -25,6 +25,10 @@ import org.bson.util.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class PoolOutputBuffer extends OutputBuffer {
 
     public static final int BUF_SIZE = 1024 * 16;
@@ -46,14 +50,26 @@ public class PoolOutputBuffer extends OutputBuffer {
         return _cur.pos();
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public void setPosition( int position ){
         _cur.reset( position );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public void seekEnd(){
         _cur.reset( _end );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public void seekStart(){
         _cur.reset();
     }
@@ -201,6 +217,10 @@ public class PoolOutputBuffer extends OutputBuffer {
         return new String( c , 0  , m );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     */
+    @Deprecated
     public String asString( String encoding )
         throws UnsupportedEncodingException {
 
