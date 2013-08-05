@@ -578,7 +578,10 @@ public abstract class DBCollection {
      * Convenience method to generate an index name from the set of fields it is over.
      * @param keys the names of the fields used in this index
      * @return a string representation of this index's fields
+     *
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
+    @Deprecated
     public static String genIndexName( DBObject keys ){
         StringBuilder name = new StringBuilder();
         for ( String s : keys.keySet() ){
@@ -600,6 +603,14 @@ public abstract class DBCollection {
      */
     public void setHintFields( List<DBObject> lst ){
         _hintFields = lst;
+    }
+
+    /**
+     * Get hint fields for this collection (used to optimize queries).
+     * @return a list of {@code DBObject} to be used as hints.
+     */
+    protected List<DBObject> getHintFields() {
+        return Collections.unmodifiableList(_hintFields);
     }
 
     /**
@@ -1381,17 +1392,23 @@ public abstract class DBCollection {
         _options = new Bytes.OptionHolder( _db._options );
     }
 
-    protected DBObject _checkObject( DBObject o , boolean canBeNull , boolean query ){
-        if ( o == null ){
-            if ( canBeNull )
+    /**
+     * @deprecated This method should not be a part of API.
+     *             If you overriding one of the {@code DBCollection} methods please rely on superclass
+     *             implementation in checking argument correctness and validity.
+     */
+    @Deprecated
+    protected DBObject _checkObject(DBObject o, boolean canBeNull, boolean query) {
+        if (o == null) {
+            if (canBeNull)
                 return null;
-            throw new IllegalArgumentException( "can't be null" );
+            throw new IllegalArgumentException("can't be null");
         }
 
-        if ( o.isPartialObject() && ! query )
-            throw new IllegalArgumentException( "can't save partial objects" );
+        if (o.isPartialObject() && !query)
+            throw new IllegalArgumentException("can't save partial objects");
 
-        if ( ! query ){
+        if (!query) {
             _checkKeys(o);
         }
         return o;
@@ -1699,9 +1716,22 @@ public abstract class DBCollection {
 
     final DB _db;
 
+    /**
+     * @deprecated Please use {@link #getName()} instead.
+     */
+    @Deprecated
     final protected String _name;
+
+    /**
+     * @deprecated Please use {@link #getFullName()} instead.
+     */
+    @Deprecated
     final protected String _fullName;
 
+    /**
+     * @deprecated Please use {@link #setHintFields(java.util.List)} and {@link #getHintFields()} instead.
+     */
+    @Deprecated
     protected List<DBObject> _hintFields;
     private WriteConcern _concern = null;
     private ReadPreference _readPref = null;
@@ -1709,6 +1739,10 @@ public abstract class DBCollection {
     private DBEncoderFactory _encoderFactory;
     final Bytes.OptionHolder _options;
 
+    /**
+     * @deprecated Please use {@link #getObjectClass()} and {@link #setObjectClass(Class)} instead.
+     */
+    @Deprecated
     protected Class _objectClass = null;
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
