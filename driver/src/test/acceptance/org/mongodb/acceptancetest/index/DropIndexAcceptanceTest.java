@@ -36,13 +36,13 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldDropSingleNamedIndex() {
         // Given
-        collection.tools().ensureIndex(new Index.Builder().addKey("theField").build());
+        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
 
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                    is(2));
 
         // When
-        collection.tools().dropIndex(new Index.Builder().addKey("theField").build());
+        collection.tools().dropIndex(Index.builder().addKey("theField").build());
 
         // Then
         assertThat("Should be one less index", collection.tools().getIndexes().size(), is(1));
@@ -51,8 +51,8 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldDropAllIndexesForCollection() {
         // Given
-        collection.tools().ensureIndex(new Index.Builder().addKey("theField").build());
-        collection.tools().ensureIndex(new Index.Builder().addKey("aSecondIndex").build());
+        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
+        collection.tools().ensureIndex(Index.builder().addKey("aSecondIndex").build());
 
         assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
                    is(3));

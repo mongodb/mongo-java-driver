@@ -54,9 +54,11 @@ public class Index implements ConvertibleToDocument {
     private final int expireAfterSeconds;
 
     private final Document keys;
+    
+    private final Document extra;
 
-    public Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
-        final int expireAfterSeconds, final Document keys) {
+    private Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
+        final int expireAfterSeconds, final Document keys, final Document extra) {
         this.name = name;
         this.unique = unique;
         this.dropDups = dropDups;
@@ -65,8 +67,13 @@ public class Index implements ConvertibleToDocument {
         this.background = background;
         this.expireAfterSeconds = expireAfterSeconds;
         this.keys = keys;
+        this.extra = extra;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+    
     public String getName() {
         return name;
     }
@@ -91,6 +98,7 @@ public class Index implements ConvertibleToDocument {
         if (expireAfterSeconds != -1) {
             indexDetails.append("expireAfterSeconds", expireAfterSeconds);
         }
+        indexDetails.putAll(extra);
 
         return indexDetails;
     }
@@ -150,7 +158,11 @@ public class Index implements ConvertibleToDocument {
         private boolean sparse = false;
         private int expireAfterSeconds = -1;
         private final Document keys = new Document();
+        private final Document extra = new Document();
 
+        private Builder() {
+        }
+        
         /**
          * Sets the name of the index.
          */
@@ -254,6 +266,11 @@ public class Index implements ConvertibleToDocument {
             return this;
         }
 
+        public Builder extra(final String key, final Object value) {
+            extra.put(key, value);
+            return this;
+        }
+
         /**
          * Convenience method to generate an index name from the set of fields it is over.
          *
@@ -279,7 +296,7 @@ public class Index implements ConvertibleToDocument {
             if (name == null) {
                 name = generateIndexName();
             }
-            return new Index(name, unique, dropDups, sparse, background, expireAfterSeconds, keys);
+            return new Index(name, unique, dropDups, sparse, background, expireAfterSeconds, keys, extra);
         }
     }
 }

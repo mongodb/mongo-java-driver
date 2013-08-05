@@ -1290,7 +1290,7 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void ensureIndex(final String name) {
-        final Index index = new Index.Builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
+        final Index index = Index.builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
         final Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         final Insert<Document> insertIndexOperation = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, indexDetails);
@@ -1636,7 +1636,7 @@ public class DBCollection implements IDBCollection {
     @Override
     public void dropIndex(final DBObject keys) {
         final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(keys);
-        final Index indexToDrop = new Index.Builder().addKeys(keysFromDBObject).build();
+        final Index indexToDrop = Index.builder().addKeys(keysFromDBObject).build();
         final DropIndex dropIndex = new DropIndex(getName(), indexToDrop.getName());
         getDB().executeCommand(dropIndex);
     }
@@ -1726,8 +1726,6 @@ public class DBCollection implements IDBCollection {
     }
 
     private Document toIndexDetailsDocument(final DBObject keys, final DBObject options) {
-        // TODO: Check if these are all the supported options. driver:index still not supports all options.
-        // Waiting for https://trello.com/card/additional-index-functionality-that-isn-t-supported-yet/50c237ecaad6596f2f001a3e/127
         String indexName = null;
         boolean unique = false;
         boolean dropDups = false;
@@ -1735,29 +1733,32 @@ public class DBCollection implements IDBCollection {
         boolean background = false;
         int expireAfterSeconds = -1;
 
+        final Index.Builder builder = Index.builder();
         if (options != null) {
-            indexName = (String) options.get("name");
-            unique = FieldHelpers.asBoolean(options.get("unique"));
-            dropDups = FieldHelpers.asBoolean(options.get("dropDups"));
-            sparse = FieldHelpers.asBoolean(options.get("sparse"));
-            background = FieldHelpers.asBoolean(options.get("background"));
+            final DBObject optionsCopy = new BasicDBObject(options.toMap());
+            indexName = (String) optionsCopy.get("name");
+            unique = FieldHelpers.asBoolean(optionsCopy.removeField("unique"));
+            dropDups = FieldHelpers.asBoolean(optionsCopy.removeField("dropDups"));
+            sparse = FieldHelpers.asBoolean(optionsCopy.removeField("sparse"));
+            background = FieldHelpers.asBoolean(optionsCopy.removeField("background"));
             if (options.get("expireAfterSeconds") != null) {
-                expireAfterSeconds = Integer.parseInt(options.get("expireAfterSeconds").toString());
+                expireAfterSeconds = Integer.parseInt(optionsCopy.removeField("expireAfterSeconds").toString());
+            }
+            for (final String extraKey : optionsCopy.keySet()) {
+                builder.extra(extraKey, optionsCopy.get(extraKey));
             }
         }
 
-        final List<Index.Key<?>> keyList = getKeysFromDBObject(keys);
-        final Index index = new Index.Builder()
+        builder
             .name(indexName)
             .unique(unique)
             .dropDups(dropDups)
             .sparse(sparse)
             .background(background)
             .expireAfterSeconds(expireAfterSeconds)
-            .addKeys(keyList)
-            .build();
+            .addKeys(getKeysFromDBObject(keys));
 
-        final Document indexDetails = index.toDocument();
+        final Document indexDetails = builder.build().toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         return indexDetails;
     }

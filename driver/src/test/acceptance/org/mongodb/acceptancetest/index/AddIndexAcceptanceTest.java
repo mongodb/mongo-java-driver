@@ -51,7 +51,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateIndexOnCollectionWithoutIndex() {
-        collection.tools().ensureIndex(new Index.Builder().addKey("theField").build());
+        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
 
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                   is(2));
@@ -59,7 +59,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
-        collection.tools().ensureIndex(new Index.Builder().addKey("theField", ASC).build());
+        collection.tools().ensureIndex(Index.builder().addKey("theField", ASC).build());
 
         final String nameOfCreatedIndex = (String) collection.tools().getIndexes().get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("theField_1"));
@@ -67,7 +67,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateAscendingIndexByDefault() {
-        final Index index = new Index.Builder().addKey("theFieldToIndex").build();
+        final Index index = Index.builder().addKey("theFieldToIndex").build();
         collection.tools().ensureIndex(index);
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -77,7 +77,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateAnAscendingIndex() {
-        final Index index = new Index.Builder().addKey("field", ASC).build();
+        final Index index = Index.builder().addKey("field", ASC).build();
         collection.tools().ensureIndex(index);
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -87,7 +87,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateADescendingIndex() {
-        final Index index = new Index.Builder().addKey("field", DESC).build();
+        final Index index = Index.builder().addKey("field", DESC).build();
         collection.tools().ensureIndex(index);
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -97,7 +97,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateNonUniqueIndexByDefault() {
-        final Index index = new Index.Builder().addKey("field", DESC).build();
+        final Index index = Index.builder().addKey("field", DESC).build();
         collection.tools().ensureIndex(index);
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -106,7 +106,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateIndexOfUniqueValues() {
-        collection.tools().ensureIndex(new Index.Builder().addKey("field", DESC).unique().build());
+        collection.tools().ensureIndex(Index.builder().addKey("field", DESC).unique().build());
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
         final Boolean unique = (Boolean) newIndexDetails.get("unique");
@@ -115,7 +115,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSupportCompoundIndexes() {
-        collection.tools().ensureIndex(new Index.Builder().addKeys("theFirstField", "theSecondField").build());
+        collection.tools().ensureIndex(Index.builder().addKeys("theFirstField", "theSecondField").build());
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
 
@@ -136,7 +136,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
-        final Index index = new Index.Builder().addKeys(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC)).build();
+        final Index index = Index.builder().addKeys(new OrderedKey("theFirstField", ASC), new OrderedKey("theSecondField", DESC)).build();
         collection.tools().ensureIndex(index);
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -155,10 +155,10 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldOnlyReturnIndexesForTheSelectedCollection() {
-        collection.tools().ensureIndex(new Index.Builder().addKey("theField").build());
+        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
 
         final MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
-        anotherCollection.tools().ensureIndex(new Index.Builder().addKey("someOtherField").build());
+        anotherCollection.tools().ensureIndex(Index.builder().addKey("someOtherField").build());
 
         assertThat("Should be default index and new index on the first database",
                   collection.tools().getIndexes().size(), is(2));
@@ -169,14 +169,14 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
-        collection.tools().ensureIndex(new Index.Builder().addKey(new GeoKey("theField")).build());
+        collection.tools().ensureIndex(Index.builder().addKey(new GeoKey("theField")).build());
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                   is(2));
     }
 
     @Test
     public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
-        collection.tools().ensureIndex(new Index.Builder().addKeys(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC))
+        collection.tools().ensureIndex(Index.builder().addKeys(new GeoKey("locationField"), new OrderedKey("someOtherField", ASC))
             .build());
 
         final Document newIndexDetails = collection.tools().getIndexes().get(1);
@@ -199,7 +199,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldAllowAliasForIndex() {
         final String indexAlias = "indexAlias";
-        collection.tools().ensureIndex(new Index.Builder().name(indexAlias).addKey(new OrderedKey("theField", ASC)).build());
+        collection.tools().ensureIndex(Index.builder().name(indexAlias).addKey(new OrderedKey("theField", ASC)).build());
 
         final String nameOfCreatedIndex = collection.tools().getIndexes().get(1).getString("name");
         assertThat("Should be an index named after the alias", nameOfCreatedIndex, is(indexAlias));
@@ -207,7 +207,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     
     @Test
     public void shouldCreateASparseIndex() {
-        collection.tools().ensureIndex(new Index.Builder().sparse().addKey(new OrderedKey("theField", ASC)).build());
+        collection.tools().ensureIndex(Index.builder().sparse().addKey(new OrderedKey("theField", ASC)).build());
 
         final Boolean sparse = collection.tools().getIndexes().get(1).getBoolean("sparse");
         assertThat("Should be a sparse index", sparse, is(true));
@@ -215,7 +215,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateABackgroundIndex() {
-        collection.tools().ensureIndex(new Index.Builder().background().addKey(new OrderedKey("theField", ASC)).build());
+        collection.tools().ensureIndex(Index.builder().background().addKey(new OrderedKey("theField", ASC)).build());
 
         final Boolean background = collection.tools().getIndexes().get(1).getBoolean("background");
         assertThat("Should be a background index", background, is(true));
@@ -223,7 +223,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateATtlIndex() {
-        collection.tools().ensureIndex(new Index.Builder().expireAfterSeconds(1600).addKey(new OrderedKey("theField", ASC)).build());
+        collection.tools().ensureIndex(Index.builder().expireAfterSeconds(1600).addKey(new OrderedKey("theField", ASC)).build());
 
         final Integer ttl = collection.tools().getIndexes().get(1).getInteger("expireAfterSeconds");
         assertThat("Should be a ttl index", ttl, is(1600));

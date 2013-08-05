@@ -10,20 +10,20 @@ class IndexSpecification extends Specification {
         index.getName() == indexName;
 
         where:
-        index                                                       | indexName
-        new Index.Builder().addKey('x').build()                     | 'x_1'
-        new Index.Builder().addKey('x', OrderBy.ASC).build()        | 'x_1'
-        new Index.Builder().addKey('x', OrderBy.DESC).build()       | 'x_-1'
-        new Index.Builder().addKey(new Index.GeoKey('x')).build()   | 'x_2d'
+        index                                                   | indexName
+        Index.builder().addKey('x').build()                     | 'x_1'
+        Index.builder().addKey('x', OrderBy.ASC).build()        | 'x_1'
+        Index.builder().addKey('x', OrderBy.DESC).build()       | 'x_-1'
+        Index.builder().addKey(new Index.GeoKey('x')).build()   | 'x_2d'
 
-        new Index.Builder().addKeys(
+        Index.builder().addKeys(
             new Index.OrderedKey('x', OrderBy.ASC),
             new Index.OrderedKey('y', OrderBy.ASC),
-            new Index.OrderedKey('a', OrderBy.ASC)).build()         | 'x_1_y_1_a_1'
+            new Index.OrderedKey('a', OrderBy.ASC)).build()     | 'x_1_y_1_a_1'
 
-        new Index.Builder().addKeys(
+        Index.builder().addKeys(
             new Index.GeoKey('x'),
-            new Index.OrderedKey('y', OrderBy.DESC)).build()        | 'x_2d_y_-1'
+            new Index.OrderedKey('y', OrderBy.DESC)).build()    | 'x_2d_y_-1'
 
     }
 
@@ -33,10 +33,10 @@ class IndexSpecification extends Specification {
         index.toDocument().getBoolean("unique") == isUnique
 
         where:
-        index                                                           | isUnique
-        new Index.Builder().addKey('x').build()                         | null
-        new Index.Builder().addKey('x').unique().build()                | true
-        new Index.Builder().addKey('x').unique().unique(false).build()  | null
+        index                                                       | isUnique
+        Index.builder().addKey('x').build()                         | null
+        Index.builder().addKey('x').unique().build()                | true
+        Index.builder().addKey('x').unique().unique(false).build()  | null
     }
 
     @Unroll
@@ -45,12 +45,34 @@ class IndexSpecification extends Specification {
         index.toDocument().getInteger("expireAfterSeconds") == seconds
 
         where:
-        index                                                               | seconds
-        new Index.Builder().addKey('x').build()                             | null
-        new Index.Builder().addKey('x').build()                             | null
-        new Index.Builder().addKey('x').build()                             | null
-        new Index.Builder().addKey('x').expireAfterSeconds(1000).build()    | 1000
-        new Index.Builder().addKey('x').expireAfterSeconds(1000)
-            .expireAfterSeconds(-1).build()                                 | null
+        index                                                           | seconds
+        Index.builder().addKey('x').build()                             | null
+        Index.builder().addKey('x').expireAfterSeconds(1000).build()    | 1000
+        Index.builder().addKey('x').expireAfterSeconds(1000)
+            .expireAfterSeconds(-1).build()                             | null
+    }
+    
+    @Unroll
+    def 'should support dropping duplicates'() {
+        expect:
+        index.toDocument().getBoolean("dropDups") == dropDups
+
+        where:
+        index                                                           | dropDups
+        Index.builder().addKey('x').build()                             | null
+        Index.builder().addKey('x').dropDups().build()                  | true
+        Index.builder().addKey('x').dropDups(false).build()             | null
+        Index.builder().addKey('x').dropDups().dropDups(false).build()  | null
+    }
+    
+    @Unroll
+    def 'should support unknown attributes'() {
+        expect:
+        index.toDocument().get("extra") == extra
+
+        where:
+        index                                                           | extra
+        Index.builder().addKey('x').build()                             | null
+        Index.builder().addKey('x').extra("extra", "special").build()   | "special"
     }
 }
