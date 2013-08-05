@@ -26,3 +26,6 @@ atlassian-ide-plugin.xml
 
 # gradle
 .gradle
+
+# code review
+codereview.rc
