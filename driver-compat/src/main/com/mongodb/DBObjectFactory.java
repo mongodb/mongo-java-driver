@@ -74,7 +74,7 @@ public final class DBObjectFactory {
         return map;
     }
 
-    private Class<? extends DBObject> getClassForPath(final List<String> path) {
+    Class<? extends DBObject> getClassForPath(final List<String> path) {
         if (pathToClassMap.containsKey(path)) {
             return pathToClassMap.get(path);
         } else {

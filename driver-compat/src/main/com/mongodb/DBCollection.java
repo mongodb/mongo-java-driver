@@ -1692,7 +1692,16 @@ public class DBCollection implements IDBCollection {
      */
     public void setInternalClass(final String path, final Class<? extends DBObject> aClass) {
         setObjectFactory(objectFactory.update(aClass, Arrays.asList(path.split("\\."))));
+    }
 
+    /**
+     * Sets the internal class for the given path in the document hierarchy
+     *
+     * @param path the path to map the given Class to
+     * @return the class for a given path in the hierarchy
+     */
+    protected Class<? extends DBObject> getInternalClass(final String path) {
+        return objectFactory.getClassForPath(Arrays.asList(path.split("\\.")));
     }
 
     @Override
