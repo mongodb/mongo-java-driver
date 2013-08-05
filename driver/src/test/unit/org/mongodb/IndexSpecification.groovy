@@ -30,7 +30,7 @@ class IndexSpecification extends Specification {
     @Unroll
     def 'should support unique indexes'() {
         expect:
-        index.toDocument().getBoolean("unique") == isUnique
+        index.toDocument().getBoolean('unique') == isUnique
 
         where:
         index                                                       | isUnique
@@ -42,7 +42,7 @@ class IndexSpecification extends Specification {
     @Unroll
     def 'should support ttl indexes'() {
         expect:
-        index.toDocument().getInteger("expireAfterSeconds") == seconds
+        index.toDocument().getInteger('expireAfterSeconds') == seconds
 
         where:
         index                                                           | seconds
@@ -55,7 +55,7 @@ class IndexSpecification extends Specification {
     @Unroll
     def 'should support dropping duplicates'() {
         expect:
-        index.toDocument().getBoolean("dropDups") == dropDups
+        index.toDocument().getBoolean('dropDups') == dropDups
 
         where:
         index                                                           | dropDups
@@ -68,11 +68,11 @@ class IndexSpecification extends Specification {
     @Unroll
     def 'should support unknown attributes'() {
         expect:
-        index.toDocument().get("extra") == extra
+        index.toDocument().get('extra') == extra
 
         where:
         index                                                           | extra
         Index.builder().addKey('x').build()                             | null
-        Index.builder().addKey('x').extra("extra", "special").build()   | "special"
+        Index.builder().addKey('x').extra('extra', 'special').build()   | 'special'
     }
 }
