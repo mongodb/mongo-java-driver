@@ -26,7 +26,7 @@ import static org.mongodb.OrderBy.ASC;
 /**
  * Represents an index to create on the database.  Used as an argument in ensureIndex
  */
-public class Index implements ConvertibleToDocument {
+public final class Index implements ConvertibleToDocument {
     private final String name;
     /**
      * Ensures that the indexed key value is unique
@@ -54,7 +54,7 @@ public class Index implements ConvertibleToDocument {
     private final int expireAfterSeconds;
 
     private final Document keys;
-    
+
     private final Document extra;
 
     private Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
@@ -73,7 +73,7 @@ public class Index implements ConvertibleToDocument {
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public String getName() {
         return name;
     }
@@ -162,7 +162,7 @@ public class Index implements ConvertibleToDocument {
 
         private Builder() {
         }
-        
+
         /**
          * Sets the name of the index.
          */
