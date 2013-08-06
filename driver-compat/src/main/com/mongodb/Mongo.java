@@ -43,6 +43,7 @@ import org.mongodb.session.ServerSelectingSession;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -76,6 +77,189 @@ public class Mongo {
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     private final ThreadLocal<ServerSelectingSession> pinnedSession = new ThreadLocal<ServerSelectingSession>();
+
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
+     *
+     * @throws UnknownHostException
+     * @throws MongoException
+     * @deprecated Replaced by {@link MongoClient#MongoClient()})
+     */
+    @Deprecated
+    public Mongo() throws UnknownHostException {
+        this(new ServerAddress(), createLegacyOptions());
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node (default port)
+     *
+     * @param host server to connect to
+     * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
+     */
+    @Deprecated
+    public Mongo(final String host) throws UnknownHostException {
+        this(new ServerAddress(host), createLegacyOptions());
+    }
+
+
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node (default port)
+     *
+     * @param host    server to connect to
+     * @param options default query options
+     * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
+     */
+    @Deprecated
+    public Mongo(final String host, @SuppressWarnings("deprecation") final MongoOptions options)
+            throws UnknownHostException {
+        this(new ServerAddress(host), options.toClientOptions());
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node
+     *
+     * @param host the database's host address
+     * @param port the port on which the database is running
+     * @throws UnknownHostException if the database host cannot be resolved
+     * @throws MongoException
+     * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
+     */
+    @Deprecated
+    public Mongo(final String host, final int port) throws UnknownHostException {
+        this(new ServerAddress(host, port), createLegacyOptions());
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongodb node
+     *
+     * @param address the database address
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
+     */
+    @Deprecated
+    public Mongo(final ServerAddress address) {
+        this(address, createLegacyOptions());
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
+     *
+     * @param address the database address
+     * @param options default query options
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
+     */
+    @Deprecated
+    public Mongo(final ServerAddress address, @SuppressWarnings("deprecation") final MongoOptions options) {
+        this(address, options.toClientOptions());
+    }
+
+    /**
+     * <p>Creates a Mongo in paired mode. <br/> This will also work for
+     * a replica set and will find all members (the master will be used by
+     * default).</p>
+     *
+     * @param left  left side of the pair
+     * @param right right side of the pair
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List)} instead.
+     */
+    @Deprecated
+    public Mongo(final ServerAddress left, final ServerAddress right) {
+        this(Arrays.asList(left, right), createLegacyOptions());
+    }
+
+    /**
+     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
+     * a replica set and will find all members (the master will be used by
+     * default).</p>
+     *
+     * @param left    left side of the pair
+     * @param right   right side of the pair
+     * @param options
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
+     */
+    @Deprecated
+    public Mongo(final ServerAddress left, final ServerAddress right,
+                 @SuppressWarnings("deprecation") final MongoOptions options) {
+        this(Arrays.asList(left, right), options.toClientOptions());
+    }
+
+    /**
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.
+     * <p/>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *              sharded cluster.
+     * @throws MongoException
+     * @see com.mongodb.ServerAddress
+     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
+     */
+    @Deprecated
+    public Mongo(final List<ServerAddress> seeds) {
+        this(seeds, createLegacyOptions());
+    }
+
+    /**
+     * Creates a Mongo based on a list of replica set members or a list of mongos.
+     * It will find all members (the master will be used by default). If you pass in a single server in the list,
+     * the driver will still function as if it is a replica set. If you have a standalone server,
+     * use the Mongo(ServerAddress) constructor.
+     * <p>
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
+     * and automatically fail over to the next server if the closest is down.
+     *
+     * @see com.mongodb.ServerAddress
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *              sharded cluster.
+     * @param options for configuring this Mongo instance
+     * @throws MongoException
+     *
+     * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
+     *
+     */
+    @Deprecated
+    public Mongo(final List<ServerAddress> seeds, @SuppressWarnings("deprecation") final MongoOptions options) {
+        this(seeds, options.toClientOptions());
+    }
+
+    /**
+     * Creates a Mongo described by a URI.
+     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
+     * If the URI contains database credentials, the database will be authenticated lazily on first use
+     * with those credentials.
+     *
+     * @param uri
+     * @throws MongoException
+     * @throws UnknownHostException
+     * @dochub connections
+     * @see MongoURI
+     *      <p>examples:
+     *      <li>mongodb://localhost</li>
+     *      <li>mongodb://fred:foobar@localhost/</li>
+     *      </p>
+     * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
+     */
+    @Deprecated
+    public Mongo(@SuppressWarnings("deprecation") final MongoURI uri) throws UnknownHostException {
+        this(uri.toClientURI());
+    }
 
     Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
         this(new DefaultClusterFactory().create(
@@ -215,6 +399,18 @@ public class Mongo {
             return null;
         }
         return new ServerAddress(description.getPrimaries().get(0).getAddress());
+    }
+
+    /**
+     * Returns the mongo options.
+     *
+     * @return the mongo options
+     * @deprecated Please use {@link MongoClient} class to connect
+     *             to server and corresponging {@link com.mongodb.MongoClient#getMongoClientOptions()}
+     */
+    @Deprecated
+    public MongoOptions getMongoOptions() {
+        return new MongoOptions(getMongoClientOptions());
     }
 
     /**
@@ -423,6 +619,14 @@ public class Mongo {
         return master != null ? String.format("%s:%d", master.getHost(), master.getPort()) : null;
     }
 
+    private static MongoClientOptions createLegacyOptions() {
+        return MongoClientOptions.builder()
+                .writeConcern(WriteConcern.UNACKNOWLEDGED)
+                .connectionsPerHost(10)
+                .build();
+    }
+
+
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
         final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (final ServerAddress cur : seedList) {
@@ -545,6 +749,22 @@ public class Mongo {
 
         public static Holder singleton() {
             return INSTANCE;
+        }
+
+        /**
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
+         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         *
+         * @param uri the Mongo URI
+         * @return the client
+         * @throws MongoException
+         * @throws UnknownHostException
+         *
+         * @deprecated Please use {@link #connect(MongoClientURI)} instead.
+         */
+        @Deprecated
+        public Mongo connect(final MongoURI uri) throws UnknownHostException {
+            return connect(uri.toClientURI());
         }
 
         /**
