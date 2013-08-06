@@ -22,6 +22,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoWriteConcernException;
 
 public class MongoExceptions {
+    @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
         final Throwable cause = e.getCause();
         if (e instanceof org.mongodb.command.MongoDuplicateKeyException) {

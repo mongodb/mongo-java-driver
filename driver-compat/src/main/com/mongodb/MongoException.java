@@ -94,11 +94,15 @@ public class MongoException extends RuntimeException {
     }
 
     /**
+     * Subclass of WriteConcernException representing a duplicate key error.
+     *
      * @deprecated This class will be dropped in 3.x versions.
+     *             Please catch {@link MongoDuplicateKeyException} instead.
      */
+    @Deprecated
     public static class DuplicateKey extends MongoDuplicateKeyException {
 
-        private static final long serialVersionUID = -4415279469780082174L;
+        private static final long serialVersionUID = 6557680785576001838L;
 
         public DuplicateKey(final org.mongodb.command.MongoDuplicateKeyException e) {
             super(e);
