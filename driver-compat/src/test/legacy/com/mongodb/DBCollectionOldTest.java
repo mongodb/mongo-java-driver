@@ -357,27 +357,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(2, collection.getIndexInfo().size());
         assertEquals(indexAlias, collection.getIndexInfo().get(1).get("name"));
     }
-    
-    @Test
-    public void shouldSupportIndexOptions() {
-        // given
-        collection.save(new BasicDBObject("x", 1));
-        assertEquals(1, collection.getIndexInfo().size());
-
-        // when
-        final BasicDBObject options = new BasicDBObject();
-        options.put("sparse", true);
-        options.put("background", true);
-        options.put("expireAfterSeconds", 42);
-        options.put("somethingOdd", "jeff");
-        collection.ensureIndex(new BasicDBObject("y", 1), options);
-
-        // then
-        assertEquals(2, collection.getIndexInfo().size());
-        assertEquals(42, collection.getIndexInfo().get(1).get("expireAfterSeconds"));
-        assertNull(collection.getIndexInfo().get(1).get("dropDups"));
-        assertEquals("jeff", collection.getIndexInfo().get(1).get("somethingOdd"));
-    }
 
     @Test
     public void testIndexExceptions() {

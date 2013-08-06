@@ -18,6 +18,10 @@ package com.mongodb
 
 class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
+    def setupSpec() {
+        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
+    }
+
     def setup() {
         collection.insert(new BasicDBObject('a', new BasicDBObject()).append('b', new BasicDBObject()));
         collection.setObjectClass(BasicDBObject)
@@ -46,6 +50,28 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         then:
         document.get('a') instanceof ClassA
         document.get('b') instanceof ClassB
+    }
+
+    def 'should support index options'() {
+        given:
+        def options = ~[
+                'sparse': true,
+                'background': true,
+                'expireAfterSeconds': 42,
+                'somethingOdd': 'jeff'
+        ]
+
+        when:
+        collection.ensureIndex(~['y': 1], options);
+
+        then:
+        collection.getIndexInfo().size() == 2
+
+        DBObject document = collection.getIndexInfo()[1]
+        document.get('expireAfterSeconds') == 42
+        document.get('somethingOdd') == 'jeff'
+        document.get('background') == true
+        !document.containsField('dropDups')
     }
 
     def 'should should provided decoder factory for findAndModify'() {
