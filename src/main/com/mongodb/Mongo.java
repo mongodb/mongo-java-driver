@@ -104,7 +104,10 @@ public class Mongo {
     /**
      * Gets the major version of this library
      * @return the major version, e.g. 2
+     *
+     * @deprecated Please use {@link #getVersion()} instead.
      */
+    @Deprecated
     public static int getMajorVersion() {
         return MAJOR_VERSION;
     }
@@ -112,7 +115,10 @@ public class Mongo {
     /**
      * Gets the minor version of this library
      * @return the minor version, e.g. 8
+     *
+     * @deprecated Please use {@link #getVersion()} instead.
      */
+    @Deprecated
     public static int getMinorVersion() {
         return MINOR_VERSION;
     }
@@ -122,7 +128,10 @@ public class Mongo {
      * @param addr the database address
      * @return
      * @throws MongoException
+     *
+     * @deprecated Please use {@link MongoClient#getDB(String)} instead.
      */
+    @Deprecated
     public static DB connect( DBAddress addr ){
         return new Mongo( addr ).getDB( addr.getDBName() );
     }
@@ -416,7 +425,10 @@ public class Mongo {
     /**
      * returns a string representing the hosts used in this Mongo instance
      * @return
+     *
+     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
      */
+    @Deprecated
     public String debugString(){
         return _connector.debugString();
     }
@@ -595,7 +607,11 @@ public class Mongo {
 
     /**
      * Returns the mongo options.
+     *
+     * @deprecated Please use {@link MongoClient}
+     *             and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
      */
+    @Deprecated
     public MongoOptions getMongoOptions() {
         return _options;
     }
@@ -715,43 +731,51 @@ public class Mongo {
     public static class Holder {
 
         /**
-         * Attempts to find an existing Mongo instance matching that URI in the holder, and returns it if exists.
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
          * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         *
          * @param uri the Mongo URI
-         * @return
+         * @return the client
+         * @throws MongoException
+         * @throws UnknownHostException
+         *
+         * @deprecated Please use {@link #connect(MongoClientURI)} instead.
+         */
+        @Deprecated
+        public Mongo connect(final MongoURI uri) throws UnknownHostException {
+            return connect(uri.toClientURI());
+        }
+
+        /**
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
+         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         *
+         * @param uri the Mongo URI
+         * @return the client
          * @throws MongoException
          * @throws UnknownHostException
          */
-        public Mongo connect( MongoURI uri )
-            throws UnknownHostException {
+        public Mongo connect(final MongoClientURI uri) throws UnknownHostException {
 
-            String key = _toKey( uri );
+            final String key = toKey(uri);
 
-            Mongo m = _mongos.get(key);
-            if ( m != null )
-                return m;
+            Mongo client = _mongos.get(key);
 
-            m = new Mongo( uri );
-
-            Mongo temp = _mongos.putIfAbsent( key , m );
-            if ( temp == null ){
-                // ours got in
-                return m;
+            if (client == null) {
+                final Mongo newbie = new MongoClient(uri);
+                client = _mongos.putIfAbsent(key, newbie);
+                if (client == null) {
+                    client = newbie;
+                } else {
+                    newbie.close();
+                }
             }
 
-            // there was a race and we lost
-            // close ours and return the other one
-            m.close();
-            return temp;
+            return client;
         }
 
-        String _toKey( MongoURI uri ){
-            StringBuilder buf = new StringBuilder();
-            for ( String h : uri.getHosts() )
-                buf.append( h ).append( "," );
-            buf.append( uri.getOptions() );
-            buf.append( uri.getUsername() );
-            return buf.toString();
+        private String toKey(final MongoClientURI uri) {
+            return uri.toString();
         }
 
         public static Holder singleton() { return _default; }

@@ -267,4 +267,8 @@ public class MongoURI {
     public String toString() {
         return mongoClientURI.toString();
     }
+
+    MongoClientURI toClientURI() {
+        return mongoClientURI;
+    }
 }
