@@ -32,14 +32,23 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultConnectionFactory implements ConnectionFactory {
     private final DefaultConnectionSettings settings;
     private final SSLSettings sslSettings;
+    private final SocketFactory socketFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
     public DefaultConnectionFactory(final DefaultConnectionSettings settings,
                                     final SSLSettings sslSettings, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
+        this(settings, sslSettings.isEnabled() ? SSLSocketFactory.getDefault() : SocketFactory.getDefault(), bufferProvider,
+                credentialList);
+    }
+
+    public DefaultConnectionFactory(final DefaultConnectionSettings settings,
+                                    final SocketFactory socketFactory, final BufferProvider bufferProvider,
+                                    final List<MongoCredential> credentialList) {
         this.settings = notNull("settings", settings);
-        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.sslSettings = null;
+        this.socketFactory = notNull("socketFactory", socketFactory);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
     }
@@ -47,7 +56,10 @@ public class DefaultConnectionFactory implements ConnectionFactory {
     @Override
     public Connection create(final ServerAddress serverAddress) {
         Connection socketConnection;
-        if (sslSettings.isEnabled()) {
+        if (socketFactory != null) {
+            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, socketFactory);
+        }
+        else if (sslSettings.isEnabled()) {
             socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
