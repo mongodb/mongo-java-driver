@@ -90,7 +90,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         final int startPosition = getOutputBuffer().getPosition();
         bsonWriter.writeStartDocument();
         for (final String key : document.keySet()) {
-            putObjectField(key, document.get(key));
+            _putObjectField(key, document.get(key));
         }
         bsonWriter.writeEndDocument();
         return getOutputBuffer().getPosition() - startPosition;
@@ -102,7 +102,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         }
     }
 
-    protected void putObjectField(final String name, final Object initialValue) {
+    protected void _putObjectField(final String name, final Object initialValue) {
         if ("_transientFields".equals(name)) {
             return;
         }
@@ -291,7 +291,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         } else {
             final int length = Array.getLength(object);
             for (int i = 0; i < length; i++) {
-                putObjectField(String.valueOf(i), Array.get(object, i));
+                _putObjectField(String.valueOf(i), Array.get(object, i));
             }
         }
         bsonWriter.writeEndArray();
@@ -303,7 +303,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeStartArray();
         final int i = 0;
         for (Object o : iterable) {
-            putObjectField(String.valueOf(i), o);
+            _putObjectField(String.valueOf(i), o);
         }
         bsonWriter.writeEndArray();
     }
@@ -313,7 +313,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         putName(name);
         bsonWriter.writeStartDocument();
         for (Map.Entry entry : (Set<Map.Entry>) map.entrySet()) {
-            putObjectField((String) entry.getKey(), entry.getValue());
+            _putObjectField((String) entry.getKey(), entry.getValue());
         }
         bsonWriter.writeEndDocument();
     }
