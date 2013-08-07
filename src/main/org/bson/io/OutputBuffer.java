@@ -18,6 +18,8 @@
 
 package org.bson.io;
 
+import org.bson.BSONException;
+
 import java.io.*;
 import java.security.*;
 
@@ -189,6 +191,52 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeDouble( double x ){
         writeLong( Double.doubleToRawLongBits( x ) );
+    }
+
+    /**
+     * Writes C string (null-terminated string) to underlying buffer.
+     *
+     * @param str the string
+     * @return number of bytes written
+     */
+    public int writeCString(final String str) {
+
+        final int len = str.length();
+        int total = 0;
+
+        for (int i = 0; i < len;/*i gets incremented*/) {
+            final int c = Character.codePointAt(str, i);
+
+            if (c == 0x0) {
+                throw new BSONException(
+                        String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
+            }
+            if (c < 0x80) {
+                write((byte) c);
+                total += 1;
+            } else if (c < 0x800) {
+                write((byte) (0xc0 + (c >> 6)));
+                write((byte) (0x80 + (c & 0x3f)));
+                total += 2;
+            } else if (c < 0x10000) {
+                write((byte) (0xe0 + (c >> 12)));
+                write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                write((byte) (0x80 + (c & 0x3f)));
+                total += 3;
+            } else {
+                write((byte) (0xf0 + (c >> 18)));
+                write((byte) (0x80 + ((c >> 12) & 0x3f)));
+                write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                write((byte) (0x80 + (c & 0x3f)));
+                total += 4;
+            }
+
+            i += Character.charCount(c);
+        }
+
+        write((byte) 0);
+        total++;
+        return total;
     }
 
     public String toString(){

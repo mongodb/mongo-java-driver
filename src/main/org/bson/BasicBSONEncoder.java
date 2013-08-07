@@ -95,6 +95,15 @@ public class BasicBSONEncoder implements BSONEncoder {
         
         _buf = out;
     }
+
+    /**
+     * Gets the buffer this encoder is writing to.
+     *
+     * @return the output buffer
+     */
+    protected OutputBuffer getOutputBuffer() {
+        return _buf;
+    }
  
     public void done(){
         _buf = null;
@@ -102,7 +111,10 @@ public class BasicBSONEncoder implements BSONEncoder {
    
     /**
      * @return true if object was handled
+     *
+     * @deprecated Override {@link #putSpecial(String, Object)} if you need to you need to handle custom types.
      */
+    @Deprecated
     protected boolean handleSpecialObjects( String name , BSONObject o ){
         return false;
     }
@@ -447,16 +459,25 @@ public class BasicBSONEncoder implements BSONEncoder {
 
 
     // ----------------------------------------------
-    
+
     /**
      * Encodes the type and key.
-     * 
+     *
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     *             Access buffer directly via {@link #getOutputBuffer()} if you need to change how BSON is written.
      */
-    protected void _put( byte type , String name ){
-        _buf.write( type );
-        _put( name );
+    @Deprecated
+    protected void _put(byte type, String name) {
+        _buf.write(type);
+        _put(name);
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     *             Access buffer directly via {@link #getOutputBuffer()} if you need to change how BSON is written.
+     *             Otherwise override {@link #putString(String, String)}.
+     */
+    @Deprecated
     protected void _putValueString( String s ){
         int lenPos = _buf.getPosition();
         _buf.writeInt( 0 ); // making space for size
@@ -466,68 +487,56 @@ public class BasicBSONEncoder implements BSONEncoder {
     
     void _reset( Buffer b ){
         b.position(0);
-        b.limit( b.capacity() );
+        b.limit(b.capacity());
     }
 
     /**
      * puts as utf-8 string
+     *
+     * @deprecated Replaced by {@code getOutputBuffer().writeCString(String)}.
      */
+    @Deprecated
     protected int _put( String str ){
-
-        final int len = str.length();
-        int total = 0;
-
-        for ( int i=0; i<len; ){
-            int c = Character.codePointAt( str , i );
-
-            if (c == 0x0) {
-                throw new BSONException(
-                        String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
-            }
-
-            if ( c < 0x80 ){
-                _buf.write( (byte)c );
-                total += 1;
-            }
-            else if ( c < 0x800 ){
-                _buf.write( (byte)(0xc0 + (c >> 6) ) );
-                _buf.write( (byte)(0x80 + (c & 0x3f) ) );
-                total += 2;
-            }
-            else if (c < 0x10000){
-                _buf.write( (byte)(0xe0 + (c >> 12) ) );
-                _buf.write( (byte)(0x80 + ((c >> 6) & 0x3f) ) );
-                _buf.write( (byte)(0x80 + (c & 0x3f) ) );
-                total += 3;
-            }
-            else {
-                _buf.write( (byte)(0xf0 + (c >> 18)) );
-                _buf.write( (byte)(0x80 + ((c >> 12) & 0x3f)) );
-                _buf.write( (byte)(0x80 + ((c >> 6) & 0x3f)) );
-                _buf.write( (byte)(0x80 + (c & 0x3f)) );
-                total += 4;
-            }
-            
-            i += Character.charCount(c);
-        }  
-        
-        _buf.write( (byte)0 );
-        total++;
-        return total;
+        return _buf.writeCString(str);
     }
 
+    /**
+     * Writes integer to underlying buffer.
+     *
+     * @param x the integer number
+     * @deprecated Replaced by {@code getOutputBuffer().writeInt(int)}.
+     */
+    @Deprecated
     public void writeInt( int x ){
         _buf.writeInt( x );
     }
 
+    /**
+     * Writes long to underlying buffer.
+     *
+     * @param x the long number
+     * @deprecated Replaced by {@code getOutputBuffer().writeLong(long)}.
+     */
+    @Deprecated
     public void writeLong( long x ){
-        _buf.writeLong( x );
-    }
-    
-    public void writeCString( String s ){
-        _put( s );
+        _buf.writeLong(x);
     }
 
+    /**
+     * Writes C string (null-terminated string) to underlying buffer.
+     *
+     * @param s the string
+     * @deprecated Replaced by {@code getOutputBuffer().writeCString(String)}.
+     */
+    @Deprecated
+    public void writeCString( String s ){
+        _buf.writeCString(s);
+    }
+
+    /**
+     * @deprecated Replaced by {@link #getOutputBuffer()}.
+     */
+    @Deprecated
     protected OutputBuffer _buf;
 
 }
