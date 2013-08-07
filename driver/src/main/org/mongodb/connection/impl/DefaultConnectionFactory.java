@@ -39,8 +39,11 @@ public class DefaultConnectionFactory implements ConnectionFactory {
     public DefaultConnectionFactory(final DefaultConnectionSettings settings,
                                     final SSLSettings sslSettings, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
-        this(settings, sslSettings.isEnabled() ? SSLSocketFactory.getDefault() : SocketFactory.getDefault(), bufferProvider,
-                credentialList);
+        this.settings = notNull("settings", settings);
+        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.socketFactory = null;
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
+        this.credentialList = notNull("credentialList", credentialList);
     }
 
     public DefaultConnectionFactory(final DefaultConnectionSettings settings,
