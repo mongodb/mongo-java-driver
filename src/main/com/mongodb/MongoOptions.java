@@ -26,7 +26,10 @@ import javax.net.SocketFactory;
  *
  * @see MongoClientOptions
  * @see MongoClient
+ *
+ * @deprecated Replaced by {@link MongoClientOptions}.
  */
+@Deprecated
 public class MongoOptions {
 
     @Deprecated

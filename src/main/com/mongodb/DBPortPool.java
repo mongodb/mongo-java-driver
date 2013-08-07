@@ -35,7 +35,10 @@ import java.util.logging.Level;
 
 /**
  * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ *
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
  */
+@Deprecated
 public class DBPortPool extends SimplePool<DBPort> {
 
     public String getHost() {

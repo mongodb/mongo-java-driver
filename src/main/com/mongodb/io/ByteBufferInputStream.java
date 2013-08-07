@@ -22,6 +22,10 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class ByteBufferInputStream extends InputStream {
 
     public ByteBufferInputStream( List<ByteBuffer> lst ){

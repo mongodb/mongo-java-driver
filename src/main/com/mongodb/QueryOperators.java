@@ -70,4 +70,11 @@ public class QueryOperators {
     public static final String SHOW_DISK_LOC = "$showDiskLoc";
     public static final String HINT = "$hint";
     public static final String COMMENT = "$comment";
+
+    /**
+     * @deprecated Utility classes should not have a public or default constructor.
+     */
+    @Deprecated
+    public QueryOperators() {
+    }
 }

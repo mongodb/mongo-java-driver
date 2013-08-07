@@ -23,6 +23,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ */
+@Deprecated
 public class ByteBufferOutputStream extends OutputStream  {
 
     public ByteBufferOutputStream(){

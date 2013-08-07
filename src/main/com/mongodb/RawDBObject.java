@@ -54,7 +54,10 @@ import org.bson.types.ObjectId;
 
 /**
  * This object wraps the binary object format ("BSON") used for the transport of serialized objects to / from the Mongo database.
+ *
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
  */
+@Deprecated
 public class RawDBObject implements DBObject {
 
     RawDBObject( ByteBuffer buf ){

@@ -27,6 +27,10 @@ import java.util.regex.Pattern;
 @Deprecated
 public class MyAsserts {
 
+    /**
+     * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     public static class MyAssert extends RuntimeException {
 
         private static final long serialVersionUID = -4415279469780082174L;

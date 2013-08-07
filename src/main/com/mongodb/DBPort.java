@@ -52,7 +52,10 @@ import java.util.logging.Logger;
  * represents a Port to the database, which is effectively a single connection to a server
  * Methods implemented at the port level should throw the raw exceptions like IOException,
  * so that the connector above can make appropriate decisions on how to handle.
+ *
+ * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
  */
+@Deprecated
 public class DBPort {
     
     /**

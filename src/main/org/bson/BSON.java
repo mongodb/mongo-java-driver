@@ -297,6 +297,10 @@ public class BSON {
     static ClassMap<List<Transformer>> _decodingHooks =
         new ClassMap<List<Transformer>>();
 
+    /**
+     * @deprecated Use {@link Charset#forName(String)} to create UTF-8 charset.
+     */
+    @Deprecated
     static protected Charset _utf8 = Charset.forName( "UTF-8" );
 
     // ----- static encode/decode -----
