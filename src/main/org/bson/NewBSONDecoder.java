@@ -29,7 +29,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * A new implementation of the bson decoder.
  *
- * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
 public class NewBSONDecoder implements BSONDecoder {

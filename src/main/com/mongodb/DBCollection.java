@@ -1394,7 +1394,7 @@ public abstract class DBCollection {
 
     /**
      * @deprecated This method should not be a part of API.
-     *             If you overriding one of the {@code DBCollection} methods please rely on superclass
+     *             If you override one of the {@code DBCollection} methods please rely on superclass
      *             implementation in checking argument correctness and validity.
      */
     @Deprecated

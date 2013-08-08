@@ -53,7 +53,7 @@ import java.util.logging.Logger;
  * Methods implemented at the port level should throw the raw exceptions like IOException,
  * so that the connector above can make appropriate decisions on how to handle.
  *
- * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
 public class DBPort {

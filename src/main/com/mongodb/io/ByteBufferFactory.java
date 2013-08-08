@@ -21,14 +21,14 @@ package com.mongodb.io;
 import java.nio.ByteBuffer;
 
 /**
- * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
 public interface ByteBufferFactory {
     public ByteBuffer get();
 
     /**
-     * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public static class SimpleHeapByteBufferFactory implements ByteBufferFactory {

@@ -173,7 +173,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * @param time time in seconds
      * @param machine machine ID
      * @param inc incremental value
-     * @deprecated {@code ObjectId}'s constructed this way are not conform
+     * @deprecated {@code ObjectId}'s constructed this way do not conform to
      *             the <a href="http://docs.mongodb.org/manual/reference/object-id/">spec</a>.
      *             Please use {@link org.bson.types.ObjectId#ObjectId(byte[])} instead.
      */

@@ -52,7 +52,7 @@ import org.bson.types.ObjectId;
  *<h4>Solution 1: Custom {@link BSONCallback} implementation</h4>
  * With callbacks you can handle the process of creating objects from bytes in BSON format.
  * <p>
- * For example to get away of overriging <b>{@code BasicBSONDecoder._binary(String)}</b>
+ * For example to get away from overriging <b>{@code BasicBSONDecoder._binary(String)}</b>
  * you can use the following piece of code:
  * </p>
  * <pre>
@@ -69,7 +69,7 @@ import org.bson.types.ObjectId;
  * This solution covers majority of the cases.
  *
  * <h4>Solution 2: Custom {@link BSONDecoder} implementation</h4>
- * If you need to customize bytes decoding at the lowest layer you have to provide you own
+ * If you need to customize byte-level decoding at the lowest layer you have to provide you own
  * implementation of the {@link BSONDecoder} interface.
  * <br/>
  * Please check <a href="http://bsonspec.org/">http://bsonspec.org/</a> for more information.
@@ -284,7 +284,7 @@ public class BasicBSONDecoder implements BSONDecoder {
      * @throws IOException
      *
      * @deprecated This method should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected void _binary( final String name )
@@ -341,7 +341,7 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     /**
      * @deprecated This class should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected class BSONInput {
@@ -555,14 +555,14 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     /**
      * @deprecated This field should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected BSONInput _in;
 
     /**
      * @deprecated This field should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected BSONCallback _callback;
@@ -574,14 +574,14 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     /**
      * @deprecated This field should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected int _pos; // current offset into _inputBuffer
 
     /**
      * @deprecated This field should not be a part of API.
-     *             Please see the description of the current class for a migration instructions.
+     *             Please see the class-level documentation for a migration instructions.
      */
     @Deprecated
     protected int _len; // length of valid data in _inputBuffer

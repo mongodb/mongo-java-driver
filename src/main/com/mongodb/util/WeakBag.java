@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * if its not obvious what a weak bag should do, then, well...
  * very very not thread safe
- * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
 public class WeakBag<T> implements Iterable<T> {

@@ -32,19 +32,19 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract int getPosition();
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public abstract void setPosition( int position );
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public abstract void seekEnd();
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public abstract void seekStart();
@@ -75,7 +75,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public String asString(){
@@ -83,7 +83,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public String asString( String encoding )
@@ -92,7 +92,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public String hex(){
@@ -117,7 +117,7 @@ public abstract class OutputBuffer extends OutputStream {
 
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public String md5(){
@@ -157,7 +157,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public void writeIntBE( int x ){
@@ -168,7 +168,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public void writeInt( int pos , int x ){

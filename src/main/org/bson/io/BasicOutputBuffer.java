@@ -47,7 +47,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Override
     @Deprecated
@@ -56,7 +56,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Override
     @Deprecated
@@ -65,7 +65,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     @Override
@@ -93,7 +93,7 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     /**
      * @return bytes written
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public int pipe( DataOutput out )
@@ -118,7 +118,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Override
     @Deprecated
@@ -127,7 +127,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Override
     @Deprecated

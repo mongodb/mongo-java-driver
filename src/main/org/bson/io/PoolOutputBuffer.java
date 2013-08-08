@@ -26,7 +26,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * @deprecated This class is NOT a part of public API and will be propped in 3.x versions.
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
 public class PoolOutputBuffer extends OutputBuffer {
@@ -51,7 +51,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public void setPosition( int position ){
@@ -59,7 +59,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public void seekEnd(){
@@ -67,7 +67,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public void seekStart(){
@@ -218,7 +218,7 @@ public class PoolOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * @deprecated This method is NOT a part of public API and will be propped in 3.x versions.
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
     public String asString( String encoding )
