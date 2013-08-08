@@ -20,6 +20,9 @@ import category.ReplicaSet;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mongodb.Document;
+import org.mongodb.connection.impl.NativeAuthenticationHelper;
+import org.mongodb.operation.FindUserOperation;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -29,8 +32,10 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mongodb.Fixture.getSession;
 
 public class DBTest extends DatabaseTestCase {
     @Test
@@ -138,7 +143,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shoudExecuteCommand() {
+    public void shouldExecuteCommand() {
         final CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
         assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok", "serverUsed"}));
     }
@@ -161,6 +166,52 @@ public class DBTest extends DatabaseTestCase {
     public void shouldNotThrowAnExceptionOnCommandFailure() {
         final CommandResult commandResult = database.command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
         assertThat(commandResult, hasFields(new String[]{"serverUsed", "ok", "errmsg"}));
+    }
+
+    @Test
+    public void shouldAddUser() {
+        String userName = "jeff";
+        char[] password = "123".toCharArray();
+        boolean readOnly = true;
+        database.addUser(userName, password, readOnly);
+        Document userDocument = new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
+                true).execute();
+        assertEquals(userName, userDocument.get("user"));
+        assertEquals(NativeAuthenticationHelper.createAuthenticationHash(userName, password), userDocument.get("pwd"));
+        assertEquals(readOnly, userDocument.get("readOnly"));
+    }
+
+    @Test
+    public void shouldUpdateUser() {
+        String userName = "jeff";
+
+        char[] password = "123".toCharArray();
+        boolean readOnly = true;
+        database.addUser(userName, password, readOnly);
+
+        char[] newPassword = "345".toCharArray();
+        boolean newReadOnly = false;
+        database.addUser(userName, newPassword, newReadOnly);
+
+        Document userDocument = new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
+                true).execute();
+        assertEquals(userName, userDocument.get("user"));
+        assertEquals(NativeAuthenticationHelper.createAuthenticationHash(userName, newPassword), userDocument.get("pwd"));
+        assertEquals(newReadOnly, userDocument.get("readOnly"));
+    }
+
+    @Test
+    public void shouldRemoveUser() {
+        String userName = "jeff";
+
+        char[] password = "123".toCharArray();
+        boolean readOnly = true;
+        database.addUser(userName, password, readOnly);
+
+        database.removeUser(userName);
+
+        assertNull(new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
+                true).execute());
     }
 
 }

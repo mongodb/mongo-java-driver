@@ -30,10 +30,15 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.impl.NativeAuthenticationHelper;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.FindUserOperation;
+import org.mongodb.operation.InsertUserOperation;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.RemoveUserOperation;
+import org.mongodb.operation.ReplaceUserOperation;
 import org.mongodb.session.Session;
 
 import java.util.HashSet;
@@ -379,17 +384,36 @@ public class DB implements IDB {
 
     @Override
     public WriteResult addUser(final String username, final char[] passwd) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return addUser(username, passwd, false);
     }
 
     @Override
     public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Document foundUserDocument = new FindUserOperation(getName(), getBufferPool(), username, getSession(), true).execute();
+        Document userDocument;
+        if (foundUserDocument == null) {
+            userDocument = new Document("user", username);
+        }
+        else {
+            userDocument = foundUserDocument;
+        }
+        userDocument.append("pwd", NativeAuthenticationHelper.createAuthenticationHash(username, passwd));
+        userDocument.append("readOnly", readOnly);
+        org.mongodb.CommandResult commandResult;
+        if (foundUserDocument == null) {
+            commandResult = new InsertUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+        }
+        else {
+            commandResult = new ReplaceUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+        }
+        return new WriteResult(new CommandResult(commandResult), getWriteConcern());
     }
 
     @Override
     public WriteResult removeUser(final String username) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        CommandResult commandResult = new CommandResult(new RemoveUserOperation(getName(), username, getBufferPool(),
+                getSession(), true).execute());
+        return new WriteResult(commandResult, getWriteConcern());
     }
 
     @Override
