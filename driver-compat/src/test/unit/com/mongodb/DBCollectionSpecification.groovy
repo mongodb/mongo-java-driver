@@ -24,6 +24,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -55,7 +57,7 @@ class DBCollectionSpecification extends Specification {
         database.getCluster() >> { cluster }
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription() }
-        database.getBufferPool() >> {getBufferProvider()}
+        database.getBufferPool() >> { getBufferProvider() }
         cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
 
         //TODO: this shouldn't be required.  I think.

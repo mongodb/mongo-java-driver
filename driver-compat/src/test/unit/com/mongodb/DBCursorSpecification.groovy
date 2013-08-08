@@ -22,6 +22,8 @@
 
 
 
+
+
 package com.mongodb
 
 import com.mongodb.codecs.DocumentCodec
@@ -45,10 +47,9 @@ class DBCursorSpecification extends Specification {
 
     def setup() {
         collection.getDocumentCodec() >> { new DocumentCodec(PrimitiveCodecs.createDefault()) }
-        collection.getNamespace() >> { new MongoNamespace("test", "test") }
+        collection.getNamespace() >> { new MongoNamespace('test', 'test') }
         collection.getSession() >> { session }
-        collection.getBufferPool() >> {getBufferProvider()}
-
+        collection.getBufferPool() >> { getBufferProvider() }
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
