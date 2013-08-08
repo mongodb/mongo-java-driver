@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
 import org.bson.ByteBuf;
+import org.mongodb.MongoException;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.MongoSocketWriteException;
@@ -205,6 +206,7 @@ public class SocketClient {
 
             @Override
             public void failed(final Throwable t) {
+                callback.onResult(null, t instanceof MongoException ? (MongoException) t : new MongoException(t.getMessage(), t));
             }
         });
         triggerWrite();
@@ -228,7 +230,8 @@ public class SocketClient {
                         if (selector.select() == 0) {
                             continue;
                         }
-                        final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+                        final Iterator<SelectionKey> it = selector.selectedKeys()
+                            .iterator();
                         while (it.hasNext()) {
                             final SelectionKey key = it.next();
                             it.remove();

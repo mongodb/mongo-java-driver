@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+
 package org.mongodb.connection;
+
 
 import org.bson.ByteBuf;
 import org.junit.Test;
@@ -31,11 +33,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.getPrimary;
 
+
 public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldGetConnection() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+            ConnectionProviderSettings.builder()
+                .maxSize(1)
+                .maxWaitQueueSize(1)
+                .build());
 
         AsyncConnection first = connectionProvider.get();
         assertNotNull(first);
@@ -44,7 +50,10 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldThrowIfPoolIsExhausted() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+            ConnectionProviderSettings.builder()
+                .maxSize(1)
+                .maxWaitQueueSize(1)
+                .build());
 
         AsyncConnection first = connectionProvider.get();
         assertNotNull(first);
@@ -59,13 +68,12 @@ public class DefaultAsyncConnectionProviderTest {
 
     @Test
     public void shouldThrowIfWaitQueueIsFull() throws InterruptedException {
-        AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(),
-                new TestAsyncConnectionFactory(),
-                ConnectionProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxWaitTime(1, TimeUnit.SECONDS)
-                        .build());
+        AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
+            ConnectionProviderSettings.builder()
+                .maxSize(1)
+                .maxWaitQueueSize(1)
+                .maxWaitTime(1, TimeUnit.SECONDS)
+                .build());
 
 
         AsyncConnection first = connectionProvider.get();
@@ -75,8 +83,7 @@ public class DefaultAsyncConnectionProviderTest {
         AtomicBoolean gotTimeout = new AtomicBoolean(false);
         AtomicBoolean gotWaitQueueFull = new AtomicBoolean(false);
 
-        TestAsyncConnectionGetter connectionGetter = new TestAsyncConnectionGetter(connectionProvider, gotTimeout, gotWaitQueueFull,
-                latch);
+        TestAsyncConnectionGetter connectionGetter = new TestAsyncConnectionGetter(connectionProvider, gotTimeout, gotWaitQueueFull, latch);
         new Thread(connectionGetter).start();
         new Thread(connectionGetter).start();
 
@@ -93,7 +100,7 @@ public class DefaultAsyncConnectionProviderTest {
         private final CountDownLatch latch;
 
         public TestAsyncConnectionGetter(final AsyncConnectionProvider connectionProvider, final AtomicBoolean gotTimeout,
-                                         final AtomicBoolean gotWaitQueueFull, final CountDownLatch latch) {
+            final AtomicBoolean gotWaitQueueFull, final CountDownLatch latch) {
             this.connectionProvider = connectionProvider;
             this.gotTimeout = gotTimeout;
             this.gotWaitQueueFull = gotWaitQueueFull;

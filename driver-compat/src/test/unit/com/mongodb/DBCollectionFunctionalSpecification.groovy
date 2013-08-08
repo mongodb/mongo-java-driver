@@ -27,8 +27,8 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(BasicDBObject)
     }
 
-    def 'should use top-leve class for findAndModify'() {
-        given:
+    def 'should use top-level class for findAndModify'() {
+        setup:
         collection.setObjectClass(ClassA)
 
         when:
