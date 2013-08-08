@@ -57,6 +57,10 @@ public class ReplicaSetStatusTest {
     
     @Test
     public void testSetNames() throws Exception {
+        // not a replica set
+        if (mongoClient.isMongosConnection()) {
+            throw new SkipException("test disabled on mongos");
+        }
         String replicaSetName = mongoClient.getConnector().getReplicaSetStatus().getName();
         
         List<ReplicaSetNode> nodes = mongoClient.getConnector().getReplicaSetStatus()._replicaSetHolder.get().getAll();
