@@ -662,12 +662,14 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
 
         try {
             usersCollection.remove(new BasicDBObject());
             assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx" , "e".toCharArray() );
+            db.getLastError(wAll);
             assertEquals(1, usersCollection.find().count());
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
@@ -696,12 +698,14 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollections = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
 
         try {
             usersCollections.remove(new BasicDBObject());
             assertEquals(0, usersCollections.find().count());
 
             db.addUser("xx", "e".toCharArray());
+            db.getLastError(wAll);
             assertEquals(1, usersCollections.find().count());
 
             try {
@@ -791,11 +795,13 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
         try {
             usersCollection.remove(new BasicDBObject());
             assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx", "e".toCharArray());
+            db.getLastError(wAll);
             assertEquals(1, usersCollection.find().count());
         }
         finally {
