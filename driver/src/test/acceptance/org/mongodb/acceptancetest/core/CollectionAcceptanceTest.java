@@ -142,7 +142,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         doc.append("doc list", Arrays.asList(new Document("x", 1), new Document("x", 2)));
 
         collection.insert(doc);
-        Document found = collection.one();
+        Document found = collection.find().getOne();
         assertNotNull(found);
         assertEquals(ObjectId.class, found.get("_id").getClass());
         assertEquals(Boolean.class, found.get("bool").getClass());
