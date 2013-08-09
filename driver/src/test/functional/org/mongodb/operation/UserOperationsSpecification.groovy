@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCredential
-import org.mongodb.connection.ConnectionFactory
 import org.mongodb.connection.MongoSecurityException
 import org.mongodb.connection.impl.DefaultConnectionFactory
 import org.mongodb.connection.impl.DefaultConnectionSettings
