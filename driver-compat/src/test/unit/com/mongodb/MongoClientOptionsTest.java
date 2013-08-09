@@ -33,6 +33,7 @@ public class MongoClientOptionsTest {
         final MongoClientOptions options = builder.build();
         assertNull(options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
+        assertEquals(0, options.getMinConnectionsPerHost());
         assertEquals(100, options.getConnectionsPerHost());
         assertEquals(10000, options.getConnectTimeout());
         assertEquals(0, options.getMaxAutoConnectRetryTime());
@@ -62,6 +63,12 @@ public class MongoClientOptionsTest {
         }
         try {
             builder.connectionsPerHost(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // NOPMD all good
+        }
+        try {
+            builder.minConnectionsPerHost(-1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
             // NOPMD all good
@@ -109,6 +116,7 @@ public class MongoClientOptionsTest {
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNAL_SAFE);
         builder.autoConnectRetry(true);
+        builder.minConnectionsPerHost(30);
         builder.connectionsPerHost(500);
         builder.connectTimeout(100);
         builder.maxWaitTime(200);
@@ -132,6 +140,7 @@ public class MongoClientOptionsTest {
         assertEquals(200, options.getMaxWaitTime());
         assertEquals(300, options.getMaxConnectionIdleTime());
         assertEquals(400, options.getMaxConnectionLifeTime());
+        assertEquals(30, options.getMinConnectionsPerHost());
         assertEquals(500, options.getConnectionsPerHost());
         assertEquals(100, options.getConnectTimeout());
         assertEquals(600, options.getMaxAutoConnectRetryTime());

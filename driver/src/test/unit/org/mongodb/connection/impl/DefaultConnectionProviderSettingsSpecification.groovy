@@ -18,6 +18,10 @@
 
 
 
+
+
+
+
 package org.mongodb.connection.impl
 
 import spock.lang.Specification
@@ -35,12 +39,15 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
         settings.maxWaitQueueSize == maxWaitQueueSize
         settings.getMaxConnectionLifeTime(MILLISECONDS) == maxConnectionLifeTimeMS
         settings.getMaxConnectionIdleTime(MILLISECONDS) == maxConnectionIdleTimeMS
+        settings.minSize == minSize
+        settings.getMaintenanceFrequency(MILLISECONDS) == maintancanceFrequencyMS
 
         where:
-        settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS | maxConnectionIdleTimeMS
+        settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS |
+                maxConnectionIdleTimeMS | minSize | maintancanceFrequencyMS
         DefaultConnectionProviderSettings
                 .builder()
-                .maxSize(1).build()           | 0L          | 1       | 0                | 0                       | 0
+                .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 60000
         DefaultConnectionProviderSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
@@ -50,7 +57,10 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
                 101, SECONDS)
                 .maxConnectionIdleTime(
                 51, SECONDS)
-                .build()                      | 5000        | 75     | 11                | 101000                  | 51000
+                .minSize(1)
+                .maintenanceFrequency(
+                1000, SECONDS)
+                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 1000000
     }
 
     def 'should throw exception on invalid argument'() {
@@ -74,6 +84,18 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
 
         when:
         DefaultConnectionProviderSettings.builder().maxSize(1).maxConnectionIdleTime(-1, SECONDS).build()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        DefaultConnectionProviderSettings.builder().maxSize(1).minSize(2).build()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        DefaultConnectionProviderSettings.builder().maintenanceFrequency(0, MILLISECONDS).build()
 
         then:
         thrown(IllegalStateException)

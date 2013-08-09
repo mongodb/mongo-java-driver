@@ -42,13 +42,16 @@ class ConcurrentPool<T> implements Pool<T> {
      */
     interface ItemFactory<T> {
         T create();
+
         void close(T t);
+
+        boolean shouldPrune(T t);
     }
 
     /**
      * Initializes a new pool of objects.
      *
-     * @param maxSize max to hold to at any given time. if < 0 then no limit
+     * @param maxSize     max to hold to at any given time. if < 0 then no limit
      * @param itemFactory factory used to create and close items in the pool
      */
     public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory) {
@@ -70,11 +73,11 @@ class ConcurrentPool<T> implements Pool<T> {
     /**
      * call done when you are done with an object from the pool if there is room and the object is ok will get added
      *
-     * @param t       item to return to the pool
-     * @param discard true if the item should be discarded, false if it should be put back in the pool
+     * @param t     item to return to the pool
+     * @param prune true if the item should be closed, false if it should be put back in the pool
      */
     @Override
-    public void release(final T t, final boolean discard) {
+    public void release(final T t, final boolean prune) {
         if (t == null) {
             throw new IllegalArgumentException("Can not return a null item to the pool");
         }
@@ -83,7 +86,7 @@ class ConcurrentPool<T> implements Pool<T> {
             return;
         }
 
-        if (discard) {
+        if (prune) {
             close(t);
         }
         else {
@@ -127,6 +130,30 @@ class ConcurrentPool<T> implements Pool<T> {
         }
 
         return t;
+    }
+
+    public void prune() {
+        final int currentAvailableCount = getAvailableCount();
+        for (int numAttempts = 0; numAttempts < currentAvailableCount; numAttempts++) {
+            if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
+                break;
+            }
+            T cur = available.poll();
+            if (cur == null) {
+                releasePermit();
+                break;
+            }
+            release(cur, itemFactory.shouldPrune(cur));
+        }
+    }
+
+    public void ensureMinSize(final int minSize) {
+        while (getCount() < minSize) {
+            if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
+                break;
+            }
+            release(createNewAndReleasePermitIfFailure());
+        }
     }
 
     private T createNewAndReleasePermitIfFailure() {
@@ -187,6 +214,10 @@ class ConcurrentPool<T> implements Pool<T> {
 
     public int getAvailableCount() {
         return available.size();
+    }
+
+    public int getCount() {
+        return getInUseCount() + getAvailableCount();
     }
 
     public String toString() {

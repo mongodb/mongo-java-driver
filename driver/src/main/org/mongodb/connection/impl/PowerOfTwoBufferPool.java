@@ -48,6 +48,11 @@ public class PowerOfTwoBufferPool implements BufferProvider {
                         @Override
                         public void close(final ByteBuffer byteBuffer) {
                         }
+
+                        @Override
+                        public boolean shouldPrune(final ByteBuffer byteBuffer) {
+                            return false;
+                        }
                     }));
             x = x << 1;
         }

@@ -29,6 +29,9 @@ import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,22 +43,29 @@ class DefaultConnectionProvider implements ConnectionProvider {
     private final DefaultConnectionProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
+    private final ExecutorService sizeMaintenanceTimer;
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
         pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
                 new ConcurrentPool.ItemFactory<UsageTrackingConnection>() {
-            @Override
-            public UsageTrackingConnection create() {
-                return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
-            }
+                    @Override
+                    public UsageTrackingConnection create() {
+                        return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
+                    }
 
-            @Override
-            public void close(final UsageTrackingConnection connection) {
-                connection.close();
-            }
-        });
+                    @Override
+                    public void close(final UsageTrackingConnection connection) {
+                        connection.close();
+                    }
+
+                    @Override
+                    public boolean shouldPrune(final UsageTrackingConnection usageTrackingConnection) {
+                        return DefaultConnectionProvider.this.shouldPrune(usageTrackingConnection);
+                    }
+                });
         this.settings = settings;
+        sizeMaintenanceTimer = createTimer();
     }
 
     @Override
@@ -68,11 +78,11 @@ class DefaultConnectionProvider implements ConnectionProvider {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException(String.format("Too many threads are already waiting for a connection. "
-                                                                    + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
-                                                                    settings.getMaxWaitQueueSize()));
+                        + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
+                        settings.getMaxWaitQueueSize()));
             }
             UsageTrackingConnection connection = pool.get(timeout, timeUnit);
-            while (shouldDiscard(connection)) {
+            while (shouldPrune(connection)) {
                 pool.release(connection, true);
                 connection = pool.get(timeout, timeUnit);
             }
@@ -85,9 +95,40 @@ class DefaultConnectionProvider implements ConnectionProvider {
     @Override
     public void close() {
         pool.close();
+        if (sizeMaintenanceTimer != null) {
+            sizeMaintenanceTimer.shutdownNow();
+        }
     }
 
-    private boolean shouldDiscard(final UsageTrackingConnection connection) {
+    private ExecutorService createTimer() {
+        ScheduledExecutorService newTimer = null;
+        if (shouldPrune() || shouldEnsureMinSize()) {
+            newTimer = Executors.newSingleThreadScheduledExecutor();
+            newTimer.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    if (shouldPrune()) {
+                        pool.prune();
+                    }
+                    if (shouldEnsureMinSize()) {
+                        pool.ensureMinSize(settings.getMinSize());
+                    }
+                }
+            }, 0, settings.getMaintenanceFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+        }
+
+        return newTimer;
+    }
+
+    private boolean shouldEnsureMinSize() {
+        return settings.getMinSize() > 0;
+    }
+
+    private boolean shouldPrune() {
+        return settings.getMaxConnectionIdleTime(TimeUnit.MILLISECONDS) > 0 || settings.getMaxConnectionLifeTime(TimeUnit.MILLISECONDS) > 0;
+    }
+
+    private boolean shouldPrune(final UsageTrackingConnection connection) {
         final long curTime = System.currentTimeMillis();
         return generation.get() > connection.getGeneration()
                 || expired(connection.getOpenedAt(), curTime, settings.getMaxConnectionLifeTime(TimeUnit.MILLISECONDS))
@@ -120,7 +161,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
         @Override
         public void close() {
             if (wrapped != null) {
-                pool.release(wrapped, wrapped.isClosed() || shouldDiscard(wrapped));
+                pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;
             }
         }

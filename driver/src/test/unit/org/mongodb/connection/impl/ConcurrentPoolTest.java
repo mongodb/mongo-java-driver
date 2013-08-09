@@ -34,6 +34,7 @@ public class ConcurrentPoolTest {
 
     static class TestCloseable implements Closeable {
         private boolean closed;
+        private boolean shouldPrune;
 
         @Override
         public void close()  {
@@ -42,6 +43,10 @@ public class ConcurrentPoolTest {
 
         boolean isClosed() {
             return closed;
+        }
+
+        public boolean shouldPrune() {
+            return shouldPrune;
         }
     }
     
@@ -56,6 +61,11 @@ public class ConcurrentPoolTest {
             @Override
             public void close(final TestCloseable closeable) {
                 closeable.close();
+            }
+
+            @Override
+            public boolean shouldPrune(final TestCloseable testCloseable) {
+                return testCloseable.shouldPrune();
             }
         });
     }
@@ -133,5 +143,41 @@ public class ConcurrentPoolTest {
         pool.close();
         pool.release(c1);
         assertTrue(c1.isClosed());
+    }
+
+    @Test
+    public void testEnsureMinSize() {
+        pool.ensureMinSize(0);
+        assertEquals(0, pool.getAvailableCount());
+
+        pool.ensureMinSize(1);
+        assertEquals(1, pool.getAvailableCount());
+
+        pool.ensureMinSize(1);
+        assertEquals(1, pool.getAvailableCount());
+
+        pool.get();
+        pool.ensureMinSize(1);
+        assertEquals(0, pool.getAvailableCount());
+
+        pool.ensureMinSize(4);
+        assertEquals(3, pool.getAvailableCount());
+    }
+
+    @Test
+    public void testPrune() {
+        TestCloseable t1 = pool.get();
+        TestCloseable t2 = pool.get();
+        t1.shouldPrune = true;
+        t2.shouldPrune = true;
+
+        pool.release(t1);
+        pool.release(t2);
+
+        pool.prune();
+        assertEquals(0, pool.getAvailableCount());
+        assertEquals(0, pool.getInUseCount());
+        assertTrue(t1.isClosed());
+        assertTrue(t2.isClosed());
     }
 }

@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -85,7 +87,8 @@ class MongoClientURISpecification extends Specification {
     @Unroll
     def 'should correctly parse URI options for #type'() {
         expect:
-        options.getConnectionsPerHost() == 10;
+        options.getMinConnectionPoolSize() == 5
+        options.getMaxConnectionPoolSize() == 10;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5;
         options.getMaxWaitTime() == 150;
         options.getMaxConnectionIdleTime() == 200
@@ -97,16 +100,16 @@ class MongoClientURISpecification extends Specification {
 
         where:
         options <<
-                [new MongoClientURI('mongodb://localhost/?maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
+                [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&'
                                             + 'slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
-                 new MongoClientURI('mongodb://localhost/?maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                 new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
-                 new MongoClientURI('mongodb://localhost/test?maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                 new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&autoConnectRetry=true;'
@@ -120,7 +123,7 @@ class MongoClientURISpecification extends Specification {
         MongoClientOptions options = new MongoClientURI('mongodb://localhost').getOptions();
 
         then:
-        options.getConnectionsPerHost() == 100;
+        options.getMaxConnectionPoolSize() == 100;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5;
         options.getMaxWaitTime() == 120000;
         options.getConnectTimeout() == 10000;

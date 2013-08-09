@@ -84,7 +84,19 @@ public class MongoClientOptions {
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
     public int getConnectionsPerHost() {
-        return proxied.getConnectionsPerHost();
+        return proxied.getMaxConnectionPoolSize();
+    }
+
+    /**
+     * The minimum number of connections per host for this MongoClient instance. Those connections will be kept
+     * in a pool when idle, and the pool will ensure over time that it contains at least this minimum number.
+     * <p/>
+     * Default is 0.
+     *
+     * @return the minimum size of the connection pool per host
+     */
+    public int getMinConnectionsPerHost() {
+        return proxied.getMinConnectionPoolSize();
     }
 
     /**
@@ -303,6 +315,19 @@ public class MongoClientOptions {
         }
 
         /**
+         * Sets the minimum number of connections per host.
+         *
+         * @param minConnectionsPerHost minimum number of connections
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>minConnectionsPerHost < 0</code>
+         * @see com.mongodb.MongoClientOptions#getMinConnectionsPerHost()
+         */
+        public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
+            proxied.minConnectionPoolSize(minConnectionsPerHost);
+            return this;
+        }
+
+        /**
          * Sets the maximum number of connections per host.
          *
          * @param connectionsPerHost maximum number of connections
@@ -311,7 +336,7 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getConnectionsPerHost()
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {
-            proxied.connectionsPerHost(connectionsPerHost);
+            proxied.maxConnectionPoolSize(connectionsPerHost);
             return this;
         }
 

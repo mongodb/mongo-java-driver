@@ -52,6 +52,11 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
             public void close(final AsyncConnection connection) {
                 connection.close();
             }
+
+            @Override
+            public boolean shouldPrune(final AsyncConnection connection) {
+                return false;
+            }
         });
     }
 

@@ -96,8 +96,9 @@ public final class MongoClients {
         SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 
         DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
-                .maxSize(options.getConnectionsPerHost())
-                .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
+                .minSize(options.getMinConnectionPoolSize())
+                .maxSize(options.getMaxConnectionPoolSize())
+                .maxWaitQueueSize(options.getMaxConnectionPoolSize() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                 .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionIdleTime(options.getMaxConnectionIdleTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionLifeTime(options.getMaxConnectionLifeTime(), TimeUnit.MILLISECONDS)

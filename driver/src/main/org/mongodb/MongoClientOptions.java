@@ -33,7 +33,8 @@ public final class MongoClientOptions {
     private final WriteConcern writeConcern;
     private final PrimitiveCodecs primitiveCodecs;
 
-    private final int connectionsPerHost;
+    private final int minConnectionPoolSize;
+    private final int maxConnectionPoolSize;
     private final int threadsAllowedToBlockForConnectionMultiplier;
     private final int maxWaitTime;
     private final int maxConnectionIdleTime;
@@ -71,7 +72,8 @@ public final class MongoClientOptions {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
-        private int connectionsPerHost = 100;
+        private int minConnectionPoolSize;
+        private int maxConnectionPoolSize = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
         private int maxWaitTime = 1000 * 60 * 2;
         private int maxConnectionIdleTime;
@@ -99,18 +101,34 @@ public final class MongoClientOptions {
         }
 
         /**
-         * Sets the maximum number of connections per host.
+         * Sets the minimum number of connections per server.
          *
-         * @param aConnectionsPerHost maximum number of connections
+         * @param aMinConnectionPoolSize minimum number of connections
          * @return {@code this}
-         * @throws IllegalArgumentException if <code>connnectionsPerHost < 1</code>
-         * @see MongoClientOptions#getConnectionsPerHost()
+         * @throws IllegalArgumentException if <code>minConnectionPoolSize < 0</code>
+         * @see MongoClientOptions#getMinConnectionPoolSize()
          */
-        public Builder connectionsPerHost(final int aConnectionsPerHost) {
-            if (aConnectionsPerHost < 1) {
+        public Builder minConnectionPoolSize(final int aMinConnectionPoolSize) {
+            if (aMinConnectionPoolSize < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.minConnectionPoolSize = aMinConnectionPoolSize;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of connections per server.
+         *
+         * @param aMaxConnectionPoolSize maximum number of connections
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>maxConnectionPoolSize < 1</code>
+         * @see MongoClientOptions#getMaxConnectionPoolSize()
+         */
+        public Builder maxConnectionPoolSize(final int aMaxConnectionPoolSize) {
+            if (aMaxConnectionPoolSize < 1) {
                 throw new IllegalArgumentException("Minimum value is 1");
             }
-            this.connectionsPerHost = aConnectionsPerHost;
+            this.maxConnectionPoolSize = aMaxConnectionPoolSize;
             return this;
         }
 
@@ -345,6 +363,18 @@ public final class MongoClientOptions {
     }
 
     /**
+     * The minimum number of connections per server for this MongoClient instance. Those connections will be kept
+     * in a pool when idle, and the pool will ensure over time that it contains at least this minimum number.
+     * <p/>
+     * Default is 0.
+     *
+     * @return the minimum size of the connection pool per host
+     */
+    public int getMinConnectionPoolSize() {
+        return minConnectionPoolSize;
+    }
+
+    /**
      * The maximum number of connections allowed per host for this MongoClient instance. Those connections will be kept
      * in a pool when idle. Once the pool is exhausted, any operation requiring a connection will block waiting for an
      * available connection.
@@ -354,14 +384,14 @@ public final class MongoClientOptions {
      * @return the maximum size of the connection pool per host
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
-    public int getConnectionsPerHost() {
-        return connectionsPerHost;
+    public int getMaxConnectionPoolSize() {
+        return maxConnectionPoolSize;
     }
 
     /**
-     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be
+     * this multiplier, multiplied with the maxConnectionPoolSize setting, gives the maximum number of threads that may be
      * waiting for a connection to become available from the pool. All further threads will get an exception right away.
-     * For example if connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50
+     * For example if maxConnectionPoolSize is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50
      * threads can wait for a connection.
      * <p/>
      * Default is 5.
@@ -521,7 +551,8 @@ public final class MongoClientOptions {
     public String toString() {
         return "MongoClientOptions {"
                 + "description='" + description + '\''
-                + ", connectionsPerHost=" + connectionsPerHost
+                + ", minConnectionPoolSize=" + minConnectionPoolSize
+                + ", maxConnectionPoolSize=" + maxConnectionPoolSize
                 + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
                 + ", maxWaitTime=" + maxWaitTime
                 + ", maxConnectionIdleTime=" + maxConnectionIdleTime
@@ -541,7 +572,8 @@ public final class MongoClientOptions {
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
-        connectionsPerHost = builder.connectionsPerHost;
+        minConnectionPoolSize = builder.minConnectionPoolSize;
+        maxConnectionPoolSize = builder.maxConnectionPoolSize;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
         maxWaitTime = builder.maxWaitTime;
         maxConnectionIdleTime = builder.maxConnectionIdleTime;

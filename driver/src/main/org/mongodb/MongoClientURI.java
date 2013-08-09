@@ -277,6 +277,7 @@ public class MongoClientURI {
     private static Set<String> allKeys = new HashSet<String>();
 
     static {
+        generalOptionsKeys.add("minpoolsize");
         generalOptionsKeys.add("maxpoolsize");
         generalOptionsKeys.add("waitqueuemultiple");
         generalOptionsKeys.add("waitqueuetimeoutms");
@@ -323,7 +324,10 @@ public class MongoClientURI {
             }
 
             if (key.equals("maxpoolsize")) {
-                builder.connectionsPerHost(Integer.parseInt(value));
+                builder.maxConnectionPoolSize(Integer.parseInt(value));
+            }
+            else if (key.equals("minpoolsize")) {
+                builder.minConnectionPoolSize(Integer.parseInt(value));
             }
             else if (key.equals("maxidletimems")) {
                 builder.maxConnectionIdleTime(Integer.parseInt(value));

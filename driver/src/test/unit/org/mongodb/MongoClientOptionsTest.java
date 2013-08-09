@@ -33,7 +33,7 @@ public class MongoClientOptionsTest {
         final MongoClientOptions options = builder.build();
         assertEquals(null, options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
-        assertEquals(100, options.getConnectionsPerHost());
+        assertEquals(100, options.getMaxConnectionPoolSize());
         assertEquals(10000, options.getConnectTimeout());
         assertEquals(0, options.getMaxAutoConnectRetryTime());
         assertEquals(ReadPreference.primary(), options.getReadPreference());
@@ -64,9 +64,15 @@ public class MongoClientOptionsTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testConnectionsPerHostIllegalArguments() {
+    public void testMinConnectionPoolSizeIllegalArguments() {
         final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        builder.connectionsPerHost(0);
+        builder.minConnectionPoolSize(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxConnectionPoolSizeIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.maxConnectionPoolSize(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -119,7 +125,8 @@ public class MongoClientOptionsTest {
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNALED);
         builder.autoConnectRetry(true);
-        builder.connectionsPerHost(600);
+        builder.minConnectionPoolSize(30);
+        builder.maxConnectionPoolSize(600);
         builder.connectTimeout(100);
         builder.maxWaitTime(200);
         builder.maxConnectionIdleTime(300);
@@ -138,7 +145,8 @@ public class MongoClientOptionsTest {
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
         assertEquals(WriteConcern.JOURNALED, options.getWriteConcern());
         assertEquals(true, options.isAutoConnectRetry());
-        assertEquals(600, options.getConnectionsPerHost());
+        assertEquals(30, options.getMinConnectionPoolSize());
+        assertEquals(600, options.getMaxConnectionPoolSize());
         assertEquals(100, options.getConnectTimeout());
         assertEquals(200, options.getMaxWaitTime());
         assertEquals(300, options.getMaxConnectionIdleTime());
