@@ -1,9 +1,25 @@
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.mongodb
 
 import spock.lang.Specification
 
-import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
-import static org.mongodb.AuthenticationMechanism.PLAIN;
+import static org.mongodb.AuthenticationMechanism.MONGODB_CR
+import static org.mongodb.AuthenticationMechanism.PLAIN
 
 class MongoCredentialSpecification extends Specification {
     def 'creating a challenge-response credential should populate correct fields'() {
@@ -45,27 +61,33 @@ class MongoCredentialSpecification extends Specification {
         given:
         AuthenticationMechanism mechanism = PLAIN;
         String userName = 'user';
+        String source = '$external';
         char[] password = 'pwd'.toCharArray();
 
         when:
-        MongoCredential credential = MongoCredential.createPlainCredential(userName, password);
+        MongoCredential credential = MongoCredential.createPlainCredential(userName, source, password);
 
         then:
         mechanism == credential.getMechanism()
         userName == credential.getUserName()
-        '$external' == credential.getSource()
+        source == credential.getSource()
         password == credential.getPassword()
         mechanism == credential.getMechanism()
     }
 
     def 'should throw IllegalArgumentException when a required field is not passed in'() {
         when:
-        MongoCredential.createPlainCredential(null, 'pwd'.toCharArray());
+        MongoCredential.createPlainCredential(null, '$external', 'pwd'.toCharArray());
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createPlainCredential('user', null);
+        MongoCredential.createPlainCredential('user', '$external', null);
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoCredential.createPlainCredential('user', null, 'pwd'.toCharArray());
         then:
         thrown(IllegalArgumentException)
     }

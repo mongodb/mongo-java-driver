@@ -75,7 +75,7 @@ public class AsyncAuthenticatingConnectionTest {
     @Ignore
     public void testPlainAuthentication() {
         final AuthenticatingAsyncConnection authenticatingConnection = new AuthenticatingAsyncConnection(connection,
-                Arrays.asList(MongoCredential.createPlainCredential(userName, password.toCharArray())), getBufferProvider());
+                Arrays.asList(MongoCredential.createPlainCredential(userName, source, password.toCharArray())), getBufferProvider());
         operation.execute(new TestAsyncServerConnection(authenticatingConnection)).get();
     }
 

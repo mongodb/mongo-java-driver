@@ -58,12 +58,13 @@ public class MongoCredentialTest {
 
         final String mechanism = MongoCredential.PLAIN_MECHANISM;
         final String userName = "user";
+        final String source = "$external";
         final char[] password = "pwd".toCharArray();
-        credential = MongoCredential.createPlainCredential(userName, password);
+        credential = MongoCredential.createPlainCredential(userName, source, password);
 
         assertEquals(mechanism, credential.getMechanism());
         assertEquals(userName, credential.getUserName());
-        assertEquals("$external", credential.getSource());
+        assertEquals(source, credential.getSource());
         assertArrayEquals(password, credential.getPassword());
     }
 

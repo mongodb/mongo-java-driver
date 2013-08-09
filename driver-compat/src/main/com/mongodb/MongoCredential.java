@@ -60,11 +60,12 @@ public final class MongoCredential {
      * Creates a MongoCredential instance for the PLAIN SASL mechanism.
      *
      * @param userName the non-null user name
+     * @param source the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
      * @param password the non-null user password
      * @return the credential
      */
-    public static MongoCredential createPlainCredential(final String userName, final char[] password) {
-        return new MongoCredential(org.mongodb.MongoCredential.createPlainCredential(userName, password));
+    public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(org.mongodb.MongoCredential.createPlainCredential(userName, source, password));
     }
 
 

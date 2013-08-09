@@ -39,12 +39,14 @@ import static org.mongodb.Fixture.getBufferProvider;
 public class PlainAsyncAuthenticatorTest {
     private AsyncConnection connection;
     private String userName;
+    private String source;
     private String password;
 
     @Before
     public void setUp() throws Exception {
         String host = System.getProperty("org.mongodb.test.host");
         userName = System.getProperty("org.mongodb.test.userName");
+        source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         connection = new DefaultAsyncConnection(new ServerAddress(host), new PowerOfTwoBufferPool());
     }
@@ -57,7 +59,7 @@ public class PlainAsyncAuthenticatorTest {
     @Test
     public void testSuccessfulAuthentication() throws InterruptedException {
         PlainAsyncAuthenticator authenticator = new PlainAsyncAuthenticator(
-                MongoCredential.createPlainCredential(userName, password.toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, password.toCharArray()), connection, getBufferProvider());
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<Boolean> gotResult = new AtomicReference<Boolean>(false);
         authenticator.authenticate(new SingleResultCallback<CommandResult>() {
@@ -74,7 +76,7 @@ public class PlainAsyncAuthenticatorTest {
     @Test
     public void testUnsuccessfulAuthentication() throws InterruptedException {
         PlainAsyncAuthenticator authenticator = new PlainAsyncAuthenticator(
-                MongoCredential.createPlainCredential(userName, "wrong".toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, "wrong".toCharArray()), connection, getBufferProvider());
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<Boolean> gotException = new AtomicReference<Boolean>(false);
         authenticator.authenticate(new SingleResultCallback<CommandResult>() {

@@ -59,8 +59,8 @@ public class AuthenticatingConnectionTest {
     @Test
     @Ignore
     public void tesPlainAuthentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, password.toCharArray())),
-                getBufferProvider());
+        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, source,
+                password.toCharArray())), getBufferProvider());
     }
 
     @Test

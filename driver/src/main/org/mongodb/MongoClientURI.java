@@ -440,7 +440,7 @@ public class MongoClientURI {
             return MongoCredential.createGSSAPICredential(userName);
         }
         else if (mechanism == PLAIN) {
-            return MongoCredential.createPlainCredential(userName, password);
+            return MongoCredential.createPlainCredential(userName, authSource, password);
         }
         else if (mechanism == MONGODB_CR) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);

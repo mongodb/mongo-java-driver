@@ -31,12 +31,14 @@ import static org.mongodb.Fixture.getBufferProvider;
 public class PlainAuthenticatorTest {
     private Connection connection;
     private String userName;
+    private String source;
     private String password;
 
     @Before
     public void setUp() throws Exception {
         String host = System.getProperty("org.mongodb.test.host");
         userName = System.getProperty("org.mongodb.test.userName");
+        source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         connection = new DefaultSocketChannelConnection(new ServerAddress(host), DefaultConnectionSettings.builder().build(),
                 new PowerOfTwoBufferPool());
@@ -50,14 +52,14 @@ public class PlainAuthenticatorTest {
     @Test
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, password.toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, password.toCharArray()), connection, getBufferProvider());
         authenticator.authenticate();
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, "wrong".toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, "wrong".toCharArray()), connection, getBufferProvider());
         authenticator.authenticate();
     }
 }
