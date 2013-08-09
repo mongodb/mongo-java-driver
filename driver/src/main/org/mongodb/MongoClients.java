@@ -99,6 +99,8 @@ public final class MongoClients {
                 .maxSize(options.getConnectionsPerHost())
                 .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                 .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
+                .maxConnectionIdleTime(options.getMaxConnectionIdleTime(), TimeUnit.MILLISECONDS)
+                .maxConnectionLifeTime(options.getMaxConnectionLifeTime(), TimeUnit.MILLISECONDS)
                 .build();
         DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())

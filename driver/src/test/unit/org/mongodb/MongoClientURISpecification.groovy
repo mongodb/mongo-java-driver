@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -82,6 +84,8 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 10;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5;
         options.getMaxWaitTime() == 150;
+        options.getMaxConnectionIdleTime() == 200
+        options.getMaxConnectionLifeTime() == 300
         options.getSocketTimeout() == 5500;
         options.isAutoConnectRetry();
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
@@ -90,13 +94,16 @@ class MongoClientURISpecification extends Specification {
         where:
         options <<
                 [new MongoClientURI('mongodb://localhost/?maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&'
                                             + 'slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/?maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/test?maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true').getOptions()]

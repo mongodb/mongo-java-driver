@@ -36,6 +36,8 @@ public final class MongoClientOptions {
     private final int connectionsPerHost;
     private final int threadsAllowedToBlockForConnectionMultiplier;
     private final int maxWaitTime;
+    private final int maxConnectionIdleTime;
+    private final int maxConnectionLifeTime;
 
     private final int connectTimeout;
     private final int socketTimeout;
@@ -72,6 +74,8 @@ public final class MongoClientOptions {
         private int connectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
         private int maxWaitTime = 1000 * 60 * 2;
+        private int maxConnectionIdleTime;
+        private int maxConnectionLifeTime;
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean socketKeepAlive = false;
@@ -120,8 +124,8 @@ public final class MongoClientOptions {
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
          */
         public Builder threadsAllowedToBlockForConnectionMultiplier(
-                                                                   final int
-                                                                   aThreadsAllowedToBlockForConnectionMultiplier) {
+                final int
+                        aThreadsAllowedToBlockForConnectionMultiplier) {
             if (aThreadsAllowedToBlockForConnectionMultiplier < 1) {
                 throw new IllegalArgumentException("Minimum value is 1");
             }
@@ -142,6 +146,38 @@ public final class MongoClientOptions {
                 throw new IllegalArgumentException("Minimum value is 0");
             }
             this.maxWaitTime = aMaxWaitTime;
+            return this;
+        }
+
+        /**
+         * Sets the maximum idle time for a pooled connection.
+         *
+         * @param aMaxConnectionIdleTime the maximum idle time
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>aMaxConnectionIdleTime < 0</code>
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionIdleTime(final int aMaxConnectionIdleTime) {
+            if (aMaxConnectionIdleTime < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.maxConnectionIdleTime = aMaxConnectionIdleTime;
+            return this;
+        }
+
+        /**
+         * Sets the maximum life time for a pooled connection.
+         *
+         * @param aMaxConnectionLifeTime the maximum life time
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>aMaxConnectionIdleTime < 0</code>
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionLifeTime(final int aMaxConnectionLifeTime) {
+            if (aMaxConnectionLifeTime < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.maxConnectionLifeTime = aMaxConnectionLifeTime;
             return this;
         }
 
@@ -259,9 +295,9 @@ public final class MongoClientOptions {
         }
 
         /**
-         *  Sets whether to use SSL.  Currently this has rather large ramifications.  For one, async will not be
-         *  available.  For two, the driver will use Socket instances instead of SocketChannel instances,
-         *  which won't be quite as efficient.
+         * Sets whether to use SSL.  Currently this has rather large ramifications.  For one, async will not be
+         * available.  For two, the driver will use Socket instances instead of SocketChannel instances,
+         * which won't be quite as efficient.
          *
          * @return {@code this}
          * @see org.mongodb.MongoClientOptions#isSSLEnabled()
@@ -274,7 +310,7 @@ public final class MongoClientOptions {
         //CHECKSTYLE:ON
 
         /**
-         *  Sets whether to disable async.
+         * Sets whether to disable async.
          *
          * @return {@code this}
          * @see org.mongodb.MongoClientOptions#isAsyncEnabled()
@@ -345,6 +381,26 @@ public final class MongoClientOptions {
      */
     public int getMaxWaitTime() {
         return maxWaitTime;
+    }
+
+    /**
+     * The maximum idle time of a pooled connection.  A zero value indicates no limit to the idle time.  A pooled connection that has
+     * exceeded its idle time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum idle time, in milliseconds
+     */
+    public int getMaxConnectionIdleTime() {
+        return maxConnectionIdleTime;
+    }
+
+    /**
+     * The maximum life time of a pooled connection.  A zero value indicates no limit to the life time.  A pooled connection that has
+     * exceeded its life time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum life time, in milliseconds
+     */
+    public int getMaxConnectionLifeTime() {
+        return maxConnectionLifeTime;
     }
 
     /**
@@ -456,7 +512,6 @@ public final class MongoClientOptions {
     /**
      * Whether to enable asynchronous operations.  The default is true if the platform version supports it
      * (currently Java 7 and above), and false otherwise/
-     *
      */
     public boolean isAsyncEnabled() {
         return asyncEnabled;
@@ -469,6 +524,8 @@ public final class MongoClientOptions {
                 + ", connectionsPerHost=" + connectionsPerHost
                 + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
                 + ", maxWaitTime=" + maxWaitTime
+                + ", maxConnectionIdleTime=" + maxConnectionIdleTime
+                + ", maxConnectionLifeTime=" + maxConnectionLifeTime
                 + ", connectTimeout=" + connectTimeout
                 + ", socketTimeout=" + socketTimeout
                 + ", socketKeepAlive=" + socketKeepAlive
@@ -487,6 +544,8 @@ public final class MongoClientOptions {
         connectionsPerHost = builder.connectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
         maxWaitTime = builder.maxWaitTime;
+        maxConnectionIdleTime = builder.maxConnectionIdleTime;
+        maxConnectionLifeTime = builder.maxConnectionLifeTime;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
         autoConnectRetry = builder.autoConnectRetry;

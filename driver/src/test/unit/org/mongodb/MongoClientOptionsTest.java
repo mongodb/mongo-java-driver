@@ -76,7 +76,7 @@ public class MongoClientOptionsTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testMaxAutoconnectRetryIllegalArguments() {
+    public void testMaxAutoConnectRetryIllegalArguments() {
         final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.maxAutoConnectRetryTime(-1);
     }
@@ -85,6 +85,18 @@ public class MongoClientOptionsTest {
     public void testThreadsAllowsToBlockIllegalArguments() {
         final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.threadsAllowedToBlockForConnectionMultiplier(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxConnectionIdleTimeIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.maxConnectionIdleTime(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxConnectionLifeTimeIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.maxConnectionLifeTime(-1);
     }
 
     @Test
@@ -107,9 +119,12 @@ public class MongoClientOptionsTest {
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNALED);
         builder.autoConnectRetry(true);
-        builder.connectionsPerHost(500);
+        builder.connectionsPerHost(600);
         builder.connectTimeout(100);
-        builder.maxAutoConnectRetryTime(300);
+        builder.maxWaitTime(200);
+        builder.maxConnectionIdleTime(300);
+        builder.maxConnectionLifeTime(400);
+        builder.maxAutoConnectRetryTime(500);
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
@@ -123,9 +138,12 @@ public class MongoClientOptionsTest {
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
         assertEquals(WriteConcern.JOURNALED, options.getWriteConcern());
         assertEquals(true, options.isAutoConnectRetry());
-        assertEquals(500, options.getConnectionsPerHost());
+        assertEquals(600, options.getConnectionsPerHost());
         assertEquals(100, options.getConnectTimeout());
-        assertEquals(300, options.getMaxAutoConnectRetryTime());
+        assertEquals(200, options.getMaxWaitTime());
+        assertEquals(300, options.getMaxConnectionIdleTime());
+        assertEquals(400, options.getMaxConnectionLifeTime());
+        assertEquals(500, options.getMaxAutoConnectRetryTime());
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertEquals(true, options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());

@@ -113,6 +113,26 @@ public class MongoClientOptions {
     }
 
     /**
+     * The maximum idle time of a pooled connection.  A zero value indicates no limit to the idle time.  A pooled connection that has
+     * exceeded its idle time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum idle time, in milliseconds
+     */
+    public int getMaxConnectionIdleTime() {
+        return proxied.getMaxConnectionIdleTime();
+    }
+
+    /**
+     * The maximum life time of a pooled connection.  A zero value indicates no limit to the life time.  A pooled connection that has
+     * exceeded its life time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum life time, in milliseconds
+     */
+    public int getMaxConnectionLifeTime() {
+        return proxied.getMaxConnectionLifeTime();
+    }
+
+    /**
      * The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new
      * connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
      * <p/>
@@ -323,6 +343,33 @@ public class MongoClientOptions {
             proxied.maxWaitTime(maxWaitTime);
             return this;
         }
+
+        /**
+         * Sets the maximum idle time for a pooled connection.
+         *
+         * @param maxConnectionIdleTime the maximum idle time
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>aMaxConnectionIdleTime < 0</code>
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
+            proxied.maxConnectionIdleTime(maxConnectionIdleTime);
+            return this;
+        }
+
+        /**
+         * Sets the maximum life time for a pooled connection.
+         *
+         * @param maxConnectionLifeTime the maximum life time
+         * @return {@code this}
+         * @throws IllegalArgumentException if <code>aMaxConnectionIdleTime < 0</code>
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
+            proxied.maxConnectionLifeTime(maxConnectionLifeTime);
+            return this;
+        }
+
 
         /**
          * Sets the connection timeout.

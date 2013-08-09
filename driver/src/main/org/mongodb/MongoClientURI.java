@@ -72,6 +72,8 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
@@ -278,6 +280,8 @@ public class MongoClientURI {
         generalOptionsKeys.add("waitqueuemultiple");
         generalOptionsKeys.add("waitqueuetimeoutms");
         generalOptionsKeys.add("connecttimeoutms");
+        generalOptionsKeys.add("maxidletimems");
+        generalOptionsKeys.add("maxlifetimems");
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("autoconnectretry");
@@ -319,6 +323,12 @@ public class MongoClientURI {
 
             if (key.equals("maxpoolsize")) {
                 builder.connectionsPerHost(Integer.parseInt(value));
+            }
+            else if (key.equals("maxidletimems")) {
+                builder.maxConnectionIdleTime(Integer.parseInt(value));
+            }
+            else if (key.equals("maxlifetimems")) {
+                builder.maxConnectionLifeTime(Integer.parseInt(value));
             }
             else if (key.equals("waitqueuemultiple")) {
                 builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));

@@ -111,7 +111,10 @@ public class MongoClientOptionsTest {
         builder.autoConnectRetry(true);
         builder.connectionsPerHost(500);
         builder.connectTimeout(100);
-        builder.maxAutoConnectRetryTime(300);
+        builder.maxWaitTime(200);
+        builder.maxConnectionIdleTime(300);
+        builder.maxConnectionLifeTime(400);
+        builder.maxAutoConnectRetryTime(600);
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
@@ -126,9 +129,12 @@ public class MongoClientOptionsTest {
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
         assertEquals(WriteConcern.JOURNAL_SAFE, options.getWriteConcern());
         assertTrue(options.isAutoConnectRetry());
+        assertEquals(200, options.getMaxWaitTime());
+        assertEquals(300, options.getMaxConnectionIdleTime());
+        assertEquals(400, options.getMaxConnectionLifeTime());
         assertEquals(500, options.getConnectionsPerHost());
         assertEquals(100, options.getConnectTimeout());
-        assertEquals(300, options.getMaxAutoConnectRetryTime());
+        assertEquals(600, options.getMaxAutoConnectRetryTime());
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertTrue(options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());
