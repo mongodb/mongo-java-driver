@@ -51,6 +51,10 @@ public class ErrorTest extends TestCase {
     @Test
     public void testLastErrorWithConcern()
         throws MongoException {
+        // getLastError's return object is different
+        if (db.getMongo().isMongosConnection()) {
+            throw new SkipException("test disabled on mongos");
+        }
 
         _db.resetError();
         CommandResult cr = _db.getLastError(WriteConcern.FSYNC_SAFE);
@@ -72,6 +76,10 @@ public class ErrorTest extends TestCase {
     @Test
     public void testPrevError()
         throws MongoException {
+        // getPrevError doesn't work on mongos
+        if (db.getMongo().isMongosConnection()) {
+            throw new SkipException("test disabled on mongos");
+        }
 
         _db.resetError();
         

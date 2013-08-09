@@ -99,6 +99,10 @@ public class ObjectIdTest extends TestCase {
 
     @Test
     public void testStringOnServer(){
+        // Leif thinks mongos doesn't return to you the _id that it inserted.
+        if (_db.getMongo().isMongosConnection()) {
+            throw new SkipException("test disabled on mongos");
+        }
         ObjectId oid = new ObjectId();
         DBObject res = _db.command( new BasicDBObject( "driverOIDTest" , oid ) );
         assertEquals( oid.toString() , res.get( "str" ).toString() );

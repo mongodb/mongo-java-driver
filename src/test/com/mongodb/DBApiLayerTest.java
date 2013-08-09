@@ -34,6 +34,11 @@ public class DBApiLayerTest extends TestCase {
 
     @Test
     public void testCursorNotFoundException() {
+        // mongos returns a differently formatted "cursor not found" error
+        // than this test expects.
+        if (db.getMongo().isMongosConnection()) {
+            throw new SkipException("test disabled on mongos");
+        }
         DBCollection collection = db.getCollection("testCursorNotFoundException");
         for (int i = 0; i < 150; i++) {
             collection.insert(new BasicDBObject());

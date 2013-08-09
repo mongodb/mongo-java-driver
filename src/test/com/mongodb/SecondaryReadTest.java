@@ -45,6 +45,9 @@ public class SecondaryReadTest extends TestCase {
             if (isStandalone(mongo)) {
                 return;
             }
+            if (mongo.isMongosConnection()) {
+                throw new SkipException("test disabled on mongos");
+            }
 
             final List<TestHost> testHosts = extractHosts(mongo);
 
@@ -77,6 +80,9 @@ public class SecondaryReadTest extends TestCase {
         try {
             if (isStandalone(mongo)) {
                 return;
+            }
+            if (mongo.isMongosConnection()) {
+                throw new SkipException("test disabled on mongos");
             }
 
             final List<TestHost> testHosts = extractHosts(mongo);

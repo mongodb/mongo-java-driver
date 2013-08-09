@@ -34,10 +34,13 @@ public class DBPortTest extends TestCase {
         DB db2 = m.getDB("DBPortTest2");
         db1.dropDatabase();
         db2.dropDatabase();
+        WriteConcern wAll = new WriteConcern("all");
 
         try {
             db1.addUser("u1", "e".toCharArray());
+            db1.getLastError(wAll);
             db2.addUser("u2", "e".toCharArray());
+            db2.getLastError(wAll);
 
             DBPort port = new DBPort(m.getAddress(), new DBPortPool(m.getAddress(), new MongoOptions()), new MongoOptions());
             port.checkAuth(m);

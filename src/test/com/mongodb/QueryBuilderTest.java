@@ -25,6 +25,7 @@ package com.mongodb;
 import com.mongodb.QueryBuilder.QueryBuilderException;
 import com.mongodb.util.TestCase;
 import org.testng.annotations.Test;
+import org.testng.SkipException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -292,6 +293,8 @@ public class QueryBuilderTest extends TestCase {
     
     @Test
     public void nearTest() {
+        throw new SkipException("geo tests disabled on TokuMX");
+        /*
         String key = "loc";
         DBCollection collection = _testDB.getCollection("geoSpatial-test");
         BasicDBObject geoSpatialIndex = new BasicDBObject();
@@ -341,6 +344,7 @@ public class QueryBuilderTest extends TestCase {
             QueryBuilder.start(key).withinPolygon(tooFew);
             fail("IllegalArgumentException should have been thrown");
         }catch(IllegalArgumentException e) {}
+        */
     }
 	
     @Test

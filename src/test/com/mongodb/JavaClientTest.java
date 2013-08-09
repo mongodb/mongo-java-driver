@@ -30,6 +30,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
+import org.testng.SkipException;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -508,6 +509,8 @@ public class JavaClientTest extends TestCase {
             return;
         }
 
+        throw new SkipException("Not testing mapreduce on secondaries since that's disabled right now.");
+        /*
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );
         //c.setReadPreference(ReadPreference.SECONDARY);
@@ -540,6 +543,7 @@ public class JavaClientTest extends TestCase {
         if( replStatus!= null && replStatus.getName() != null && ((replStatus.getMaster() == null) || (replStatus.getMaster() != null && !replStatus.getMaster().equals(replStatus.getASecondary()))))
             assertTrue( !mongo.getReplicaSetStatus().isMaster( out.getCommandResult().getServerUsed() ),
             		"Had a replicaset but didn't use secondary! replSetStatus : " + mongo.getReplicaSetStatus() + " \n Used: " + out.getCommandResult().getServerUsed() + " \n ");
+        */
     }
 
     @Test
@@ -658,12 +662,14 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
 
         try {
             usersCollection.remove(new BasicDBObject());
             assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx" , "e".toCharArray() );
+            db.getLastError(wAll);
             assertEquals(1, usersCollection.find().count());
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
@@ -692,12 +698,14 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollections = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
 
         try {
             usersCollections.remove(new BasicDBObject());
             assertEquals(0, usersCollections.find().count());
 
             db.addUser("xx", "e".toCharArray());
+            db.getLastError(wAll);
             assertEquals(1, usersCollections.find().count());
 
             try {
@@ -787,11 +795,13 @@ public class JavaClientTest extends TestCase {
         Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollection = db.getCollection( "system.users" );
+        WriteConcern wAll = new WriteConcern("all");
         try {
             usersCollection.remove(new BasicDBObject());
             assertEquals(0, usersCollection.find().count());
 
             db.addUser("xx", "e".toCharArray());
+            db.getLastError(wAll);
             assertEquals(1, usersCollection.find().count());
         }
         finally {
@@ -878,6 +888,9 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testLargeBulkInsert(){
+        if (!isStandalone(_mongo)) {
+            throw new SkipException("Not testing bulk insert on replica sets until #93 is fixed.");
+        }
         // max size should be obtained from server
         int maxObjSize = _mongo.getMaxBsonObjectSize();
         DBCollection c = _db.getCollection( "largebulk" );
