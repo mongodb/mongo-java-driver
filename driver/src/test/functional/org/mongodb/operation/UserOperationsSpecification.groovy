@@ -34,7 +34,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
     def password = '123'.toCharArray()
 
-    def ConnectionFactory connectionFactory
+    def connectionFactory
 
     def setup() {
         connectionFactory = new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(),
