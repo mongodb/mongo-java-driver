@@ -71,6 +71,6 @@ public class DefaultConnectionFactory implements ConnectionFactory {
         else {
             socketConnection = new DefaultSocketChannelConnection(serverAddress, settings, bufferProvider);
         }
-        return new AuthenticatingConnection(socketConnection, credentialList, bufferProvider);
+        return credentialList.isEmpty() ? socketConnection : new AuthenticatingConnection(socketConnection, credentialList, bufferProvider);
     }
 }

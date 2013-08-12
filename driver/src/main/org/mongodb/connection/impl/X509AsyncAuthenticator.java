@@ -30,37 +30,22 @@ import org.mongodb.operation.AsyncCommandOperation;
 
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
-class NativeAsyncAuthenticator extends AsyncAuthenticator {
-    NativeAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
-                             final BufferProvider bufferProvider) {
+class X509AsyncAuthenticator extends AsyncAuthenticator {
+
+    X509AsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection, final BufferProvider bufferProvider) {
         super(credential, connection, bufferProvider);
     }
 
     @Override
-    public void authenticate(final SingleResultCallback<CommandResult> callback) {
+    void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
-                new Command(NativeAuthenticationHelper.getNonceCommand()),
+                new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
                 new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), getBufferProvider())
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override
                     public void onResult(final CommandResult result, final MongoException e) {
-                        if (e != null) {
-                            callback.onResult(result, e);
-                        }
-                        else {
-                            new AsyncCommandOperation(getCredential().getSource(),
-                                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                                            getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                                    new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), getBufferProvider())
-                                    .execute(new ConnectingAsyncServerConnection(getConnection()))
-                                    .register(new SingleResultCallback<CommandResult>() {
-                                        @Override
-                                        public void onResult(final CommandResult result, final MongoException e) {
-                                            callback.onResult(result, e);
-                                        }
-                                    });
-                        }
+                        callback.onResult(result, e);
                     }
                 });
     }

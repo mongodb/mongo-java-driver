@@ -17,23 +17,30 @@
 package org.mongodb.connection.impl;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 
 abstract class Authenticator {
     private final MongoCredential credential;
     private final Connection connection;
+    private final BufferProvider bufferProvider;
 
-    Authenticator(final MongoCredential credential, final Connection connection) {
+    Authenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
         this.credential = credential;
         this.connection = connection;
+        this.bufferProvider = bufferProvider;
     }
 
     MongoCredential getCredential() {
         return credential;
     }
 
-    public Connection getConnection() {
+    Connection getConnection() {
         return connection;
+    }
+
+    BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     abstract void authenticate();

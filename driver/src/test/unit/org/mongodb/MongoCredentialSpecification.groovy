@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+
+
+
+
 package org.mongodb
 
 import spock.lang.Specification
@@ -99,6 +103,21 @@ class MongoCredentialSpecification extends Specification {
 
         when:
         MongoCredential credential = MongoCredential.createGSSAPICredential(userName);
+
+        then:
+        mechanism == credential.getMechanism()
+        userName == credential.getUserName()
+        '$external' == credential.getSource()
+        null == credential.getPassword()
+    }
+
+    def 'creating an X.509 Credential should populate the correct fields'() {
+        given:
+        AuthenticationMechanism mechanism = AuthenticationMechanism.MONGODB_X509
+        String userName = 'user'
+
+        when:
+        MongoCredential credential = MongoCredential.createMongoX509Credential(userName)
 
         then:
         mechanism == credential.getMechanism()

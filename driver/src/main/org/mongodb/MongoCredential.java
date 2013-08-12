@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
 import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
+import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static org.mongodb.AuthenticationMechanism.PLAIN;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -53,6 +54,16 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the MongoDB X.509 protocol.
+     *
+     * @param userName the non-null user name
+     * @return the credential
+     */
+    public static MongoCredential createMongoX509Credential(final String userName) {
+        return new MongoCredential(MONGODB_X509, userName, "$external", null);
+    }
+
+    /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
      *
      * @param userName the non-null user name
@@ -74,6 +85,7 @@ public final class MongoCredential {
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
         return new MongoCredential(PLAIN, userName, source, password);
     }
+
     /**
      *
      * Constructs a new instance using the given mechanism, userName, source, and password
@@ -92,7 +104,7 @@ public final class MongoCredential {
             throw new IllegalArgumentException("Password can not be null for " + mechanism + " mechanism");
         }
 
-        if (mechanism == GSSAPI && password != null) {
+        if ((mechanism == GSSAPI || mechanism == MONGODB_X509) && password != null) {
             throw new IllegalArgumentException("Password must be null for the " + mechanism + " mechanism");
         }
 

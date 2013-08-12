@@ -16,30 +16,26 @@
 
 package org.mongodb.connection.impl;
 
-import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 
-class NativeAuthenticator extends Authenticator {
-    public NativeAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
+class X509Authenticator extends Authenticator {
+    X509Authenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
         super(credential, connection, bufferProvider);
     }
 
     @Override
-    public void authenticate() {
+    void authenticate() {
         try {
-            CommandResult nonceResponse = CommandHelper.executeCommand(getCredential().getSource(),
-                    new Command(NativeAuthenticationHelper.getNonceCommand()), new DocumentCodec(), getConnection(), getBufferProvider());
-
             CommandHelper.executeCommand(getCredential().getSource(),
-                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(), getCredential().getPassword(),
-                            nonceResponse.getResponse().getString("nonce"))),
-                    new DocumentCodec(), getConnection(), getBufferProvider());
+                    new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
+                    new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection(), getBufferProvider());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

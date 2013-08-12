@@ -31,11 +31,9 @@ import javax.security.sasl.SaslException;
 
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
-    private final BufferProvider bufferProvider;
 
     SaslAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
-        super(credential, connection);
-        this.bufferProvider = bufferProvider;
+        super(credential, connection, bufferProvider);
     }
 
     public void authenticate() {
@@ -69,12 +67,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return CommandHelper.executeCommand(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                getConnection(), bufferProvider);
+                getConnection(), getBufferProvider());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return CommandHelper.executeCommand(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), getConnection(), bufferProvider);
+                new DocumentCodec(), getConnection(), getBufferProvider());
     }
 
     private Command createSaslStartCommand(final byte[] outToken) {

@@ -16,6 +16,10 @@
 
 
 
+
+
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -126,6 +130,31 @@ class MongoClientURISpecification extends Specification {
         options.getMaxAutoConnectRetryTime() == 0;
         options.getDescription() == null;
         options.getReadPreference() == ReadPreference.primary();
+    }
+
+    @Unroll
+    def 'should support all credential types'() {
+        expect:
+        uri.credentialList == credentialList
+
+        where:
+        uri                                                   | credentialList
+        new MongoClientURI('mongodb://jeff:123@localhost')    | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'admin',
+                                                                                                      '123'.toCharArray()))
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                           'authMechanism=MONGODB-CR')        | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'admin',
+                                                                                                      '123'.toCharArray()))
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                'authMechanism=MONGODB-CR&authSource=test')   | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'test',
+                                                                                                      '123'.toCharArray()))
+        new MongoClientURI('mongodb://jeff@localhost/?' +
+                           'authMechanism=GSSAPI')            | Arrays.asList(MongoCredential.createGSSAPICredential('jeff'))
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                           'authMechanism=PLAIN')             | Arrays.asList(MongoCredential.createPlainCredential('jeff', 'admin',
+                                                                                                      '123'.toCharArray()))
+        new MongoClientURI('mongodb://jeff@localhost/?' +
+                           'authMechanism=MONGODB-X509')      | Arrays.asList(MongoCredential.createMongoX509Credential('jeff'))
+
     }
 
     @Unroll

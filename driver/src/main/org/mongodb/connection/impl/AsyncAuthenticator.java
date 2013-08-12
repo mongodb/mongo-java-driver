@@ -19,23 +19,30 @@ package org.mongodb.connection.impl;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.SingleResultCallback;
 
 abstract class AsyncAuthenticator {
     private final MongoCredential credential;
     private final AsyncConnection connection;
+    private final BufferProvider bufferProvider;
 
-    AsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection) {
+    AsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection, final BufferProvider bufferProvider) {
         this.credential = credential;
         this.connection = connection;
+        this.bufferProvider = bufferProvider;
     }
 
     MongoCredential getCredential() {
         return credential;
     }
 
-    public AsyncConnection getConnection() {
+    AsyncConnection getConnection() {
         return connection;
+    }
+
+    BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 
     abstract void authenticate(final SingleResultCallback<CommandResult> callback);

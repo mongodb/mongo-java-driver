@@ -36,6 +36,11 @@ public enum AuthenticationMechanism {
     PLAIN("PLAIN"),
 
     /**
+     * The MongoDB X.509 mechanism. This mechanism is available only with client certificates over SSL.
+     */
+    MONGODB_X509("MONGODB-X509"),
+
+    /**
      * The MongoDB Challenge Response mechanism.
      */
     MONGODB_CR("MONGODB-CR");

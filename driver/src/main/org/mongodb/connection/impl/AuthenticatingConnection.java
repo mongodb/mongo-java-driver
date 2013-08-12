@@ -94,6 +94,8 @@ class AuthenticatingConnection implements Connection {
                 return new GSSAPIAuthenticator(credential, wrapped, bufferProvider);
             case PLAIN:
                 return new PlainAuthenticator(credential, wrapped, bufferProvider);
+            case MONGODB_X509:
+                return new X509Authenticator(credential, wrapped, bufferProvider);
             default:
                 throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }

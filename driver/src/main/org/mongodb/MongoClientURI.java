@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
 import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
+import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static org.mongodb.AuthenticationMechanism.PLAIN;
 
 
@@ -454,6 +455,9 @@ public class MongoClientURI {
         }
         else if (mechanism == MONGODB_CR) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
+        }
+        else if (mechanism == MONGODB_X509) {
+            return MongoCredential.createMongoX509Credential(userName);
         }
         else {
             throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);

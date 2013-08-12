@@ -142,6 +142,8 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
                     return new GSSAPIAsyncAuthenticator(credential, wrapped, bufferProvider);
                 case PLAIN:
                     return new PlainAsyncAuthenticator(credential, wrapped, bufferProvider);
+                case MONGODB_X509:
+                    return new X509AsyncAuthenticator(credential, wrapped, bufferProvider);
                 default:
                     throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
             }
