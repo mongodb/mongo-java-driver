@@ -22,7 +22,10 @@ import org.bson.io.BSONByteBuffer;
 /**
  * @author brendan
  * @author scotthernandez
+ *
+ * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
+@Deprecated
 public class KeyCachingLazyBSONObject extends LazyBSONObject {
 
     public KeyCachingLazyBSONObject(byte[] data , LazyBSONCallback cbk) { super( data , cbk ); }

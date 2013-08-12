@@ -54,6 +54,10 @@ public class LazyBSONCallback extends EmptyBSONCallback {
         setRootObject( createObject( data, 0 ) );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     public void setRootObject( Object root ){
         _root = root;
     }

@@ -91,6 +91,10 @@ public class LazyBSONObject implements BSONObject {
         int offset = _doc_start_offset + FIRST_ELMT_OFFSET;
     }
 
+    /**
+     * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     public class LazyBSONKeySet extends ReadOnlySet<String> {
 
         /**
@@ -431,6 +435,10 @@ public class LazyBSONObject implements BSONObject {
         return new LazyBSONEntrySet();
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected boolean isElementEmpty( int offset ){
         return getElementType( offset ) == BSON.EOO;
     }
@@ -456,10 +464,18 @@ public class LazyBSONObject implements BSONObject {
         return _input.getCString( offset );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected byte getElementType( final int offset ){
         return _input.get( offset );
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected int getElementBSONSize( int offset ){
         int x = 0;
         byte type = getElementType( offset++ );
@@ -522,7 +538,10 @@ public class LazyBSONObject implements BSONObject {
      * Returns the size of the BSON cstring at the given offset in the buffer
      * @param offset the offset into the buffer
      * @return the size of the BSON cstring, including the null terminator
+     *
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
+    @Deprecated
     protected int sizeCString( int offset ){
         int end = offset;
         while ( true ){
@@ -535,6 +554,10 @@ public class LazyBSONObject implements BSONObject {
         return end - offset + 1;
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected Object getElementValue( ElementRecord record ){
         switch ( record.type ){
             case BSON.EOO:
@@ -645,6 +668,10 @@ public class LazyBSONObject implements BSONObject {
         return bin;
     }
 
+    protected int getOffset(){
+        return _doc_start_offset;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -677,10 +704,23 @@ public class LazyBSONObject implements BSONObject {
      */
     final static int FIRST_ELMT_OFFSET = 4;
 
+    /**
+     * @deprecated Please use {@link #getOffset()} instead.
+     */
+    @Deprecated
     protected final int _doc_start_offset;
 
+    /**
+     *  @deprecated This field is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
     // callback is kept to create sub-objects on the fly
+
+    /**
+     * @deprecated This field is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected final LazyBSONCallback _callback;
     private static final Logger log = Logger.getLogger( "org.bson.LazyBSONObject" );
 }
