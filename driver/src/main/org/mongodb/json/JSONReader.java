@@ -25,6 +25,7 @@ import org.bson.BSONReaderSettings;
 import org.bson.BSONType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -209,7 +210,11 @@ public class JSONReader extends BSONReader {
                 } else if ("RegExp".equals(value)) {
                     setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
                     currentValue = visitRegularExpressionConstructor();
-                } else if ("UUID".equals(value)
+                } else if ("DBPointer".equals(value)) {
+                    setCurrentBSONType(BSONType.DB_POINTER);
+                    currentValue = visitDBPointerConstructor();
+                }
+                else if ("UUID".equals(value)
                         || "GUID".equals(value)
                         || "CSUUID".equals(value)
                         || "CSGUID".equals(value)
@@ -409,6 +414,13 @@ public class JSONReader extends BSONReader {
         checkPreconditions("readRegularExpression", BSONType.REGULAR_EXPRESSION);
         setState(getNextState());
         return (RegularExpression) currentValue;
+    }
+
+    @Override
+    public DBPointer readDBPointer() {
+        checkPreconditions("readDBPointer", BSONType.DB_POINTER);
+        setState(getNextState());
+        return (DBPointer) currentValue;
     }
 
     @Override
@@ -618,6 +630,9 @@ public class JSONReader extends BSONReader {
         } else if ("RegExp".equals(value)) {
             currentValue = visitRegularExpressionConstructor();
             setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+        } else if ("DBPointer".equals(value)) {
+            currentValue = visitDBPointerConstructor();
+            setCurrentBSONType(BSONType.DB_POINTER);
         } else if ("UUID".equals(value)
                 || "GUID".equals(value)
                 || "CSUUID".equals(value)
@@ -743,6 +758,21 @@ public class JSONReader extends BSONReader {
         }
         verifyToken(")");
         return new ObjectId(valueToken.getValue(String.class));
+    }
+
+    private DBPointer visitDBPointerConstructor() {
+        verifyToken("(");
+        final JSONToken namespaceToken = popToken();
+        if (namespaceToken.getType() != JSONTokenType.STRING) {
+            throw new JSONParseException("JSON reader expected a string but found '%s'.", namespaceToken.getValue());
+        }
+        verifyToken(",");
+        final JSONToken idToken = popToken();
+        if (namespaceToken.getType() != JSONTokenType.STRING) {
+            throw new JSONParseException("JSON reader expected a string but found '%s'.", idToken.getValue());
+        }
+        verifyToken(")");
+        return new DBPointer(namespaceToken.getValue(String.class), new ObjectId(idToken.getValue(String.class)));
     }
 
     private long visitNumberLongConstructor() {

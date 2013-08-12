@@ -19,6 +19,7 @@ package org.bson;
 import org.bson.io.InputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
@@ -216,6 +217,14 @@ public class BSONBinaryReader extends BSONReader {
         checkPreconditions("readRegularExpression", BSONType.REGULAR_EXPRESSION);
         setState(getNextState());
         return new RegularExpression(buffer.readCString(), buffer.readCString());
+    }
+
+    @Override
+    public DBPointer readDBPointer() {
+        checkPreconditions("readDBPointer", BSONType.DB_POINTER);
+        setState(getNextState());
+        buffer.readInt32(); //according to 2.x namespace is preceded by integer - length of namespace
+        return new DBPointer(buffer.readCString(), buffer.readObjectId());
     }
 
     @Override

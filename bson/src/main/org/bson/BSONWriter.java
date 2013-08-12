@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
@@ -443,6 +444,13 @@ public abstract class BSONWriter implements Closeable {
         writeUndefined();
     }
 
+    private void writeDBPointer(final DBPointer dbPointer) {
+        writeStartDocument();
+        writeString("$ref", dbPointer.getNamespace());
+        writeObjectId("$id", dbPointer.getId());
+        writeEndDocument();
+    }
+
     protected State getNextState() {
         if (getContext().getContextType() == BSONContextType.ARRAY) {
             return State.VALUE;
@@ -619,6 +627,9 @@ public abstract class BSONWriter implements Closeable {
             case MIN_KEY:
                 reader.readMinKey();
                 writeMinKey();
+                break;
+            case DB_POINTER:
+                writeDBPointer(reader.readDBPointer());
                 break;
             case MAX_KEY:
                 reader.readMaxKey();

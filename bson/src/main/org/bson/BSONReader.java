@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
@@ -357,6 +358,25 @@ public abstract class BSONReader implements Closeable {
         verifyName(name);
         return readRegularExpression();
     }
+
+    /**
+     * Reads a BSON DBPointer from the reader.
+     *
+     * @return A DBPointer.
+     */
+    public abstract DBPointer readDBPointer();
+
+    /**
+     * Reads a BSON DBPointer element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A DBPointer.
+     */
+    public DBPointer readDBPointer(final String name) {
+        verifyName(name);
+        return readDBPointer();
+    }
+
 
     /**
      * Reads the start of a BSON array.

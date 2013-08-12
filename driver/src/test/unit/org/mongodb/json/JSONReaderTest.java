@@ -21,6 +21,7 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.junit.Test;
@@ -646,5 +647,23 @@ public class JSONReaderTest {
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
 
+    @Test
+         public void testDBPointer() {
+        final String json = "DBPointer(\"b\",\"5209296cd6c4e38cf96fffdc\")";
+        bsonReader = new JSONReader(json);
+        assertEquals(BSONType.DB_POINTER, bsonReader.readBSONType());
+        final DBPointer dbPointer = bsonReader.readDBPointer();
+        assertEquals("b", dbPointer.getNamespace());
+        assertEquals(new ObjectId("5209296cd6c4e38cf96fffdc"), dbPointer.getId());
+    }
 
+    @Test
+    public void testDBPointerWithNew() {
+        final String json = "new DBPointer(\"b\",\"5209296cd6c4e38cf96fffdc\")";
+        bsonReader = new JSONReader(json);
+        assertEquals(BSONType.DB_POINTER, bsonReader.readBSONType());
+        final DBPointer dbPointer = bsonReader.readDBPointer();
+        assertEquals("b", dbPointer.getNamespace());
+        assertEquals(new ObjectId("5209296cd6c4e38cf96fffdc"), dbPointer.getId());
+    }
 }

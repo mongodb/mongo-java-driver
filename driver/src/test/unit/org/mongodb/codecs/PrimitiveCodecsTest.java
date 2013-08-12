@@ -16,10 +16,13 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BSONBinaryReader;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.ByteBufNIO;
+import org.bson.io.BasicInputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -27,15 +30,18 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.mongodb.DBRef;
 import org.mongodb.Decoder;
 import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 
@@ -221,6 +227,28 @@ public class PrimitiveCodecsTest {
     @Test
     public void shouldNotBeAbleToDecodeByte() {
         assertThat(primitiveCodecs.canDecode(Byte.class), is(false));
+    }
+
+    @Test
+    public void shouldBeAbleToDecodeDBPointer() {
+        final byte[] bytes = {
+                26, 0, 0, 0, 12, 97, 0, 2, 0, 0, 0, 98, 0, 82, 9, 41, 108,
+                -42, -60, -29, -116, -7, 111, -1, -36, 0
+        };
+        final BSONReader reader = new BSONBinaryReader(
+                new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true
+        );
+
+        reader.readStartDocument();
+        reader.readName();
+
+        final Object object = primitiveCodecs.decode(reader);
+
+        assertThat(object, instanceOf(DBRef.class));
+        final DBRef reference = (DBRef) object;
+        assertThat(reference.getRef(), is("b"));
+        assertThat(reference.getId(), instanceOf(ObjectId.class));
+        assertThat((ObjectId) reference.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
     }
 
     @Test

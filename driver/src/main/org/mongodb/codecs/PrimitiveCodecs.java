@@ -113,6 +113,7 @@ public class PrimitiveCodecs implements Codec<Object> {
                .otherEncoder(new ByteArrayCodec())
                .otherEncoder(new BinaryEncoder())
                .otherEncoder(new UUIDEncoder())
+               .otherDecoder(BSONType.DB_POINTER, new DBPointerDecoder())
                .binaryDecoder(new TransformingBinaryDecoder())
                .build();
     }
