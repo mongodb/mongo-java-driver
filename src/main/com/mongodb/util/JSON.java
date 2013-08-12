@@ -33,7 +33,7 @@ public class JSON {
      *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
      *
      * @param o object to serialize
-     * @return  String containing JSON form of the object
+     * @return  a String containing the JSON form of the object
      * @see com.mongodb.util.JSONSerializers#getLegacy()
      */
     public static String serialize( Object o ){
@@ -57,20 +57,33 @@ public class JSON {
     }
 
     /**
-     *  Parses a JSON string representing a JSON value
+     *  Parses a JSON string and returns a corresponding Java object.
+     *  The returned value is either a {@link com.mongodb.DBObject DBObject}
+     *  (if the string is a JSON document or array), or a 
+     *  <code>java.lang.Integer</code>, <code>java.lang.Double</code>
+     *  or <code>java.lang.Boolean</code> for the corresponding primitive types.
      *
      * @param s the string to parse
-     * @return the object
+     * @return a Java object representing the JSON data
+     * @throws JSONParseException if s is not valid JSON 
      */
     public static Object parse( String s ){
 	return parse(s, null);
     }
 
     /**
-     * Parses a JSON string representing a JSON value
-     *
+     * Parses a JSON string and calls the methods of a
+     * {@link org.bson.BSONCallback BSONCallback} during parsing.
+     * The returned value is a Java object representing the JSON string, which
+     * can be either a {@link com.mongodb.DBObject DBObject}
+     *  (if the string is a JSON document or array), or a 
+     *  <code>java.lang.Integer</code>, <code>java.lang.Double</code>
+     *  or <code>java.lang.Boolean</code> for the corresponding primitive types.
+     * 
      * @param s the string to parse
-     * @return the object
+     * @param c the BSONCallback to call during parsing
+     * @return a Java object representing the JSON data
+     * @throws JSONParseException if s is not valid JSON 
      */
     public static Object parse( String s, BSONCallback c ){
         if (s == null || (s=s.trim()).equals("")) {
