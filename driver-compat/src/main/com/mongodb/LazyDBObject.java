@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
+import org.bson.io.BSONByteBuffer;
 
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
@@ -29,6 +30,14 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
 
     public LazyDBObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
         super(bytes, offset, callback);
+    }
+
+    public LazyDBObject(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
+        this(buffer.array(), callback);
+    }
+
+    public LazyDBObject(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
+        this(buffer.array(), offset, callback);
     }
 
     @Override

@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import org.bson.io.BSONByteBuffer;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,6 +35,14 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     public LazyBSONList(final byte[] data, final int offset, final LazyBSONCallback callback) {
         super(data, offset, callback);
+    }
+
+    public LazyBSONList(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
+        super(buffer.array(), callback);
+    }
+
+    public LazyBSONList(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
+        super(buffer.array(), offset, callback);
     }
 
     @Override
