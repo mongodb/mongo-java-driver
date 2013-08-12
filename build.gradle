@@ -21,7 +21,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'me.trnl:clirr-gradle-plugin:0.1'
+        classpath 'me.trnl:clirr-gradle-plugin:0.3'
     }
 }
 
@@ -44,6 +44,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     dependencies {
@@ -235,6 +236,7 @@ project(':driver-compat') {
 
     clirr {
         ignoreFailures = true
+        ignoreDeprecated = true
         ignoredDifferenceTypes 10000, 7011, 8000, 6006
         /*
             - 10000 (Class format version increased): className, from, to (class format version numbers, NOT expressions)
@@ -267,7 +269,7 @@ project(':driver-compat') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.6'
+    gradleVersion = '1.7'
 }
 
 gradle.buildFinished { BuildResult result ->
