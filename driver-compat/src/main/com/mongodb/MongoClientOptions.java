@@ -18,6 +18,8 @@ package com.mongodb;
 
 import org.mongodb.annotations.Immutable;
 
+import javax.net.SocketFactory;
+
 /**
  * Various settings to control the behavior of a <code>MongoClient</code>.
  * <p/>
@@ -33,12 +35,16 @@ public class MongoClientOptions {
     private final org.mongodb.MongoClientOptions proxied;
     private final DBDecoderFactory dbDecoderFactory;
     private final DBEncoderFactory dbEncoderFactory;
+    private final SocketFactory socketFactory;
+    private final boolean cursorFinalizerEnabled;
 
     MongoClientOptions(final org.mongodb.MongoClientOptions proxied) {
         this.proxied = proxied;
 
         this.dbDecoderFactory = DefaultDBDecoder.FACTORY;
         this.dbEncoderFactory = DefaultDBEncoder.FACTORY;
+        this.socketFactory = SocketFactory.getDefault();
+        this.cursorFinalizerEnabled = true;
     }
 
     private MongoClientOptions(final Builder builder) {
@@ -46,6 +52,8 @@ public class MongoClientOptions {
 
         this.dbDecoderFactory = builder.dbDecoderFactory;
         this.dbEncoderFactory = builder.dbEncoderFactory;
+        this.socketFactory = builder.socketFactory;
+        this.cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
     }
 
     /**
@@ -259,6 +267,44 @@ public class MongoClientOptions {
         return dbEncoderFactory;
     }
 
+    /**
+     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+     * the VM is Java 5.
+     * <p>
+     * Default is false.
+     * </p>
+     */
+    public boolean isAlwaysUseMBeans() {
+        return proxied.isAlwaysUseMBeans();
+    }
+
+    /**
+     * The socket factory for creating sockets to the mongo server.
+     * <p/>
+     * Default is SocketFactory.getDefault()
+     *
+     * @return the socket factory
+     */
+    public SocketFactory getSocketFactory() {
+        return socketFactory;
+    }
+
+    /**
+     * Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client
+     * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
+     * <p/>
+     * Default is true.
+     *
+     * @return whether finalizers are enabled on cursors
+     * @see DBCursor
+     * @see com.mongodb.DBCursor#close()
+     */
+    public boolean isCursorFinalizerEnabled() {
+        return cursorFinalizerEnabled;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -276,6 +322,12 @@ public class MongoClientOptions {
         if (!dbEncoderFactory.equals(that.dbEncoderFactory)) {
             return false;
         }
+        if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) {
+            return false;
+        }
+        if (!socketFactory.equals(that.socketFactory)) {
+            return false;
+        }
         if (!proxied.equals(that.proxied)) {
             return false;
         }
@@ -288,6 +340,8 @@ public class MongoClientOptions {
         int result = proxied.hashCode();
         result = 31 * result + dbDecoderFactory.hashCode();
         result = 31 * result + dbEncoderFactory.hashCode();
+        result = 31 * result + socketFactory.hashCode();
+        result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         return result;
     }
 
@@ -301,6 +355,8 @@ public class MongoClientOptions {
         private final org.mongodb.MongoClientOptions.Builder proxied = new org.mongodb.MongoClientOptions.Builder();
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
+        private SocketFactory socketFactory = SocketFactory.getDefault();
+        private boolean cursorFinalizerEnabled = true;
 
         /**
          * Sets the description.
@@ -498,6 +554,48 @@ public class MongoClientOptions {
         }
 
         /**
+         * Sets the socket factory.
+         *
+         * @param socketFactory the socket factory
+         * @return {@code this}
+         * @see MongoClientOptions#getSocketFactory()
+         */
+        public Builder socketFactory(final SocketFactory socketFactory) {
+            if (socketFactory == null) {
+                throw new IllegalArgumentException("null is not a legal value");
+            }
+            this.socketFactory = socketFactory;
+            return this;
+        }
+
+
+        /**
+         * Sets whether cursor finalizers are enabled.
+         *
+         * @param cursorFinalizerEnabled whether cursor finalizers are enabled.
+         * @return {@code this}
+         * @see MongoClientOptions#isCursorFinalizerEnabled()
+         */
+        public Builder cursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
+            this.cursorFinalizerEnabled = cursorFinalizerEnabled;
+            return this;
+        }
+
+        /**
+         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+         * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+         * the VM is Java 5.
+         *
+         * @param alwaysUseMBeans true if driver should always use MBeans, regardless of VM version
+         * @return this
+         * @see MongoClientOptions#isAlwaysUseMBeans()
+         */
+        public Builder alwaysUseMBeans(final boolean alwaysUseMBeans) {
+            proxied.alwaysUseMBeans(alwaysUseMBeans);
+            return this;
+        }
+
+        /**
          * Sets the decoder factory.
          *
          * @param dbDecoderFactory the decoder factory
@@ -524,6 +622,17 @@ public class MongoClientOptions {
                 throw new IllegalArgumentException("null is not a legal value");
             }
             this.dbEncoderFactory = dbEncoderFactory;
+            return this;
+        }
+
+        /**
+         * Sets defaults to be what they are in {@code MongoOptions}.
+         *
+         * @return {@code this}
+         * @see MongoOptions
+         */
+        public Builder legacyDefaults() {
+            proxied.maxConnectionPoolSize(10).writeConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
             return this;
         }
 

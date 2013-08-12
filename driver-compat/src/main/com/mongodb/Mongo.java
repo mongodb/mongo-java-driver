@@ -666,6 +666,7 @@ public class Mongo {
 
     private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialList,
                                                                            final org.mongodb.MongoClientOptions options) {
+        //TODO: Passing MongoClientOptions.socketFactory to DefaultConnectionFactory constructors
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
         final SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 

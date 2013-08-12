@@ -49,6 +49,7 @@ public final class MongoClientOptions {
     //CHECKSTYLE:OFF
     private final boolean SSLEnabled;
     //CHECKSTYLE:ON
+    private boolean alwaysUseMBeans;
 
     /**
      * Convenience method to create a Builder.
@@ -87,6 +88,7 @@ public final class MongoClientOptions {
         private boolean SSLEnabled = false;
         //CHECKSTYLE:ON
         private boolean asyncEnabled = AsyncDetector.isAsyncEnabled();
+        private boolean alwaysUseMBeans = false;
 
         /**
          * Sets the description.
@@ -342,6 +344,20 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+         * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+         * the VM is Java 5.
+         *
+         * @param aAlwaysUseMBeans true if driver should always use MBeans, regardless of VM version
+         * @return this
+         * @see MongoClientOptions#isAlwaysUseMBeans()
+         */
+        public Builder alwaysUseMBeans(final boolean aAlwaysUseMBeans) {
+            this.alwaysUseMBeans = aAlwaysUseMBeans;
+            return this;
+        }
+
+        /**
          * Build an instance of MongoClientOptions.
          *
          * @return the options from this builder
@@ -547,6 +563,18 @@ public final class MongoClientOptions {
         return asyncEnabled;
     }
 
+    /**
+     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+     * the VM is Java 5.
+     * <p>
+     * Default is false.
+     * </p>
+     */
+    public boolean isAlwaysUseMBeans() {
+        return alwaysUseMBeans;
+    }
+
     @Override
     public String toString() {
         return "MongoClientOptions {"
@@ -567,6 +595,7 @@ public final class MongoClientOptions {
                 + ", primitiveCodecs=" + primitiveCodecs
                 + ", SSLEnabled=" + SSLEnabled
                 + ", asyncEnabled=" + asyncEnabled
+                + ", alwaysUseMBeans=" + alwaysUseMBeans
                 + '}';
     }
 
@@ -588,5 +617,6 @@ public final class MongoClientOptions {
         primitiveCodecs = builder.primitiveCodecs;
         SSLEnabled = builder.SSLEnabled;
         asyncEnabled = builder.asyncEnabled;
+        alwaysUseMBeans = builder.alwaysUseMBeans;
     }
 }
