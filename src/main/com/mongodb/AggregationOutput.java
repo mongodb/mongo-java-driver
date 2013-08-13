@@ -51,8 +51,22 @@ public class AggregationOutput {
         else 
             throw new IllegalArgumentException("result undefined");
     }
-    
+
+    /**
+     * @deprecated Please use {@link #getCommandResult()} instead.
+     */
+    @Deprecated
     protected final CommandResult _commandResult;
-    protected final DBObject _cmd;    
+
+    /**
+     * @deprecated Please use {@link #getCommand()} instead.
+     */
+    @Deprecated
+    protected final DBObject _cmd;
+
+    /**
+     * @deprecated Please use {@link #results()} instead.
+     */
+    @Deprecated
     protected final Iterable<DBObject> _resultSet;
 }
