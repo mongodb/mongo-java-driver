@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
@@ -139,12 +140,29 @@ public class DBCollection implements IDBCollection {
     private final Codec<Document> documentCodec;
     private CollectibleCodec<DBObject> objectCodec;
 
+
+    /**
+     * Constructs new {@code DBCollection} instance. This opertation not reflected on the server.
+     *
+     * @param name the name of the collection
+     * @param database the database to which this collections belongs to
+     * @param documentCodec codec to be used for messages to server
+     */
     DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
         this.name = name;
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         setObjectFactory(new DBObjectFactory());
+    }
+
+    /**
+     * Initializes a new collection. No operation is actually performed on the database.
+     * @param database database in which to create the collection
+     * @param name the name of the collection
+     */
+    protected DBCollection(final DB database, final String name) {
+        this(name, database, new DocumentCodec(PrimitiveCodecs.createDefault()));
     }
 
     /**
