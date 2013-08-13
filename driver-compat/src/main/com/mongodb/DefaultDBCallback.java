@@ -21,6 +21,7 @@ import org.bson.BasicBSONCallback;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -60,7 +61,9 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     public Object objectDone() {
         final String name = curName();
         BSONObject document = (BSONObject) super.objectDone();
-        if (document.containsField("$ref") && document.containsField("$id")) {
+        final Iterator<String> iterator = document.keySet().iterator();
+        if (iterator.hasNext() && iterator.next().equals("$ref")
+                && iterator.hasNext() && iterator.next().equals("$id")) {
             _put(name, new DBRef(db, document));
         }
 

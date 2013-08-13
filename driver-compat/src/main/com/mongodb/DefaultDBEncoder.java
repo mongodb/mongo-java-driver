@@ -20,6 +20,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.OutputBuffer;
 
+import static org.bson.BSON.EOO;
+import static org.bson.BSON.OBJECT;
+
 public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     @Override
@@ -33,12 +36,15 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
     @Override
     protected boolean putSpecial(final String name, final Object value) {
         if (value instanceof DBRef) {
-            final DBRef ref = (DBRef) value;
-            putObject(name, new BasicDBObject("$ref", ref.getRef()).append("$id", ref.getId()));
+            putDBRef(name, (DBRef) value);
             return true;
         } else {
             return false;
         }
+    }
+
+    protected void putDBRef(final String name, final DBRefBase ref) {
+        putObject(name, new BasicDBObject("$ref", ref.getRef()).append("$id", ref.getId()));
     }
 
     @Override
