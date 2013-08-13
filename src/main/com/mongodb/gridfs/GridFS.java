@@ -243,6 +243,10 @@ public class GridFS {
         return files;
     }
 
+    /**
+     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     */
+    @Deprecated
     protected GridFSDBFile _fix( Object o ){
         if ( o == null )
             return null;
@@ -410,9 +414,47 @@ public class GridFS {
         return _db;
     }
 
+    /**
+     * Gets the {@link DBCollection} in which the file’s metadata is stored.
+     *
+     * @return the collection
+     */
+    protected DBCollection getFilesCollection() {
+        return _filesCollection;
+    }
+
+    /**
+     * Gets the {@link DBCollection} in which the binary chunks are stored.
+     *
+     * @return the collection
+     */
+    protected DBCollection getChunksCollection() {
+        return _chunkCollection;
+    }
+
+
+    /**
+     * @deprecated Please use {@link #getDB()} for access.
+     */
+    @Deprecated
     protected final DB _db;
+
+    /**
+     * @deprecated Please use {@link #getBucketName()} for access.
+     */
+    @Deprecated
     protected final String _bucketName;
+
+    /**
+     * @deprecated Please use {@link #getFilesCollection()} for access.
+     */
+    @Deprecated
     protected final DBCollection _filesCollection;
+
+    /**
+     * @deprecated Please use {@link #getChunksCollection()} for access.
+     */
+    @Deprecated
     protected final DBCollection _chunkCollection;
 
 }

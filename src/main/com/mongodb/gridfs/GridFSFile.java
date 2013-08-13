@@ -277,6 +277,15 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
+     * Gets the GridFS associated with this file
+     *
+     * @return gridFS instance
+     */
+    protected GridFS getGridFS(){
+        return this._fs;
+    }
+
+    /**
      * Sets the GridFS associated with this file
      * @param fs
      */
@@ -284,6 +293,10 @@ public abstract class GridFSFile implements DBObject {
         _fs = fs;
     }
 
+    /**
+     * @deprecated Please use {@link #getGridFS()} & {@link #setGridFS(GridFS)} instead.
+     */
+    @Deprecated
     protected GridFS _fs = null;
 
     Object _id;
