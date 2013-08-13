@@ -21,10 +21,14 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerVersion;
 import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
+
+import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -49,7 +53,12 @@ public abstract class WriteOperationBase extends OperationBase<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            return getProtocol(provider).execute();
+            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) < 0) {
+                return doDedicatedWriteProtocol(provider.getServerDescription(), connection);
+            }
+            else {
+                return doDedicatedWriteProtocol(provider.getServerDescription(), connection);
+            }
         } finally {
             connection.close();
             if (isCloseSession()) {
@@ -58,9 +67,13 @@ public abstract class WriteOperationBase extends OperationBase<CommandResult> {
         }
     }
 
+    private CommandResult doDedicatedWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return getProtocol(serverDescription, connection).execute();
+    }
+
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    protected abstract WriteProtocol getProtocol(ServerConnectionProvider provider);
+    protected abstract WriteProtocol getProtocol(final ServerDescription serverDescription, Connection connection);
 }

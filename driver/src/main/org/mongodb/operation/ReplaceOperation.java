@@ -20,6 +20,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.ReplaceProtocol;
 import org.mongodb.session.Session;
 
@@ -40,8 +42,8 @@ public class ReplaceOperation<T> extends WriteOperationBase {
     }
 
     @Override
-    protected ReplaceProtocol<T> getProtocol(final ServerConnectionProvider provider) {
-        return new ReplaceProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(),
-                provider.getServerDescription(), provider.getConnection(), true);
+    protected ReplaceProtocol<T> getProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new ReplaceProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(), serverDescription, connection,
+                false);
     }
 }

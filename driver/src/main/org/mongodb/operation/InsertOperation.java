@@ -19,6 +19,8 @@ package org.mongodb.operation;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.InsertProtocol;
 import org.mongodb.session.Session;
 
@@ -36,8 +38,7 @@ public class InsertOperation<T> extends WriteOperationBase {
     }
 
     @Override
-    protected InsertProtocol<T> getProtocol(final ServerConnectionProvider provider) {
-        return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), provider.getServerDescription(),
-                provider.getConnection(), true);
+    protected InsertProtocol<T> getProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, connection, false);
     }
 }

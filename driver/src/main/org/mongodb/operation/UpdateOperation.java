@@ -20,6 +20,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.UpdateProtocol;
 import org.mongodb.session.Session;
 
@@ -38,8 +40,7 @@ public class UpdateOperation extends WriteOperationBase {
     }
 
     @Override
-    protected UpdateProtocol getProtocol(final ServerConnectionProvider provider) {
-        return new UpdateProtocol(getNamespace(), update, queryEncoder, getBufferProvider(), provider.getServerDescription(),
-                provider.getConnection(), true);
+    protected UpdateProtocol getProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new UpdateProtocol(getNamespace(), update, queryEncoder, getBufferProvider(), serverDescription, connection, false);
     }
 }

@@ -20,6 +20,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.RemoveProtocol;
 import org.mongodb.session.Session;
 
@@ -37,8 +39,7 @@ public class RemoveOperation extends WriteOperationBase {
     }
 
     @Override
-    protected RemoveProtocol getProtocol(final ServerConnectionProvider provider) {
-        return new RemoveProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), provider.getServerDescription(),
-                provider.getConnection(), true);
+    protected RemoveProtocol getProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new RemoveProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), serverDescription, connection, false);
     }
 }
