@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     @Override
     public BSONObject create(final boolean array, final List<String> path) {
         return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : new ArrayList<String>());
+    }
+
+    @Override
+    public void gotDBRef(final String name, final String ns, final ObjectId id) {
+        _put(name, new DBRef(db, ns, id));
     }
 
     @Override
