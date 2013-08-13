@@ -116,11 +116,14 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
 
 
     @Override
-    public void pipe(final OutputStream out) throws IOException {
+    public int pipe(final OutputStream out) throws IOException {
+        int total = 0;
         for (final ByteBuf cur : bufferList) {
             cur.flip();
             out.write(cur.array(), 0, cur.limit());
+            total += cur.limit();
         }
+        return total;
     }
 
     @Override

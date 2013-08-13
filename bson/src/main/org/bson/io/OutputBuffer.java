@@ -49,8 +49,10 @@ public abstract class OutputBuffer extends OutputStream {
 
     /**
      * Pipe the contents of this output buffer into the given output stream
+     *
+     * @return number of bytes written to the stream
      */
-    public abstract void pipe(OutputStream out) throws IOException;
+    public abstract int pipe(OutputStream out) throws IOException;
 
     /**
      * Get a list of byte buffers that are prepared to be read from; in other words, whose position is 0 and whose limit is the number of
