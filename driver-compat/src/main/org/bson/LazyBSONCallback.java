@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import org.bson.types.ObjectId;
+
 import java.util.List;
 
 public class LazyBSONCallback extends EmptyBSONCallback {
@@ -51,5 +53,16 @@ public class LazyBSONCallback extends EmptyBSONCallback {
     @SuppressWarnings("rawtypes")
     public List createArray(final byte[] bytes, final int offset) {
         return new LazyBSONList(bytes, offset, this);
+    }
+
+    /**
+     * This is a factory method pattern to create appropriate objects for BSON type DBPointer(0x0c).
+     *
+     * @param ns the namespace of the reference
+     * @param id the identificator of the reference
+     * @return object to be used as reference representation
+     */
+    public Object createDBRef(final String ns, final ObjectId id) {
+        return new BasicBSONObject("$ns", ns).append("$id", id);
     }
 }

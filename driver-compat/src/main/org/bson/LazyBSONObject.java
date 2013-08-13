@@ -21,6 +21,7 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
+import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.RegularExpression;
@@ -171,6 +172,9 @@ public class LazyBSONObject implements BSONObject {
                         regularExpression.getPattern(),
                         BSON.regexFlags(regularExpression.getOptions())
                 );
+            case DB_POINTER:
+                final DBPointer dbPointer = reader.readDBPointer();
+                return callback.createDBRef(dbPointer.getNamespace(), dbPointer.getId());
             case JAVASCRIPT:
                 return new Code(reader.readJavaScript());
             case SYMBOL:
