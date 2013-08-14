@@ -97,8 +97,8 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         ResponseBuffers responseBuffers = connection.receiveMessage(
                 getResponseSettings(serverDescription, requestMessage.getId()));
         try {
-            return parseGetLastErrorResponse(createCommandResult(getLastErrorCommand,
-                    new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), requestMessage.getId()), connection));
+            return parseGetLastErrorResponse(createCommandResult(new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
+                    requestMessage.getId()), connection));
         } finally {
             responseBuffers.close();
         }

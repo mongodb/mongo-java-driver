@@ -36,7 +36,7 @@ final class CommandHelper {
 
     static CommandResult executeCommand(final String database, final Command command, final Codec<Document> codec,
                                         final Connection connection, final BufferProvider bufferProvider) {
-        return receiveMessage(command, codec, connection, sendMessage(database, command, codec, connection, bufferProvider));
+        return receiveMessage(codec, connection, sendMessage(database, command, codec, connection, bufferProvider));
     }
 
     private static CommandMessage sendMessage(final String database, final Command command, final Codec<Document> codec,
@@ -53,12 +53,11 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult receiveMessage(final Command command, final Codec<Document> codec, final Connection connection,
-                                                final CommandMessage message) {
+    private static CommandResult receiveMessage(final Codec<Document> codec, final Connection connection, final CommandMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(ResponseSettings.builder().responseTo(message.getId()).build());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-            return createCommandResult(command, replyMessage, connection);
+            return createCommandResult(replyMessage, connection);
         } finally {
             responseBuffers.close();
         }

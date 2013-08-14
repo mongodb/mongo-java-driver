@@ -20,19 +20,15 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
-import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.protocol.ReplyMessage;
 
 abstract class CommandResultBaseCallback extends ResponseCallback {
-    private final Command commandOperation;
     private final Decoder<Document> decoder;
 
-    public CommandResultBaseCallback(final Command commandOperation, final Decoder<Document> decoder,
-                                     final AsyncServerConnection connection, final long requestId) {
+    public CommandResultBaseCallback(final Decoder<Document> decoder, final AsyncServerConnection connection, final long requestId) {
         super(connection, requestId);
-        this.commandOperation = commandOperation;
         this.decoder = decoder;
     }
 
@@ -43,8 +39,8 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
             }
             else {
                 ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, getRequestId());
-                callCallback(new CommandResult(commandOperation.toDocument(), getConnection().getServerAddress(),
-                        replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), null);
+                callCallback(new CommandResult(getConnection().getServerAddress(), replyMessage.getDocuments().get(0),
+                        replyMessage.getElapsedNanoseconds()), null);
             }
         } finally {
             if (responseBuffers != null) {

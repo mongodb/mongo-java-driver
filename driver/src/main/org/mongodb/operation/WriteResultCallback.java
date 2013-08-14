@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.GetLastError;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
@@ -38,10 +37,10 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final BufferProvider bufferProvider;
 
     public WriteResultCallback(final SingleResultFuture<CommandResult> future, final BaseWrite writeOperation,
-                               final GetLastError getLastError, final Decoder<Document> decoder, final MongoNamespace namespace,
+                               final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage, final AsyncServerConnection connection,
                                final BufferProvider bufferProvider, final long requestId) {
-        super(getLastError, decoder, connection, requestId);
+        super(decoder, connection, requestId);
         this.future = future;
         this.writeOperation = writeOperation;
         this.namespace = namespace;

@@ -16,6 +16,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -96,11 +98,7 @@ class MongoExceptionsSpecification extends Specification {
     }
 
     private static org.mongodb.CommandResult commandResultWithErrorCode(int expectedErrorCode) {
-        new org.mongodb.CommandResult(new Document(),
-                new ServerAddress(),
-                new Document
-                ('code', expectedErrorCode),
-                15L)
+        new org.mongodb.CommandResult(new ServerAddress(), new Document('code', expectedErrorCode), 15L)
     }
 
 }

@@ -19,27 +19,20 @@ package org.mongodb;
 import org.mongodb.connection.ServerAddress;
 
 public class CommandResult {
-    private final Document command;
     private final ServerAddress address;
     private final Document response;
     private final long elapsedNanoseconds;
 
-    public CommandResult(final Document command, final ServerAddress address, final Document response, final long elapsedNanoseconds) {
-        this.command = command;
+    public CommandResult(final ServerAddress address, final Document response, final long elapsedNanoseconds) {
         this.address = address;
         this.response = response;
         this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
     public CommandResult(final CommandResult baseResult) {
-        this.command = baseResult.command;
         this.address = baseResult.address;
         this.response = baseResult.response;
         this.elapsedNanoseconds = baseResult.elapsedNanoseconds;
-    }
-
-    public Document getCommand() {
-        return command;
     }
 
     public ServerAddress getAddress() {

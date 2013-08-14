@@ -95,7 +95,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
                 getResponseSettings(serverDescription, message.getId()));
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, message.getId());
-            return createCommandResult(command, replyMessage, connection);
+            return createCommandResult(replyMessage, connection);
         } finally {
             responseBuffers.close();
         }

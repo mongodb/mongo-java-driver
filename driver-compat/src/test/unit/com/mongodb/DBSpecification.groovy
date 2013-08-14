@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -65,10 +57,8 @@ class DBSpecification extends Specification {
         given:
         cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()) }
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                    new Document(), 15L))
         }
 
         when:
@@ -98,10 +88,8 @@ class DBSpecification extends Specification {
         given:
         cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()) }
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                    new Document(), 15L))
         }
 
         when:
@@ -115,10 +103,8 @@ class DBSpecification extends Specification {
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
-                                                                                           new org.mongodb.connection.ServerAddress(),
-                                                                                           new Document(),
-                                                                                           15L))
+            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                    new Document(), 15L))
         }
 
         when:
@@ -145,10 +131,7 @@ class DBSpecification extends Specification {
 
     def 'should not throw MongoCommandFailureException if command fails'() {
         given:
-        def expectedCommandResult = new org.mongodb.CommandResult(new Document(),
-                                                                            new org.mongodb.connection.ServerAddress(),
-                                                                            new Document(),
-                                                                            15L)
+        def expectedCommandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), new Document(), 15L)
         cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(expectedCommandResult)

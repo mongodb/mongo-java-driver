@@ -95,7 +95,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
                 getResponseSettings(serverDescription, message.getId()));
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
-            return createCommandResult(message.getCommand(), replyMessage, connection);
+            return createCommandResult(replyMessage, connection);
         } finally {
             responseBuffers.close();
         }
@@ -142,8 +142,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     }
 
     private static CommandResult mungeCommandResult(final CommandResult commandResult, final Document aResult) {
-        return new CommandResult(commandResult.getCommand(), commandResult.getAddress(), aResult,
-                commandResult.getElapsedNanoseconds());
+        return new CommandResult(commandResult.getAddress(), aResult, commandResult.getElapsedNanoseconds());
     }
 
     private static MongoCommandFailureException getWriteCommandException(final CommandResult commandResult) {

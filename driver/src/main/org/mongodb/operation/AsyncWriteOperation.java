@@ -58,7 +58,7 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendMessage(buffer.getByteBuffers(),
                     new SendMessageCallback<CommandResult>(connection, buffer, getLastErrorMessage.getId(), retVal,
-                            new WriteResultCallback(retVal, getWrite(), getLastError, new DocumentCodec(),
+                            new WriteResultCallback(retVal, getWrite(), new DocumentCodec(),
                                     getNamespace(), nextMessage, connection, bufferProvider, getLastErrorMessage.getId())));
         }
         else {

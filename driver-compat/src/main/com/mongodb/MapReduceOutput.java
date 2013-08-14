@@ -21,7 +21,6 @@ package com.mongodb;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceInlineCommandResult;
 
-import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.DBObjects.toDocument;
 
 /**
@@ -33,8 +32,10 @@ public class MapReduceOutput {
 
     private final org.mongodb.CommandResult commandResult;
     private final DBCollection collection;
+    private final DBObject command;
 
-    MapReduceOutput(final DBCollection collection, final MapReduceCommandResult commandResult) {
+    MapReduceOutput(final DBCollection collection, final DBObject command, final MapReduceCommandResult commandResult) {
+        this.command = command;
         this.commandResult = commandResult;
         this.collection = getTargetCollection(
                 collection,
@@ -43,15 +44,15 @@ public class MapReduceOutput {
         );
     }
 
-    MapReduceOutput(final DBCollection collection, final MapReduceInlineCommandResult<DBObject> commandResult) {
+    MapReduceOutput(final DBObject command, final MapReduceInlineCommandResult<DBObject> commandResult) {
+        this.command = command;
         this.collection = null;
         this.commandResult = commandResult;
     }
 
     public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
-
+        this.command = command;
         final org.mongodb.CommandResult result = new org.mongodb.CommandResult(
-                toDocument(command),
                 commandResult.getServerUsed().toNew(),
                 toDocument(commandResult),
                 0
@@ -69,7 +70,6 @@ public class MapReduceOutput {
             );
             this.commandResult = mapReduceCommandResult;
         }
-
     }
 
     /**
@@ -114,7 +114,7 @@ public class MapReduceOutput {
     }
 
     public DBObject getCommand() {
-        return toDBObject(commandResult.getCommand());
+        return command;
     }
 
     public ServerAddress getServerUsed() {

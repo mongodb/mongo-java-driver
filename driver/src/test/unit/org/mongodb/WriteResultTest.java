@@ -26,8 +26,8 @@ import static org.junit.Assert.assertTrue;
 public class WriteResultTest {
     @Test
     public void testWithCommandResult() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new Document("getLastError", 1), new ServerAddress("localhost", 28000),
-                new Document("ok", 1).append("n", 0).append("connectionId", 431), 100000L);
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost", 28000), new Document("ok", 1).append("n",
+                0).append("connectionId", 431), 100000L);
         WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         WriteResult writeResult = new WriteResult(commandResult, writeConcern);
         assertTrue(writeResult.toString().startsWith("WriteResult"));

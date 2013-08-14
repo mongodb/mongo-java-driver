@@ -30,7 +30,7 @@ class CommandResultCallback extends CommandResultBaseCallback {
 
     public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Command commandOperation,
                                  final Decoder<Document> decoder, final AsyncServerConnection connection, final long requestId) {
-        super(commandOperation, decoder, connection, requestId);
+        super(decoder, connection, requestId);
         this.callback = callback;
     }
 

@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -94,7 +78,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(new Document(),
+            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))
@@ -121,7 +105,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw com.mongodb.CommandFailureException when group fails'() {
         given:
         database.executeCommand(_) >> {
-            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
+            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))
@@ -139,7 +123,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(new Document(),
+            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))
@@ -166,7 +150,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw com.mongodb.MongoException when drop fails'() {
         given:
         database.executeCommand(_) >> {
-            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(new Document(),
+            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))
@@ -184,7 +168,6 @@ class DBCollectionSpecification extends Specification {
         given:
         database.executeCommand(_) >> {
             org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
-                    new Document(),
                     new org.mongodb.connection.ServerAddress(),
                     new Document('errmsg', 'ns not found'),
                     15L));

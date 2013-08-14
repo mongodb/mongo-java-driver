@@ -18,12 +18,10 @@
 package com.mongodb;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
+import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.CompoundDBObjectCodec;
+import com.mongodb.codecs.DBDecoderAdapter;
+import com.mongodb.codecs.DBEncoderAdapter;
 import com.mongodb.codecs.DBEncoderFactoryAdapter;
 import com.mongodb.codecs.DocumentCodec;
 import org.bson.types.ObjectId;
@@ -73,9 +71,11 @@ import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.session.Session;
 import org.mongodb.util.FieldHelpers;
-import com.mongodb.codecs.CollectibleDBObjectCodec;
-import com.mongodb.codecs.DBDecoderAdapter;
-import com.mongodb.codecs.DBEncoderAdapter;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.mongodb.DBObjects.toDBList;
 import static com.mongodb.DBObjects.toDBObject;
@@ -84,7 +84,6 @@ import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 import static com.mongodb.MongoExceptions.mapException;
-
 
 /**
  * Implementation of a database collection.
@@ -1102,9 +1101,10 @@ public class DBCollection {
 
         final org.mongodb.CommandResult executionResult;
 
+        Command newStyleCommand = command.toNew();
         try {
             executionResult = new CommandOperation(getDB().getName(),
-                    command.toNew(),
+                    newStyleCommand,
                     mapReduceCodec,
                     getDB().getClusterDescription(),
                     getBufferPool(), getSession(), false).execute();
@@ -1112,9 +1112,10 @@ public class DBCollection {
             throw mapException(e);
         }
 
+        BasicDBObject commandDocument = toDBObject(newStyleCommand.toDocument());
         return command.getOutputType() == MapReduceCommand.OutputType.INLINE
-                ? new MapReduceOutput(this, new MapReduceInlineCommandResult<DBObject>(executionResult))
-                : new MapReduceOutput(this, new MapReduceCommandResult(executionResult));
+                ? new MapReduceOutput(commandDocument, new MapReduceInlineCommandResult<DBObject>(executionResult))
+                : new MapReduceOutput(this, commandDocument, new MapReduceCommandResult(executionResult));
     }
 
     /**
