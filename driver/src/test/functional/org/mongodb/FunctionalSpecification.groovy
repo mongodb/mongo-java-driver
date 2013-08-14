@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb
 
 import spock.lang.Specification
@@ -50,6 +52,10 @@ class FunctionalSpecification extends Specification {
 
     String getCollectionName() {
         collection.getName();
+    }
+
+    MongoNamespace getNamespace() {
+        new MongoNamespace(getDatabaseName(), getCollectionName())
     }
 
     static class ShutdownHook extends Thread {
