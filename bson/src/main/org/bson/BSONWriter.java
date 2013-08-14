@@ -535,7 +535,7 @@ public abstract class BSONWriter implements Closeable {
     }
 
     /**
-     * Reads from BSONReader and writes data to the writer.
+     * Reads a single document from a BSONReader and writes it to this.
      *
      * @param reader The source.
      */

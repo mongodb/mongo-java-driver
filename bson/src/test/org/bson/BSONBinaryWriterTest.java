@@ -291,6 +291,19 @@ public class BSONBinaryWriterTest {
     }
 
     @Test
+    public void testWriteArrayElements() {
+
+        writer.writeStartDocument();
+        writer.writeStartArray("a1");
+        writer.writeBoolean(true);
+        writer.writeBoolean(false);
+        writer.writeEndArray();
+        writer.writeEndDocument();
+        final byte[] expectedValues = {22, 0, 0, 0, 4, 97, 49, 0, 13, 0, 0, 0, 8, 48, 0, 1, 8, 49, 0, 0, 0, 0};
+        assertArrayEquals(expectedValues, buffer.toByteArray());
+    }
+
+    @Test
     public void testWriteNull() {
 
         writer.writeStartDocument();
@@ -558,6 +571,10 @@ public class BSONBinaryWriterTest {
 
     @Test
     public void testPipeNestedDocument() {
+        // {
+        //    "value" : { "a" : true},
+        //    "b"     : 2
+        // }
         writer.writeStartDocument();
         writer.writeStartDocument("value");
         writer.writeBoolean("a", true);
@@ -590,4 +607,34 @@ public class BSONBinaryWriterTest {
         reader2.readEndDocument();
     }
 
+
+    @Test
+    public void testPipeDocumentIntoArray() {
+        writer.writeStartDocument();
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        final BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.writeStartDocument();
+        newWriter.writeStartArray("a");
+        newWriter.pipe(reader1);
+        newWriter.writeEndArray();
+        newWriter.writeEndDocument();
+
+        final BSONBinaryReader reader2 = new BSONBinaryReader(
+                new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer().toByteArray()))),
+                true
+        );
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        reader2.readStartArray();
+        reader2.readStartDocument();
+        reader2.readEndDocument();
+        reader2.readEndArray();
+        reader2.readEndDocument();
+    }
 }

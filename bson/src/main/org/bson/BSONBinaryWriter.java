@@ -328,7 +328,8 @@ public class BSONBinaryWriter extends BSONWriter {
         setContext(getContext().getParentContext());
         if (getContext() == null) {
             setState(State.DONE);
-        } else {
+        }
+        else {
             if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
                 backpatchSize(); // size of the JavaScript with scope value
                 setContext(getContext().getParentContext());
@@ -340,12 +341,17 @@ public class BSONBinaryWriter extends BSONWriter {
     @Override
     public void pipe(final BSONReader reader) {
         if (reader instanceof BSONBinaryReader) {
+            if (getState() == State.VALUE) {
+                buffer.write(BSONType.DOCUMENT.getValue());
+                writeCurrentName();
+            }
             InputBuffer inputBuffer = ((BSONBinaryReader) reader).getBuffer();
             int size = inputBuffer.readInt32();
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
             reader.setState(BSONReader.State.TYPE);
-        } else {
+        }
+        else {
             super.pipe(reader);
         }
     }
@@ -353,7 +359,8 @@ public class BSONBinaryWriter extends BSONWriter {
     private void writeCurrentName() {
         if (getContext().getContextType() == BSONContextType.ARRAY) {
             buffer.writeCString(Integer.toString(getContext().index++));
-        } else {
+        }
+        else {
             buffer.writeCString(getName());
         }
     }
@@ -363,7 +370,7 @@ public class BSONBinaryWriter extends BSONWriter {
         final int size = buffer.getPosition() - getContext().startPosition;
         if (size > binaryWriterSettings.getMaxDocumentSize()) {
             final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
-                                                 binaryWriterSettings.getMaxDocumentSize());
+                    binaryWriterSettings.getMaxDocumentSize());
             throw new BSONSerializationException(message);
         }
         buffer.backpatchSize(size);
