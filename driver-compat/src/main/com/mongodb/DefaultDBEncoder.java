@@ -20,9 +20,6 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.OutputBuffer;
 
-import static org.bson.BSON.EOO;
-import static org.bson.BSON.OBJECT;
-
 public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     @Override
