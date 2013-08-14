@@ -37,7 +37,7 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
 
     @Test
     public void testBatchInsert() {
-        final byte[] hugeByteArray = new byte[1024 * 1024 * 15];
+        final byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
 
         final List<Document> documents = new ArrayList<Document>();
         documents.add(new Document("bytes", hugeByteArray));

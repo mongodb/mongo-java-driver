@@ -44,7 +44,7 @@ public class BSONBinaryWriterTest {
     @Before
     public void setup() {
         buffer = new BasicOutputBuffer();
-        writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024 * 1024), buffer, true);
+        writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024), buffer, true);
     }
 
     @After
@@ -636,5 +636,24 @@ public class BSONBinaryWriterTest {
         reader2.readEndDocument();
         reader2.readEndArray();
         reader2.readEndDocument();
+    }
+
+    @Test(expected = BSONSerializationException.class)
+    public void testPushOfMaxDocumentSize() {
+        writer.writeStartDocument();
+        writer.pushMaxDocumentSize(10);
+        writer.writeStartDocument("doc");
+        writer.writeString("s", "123456789");
+        writer.writeEndDocument();
+    }
+
+    @Test(expected = BSONSerializationException.class)
+    public void testPopOfMaxDocumentSize() {
+        writer.writeStartDocument();
+        writer.pushMaxDocumentSize(10);
+        writer.writeStartDocument("doc");
+        writer.writeEndDocument();
+        writer.writeBinaryData("bin", new Binary(new byte[256]));
+        writer.writeEndDocument();
     }
 }

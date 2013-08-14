@@ -17,10 +17,11 @@
 package org.mongodb.operation.protocol;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.BSONBinaryWriterSettings;
+import org.bson.BSONWriterSettings;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoInvalidDocumentException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.Command;
@@ -28,6 +29,8 @@ import org.mongodb.operation.Insert;
 
 public class InsertCommandMessage<T> extends BaseQueryMessage {
 
+    // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it
+    private static final int HEADROOM = 16 * 1024;
     private final Insert<T> insert;
     private final Encoder<Document> commandEncoder;
     private final Encoder<T> encoder;
@@ -47,7 +50,9 @@ public class InsertCommandMessage<T> extends BaseQueryMessage {
         InsertCommandMessage<T> nextMessage = null;
         Command command = createInsertCommand();
         writeQueryPrologue(command, buffer);
-        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
+        int commandStartPosition = buffer.getPosition();
+        final BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(),
+                new BSONBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM), buffer, false);
         try {
             writer.writeStartDocument();
             writer.writeString("insert", namespace.getCollectionName());
@@ -59,20 +64,18 @@ public class InsertCommandMessage<T> extends BaseQueryMessage {
                 commandEncoder.encode(writer, writeConcernDocument);
             }
             writer.writeStartArray("documents");
+            writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             for (int i = 0; i < insert.getDocuments().size(); i++) {
                 int documentStartPosition = buffer.getPosition();
                 encoder.encode(writer, insert.getDocuments().get(i));
-                int documentSize = buffer.getPosition() - documentStartPosition;
-                if (documentSize > getSettings().getMaxDocumentSize()) {
-                    throw new MongoInvalidDocumentException(String.format("Document size of %d exceeds maximum of %d", documentSize,
-                            getSettings().getMaxDocumentSize()));
-                }
-                if (buffer.getPosition() - messageStartPosition > getSettings().getMaxDocumentSize()) {
+                // Subtract 2 to account for the trailing 0x00 at the end of the enclosing array and command document
+                if (buffer.getPosition() - commandStartPosition > getSettings().getMaxDocumentSize() + HEADROOM - 2) {
                     buffer.truncateToPosition(documentStartPosition);
                     nextMessage = new InsertCommandMessage<T>(namespace, new Insert<T>(insert, i), commandEncoder, encoder, getSettings());
                     break;
                 }
             }
+            writer.popMaxDocumentSize();
             writer.writeEndArray();
             writer.writeEndDocument();
         } finally {

@@ -23,12 +23,14 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
+import java.util.Stack;
+
 public class BSONBinaryWriter extends BSONWriter {
     private final BSONBinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
     private final boolean closeBuffer;
-
+    private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
     public BSONBinaryWriter(final OutputBuffer buffer, final boolean closeBuffer) {
         this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, closeBuffer);
     }
@@ -39,6 +41,7 @@ public class BSONBinaryWriter extends BSONWriter {
         this.binaryWriterSettings = binaryWriterSettings;
         this.buffer = buffer;
         this.closeBuffer = closeBuffer;
+        maxDocumentSizeStack.push(binaryWriterSettings.getMaxDocumentSize());
     }
 
     @Override
@@ -356,6 +359,14 @@ public class BSONBinaryWriter extends BSONWriter {
         }
     }
 
+    public void pushMaxDocumentSize(final int maxDocumentSize) {
+        maxDocumentSizeStack.push(maxDocumentSize);
+    }
+
+    public void popMaxDocumentSize() {
+        maxDocumentSizeStack.pop();
+    }
+
     private void writeCurrentName() {
         if (getContext().getContextType() == BSONContextType.ARRAY) {
             buffer.writeCString(Integer.toString(getContext().index++));
@@ -368,7 +379,7 @@ public class BSONBinaryWriter extends BSONWriter {
 
     private void backpatchSize() {
         final int size = buffer.getPosition() - getContext().startPosition;
-        if (size > binaryWriterSettings.getMaxDocumentSize()) {
+        if (size > maxDocumentSizeStack.peek()) {
             final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
                     binaryWriterSettings.getMaxDocumentSize());
             throw new BSONSerializationException(message);

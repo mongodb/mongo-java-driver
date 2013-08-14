@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
+import org.junit.Test
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
+import org.mongodb.command.CountOperation
 
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
@@ -60,5 +64,29 @@ class InsertOperationSpecification extends FunctionalSpecification {
         then:
         result == null
     }
+
+    @Test
+    def 'should insert a batch at The limit of the batch size'() {
+        given:
+
+        final byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];
+        final byte[] smallerByteArray = new byte[1024 * 16 + 1980];
+
+        final List<Document> documents = new ArrayList<Document>();
+        documents.add(new Document("bytes", hugeByteArray));
+        documents.add(new Document("bytes", smallerByteArray));
+
+        final Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, documents);
+
+        when:
+        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
+                false).execute();
+
+        then:
+        documents.size() ==
+                new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(), getBufferProvider(), getSession(), false)
+                        .execute()
+    }
+
 
 }
