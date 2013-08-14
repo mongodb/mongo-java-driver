@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import category.ReplicaSet;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -62,6 +63,7 @@ public class ErrorOldTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore("prevError no longer works as of 2.6")
     public void testPrevError() {
         database.requestStart();
 
