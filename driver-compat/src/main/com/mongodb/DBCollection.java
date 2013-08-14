@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.mongodb.codecs.DocumentCodec;
@@ -1365,9 +1366,16 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public void setHintFields(final List<DBObject> indexes) {
-        hintFields = indexes;
+        this.hintFields = indexes;
     }
 
+    /**
+     * Get hint fields for this collection (used to optimize queries).
+     * @return a list of {@code DBObject} to be used as hints.
+     */
+    public List<DBObject> getHintFields() {
+        return Collections.unmodifiableList(hintFields);
+    }
 
     /**
      * Atomically modify and return a single document.
