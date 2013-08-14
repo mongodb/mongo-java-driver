@@ -16,12 +16,14 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Codec;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.command.Create;
 import org.mongodb.command.DropDatabase;
@@ -65,6 +67,10 @@ public class DB implements IDB {
         this.documentCodec = documentCodec;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
+    }
+
+    public DB(final Mongo mongo, final String dbName) {
+        this(mongo, dbName, new DocumentCodec(PrimitiveCodecs.createDefault()));
     }
 
     /**
@@ -122,6 +128,10 @@ public class DB implements IDB {
     @Override
     public void requestEnsureConnection() {
         // do nothing for now
+    }
+
+    public DBCollection doGetCollection(final String name) {
+        return getCollection(name);
     }
 
     @Override
