@@ -193,7 +193,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testcreateIndexWithDBEncoder() {
+    public void testCreateIndexWithDBEncoder() {
         collection.createIndex(
                 new BasicDBObject("a", 1),
                 new BasicDBObject("unique", false),
