@@ -27,7 +27,6 @@ public class PojoCodec<T> implements CollectibleCodec<T> {
 
     public PojoCodec(final Codecs codecs, final Class<T> theClass) {
         this.theClass = theClass;
-        codecs.setDefaultObjectCodec(this);
         pojoDecoder = new PojoDecoder(codecs);
         pojoEncoder = new PojoEncoder<T>(codecs);
     }

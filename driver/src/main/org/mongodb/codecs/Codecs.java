@@ -67,22 +67,19 @@ public class Codecs implements Codec<Object> {
     public void encode(final BSONWriter bsonWriter, final Object object) {
         if (object == null || primitiveCodecs.canEncode(object.getClass())) {
             primitiveCodecs.encode(bsonWriter, object);
-        } else if (object.getClass().isArray()) {
+        }
+        else if (encoderRegistry.get(object.getClass()) != null) {
+            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
+            codec.encode(bsonWriter, object);
+        }
+        else if (object.getClass().isArray()) {
             arrayCodec.encode(bsonWriter, object);
-        } else if (object instanceof Map) {
+        }
+        else if (object instanceof Map) {
             encode(bsonWriter, (Map) object);
-        } else if (object instanceof Iterable) {
-            //urgh?
-            final Encoder<Iterable> codec = encoderRegistry.get(Iterable.class);
-            codec.encode(bsonWriter, (Iterable) object);
-        } else if (object instanceof CodeWithScope) {
-            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
-            codec.encode(bsonWriter, object);
-        } else if (object instanceof DBRef) {
-            encode(bsonWriter, (DBRef) object);
-        } else {
-            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
-            codec.encode(bsonWriter, object);
+        }
+        else {
+            encoderRegistry.getDefaultEncoder().encode(bsonWriter, object);
         }
     }
 

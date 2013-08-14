@@ -41,22 +41,20 @@ public class EncoderRegistry {
         classToEncoderMap.put(CodeWithScope.class, new CodeWithScopeCodec(codecs));
         classToEncoderMap.put(Iterable.class, new IterableCodec(codecs));
         classToEncoderMap.put(DBRef.class, new DBRefEncoder(codecs));
-        //default to Document
-        classToEncoderMap.put(Object.class, new DocumentCodec(primitiveCodecs, defaultValidator, this));
+    }
+
+    public Encoder getDefaultEncoder() {
+        return (Encoder) new DocumentCodec(primitiveCodecs, defaultValidator, this);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) //not cool
     public <T> Encoder<T> get(final Class<T> aClass) {
-        if (Iterable.class.isAssignableFrom(aClass)) {
-            return classToEncoderMap.get(Iterable.class);
-        } else {
-            final Encoder encoder = classToEncoderMap.get(aClass);
-            if (encoder == null) {
-                return classToEncoderMap.get(Object.class);
-            } else {
-                return encoder;
+        for (Map.Entry<Class, Encoder> cur : classToEncoderMap.entrySet()) {
+            if (cur.getKey().isAssignableFrom(aClass)) {
+                return cur.getValue();
             }
         }
+        return null;
     }
 
     /**

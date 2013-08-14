@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.codecs
 
 import org.bson.types.CodeWithScope
@@ -70,9 +72,9 @@ class EncoderRegistrySpecification extends Specification {
         encoder instanceof DBRefEncoder;
     }
 
-    def 'should return DocumentCodec by default for all Objects'() {
+    def 'should return DocumentCodec by default'() {
         when:
-        Encoder encoder = encoderRegistry.get(SomeObject);
+        Encoder encoder = encoderRegistry.getDefaultEncoder()
 
         then:
         encoder instanceof DocumentCodec;

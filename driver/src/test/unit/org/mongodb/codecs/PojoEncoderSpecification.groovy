@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.codecs
 
 import org.bson.BSONWriter
@@ -30,7 +32,8 @@ import static org.junit.Assert.fail
 class PojoEncoderSpecification extends Specification {
     private final BSONWriter bsonWriter = Mock();
 
-    private final Codecs codecs = Codecs.createDefault();
+    private final EncoderRegistry encoderRegistry = new EncoderRegistry()
+    private final Codecs codecs = new Codecs(PrimitiveCodecs.createDefault(), encoderRegistry);
 
     def shouldEncodeSimplePojo() {
         given:
@@ -148,9 +151,10 @@ class PojoEncoderSpecification extends Specification {
 
     def shouldEncodeMapsOfObjects() {
         given:
+        encoderRegistry.register(SimpleObject, new PojoEncoder<SimpleObject>(codecs));
         PojoEncoder<ObjectWithMapOfObjects> pojoEncoder = new PojoEncoder<ObjectWithMapOfObjects>(codecs);
         //TODO: get rid of this - default object codec is a bit of a smell
-        codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
+//        codecs.setDefaultObjectCodec(new PojoCodec<ObjectWithMapOfObjects>(codecs, null));
 
         String simpleObjectValue = 'theValue';
 

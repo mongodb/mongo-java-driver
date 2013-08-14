@@ -50,7 +50,8 @@ import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecode
 
 public class PojoDecoderTest {
 
-    private final Codecs codecs = Codecs.createDefault();
+    private final EncoderRegistry encoderRegistry = new EncoderRegistry();
+    private final Codecs codecs = new Codecs(PrimitiveCodecs.createDefault(), encoderRegistry);
     private PojoDecoder pojoDecoder;
 
     @Before
@@ -130,6 +131,7 @@ public class PojoDecoderTest {
 
     @Test
     public void shouldDecodePojoWithMapContainingPojos() {
+        encoderRegistry.register(Person.class, new PojoCodec<Person>(codecs, Person.class));
         final Map<String, Person> map = new HashMap<String, Person>();
         map.put("person", new Person(new Address(), new Name()));
         final MapPojo pojo = new MapPojo(map);
@@ -162,6 +164,7 @@ public class PojoDecoderTest {
 
     @Test
     public void shouldDecodePojoWithListContainingPojos() {
+        encoderRegistry.register(Person.class, new PojoCodec<Person>(codecs, Person.class));
         final List<Person> list = new ArrayList<Person>();
         list.add(new Person(new Address(), new Name()));
         final ListPojo pojo = new ListPojo(list);
@@ -202,6 +205,7 @@ public class PojoDecoderTest {
 
     @Test
     public void shouldDecodePojoWithSetContainingPojos() {
+        encoderRegistry.register(Person.class, new PojoCodec<Person>(codecs, Person.class));
         final Set<Person> set = new HashSet<Person>();
         set.add(new Person(new Address(), new Name()));
         final SetPojo pojo = new SetPojo(set);
