@@ -20,8 +20,8 @@ package com.mongodb;
  * Container for the result of aggregation operation.
  */
 public class AggregationOutput {
-    protected final CommandResult commandResult;
-    protected final DBObject command;
+    private final CommandResult commandResult;
+    private final DBObject command;
 
     /**
      * Create new container. This class should be hidden, so don't use it in your code.
