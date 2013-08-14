@@ -19,6 +19,7 @@ package org.mongodb.operation.protocol;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
@@ -61,14 +62,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
 
     public CommandResult execute() {
         try {
-            CommandResult commandResult = receiveMessage(sendMessage());
-            if (writeConcern.callGetLastError()) {
-                return parseWriteCommandResult(commandResult);
-            }
-            else {
-                return null;
-            }
-
+            return sendAndReceiveAllMessages();
         } finally {
             if (closeConnection) {
                 connection.close();
@@ -76,21 +70,50 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    protected abstract CommandMessage createCommandMessage();
+    protected abstract RequestMessage createRequestMessage();
 
-    private CommandMessage sendMessage() {
+    private CommandResult sendAndReceiveAllMessages() {
+        RequestMessage message = createRequestMessage();
+        CommandResult commandResult;
+        MongoException lastException = null;
+        do {
+            RequestMessage nextMessage = sendMessage(message);
+            commandResult = receiveMessage(message);
+            try {
+               commandResult = parseWriteCommandResult(commandResult);
+            } catch (MongoException e) {
+                lastException = e;
+                if (!writeConcern.getContinueOnErrorForInsert()) {
+                    if (writeConcern.callGetLastError()) {
+                        throw e;
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+            message = nextMessage;
+        } while (message != null);
+
+        if (writeConcern.callGetLastError() && lastException != null) {
+            throw lastException;
+        }
+
+        return writeConcern.callGetLastError() ? commandResult : null;
+    }
+
+    private RequestMessage sendMessage(final RequestMessage message) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = createCommandMessage();
-            message.encode(buffer);
+            final RequestMessage nextMessage = message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
-            return message;
+            return nextMessage;
         } finally {
             buffer.close();
         }
     }
 
-    private CommandResult receiveMessage(final CommandMessage message) {
+    private CommandResult receiveMessage(final RequestMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(
                 getResponseSettings(serverDescription, message.getId()));
         try {

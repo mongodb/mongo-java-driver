@@ -16,11 +16,9 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.command.Command;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -41,16 +39,8 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected CommandMessage createCommandMessage() {
-        return new CommandMessage(getCommandNamespace().getFullName(), createInsertCommand(), new CommandCodec<T>(encoder),
+    protected RequestMessage createRequestMessage() {
+        return new InsertCommandMessage<T>(getNamespace(), insert, new DocumentCodec(), encoder,
                 getMessageSettings(getServerDescription()));
-    }
-
-    private Command createInsertCommand() {
-        return new Command(new Document("insert", getNamespace().getCollectionName())
-                .append("writeConcern", insert.getWriteConcern().getCommand())
-                .append("continueOnError", insert.getWriteConcern().getContinueOnErrorForInsert())
-                .append("documents", insert.getDocuments())
-        ).readPreference(ReadPreference.primary());
     }
 }

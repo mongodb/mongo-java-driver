@@ -44,7 +44,7 @@ public class RemoveCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-     protected CommandMessage createCommandMessage() {
+    protected RequestMessage createRequestMessage() {
         return new CommandMessage(getCommandNamespace().getFullName(), createRemoveCommand(), new CommandCodec<Document>(queryEncoder),
                 getMessageSettings(getServerDescription()));
     }

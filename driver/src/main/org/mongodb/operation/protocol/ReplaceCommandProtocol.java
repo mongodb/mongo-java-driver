@@ -46,7 +46,7 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected CommandMessage createCommandMessage() {
+    protected RequestMessage createRequestMessage() {
         return new CommandMessage(getCommandNamespace().getFullName(), createUpdateCommand(), new CommandCodec<T>(encoder),
                 getMessageSettings(getServerDescription()));
     }

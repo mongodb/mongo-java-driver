@@ -44,7 +44,7 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected CommandMessage createCommandMessage() {
+    protected RequestMessage createRequestMessage() {
         return new CommandMessage(getCommandNamespace().getFullName(), createUpdateCommand(), new CommandCodec<Document>(queryEncoder),
                 getMessageSettings(getServerDescription()));
     }
