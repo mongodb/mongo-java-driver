@@ -76,7 +76,7 @@ public interface BSONObject {
      *
      * @param s
      * @return True if the key is present
-     * @deprecated
+     * @deprecated Please use {@link #containsField(String)} instead
      */
     @Deprecated
     boolean containsKey(String s);

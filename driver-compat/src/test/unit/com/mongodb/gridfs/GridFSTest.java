@@ -190,14 +190,14 @@ public class GridFSTest extends DatabaseTestCase {
         inputFile.save(chunkSize);
 
         final GridFSDBFile savedFile = gridFS.findOne(new BasicDBObject("_id", inputFile.getId()));
-        GridFSDBFile.MyInputStream inputStream = (GridFSDBFile.MyInputStream) savedFile.getInputStream();
+        InputStream inputStream = savedFile.getInputStream();
 
         //Quick run-through, make sure the file is as expected
         for (int idx = 0; idx < fileSize; ++idx) {
             assertEquals((byte) (idx % 251), (byte) inputStream.read());
         }
 
-        inputStream = (GridFSDBFile.MyInputStream) savedFile.getInputStream();
+        inputStream = savedFile.getInputStream();
 
         long skipped = inputStream.skip(1);
         assertEquals(1, skipped);
@@ -258,8 +258,8 @@ public class GridFSTest extends DatabaseTestCase {
 
     int[] _get() {
         final int[] i = new int[2];
-        i[0] = gridFS._filesCollection.find().count();
-        i[1] = gridFS._chunkCollection.find().count();
+        i[0] = gridFS.getFilesCollection().find().count();
+        i[1] = gridFS.getChunksCollection().find().count();
         return i;
     }
 

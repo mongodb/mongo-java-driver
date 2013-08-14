@@ -32,6 +32,11 @@ import java.security.MessageDigest;
  */
 public class CLI {
 
+    private static String host = "127.0.0.1";
+    private static String db = "test";
+    private static Mongo mongo = null;
+    private static GridFS gridFS;
+
     /**
      * Dumps usage info to stdout
      */
@@ -44,25 +49,18 @@ public class CLI {
         System.out.println("      md5 filename              : does an md5 hash on a file in the db (for testing)");
     }
 
-    private static String host = "127.0.0.1";
-    private static String db = "test";
-
-    private static Mongo _mongo = null;
-
     private static Mongo getMongo() throws Exception {
-        if (_mongo == null) {
-            _mongo = new MongoClient(host);
+        if (mongo == null) {
+            mongo = new MongoClient(host);
         }
-        return _mongo;
+        return mongo;
     }
 
-    private static GridFS _gridfs;
-
     private static GridFS getGridFS() throws Exception {
-        if (_gridfs == null) {
-            _gridfs = new GridFS(getMongo().getDB(db));
+        if (gridFS == null) {
+            gridFS = new GridFS(getMongo().getDB(db));
         }
-        return _gridfs;
+        return gridFS;
     }
 
     public static void main(final String[] args) throws Exception {
@@ -97,10 +95,10 @@ public class CLI {
 
                 System.out.printf("%-60s %-10s%n", "Filename", "Length");
 
-                DBCursor fileListCursor = fs.getFileList();
+                final DBCursor fileListCursor = fs.getFileList();
                 try {
                     while (fileListCursor.hasNext()) {
-                        DBObject o = fileListCursor.next();
+                        final DBObject o = fileListCursor.next();
                         System.out.printf("%-60s %-10d%n", o.get("filename"), ((Number) o.get("length")).longValue());
                     }
                 } finally {

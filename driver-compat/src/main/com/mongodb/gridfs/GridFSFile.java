@@ -31,17 +31,26 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The abstract class representing a GridFS file
+ * The abstract class representing a GridFS file.
  *
  * @author antoine
  */
-@SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class GridFSFile implements DBObject {
 
+    private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(
+            Arrays.asList("_id", "filename", "contentType", "length", "chunkSize", "uploadDate", "aliases", "md5"))
+    );
 
-    // ------------------------------
-    // --------- db           -------
-    // ------------------------------
+    final DBObject extra = new BasicDBObject();
+
+    GridFS fs;
+    Object id;
+    String filename;
+    String contentType;
+    long length;
+    long chunkSize;
+    Date uploadDate;
+    String md5;
 
     /**
      * Saves the file entry to the files collection
@@ -49,10 +58,10 @@ public abstract class GridFSFile implements DBObject {
      * @throws MongoException
      */
     public void save() {
-        if (_fs == null) {
-            throw new MongoException("need _fs");
+        if (fs == null) {
+            throw new MongoException("need fs");
         }
-        _fs._filesCollection.save(this);
+        fs.getFilesCollection().save(this);
     }
 
     /**
@@ -62,22 +71,22 @@ public abstract class GridFSFile implements DBObject {
      * @throws MongoException
      */
     public void validate() {
-        if (_fs == null) {
-            throw new MongoException("no _fs");
+        if (fs == null) {
+            throw new MongoException("no fs");
         }
-        if (_md5 == null) {
-            throw new MongoException("no _md5 stored");
+        if (md5 == null) {
+            throw new MongoException("no md5 stored");
         }
 
-        final DBObject cmd = new BasicDBObject("filemd5", _id);
-        cmd.put("root", _fs._bucketName);
-        final DBObject res = _fs._db.command(cmd);
+        final DBObject cmd = new BasicDBObject("filemd5", id);
+        cmd.put("root", fs.getBucketName());
+        final DBObject res = fs.getDB().command(cmd);
         if (res != null && res.containsField("md5")) {
             final String m = res.get("md5").toString();
-            if (m.equals(_md5)) {
+            if (m.equals(md5)) {
                 return;
             }
-            throw new MongoException("md5 differ.  mine [" + _md5 + "] theirs [" + m + "]");
+            throw new MongoException("md5 differ.  mine [" + md5 + "] theirs [" + m + "]");
         }
 
         // no md5 from the server
@@ -86,222 +95,183 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
-     * Returns the number of chunks that store the file data
+     * Returns the number of chunks that store the file data.
      *
-     * @return
+     * @return number of chunks
      */
     public int numChunks() {
-        double d = _length;
-        d = d / _chunkSize;
+        double d = length;
+        d = d / chunkSize;
         return (int) Math.ceil(d);
     }
 
-    // ------------------------------
-    // --------- getters      -------
-    // ------------------------------
-
-
     /**
-     * Gets the id
+     * Gets the id.
      *
-     * @return
+     * @return the id of the file.
      */
     public Object getId() {
-        return _id;
+        return id;
     }
 
     /**
-     * Gets the filename
+     * Gets the filename.
      *
-     * @return
+     * @return the name of the file
      */
     public String getFilename() {
-        return _filename;
+        return filename;
     }
 
     /**
-     * Gets the content type
+     * Gets the content type.
      *
-     * @return
+     * @return the content type
      */
     public String getContentType() {
-        return _contentType;
+        return contentType;
     }
 
     /**
-     * Gets the file's length
+     * Gets the file's length.
      *
-     * @return
+     * @return the length of the file
      */
     public long getLength() {
-        return _length;
+        return length;
     }
 
     /**
-     * Gets the size of a chunk
+     * Gets the size of a chunk.
      *
-     * @return
+     * @return the chunkSize
      */
     public long getChunkSize() {
-        return _chunkSize;
+        return chunkSize;
     }
 
     /**
-     * Gets the upload date
+     * Gets the upload date.
      *
-     * @return
+     * @return the date
      */
     public Date getUploadDate() {
-        return _uploadDate;
+        return uploadDate;
     }
 
     /**
      * Gets the aliases from the metadata. note: to set aliases, call put( "aliases" , List<String> )
      *
-     * @return
+     * @return list of aliases
      */
     @SuppressWarnings("unchecked")
     public List<String> getAliases() {
-        return (List<String>) _extradata.get("aliases");
+        return (List<String>) extra.get("aliases");
     }
 
     /**
-     * Gets the file metadata
+     * Gets the file metadata.
      *
-     * @return
+     * @return the metadata
      */
     public DBObject getMetaData() {
-        return (DBObject) _extradata.get("metadata");
+        return (DBObject) extra.get("metadata");
     }
 
     /**
-     * Gets the file metadata
+     * Gets the file metadata.
      *
-     * @return
+     * @param metadata metadata to be set
      */
     public void setMetaData(final DBObject metadata) {
-        _extradata.put("metadata", metadata);
+        extra.put("metadata", metadata);
     }
 
     /**
      * Gets the observed MD5 during transfer
      *
-     * @return
+     * @return md5
      */
     public String getMD5() {
-        return _md5;
+        return md5;
     }
-
-    // ------------------------------
-    // --------- DBOBject methods ---
-    // ------------------------------
 
     public Object put(final String key, final Object v) {
         if (key == null) {
             throw new RuntimeException("key should never be null");
-        }
-        else if (key.equals("_id")) {
-            _id = v;
-        }
-        else if (key.equals("filename")) {
-            _filename = v == null ? null : v.toString();
-        }
-        else if (key.equals("contentType")) {
-            _contentType = (String) v;
-        }
-        else if (key.equals("length")) {
-            _length = ((Number) v).longValue();
-        }
-        else if (key.equals("chunkSize")) {
-            _chunkSize = ((Number) v).longValue();
-        }
-        else if (key.equals("uploadDate")) {
-            _uploadDate = (Date) v;
-        }
-        else if (key.equals("md5")) {
-            _md5 = (String) v;
-        }
-        else {
-            _extradata.put(key, v);
+        } else if (key.equals("_id")) {
+            id = v;
+        } else if (key.equals("filename")) {
+            filename = v == null ? null : v.toString();
+        } else if (key.equals("contentType")) {
+            contentType = (String) v;
+        } else if (key.equals("length")) {
+            length = ((Number) v).longValue();
+        } else if (key.equals("chunkSize")) {
+            chunkSize = ((Number) v).longValue();
+        } else if (key.equals("uploadDate")) {
+            uploadDate = (Date) v;
+        } else if (key.equals("md5")) {
+            md5 = (String) v;
+        } else {
+            extra.put(key, v);
         }
         return v;
     }
 
+    @Override
     public Object get(final String key) {
         if (key == null) {
-            throw new RuntimeException("key should never be null");
+            throw new IllegalArgumentException("Key should never be null");
+        } else if (key.equals("_id")) {
+            return id;
+        } else if (key.equals("filename")) {
+            return filename;
+        } else if (key.equals("contentType")) {
+            return contentType;
+        } else if (key.equals("length")) {
+            return length;
+        } else if (key.equals("chunkSize")) {
+            return chunkSize;
+        } else if (key.equals("uploadDate")) {
+            return uploadDate;
+        } else if (key.equals("md5")) {
+            return md5;
         }
-        else if (key.equals("_id")) {
-            return _id;
-        }
-        else if (key.equals("filename")) {
-            return _filename;
-        }
-        else if (key.equals("contentType")) {
-            return _contentType;
-        }
-        else if (key.equals("length")) {
-            return _length;
-        }
-        else if (key.equals("chunkSize")) {
-            return _chunkSize;
-        }
-        else if (key.equals("uploadDate")) {
-            return _uploadDate;
-        }
-        else if (key.equals("md5")) {
-            return _md5;
-        }
-        return _extradata.get(key);
+        return extra.get(key);
     }
 
-    public void putAll(final BSONObject o) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void putAll(final Map m) {
-        throw new UnsupportedOperationException();
-    }
-
-    public Map toMap() {
-        throw new UnsupportedOperationException();
-    }
-
-    public Object removeField(final String key) {
-        throw new UnsupportedOperationException();
-    }
-
-    /*
-     * @deprecated
+    /**
+     * @deprecated Please use {@link #containsField(String)} instead.
      */
+    @Override
     @Deprecated
     public boolean containsKey(final String s) {
         return containsField(s);
     }
 
+    @Override
     public boolean containsField(final String s) {
         return keySet().contains(s);
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     public Set<String> keySet() {
-        final Set<String> keys = new HashSet();
+        final Set<String> keys = new HashSet<String>();
         keys.addAll(VALID_FIELDS);
-        keys.addAll(_extradata.keySet());
+        keys.addAll(extra.keySet());
         return keys;
     }
 
+    @Override
     public boolean isPartialObject() {
         return false;
     }
 
+    @Override
     public void markAsPartialObject() {
-        throw new RuntimeException("can't load partial GridFSFile file");
+        throw new MongoException("Can't load partial GridFSFile file");
     }
-
-    // ----------------------
-    // ------- fields -------
-    // ----------------------
 
     @Override
     public String toString() {
@@ -309,33 +279,40 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
-     * Sets the GridFS associated with this file
+     * Sets the GridFS associated with this file.
      *
-     * @param fs
+     * @param fs gridFS instance
      */
     protected void setGridFS(final GridFS fs) {
-        _fs = fs;
+        this.fs = fs;
     }
 
-    protected GridFS _fs = null;
+    /**
+     * Gets the GridFS associated with this file
+     *
+     * @return gridFS instance
+     */
+    protected GridFS getGridFS() {
+        return this.fs;
+    }
 
-    Object _id;
-    String _filename;
-    String _contentType;
-    long _length;
-    long _chunkSize;
-    Date _uploadDate;
-    final DBObject _extradata = new BasicDBObject();
-    String _md5;
+    @Override
+    public void putAll(final BSONObject o) {
+        throw new UnsupportedOperationException();
+    }
 
-    @SuppressWarnings("unchecked")
-    static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet(Arrays.asList(
-                                                                                                 new String[]{"_id",
-                                                                                                              "filename",
-                                                                                                              "contentType",
-                                                                                                              "length",
-                                                                                                              "chunkSize",
-                                                                                                              "uploadDate",
-                                                                                                              "aliases",
-                                                                                                              "md5"})));
+    @Override
+    public void putAll(@SuppressWarnings("rawtypes") final Map m) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<?, ?> toMap() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object removeField(final String key) {
+        throw new UnsupportedOperationException();
+    }
 }

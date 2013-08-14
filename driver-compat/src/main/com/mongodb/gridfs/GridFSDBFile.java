@@ -17,7 +17,6 @@
 package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 
@@ -37,19 +36,19 @@ public class GridFSDBFile extends GridFSFile {
 
 
     /**
-     * Returns an InputStream from which data can be read
+     * Returns an InputStream from which data can be read.
      *
-     * @return
+     * @return the input stream
      */
     public InputStream getInputStream() {
-        return new MyInputStream();
+        return new GridFSInputStream();
     }
 
     /**
-     * Writes the file's data to a file on disk
+     * Writes the file's data to a file on disk.
      *
      * @param filename the file name on disk
-     * @return
+     * @return number of bytes written
      * @throws IOException
      * @throws MongoException
      */
@@ -61,7 +60,7 @@ public class GridFSDBFile extends GridFSFile {
      * Writes the file's data to a file on disk
      *
      * @param f the File object
-     * @return
+     * @return number of bytes written
      * @throws IOException
      * @throws MongoException
      */
@@ -82,7 +81,7 @@ public class GridFSDBFile extends GridFSFile {
      * Writes the file's data to an OutputStream
      *
      * @param out the OutputStream
-     * @return
+     * @return number of bytes written
      * @throws IOException
      * @throws MongoException
      */
@@ -91,50 +90,50 @@ public class GridFSDBFile extends GridFSFile {
         for (int i = 0; i < nc; i++) {
             out.write(getChunk(i));
         }
-        return _length;
+        return length;
     }
 
-    byte[] getChunk(final int i) {
-        if (_fs == null) {
-            throw new RuntimeException("no gridfs!");
+    private byte[] getChunk(final int i) {
+        if (fs == null) {
+            throw new IllegalStateException("No GridFS instance defined!");
         }
 
-        final DBObject chunk = _fs._chunkCollection.findOne(BasicDBObjectBuilder.start("files_id", _id).add("n", i).get());
+        final DBObject chunk = fs.getChunksCollection().findOne(new BasicDBObject("files_id", id).append("n", i));
         if (chunk == null) {
-            throw new MongoException("can't find a chunk!  file id: " + _id + " chunk: " + i);
+            throw new MongoException("Can't find a chunk!  file id: " + id + " chunk: " + i);
         }
 
         return (byte[]) chunk.get("data");
     }
 
-    class MyInputStream extends InputStream {
+    /**
+     * Removes file from GridFS i.e. removes documents from files and chunks collections.
+     */
+    void remove() {
+        fs.getFilesCollection().remove(new BasicDBObject("_id", id));
+        fs.getChunksCollection().remove(new BasicDBObject("files_id", id));
+    }
 
-        MyInputStream() {
-            _numChunks = numChunks();
+    private class GridFSInputStream extends InputStream {
+
+        final int numberOfChunks;
+        private int currentChunkId = -1;
+        private int offset = 0;
+        private byte[] buffer = null;
+
+        GridFSInputStream() {
+            this.numberOfChunks = numChunks();
         }
 
+        @Override
         public int available() {
-            if (_data == null) {
+            if (buffer == null) {
                 return 0;
             }
-            return _data.length - _offset;
+            return buffer.length - offset;
         }
 
-        public void close() {
-        }
-
-        public void mark(final int readlimit) {
-            throw new RuntimeException("mark not supported");
-        }
-
-        public void reset() {
-            throw new RuntimeException("mark not supported");
-        }
-
-        public boolean markSupported() {
-            return false;
-        }
-
+        @Override
         public int read() {
             final byte[] b = new byte[1];
             final int res = read(b);
@@ -144,71 +143,63 @@ public class GridFSDBFile extends GridFSFile {
             return b[0] & 0xFF;
         }
 
+        @Override
         public int read(final byte[] b) {
             return read(b, 0, b.length);
         }
 
+        @Override
         public int read(final byte[] b, final int off, final int len) {
 
-            if (_data == null || _offset >= _data.length) {
-                if (_currentChunkIdx + 1 >= _numChunks) {
+            if (buffer == null || offset >= buffer.length) {
+                if (currentChunkId + 1 >= numberOfChunks) {
                     return -1;
                 }
 
-                _data = getChunk(++_currentChunkIdx);
-                _offset = 0;
+                buffer = getChunk(++currentChunkId);
+                offset = 0;
             }
 
-            final int r = Math.min(len, _data.length - _offset);
-            System.arraycopy(_data, _offset, b, off, r);
-            _offset += r;
+            final int r = Math.min(len, buffer.length - offset);
+            System.arraycopy(buffer, offset, b, off, r);
+            offset += r;
             return r;
         }
 
         /**
          * Will smartly skips over chunks without fetching them if possible.
          */
-        public long skip(final long numBytesToSkip) throws IOException {
-            if (numBytesToSkip <= 0) {
+        @Override
+        public long skip(final long bytesToSkip) throws IOException {
+            if (bytesToSkip <= 0) {
                 return 0;
             }
 
-            if (_currentChunkIdx == _numChunks) {
-            //We're actually skipping over the back end of the file, short-circuit here
-            //Don't count those extra bytes to skip in with the return value
+            if (currentChunkId == numberOfChunks) {
+                //We're actually skipping over the back end of the file, short-circuit here
+                //Don't count those extra bytes to skip in with the return value
                 return 0;
             }
 
             // offset in the whole file
             long offsetInFile = 0;
-            if (_currentChunkIdx >= 0) {
-                offsetInFile = _currentChunkIdx * _chunkSize + _offset;
+            if (currentChunkId >= 0) {
+                offsetInFile = currentChunkId * chunkSize + offset;
             }
-            if (numBytesToSkip + offsetInFile >= _length) {
-                _currentChunkIdx = _numChunks;
-                _data = null;
-                return _length - offsetInFile;
+            if (bytesToSkip + offsetInFile >= length) {
+                currentChunkId = numberOfChunks;
+                buffer = null;
+                return length - offsetInFile;
             }
 
-            final int temp = _currentChunkIdx;
-            _currentChunkIdx = (int) ((numBytesToSkip + offsetInFile) / _chunkSize);
-            if (temp != _currentChunkIdx) {
-                _data = getChunk(_currentChunkIdx);
+            final int temp = currentChunkId;
+            currentChunkId = (int) ((bytesToSkip + offsetInFile) / chunkSize);
+            if (temp != currentChunkId) {
+                buffer = getChunk(currentChunkId);
             }
-            _offset = (int) ((numBytesToSkip + offsetInFile) % _chunkSize);
+            offset = (int) ((bytesToSkip + offsetInFile) % chunkSize);
 
-            return numBytesToSkip;
+            return bytesToSkip;
         }
-
-        final int _numChunks;
-
-        int _currentChunkIdx = -1;
-        int _offset = 0;
-        byte[] _data = null;
-    }
-
-    void remove() {
-        _fs._filesCollection.remove(new BasicDBObject("_id", _id));
-        _fs._chunkCollection.remove(new BasicDBObject("files_id", _id));
     }
 }
