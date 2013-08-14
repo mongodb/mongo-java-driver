@@ -23,6 +23,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
+import org.mongodb.operation.protocol.WriteCommandProtocol;
 import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class WriteOperationBase extends OperationBase<CommandResult> {
+
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
 
@@ -53,11 +55,11 @@ public abstract class WriteOperationBase extends OperationBase<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) < 0) {
-                return doDedicatedWriteProtocol(provider.getServerDescription(), connection);
+            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) > 0) {
+                return getWriteProtocol(provider.getServerDescription(), connection).execute();
             }
             else {
-                return doDedicatedWriteProtocol(provider.getServerDescription(), connection);
+                return getCommandProtocol(provider.getServerDescription(), connection).execute();
             }
         } finally {
             connection.close();
@@ -67,13 +69,11 @@ public abstract class WriteOperationBase extends OperationBase<CommandResult> {
         }
     }
 
-    private CommandResult doDedicatedWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return getProtocol(serverDescription, connection).execute();
-    }
-
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    protected abstract WriteProtocol getProtocol(final ServerDescription serverDescription, Connection connection);
+    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Connection connection);
+
+    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection);
 }

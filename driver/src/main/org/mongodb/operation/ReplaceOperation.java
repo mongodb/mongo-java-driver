@@ -22,7 +22,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.protocol.ReplaceCommandProtocol;
 import org.mongodb.operation.protocol.ReplaceProtocol;
+import org.mongodb.operation.protocol.WriteCommandProtocol;
+import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -42,8 +45,13 @@ public class ReplaceOperation<T> extends WriteOperationBase {
     }
 
     @Override
-    protected ReplaceProtocol<T> getProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new ReplaceProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(), serverDescription, connection,
                 false);
+    }
+    @Override
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new ReplaceCommandProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(), serverDescription,
+                connection, false);
     }
 }

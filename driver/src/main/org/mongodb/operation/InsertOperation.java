@@ -21,7 +21,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.protocol.InsertCommandProtocol;
 import org.mongodb.operation.protocol.InsertProtocol;
+import org.mongodb.operation.protocol.WriteCommandProtocol;
+import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -38,7 +41,12 @@ public class InsertOperation<T> extends WriteOperationBase {
     }
 
     @Override
-    protected InsertProtocol<T> getProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, connection, false);
+    }
+
+    @Override
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new InsertCommandProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, connection, false);
     }
 }

@@ -22,7 +22,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.protocol.UpdateCommandProtocol;
 import org.mongodb.operation.protocol.UpdateProtocol;
+import org.mongodb.operation.protocol.WriteCommandProtocol;
+import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -40,7 +43,13 @@ public class UpdateOperation extends WriteOperationBase {
     }
 
     @Override
-    protected UpdateProtocol getProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new UpdateProtocol(getNamespace(), update, queryEncoder, getBufferProvider(), serverDescription, connection, false);
     }
+
+    @Override
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new UpdateCommandProtocol(getNamespace(), update, queryEncoder, getBufferProvider(), serverDescription, connection, false);
+    }
+
 }

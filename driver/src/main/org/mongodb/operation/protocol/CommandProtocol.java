@@ -18,7 +18,9 @@ package org.mongodb.operation.protocol;
 
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
@@ -33,14 +35,22 @@ import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class CommandProtocol implements Protocol<CommandResult> {
     private final Command command;
-    private final Codec<Document> codec;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final Encoder<Document> encoder;
+    private final Decoder<Document> decoder;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
     public CommandProtocol(final String database, final Command command, final Codec<Document> codec,
+                           final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                           final Connection connection, final boolean closeConnection) {
+
+        this(database, command, codec, codec, bufferProvider, serverDescription, connection, closeConnection);
+    }
+
+    public CommandProtocol(final String database, final Command command, final Encoder<Document> encoder, final Decoder<Document> decoder,
                            final BufferProvider bufferProvider, final ServerDescription serverDescription,
                            final Connection connection, final boolean closeConnection) {
         this.serverDescription = serverDescription;
@@ -49,7 +59,8 @@ public class CommandProtocol implements Protocol<CommandResult> {
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.bufferProvider = bufferProvider;
         this.command = command;
-        this.codec = codec;
+        this.encoder = encoder;
+        this.decoder = decoder;
     }
 
     public Command getCommand() {
@@ -69,7 +80,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private CommandMessage sendMessage() {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, codec,
+            final CommandMessage message = new CommandMessage(namespace.getFullName(), command, encoder,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
@@ -83,7 +94,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         final ResponseBuffers responseBuffers = connection.receiveMessage(
                 getResponseSettings(serverDescription, message.getId()));
         try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
+            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, message.getId());
             return createCommandResult(command, replyMessage, connection);
         } finally {
             responseBuffers.close();

@@ -22,7 +22,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.protocol.RemoveCommandProtocol;
 import org.mongodb.operation.protocol.RemoveProtocol;
+import org.mongodb.operation.protocol.WriteCommandProtocol;
+import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -39,7 +42,12 @@ public class RemoveOperation extends WriteOperationBase {
     }
 
     @Override
-    protected RemoveProtocol getProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new RemoveProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), serverDescription, connection, false);
+    }
+
+    @Override
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+        return new RemoveCommandProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), serverDescription, connection, false);
     }
 }

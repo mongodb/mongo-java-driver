@@ -22,20 +22,24 @@ import org.mongodb.Encoder;
 import org.mongodb.command.Command;
 
 public class CommandMessage extends BaseQueryMessage {
-    private final Command commandOperation;
+    private final Command command;
     private final Encoder<Document> encoder;
 
-    public CommandMessage(final String collectionName, final Command commandOperation, final Encoder<Document> encoder,
+    public CommandMessage(final String collectionName, final Command command, final Encoder<Document> encoder,
                           final MessageSettings settings) {
         super(collectionName, settings);
-        this.commandOperation = commandOperation;
+        this.command = command;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeQueryPrologue(commandOperation, buffer);
-        addDocument(commandOperation.toDocument(), encoder, buffer);
+        writeQueryPrologue(command, buffer);
+        addDocument(command.toDocument(), encoder, buffer);
         return null;
+    }
+
+    public Command getCommand() {
+        return command;
     }
 }
