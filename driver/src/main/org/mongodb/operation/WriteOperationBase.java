@@ -55,11 +55,11 @@ public abstract class WriteOperationBase extends OperationBase<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) > 0) {
-                return getWriteProtocol(provider.getServerDescription(), connection).execute();
+            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) >= 0) {
+                return getCommandProtocol(provider.getServerDescription(), connection).execute();
             }
             else {
-                return getCommandProtocol(provider.getServerDescription(), connection).execute();
+                return getWriteProtocol(provider.getServerDescription(), connection).execute();
             }
         } finally {
             connection.close();
