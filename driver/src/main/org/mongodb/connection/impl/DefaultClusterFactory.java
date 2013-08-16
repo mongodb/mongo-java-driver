@@ -35,11 +35,11 @@ public final class DefaultClusterFactory implements ClusterFactory {
 
     @Override
     public Cluster create(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
-        return new DefaultSingleServerCluster(serverAddress, serverFactory);
+        return new DirectCluster(serverAddress, serverFactory);
     }
 
     @Override
     public Cluster create(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
-        return new DefaultMultiServerCluster(seedList, serverFactory);
+        return new DiscoveringCluster(seedList, serverFactory);
     }
 }

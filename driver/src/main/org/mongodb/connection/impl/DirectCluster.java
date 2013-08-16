@@ -33,10 +33,10 @@ import static org.mongodb.connection.ClusterConnectionMode.Direct;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DefaultSingleServerCluster extends DefaultCluster {
+final class DirectCluster extends BaseCluster {
     private final ClusterableServer server;
 
-    public DefaultSingleServerCluster(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
+    public DirectCluster(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
         notNull("serverAddress", serverAddress);
 

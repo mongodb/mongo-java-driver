@@ -40,11 +40,11 @@ import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DefaultMultiServerCluster extends DefaultCluster {
+final class DiscoveringCluster extends BaseCluster {
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
-    public DefaultMultiServerCluster(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
+    public DiscoveringCluster(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
 
         notNull("seedList", seedList);

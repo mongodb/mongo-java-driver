@@ -48,7 +48,7 @@ import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public abstract class DefaultCluster implements Cluster {
+public abstract class BaseCluster implements Cluster {
 
     private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
 
@@ -66,7 +66,7 @@ public abstract class DefaultCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public DefaultCluster(final ClusterableServerFactory serverFactory) {
+    public BaseCluster(final ClusterableServerFactory serverFactory) {
         this.serverFactory = notNull("serverFactory", serverFactory);
     }
 

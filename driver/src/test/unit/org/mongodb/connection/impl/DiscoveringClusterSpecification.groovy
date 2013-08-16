@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -30,7 +32,7 @@ import static org.mongodb.connection.ClusterType.ReplicaSet
 import static org.mongodb.connection.ServerConnectionState.Connected
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary
 
-class DefaultMultiClusterSpecification extends Specification {
+class DiscoveringClusterSpecification extends Specification {
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress('localhost:27017');
     private static final ServerDescription.Builder CONNECTED_DESCRIPTION_BUILDER = ServerDescription.builder()
             .address(SERVER_ADDRESS)

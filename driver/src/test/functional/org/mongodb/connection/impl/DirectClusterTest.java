@@ -34,12 +34,12 @@ import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 
-public class DefaultSingleServerClusterTest {
-    private DefaultSingleServerCluster cluster;
+public class DirectClusterTest {
+    private DirectCluster cluster;
 
     @Before
     public void setUp() throws Exception {
-        cluster = new DefaultSingleServerCluster(getPrimary(),
+        cluster = new DirectCluster(getPrimary(),
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
                         new DefaultConnectionProviderFactory(ConnectionProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
