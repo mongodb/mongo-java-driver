@@ -20,12 +20,12 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * TODO Documentation. Should be deprecated.
+ * TODO Documentation.
  */
 public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
@@ -49,7 +49,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public BSONObject create(final boolean array, final List<String> path) {
-        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : new ArrayList<String>());
+        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : Collections.<String>emptyList());
     }
 
     @Override
@@ -70,7 +70,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         return document;
     }
 
-    public static DBCallbackFactory FACTORY = new DBCallbackFactory() {
+    public static final DBCallbackFactory FACTORY = new DBCallbackFactory() {
         @Override
         public DBCallback create(final DBCollection collection) {
             return new DefaultDBCallback(collection);
