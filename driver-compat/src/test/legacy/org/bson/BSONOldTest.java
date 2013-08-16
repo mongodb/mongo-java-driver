@@ -32,6 +32,7 @@ import java.util.Vector;
 import static com.mongodb.util.Util.hexMD5;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -281,6 +282,33 @@ public class BSONOldTest {
         public String toString() {
             return year + "-" + month + "-" + date + " " + hour + ":" + minute + ":" + second;
         }
+    }
+
+    @Test
+    public void testEquals() {
+        assertNotEquals("longs should not be equal",
+                new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L)
+                );
+
+        assertNotEquals("doubles should not be equal",
+                new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D)
+                );
+
+        assertNotEquals("floats should not be equal",
+                new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F)
+                );
+
+        assertEquals("doubles should be equal",
+                new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D)
+                );
+
+        assertEquals("floats should be equal",
+                new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F)
+                );
+
+        assertEquals("int and long should be equal",
+                new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L)
+                );
     }
 
     private class TestDateTransformer implements Transformer {

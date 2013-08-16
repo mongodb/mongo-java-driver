@@ -378,7 +378,14 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
                 }
             }
             else if (a instanceof Number && b instanceof Number) {
-                if (((Number) a).doubleValue() != ((Number) b).doubleValue()) {
+                final Number aNumber = (Number) a;
+                final Number bNumber = (Number) b;
+                if (aNumber instanceof Double || bNumber instanceof Double
+                        || aNumber instanceof Float || bNumber instanceof Float) {
+                    if (aNumber.doubleValue() != bNumber.doubleValue()) {
+                        return false;
+                    }
+                } else if (aNumber.longValue() != bNumber.longValue()) {
                     return false;
                 }
             }
