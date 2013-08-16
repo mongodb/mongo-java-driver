@@ -403,6 +403,9 @@ public class Mongo {
 
     /**
      * Returns the mongo options.
+     * <p/>
+     * Please be aware that since 3.0 changes to {@code MongoOptions}
+     * that are done after connection are not reflected.
      *
      * @return the mongo options
      * @deprecated Please use {@link MongoClient} class to connect
