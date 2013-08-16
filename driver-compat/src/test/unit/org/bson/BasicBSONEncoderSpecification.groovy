@@ -159,4 +159,22 @@ class BasicBSONEncoderSpecification extends Specification {
         then:
         thrown(IllegalStateException)
     }
+
+    def 'should write _id first'() {
+        given:
+        BasicBSONObject document = new BasicBSONObject('a', 2).append('_id', 1)
+        OutputBuffer buffer = Mock()
+        bsonEncoder.set(buffer)
+
+        when:
+        bsonEncoder.putObject(document)
+
+        then:
+        1 * buffer.writeCString('_id')
+        1 * buffer.writeInt(1)
+
+        then:
+        1 * buffer.writeCString('a')
+        1 * buffer.writeInt(2)
+    }
 }

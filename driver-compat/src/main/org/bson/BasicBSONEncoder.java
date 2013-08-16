@@ -89,11 +89,23 @@ public class BasicBSONEncoder implements BSONEncoder {
     public int putObject(final BSONObject document) {
         final int startPosition = getOutputBuffer().getPosition();
         bsonWriter.writeStartDocument();
+
+        if (isTopLevelDocument() && document.containsField("_id")) {
+            _putObjectField("_id", document.get("_id"));
+        }
+
         for (final String key : document.keySet()) {
+            if (isTopLevelDocument() && key.equals("_id")){
+                continue;
+            }
             _putObjectField(key, document.get(key));
         }
         bsonWriter.writeEndDocument();
         return getOutputBuffer().getPosition() - startPosition;
+    }
+
+    private boolean isTopLevelDocument() {
+        return bsonWriter.getContext().getParentContext() == null;
     }
 
     protected void putName(final String name) {
