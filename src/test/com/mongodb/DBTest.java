@@ -25,67 +25,65 @@ public class DBTest extends TestCase {
 
     public DBTest() {
         super();
-	cleanupDB = "com_mongodb_unittest_DBTest";
-	_db = cleanupMongo.getDB( cleanupDB );
+        cleanupDB = "com_mongodb_unittest_DBTest";
+        _db = cleanupMongo.getDB(cleanupDB);
     }
 
     @Test(groups = {"basic"})
     public void testCreateCollection() {
-        _db.getCollection( "foo1" ).drop();
-        _db.getCollection( "foo2" ).drop();
-        _db.getCollection( "foo3" ).drop();
-        _db.getCollection( "foo4" ).drop();
+        _db.getCollection("foo1").drop();
+        _db.getCollection("foo2").drop();
+        _db.getCollection("foo3").drop();
+        _db.getCollection("foo4").drop();
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
         DBCollection c = _db.createCollection("foo1", o1);
 
         DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
-            .add("size", 100000).add("max", 10).get();
+                .add("size", 100000).add("max", 10).get();
         c = _db.createCollection("foo2", o2);
-        for (int i=0; i<30; i++) {
+        for (int i = 0; i < 30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
         assertTrue(c.find().count() <= 10);
 
         DBObject o3 = BasicDBObjectBuilder.start().add("capped", true)
-            .add("size", 1000).add("max", 2).get();
+                .add("size", 1000).add("max", 2).get();
         c = _db.createCollection("foo3", o3);
-        for (int i=0; i<30; i++) {
+        for (int i = 0; i < 30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
         assertEquals(c.find().count(), 2);
 
         try {
             DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
-                .add("size", -20).get();
+                    .add("size", -20).get();
             c = _db.createCollection("foo4", o4);
-        }
-        catch(MongoException e) {
+        } catch (MongoException e) {
             return;
         }
         assertEquals(0, 1);
     }
 
     @Test(groups = {"basic"})
-    public void testForCollectionExistence()
-    {
-        _db.getCollection( "foo1" ).drop();
-        _db.getCollection( "foo2" ).drop();
-        _db.getCollection( "foo3" ).drop();
-        _db.getCollection( "foo4" ).drop();
+    public void testForCollectionExistence() {
+        _db.getCollection("foo1").drop();
+        _db.getCollection("foo2").drop();
+        _db.getCollection("foo3").drop();
+        _db.getCollection("foo4").drop();
 
-        assertFalse(_db.collectionExists( "foo1" ));
+        assertFalse(_db.collectionExists("foo1"));
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
         DBCollection c = _db.createCollection("foo1", o1);
 
-        assertTrue(_db.collectionExists( "foo1" ), "Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.");
-        assertTrue(_db.collectionExists( "FOO1" ));
-        assertTrue(_db.collectionExists( "fOo1" ));
+        assertTrue(_db.collectionExists("foo1"), "Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.");
+        assertTrue(_db.collectionExists("FOO1"));
+        assertTrue(_db.collectionExists("fOo1"));
 
-        _db.getCollection( "foo1" ).drop();
+        _db.getCollection("foo1").drop();
 
-        assertFalse(_db.collectionExists( "foo1" ));
+        assertFalse(_db.collectionExists("foo1"));
     }
 
     @Test(groups = {"basic"})
@@ -148,6 +146,34 @@ public class DBTest extends TestCase {
         }
     }
 
+    @Test(groups = {"basic"})
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+        DB db = m.getDB("com_mongodb_unittest_DBTest");
+
+        try {
+            db.requestStart();
+            try {
+                db.command(new BasicDBObject("ping", 1));
+                db.requestStart();
+                try {
+                    db.command(new BasicDBObject("ping", 1));
+                } finally {
+                    db.requestDone();
+                }
+            } finally {
+                db.requestDone();
+            }
+        } finally {
+            m.close();
+        }
+    }
+
+    @Test(groups = {"basic"})
+    public void whenRequestDoneIsCalledWithoutFirstCallingRequestStartNoExceptionIsThrown() throws UnknownHostException {
+        _db.requestDone();
+    }
 
 
     /*public static class Person extends DBObject {
@@ -194,8 +220,8 @@ public class DBTest extends TestCase {
 
     final DB _db;
 
-    public static void main( String args[] )
-        throws Exception {
+    public static void main(String args[])
+            throws Exception {
         (new DBTest()).runConsole();
     }
 }
