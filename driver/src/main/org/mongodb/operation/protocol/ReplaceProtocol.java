@@ -19,32 +19,31 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Replace;
 
+import java.util.List;
+
 public class ReplaceProtocol<T> extends WriteProtocol {
-    private final Replace<T> replace;
+    private final List<Replace<T>> replaces;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
-    public ReplaceProtocol(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
-                           final Encoder<T> encoder, final BufferProvider bufferProvider,
+    public ReplaceProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Replace<T>> replaces,
+                           final Encoder<Document> queryEncoder, final Encoder<T> encoder, final BufferProvider bufferProvider,
                            final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, replace.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.replace = replace;
+        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
+        this.replaces = replaces;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replaces, queryEncoder, encoder, settings);
     }
 
-    @Override
-    public Replace<T> getWrite() {
-        return replace;
-    }
 }

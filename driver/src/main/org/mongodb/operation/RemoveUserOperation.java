@@ -22,10 +22,12 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.RemoveProtocol;
+import org.mongodb.operation.protocol.DeleteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
+
+import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -37,7 +39,8 @@ public class RemoveUserOperation extends OperationBase<CommandResult> {
                                final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.database = notNull("database", database);
-        this.userName = notNull("userName", userName);    }
+        this.userName = notNull("userName", userName);
+    }
 
     @Override
     public CommandResult execute() {
@@ -45,7 +48,8 @@ public class RemoveUserOperation extends OperationBase<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        return new RemoveProtocol(namespace, new Remove(WriteConcern.ACKNOWLEDGED, new Document("user", userName)), codec,
+        return new DeleteProtocol(namespace, WriteConcern.ACKNOWLEDGED,
+                Arrays.asList(new Remove(WriteConcern.ACKNOWLEDGED, new Document("user", userName))), codec,
                 getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(),
                 true).execute();
     }

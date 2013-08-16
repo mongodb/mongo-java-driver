@@ -19,30 +19,28 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Remove;
 
-public class RemoveProtocol extends WriteProtocol {
-    private final Remove remove;
+import java.util.List;
+
+public class DeleteProtocol extends WriteProtocol {
+    private final List<Remove> deletes;
     private final Encoder<Document> queryEncoder;
 
-    public RemoveProtocol(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                          final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, remove.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.remove = remove;
+    public DeleteProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> deletes,
+                          final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
+                          final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
+        this.deletes = deletes;
         this.queryEncoder = queryEncoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
-    }
-
-    @Override
-    public Remove getWrite() {
-        return remove;
+        return new DeleteMessage(getNamespace().getFullName(), deletes, queryEncoder, settings);
     }
 }

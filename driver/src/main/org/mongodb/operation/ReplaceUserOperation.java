@@ -27,6 +27,8 @@ import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import java.util.Arrays;
+
 public class ReplaceUserOperation extends OperationBase<CommandResult> {
     private final String database;
     private final Document userDocument;
@@ -39,14 +41,15 @@ public class ReplaceUserOperation extends OperationBase<CommandResult> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public CommandResult execute() {
         ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        return new ReplaceProtocol<Document>(namespace,
-                new Replace<Document>(WriteConcern.ACKNOWLEDGED, new Document("_id", userDocument.get("_id")), userDocument), codec,
-                codec, getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(),
-                true).execute();
+        return new ReplaceProtocol<Document>(namespace, WriteConcern.ACKNOWLEDGED,
+                Arrays.asList(new Replace<Document>(WriteConcern.ACKNOWLEDGED, new Document("_id", userDocument.get("_id")),
+                        userDocument)), codec, codec, getBufferProvider(), serverConnectionProvider.getServerDescription(),
+                serverConnectionProvider.getConnection(), true).execute();
     }
 }

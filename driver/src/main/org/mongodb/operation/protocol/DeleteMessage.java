@@ -21,24 +21,31 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.operation.Remove;
 
+import java.util.List;
+
 public class DeleteMessage extends RequestMessage {
-    private final Remove remove;
+    private final List<Remove> removes;
     private final Encoder<Document> encoder;
 
-    public DeleteMessage(final String collectionName, final Remove remove, final Encoder<Document> encoder,
+    public DeleteMessage(final String collectionName, final List<Remove> removes, final Encoder<Document> encoder,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
-        this.remove = remove;
+        this.removes = removes;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeDelete(buffer);
-        return null;
+        writeDelete(removes.get(0), buffer);
+        if (removes.size() == 1) {
+            return null;
+        }
+        else {
+            return new DeleteMessage(getCollectionName(), removes.subList(1, removes.size()), encoder, getSettings());
+        }
     }
 
-    private void writeDelete(final OutputBuffer buffer) {
+    private void writeDelete(final Remove remove, final OutputBuffer buffer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(getCollectionName());
 

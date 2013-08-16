@@ -22,24 +22,31 @@ import org.mongodb.Encoder;
 import org.mongodb.operation.BaseUpdate;
 import org.mongodb.operation.Update;
 
-public class UpdateMessage extends BaseUpdateMessage {
-    private Update update;
+import java.util.List;
 
-    public UpdateMessage(final String fullName, final Update update, final Encoder<Document> encoder,
+public class UpdateMessage extends BaseUpdateMessage {
+    private List<Update> updates;
+
+    public UpdateMessage(final String collectionName, final List<Update> updates, final Encoder<Document> encoder,
                          final MessageSettings settings) {
-        super(fullName, OpCode.OP_UPDATE, encoder, settings);
-        this.update = update;
+        super(collectionName, OpCode.OP_UPDATE, encoder, settings);
+        this.updates = updates;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(update.getUpdateOperations(), getBaseEncoder(), buffer);
-        return null;
+        addDocument(updates.get(0).getUpdateOperations(), getBaseEncoder(), buffer);
+        if (updates.size() == 1) {
+            return null;
+        }
+        else {
+            return new UpdateMessage(getCollectionName(), updates.subList(1, updates.size()), getBaseEncoder(), getSettings());
+        }
     }
 
     @Override
     protected BaseUpdate getUpdateBase() {
-        return update;
+        return updates.get(0);
     }
 }

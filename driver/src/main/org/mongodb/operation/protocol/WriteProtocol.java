@@ -27,7 +27,6 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.BaseWrite;
 
 import static org.mongodb.command.GetLastError.parseGetLastErrorResponse;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
@@ -103,8 +102,6 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
             responseBuffers.close();
         }
     }
-
-    protected abstract BaseWrite getWrite();
 
     protected abstract RequestMessage createRequestMessage(final MessageSettings settings);
 

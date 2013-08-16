@@ -19,45 +19,32 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.command.Command;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Update;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
 public class UpdateCommandProtocol extends WriteCommandProtocol {
-    private final Update update;
+    private final List<Update> updates;
     private final Encoder<Document> queryEncoder;
 
-    public UpdateCommandProtocol(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                                 final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                 final Connection connection, final boolean closeConnection) {
-        super(namespace, update.getWriteConcern(), bufferProvider, serverDescription, connection, closeConnection);
-        this.update = notNull("update", update);
+    public UpdateCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Update> updates,
+                                 final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
+                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
+        this.updates = notNull("update", updates);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
     protected RequestMessage createRequestMessage() {
-        return new CommandMessage(getCommandNamespace().getFullName(), createUpdateCommand(), new CommandCodec<Document>(queryEncoder),
-                getMessageSettings(getServerDescription()));
-    }
-
-    private Command createUpdateCommand() {
-        return new Command(new Document("update", getNamespace().getCollectionName())
-                .append("writeConcern", update.getWriteConcern().getCommand())
-                .append("updates", Arrays.asList(
-                        new Document("q", update.getFilter())
-                                .append("u", update.getUpdateOperations())
-                                .append("multi", update.isMulti())
-                                .append("upsert", update.isUpsert())
-                ))
-        ).readPreference(ReadPreference.primary());
+        return new UpdateCommandMessage(getNamespace(), getWriteConcern(), updates,
+                new CommandCodec<Document>(queryEncoder), getMessageSettings(getServerDescription()));
     }
 }

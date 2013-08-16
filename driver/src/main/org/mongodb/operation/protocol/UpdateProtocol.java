@@ -19,29 +19,29 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Update;
 
+import java.util.List;
+
 public class UpdateProtocol extends WriteProtocol {
-    private final Update update;
+    private final List<Update> updates;
     private final Encoder<Document> queryEncoder;
 
-    public UpdateProtocol(final MongoNamespace namespace, final Update update, final Encoder<Document> queryEncoder,
-                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                          final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, update.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.update = update;
+    public UpdateProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Update> updates,
+                          final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
+                          final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
+        this.updates = updates;
         this.queryEncoder = queryEncoder;
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
+        return new UpdateMessage(getNamespace().getFullName(), updates, queryEncoder, settings);
     }
 
-    @Override
-    public Update getWrite() {
-        return update;
-    }}
+}

@@ -25,6 +25,8 @@ import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.operation.protocol.UpdateMessage;
 
+import java.util.Arrays;
+
 public class AsyncUpdateOperation extends AsyncWriteOperation {
     private final Update update;
     private final Encoder<Document> queryEncoder;
@@ -38,7 +40,7 @@ public class AsyncUpdateOperation extends AsyncWriteOperation {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), update, queryEncoder, settings);
+        return new UpdateMessage(getNamespace().getFullName(), Arrays.asList(update), queryEncoder, settings);
     }
 
     @Override

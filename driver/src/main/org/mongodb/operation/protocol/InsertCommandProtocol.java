@@ -40,7 +40,7 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     @Override
     protected RequestMessage createRequestMessage() {
-        return new InsertCommandMessage<T>(getNamespace(), insert, new DocumentCodec(), encoder,
+        return new InsertCommandMessage<T>(getNamespace(), getWriteConcern(), insert, new DocumentCodec(), encoder,
                 getMessageSettings(getServerDescription()));
     }
 }

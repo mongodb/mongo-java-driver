@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.junit.Test
@@ -69,14 +71,15 @@ class InsertOperationSpecification extends FunctionalSpecification {
     def 'should insert a batch at The limit of the batch size'() {
         given:
 
-        final byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];
-        final byte[] smallerByteArray = new byte[1024 * 16 + 1980];
+        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];
+        byte[] smallerByteArray = new byte[1024 * 16 + 1980];
 
-        final List<Document> documents = new ArrayList<Document>();
-        documents.add(new Document("bytes", hugeByteArray));
-        documents.add(new Document("bytes", smallerByteArray));
+        List<Document> documents = [
+                new Document('bytes', hugeByteArray),
+                new Document('bytes', smallerByteArray)
+        ]
 
-        final Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, documents);
+        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, documents);
 
         when:
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),

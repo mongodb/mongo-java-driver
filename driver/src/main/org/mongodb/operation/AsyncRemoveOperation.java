@@ -25,6 +25,8 @@ import org.mongodb.operation.protocol.DeleteMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 
+import java.util.Arrays;
+
 public class AsyncRemoveOperation extends AsyncWriteOperation {
     private final Remove remove;
     private final Encoder<Document> queryEncoder;
@@ -38,7 +40,7 @@ public class AsyncRemoveOperation extends AsyncWriteOperation {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), remove, queryEncoder, settings);
+        return new DeleteMessage(getNamespace().getFullName(), Arrays.asList(remove), queryEncoder, settings);
     }
 
     @Override

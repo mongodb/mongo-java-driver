@@ -25,6 +25,8 @@ import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplaceMessage;
 import org.mongodb.operation.protocol.RequestMessage;
 
+import java.util.Arrays;
+
 public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
     private final Replace<T> replace;
     private final Encoder<Document> queryEncoder;
@@ -39,8 +41,9 @@ public class AsyncReplaceOperation<T> extends AsyncWriteOperation {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replace, queryEncoder, encoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), Arrays.asList(replace), queryEncoder, encoder, settings);
     }
 
     @Override

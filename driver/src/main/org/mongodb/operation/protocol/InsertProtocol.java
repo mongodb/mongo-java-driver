@@ -39,7 +39,4 @@ public class InsertProtocol<T> extends WriteProtocol {
         return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
-    public Insert<T> getWrite() {
-        return insert;
-    }
 }

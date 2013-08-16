@@ -22,39 +22,46 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.Remove;
 
-public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
-    private final Insert<T> insert;
-    private final Encoder<T> encoder;
+import java.util.List;
 
-    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final Insert<T> insert,
-                                final Encoder<Document> commandEncoder, final Encoder<T> encoder, final MessageSettings settings) {
+public class DeleteCommandMessage extends BaseWriteCommandMessage {
+    private final List<Remove> deletes;
+
+    public DeleteCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> deletes,
+                                final Encoder<Document> commandEncoder, final MessageSettings settings) {
         super(namespace, writeConcern, commandEncoder, settings);
-        this.insert = insert;
-        this.encoder = encoder;
+        this.deletes = deletes;
     }
 
+    @Override
     protected String getCommandName() {
-        return "insert";
+        return "delete";
     }
 
-    protected InsertCommandMessage<T> writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
+    @Override
+    protected BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
                                                      final BSONBinaryWriter writer) {
-        InsertCommandMessage<T> nextMessage = null;
-        writer.writeStartArray("documents");
-        writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
-        for (int i = 0; i < insert.getDocuments().size(); i++) {
+        DeleteCommandMessage nextMessage = null;
+        writer.writeStartArray("deletes");
+        for (int i = 0; i < deletes.size(); i++) {
             int documentStartPosition = buffer.getPosition();
-            encoder.encode(writer, insert.getDocuments().get(i));
+            Remove remove = deletes.get(i);
+            writer.writeStartDocument();
+            writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
+            writer.writeName("q");
+            getCommandEncoder().encode(writer, remove.getFilter());
+            writer.writeBoolean("multi", remove.isMulti());
+            writer.popMaxDocumentSize();
+            writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
                 buffer.truncateToPosition(documentStartPosition);
-                nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), getWriteConcern(), new Insert<T>(insert, i),
-                        getCommandEncoder(), encoder, getSettings());
+                nextMessage = new DeleteCommandMessage(getWriteNamespace(), getWriteConcern(), deletes.subList(i, deletes.size()),
+                        getCommandEncoder(), getSettings());
                 break;
             }
         }
-        writer.popMaxDocumentSize();
         writer.writeEndArray();
         return nextMessage;
     }

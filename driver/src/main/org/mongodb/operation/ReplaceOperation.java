@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -28,30 +29,40 @@ import org.mongodb.operation.protocol.WriteCommandProtocol;
 import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class ReplaceOperation<T> extends WriteOperationBase {
-    private final Replace<T> replace;
+    private final List<Replace<T>> replaces;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
+    @SuppressWarnings("unchecked")
     public ReplaceOperation(final MongoNamespace namespace, final Replace<T> replace, final Encoder<Document> queryEncoder,
                             final Encoder<T> encoder, final BufferProvider bufferProvider, final Session session,
                             final boolean closeSession) {
-        super(namespace, replace.getWriteConcern(), bufferProvider, session, closeSession);
-        this.replace = notNull("replace", replace);
+        this(namespace, replace.getWriteConcern(), Arrays.asList(replace), queryEncoder, encoder, bufferProvider, session, closeSession);
+    }
+
+    public ReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Replace<T>> replaces,
+                            final Encoder<Document> queryEncoder, final Encoder<T> encoder, final BufferProvider bufferProvider,
+                            final Session session, final boolean closeSession) {
+        super(namespace, writeConcern, bufferProvider, session, closeSession);
+        this.replaces = notNull("replace", replaces);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new ReplaceProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(), serverDescription, connection,
-                false);
-    }
+        return new ReplaceProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
+                serverDescription, connection, false); }
+
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new ReplaceCommandProtocol<T>(getNamespace(), replace, queryEncoder, encoder, getBufferProvider(), serverDescription,
-                connection, false);
+        return new ReplaceCommandProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
+                serverDescription, connection, false);
     }
 }

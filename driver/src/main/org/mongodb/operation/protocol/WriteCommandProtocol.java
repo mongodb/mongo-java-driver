@@ -60,6 +60,10 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         this.closeConnection = closeConnection;
     }
 
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
     public CommandResult execute() {
         try {
             return sendAndReceiveAllMessages();
@@ -138,10 +142,6 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
 
     public Connection getConnection() {
         return connection;
-    }
-
-    protected MongoNamespace getCommandNamespace() {
-        return new MongoNamespace(namespace.getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME);
     }
 
     protected static class CommandCodec<T> extends DocumentCodec {

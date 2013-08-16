@@ -19,43 +19,32 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.command.Command;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Remove;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
-public class RemoveCommandProtocol extends WriteCommandProtocol {
-    private final Remove remove;
+public class DeleteCommandProtocol extends WriteCommandProtocol {
+    private final List<Remove> removes;
     private final Encoder<Document> queryEncoder;
 
-    public RemoveCommandProtocol(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
-                                 final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                 final Connection connection, final boolean closeConnection) {
-        super(namespace, remove.getWriteConcern(), bufferProvider, serverDescription, connection, closeConnection);
-        this.remove = notNull("remove", remove);
+    public DeleteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> removes,
+                                 final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
+                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, writeConcern,  bufferProvider, serverDescription, connection, closeConnection);
+        this.removes = notNull("removes", removes);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
     protected RequestMessage createRequestMessage() {
-        return new CommandMessage(getCommandNamespace().getFullName(), createRemoveCommand(), new CommandCodec<Document>(queryEncoder),
+        return new DeleteCommandMessage(getNamespace(), getWriteConcern(), removes, queryEncoder,
                 getMessageSettings(getServerDescription()));
     }
-
-    private Command createRemoveCommand() {
-        Document deleteDocument = new Document("q", remove.getFilter()).append("isMulti", remove.isMulti());
-        return new Command(
-                new Document("delete", getNamespace().getCollectionName())
-                        .append("writeConcern", remove.getWriteConcern().getCommand())
-                        .append("deletes", Arrays.asList(deleteDocument))
-        ).readPreference(ReadPreference.primary());
-    }
-
 }

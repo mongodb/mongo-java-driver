@@ -19,35 +19,47 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.protocol.RemoveCommandProtocol;
-import org.mongodb.operation.protocol.RemoveProtocol;
+import org.mongodb.operation.protocol.DeleteCommandProtocol;
+import org.mongodb.operation.protocol.DeleteProtocol;
 import org.mongodb.operation.protocol.WriteCommandProtocol;
 import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class RemoveOperation extends WriteOperationBase {
-    private final Remove remove;
+    private final List<Remove> removes;
     private final Encoder<Document> queryEncoder;
 
     public RemoveOperation(final MongoNamespace namespace, final Remove remove, final Encoder<Document> queryEncoder,
                            final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(namespace, remove.getWriteConcern(), bufferProvider, session, closeSession);
-        this.remove = notNull("remove", remove);
+        this(namespace, remove.getWriteConcern(), Arrays.asList(remove), queryEncoder, bufferProvider, session, closeSession);
+    }
+
+    public RemoveOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> removes,
+                           final Encoder<Document> queryEncoder, final BufferProvider bufferProvider, final Session session,
+                           final boolean closeSession) {
+        super(namespace, writeConcern, bufferProvider, session, closeSession);
+        this.removes = notNull("removes", removes);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new RemoveProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), serverDescription, connection, false);
+        return new DeleteProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
+                connection, false);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new RemoveCommandProtocol(getNamespace(), remove, queryEncoder, getBufferProvider(), serverDescription, connection, false);
+        return new DeleteCommandProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
+                connection, false);
     }
 }

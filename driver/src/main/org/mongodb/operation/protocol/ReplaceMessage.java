@@ -22,26 +22,34 @@ import org.mongodb.Encoder;
 import org.mongodb.operation.BaseUpdate;
 import org.mongodb.operation.Replace;
 
+import java.util.List;
+
 public class ReplaceMessage<T> extends BaseUpdateMessage {
-    private Replace<T> replace;
+    private List<Replace<T>> replaces;
     private final Encoder<T> encoder;
 
-    public ReplaceMessage(final String collectionName, final Replace<T> replace,
+    public ReplaceMessage(final String collectionName, final List<Replace<T>> replaces,
                           final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, baseEncoder, settings);
-        this.replace = replace;
+        this.replaces = replaces;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(replace.getReplacement(), encoder, buffer);
-        return null;
+        addDocument(replaces.get(0).getReplacement(), encoder, buffer);
+        if (replaces.size() == 1) {
+            return null;
+        }
+        else {
+            return new ReplaceMessage<T>(getCollectionName(), replaces.subList(1, replaces.size()), getBaseEncoder(), encoder,
+                    getSettings());
+        }
     }
 
     @Override
     protected BaseUpdate getUpdateBase() {
-        return replace;
+        return replaces.get(0);
     }
 }
