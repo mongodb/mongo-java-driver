@@ -28,6 +28,8 @@ import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.CodeWScope;
+import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
 import org.mongodb.Codec;
 import org.mongodb.MongoException;
@@ -109,6 +111,8 @@ public class DBObjectCodec implements Codec<DBObject> {
                 encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
             } else if (value instanceof Iterable) {
                 encodeIterable(bsonWriter, (Iterable) value);
+            } else if (value instanceof CodeWScope) {
+                encodeCodeWScope(bsonWriter, (CodeWScope) value);
             } else if (value instanceof byte[]) {
                 primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
             } else if (value != null && value.getClass().isArray()) {
@@ -155,6 +159,12 @@ public class DBObjectCodec implements Codec<DBObject> {
         bsonWriter.writeEndDocument();
     }
 
+    @SuppressWarnings("unchecked")
+    private void encodeCodeWScope(final BSONWriter bsonWriter, final CodeWScope value) {
+        bsonWriter.writeJavaScriptWithScope(value.getCode());
+        encodeEmbeddedObject(bsonWriter, value.getScope().toMap());
+    }
+
     private void encodeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
@@ -166,17 +176,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     @Override
     public DBObject decode(final BSONReader reader) {
         final List<String> path = new ArrayList<String>(10);
-        final DBObject document = objectFactory.getInstance(path);
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName, path));
-        }
-
-        reader.readEndDocument();
-
-        return document;
+        return readDocument(reader, path);
     }
 
     @Override
@@ -184,47 +184,37 @@ public class DBObjectCodec implements Codec<DBObject> {
         return DBObject.class;
     }
 
-    private Object decode(final BSONReader reader, final List<String> path) {
-        final DBObject document = objectFactory.getInstance(path);
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName, path));
-        }
-
-        reader.readEndDocument();
-
-        if (document.containsField("$ref") && document.containsField("$id")) {
-            return new DBRef(db, document);
-        }
-
-
-        return document;
-    }
-
     private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {
         final Object initialRetVal;
         try {
             final BSONType bsonType = reader.getCurrentBSONType();
-            if (bsonType.isContainer()) {
-                if (fieldName != null) {
-                    path.add(fieldName);
-                }
 
-                if (bsonType.equals(BSONType.DOCUMENT)) {
-                    initialRetVal = decode(reader, path);
-                }
-                // Must be an array, since there are only two container types
-                else {
+            if (bsonType.isContainer() && fieldName != null) {
+                //if we got into some new context like nested document or array
+                path.add(fieldName);
+            }
+
+            switch (bsonType) {
+                case DOCUMENT:
+                    initialRetVal = verifyForDBRef(readDocument(reader, path));
+                    break;
+                case ARRAY:
                     initialRetVal = readArray(reader, path);
-                }
+                    break;
+                case JAVASCRIPT_WITH_SCOPE: //custom for driver-compat types
+                    initialRetVal = readCodeWScope(reader, path);
+                    break;
+                case DB_POINTER: //custom for driver-compat types
+                    final DBPointer dbPointer = reader.readDBPointer();
+                    initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
+                    break;
+                default:
+                    initialRetVal = primitiveCodecs.decode(reader);
+            }
 
-                if (fieldName != null) {
-                    path.remove(path.size() - 1);
-                }
-            } else {
-                initialRetVal = primitiveCodecs.decode(reader);
+            if (bsonType.isContainer() && fieldName != null) {
+                //step out of current context to a parent
+                path.remove(fieldName);
             }
         } catch (MongoException e) {
             throw mapException(e);
@@ -241,6 +231,31 @@ public class DBObjectCodec implements Codec<DBObject> {
         }
         reader.readEndArray();
         return list;
+    }
+
+    private DBObject readDocument(final BSONReader reader, final List<String> path) {
+        final DBObject document = objectFactory.getInstance(path);
+
+        reader.readStartDocument();
+        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            final String fieldName = reader.readName();
+            document.put(fieldName, readValue(reader, fieldName, path));
+        }
+
+        reader.readEndDocument();
+        return document;
+    }
+
+    private CodeWScope readCodeWScope(final BSONReader reader, final List<String> path) {
+        return new CodeWScope(reader.readJavaScriptWithScope(), readDocument(reader, path));
+    }
+
+    private Object verifyForDBRef(final DBObject document) {
+        if (document.containsField("$ref") && document.containsField("$id")) {
+            return new DBRef(db, document);
+        } else {
+            return document;
+        }
     }
 }
 

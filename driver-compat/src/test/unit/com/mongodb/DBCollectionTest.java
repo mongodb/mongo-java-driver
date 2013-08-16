@@ -28,6 +28,7 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
+import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -420,7 +421,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         doc.append("minKey", new MinKey());
         doc.append("maxKey", new MaxKey());
         doc.append("js", new Code("code"));
-//        doc.append("jsWithScope", new CodeWithScope("code", new Document()));
+        doc.append("jsWithScope", new CodeWScope("code", new BasicDBObject()));
         doc.append("null", null);
         doc.append("uuid", UUID.randomUUID());
         doc.append("db ref", new com.mongodb.DBRef(collection.getDB(), "test", new ObjectId()));
@@ -447,7 +448,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(MinKey.class, found.get("minKey").getClass());
         assertEquals(MaxKey.class, found.get("maxKey").getClass());
         assertEquals(Code.class, found.get("js").getClass());
-//        assertEquals(CodeWithScope.class, found.get("jsWithScope").getClass());
+        assertEquals(CodeWScope.class, found.get("jsWithScope").getClass());
         assertNull(found.get("null"));
         assertEquals(UUID.class, found.get("uuid").getClass());
         assertEquals(DBRef.class, found.get("db ref").getClass());
