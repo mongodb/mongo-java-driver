@@ -142,6 +142,12 @@ public class DB implements IDB {
         }
 
         collection = new DBCollection(name, this, documentCodec);
+        if (mongo.getMongoClientOptions().getDbDecoderFactory() != DefaultDBDecoder.FACTORY){
+            collection.setDBDecoderFactory(mongo.getMongoClientOptions().getDbDecoderFactory());
+        }
+        if (mongo.getMongoClientOptions().getDbEncoderFactory() != DefaultDBEncoder.FACTORY){
+            collection.setDBEncoderFactory(mongo.getMongoClientOptions().getDbEncoderFactory());
+        }
         final DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
