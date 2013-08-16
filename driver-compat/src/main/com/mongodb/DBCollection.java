@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.mongodb.codecs.CompoundDBObjectCodec;
+import com.mongodb.codecs.DBEncoderFactoryAdapter;
 import com.mongodb.codecs.DocumentCodec;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
@@ -139,7 +141,7 @@ public class DBCollection implements IDBCollection {
     private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private CollectibleCodec<DBObject> objectCodec;
+    private CompoundDBObjectCodec objectCodec;
 
 
     /**
@@ -154,7 +156,8 @@ public class DBCollection implements IDBCollection {
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        setObjectFactory(new DBObjectFactory());
+        this.objectFactory = new DBObjectFactory();
+        this.objectCodec = new CompoundDBObjectCodec(createCollectibleDBObjectCodec());
     }
 
     /**
@@ -287,22 +290,12 @@ public class DBCollection implements IDBCollection {
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
-        final Insert<DBObject> insert = new Insert<DBObject>(writeConcern.toNew(), documents);
+        final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
         return new WriteResult(insert(insert, encoder), aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
-        final Encoder<DBObject> encoder;
-        if (dbEncoder != null) {
-            encoder = new DBEncoderAdapter(dbEncoder);
-        }
-        else if (encoderFactory != null) {
-            encoder = new DBEncoderAdapter(encoderFactory.create());
-        }
-        else {
-            encoder = this.objectCodec;
-        }
-        return encoder;
+        return dbEncoder != null ? new DBEncoderAdapter(dbEncoder, new ObjectIdGenerator()) : objectCodec;
     }
 
     private CommandResult insert(final Insert<DBObject> insert, final Encoder<DBObject> encoder) {
@@ -1156,12 +1149,8 @@ public class DBCollection implements IDBCollection {
     @Override
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                : getObjectCodec();
-
         final MapReduceCommandResultCodec<DBObject> mapReduceCodec =
-                new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
+                new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
         final org.mongodb.CommandResult executionResult;
 
@@ -1374,7 +1363,7 @@ public class DBCollection implements IDBCollection {
      * @return a list of {@code DBObject} to be used as hints.
      */
     public List<DBObject> getHintFields() {
-        return Collections.unmodifiableList(hintFields);
+        return hintFields;
     }
 
     /**
@@ -1471,12 +1460,8 @@ public class DBCollection implements IDBCollection {
             }
         }
 
-        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                : getObjectCodec();
-
         final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
-                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), resultDecoder);
+                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
         final FindAndModifyCommandResult<DBObject> commandResult;
         try {
@@ -1600,6 +1585,13 @@ public class DBCollection implements IDBCollection {
     @Override
     public synchronized void setDBDecoderFactory(final DBDecoderFactory factory) {
         this.decoderFactory = factory;
+
+        //Are we are using default factory?
+        // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
+        final Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
+                ? createCollectibleDBObjectCodec()
+                : new DBDecoderAdapter(factory.create(), this, getBufferPool());
+        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
     }
 
     @Override
@@ -1608,8 +1600,15 @@ public class DBCollection implements IDBCollection {
     }
 
     @Override
-    public synchronized  void setDBEncoderFactory(final DBEncoderFactory factory) {
+    public synchronized void setDBEncoderFactory(final DBEncoderFactory factory) {
         this.encoderFactory = factory;
+
+        //Are we are using default factory?
+        // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
+        final Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
+                ? createCollectibleDBObjectCodec()
+                : new DBEncoderFactoryAdapter(encoderFactory);
+        this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
     }
 
 
@@ -1680,7 +1679,7 @@ public class DBCollection implements IDBCollection {
 
     @Override
     public Class getObjectClass() {
-        return objectCodec.getEncoderClass();
+        return objectFactory.getClassForPath(Collections.<String>emptyList());
     }
 
     /**
@@ -1726,11 +1725,11 @@ public class DBCollection implements IDBCollection {
 
     synchronized void setObjectFactory(final DBObjectFactory factory) {
         this.objectFactory = factory;
-        updateObjectCodec();
+        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), createCollectibleDBObjectCodec());
     }
 
-    private void updateObjectCodec() {
-        this.objectCodec = new CollectibleDBObjectCodec(
+    private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
+        return new CollectibleDBObjectCodec(
                 getDB(),
                 getPrimitiveCodecs(),
                 new ObjectIdGenerator(),

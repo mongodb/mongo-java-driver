@@ -41,13 +41,8 @@ public class DatabaseTestCase {
     @Before
     public void setUp() {
         //create a brand new collection for each test
-        collectionName = getClass().getName();
+        collectionName = getClass().getName() + System.nanoTime();
         collection = database.getCollection(collectionName);
-
-        collection.drop();
-        collection.setReadPreference(ReadPreference.primary());
-        collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
-        collection.setObjectClass(BasicDBObject.class);
     }
 
     @After

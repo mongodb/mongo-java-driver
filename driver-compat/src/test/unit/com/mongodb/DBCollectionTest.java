@@ -16,6 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.codecs.CollectibleDBObjectCodec;
+import com.mongodb.codecs.CompoundDBObjectCodec;
+import com.mongodb.codecs.DBDecoderAdapter;
+import com.mongodb.codecs.DBEncoderFactoryAdapter;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
@@ -53,6 +57,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DBCollectionTest extends DatabaseTestCase {
+
+    @Test
+    public void testDefaultSettings() {
+        assertNull(collection.getDBDecoderFactory());
+        assertNull(collection.getDBEncoderFactory());
+        assertEquals(BasicDBObject.class, collection.getObjectClass());
+        assertNull(collection.getHintFields());
+        assertEquals(ReadPreference.primary(), collection.getReadPreference());
+        assertEquals(WriteConcern.ACKNOWLEDGED, collection.getWriteConcern());
+        assertEquals(0, collection.getOptions());
+    }
 
     @Test
     public void shouldDropCollection() {
@@ -95,6 +110,14 @@ public class DBCollectionTest extends DatabaseTestCase {
         } catch (MongoDuplicateKeyException e) {
             assertThat(e.getCode(), is(11000));
         }
+    }
+
+    @Test
+    public void testSaveWithIdDefined() {
+        final DBObject document = new BasicDBObject("_id", new ObjectId()).append("a", Math.random());
+        collection.save(document);
+        assertThat(collection.count(), is(1L));
+        assertEquals(document, collection.findOne());
     }
 
     @Test
@@ -434,6 +457,43 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertTrue(found.get("list") instanceof List);
         assertTrue(found.get("doc list") instanceof List);
     }
+
+
+    @Test
+    public void testCompoundCodecWithDefaultValues() {
+        assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
+        final CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
+        assertThat(codec.getDecoder(), instanceOf(CollectibleDBObjectCodec.class));
+        assertThat(codec.getEncoder(), instanceOf(CollectibleDBObjectCodec.class));
+    }
+
+    @Test
+    public void testCompoundCodecWithCustomEncoderFactory() {
+        collection.setDBEncoderFactory(new DBEncoderFactory() {
+            @Override
+            public DBEncoder create() {
+                return new DefaultDBEncoder();
+            }
+        });
+        assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
+        final CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
+        assertThat(codec.getEncoder(), instanceOf(DBEncoderFactoryAdapter.class));
+    }
+
+    @Test
+    public void testCompoundCodecWithCustomDecoderFactory() {
+        collection.setDBDecoderFactory(new DBDecoderFactory() {
+            @Override
+            public DBDecoder create() {
+                return new DefaultDBDecoder();
+            }
+        });
+        assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
+        final CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
+        assertThat(codec.getDecoder(), instanceOf(DBDecoderAdapter.class));
+    }
+
+
 
 
     public static class MyDBObject extends BasicDBObject {

@@ -94,11 +94,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
         this.collection = collection;
         this.find = new Find(find);
-        if (collection.getDBDecoderFactory() != null) {
-            setDecoderFactory(collection.getDBDecoderFactory());
-        } else {
-            this.resultDecoder = collection.getObjectCodec();
-        }
+        this.resultDecoder = collection.getObjectCodec();
+        this.decoderFactory = collection.getDBDecoderFactory();
     }
 
     /**
@@ -547,6 +544,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     public DBCursor setDecoderFactory(final DBDecoderFactory factory) {
         this.decoderFactory = factory;
+
+        //Not creating new CompoundDBObjectCodec because we don't care about encoder.
         this.resultDecoder = new DBDecoderAdapter(factory.create(), collection, getCollection().getBufferPool());
         return this;
     }

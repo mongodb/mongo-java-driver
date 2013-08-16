@@ -30,7 +30,7 @@ import org.mongodb.codecs.validators.FieldNameValidator;
  * first.
  */
 public class CollectibleDBObjectCodec extends DBObjectCodec implements CollectibleCodec<DBObject> {
-    public static final String ID_FIELD_NAME = "_id";
+    private static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
     public CollectibleDBObjectCodec(final DB database, final PrimitiveCodecs primitiveCodecs,
