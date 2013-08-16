@@ -610,7 +610,7 @@ public abstract class DBCollection {
      * @return a list of {@code DBObject} to be used as hints.
      */
     protected List<DBObject> getHintFields() {
-        return Collections.unmodifiableList(_hintFields);
+        return _hintFields;
     }
 
     /**
