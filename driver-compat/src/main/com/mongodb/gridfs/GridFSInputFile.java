@@ -206,10 +206,8 @@ public class GridFSInputFile extends GridFSFile {
             throw new MongoException("Chunks already saved!");
         }
 
-        if (chunkSize <= 0 || chunkSize > GridFS.MAX_CHUNKSIZE) {
-            throw new MongoException(
-                    "chunkSize must be greater than zero and less than or equal to GridFS.MAX_CHUNKSIZE"
-            );
+        if (chunkSize <= 0) {
+            throw new MongoException("chunkSize must be greater than zero");
         }
 
         if (this.chunkSize != chunkSize) {

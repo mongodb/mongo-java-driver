@@ -60,7 +60,11 @@ public class GridFS {
     public static final int DEFAULT_CHUNKSIZE = 256 * 1024;
     /**
      * File's max chunk size
+     * @deprecated You can calculate max chunkSize with
+     *             a similar formula {@link com.mongodb.MongoClient#getMaxBsonObjectSize()} - 500*1000.
+     *             Please ensure that you left enough space for metadata (500kb is enough).
      */
+    @Deprecated
     public static final long MAX_CHUNKSIZE = (long) (3.5 * 1000 * 1000);
     /**
      * Bucket to use for the collection namespaces
