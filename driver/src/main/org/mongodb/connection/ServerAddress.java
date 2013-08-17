@@ -159,9 +159,6 @@ public class ServerAddress implements Serializable {
 
     @Override
     public String toString() {
-        return "ServerAddress{"
-                + "host='" + host + '\''
-                + ", port=" + port
-                + '}';
+        return host + ":" + port;
     }
 }
