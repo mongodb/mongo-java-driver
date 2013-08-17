@@ -21,6 +21,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 
 import java.io.ByteArrayInputStream;
@@ -106,12 +107,16 @@ public class GridFS {
         this.chunksCollection = database.getCollection(bucketName + ".chunks");
 
         // ensure standard indexes as long as collections are small
-        if (filesCollection.count() < 1000) {
-            filesCollection.ensureIndex(new BasicDBObject("filename", 1).append("uploadDate", 1));
-        }
-        if (chunksCollection.count() < 1000) {
-            chunksCollection.ensureIndex(new BasicDBObject("files_id", 1).append("n", 1),
-                    new BasicDBObject("unique", 1));
+        try {
+            if (filesCollection.count() < 1000) {
+                filesCollection.ensureIndex(new BasicDBObject("filename", 1).append("uploadDate", 1));
+            }
+            if (chunksCollection.count() < 1000) {
+                chunksCollection.ensureIndex(new BasicDBObject("files_id", 1).append("n", 1),
+                        new BasicDBObject("unique", true));
+            }
+        } catch (MongoException e) {
+            //TODO: Logging
         }
 
         filesCollection.setObjectClass(GridFSDBFile.class);
