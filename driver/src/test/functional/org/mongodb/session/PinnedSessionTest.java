@@ -23,7 +23,6 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.Find;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
 import static org.junit.Assert.assertEquals;
@@ -41,7 +40,6 @@ public class PinnedSessionTest extends DatabaseTestCase {
 
     @Test
     public void shouldPinReadsToSameServer() throws InterruptedException {
-        final Find find = new Find().readPreference(ReadPreference.secondary()).batchSize(-1);
         final ServerAddress serverAddress = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                 new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress();
         // there is randomization in the selection, so have to try a bunch of times.
