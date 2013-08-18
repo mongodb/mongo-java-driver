@@ -83,7 +83,8 @@ public abstract class DefaultCluster implements Cluster {
             while (serverDescriptions.isEmpty()) {
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("No server satisfies the selector %s", serverSelector));
+                    throw new MongoServerSelectionFailureException(
+                            format("Unable to connect to any server that satisfies the selector %s", serverSelector));
                 }
 
                 final long timeout = endTime - System.nanoTime();
@@ -118,7 +119,7 @@ public abstract class DefaultCluster implements Cluster {
             while (curDescription.getType() == ClusterType.Unknown) {
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("Unable to determine cluster type"));
+                    throw new MongoServerSelectionFailureException(format("Unable to connect to any servers"));
                 }
 
                 final long timeout = endTime - System.nanoTime();
