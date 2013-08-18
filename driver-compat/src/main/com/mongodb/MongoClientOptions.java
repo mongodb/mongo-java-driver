@@ -231,6 +231,25 @@ public class MongoClientOptions {
         return proxied.getHeartbeatSocketTimeout();
     }
 
+    /**
+     * Gets the required replica set name.  With this option set, the MongoClient instance will
+     *
+     * <p>
+     * 1. Connect in replica set mode, and discover all members of the set based on the given servers
+     * </p>
+     * <p>
+     * 2. Make sure that the set name reported by all members matches the required set name.
+     * </p>
+     * <p>
+     * 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.j
+     * </p>
+     *
+     * @return the required replica set name
+     * since 3.0
+     */
+    public String getRequiredReplicaSetName() {
+        return proxied.getRequiredReplicaSetName();
+    }
 
     /**
      * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established.
@@ -730,6 +749,17 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets the required replica set name for the cluster.
+         *
+         * @param requiredReplicaSetName the required replica set name for the replica set.
+         * @return this
+         * @see MongoClientOptions#getRequiredReplicaSetName()
+         */
+        public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
+            proxied.requiredReplicaSetName(requiredReplicaSetName);
+            return this;
+        }
 
         /**
          * Sets defaults to be what they are in {@code MongoOptions}.

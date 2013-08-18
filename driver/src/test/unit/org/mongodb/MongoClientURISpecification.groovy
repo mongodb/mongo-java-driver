@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -97,20 +99,21 @@ class MongoClientURISpecification extends Specification {
         options.isAutoConnectRetry();
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
         options.getReadPreference() == ReadPreference.secondaryPreferred();
+        options.getRequiredReplicaSetName() == "test"
 
         where:
         options <<
                 [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&'
                                             + 'slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;'
+                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true').getOptions()]
@@ -133,6 +136,7 @@ class MongoClientURISpecification extends Specification {
         options.getMaxAutoConnectRetryTime() == 0;
         options.getDescription() == null;
         options.getReadPreference() == ReadPreference.primary();
+        options.getRequiredReplicaSetName() == null
     }
 
     @Unroll

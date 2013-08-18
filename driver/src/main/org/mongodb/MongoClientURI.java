@@ -288,6 +288,7 @@ public class MongoClientURI {
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("autoconnectretry");
         generalOptionsKeys.add("ssl");
+        generalOptionsKeys.add("replicaset");
 
         readPreferenceKeys.add("slaveok");
         readPreferenceKeys.add("readpreference");
@@ -352,6 +353,9 @@ public class MongoClientURI {
             }
             else if (key.equals("ssl") && parseBoolean(value)) {
                 builder.SSLEnabled(true);
+            }
+            else if (key.equals("replicaset")) {
+                builder.requiredReplicaSetName(value);
             }
         }
 

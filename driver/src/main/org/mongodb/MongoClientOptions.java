@@ -54,6 +54,7 @@ public final class MongoClientOptions {
     private final int heartbeatConnectRetryFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
+    private final String requiredReplicaSetName;
 
     /**
      * Convenience method to create a Builder.
@@ -98,6 +99,8 @@ public final class MongoClientOptions {
         private int heartbeatConnectRetryFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
+
+        private String requiredReplicaSetName;
 
         /**
          * Sets the description.
@@ -433,6 +436,18 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets the required replica set name for the cluster.
+         *
+         * @param aRequiredReplicaSetName the required replica set name for the replica set.
+         * @return this
+         * @see MongoClientOptions#getRequiredReplicaSetName()
+         */
+        public Builder requiredReplicaSetName(final String aRequiredReplicaSetName) {
+            this.requiredReplicaSetName = aRequiredReplicaSetName;
+            return this;
+        }
+
+        /**
          * Build an instance of MongoClientOptions.
          *
          * @return the options from this builder
@@ -692,6 +707,26 @@ public final class MongoClientOptions {
         return heartbeatSocketTimeout;
     }
 
+    /**
+     * Gets the required replica set name.  With this option set, the MongoClient instance will
+     *
+     * <p>
+     * 1. Connect in replica set mode, and discover all members of the set based on the given servers
+     * </p>
+     * <p>
+     * 2. Make sure that the set name reported by all members matches the required set name.
+     * </p>
+     * <p>
+     * 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.j
+     * </p>
+     *
+     * @return the required replica set name
+     * since 3.0
+     */
+    public String getRequiredReplicaSetName() {
+        return requiredReplicaSetName;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -770,6 +805,10 @@ public final class MongoClientOptions {
             return false;
         }
 
+        if (!requiredReplicaSetName.equals(that.requiredReplicaSetName)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -797,6 +836,7 @@ public final class MongoClientOptions {
         result = 31 * result + heartbeatConnectRetryFrequency;
         result = 31 * result + heartbeatConnectTimeout;
         result = 31 * result + heartbeatSocketTimeout;
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
 
@@ -825,6 +865,7 @@ public final class MongoClientOptions {
                 + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
                 + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                 + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
+                + ", requiredReplicaSetName=" + requiredReplicaSetName
                 + '}';
     }
 
@@ -851,5 +892,6 @@ public final class MongoClientOptions {
         heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
+        requiredReplicaSetName = builder.requiredReplicaSetName;
     }
 }

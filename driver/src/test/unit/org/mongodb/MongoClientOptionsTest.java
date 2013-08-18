@@ -21,6 +21,7 @@ import org.mongodb.codecs.PrimitiveCodecs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -46,6 +47,7 @@ public class MongoClientOptionsTest {
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
+        assertNull(options.getRequiredReplicaSetName());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -168,6 +170,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectRetryFrequency(10);
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
+        builder.requiredReplicaSetName("test");
         final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
         builder.primitiveCodecs(primitiveCodecs);
 
@@ -193,5 +196,6 @@ public class MongoClientOptionsTest {
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
+        assertEquals("test", options.getRequiredReplicaSetName());
     }
 }

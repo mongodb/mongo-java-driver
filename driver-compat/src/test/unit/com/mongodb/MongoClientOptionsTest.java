@@ -131,6 +131,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectRetryFrequency(10);
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
+        builder.requiredReplicaSetName("test");
 
         final DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
         builder.dbEncoderFactory(encoderFactory);
@@ -157,6 +158,7 @@ public class MongoClientOptionsTest {
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
+        assertEquals("test", options.getRequiredReplicaSetName());
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory{
