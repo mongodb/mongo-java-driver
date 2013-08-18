@@ -701,7 +701,7 @@ public class Mongo {
                                 .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
                                 .keepAlive(options.isSocketKeepAlive())
                                 .build(),
-                        sslSettings, bufferProvider, credentialList),
+                        sslSettings, bufferProvider, Collections.<org.mongodb.MongoCredential>emptyList()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 bufferProvider);
     }

@@ -119,7 +119,8 @@ public final class MongoClients {
                 DefaultServerSettings.builder().build(), // TODO: allow configuration
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 asyncConnectionProviderFactory,
-                new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, credentialList),  // TODO: allow configuration
+                // TODO: allow configuration
+                new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, Collections.<MongoCredential>emptyList()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 bufferProvider);
     }
