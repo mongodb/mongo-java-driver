@@ -26,8 +26,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.StandAlone;
 import static org.mongodb.connection.ClusterType.Unknown;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
@@ -67,18 +65,24 @@ public class ClusterDescription {
     }
 
     public ClusterType getType() {
+        ClusterType type = ClusterType.Unknown;
         for (ServerDescription description : all) {
-            if (description.isReplicaSetMember()) {
-                return ReplicaSet;
+            if (description.getType() == ServerType.Unknown) {
+                continue;
             }
-            else if (description.isShardRouter()) {
-                return Sharded;
+
+            if (type != Unknown && type != description.getClusterType()) {
+                return ClusterType.Mixed;
             }
-            else if (description.isStandAlone()) {
-                return StandAlone;
+
+            // Two standalones in the same cluster is a no-no
+            if (type == StandAlone && description.getType() == ServerType.StandAlone) {
+                return ClusterType.Mixed;
             }
+
+            type = description.getClusterType();
         }
-        return Unknown;
+        return type;
     }
 
     /**
@@ -190,8 +194,9 @@ public class ClusterDescription {
     @Override
     public String toString() {
         return "ClusterDescription{"
-                + "all=" + all
+                + "type=" + getType()
                 + ", mode=" + mode
+                + ", all=" + all
                 + '}';
     }
 

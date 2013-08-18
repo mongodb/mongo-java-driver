@@ -22,24 +22,19 @@ public class TestServer implements ClusterableServer {
     private ChangeListener<ServerDescription> changeListener;
     private ServerDescription description;
     private boolean isClosed;
-    private boolean isInvalidated;
+    private ServerAddress serverAddress;
 
     public TestServer(final ServerAddress serverAddress) {
-        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        this.serverAddress = serverAddress;
+        invalidate();
     }
 
     public void sendNotification(final ServerDescription newDescription) {
         ServerDescription currentDescription = description;
         description = newDescription;
-        changeListener.stateChanged(new ChangeEvent<ServerDescription>(currentDescription, newDescription));
-    }
-
-    public boolean isInvalidated() {
-        return isInvalidated;
-    }
-
-    public void clearInvalidated() {
-        isInvalidated = false;
+        if (changeListener != null) {
+            changeListener.stateChanged(new ChangeEvent<ServerDescription>(currentDescription, newDescription));
+        }
     }
 
     @Override
@@ -49,7 +44,7 @@ public class TestServer implements ClusterableServer {
 
     @Override
     public void invalidate() {
-        isInvalidated = true;
+        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
     }
 
     @Override

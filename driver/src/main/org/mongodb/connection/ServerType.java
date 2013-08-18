@@ -16,13 +16,88 @@
 
 package org.mongodb.connection;
 
+/**
+ *
+ * The type of the server.
+ *
+ * @since 3.0
+ */
 public enum ServerType {
-    StandAlone,
-    ReplicaSetPrimary,
-    ReplicaSetSecondary,
-    ReplicaSetArbiter,
-    ReplicaSetOther,
-    ShardRouter,
-    Unknown
+    /**
+     * A standalone mongod server.
+     */
+    StandAlone {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.StandAlone;
+        }
+    },
+
+    /**
+     * A replica set primary.
+     */
+    ReplicaSetPrimary {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.ReplicaSet;
+        }
+    },
+
+    /**
+     * A replica set secondary.
+     */
+    ReplicaSetSecondary {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.ReplicaSet;
+        }
+    },
+
+    /**
+     * A replica set arbiter.
+     */
+    ReplicaSetArbiter {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.ReplicaSet;
+        }
+    },
+
+    /**
+     * A replica set member that is none of the other types (a passive, for example).
+     */
+    ReplicaSetOther {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.ReplicaSet;
+        }
+    },
+
+    /**
+     * A router to a sharded cluster, i.e. a mongos server.
+     */
+    ShardRouter {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.Sharded;
+        }
+    },
+
+    /**
+     * The server type is not yet known.
+     */
+    Unknown {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.Unknown;
+        }
+    };
+
+    /**
+     * The type of the cluster to which this server belongs
+     *
+     * @return the cluster type
+     */
+    public abstract ClusterType getClusterType();
 }
 

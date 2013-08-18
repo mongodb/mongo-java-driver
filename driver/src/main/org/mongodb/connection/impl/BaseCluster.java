@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ClusterType.Mixed;
 
 public abstract class BaseCluster implements Cluster {
 
@@ -77,6 +78,10 @@ public abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
+            if (curDescription.getType() == Mixed) {
+                throw new MongoServerSelectionFailureException(format("Mixed cluster detected! Cluster description: %s", curDescription));
+            }
+
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
             final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable

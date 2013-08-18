@@ -33,6 +33,9 @@ import static org.mongodb.connection.ServerType.ShardRouter;
 import static org.mongodb.connection.ServerType.StandAlone;
 import static org.mongodb.connection.ServerType.Unknown;
 
+/**
+ * Immutable snapshot state of a server.
+ */
 @Immutable
 public class ServerDescription {
 
@@ -254,6 +257,10 @@ public class ServerDescription {
 
     public ServerType getType() {
         return type;
+    }
+
+    public ClusterType getClusterType() {
+        return type.getClusterType();
     }
 
     public ServerVersion getVersion() {

@@ -33,9 +33,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterType.Unknown;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
@@ -72,8 +72,6 @@ final class DiscoveringCluster extends BaseCluster {
 
     @Override
     protected ClusterableServer getServer(final ServerAddress serverAddress) {
-        isTrue("open", !isClosed());
-
         ClusterableServer server = addressToServerMap.get(serverAddress);
         if (server == null) {
             throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
@@ -89,31 +87,37 @@ final class DiscoveringCluster extends BaseCluster {
         }
     }
 
-    private synchronized void onChange(final ChangeEvent<ServerDescription> event) {
+    private void onChange(final ChangeEvent<ServerDescription> event) {
         if (isClosed()) {
             return;
         }
-        ClusterDescription oldDescription = getDescriptionNoWaiting();
+        ClusterDescription currentDescription = getDescriptionNoWaiting();
 
         synchronized (this) {
-            if (event.getNewValue().isReplicaSetMember()) {
-                if (event.getNewValue().isOk()) {
-                    addNewHosts(event.getNewValue().getHosts());
-                    addNewHosts(event.getNewValue().getPassives());
-                    removeExtras(event.getNewValue());
-                }
-                else if (event.getOldValue().isPrimary()) {
-                    invalidateAll();
+            if ((currentDescription.getType() == Unknown || event.getNewValue().getClusterType() == currentDescription.getType())
+                    && event.getNewValue().isOk()) {
+                switch (currentDescription.getType() == Unknown ? event.getNewValue().getClusterType() : currentDescription.getType()) {
+                    case ReplicaSet:
+                        handleReplicaSetMemberChange(event);
+                        break;
+                    default:
+                        break;
                 }
             }
             updateDescription();
         }
-        fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
+        fireChangeEvent(new ChangeEvent<ClusterDescription>(currentDescription, getDescriptionNoWaiting()));
+    }
+
+    private void handleReplicaSetMemberChange(final ChangeEvent<ServerDescription> event) {
+        ensureServers(event);
+
+        if (event.getNewValue().isPrimary()) {
+            invalidateOldPrimaries(event.getNewValue().getAddress());
+        }
     }
 
     private void addServer(final ServerAddress serverAddress) {
-        isTrue("open", !isClosed());
-
         if (!addressToServerMap.containsKey(serverAddress)) {
             ClusterableServer mongoServer = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerMap.put(serverAddress, mongoServer);
@@ -121,24 +125,20 @@ final class DiscoveringCluster extends BaseCluster {
     }
 
     private void removeServer(final ServerAddress serverAddress) {
-        isTrue("open", !isClosed());
-
         ClusterableServer server = addressToServerMap.remove(serverAddress);
         server.close();
     }
 
 
-    private void invalidateAll() {
-        isTrue("open", !isClosed());
-
+    private void invalidateOldPrimaries(final ServerAddress newPrimary) {
         for (ClusterableServer server : addressToServerMap.values()) {
-            server.invalidate();
+            if (!server.getDescription().getAddress().equals(newPrimary) && server.getDescription().isPrimary()) {
+                server.invalidate();
+            }
         }
     }
 
     private void updateDescription() {
-        isTrue("open", !isClosed());
-
         final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
         updateDescription(new ClusterDescription(newServerDescriptionList, Discovering));
     }
@@ -149,6 +149,12 @@ final class DiscoveringCluster extends BaseCluster {
             serverDescriptions.add(server.getDescription());
         }
         return serverDescriptions;
+    }
+
+    private void ensureServers(final ChangeEvent<ServerDescription> event) {
+        addNewHosts(event.getNewValue().getHosts());
+        addNewHosts(event.getNewValue().getPassives());
+        removeExtras(event.getNewValue());
     }
 
     private void addNewHosts(final Set<String> hosts) {
