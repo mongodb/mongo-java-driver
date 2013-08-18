@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
+import static org.mongodb.connection.ServerConnectionState.Unconnected;
 
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
@@ -55,6 +56,7 @@ class DefaultServer implements ClusterableServer {
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
+    private final DefaultServerSettings settings;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
@@ -65,6 +67,7 @@ class DefaultServer implements ClusterableServer {
                          final ConnectionFactory heartbeatConnectionFactory,
                          final ScheduledExecutorService scheduledExecutorService,
                          final BufferProvider bufferProvider) {
+        this.settings = settings;
         notNull("connectionProvider", connectionProvider);
         notNull("heartbeatConnectionFactory", heartbeatConnectionFactory);
         notNull("scheduledExecutorService", scheduledExecutorService);
@@ -148,6 +151,10 @@ class DefaultServer implements ClusterableServer {
             description = event.getNewValue();
             for (ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
+            }
+            if (event.getNewValue().getState() == Unconnected) {
+                scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(TimeUnit.MILLISECONDS),
+                        TimeUnit.MILLISECONDS);
             }
         }
 
