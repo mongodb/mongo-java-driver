@@ -42,6 +42,10 @@ public class MongoClientOptionsTest {
         assertFalse(options.isAutoConnectRetry());
         assertFalse(options.isSSLEnabled());
         assertEquals(AsyncDetector.isAsyncEnabled(), options.isAsyncEnabled());
+        assertEquals(5000, options.getHeartbeatFrequency());
+        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(20000, options.getHeartbeatConnectTimeout());
+        assertEquals(20000, options.getHeartbeatSocketTimeout());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -105,6 +109,30 @@ public class MongoClientOptionsTest {
         builder.maxConnectionLifeTime(-1);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testHeartbeatFrequencyIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.heartbeatFrequency(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHeartbeatConnectRetryFrequencyIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.heartbeatConnectRetryFrequency(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHeartbeatConnectionTimeoutIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.heartbeatConnectTimeout(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHeartbeatSocketTimeoutIllegalArguments() {
+        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.heartbeatSocketTimeout(-1);
+    }
+
     @Test
     public void testAsyncEnabledIllegalArguments() {
         if (!AsyncDetector.isAsyncEnabled()) {
@@ -136,6 +164,10 @@ public class MongoClientOptionsTest {
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
         builder.asyncEnabled(false);
+        builder.heartbeatFrequency(5);
+        builder.heartbeatConnectRetryFrequency(10);
+        builder.heartbeatConnectTimeout(15);
+        builder.heartbeatSocketTimeout(20);
         final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
         builder.primitiveCodecs(primitiveCodecs);
 
@@ -157,5 +189,9 @@ public class MongoClientOptionsTest {
         assertTrue(options.isSSLEnabled());
         assertFalse(options.isAsyncEnabled());
         assertSame(primitiveCodecs, options.getPrimitiveCodecs());
+        assertEquals(5, options.getHeartbeatFrequency());
+        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(15, options.getHeartbeatConnectTimeout());
+        assertEquals(20, options.getHeartbeatSocketTimeout());
     }
 }

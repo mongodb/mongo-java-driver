@@ -189,6 +189,49 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+     * in the cluster. The default value is 5000 milliseconds.
+     *
+     * @return the heartbeat frequency, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatFrequency() {
+        return proxied.getHeartbeatFrequency();
+    }
+
+    /**
+     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+     * in the cluster, after a previous failed attempt. The default value is 10 milliseconds.
+     *
+     * @return the heartbeat frequency, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatConnectRetryFrequency() {
+        return proxied.getHeartbeatConnectRetryFrequency();
+    }
+
+    /**
+     * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     *
+     * @return the heartbeat connect timeout, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatConnectTimeout() {
+        return proxied.getHeartbeatConnectTimeout();
+    }
+
+    /**
+     * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     *
+     * @return the heartbeat socket timeout, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatSocketTimeout() {
+        return proxied.getHeartbeatSocketTimeout();
+    }
+
+
+    /**
      * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established.
      * There is maximum amount of time to keep retrying, which is 15s by default. This can be useful to avoid some
      * exceptions being thrown when a server is down temporarily by blocking the operations. It also can be useful to
@@ -357,6 +400,13 @@ public class MongoClientOptions {
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
+
+        public Builder() {
+            proxied.heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
+            proxied.heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
+            proxied.heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
+            proxied.heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
+        }
 
         /**
          * Sets the description.
@@ -624,6 +674,61 @@ public class MongoClientOptions {
             this.dbEncoderFactory = dbEncoderFactory;
             return this;
         }
+
+        /**
+         * Sets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+         * in the cluster.
+         *
+         * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatFrequency()
+         * @since 3.0
+         */
+        public Builder heartbeatFrequency(final int heartbeatFrequency) {
+            proxied.heartbeatFrequency(heartbeatFrequency);
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat connect frequency. This is the frequency that the driver will attempt to determine the current state of each
+         * server in the cluster after a previous failed attempt.
+         *
+         * @param heartbeatConnectFrequency the heartbeat connect retry frequency for the cluster, in milliseconds
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatFrequency()
+         * @since 3.0
+         */
+        public Builder heartbeatConnectRetryFrequency(final int heartbeatConnectFrequency) {
+            proxied.heartbeatConnectRetryFrequency(heartbeatConnectFrequency);
+            return this;
+        }
+
+        /**
+         * Sets the connect timeout for connections used for the cluster heartbeat.
+         *
+         * @param connectTimeout the connection timeout
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatConnectTimeout()
+         * @since 3.0
+         */
+        public Builder heartbeatConnectTimeout(final int connectTimeout) {
+            proxied.heartbeatConnectTimeout(connectTimeout);
+            return this;
+        }
+
+        /**
+         * Sets the socket timeout for connections used for the cluster heartbeat.
+         *
+         * @param socketTimeout the socket timeout
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatSocketTimeout()
+         * @since 3.0
+         */
+        public Builder heartbeatSocketTimeout(final int socketTimeout) {
+            proxied.heartbeatSocketTimeout(socketTimeout);
+            return this;
+        }
+
 
         /**
          * Sets defaults to be what they are in {@code MongoOptions}.

@@ -111,7 +111,7 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderBuild() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        final MongoClientOptions.Builder builder = MongoClientOptions.builder();
         builder.description("test");
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNAL_SAFE);
@@ -127,6 +127,10 @@ public class MongoClientOptionsTest {
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
         builder.dbDecoderFactory(LazyDBDecoder.FACTORY);
+        builder.heartbeatFrequency(5);
+        builder.heartbeatConnectRetryFrequency(10);
+        builder.heartbeatConnectTimeout(15);
+        builder.heartbeatSocketTimeout(20);
 
         final DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
         builder.dbEncoderFactory(encoderFactory);
@@ -149,6 +153,10 @@ public class MongoClientOptionsTest {
         assertTrue(options.isSSLEnabled());
         assertEquals(LazyDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(encoderFactory, options.getDbEncoderFactory());
+        assertEquals(5, options.getHeartbeatFrequency());
+        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(15, options.getHeartbeatConnectTimeout());
+        assertEquals(20, options.getHeartbeatSocketTimeout());
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory{

@@ -50,6 +50,10 @@ public final class MongoClientOptions {
     private final boolean SSLEnabled;
     //CHECKSTYLE:ON
     private boolean alwaysUseMBeans;
+    private final int heartbeatFrequency;
+    private final int heartbeatConnectRetryFrequency;
+    private final int heartbeatConnectTimeout;
+    private final int heartbeatSocketTimeout;
 
     /**
      * Convenience method to create a Builder.
@@ -89,6 +93,11 @@ public final class MongoClientOptions {
         //CHECKSTYLE:ON
         private boolean asyncEnabled = AsyncDetector.isAsyncEnabled();
         private boolean alwaysUseMBeans = false;
+
+        private int heartbeatFrequency = 5000;
+        private int heartbeatConnectRetryFrequency = 10;
+        private int heartbeatConnectTimeout = 20000;
+        private int heartbeatSocketTimeout = 20000;
 
         /**
          * Sets the description.
@@ -358,6 +367,72 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+         * in the cluster.
+         *
+         * @param aHeartbeatFrequency the heartbeat frequency for the cluster, in milliseconds
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatFrequency()
+         * @since 3.0
+         */
+        public Builder heartbeatFrequency(final int aHeartbeatFrequency) {
+            if (aHeartbeatFrequency < 1) {
+                throw new IllegalArgumentException("Minimum value is 1");
+            }
+            this.heartbeatFrequency = aHeartbeatFrequency;
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat connect frequency. This is the frequency that the driver will attempt to determine the current state of each
+         * server in the cluster after a previous failed attempt.
+         *
+         * @param aHeartbeatConnectFrequency the heartbeat connect retry frequency for the cluster, in milliseconds
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatFrequency()
+         * @since 3.0
+         */
+        public Builder heartbeatConnectRetryFrequency(final int aHeartbeatConnectFrequency) {
+            if (aHeartbeatConnectFrequency < 1) {
+                throw new IllegalArgumentException("Minimum value is 1");
+            }
+            this.heartbeatConnectRetryFrequency = aHeartbeatConnectFrequency;
+            return this;
+        }
+
+        /**
+         * Sets the connect timeout for connections used for the cluster heartbeat.
+         *
+         * @param aConnectTimeout the connection timeout
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatConnectTimeout()
+         * @since 3.0
+         */
+        public Builder heartbeatConnectTimeout(final int aConnectTimeout) {
+            if (aConnectTimeout < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.heartbeatConnectTimeout = aConnectTimeout;
+            return this;
+        }
+
+        /**
+         * Sets the socket timeout for connections used for the cluster heartbeat.
+         *
+         * @param aSocketTimeout the socket timeout
+         * @return {@code this}
+         * @see MongoClientOptions#getHeartbeatSocketTimeout()
+         * @since 3.0
+         */
+        public Builder heartbeatSocketTimeout(final int aSocketTimeout) {
+            if (aSocketTimeout < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.heartbeatSocketTimeout = aSocketTimeout;
+            return this;
+        }
+
+        /**
          * Build an instance of MongoClientOptions.
          *
          * @return the options from this builder
@@ -575,6 +650,156 @@ public final class MongoClientOptions {
         return alwaysUseMBeans;
     }
 
+    /**
+     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+     * in the cluster. The default value is 5000 milliseconds.
+     *
+     * @return the heartbeat frequency, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatFrequency() {
+        return heartbeatFrequency;
+    }
+
+    /**
+     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server
+     * in the cluster, after a previous failed attempt. The default value is 10 milliseconds.
+     *
+     * @return the heartbeat frequency, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatConnectRetryFrequency() {
+        return heartbeatConnectRetryFrequency;
+    }
+
+    /**
+     * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     *
+     * @return the heartbeat connect timeout, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatConnectTimeout() {
+        return heartbeatConnectTimeout;
+    }
+
+    /**
+     * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     *
+     * @return the heartbeat socket timeout, in milliseconds
+     * @since 3.0
+     */
+    public int getHeartbeatSocketTimeout() {
+        return heartbeatSocketTimeout;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final MongoClientOptions that = (MongoClientOptions) o;
+
+        if (SSLEnabled != that.SSLEnabled) {
+            return false;
+        }
+        if (alwaysUseMBeans != that.alwaysUseMBeans) {
+            return false;
+        }
+        if (asyncEnabled != that.asyncEnabled) {
+            return false;
+        }
+        if (autoConnectRetry != that.autoConnectRetry) {
+            return false;
+        }
+        if (connectTimeout != that.connectTimeout) {
+            return false;
+        }
+        if (heartbeatConnectRetryFrequency != that.heartbeatConnectRetryFrequency) {
+            return false;
+        }
+        if (heartbeatConnectTimeout != that.heartbeatConnectTimeout) {
+            return false;
+        }
+        if (heartbeatFrequency != that.heartbeatFrequency) {
+            return false;
+        }
+        if (heartbeatSocketTimeout != that.heartbeatSocketTimeout) {
+            return false;
+        }
+        if (maxAutoConnectRetryTime != that.maxAutoConnectRetryTime) {
+            return false;
+        }
+        if (maxConnectionIdleTime != that.maxConnectionIdleTime) {
+            return false;
+        }
+        if (maxConnectionLifeTime != that.maxConnectionLifeTime) {
+            return false;
+        }
+        if (maxConnectionPoolSize != that.maxConnectionPoolSize) {
+            return false;
+        }
+        if (maxWaitTime != that.maxWaitTime) {
+            return false;
+        }
+        if (minConnectionPoolSize != that.minConnectionPoolSize) {
+            return false;
+        }
+        if (socketKeepAlive != that.socketKeepAlive) {
+            return false;
+        }
+        if (socketTimeout != that.socketTimeout) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (!primitiveCodecs.equals(that.primitiveCodecs)) {
+            return false;
+        }
+        if (!readPreference.equals(that.readPreference)) {
+            return false;
+        }
+        if (!writeConcern.equals(that.writeConcern)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + readPreference.hashCode();
+        result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + primitiveCodecs.hashCode();
+        result = 31 * result + minConnectionPoolSize;
+        result = 31 * result + maxConnectionPoolSize;
+        result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
+        result = 31 * result + maxWaitTime;
+        result = 31 * result + maxConnectionIdleTime;
+        result = 31 * result + maxConnectionLifeTime;
+        result = 31 * result + connectTimeout;
+        result = 31 * result + socketTimeout;
+        result = 31 * result + (socketKeepAlive ? 1 : 0);
+        result = 31 * result + (autoConnectRetry ? 1 : 0);
+        result = 31 * result + (int) (maxAutoConnectRetryTime ^ (maxAutoConnectRetryTime >>> 32));
+        result = 31 * result + (asyncEnabled ? 1 : 0);
+        result = 31 * result + (SSLEnabled ? 1 : 0);
+        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        result = 31 * result + heartbeatFrequency;
+        result = 31 * result + heartbeatConnectRetryFrequency;
+        result = 31 * result + heartbeatConnectTimeout;
+        result = 31 * result + heartbeatSocketTimeout;
+        return result;
+    }
+
     @Override
     public String toString() {
         return "MongoClientOptions {"
@@ -596,6 +821,10 @@ public final class MongoClientOptions {
                 + ", SSLEnabled=" + SSLEnabled
                 + ", asyncEnabled=" + asyncEnabled
                 + ", alwaysUseMBeans=" + alwaysUseMBeans
+                + ", heartbeatFrequency=" + heartbeatFrequency
+                + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
+                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
+                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
                 + '}';
     }
 
@@ -618,5 +847,9 @@ public final class MongoClientOptions {
         SSLEnabled = builder.SSLEnabled;
         asyncEnabled = builder.asyncEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
+        heartbeatFrequency = builder.heartbeatFrequency;
+        heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
+        heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
+        heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
     }
 }

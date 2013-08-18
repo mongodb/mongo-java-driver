@@ -686,19 +686,18 @@ public class Mongo {
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
                 .build();
-        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, credentialList);
+        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider,
+                credentialList);
 
         return new DefaultClusterableServerFactory(
-                DefaultServerSettings.builder()
-                        .heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")),
-                                TimeUnit.MILLISECONDS)
-                        .build(),
+                DefaultServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
+                        connectRetryFrequency(options.getHeartbeatConnectRetryFrequency(), TimeUnit.MILLISECONDS).build(),
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 null,
                 new DefaultConnectionFactory(
                         DefaultConnectionSettings.builder()
-                                .connectTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")))
-                                .readTimeoutMS(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")))
+                                .connectTimeoutMS(options.getHeartbeatConnectTimeout())
+                                .readTimeoutMS(options.getHeartbeatSocketTimeout())
                                 .keepAlive(options.isSocketKeepAlive())
                                 .build(),
                         sslSettings, bufferProvider, Collections.<org.mongodb.MongoCredential>emptyList()),

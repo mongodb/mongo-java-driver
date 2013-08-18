@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DefaultServerSettings {
     private final long heartbeatFrequencyMS;
+    private final long heartbeatConnectRetryFrequencyMS;
 
     public static Builder builder() {
         return new Builder();
@@ -27,9 +28,15 @@ public class DefaultServerSettings {
 
     public static class Builder {
         private long heartbeatFrequencyMS = 5000;
+        private long heartbeatConnectRetryFrequencyMS = 10;
 
         public Builder heartbeatFrequency(final long heartbeatFrequency, final TimeUnit timeUnit) {
             this.heartbeatFrequencyMS = TimeUnit.MILLISECONDS.convert(heartbeatFrequency, timeUnit);
+            return this;
+        }
+
+        public Builder connectRetryFrequency(final long heartbeatConnectRetryFrequency, final TimeUnit timeUnit) {
+            this.heartbeatConnectRetryFrequencyMS = TimeUnit.MILLISECONDS.convert(heartbeatConnectRetryFrequency, timeUnit);
             return this;
         }
 
@@ -42,8 +49,13 @@ public class DefaultServerSettings {
         return timeUnit.convert(heartbeatFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
+    public long getHeartbeatConnectRetryFrequency(final TimeUnit timeUnit) {
+        return timeUnit.convert(heartbeatConnectRetryFrequencyMS, TimeUnit.MILLISECONDS);
+    }
+
     DefaultServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
+        heartbeatConnectRetryFrequencyMS = builder.heartbeatConnectRetryFrequencyMS;
     }
 
 }

@@ -116,11 +116,17 @@ public final class MongoClients {
                         new DefaultAsyncConnectionFactory(bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(
-                DefaultServerSettings.builder().build(), // TODO: allow configuration
+                DefaultServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
+                        connectRetryFrequency(options.getHeartbeatConnectRetryFrequency(), TimeUnit.MILLISECONDS).build(),
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 asyncConnectionProviderFactory,
-                // TODO: allow configuration
-                new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider, Collections.<MongoCredential>emptyList()),
+                new DefaultConnectionFactory(
+                        DefaultConnectionSettings.builder()
+                                .connectTimeoutMS(options.getHeartbeatConnectTimeout())
+                                .readTimeoutMS(options.getHeartbeatSocketTimeout())
+                                .keepAlive(options.isSocketKeepAlive())
+                                .build(),
+                        sslSettings, bufferProvider, Collections.<org.mongodb.MongoCredential>emptyList()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 bufferProvider);
     }

@@ -29,7 +29,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.MongoServerSelectionFailureException;
+import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
@@ -212,7 +212,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             try {
                 MongoClient client = MongoClients.create(getPrimary(), Arrays.asList(credential), MongoClientOptions.builder().build());
                 client.getDatabase("test").getCollection("test").find().getOne();
-            } catch (MongoServerSelectionFailureException e) {
+            } catch (MongoSecurityException e) {
                 // all good.  using this style to make sure that it's not the addUser call that is throwing.  of course, could move
                 // the addUser to setUp, but that would require its own test class.
             }
