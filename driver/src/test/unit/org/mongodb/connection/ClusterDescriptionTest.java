@@ -25,6 +25,7 @@ import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -70,6 +71,44 @@ public class ClusterDescriptionTest {
                 ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(StandAlone).build()),
                 Discovering);
         assertEquals(ClusterType.Mixed, description.getType());
+
+        description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(StandAlone).setName("test2")
+                        .build(),
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(StandAlone).build()),
+                Discovering, "test1");
+        assertEquals(ClusterType.Mixed, description.getType());
+
+        description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
+                        .build(),
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).setName("t2")
+                        .build()),
+                Discovering);
+        assertEquals(ClusterType.Mixed, description.getType());
+    }
+
+    @Test
+    public void testReplicaSetName() {
+        ClusterDescription description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
+                        .build()),
+                Discovering);
+        assertEquals("t1", description.getReplicaSetName());
+
+        description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
+                        .build()),
+                Discovering, "t2");
+        assertNull(description.getReplicaSetName());
+
+        description = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
+                        .build(),
+                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).setName("t2")
+                        .build()),
+                Discovering);
+        assertNull(description.getReplicaSetName());
     }
 
 

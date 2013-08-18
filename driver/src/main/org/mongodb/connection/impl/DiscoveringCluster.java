@@ -19,6 +19,8 @@ package org.mongodb.connection.impl;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.MongoServerNotFoundException;
@@ -33,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.Unknown;
@@ -41,17 +44,20 @@ import static org.mongodb.connection.ClusterType.Unknown;
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
 final class DiscoveringCluster extends BaseCluster {
+    private String requiredReplicaSetName;
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
-    public DiscoveringCluster(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
+    public DiscoveringCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
+        notNull("settings", settings);
+        isTrue("mode is discovering", settings.getMode() == ClusterMode.Discovering);
+        requiredReplicaSetName = settings.getRequiredReplicaSetName();
 
-        notNull("seedList", seedList);
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            for (ServerAddress serverAddress : seedList) {
+            for (ServerAddress serverAddress : settings.getSeedList()) {
                 addServer(serverAddress);
             }
             updateDescription();
@@ -140,7 +146,7 @@ final class DiscoveringCluster extends BaseCluster {
 
     private void updateDescription() {
         final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(newServerDescriptionList, Discovering));
+        updateDescription(new ClusterDescription(newServerDescriptionList, Discovering, requiredReplicaSetName));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

@@ -18,10 +18,9 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterFactory;
+import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
-import org.mongodb.connection.ServerAddress;
-
-import java.util.List;
 
 /**
  * The default factory for cluster implementations.
@@ -34,12 +33,15 @@ public final class DefaultClusterFactory implements ClusterFactory {
     }
 
     @Override
-    public Cluster create(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
-        return new DirectCluster(serverAddress, serverFactory);
-    }
-
-    @Override
-    public Cluster create(final List<ServerAddress> seedList, final ClusterableServerFactory serverFactory) {
-        return new DiscoveringCluster(seedList, serverFactory);
+    public Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+        if (settings.getMode() == ClusterMode.Direct) {
+            return new DirectCluster(settings, serverFactory);
+        }
+        else if (settings.getMode() == ClusterMode.Discovering) {
+            return new DiscoveringCluster(settings, serverFactory);
+        }
+        else {
+            throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
+        }
     }
 }

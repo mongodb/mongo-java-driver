@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -76,6 +77,19 @@ public class MongoConstructorsTest {
         } finally {
             mongo.close();
         }
+    }
+
+    @Test
+    public void shouldAllowRequiredReplicaSetNameForSingleServerConstructors() throws UnknownHostException {
+        Mongo mongo = new MongoClient("localhost", MongoClientOptions.builder().requiredReplicaSetName("test").build());
+        mongo.close();
+
+        mongo = new MongoClient(new ServerAddress(), Collections.<MongoCredential>emptyList(),
+                MongoClientOptions.builder().requiredReplicaSetName("test").build());
+        mongo.close();
+
+        mongo = new MongoClient(new MongoClientURI("mongodb://localhost/?setName=test"));
+        mongo.close();
     }
 
     @Test

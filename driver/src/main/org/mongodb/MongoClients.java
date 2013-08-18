@@ -16,15 +16,10 @@
 
 package org.mongodb;
 
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
@@ -36,9 +31,16 @@ import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
-import org.mongodb.connection.impl.ServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
+import org.mongodb.connection.impl.ServerSettings;
 
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
 public final class MongoClients {
@@ -56,8 +58,10 @@ public final class MongoClients {
 
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DefaultClusterFactory().create(serverAddress, getClusterableServerFactory(credentialList,
-                options)));
+        return new MongoClientImpl(options, new DefaultClusterFactory().create(
+                ClusterSettings.builder().mode(ClusterMode.Direct).seedList(Arrays.asList(serverAddress))
+                        .requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
+                getClusterableServerFactory(credentialList, options)));
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -65,7 +69,8 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, new DefaultClusterFactory().create(seedList,
+        return new MongoClientImpl(options, new DefaultClusterFactory().create(
+                ClusterSettings.builder().seedList(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                 getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
     }
 
@@ -75,7 +80,12 @@ public final class MongoClients {
 
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, new DefaultClusterFactory().create(new ServerAddress(mongoURI.getHosts().get(0)),
+            return new MongoClientImpl(options, new DefaultClusterFactory().create(
+                    ClusterSettings.builder()
+                            .mode(ClusterMode.Direct)
+                            .seedList(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
+                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                            .build(),
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
         else {
@@ -83,7 +93,8 @@ public final class MongoClients {
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options, new DefaultClusterFactory().create(seedList,
+            return new MongoClientImpl(options, new DefaultClusterFactory().create(
+                    ClusterSettings.builder().seedList(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
     }

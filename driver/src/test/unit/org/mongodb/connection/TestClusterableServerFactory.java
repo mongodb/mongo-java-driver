@@ -19,14 +19,11 @@ package org.mongodb.connection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mongodb.assertions.Assertions.isTrue;
-
 public class TestClusterableServerFactory implements ClusterableServerFactory {
     private Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        isTrue("not created yet", addressToServerMap.get(serverAddress) == null);
         addressToServerMap.put(serverAddress, new TestServer(serverAddress));
         return addressToServerMap.get(serverAddress);
     }

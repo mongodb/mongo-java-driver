@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ClusterType.Mixed;
 import static org.mongodb.connection.ClusterType.StandAlone;
 import static org.mongodb.connection.ClusterType.Unknown;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
@@ -42,12 +43,19 @@ public class ClusterDescription {
     private final Set<ServerDescription> all;
 
     private final ClusterConnectionMode mode;
+    private final String requiredReplicaSetName;
 
     public ClusterDescription(final ClusterConnectionMode mode) {
         this(Collections.<ServerDescription>emptyList(), mode);
     }
 
     public ClusterDescription(final List<ServerDescription> serverDescriptions, final ClusterConnectionMode mode) {
+        this(serverDescriptions, mode, null);
+    }
+
+    public ClusterDescription(final List<ServerDescription> serverDescriptions, final ClusterConnectionMode mode,
+                              final String requiredReplicaSetName) {
+        this.requiredReplicaSetName = requiredReplicaSetName;
         notNull("all", serverDescriptions);
         this.mode = notNull("mode", mode);
         Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>(new Comparator<ServerDescription>() {
@@ -64,20 +72,51 @@ public class ClusterDescription {
         return mode;
     }
 
+    /**
+     * Returns the replica set name, or null if this is not a replica set cluster or if the cluster has no known name.
+     *
+     * @return the replica set name
+     */
+    public String getReplicaSetName() {
+        if (getType() == Mixed) {
+            return null;
+        }
+        if (requiredReplicaSetName != null) {
+            return requiredReplicaSetName;
+        }
+
+        for (ServerDescription description : all) {
+            if (description.getSetName() != null) {
+                return description.getSetName();
+            }
+        }
+        return null;
+    }
+
     public ClusterType getType() {
         ClusterType type = ClusterType.Unknown;
+        String setName = requiredReplicaSetName;
         for (ServerDescription description : all) {
             if (description.getType() == ServerType.Unknown) {
                 continue;
             }
 
             if (type != Unknown && type != description.getClusterType()) {
-                return ClusterType.Mixed;
+                return Mixed;
             }
 
             // Two standalones in the same cluster is a no-no
             if (type == StandAlone && description.getType() == ServerType.StandAlone) {
-                return ClusterType.Mixed;
+                return Mixed;
+            }
+
+            if (description.getSetName() != null) {
+                if (setName == null) {
+                    setName = description.getSetName();
+                }
+                else if (!setName.equals(description.getSetName())) {
+                   return Mixed;
+                }
             }
 
             type = description.getClusterType();

@@ -17,17 +17,18 @@
 package org.mongodb.connection;
 
 /**
- * Factory for {@code Cluster} implementations.
+ * The cluster mode.
  *
  * @since 3.0
  */
-public interface ClusterFactory {
+public enum ClusterMode {
     /**
-     * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
-     *
-     * @param settings the settings
-     * @param serverFactory the server factory that the cluster implementation should use to create instances of {@code ClusterableServer}.
-     * @return the cluster
+     * Connect directly to a server, regardless of the type of cluster it is a part of.
      */
-     Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory);
+    Direct,
+
+    /**
+     * Dynamically discovers what type of cluster to talk to.
+     */
+    Discovering
 }

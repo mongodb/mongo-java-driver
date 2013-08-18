@@ -19,6 +19,8 @@ package org.mongodb.connection.impl;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
@@ -27,7 +29,6 @@ import org.mongodb.connection.ServerDescription;
 import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Direct;
 
 /**
@@ -36,14 +37,14 @@ import static org.mongodb.connection.ClusterConnectionMode.Direct;
 final class DirectCluster extends BaseCluster {
     private final ClusterableServer server;
 
-    public DirectCluster(final ServerAddress serverAddress, final ClusterableServerFactory serverFactory) {
+    public DirectCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
-        notNull("serverAddress", serverAddress);
-
+        isTrue("one server in a direct cluster", settings.getSeedList().size() == 1);
+        isTrue("mode is direct", settings.getMode() == ClusterMode.Direct);
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            this.server = createServer(serverAddress, new ChangeListener<ServerDescription>() {
+            this.server = createServer(settings.getSeedList().get(0), new ChangeListener<ServerDescription>() {
                 @Override
                 public void stateChanged(final ChangeEvent<ServerDescription> event) {
                     ClusterDescription oldDescription = getDescriptionNoWaiting();

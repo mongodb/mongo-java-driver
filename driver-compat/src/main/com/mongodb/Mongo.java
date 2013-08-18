@@ -25,6 +25,8 @@ import org.mongodb.command.ListDatabases;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerDescription;
@@ -649,7 +651,8 @@ public class Mongo {
                     credentialList,
                     mongoURI.getOptions()
             );
-        } else {
+        }
+        else {
             final List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
             for (final String host : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(host));
@@ -665,15 +668,20 @@ public class Mongo {
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return new DefaultClusterFactory().create(
-                createNewSeedList(seedList),
-                createClusterableServerFactory(credentialsList, options)
-        );
+                ClusterSettings.builder().seedList(createNewSeedList(seedList))
+                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                        .build(),
+                createClusterableServerFactory(credentialsList, options));
     }
 
-    private static Cluster createCluster(final ServerAddress serverAddress,
-                                         final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+    private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
+                                         final MongoClientOptions options) {
         return new DefaultClusterFactory().create(
-                serverAddress.toNew(),
+                ClusterSettings.builder()
+                        .mode(getSingleServerClusterMode(options.toNew()))
+                        .seedList(Arrays.asList(serverAddress.toNew()))
+                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                        .build(),
                 createClusterableServerFactory(credentialsList, options)
         );
     }
@@ -774,6 +782,15 @@ public class Mongo {
                 pinnedSession.remove();
                 currentlyBound.session.close();
             }
+        }
+    }
+
+    private static ClusterMode getSingleServerClusterMode(final org.mongodb.MongoClientOptions options) {
+        if (options.getRequiredReplicaSetName() == null) {
+            return ClusterMode.Direct;
+        }
+        else {
+            return ClusterMode.Discovering;
         }
     }
 

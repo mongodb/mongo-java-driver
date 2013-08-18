@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -99,7 +101,7 @@ class MongoClientURISpecification extends Specification {
         options.isAutoConnectRetry();
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
         options.getReadPreference() == ReadPreference.secondaryPreferred();
-        options.getRequiredReplicaSetName() == "test"
+        options.getRequiredReplicaSetName() == 'test'
 
         where:
         options <<
