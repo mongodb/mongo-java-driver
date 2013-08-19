@@ -27,7 +27,6 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
@@ -41,6 +40,7 @@ import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.Session;
 
+import javax.net.SocketFactory;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -220,19 +220,17 @@ public class Mongo {
      * It will find all members (the master will be used by default). If you pass in a single server in the list,
      * the driver will still function as if it is a replica set. If you have a standalone server,
      * use the Mongo(ServerAddress) constructor.
-     * <p>
+     * <p/>
      * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
      * and automatically fail over to the next server if the closest is down.
      *
-     * @see com.mongodb.ServerAddress
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
+     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can
+     *                either be a list of mongod servers in the same replica set or a list of mongos servers in the same
+     *                sharded cluster.
      * @param options for configuring this Mongo instance
      * @throws MongoException
-     *
+     * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
-     *
      */
     @Deprecated
     public Mongo(final List<ServerAddress> seeds, @SuppressWarnings("deprecation") final MongoOptions options) {
@@ -261,34 +259,38 @@ public class Mongo {
         this(uri.toClientURI());
     }
 
-    Mongo(final List<ServerAddress> seedList, final MongoClientOptions mongoOptions) {
-        this(new DefaultClusterFactory().create(
-                createNewSeedList(seedList), createClusterableServerFactory(mongoOptions.toNew())
-        ), mongoOptions, Collections.<MongoCredential>emptyList());
-    }
-
-    Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
-        this(createCluster(mongoURI.toNew()), mongoURI.getOptions(), Collections.<MongoCredential>emptyList());
+    Mongo(final List<ServerAddress> seedList, final MongoClientOptions options) {
+        this(seedList, Collections.<MongoCredential>emptyList(), options);
     }
 
     Mongo(final ServerAddress serverAddress, final MongoClientOptions options) {
-        this(new DefaultClusterFactory().create(
-                serverAddress.toNew(), createClusterableServerFactory(options.toNew())
-        ), options, Collections.<MongoCredential>emptyList());
+        this(serverAddress, Collections.<MongoCredential>emptyList(), options);
     }
 
-    Mongo(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultClusterFactory().create(
-                addr.toNew(),
-                createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())
-        ), options, credentialsList);
+    Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        this(
+                createCluster(serverAddress, credentialsList, options),
+                options,
+                credentialsList
+        );
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(new DefaultClusterFactory().create(
-                createNewSeedList(seedList),
-                createClusterableServerFactory(createNewCredentialList(credentialsList), options.toNew())
-        ), options, credentialsList);
+        this(
+                createCluster(seedList, credentialsList, options),
+                options,
+                credentialsList
+        );
+    }
+
+    Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
+        this(
+                createCluster(mongoURI),
+                mongoURI.getOptions(),
+                mongoURI.getCredentials() != null
+                        ? Arrays.asList(mongoURI.getCredentials())
+                        : Collections.<MongoCredential>emptyList()
+        );
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
@@ -587,9 +589,7 @@ public class Mongo {
     public boolean isLocked() {
         final DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");
         final BasicDBObject result = (BasicDBObject) inprogCollection.findOne();
-        return result.containsField("fsyncLock")
-                ? result.getInt("fsyncLock") == 1
-                : false;
+        return result.containsField("fsyncLock") && result.getInt("fsyncLock") == 1;
     }
 
     @Override
@@ -624,18 +624,8 @@ public class Mongo {
 
     private static MongoClientOptions createLegacyOptions() {
         return MongoClientOptions.builder()
-                .writeConcern(WriteConcern.UNACKNOWLEDGED)
-                .connectionsPerHost(10)
+                .legacyDefaults()
                 .build();
-    }
-
-
-    private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
-        for (final ServerAddress cur : seedList) {
-            retVal.add(cur.toNew());
-        }
-        return retVal;
     }
 
     private static List<org.mongodb.MongoCredential> createNewCredentialList(final List<MongoCredential> credentialsList) {
@@ -649,34 +639,55 @@ public class Mongo {
         return retVal;
     }
 
-    private static Cluster createCluster(final org.mongodb.MongoClientURI mongoURI) throws UnknownHostException {
+    private static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
+
+        final List<MongoCredential> credentialList = mongoURI.getCredentials() != null
+                ? Arrays.asList(mongoURI.getCredentials())
+                : null;
+
         if (mongoURI.getHosts().size() == 1) {
-            return new DefaultClusterFactory().create(new org.mongodb.connection.ServerAddress(mongoURI.getHosts().get(0)),
-                    createClusterableServerFactory(mongoURI.getCredentialList(), mongoURI.getOptions()));
+            return createCluster(
+                    new ServerAddress(mongoURI.getHosts().get(0)),
+                    credentialList,
+                    mongoURI.getOptions()
+            );
         } else {
-            final List<org.mongodb.connection.ServerAddress> seedList = new ArrayList<org.mongodb.connection.ServerAddress>();
-            for (final String cur : mongoURI.getHosts()) {
-                seedList.add(new org.mongodb.connection.ServerAddress(cur));
+            final List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
+            for (final String host : mongoURI.getHosts()) {
+                seedList.add(new ServerAddress(host));
             }
-            return new DefaultClusterFactory().create(seedList, createClusterableServerFactory(mongoURI.getCredentialList(),
-                    mongoURI.getOptions()));
+            return createCluster(
+                    seedList,
+                    credentialList,
+                    mongoURI.getOptions()
+            );
         }
     }
 
-    private static ClusterableServerFactory createClusterableServerFactory(final org.mongodb.MongoClientOptions options) {
-        return createClusterableServerFactory(Collections.<org.mongodb.MongoCredential>emptyList(), options);
+    private static Cluster createCluster(final List<ServerAddress> seedList,
+                                         final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        return new DefaultClusterFactory().create(
+                createNewSeedList(seedList),
+                createClusterableServerFactory(credentialsList, options)
+        );
     }
 
-    private static ClusterableServerFactory createClusterableServerFactory(final List<org.mongodb.MongoCredential> credentialList,
-                                                                           final org.mongodb.MongoClientOptions options) {
-        //TODO: Passing MongoClientOptions.socketFactory to DefaultConnectionFactory constructors
+    private static Cluster createCluster(final ServerAddress serverAddress,
+                                         final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+        return new DefaultClusterFactory().create(
+                serverAddress.toNew(),
+                createClusterableServerFactory(credentialsList, options)
+        );
+    }
+
+    private static ClusterableServerFactory createClusterableServerFactory(final List<MongoCredential> credentialList,
+                                                                           final MongoClientOptions options) {
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
-        final SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 
         final DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
-                .minSize(options.getMinConnectionPoolSize())
-                .maxSize(options.getMaxConnectionPoolSize())
-                .maxWaitQueueSize(options.getMaxConnectionPoolSize() * options.getThreadsAllowedToBlockForConnectionMultiplier())
+                .minSize(options.getMinConnectionsPerHost())
+                .maxSize(options.getConnectionsPerHost())
+                .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                 .maxWaitTime(options.getMaxWaitTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionIdleTime(options.getMaxConnectionIdleTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionLifeTime(options.getMaxConnectionLifeTime(), TimeUnit.MILLISECONDS)
@@ -686,8 +697,13 @@ public class Mongo {
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
                 .build();
-        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(connectionSettings, sslSettings, bufferProvider,
-                credentialList);
+
+        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(
+                connectionSettings,
+                options.getSocketFactory(),
+                bufferProvider,
+                createNewCredentialList(credentialList)
+        );
 
         return new DefaultClusterableServerFactory(
                 DefaultServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
@@ -700,9 +716,17 @@ public class Mongo {
                                 .readTimeoutMS(options.getHeartbeatSocketTimeout())
                                 .keepAlive(options.isSocketKeepAlive())
                                 .build(),
-                        sslSettings, bufferProvider, Collections.<org.mongodb.MongoCredential>emptyList()),
+                        options.getSocketFactory(), bufferProvider, Collections.<org.mongodb.MongoCredential>emptyList()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 bufferProvider);
+    }
+
+    private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
+        final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
+        for (final ServerAddress cur : seedList) {
+            retVal.add(cur.toNew());
+        }
+        return retVal;
     }
 
     Cluster getCluster() {
@@ -765,7 +789,6 @@ public class Mongo {
          * @return the client
          * @throws MongoException
          * @throws UnknownHostException
-         *
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
         @Deprecated

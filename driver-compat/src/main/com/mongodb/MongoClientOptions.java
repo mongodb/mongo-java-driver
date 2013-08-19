@@ -19,6 +19,7 @@ package com.mongodb;
 import org.mongodb.annotations.Immutable;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Various settings to control the behavior of a <code>MongoClient</code>.
@@ -43,7 +44,7 @@ public class MongoClientOptions {
 
         this.dbDecoderFactory = DefaultDBDecoder.FACTORY;
         this.dbEncoderFactory = DefaultDBEncoder.FACTORY;
-        this.socketFactory = SocketFactory.getDefault();
+        this.socketFactory = proxied.isSSLEnabled() ? SSLSocketFactory.getDefault() : SocketFactory.getDefault();
         this.cursorFinalizerEnabled = true;
     }
 
