@@ -50,7 +50,7 @@ import java.util.List;
  * you want access without having to load the entire file into memory.
  * For more information on the indications of GridFS, see MongoDB official documentation.
  *
- * @mongodb.driver.manual applications/gridfs GridFS
+ * @mongodb.driver.manual core/gridfs/ GridFS
  */
 @SuppressWarnings("rawtypes")
 public class GridFS {
@@ -178,7 +178,7 @@ public class GridFS {
      * Finds one file matching the given filename.
      *
      * @param filename the name of the file stored on a server
-     * @return
+     * @return the gridfs db file
      * @throws com.mongodb.MongoException
      */
     public GridFSDBFile findOne(final String filename) {
@@ -379,7 +379,7 @@ public class GridFS {
      *
      * @param filename the file name as stored in the db
      * @return a gridfs input file
-     * @see {@link GridFS#createFile()} on how to use this method
+     * @see GridFS#createFile()
      */
     public GridFSInputFile createFile(final String filename) {
         return new GridFSInputFile(this, filename);

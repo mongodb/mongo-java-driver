@@ -48,7 +48,6 @@ public class JSON {
      *
      * @param o   object to serialize
      * @param buf StringBuilder containing the JSON representation under construction
-     * @return String containing JSON form of the object
      * @see com.mongodb.util.JSONSerializers#getLegacy()
      */
     public static void serialize(Object o, StringBuilder buf) {

@@ -36,7 +36,7 @@ import java.util.Map;
  * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li>
  * </ul>
  *
- *  @mongodb.driver.manual core/write-operations/#write-concern Write Concern
+ *  @mongodb.driver.manual core/write-concern/ Write Concern
  */
 @Immutable
 public class WriteConcern implements Serializable {
@@ -389,8 +389,8 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the WriteConcern constants by name (matching is done case insensitively).
      *
-     * @param name
-     * @return
+     * @param name the name of the {@link WriteConcern}
+     * @return the {@code WriteConcern instance}
      */
     public static WriteConcern valueOf(final String name) {
         return _namedConcerns.get(name.toLowerCase());
@@ -427,7 +427,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the j parameter (journal syncing)
      *
-     * @return
+     * @return true if j is set
      */
     public boolean getJ() {
         return proxied.getJ();
@@ -436,7 +436,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the "continue inserts on error" mode
      *
-     * @return
+     * @return true if set to continue on error
      */
     public boolean getContinueOnErrorForInsert() {
         return proxied.getContinueOnErrorForInsert();

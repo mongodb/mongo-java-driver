@@ -73,9 +73,9 @@ public class MapReduceOutput {
     }
 
     /**
-     * returns a cursor to the results of the operation
+     * Returns a cursor to the results of the operation.
      *
-     * @return
+     * @return the results in iterable form
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
@@ -96,9 +96,9 @@ public class MapReduceOutput {
     }
 
     /**
-     * Gets the collection that holds the results (Will return null if results are Inline)
+     * Gets the collection that holds the results (Will return null if results are Inline).
      *
-     * @return
+     * @return the collection or null
      */
     public DBCollection getOutputCollection() {
         return collection;

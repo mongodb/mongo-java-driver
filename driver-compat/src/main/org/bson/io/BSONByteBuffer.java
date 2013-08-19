@@ -88,12 +88,18 @@ public class BSONByteBuffer {
      * Gets a Little Endian Integer
      *
      * @param i Index to read from
-     * @return
+     * @return the integer value
      */
     public int getInt(final int i) {
         return getIntLE(i);
     }
 
+    /**
+     * Gets a Little Endian Integer
+     *
+     * @param i index to read from
+     * @return the integer value
+     */
     public int getIntLE(final int i) {
         int x = 0;
         x |= (0xFF & buf.get(i + 0)) << 0;
@@ -103,6 +109,12 @@ public class BSONByteBuffer {
         return x;
     }
 
+    /**
+     * Gets a Big Endian Integer
+     *
+     * @param i index to read from
+     * @return the integer value
+     */
     public int getIntBE(final int i) {
         int x = 0;
         x |= (0xFF & buf.get(i + 0)) << 24;
@@ -112,6 +124,12 @@ public class BSONByteBuffer {
         return x;
     }
 
+    /**
+     * Gets a Long
+     *
+     * @param i index to read from
+     * @return the long value
+     */
     public long getLong(final int i) {
         return buf.getLong(i);
     }

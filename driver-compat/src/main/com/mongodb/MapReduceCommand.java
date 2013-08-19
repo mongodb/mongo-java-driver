@@ -308,7 +308,7 @@ public class MapReduceCommand {
     /**
      * Gets the read preference
      *
-     * @return
+     * @return the readPreference
      */
     public ReadPreference getReadPreference() {
         return readPreference;

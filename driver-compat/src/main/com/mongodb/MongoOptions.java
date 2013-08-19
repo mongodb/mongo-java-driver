@@ -40,7 +40,7 @@ public class MongoOptions {
      * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
      * Default is 10.
      *
-     * @see {@linkplain MongoOptions#threadsAllowedToBlockForConnectionMultiplier}</p>
+     * @see MongoOptions#threadsAllowedToBlockForConnectionMultiplier
      */
     public int connectionsPerHost;
 

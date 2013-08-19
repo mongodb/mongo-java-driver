@@ -39,36 +39,34 @@ public interface IDBCollection {
     WriteResult insert(List<DBObject> list, WriteConcern concern);
 
     /**
-     * Saves document(s) to the database. if doc doesn't have an _id, one will be added you can get the _id that was
-     * added from doc after the insert
+     * Insert documents into a collection.
+     * If the collection does not exists on the server, then it will be created.
+     * If the new document does not contain an '_id' field, it will be added.
      *
-     * @param list    list of documents to save
-     * @param concern the write concern
-     * @return
-     * @throws com.mongodb.MongoException
-     * @mongodb.driver.manual applications/create/#insert insert
+     * @param documents     a list of {@code DBObject}'s to be inserted
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
+     * @param dbEncoder     {@code DBEncoder} to be used
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
      */
-    WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
+    WriteResult insert(List<DBObject> documents, WriteConcern aWriteConcern, DBEncoder dbEncoder);
 
     WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi, WriteConcern concern);
 
     /**
-     * Performs an update operation.
+     * Modify an existing document or documents in collection.
+     * By default the method updates a single document.
+     * The query parameter employs the same query selectors, as used in {@code find()}.
      *
-     * @param q       search query for old object to update
-     * @param o       object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object
-     *                will not be inserted if it does not exist in the collection and upsert=true and multi=true. See <a
-     *                href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb
-     *                .org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @param encoder the DBEncoder to use
-     * @return
-     * @throws com.mongodb.MongoException
-     * @mongodb.driver.manual applications/update update
+     * @param query         the selection criteria for the update
+     * @param update        the modifications to apply
+     * @param upsert        insert a document if no document matches the update query criteria
+     * @param multi         update all documents in the collection that match the update query criteria
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
+     * @param encoder       {@code DBEncoder} to be used
+     * @return the result of the operation
      */
-    WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder);
+    WriteResult update(DBObject query, DBObject update, boolean upsert, boolean multi, WriteConcern aWriteConcern, DBEncoder encoder);
 
     WriteResult update(DBObject q, DBObject o, boolean upsert, boolean multi);
 
@@ -79,18 +77,23 @@ public interface IDBCollection {
     WriteResult remove(DBObject o, WriteConcern concern);
 
     /**
-     * Removes objects from the database collection.
+     * Remove documents from a collection.
      *
-     * @param o       the object that documents to be removed must match
-     * @param concern WriteConcern for this operation
-     * @param encoder the DBEncoder to use
-     * @return
-     * @throws com.mongodb.MongoException
-     * @mongodb.driver.manual reference/method/db.collection.remove remove
+     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all
+     *                     documents in the collection.
+     * @param aWriteConcern {@code WriteConcern} to be used during operation
+     * @param encoder      {@code DBEncoder} to be used
+     * @return the result of the operation
      */
-    WriteResult remove(DBObject o, WriteConcern concern, DBEncoder encoder);
+    WriteResult remove(DBObject query, WriteConcern aWriteConcern, DBEncoder encoder);
 
-    WriteResult remove(DBObject o);
+    /**
+     * Remove documents from a collection.
+     *
+     * @param query he deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @return the result of the operation
+     */
+    WriteResult remove(DBObject query);
 
     @Deprecated
     DBCursor find(DBObject query, DBObject fields, int numToSkip, int batchSize, int options);

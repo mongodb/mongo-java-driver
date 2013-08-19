@@ -246,7 +246,7 @@ public class Mongo {
      * @param uri
      * @throws MongoException
      * @throws UnknownHostException
-     * @dochub connections
+     * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @see MongoURI
      *      <p>examples:
      *      <li>mongodb://localhost</li>

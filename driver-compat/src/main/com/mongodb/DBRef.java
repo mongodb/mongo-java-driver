@@ -27,7 +27,7 @@ import org.bson.BSONObject;
  */
 public class DBRef extends DBRefBase {
     /**
-     * Creates a DBRef
+     * Creates a DBRef.
      *
      * @param db the database
      * @param o  a BSON object representing the reference
@@ -37,7 +37,7 @@ public class DBRef extends DBRefBase {
     }
 
     /**
-     * Creates a DBRef
+     * Creates a DBRef.
      *
      * @param db the database
      * @param ns the namespace where the object is stored
@@ -48,11 +48,11 @@ public class DBRef extends DBRefBase {
     }
 
     /**
-     * fetches a referenced object from the database
+     * Fetches a referenced object from the database.
      *
      * @param db  the database
      * @param ref the reference
-     * @return
+     * @return the document fetched
      * @throws MongoException
      */
     public static DBObject fetch(final DB db, final DBObject ref) {

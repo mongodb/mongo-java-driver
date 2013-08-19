@@ -37,9 +37,9 @@ public class QueryBuilder {
     }
 
     /**
-     * returns a new QueryBuilder
+     * Returns a new QueryBuilder.
      *
-     * @return
+     * @return a builder
      */
     public static QueryBuilder start() {
         return new QueryBuilder();
@@ -241,7 +241,7 @@ public class QueryBuilder {
      * @param x      x coordinate
      * @param y      y coordinate
      * @param radius radius
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder withinCenter(final double x, final double y, final double radius) {
         addOperand(QueryOperators.WITHIN,
@@ -254,7 +254,7 @@ public class QueryBuilder {
      *
      * @param x x coordinate
      * @param y y coordinate
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y) {
         addOperand(QueryOperators.NEAR,
@@ -268,7 +268,7 @@ public class QueryBuilder {
      * @param x           x coordinate
      * @param y           y coordinate
      * @param maxDistance max distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance) {
         addOperand(QueryOperators.NEAR,
@@ -281,7 +281,7 @@ public class QueryBuilder {
      *
      * @param longitude coordinate in decimal degrees
      * @param latitude  coordinate in decimal degrees
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude) {
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -295,7 +295,7 @@ public class QueryBuilder {
      * @param longitude   coordinate in decimal degrees
      * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -309,7 +309,7 @@ public class QueryBuilder {
      * @param longitude   coordinate in decimal degrees
      * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder withinCenterSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.WITHIN,
@@ -325,7 +325,7 @@ public class QueryBuilder {
      * @param y  the y coordinate of the first box corner.
      * @param x2 the x coordinate of the second box corner.
      * @param y2 the y coordinate of the second box corner.
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
@@ -337,7 +337,7 @@ public class QueryBuilder {
      * Equivalent to a $within operand, based on a bounding polygon represented by an array of points
      *
      * @param points an array of Double[] defining the vertices of the search area
-     * @return this
+     * @return {@code this}
      */
     public QueryBuilder withinPolygon(final List<Double[]> points) {
         if (points == null || points.isEmpty() || points.size() < 3) {

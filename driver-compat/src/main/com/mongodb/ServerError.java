@@ -64,27 +64,27 @@ public class ServerError {
     }
 
     /**
-     * Gets the error String
+     * Gets the error String.
      *
-     * @return
+     * @return the error string
      */
     public String getError() {
         return _err;
     }
 
     /**
-     * Gets the error code
+     * Gets the error code.
      *
-     * @return
+     * @return the error code
      */
     public int getCode() {
         return _code;
     }
 
     /**
-     * returns true if the error is "not master", which usually happens when doing operation on slave
+     * Returns true if the error is "not master", which usually happens when doing operation on slave.
      *
-     * @return
+     * @return {@code true} if the error is "not master", {@code false} otherwise
      */
     public boolean isNotMasterError() {
         switch (_code) {

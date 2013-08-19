@@ -135,7 +135,7 @@ public class MongoURI {
      * Creates a MongoURI from a string.
      *
      * @param uri the URI
-     * @dochub connections
+     * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @deprecated Replaced by {@link MongoClientURI#MongoClientURI(String)}
      */
     @Deprecated

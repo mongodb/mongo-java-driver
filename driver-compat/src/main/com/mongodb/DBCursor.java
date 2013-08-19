@@ -150,10 +150,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * adds a query option - see Bytes.QUERYOPTION_* for list
+     * Adds a query option - see Bytes.QUERYOPTION_* for list.
      *
-     * @param option
-     * @return
+     * @param option the option to be added
+     * @return {@code this}
      */
     public DBCursor addOption(final int option) {
         find.addFlags(QueryFlag.toSet(option));
@@ -161,9 +161,10 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * sets the query option - see Bytes.QUERYOPTION_* for list
+     * Sets the query option - see Bytes.QUERYOPTION_* for list.
      *
-     * @param options
+     * @param options the bitmask of options
+     * @return {@code this}
      */
     public DBCursor setOptions(final int options) {
         find.flags(QueryFlag.toSet(options));
@@ -171,7 +172,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * resets the query options
+     * Resets the query options.
+     *
+     * @return {@code this}
      */
     public DBCursor resetOptions() {
         find.flags(QueryFlag.toSet(collection.getOptions()));
@@ -179,9 +182,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * gets the query options
+     * Gets the query options.
      *
-     * @return
+     * @return the bitmask of options
      */
     public int getOptions() {
         return QueryFlag.fromSet(find.getOptions().getFlags());
@@ -305,7 +308,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * batch retrieval.
      *
      * @param n the number of elements to return in a batch
-     * @return
+     * @return {@code this}
      */
     public DBCursor batchSize(final int n) {
         find.getOptions().batchSize(n);
@@ -479,9 +482,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * gets the fields to be returned
+     * Gets the fields to be returned.
      *
-     * @return
+     * @return the field selector that cursor used
      */
     public DBObject getKeysWanted() {
         if (find.getFields() == null) {
@@ -491,18 +494,18 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * gets the query
+     * Gets the query.
      *
-     * @return
+     * @return the query that cursor used
      */
     public DBObject getQuery() {
         return DBObjects.toDBObject(find.getFilter());
     }
 
     /**
-     * gets the collection
+     * Gets the collection.
      *
-     * @return
+     * @return the collection that data is pulled from
      */
     public DBCollection getCollection() {
         return collection;
@@ -512,7 +515,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * Gets the Server Address of the server that data is pulled from. Note that this information may not be available
      * until hasNext() or next() is called.
      *
-     * @return
+     * @return the address of the server that data is pulled from
      */
     public ServerAddress getServerAddress() {
         if (cursor != null) {
@@ -534,9 +537,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     }
 
     /**
-     * Gets the default read preference
+     * Gets the default read preference.
      *
-     * @return
+     * @return the readPreference used by this cursor
      */
     public ReadPreference getReadPreference() {
         return ReadPreference.fromNew(find.getReadPreference());

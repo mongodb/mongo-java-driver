@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * A class that represents preferred replica set members to which a query or command can be sent.
  *
- * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
+ * @mongodb.driver.manual core/read-preference  Read Preference
  */
 @Immutable
 public class ReadPreference {
