@@ -24,6 +24,9 @@ import org.mongodb.Document;
 import org.mongodb.connection.impl.NativeAuthenticationHelper;
 import org.mongodb.operation.FindUserOperation;
 
+import java.net.UnknownHostException;
+import java.util.Arrays;
+
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
@@ -214,4 +217,32 @@ public class DBTest extends DatabaseTestCase {
                 true).execute());
     }
 
+    @Test
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+        DB db = m.getDB("com_mongodb_unittest_DBTest");
+
+        try {
+            db.requestStart();
+            try {
+                db.command(new BasicDBObject("ping", 1));
+                db.requestStart();
+                try {
+                    db.command(new BasicDBObject("ping", 1));
+                } finally {
+                    db.requestDone();
+                }
+            } finally {
+                db.requestDone();
+            }
+        } finally {
+            m.close();
+        }
+    }
+
+    @Test
+    public void whenRequestDoneIsCalledWithoutFirstCallingRequestStartNoExceptionIsThrown() throws UnknownHostException {
+        database.requestDone();
+    }
 }

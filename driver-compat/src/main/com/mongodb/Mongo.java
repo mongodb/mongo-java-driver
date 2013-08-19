@@ -52,7 +52,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoExceptions.mapException;
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Discovering;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
@@ -75,7 +74,7 @@ public class Mongo {
     private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
+    private final ThreadLocal<SessionHolder> pinnedSession = new ThreadLocal<SessionHolder>();
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -742,7 +741,7 @@ public class Mongo {
 
     Session getSession() {
         if (pinnedSession.get() != null) {
-            return pinnedSession.get();
+            return pinnedSession.get().session;
         }
         return new ClusterSession(getCluster());
     }
@@ -756,15 +755,26 @@ public class Mongo {
     }
 
     void pinSession() {
-        isTrue("request not already started", pinnedSession.get() == null);
-        pinnedSession.set(new PinnedSession(cluster));
+        SessionHolder currentlyBound = pinnedSession.get();
+        if (currentlyBound == null) {
+            pinnedSession.set(new SessionHolder(new PinnedSession(cluster)));
+        }
+        else {
+            currentlyBound.nestedBindings++;
+        }
     }
 
     void unpinSession() {
-        isTrue("request started", pinnedSession.get() != null);
-        final Session sessionToUnpin = this.pinnedSession.get();
-        this.pinnedSession.remove();
-        sessionToUnpin.close();
+        SessionHolder currentlyBound = pinnedSession.get();
+        if (currentlyBound != null) {
+            if (currentlyBound.nestedBindings > 0) {
+                currentlyBound.nestedBindings--;
+            }
+            else {
+                pinnedSession.remove();
+                currentlyBound.session.close();
+            }
+        }
     }
 
     /**
@@ -815,7 +825,8 @@ public class Mongo {
                 client = clients.putIfAbsent(key, newbie);
                 if (client == null) {
                     client = newbie;
-                } else {
+                }
+                else {
                     newbie.close();
                 }
             }
@@ -827,5 +838,14 @@ public class Mongo {
             return uri.toString();
         }
 
+    }
+
+    private static class SessionHolder {
+        final Session session;
+        int nestedBindings;
+
+        private SessionHolder(final Session session) {
+            this.session = session;
+        }
     }
 }
