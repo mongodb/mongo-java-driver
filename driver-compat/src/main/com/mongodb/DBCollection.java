@@ -40,6 +40,7 @@ import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.command.AggregateCommand;
 import org.mongodb.command.CollStats;
 import org.mongodb.command.Command;
 import org.mongodb.command.CountOperation;
@@ -1193,7 +1194,17 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
-        throw new UnsupportedOperationException("Not implemented yet."); //TODO: We need AggregationCommand to implement this.
+        final List<Document> pipeline = new ArrayList<Document>(additionalOps.length + 1);
+        pipeline.add(toDocument(firstOp));
+        for (DBObject op : additionalOps) {
+            pipeline.add(toDocument(op));
+        }
+
+        final AggregateCommand aggregateCommand = new AggregateCommand(getNamespace(), pipeline);
+        final org.mongodb.CommandResult commandResult = database.executeCommand(aggregateCommand);
+
+        //TODO: Fix it. We getting DBObjects in result due to explicit conversion in CommandResultConstructor
+        return new AggregationOutput(toDBObject(aggregateCommand.toDocument()), new CommandResult(commandResult));
     }
 
     /**

@@ -56,14 +56,6 @@ public class DBObjects {
         }
     }
 
-    public static Document[] toDocumentArray(final DBObject[] dbObjects) {
-        final Document[] res = new Document[dbObjects.length];
-        for (int i = 0; i < dbObjects.length; i++) {
-            res[i] = toDocument(dbObjects[i]);
-        }
-        return res;
-    }
-
     public static Document toFieldSelectorDocument(final DBObject fields) {
         if (fields == null) {
             return null;
@@ -84,13 +76,6 @@ public class DBObjects {
         }
 
         return toDocument(o);
-    }
-
-    public static CommandResult toCommandResult(final DBObject command, final ServerAddress serverAddress,
-                                                final Document document) {
-        final CommandResult res = new CommandResult(command, serverAddress);
-        fill(document, res);
-        return res;
     }
 
     public static BasicDBObject toDBObject(final Document document) {
