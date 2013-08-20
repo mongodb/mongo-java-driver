@@ -29,8 +29,7 @@ import java.util.List;
 
 public class BasicOutputBuffer extends OutputBuffer {
 
-    private int cur;
-    private int size;
+    private int position;
     private byte[] buffer = new byte[1024];
 
     @Override
@@ -41,16 +40,14 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public void write(final byte[] b, final int off, final int len) {
         ensure(len);
-        System.arraycopy(b, off, buffer, cur, len);
-        cur += len;
-        size = Math.max(cur, size);
+        System.arraycopy(b, off, buffer, position, len);
+        position += len;
     }
 
     @Override
     public void write(final int b) {
         ensure(1);
-        buffer[cur++] = (byte) (0xFF & b);
-        size = Math.max(cur, size);
+        buffer[position++] = (byte) (0xFF & b);
     }
 
     @Override
@@ -65,7 +62,7 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public int getPosition() {
-        return cur;
+        return position;
     }
 
     /**
@@ -73,30 +70,30 @@ public class BasicOutputBuffer extends OutputBuffer {
      */
     @Override
     public int size() {
-        return size;
+        return position;
     }
 
     @Override
     public int pipe(final OutputStream out) throws IOException {
-        out.write(buffer, 0, size);
-        return size;
+        out.write(buffer, 0, position);
+        return position;
     }
 
     @Override
     public void truncateToPosition(final int newPosition) {
-        if (newPosition > size || newPosition < 0) {
+        if (newPosition > position || newPosition < 0) {
             throw new IllegalArgumentException();
         }
-        size = newPosition;
+        position = newPosition;
     }
 
     @Override
     public List<ByteBuf> getByteBuffers() {
-        return Arrays.<ByteBuf>asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, size).duplicate()));
+        return Arrays.<ByteBuf>asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate()));
     }
 
     private void ensure(final int more) {
-        final int need = cur + more;
+        final int need = position + more;
         if (need < buffer.length) {
             return;
         }
@@ -107,12 +104,12 @@ public class BasicOutputBuffer extends OutputBuffer {
         }
 
         final byte[] n = new byte[newSize];
-        System.arraycopy(buffer, 0, n, 0, size);
+        System.arraycopy(buffer, 0, n, 0, position);
         buffer = n;
     }
 
     private void setPosition(final int position) {
-        cur = position;
+        this.position = position;
     }
 
     private void writeInt(final int pos, final int x) {
