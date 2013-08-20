@@ -28,6 +28,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -53,7 +55,7 @@ import static org.mongodb.connection.ServerType.ReplicaSetSecondary
 import static org.mongodb.connection.ServerType.ShardRouter
 import static org.mongodb.connection.ServerType.StandAlone
 
-class DiscoveringClusterSpecification extends Specification {
+class MultiServerClusterSpecification extends Specification {
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
     private final ServerAddress secondServer = new ServerAddress('localhost:27018')
     private final ServerAddress thirdServer = new ServerAddress('localhost:27019')

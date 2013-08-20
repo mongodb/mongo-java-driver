@@ -34,10 +34,10 @@ import static org.mongodb.connection.ClusterConnectionMode.Single;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DirectCluster extends BaseCluster {
+final class SingleServerCluster extends BaseCluster {
     private final ClusterableServer server;
 
-    public DirectCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    public SingleServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);

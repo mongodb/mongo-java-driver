@@ -43,12 +43,12 @@ import static org.mongodb.connection.ClusterType.Unknown;
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
-final class DiscoveringCluster extends BaseCluster {
+final class MultiServerCluster extends BaseCluster {
     private String requiredReplicaSetName;
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
-    public DiscoveringCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    public MultiServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
         notNull("settings", settings);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);

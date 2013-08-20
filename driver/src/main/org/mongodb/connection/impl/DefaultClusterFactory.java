@@ -35,10 +35,10 @@ public final class DefaultClusterFactory implements ClusterFactory {
     @Override
     public Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         if (settings.getMode() == ClusterConnectionMode.Single) {
-            return new DirectCluster(settings, serverFactory);
+            return new SingleServerCluster(settings, serverFactory);
         }
         else if (settings.getMode() == ClusterConnectionMode.Multiple) {
-            return new DiscoveringCluster(settings, serverFactory);
+            return new MultiServerCluster(settings, serverFactory);
         }
         else {
             throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
