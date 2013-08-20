@@ -58,7 +58,11 @@ public class QueryMessage extends BaseQueryMessage {
         if (find.getReadPreference() != null) {
             document.put("$readPreference", find.getReadPreference().toDocument());
         }
-        // TODO: hint and special
+
+        if (find.getHint() != null) {
+            document.put("$hint", find.getHint().getValue());
+        }
+        // TODO: special
         return document;
     }
 }

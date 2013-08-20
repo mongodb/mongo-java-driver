@@ -25,6 +25,7 @@ public class Find extends Query {
     private Document filter;
     private Document fields;
     private Document sortCriteria;
+    private Hint<?> hint;
     private boolean snapshotMode;
     private boolean explain;
 
@@ -41,6 +42,7 @@ public class Find extends Query {
         super(from);
         filter = from.filter;
         fields = from.fields;
+        hint = from.hint;
         sortCriteria = from.sortCriteria;
         snapshotMode = from.snapshotMode;
     }
@@ -51,6 +53,10 @@ public class Find extends Query {
 
     public Document getOrder() {
         return sortCriteria;
+    }
+
+    public Hint<?> getHint() {
+        return hint;
     }
 
     public boolean isSnapshotMode() {
@@ -103,7 +109,13 @@ public class Find extends Query {
     }
 
     public Find hintIndex(final String indexName) {
-        throw new UnsupportedOperationException();      // TODO
+        this.hint = indexName != null ? new Hint<String>(indexName) : null;
+        return this;
+    }
+
+    public Find hintIndex(final Document keys) {
+        this.hint = keys != null ? new Hint<Document>(keys) : null;
+        return this;
     }
 
     public Find snapshot() {
@@ -149,6 +161,7 @@ public class Find extends Query {
         if (snapshotMode != find.snapshotMode) return false;
         if (fields != null ? !fields.equals(find.fields) : find.fields != null) return false;
         if (filter != null ? !filter.equals(find.filter) : find.filter != null) return false;
+        if (hint != null ? !hint.equals(find.hint) : find.hint != null) return false;
         if (sortCriteria != null ? !sortCriteria.equals(find.sortCriteria) : find.sortCriteria != null) return false;
 
         return true;
@@ -161,8 +174,22 @@ public class Find extends Query {
         result = 31 * result + (filter != null ? filter.hashCode() : 0);
         result = 31 * result + (fields != null ? fields.hashCode() : 0);
         result = 31 * result + (sortCriteria != null ? sortCriteria.hashCode() : 0);
+        result = 31 * result + (hint != null ? hint.hashCode() : 0);
         result = 31 * result + (snapshotMode ? 1 : 0);
         result = 31 * result + (explain ? 1 : 0);
         return result;
+    }
+
+    public class Hint<T> {
+
+        private T value;
+
+        public Hint(final T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
     }
 }

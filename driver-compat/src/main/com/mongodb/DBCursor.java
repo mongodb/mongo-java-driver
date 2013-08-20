@@ -32,8 +32,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static com.mongodb.DBObjects.toDocument;
+import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.MongoExceptions.mapException;
 
 /**
@@ -85,6 +87,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
                         .where(toDocument(query))
                         .select(DBObjects.toFieldSelectorDocument(fields))
                         .readPreference(readPreference.toNew())
+                        .hintIndex(toNullableDocument(lookupSuitableHints(query, collection.getHintFields())))
                         .addFlags(QueryFlag.toSet(collection.getOptions())));
     }
 
@@ -210,7 +213,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final DBObject indexKeys) {
-        throw new UnsupportedOperationException();  // TODO
+        find.hintIndex(toDocument(indexKeys));
+        return this;
     }
 
     /**
@@ -603,6 +607,21 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
 
     public Session getSession() {
         return getCollection().getSession();
+    }
+
+    private static DBObject lookupSuitableHints(final DBObject query, final List<DBObject> hints) {
+        if (hints == null) {
+            return null;
+        }
+
+        final Set<String> keys = query.keySet();
+
+        for (DBObject hint : hints) {
+            if (keys.containsAll(hint.keySet())){
+                return hint;
+            }
+        }
+        return null;
     }
 
     /**

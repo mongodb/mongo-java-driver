@@ -1,5 +1,6 @@
 package org.mongodb.operation
 
+import org.mongodb.Document
 import org.mongodb.ReadPreference
 import spock.lang.Specification
 
@@ -54,11 +55,18 @@ class QuerySpecification extends Specification {
         given:
         EnumSet<QueryFlag> flags = EnumSet.allOf(QueryFlag)
         ReadPreference readPreference = ReadPreference.primary()
+        Document hint = new Document('a', 1)
         int batchSize = 2
         int limit = 5
         int skip = 1
         Find originalQuery = new Find();
-        originalQuery.addFlags(flags).readPreference(readPreference).batchSize(batchSize).limit(limit).skip(skip);
+        originalQuery
+                .addFlags(flags)
+                .hintIndex(hint)
+                .readPreference(readPreference)
+                .batchSize(batchSize)
+                .limit(limit)
+                .skip(skip);
 
         when:
         Query copy = new Find(originalQuery);
@@ -69,6 +77,17 @@ class QuerySpecification extends Specification {
         copy.getBatchSize() == batchSize
         copy.getLimit() == limit
         copy.getSkip() == skip
+        copy.getHint().getValue() == hint
     }
 
+    def 'should support index hints'() {
+        expect:
+        query.getHint()?.getValue() == value
+
+        where:
+        query                                      | value
+        new Find()                                 | null
+        new Find().hintIndex('i_1')                | 'i_1'
+        new Find().hintIndex(new Document('i', 1)) | new Document('i', 1)
+    }
 }
