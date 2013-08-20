@@ -668,7 +668,7 @@ public class Mongo {
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return new DefaultClusterFactory().create(
-                ClusterSettings.builder().seedList(createNewSeedList(seedList))
+                ClusterSettings.builder().hosts(createNewSeedList(seedList))
                         .requiredReplicaSetName(options.getRequiredReplicaSetName())
                         .build(),
                 createClusterableServerFactory(credentialsList, options));
@@ -679,7 +679,7 @@ public class Mongo {
         return new DefaultClusterFactory().create(
                 ClusterSettings.builder()
                         .mode(getSingleServerClusterMode(options.toNew()))
-                        .seedList(Arrays.asList(serverAddress.toNew()))
+                        .hosts(Arrays.asList(serverAddress.toNew()))
                         .requiredReplicaSetName(options.getRequiredReplicaSetName())
                         .build(),
                 createClusterableServerFactory(credentialsList, options)

@@ -43,7 +43,7 @@ public class DirectClusterTest {
     @Before
     public void setUp() throws Exception {
         cluster = new DirectCluster(
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList(Arrays.asList(getPrimary())).build(),
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts(Arrays.asList(getPrimary())).build(),
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
                         new DefaultConnectionProviderFactory(ConnectionProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),

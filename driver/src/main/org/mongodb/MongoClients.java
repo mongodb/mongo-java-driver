@@ -59,7 +59,7 @@ public final class MongoClients {
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options) {
         return new MongoClientImpl(options, new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList(Arrays.asList(serverAddress))
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts(Arrays.asList(serverAddress))
                         .requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                 getClusterableServerFactory(credentialList, options)));
     }
@@ -70,7 +70,7 @@ public final class MongoClients {
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
         return new MongoClientImpl(options, new DefaultClusterFactory().create(
-                ClusterSettings.builder().seedList(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
+                ClusterSettings.builder().hosts(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                 getClusterableServerFactory(Collections.<MongoCredential>emptyList(), options)));
     }
 
@@ -83,7 +83,7 @@ public final class MongoClients {
             return new MongoClientImpl(options, new DefaultClusterFactory().create(
                     ClusterSettings.builder()
                             .mode(ClusterConnectionMode.Single)
-                            .seedList(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
+                            .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                             .build(),
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
@@ -94,7 +94,7 @@ public final class MongoClients {
                 seedList.add(new ServerAddress(cur));
             }
             return new MongoClientImpl(options, new DefaultClusterFactory().create(
-                    ClusterSettings.builder().seedList(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
+                    ClusterSettings.builder().hosts(seedList).requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                     getClusterableServerFactory(mongoURI.getCredentialList(), options)));
         }
     }

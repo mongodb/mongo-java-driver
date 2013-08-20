@@ -57,7 +57,7 @@ final class DiscoveringCluster extends BaseCluster {
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            for (ServerAddress serverAddress : settings.getSeedList()) {
+            for (ServerAddress serverAddress : settings.getHosts()) {
                 addServer(serverAddress);
             }
             updateDescription();

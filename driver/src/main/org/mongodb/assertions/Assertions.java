@@ -33,6 +33,12 @@ public final class Assertions {
         }
     }
 
+    public static void isTrueArgument(final String name, final boolean check) {
+        if (!check) {
+            throw new IllegalArgumentException("state should be: " + name);
+        }
+    }
+
     private Assertions() {
     }
 }

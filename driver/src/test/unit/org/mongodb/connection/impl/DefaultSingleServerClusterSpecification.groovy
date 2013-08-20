@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -47,7 +49,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
         given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList([SERVER_ADDRESS]).build(), factory)
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {

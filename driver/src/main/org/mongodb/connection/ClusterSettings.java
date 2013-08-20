@@ -21,6 +21,7 @@ import org.mongodb.annotations.Immutable;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.isTrueArgument;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -30,8 +31,9 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class ClusterSettings {
-    private final List<ServerAddress> seedList;
+    private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
+    private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
 
     public static Builder builder() {
@@ -42,8 +44,9 @@ public final class ClusterSettings {
      * A builder for the cluster settings.
      */
     public static final class Builder {
-        private List<ServerAddress> seedList;
+        private List<ServerAddress> hosts;
         private ClusterConnectionMode mode = ClusterConnectionMode.Multiple;
+        private ClusterType requiredClusterType = ClusterType.Unknown;
         private String requiredReplicaSetName;
 
         private Builder() {
@@ -52,14 +55,14 @@ public final class ClusterSettings {
         // CHECKSTYLE:OFF
 
         /**
-         * Sets the seed list for the cluster.
+         * Sets the hosts for the cluster.
          *
-         * @param seedList the seed list
+         * @param hosts the seed list of hosts
          * @return this
          */
-        public Builder seedList(final List<ServerAddress> seedList) {
-            notNull("seedList", seedList);
-            this.seedList = Collections.unmodifiableList(seedList);
+        public Builder hosts(final List<ServerAddress> hosts) {
+            notNull("hosts", hosts);
+            this.hosts = Collections.unmodifiableList(hosts);
             return this;
         }
 
@@ -67,6 +70,7 @@ public final class ClusterSettings {
          * Sets the mode for this cluster.
          *
          * @param mode the cluster connection mode
+         * @return this;
          */
         public Builder mode(final ClusterConnectionMode mode) {
             notNull("mode", mode);
@@ -78,7 +82,7 @@ public final class ClusterSettings {
          * Sets the required replica set name for the cluster.
          *
          * @param requiredReplicaSetName the required replica set name.
-         * @return this;
+         * @return this
          */
         public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
             this.requiredReplicaSetName = requiredReplicaSetName;
@@ -86,7 +90,19 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets the required cluster type for the cluster.
+         *
+         * @param requiredClusterType the required cluster type
+         * @return this
+         */
+        public Builder requiredClusterType(final ClusterType requiredClusterType) {
+            this.requiredClusterType = requiredClusterType;
+            return this;
+        }
+
+        /**
          * Build the settings from the builder.
+         *
          * @return the cluster settings
          */
         public ClusterSettings build() {
@@ -96,12 +112,12 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets the seed list for the cluster.
+     * Gets the seed list of hosts for the cluster.
      *
-     * @return the seed list
+     * @return the seed list of hosts
      */
-    public List<ServerAddress> getSeedList() {
-        return seedList;
+    public List<ServerAddress> getHosts() {
+        return hosts;
     }
 
     /**
@@ -114,6 +130,15 @@ public final class ClusterSettings {
     }
 
     /**
+     * Get
+     *
+     * @return the cluster type
+     */
+    public ClusterType getRequiredClusterType() {
+        return requiredClusterType;
+    }
+
+    /**
      * Gets the required replica set name.
      *
      * @return the required replica set name
@@ -123,18 +148,30 @@ public final class ClusterSettings {
     }
 
     private ClusterSettings(final Builder builder) {
-        notNull("seedList", builder.seedList);
+        notNull("hosts", builder.hosts);
+        isTrueArgument("hosts size > 0", builder.hosts.size() > 0);
 
-        if (builder.mode == ClusterConnectionMode.Single && builder.seedList.size() > 1) {
+        if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.StandAlone) {
+            throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.StandAlone.");
+        }
+
+        if (builder.mode == ClusterConnectionMode.Single && builder.hosts.size() > 1) {
             throw new IllegalArgumentException("Can not directly connect to more than one server");
         }
 
-        if (builder.mode == ClusterConnectionMode.Single && builder.requiredReplicaSetName != null) {
-            throw new IllegalArgumentException("Can not directly connect when there is a required replica set name");
+        if (builder.requiredReplicaSetName != null) {
+            if (builder.requiredClusterType == ClusterType.Unknown) {
+                builder.requiredClusterType = ClusterType.ReplicaSet;
+            }
+            else if (builder.requiredClusterType != ClusterType.ReplicaSet) {
+                throw new IllegalArgumentException(
+                        "When specifying a replica set name, only ClusterType.Unknown and ClusterType.ReplicaSet are valid.");
+            }
         }
 
-        seedList = Collections.unmodifiableList(builder.seedList);
-        this.mode = builder.mode;
+        hosts = builder.hosts;
+        mode = builder.mode;
         requiredReplicaSetName = builder.requiredReplicaSetName;
+        requiredClusterType = builder.requiredClusterType;
     }
 }

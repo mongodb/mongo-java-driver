@@ -39,12 +39,12 @@ final class DirectCluster extends BaseCluster {
 
     public DirectCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
-        isTrue("one server in a direct cluster", settings.getSeedList().size() == 1);
+        isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            this.server = createServer(settings.getSeedList().get(0), new ChangeListener<ServerDescription>() {
+            this.server = createServer(settings.getHosts().get(0), new ChangeListener<ServerDescription>() {
                 @Override
                 public void stateChanged(final ChangeEvent<ServerDescription> event) {
                     ClusterDescription oldDescription = getDescriptionNoWaiting();
