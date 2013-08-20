@@ -31,6 +31,8 @@ public class BSONBinaryWriter extends BSONWriter {
     private final OutputBuffer buffer;
     private final boolean closeBuffer;
     private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
+    private Mark mark;
+
     public BSONBinaryWriter(final OutputBuffer buffer, final boolean closeBuffer) {
         this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, closeBuffer);
     }
@@ -367,6 +369,19 @@ public class BSONBinaryWriter extends BSONWriter {
         maxDocumentSizeStack.pop();
     }
 
+    public void mark() {
+        mark = new Mark();
+    }
+
+    public void reset() {
+        if (mark == null) {
+            throw new IllegalStateException("Can not reset without first marking");
+        }
+
+        mark.reset();
+        mark = null;
+    }
+
     private void writeCurrentName() {
         if (getContext().getContextType() == BSONContextType.ARRAY) {
             buffer.writeCString(Integer.toString(getContext().index++));
@@ -396,9 +411,33 @@ public class BSONBinaryWriter extends BSONWriter {
             this.startPosition = startPosition;
         }
 
+        public Context(final Context from) {
+            super(from);
+            startPosition = from.startPosition;
+            index = from.index;
+        }
+
         @Override
         public Context getParentContext() {
             return (Context) super.getParentContext();
+        }
+
+        @Override
+        public Context copy() {
+            return new Context(this);
+        }
+    }
+
+    protected class Mark extends BSONWriter.Mark {
+        private final int position;
+
+        protected Mark() {
+            this.position = buffer.getPosition();
+        }
+
+        protected void reset() {
+            super.reset();
+            buffer.truncateToPosition(mark.position);
         }
     }
 }

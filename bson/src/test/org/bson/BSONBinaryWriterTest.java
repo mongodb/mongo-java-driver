@@ -240,11 +240,11 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {82, 0, 0, 0, 2, 115, 49, 0, 1, 0, 0, 0, 0, 2, 115, 50,
-                                       0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 2, 115, 51, 0, 23,
-                                       0, 0, 0, 44, 43, 92, 34, 60, 62, 59, 91, 93, 123, 125, 64, 35,
-                                       36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 53, 0, 15, 0,
-                                       0, 0, 97, -61, -87, -29, -127, -126, -48, -80, -48, -78, -48, -79, -48, -76, 0,
-                                       0};
+                0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 2, 115, 51, 0, 23,
+                0, 0, 0, 44, 43, 92, 34, 60, 62, 59, 91, 93, 123, 125, 64, 35,
+                36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 53, 0, 15, 0,
+                0, 0, 97, -61, -87, -29, -127, -126, -48, -80, -48, -78, -48, -79, -48, -76, 0,
+                0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
 
     }
@@ -262,9 +262,9 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {45, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 16, 105, 50, 0, 0, 0, 0, -128, 18,
-                                       105,
-                                       51, 0, -1, -1, -1, -1, -1, -1, -1, 127, 18, 105, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0};
+                105,
+                51, 0, -1, -1, -1, -1, -1, -1, -1, 127, 18, 105, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -285,8 +285,8 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {31, 0, 0, 0, 4, 97, 49, 0, 5, 0, 0, 0, 0, 4, 97, 50, 0, 13, 0, 0, 0, 4, 48, 0, 5,
-                                       0,
-                                       0, 0, 0, 0, 0};
+                0,
+                0, 0, 0, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -345,8 +345,8 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {22, 0, 0, 0, 7, 95, 105, 100, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102,
-                                       43,
-                                       97, 0};
+                43,
+                97, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -365,10 +365,10 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {53, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32,
-                                       48,
-                                       0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16,
-                                       120, 0, 1, 0, 0, 0,
-                                       0, 0};
+                48,
+                0, 15, 106, 115, 50, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16,
+                120, 0, 1, 0, 0, 0,
+                0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -404,8 +404,8 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0,
-                                       9, 0,
-                                       0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
+                9, 0,
+                0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -420,8 +420,8 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
 
         final byte[] expectedValues = {43, 0, 0, 0, 11, 114, 49, 0, 40, 91, 48, 49, 93, 63, 91, 48, 45, 57, 93, 91, 48,
-                                       45,
-                                       57, 93, 63, 41, 0, 0, 11, 114, 50, 0, 91, 32, 92, 116, 93, 43, 36, 0, 105, 0, 0};
+                45,
+                57, 93, 63, 41, 0, 0, 11, 114, 50, 0, 91, 32, 92, 116, 93, 43, 36, 0, 105, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -637,6 +637,62 @@ public class BSONBinaryWriterTest {
         reader2.readEndArray();
         reader2.readEndDocument();
     }
+
+    // CHECKSTYLE:OFF
+    @Test
+    public void testMarkAndReset() throws IOException {
+        writer.writeStartDocument();
+        writer.writeStartArray("a");
+        {
+            writer.writeStartDocument();
+            writer.writeInt32("i", 1);
+            writer.writeEndDocument();
+        }
+        writer.mark();
+        {
+            writer.writeStartDocument();
+            writer.writeInt32("i", 2);
+            writer.writeEndDocument();
+        }
+        writer.reset();
+        {
+            writer.writeStartDocument();
+            writer.writeInt32("i", 3);
+            writer.writeEndDocument();
+        }
+        writer.writeEndArray();
+        writer.writeEndDocument();
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        buffer.pipe(baos);
+
+        final BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
+
+        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(), basicInputBuffer, true);
+
+        try {
+            reader.readStartDocument();
+            reader.readName("a");
+            reader.readStartArray();
+            {
+                reader.readStartDocument();
+                assertEquals(1, reader.readInt32("i"));
+                reader.readEndDocument();
+            }
+            {
+                reader.readStartDocument();
+                assertEquals(3, reader.readInt32("i"));
+                reader.readEndDocument();
+            }
+            reader.readEndArray();
+            reader.readEndDocument();
+        } finally
+
+        {
+            reader.close();
+        }
+    }
+    // CHECKSTYLE:ON
 
     @Test(expected = BSONSerializationException.class)
     public void testPushOfMaxDocumentSize() {

@@ -676,6 +676,11 @@ public abstract class BSONWriter implements Closeable {
         private final Context parentContext;
         private final BSONContextType contextType;
 
+        public Context(final Context from) {
+            parentContext = from.parentContext;
+            contextType = from.contextType;
+        }
+
         public Context(final Context parentContext, final BSONContextType contextType) {
             this.parentContext = parentContext;
             this.contextType = contextType;
@@ -687,6 +692,31 @@ public abstract class BSONWriter implements Closeable {
 
         public BSONContextType getContextType() {
             return contextType;
+        }
+
+        public Context copy() {
+            return new Context(this);
+        }
+    }
+
+    protected class Mark {
+        private final Context markedContext;
+        private final State markedState;
+        private final String currentName;
+        private final int serializationDepth;
+
+        protected Mark() {
+            this.markedContext = BSONWriter.this.context.copy();
+            this.markedState = BSONWriter.this.state;
+            this.currentName = BSONWriter.this.currentName;
+            this.serializationDepth = BSONWriter.this.serializationDepth;
+        }
+
+        protected void reset() {
+            setContext(markedContext);
+            setState(markedState);
+            BSONWriter.this.currentName = currentName;
+            BSONWriter.this.serializationDepth = serializationDepth;
         }
     }
 }
