@@ -28,7 +28,7 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
 
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
+import static org.mongodb.connection.ClusterConnectionMode.Single;
 
 class X509AsyncAuthenticator extends AsyncAuthenticator {
 
@@ -40,7 +40,7 @@ class X509AsyncAuthenticator extends AsyncAuthenticator {
     void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Direct), getBufferProvider())
+                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Single), getBufferProvider())
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override

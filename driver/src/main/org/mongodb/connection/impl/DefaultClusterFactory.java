@@ -17,8 +17,8 @@
 package org.mongodb.connection.impl;
 
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterFactory;
-import org.mongodb.connection.ClusterMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
 
@@ -34,10 +34,10 @@ public final class DefaultClusterFactory implements ClusterFactory {
 
     @Override
     public Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        if (settings.getMode() == ClusterMode.Direct) {
+        if (settings.getMode() == ClusterConnectionMode.Single) {
             return new DirectCluster(settings, serverFactory);
         }
-        else if (settings.getMode() == ClusterMode.Discovering) {
+        else if (settings.getMode() == ClusterConnectionMode.Multiple) {
             return new DiscoveringCluster(settings, serverFactory);
         }
         else {

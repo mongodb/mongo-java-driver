@@ -24,7 +24,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class ServerAddressSelectorTest {
@@ -54,6 +54,6 @@ public class ServerAddressSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetSecondary)
                 .build();
-        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondary), Discovering)));
+        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondary), Multiple)));
    }
 }

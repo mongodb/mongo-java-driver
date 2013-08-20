@@ -26,6 +26,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -58,7 +60,7 @@ class DBCollectionSpecification extends Specification {
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription() }
         database.getBufferPool() >> { getBufferProvider() }
-        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Direct) }
+        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Single) }
 
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())

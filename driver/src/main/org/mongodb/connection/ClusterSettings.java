@@ -31,7 +31,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 @Immutable
 public final class ClusterSettings {
     private final List<ServerAddress> seedList;
-    private final ClusterMode mode;
+    private final ClusterConnectionMode mode;
     private final String requiredReplicaSetName;
 
     public static Builder builder() {
@@ -43,7 +43,7 @@ public final class ClusterSettings {
      */
     public static final class Builder {
         private List<ServerAddress> seedList;
-        private ClusterMode mode = ClusterMode.Discovering;
+        private ClusterConnectionMode mode = ClusterConnectionMode.Multiple;
         private String requiredReplicaSetName;
 
         private Builder() {
@@ -66,8 +66,9 @@ public final class ClusterSettings {
         /**
          * Sets the mode for this cluster.
          *
+         * @param mode the cluster connection mode
          */
-        public Builder mode(final ClusterMode mode) {
+        public Builder mode(final ClusterConnectionMode mode) {
             notNull("mode", mode);
             this.mode = mode;
             return this;
@@ -108,7 +109,7 @@ public final class ClusterSettings {
      *
      * @return the mode
      */
-    public ClusterMode getMode() {
+    public ClusterConnectionMode getMode() {
         return mode;
     }
 
@@ -124,11 +125,11 @@ public final class ClusterSettings {
     private ClusterSettings(final Builder builder) {
         notNull("seedList", builder.seedList);
 
-        if (builder.mode == ClusterMode.Direct && builder.seedList.size() > 1) {
+        if (builder.mode == ClusterConnectionMode.Single && builder.seedList.size() > 1) {
             throw new IllegalArgumentException("Can not directly connect to more than one server");
         }
 
-        if (builder.mode == ClusterMode.Direct && builder.requiredReplicaSetName != null) {
+        if (builder.mode == ClusterConnectionMode.Single && builder.requiredReplicaSetName != null) {
             throw new IllegalArgumentException("Can not directly connect when there is a required replica set name");
         }
 

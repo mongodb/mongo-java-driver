@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ClusterMode;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
@@ -59,7 +59,7 @@ public final class MongoClients {
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                       final MongoClientOptions options) {
         return new MongoClientImpl(options, new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Direct).seedList(Arrays.asList(serverAddress))
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList(Arrays.asList(serverAddress))
                         .requiredReplicaSetName(options.getRequiredReplicaSetName()).build(),
                 getClusterableServerFactory(credentialList, options)));
     }
@@ -82,7 +82,7 @@ public final class MongoClients {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, new DefaultClusterFactory().create(
                     ClusterSettings.builder()
-                            .mode(ClusterMode.Direct)
+                            .mode(ClusterConnectionMode.Single)
                             .seedList(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                             .build(),

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class LatencyMinimizingServerSelectorTest {
@@ -63,7 +63,7 @@ public class LatencyMinimizingServerSelectorTest {
                 .averagePingTime(30, TimeUnit.MILLISECONDS)
                 .build();
         assertEquals(Arrays.asList(primary, secondaryOne, secondaryThree),
-                selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree), Discovering)));
+                selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree), Multiple)));
     }
 
     @Test
@@ -83,6 +83,6 @@ public class LatencyMinimizingServerSelectorTest {
                 .type(ServerType.ReplicaSetSecondary)
                 .averagePingTime(11, TimeUnit.NANOSECONDS)
                 .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne), Discovering)));
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne), Multiple)));
     }
 }

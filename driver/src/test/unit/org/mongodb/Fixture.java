@@ -28,7 +28,7 @@ import org.mongodb.session.Session;
 import java.net.UnknownHostException;
 import java.util.List;
 
-import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
 /**
@@ -124,6 +124,6 @@ public final class Fixture {
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
         return mongoClient.getCluster().getDescription().getType() == ReplicaSet
-                && mongoClient.getCluster().getDescription().getMode() == Discovering;
+                && mongoClient.getCluster().getDescription().getMode() == Multiple;
     }
 }

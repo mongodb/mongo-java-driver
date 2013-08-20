@@ -16,13 +16,15 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
 import org.mongodb.connection.ChangeListener
 import org.mongodb.connection.Cluster
+import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
-import org.mongodb.connection.ClusterMode
 import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerConnectionState
@@ -45,7 +47,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
         given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Direct).seedList([SERVER_ADDRESS]).build(), factory)
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList([SERVER_ADDRESS]).build(), factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {

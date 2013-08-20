@@ -19,13 +19,14 @@ package org.mongodb.connection.impl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -41,7 +42,8 @@ public class DirectClusterTest {
 
     @Before
     public void setUp() throws Exception {
-        cluster = new DirectCluster(ClusterSettings.builder().mode(ClusterMode.Direct).build(),
+        cluster = new DirectCluster(
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).seedList(Arrays.asList(getPrimary())).build(),
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
                         new DefaultConnectionProviderFactory(ConnectionProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),

@@ -39,7 +39,7 @@ public class AsyncCommandOperationTest {
     public void testReadPreferenceOverride() {
         ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
                 ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
-                ClusterConnectionMode.Discovering);
+                ClusterConnectionMode.Multiple);
 
         AsyncCommandOperation operation = new AsyncCommandOperation("test",
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),

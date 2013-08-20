@@ -31,7 +31,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class ReadPreferenceTest {
@@ -81,9 +81,9 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ClusterDescription(nodeList, Discovering);
-        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), Discovering);
-        setNoSecondary = new ClusterDescription(Arrays.asList(primary), Discovering);
+        set = new ClusterDescription(nodeList, Multiple);
+        setNoPrimary = new ClusterDescription(Arrays.asList(secondary, otherSecondary), Multiple);
+        setNoSecondary = new ClusterDescription(Arrays.asList(primary), Multiple);
     }
 
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.connection.Cluster
@@ -43,7 +45,7 @@ class MongoSpecification extends Specification {
         //currently we're getting null pointers for description
         given:
         clusterDescription.getType() >> ClusterType.ReplicaSet
-        clusterDescription.getMode() >> ClusterConnectionMode.Discovering
+        clusterDescription.getMode() >> ClusterConnectionMode.Multiple
 
         expect:
         mongo.getReplicaSetStatus() != null;
@@ -53,7 +55,7 @@ class MongoSpecification extends Specification {
     def 'should return null if cluster type not replica'() {
         given:
         clusterDescription.getType() >> ClusterType.Sharded
-        clusterDescription.getMode() >> ClusterConnectionMode.Discovering
+        clusterDescription.getMode() >> ClusterConnectionMode.Multiple
 
         expect:
         mongo.getReplicaSetStatus() == null;
@@ -62,7 +64,7 @@ class MongoSpecification extends Specification {
     def 'should return null if cluster mode not discovering'() {
         given:
         clusterDescription.getType() >> ClusterType.ReplicaSet
-        clusterDescription.getMode() >> ClusterConnectionMode.Direct
+        clusterDescription.getMode() >> ClusterConnectionMode.Single
 
         expect:
         mongo.getReplicaSetStatus() == null;

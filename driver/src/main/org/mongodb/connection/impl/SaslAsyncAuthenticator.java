@@ -33,7 +33,7 @@ import org.mongodb.operation.AsyncCommandOperation;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
+import static org.mongodb.connection.ClusterConnectionMode.Single;
 
 abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
     SaslAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
@@ -90,14 +90,14 @@ abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                new ClusterDescription(Direct), getBufferProvider()).execute(new ConnectingAsyncServerConnection(getConnection()))
+                new ClusterDescription(Single), getBufferProvider()).execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), new ClusterDescription(Direct), getBufferProvider()).execute(
+                new DocumentCodec(), new ClusterDescription(Single), getBufferProvider()).execute(
                 new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 

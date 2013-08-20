@@ -18,8 +18,8 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
@@ -29,7 +29,7 @@ import org.mongodb.connection.ServerDescription;
 import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Direct;
+import static org.mongodb.connection.ClusterConnectionMode.Single;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
@@ -40,7 +40,7 @@ final class DirectCluster extends BaseCluster {
     public DirectCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
         isTrue("one server in a direct cluster", settings.getSeedList().size() == 1);
-        isTrue("mode is direct", settings.getMode() == ClusterMode.Direct);
+        isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
@@ -58,7 +58,7 @@ final class DirectCluster extends BaseCluster {
     }
 
     private synchronized void updateDescription(final ServerDescription serverDescription) {
-        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), Direct));
+        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), Single));
     }
 
     private void updateDescription() {

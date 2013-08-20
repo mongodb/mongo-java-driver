@@ -24,13 +24,14 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
 import org.mongodb.connection.ChangeListener
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
-import org.mongodb.connection.ClusterMode
 import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.MongoServerSelectionFailureException
 import org.mongodb.connection.ServerAddress
@@ -40,7 +41,7 @@ import org.mongodb.connection.TestClusterableServerFactory
 import org.mongodb.session.PrimaryServerSelector
 import spock.lang.Specification
 
-import static org.mongodb.connection.ClusterConnectionMode.Discovering
+import static org.mongodb.connection.ClusterConnectionMode.Multiple
 import static org.mongodb.connection.ClusterType.Mixed
 import static org.mongodb.connection.ClusterType.ReplicaSet
 import static org.mongodb.connection.ServerConnectionState.Connected
@@ -60,7 +61,7 @@ class DiscoveringClusterSpecification extends Specification {
     def 'should correct report description when the cluster first starts'() {
         given:
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer]).build(), factory)
 
         when:
         sendNotification(firstServer, ReplicaSetPrimary)
@@ -69,14 +70,14 @@ class DiscoveringClusterSpecification extends Specification {
         def clusterDescription = cluster.description
         clusterDescription.isConnecting()
         clusterDescription.type == ReplicaSet
-        clusterDescription.mode == Discovering
+        clusterDescription.mode == Multiple
     }
 
 
     def 'should discover all servers in the cluster'() {
         given:
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer]).build(), factory)
 
         when:
         sendNotification(firstServer, ReplicaSetPrimary)
@@ -95,7 +96,7 @@ class DiscoveringClusterSpecification extends Specification {
     def 'when a server no longer appears in hosts, then it should be removed from the cluster'() {
         given:
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer, thirdServer]).build(),
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer, thirdServer]).build(),
                 factory);
         sendNotification(firstServer, ReplicaSetPrimary)
         sendNotification(secondServer, ReplicaSetSecondary)
@@ -117,7 +118,7 @@ class DiscoveringClusterSpecification extends Specification {
         given:
         ChangeEvent<ClusterDescription> changeEvent = null
         Cluster cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer]).build(), factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {
@@ -140,7 +141,7 @@ class DiscoveringClusterSpecification extends Specification {
         given:
         def changeEvent = null
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer]).build(), factory)
         def listener = new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {
@@ -160,7 +161,7 @@ class DiscoveringClusterSpecification extends Specification {
     def 'when a standalone is added to a replica set cluster, then cluster type should become mixed'() {
         given:
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, ReplicaSetPrimary)
 
         when:
@@ -173,7 +174,7 @@ class DiscoveringClusterSpecification extends Specification {
     def 'when a mongos is added to a replica set cluster, then cluster type should become mixed'() {
         given:
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, ReplicaSetPrimary)
 
         when:
@@ -185,7 +186,7 @@ class DiscoveringClusterSpecification extends Specification {
 
     def 'when a server becomes primary the old primary should be invalidated'() {
         new DefaultClusterFactory().create(ClusterSettings.builder()
-                .mode(ClusterMode.Discovering).seedList([firstServer, secondServer]).build(),
+                .mode(Multiple).seedList([firstServer, secondServer]).build(),
                 factory)
         sendNotification(firstServer, ReplicaSetPrimary)
 
@@ -199,7 +200,7 @@ class DiscoveringClusterSpecification extends Specification {
     def 'when a server in the seed list is not in hosts list, it should be removed'() {
         def serverAddressAlias = new ServerAddress('alternate')
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([serverAddressAlias]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([serverAddressAlias]).build(), factory)
 
         when:
         sendNotification(serverAddressAlias, ReplicaSetPrimary)
@@ -215,7 +216,7 @@ class DiscoveringClusterSpecification extends Specification {
 
     def 'when there are two standalones, then cluster type should become mixed'() {
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, StandAlone)
 
         when:
@@ -227,7 +228,7 @@ class DiscoveringClusterSpecification extends Specification {
 
     def 'when the set name does not match the required one, then cluster type should become mixed'() {
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer])
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer])
                         .requiredReplicaSetName('test1').build(), factory)
         when:
         sendNotification(secondServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], 'test2')
@@ -238,7 +239,7 @@ class DiscoveringClusterSpecification extends Specification {
 
     def 'when the cluster is mixed, then getServer throws'() {
         def cluster = new DefaultClusterFactory().create(
-                ClusterSettings.builder().mode(ClusterMode.Discovering).seedList([firstServer, secondServer]).build(), factory)
+                ClusterSettings.builder().mode(Multiple).seedList([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, StandAlone)
         sendNotification(secondServer, StandAlone)
 

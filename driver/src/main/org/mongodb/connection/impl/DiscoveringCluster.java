@@ -18,8 +18,8 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ClusterConnectionMode.Discovering;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.Unknown;
 
 /**
@@ -51,7 +51,7 @@ final class DiscoveringCluster extends BaseCluster {
     public DiscoveringCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(serverFactory);
         notNull("settings", settings);
-        isTrue("mode is discovering", settings.getMode() == ClusterMode.Discovering);
+        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);
         requiredReplicaSetName = settings.getRequiredReplicaSetName();
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
@@ -146,7 +146,7 @@ final class DiscoveringCluster extends BaseCluster {
 
     private void updateDescription() {
         final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(newServerDescriptionList, Discovering, requiredReplicaSetName));
+        updateDescription(new ClusterDescription(newServerDescriptionList, Multiple, requiredReplicaSetName));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {
