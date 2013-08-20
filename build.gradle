@@ -18,13 +18,10 @@ def configDir = new File(rootDir, 'config')
 
 buildscript {
     repositories {
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
         mavenCentral()
     }
     dependencies {
-        classpath 'me.trnl:clirr-gradle-plugin:0.4-SNAPSHOT'
+        classpath 'me.trnl:clirr-gradle-plugin:0.4'
     }
 }
 
