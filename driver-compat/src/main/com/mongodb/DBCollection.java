@@ -1177,7 +1177,11 @@ public class DBCollection implements IDBCollection {
      */
     @Override
     public MapReduceOutput mapReduce(final DBObject command) {
-        throw new UnsupportedOperationException(); //TODO DBObject needs to be converted to mapReduceCommand or directly sent to db.executeCommand
+        if (!command.containsField("mapreduce") && !command.containsField("mapReduce")) {
+            throw new IllegalArgumentException("Operation requires mapReduce command");
+        }
+        final CommandResult res = database.command(command, getOptions(), getReadPreference());
+        return new MapReduceOutput(this, command, res);
     }
 
     /**

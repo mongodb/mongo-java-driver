@@ -348,6 +348,21 @@ public class MapReduceTest extends DatabaseTestCase {
         assertEquals(realOutput.getServerUsed(), output.getServerUsed());
     }
 
+    @Test
+    public void testMapReduceInDocumentForm() {
+        final DBObject mapReduce = new BasicDBObject("mapReduce", collection.getName())
+                .append("map", DEFAULT_MAP)
+                .append("reduce", DEFAULT_REDUCE)
+                .append("out", new BasicDBObject("inline", 1));
+
+        final MapReduceOutput output = collection.mapReduce(mapReduce);
+
+        assertNotNull(output.results());
+        assertThat(output.results(), everyItem(
+                allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))
+        ));
+    }
+
     private List<DBObject> toList(final Iterable<DBObject> results) {
         return results instanceof DBCursor ? ((DBCursor) results).toArray() : (List<DBObject>) results;
     }
