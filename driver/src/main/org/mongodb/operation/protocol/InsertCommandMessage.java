@@ -45,10 +45,10 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         writer.writeStartArray("documents");
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
         for (int i = 0; i < insert.getDocuments().size(); i++) {
-            int documentStartPosition = buffer.getPosition();
+            writer.mark();
             encoder.encode(writer, insert.getDocuments().get(i));
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
-                buffer.truncateToPosition(documentStartPosition);
+                writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), getWriteConcern(), new Insert<T>(insert, i),
                         getCommandEncoder(), encoder, getSettings());
                 break;

@@ -46,7 +46,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
         DeleteCommandMessage nextMessage = null;
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {
-            int documentStartPosition = buffer.getPosition();
+            writer.mark();
             Remove remove = deletes.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
@@ -56,7 +56,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
-                buffer.truncateToPosition(documentStartPosition);
+                writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(), getWriteConcern(), deletes.subList(i, deletes.size()),
                         getCommandEncoder(), getSettings());
                 break;

@@ -42,7 +42,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdate> extends Bas
         BaseUpdateCommandMessage<T> nextMessage = null;
         writer.writeStartArray("updates");
         for (int i = 0; i < updates.size(); i++) {
-            int documentStartPosition = buffer.getPosition();
+            writer.mark();
             T update = updates.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
@@ -55,7 +55,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdate> extends Bas
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
-                buffer.truncateToPosition(documentStartPosition);
+                writer.reset();
                 nextMessage = createNextMessage(updates.subList(i, updates.size()));
                 break;
             }
