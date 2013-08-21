@@ -65,7 +65,7 @@ public final class CommandReadPreferenceHelper {
      * @return the recommended read preference for the given command when run against a cluster with the given description
      */
     public static ReadPreference getCommandReadPreference(final Command command, final ClusterDescription clusterDescription) {
-        if (clusterDescription.getMode() == Single || clusterDescription.getType() != ClusterType.ReplicaSet) {
+        if (clusterDescription.getConnectionMode() == Single || clusterDescription.getType() != ClusterType.ReplicaSet) {
             return command.getReadPreference();
         }
 

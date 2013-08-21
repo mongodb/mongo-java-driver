@@ -28,6 +28,8 @@ import org.mongodb.connection.ServerDescription;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
@@ -37,9 +39,9 @@ public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testObedience() {
-        ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
-                ClusterConnectionMode.Multiple);
+        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Multiple, ReplicaSet, Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build())
+        );
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
                 new Command(new Document("group", "test.test").append("key", "x")).readPreference(ReadPreference.secondary()),
                 clusterDescription));
@@ -86,9 +88,8 @@ public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testIgnoreObedienceForDirectConnection() {
-        ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetSecondary).build()),
-                ClusterConnectionMode.Single);
+        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Single, ReplicaSet,
+                Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetSecondary).build()));
 
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
@@ -97,9 +98,8 @@ public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testIgnoreObedienceForMongosDiscovering() {
-        ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ShardRouter).build()),
-                ClusterConnectionMode.Multiple);
+        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Multiple, Sharded,
+                Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ShardRouter).build()));
 
         assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),

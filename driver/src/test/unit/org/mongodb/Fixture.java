@@ -124,6 +124,6 @@ public final class Fixture {
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
         return mongoClient.getCluster().getDescription().getType() == ReplicaSet
-                && mongoClient.getCluster().getDescription().getMode() == Multiple;
+                && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
     }
 }

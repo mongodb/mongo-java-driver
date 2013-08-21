@@ -38,12 +38,6 @@ public enum ClusterType {
     Sharded,
 
     /**
-     * This is an error condition, when the seed list of servers contains servers from either different cluster types,
-     * or else two standalone servers.
-     */
-    Mixed,
-
-    /**
      * The cluster type is not yet known.
      */
     Unknown

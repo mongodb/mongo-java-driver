@@ -22,6 +22,7 @@ import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
@@ -47,7 +48,6 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ClusterType.Mixed;
 
 public abstract class BaseCluster implements Cluster {
 
@@ -63,11 +63,13 @@ public abstract class BaseCluster implements Cluster {
             return new Random();
         }
     };
+    private final ClusterSettings settings;
 
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public BaseCluster(final ClusterableServerFactory serverFactory) {
+    public BaseCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+        this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
     }
 
@@ -78,10 +80,6 @@ public abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            if (curDescription.getType() == Mixed) {
-                throw new MongoServerSelectionFailureException(format("Mixed cluster detected! Cluster description: %s", curDescription));
-            }
-
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
             final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable
@@ -159,6 +157,10 @@ public abstract class BaseCluster implements Cluster {
         isTrue("listener is not null", changeListener != null);
 
         changeListeners.remove(changeListener);
+    }
+
+    public ClusterSettings getSettings() {
+        return settings;
     }
 
     @Override

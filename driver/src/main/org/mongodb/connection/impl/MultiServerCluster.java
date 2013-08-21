@@ -21,6 +21,7 @@ import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
+import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.MongoServerNotFoundException;
@@ -36,23 +37,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
+import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.Unknown;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
 final class MultiServerCluster extends BaseCluster {
-    private String requiredReplicaSetName;
+    private ClusterType clusterType;
+    private String replicaSetName;
     private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
             new ConcurrentHashMap<ServerAddress, ClusterableServer>();
 
     public MultiServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(serverFactory);
-        notNull("settings", settings);
+        super(settings, serverFactory);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);
-        requiredReplicaSetName = settings.getRequiredReplicaSetName();
+        clusterType = settings.getRequiredClusterType();
+        replicaSetName = settings.getRequiredReplicaSetName();
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
@@ -78,6 +80,8 @@ final class MultiServerCluster extends BaseCluster {
 
     @Override
     protected ClusterableServer getServer(final ServerAddress serverAddress) {
+        isTrue("is open", !isClosed());
+
         ClusterableServer server = addressToServerMap.get(serverAddress);
         if (server == null) {
             throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
@@ -100,11 +104,21 @@ final class MultiServerCluster extends BaseCluster {
         ClusterDescription currentDescription = getDescriptionNoWaiting();
 
         synchronized (this) {
-            if ((currentDescription.getType() == Unknown || event.getNewValue().getClusterType() == currentDescription.getType())
-                    && event.getNewValue().isOk()) {
-                switch (currentDescription.getType() == Unknown ? event.getNewValue().getClusterType() : currentDescription.getType()) {
+            if (event.getNewValue().isOk()) {
+
+                if (clusterType == Unknown) {
+                    clusterType = event.getNewValue().getClusterType();
+                }
+
+                switch (clusterType) {
                     case ReplicaSet:
                         handleReplicaSetMemberChange(event);
+                        break;
+                    case Sharded:
+                        handleShardRouterChanged(event);
+                        break;
+                    case StandAlone:
+                        handleStandAloneChanged(event);
                         break;
                     default:
                         break;
@@ -116,10 +130,37 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void handleReplicaSetMemberChange(final ChangeEvent<ServerDescription> event) {
+        if (!event.getNewValue().isReplicaSetMember()) {
+            removeServer(event.getNewValue().getAddress());
+            return;
+        }
+
+        if (replicaSetName == null) {
+            replicaSetName = event.getNewValue().getSetName();
+        }
+
+        if (replicaSetName != null && !replicaSetName.equals(event.getNewValue().getSetName())) {
+            removeServer(event.getNewValue().getAddress());
+            return;
+        }
+
         ensureServers(event);
 
         if (event.getNewValue().isPrimary()) {
             invalidateOldPrimaries(event.getNewValue().getAddress());
+        }
+    }
+
+    private void handleShardRouterChanged(final ChangeEvent<ServerDescription> event) {
+        if (event.getNewValue().getClusterType() != Sharded) {
+            removeServer(event.getNewValue().getAddress());
+        }
+    }
+
+    private void handleStandAloneChanged(final ChangeEvent<ServerDescription> event) {
+        if (getSettings().getHosts().size() > 1) {
+            clusterType = Unknown;
+            removeServer(event.getNewValue().getAddress());
         }
     }
 
@@ -132,7 +173,9 @@ final class MultiServerCluster extends BaseCluster {
 
     private void removeServer(final ServerAddress serverAddress) {
         ClusterableServer server = addressToServerMap.remove(serverAddress);
-        server.close();
+        if (server != null) {
+            server.close();
+        }
     }
 
 
@@ -146,7 +189,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void updateDescription() {
         final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(newServerDescriptionList, Multiple, requiredReplicaSetName));
+        updateDescription(new ClusterDescription(Multiple, clusterType, newServerDescriptionList));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

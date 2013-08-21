@@ -23,6 +23,7 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.Command;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 
@@ -37,9 +38,9 @@ import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 public class AsyncCommandOperationTest {
     @Test
     public void testReadPreferenceOverride() {
-        ClusterDescription clusterDescription = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()),
-                ClusterConnectionMode.Multiple);
+        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Multiple, ClusterType.ReplicaSet,
+                Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build())
+        );
 
         AsyncCommandOperation operation = new AsyncCommandOperation("test",
                 new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),

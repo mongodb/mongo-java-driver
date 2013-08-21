@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 
 public class ReadPreferenceServerSelectorTest {
@@ -53,7 +54,7 @@ public class ReadPreferenceServerSelectorTest {
                 .ok(true)
                 .type(ServerType.ReplicaSetPrimary)
                 .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Arrays.asList(primary), Multiple)));
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(primary))));
     }
 
     @Test
@@ -80,8 +81,9 @@ public class ReadPreferenceServerSelectorTest {
                 .type(ServerType.ReplicaSetSecondary)
                 .averagePingTime(20, TimeUnit.MILLISECONDS)
                 .build();
-        assertEquals(Arrays.asList(secondaryOne), selector.choose(new ClusterDescription(Arrays.asList(primary, secondaryOne, secondaryTwo),
-                Multiple)));
+        assertEquals(Arrays.asList(secondaryOne), selector.choose(
+                new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(primary, secondaryOne, secondaryTwo)
+        )));
 
     }
 }

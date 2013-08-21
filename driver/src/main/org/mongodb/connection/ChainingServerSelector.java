@@ -32,7 +32,8 @@ public abstract class ChainingServerSelector implements ServerSelector {
             return serverDescriptions;
         }
 
-        return chainedSelector.choose(new ClusterDescription(serverDescriptions, clusterDescription.getMode()));
+        return chainedSelector.choose(new ClusterDescription(clusterDescription.getConnectionMode(), clusterDescription.getType(),
+                serverDescriptions));
     }
 
     protected abstract List<ServerDescription> chooseStep(final ClusterDescription clusterDescription);

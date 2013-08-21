@@ -21,15 +21,16 @@ import org.mongodb.connection.ChangeListener;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
+import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Single;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
@@ -38,7 +39,7 @@ final class SingleServerCluster extends BaseCluster {
     private final ClusterableServer server;
 
     public SingleServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(serverFactory);
+        super(settings, serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);
         // synchronized in the constructor because the change listener is re-entrant to this instance.
@@ -47,22 +48,40 @@ final class SingleServerCluster extends BaseCluster {
             this.server = createServer(settings.getHosts().get(0), new ChangeListener<ServerDescription>() {
                 @Override
                 public void stateChanged(final ChangeEvent<ServerDescription> event) {
-                    ClusterDescription oldDescription = getDescriptionNoWaiting();
-                    updateDescription(event.getNewValue());
-                    fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
+                    ServerDescription descriptionToPublish = event.getNewValue();
+                    if (event.getNewValue().isOk()) {
+                        if (getSettings().getRequiredClusterType() != ClusterType.Unknown
+                                && getSettings().getRequiredClusterType() != event.getNewValue().getClusterType()) {
+                            descriptionToPublish = null;
+                        }
+                        else if (getSettings().getRequiredClusterType() == ClusterType.ReplicaSet
+                                && getSettings().getRequiredReplicaSetName() != null) {
+                            if (!getSettings().getRequiredReplicaSetName().equals(event.getNewValue().getSetName())) {
+                                descriptionToPublish = null;
+                            }
+                        }
+                    }
+                    publishDescription(descriptionToPublish);
                 }
 
             });
-            updateDescription();
+            publishDescription(server.getDescription());
         }
     }
 
-    private synchronized void updateDescription(final ServerDescription serverDescription) {
-        updateDescription(new ClusterDescription(Arrays.asList(serverDescription), Single));
-    }
+    private void publishDescription(final ServerDescription serverDescription) {
+        ClusterType clusterType = getSettings().getRequiredClusterType();
+        if (clusterType == ClusterType.Unknown && serverDescription != null) {
+            clusterType = serverDescription.getClusterType();
+        }
+        ClusterDescription description = new ClusterDescription(ClusterConnectionMode.Single, clusterType,
+                serverDescription == null ? Collections.<ServerDescription>emptyList() : Arrays.asList(serverDescription));
 
-    private void updateDescription() {
-        updateDescription(server.getDescription());
+        ClusterDescription oldDescription = getDescriptionNoWaiting();
+        updateDescription(description);
+        if (oldDescription != null) {
+            fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
+        }
     }
 
     @Override

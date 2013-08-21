@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.session
 
 import org.mongodb.connection.ClusterDescription
+import org.mongodb.connection.ClusterType
 import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
@@ -54,9 +57,9 @@ class PrimaryServerSelectorSpecification extends Specification {
 
         where:
         expectedServerList | clusterDescription
-        [PRIMARY_SERVER]   | new ClusterDescription([PRIMARY_SERVER], Multiple)
-        [PRIMARY_SERVER]   | new ClusterDescription([PRIMARY_SERVER, SECONDARY_SERVER], Multiple)
-        []                 | new ClusterDescription([SECONDARY_SERVER], Multiple)
+        [PRIMARY_SERVER]   | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [PRIMARY_SERVER])
+        [PRIMARY_SERVER]   | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [PRIMARY_SERVER, SECONDARY_SERVER])
+        []                 | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [SECONDARY_SERVER])
     }
 
 }

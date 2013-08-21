@@ -25,8 +25,12 @@ import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterType;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
+
+import java.util.Collections;
 
 import static org.mongodb.connection.ClusterConnectionMode.Single;
 
@@ -40,7 +44,8 @@ class X509AsyncAuthenticator extends AsyncAuthenticator {
     void authenticate(final SingleResultCallback<CommandResult> callback) {
         new AsyncCommandOperation(getCredential().getSource(),
                 new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
-                new DocumentCodec(PrimitiveCodecs.createDefault()), new ClusterDescription(Single), getBufferProvider())
+                new DocumentCodec(PrimitiveCodecs.createDefault()),
+                new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()), getBufferProvider())
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
                     @Override

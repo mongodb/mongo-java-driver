@@ -424,7 +424,7 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return getClusterDescription().getType() == ReplicaSet && getClusterDescription().getMode() == Multiple
+        return getClusterDescription().getType() == ReplicaSet && getClusterDescription().getConnectionMode() == Multiple
                 ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
     }
 

@@ -28,6 +28,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -36,6 +38,7 @@ import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
+import org.mongodb.connection.ClusterType
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
@@ -60,7 +63,7 @@ class DBCollectionSpecification extends Specification {
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription() }
         database.getBufferPool() >> { getBufferProvider() }
-        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Single) }
+        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Multiple, ClusterType.Unknown, []) }
 
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())

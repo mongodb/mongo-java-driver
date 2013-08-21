@@ -25,111 +25,45 @@ import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterType.Unknown;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
-import static org.mongodb.connection.ServerType.StandAlone;
 
 public class ClusterDescriptionTest {
     @Test
     public void testMode() {
-        ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), Multiple);
-        assertEquals(Multiple, description.getMode());
+        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Collections.<ServerDescription>emptyList());
+        assertEquals(Multiple, description.getConnectionMode());
     }
 
     @Test
     public void testEmptySet() {
-        ClusterDescription description = new ClusterDescription(Collections.<ServerDescription>emptyList(), Multiple);
+        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Collections.<ServerDescription>emptyList());
         assertTrue(description.getAll().isEmpty());
     }
 
     @Test
-    public void testType() throws UnknownHostException {
-        ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).build()),
-                Multiple);
-        assertEquals(ReplicaSet, description.getType());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).build()),
-                Multiple);
-        assertEquals(ReplicaSet, description.getType());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(StandAlone).build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).build()),
-                Multiple);
-        assertEquals(ClusterType.Mixed, description.getType());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(StandAlone).build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(StandAlone).build()),
-                Multiple);
-        assertEquals(ClusterType.Mixed, description.getType());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(StandAlone).setName("test2")
-                        .build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(StandAlone).build()),
-                Multiple, "test1");
-        assertEquals(ClusterType.Mixed, description.getType());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
-                        .build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).setName("t2")
-                        .build()),
-                Multiple);
-        assertEquals(ClusterType.Mixed, description.getType());
-    }
-
-    @Test
-    public void testReplicaSetName() {
-        ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
-                        .build()),
-                Multiple);
-        assertEquals("t1", description.getReplicaSetName());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
-                        .build()),
-                Multiple, "t2");
-        assertNull(description.getReplicaSetName());
-
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27017")).type(ReplicaSetPrimary).setName("t1")
-                        .build(),
-                ServerDescription.builder().state(Connected).address(new ServerAddress("loc:27018")).type(ReplicaSetPrimary).setName("t2")
-                        .build()),
-                Multiple);
-        assertNull(description.getReplicaSetName());
-    }
-
-
-    @Test
     public void testIsConnecting() throws UnknownHostException {
-        ClusterDescription description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connecting).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Multiple);
+        ClusterDescription description = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(
+                ServerDescription.builder().state(Connecting).address(new ServerAddress()).type(ReplicaSetPrimary).build()));
         assertTrue(description.isConnecting());
 
-        description = new ClusterDescription(Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()), Multiple);
+        description = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(
+                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build()));
         assertFalse(description.isConnecting());
     }
 
     @Test
     public void testSortingOfAll() {
-        ClusterDescription description = new ClusterDescription(Arrays.asList(
+        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Arrays.asList(
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27019")).build(),
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27018")).build(),
-                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build()),
-                Multiple);
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build())
+        );
         Iterator<ServerDescription> iter = description.getAll().iterator();
         assertEquals(new ServerAddress("loc:27017"), iter.next().getAddress());
         assertEquals(new ServerAddress("loc:27018"), iter.next().getAddress());
@@ -138,16 +72,16 @@ public class ClusterDescriptionTest {
 
     @Test
     public void testObjectOverrides() {
-        ClusterDescription description = new ClusterDescription(Arrays.asList(
+        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Arrays.asList(
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27019")).build(),
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27018")).build(),
-                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build()),
-                Multiple);
-        ClusterDescription descriptionTwo = new ClusterDescription(Arrays.asList(
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build())
+        );
+        ClusterDescription descriptionTwo = new ClusterDescription(Multiple, Unknown, Arrays.asList(
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27019")).build(),
                 ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27018")).build(),
-                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build()),
-                Multiple);
+                ServerDescription.builder().state(Connecting).address(new ServerAddress("loc:27017")).build())
+        );
         assertEquals(description, descriptionTwo);
         assertEquals(description.hashCode(), descriptionTwo.hashCode());
         assertTrue(description.toString().startsWith("ClusterDescription"));
