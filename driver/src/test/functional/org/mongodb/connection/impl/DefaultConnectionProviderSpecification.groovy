@@ -285,6 +285,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         connectionFactory.createdConnections.size() == 0
     }
 
+    @Ignore('Test is racy')
     def 'should ensure min pool size after size maintaining thread runs'() {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
@@ -301,6 +302,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         connectionFactory.createdConnections.size() == 5
     }
 
+    @Ignore('Test is racy')
     def 'should prune after size maintaining thread runs'() {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
