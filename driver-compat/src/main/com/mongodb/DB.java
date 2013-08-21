@@ -52,7 +52,7 @@ import static com.mongodb.MongoExceptions.mapException;
 
 
 @ThreadSafe
-public class DB implements IDB {
+public class DB {
     private final Mongo mongo;
     private final String name;
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
@@ -78,27 +78,22 @@ public class DB implements IDB {
      *
      * @return the mongo instance that this database was created from.
      */
-    @Override
     public Mongo getMongo() {
         return mongo;
     }
 
-    @Override
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
 
-    @Override
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
 
-    @Override
     public ReadPreference getReadPreference() {
         return readPreference != null ? readPreference : mongo.getReadPreference();
     }
 
-    @Override
     public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
     }
@@ -108,7 +103,6 @@ public class DB implements IDB {
      * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
      * with predictable results.
      */
-    @Override
     public void requestStart() {
         getMongo().pinSession();
     }
@@ -116,7 +110,6 @@ public class DB implements IDB {
     /**
      * Ends the current "consistent request"
      */
-    @Override
     public void requestDone() {
         getMongo().unpinSession();
     }
@@ -125,16 +118,14 @@ public class DB implements IDB {
      * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a
      * replica set)
      */
-    @Override
     public void requestEnsureConnection() {
         // do nothing for now
     }
 
-    public DBCollection doGetCollection(final String name) {
+    protected DBCollection doGetCollection(final String name) {
         return getCollection(name);
     }
 
-    @Override
     public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
         if (collection != null) {
@@ -157,7 +148,6 @@ public class DB implements IDB {
      *
      * @throws MongoException
      */
-    @Override
     public void dropDatabase() {
         executeCommand(new DropDatabase());
     }
@@ -168,12 +158,10 @@ public class DB implements IDB {
      * @param s the name of the collection
      * @return the collection
      */
-    @Override
     public DBCollection getCollectionFromString(final String s) {
         return getCollection(s);
     }
 
-    @Override
     public String getName() {
         return name;
     }
@@ -184,7 +172,6 @@ public class DB implements IDB {
      * @return the names of collections in this database
      * @throws MongoException
      */
-    @Override
     public Set<String> getCollectionNames() {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
@@ -207,7 +194,6 @@ public class DB implements IDB {
         }
     }
 
-    @Override
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         final CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
         executeCommand(new Create(createCollectionOptions));
@@ -260,7 +246,6 @@ public class DB implements IDB {
         return command(new BasicDBObject(cmd, Boolean.TRUE), 0, getReadPreference());
     }
 
-    @Override
     public CommandResult command(final String cmd, final int options) {
         return command(new BasicDBObject(cmd, Boolean.TRUE), options, getReadPreference());
     }
@@ -277,7 +262,6 @@ public class DB implements IDB {
         return command(cmd, 0, getReadPreference());
     }
 
-    @Override
     public CommandResult command(final DBObject cmd, final int options) {
         return command(cmd, options, getReadPreference());
     }
@@ -299,17 +283,14 @@ public class DB implements IDB {
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
-    @Override
     public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
         return command(cmd, 0, getReadPreference(), encoder);
     }
 
-    @Override
     public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
         return command(cmd, options, getReadPreference(), encoder);
     }
 
-    @Override
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
                                  final DBEncoder encoder) {
         final Document document = toDocument(cmd, encoder, documentCodec);
@@ -329,7 +310,6 @@ public class DB implements IDB {
         return mongo.getDB(name);
     }
 
-    @Override
     public boolean collectionExists(final String collectionName) {
         final Set<String> collectionNames = getCollectionNames();
         for (final String name : collectionNames) {
@@ -340,70 +320,58 @@ public class DB implements IDB {
         return false;
     }
 
-    @Override
     public CommandResult getLastError(final WriteConcern concern) {
         final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
         final org.mongodb.CommandResult commandResult = executeCommand(getLastErrorCommand);
         return new CommandResult(commandResult);
     }
 
-    @Override
     public CommandResult getLastError() {
         return getLastError(WriteConcern.ACKNOWLEDGED);
     }
 
-    @Override
     public CommandResult getLastError(final int w, final int wtimeout, final boolean fsync) {
         return getLastError(new WriteConcern(w, wtimeout, fsync));
     }
 
-    @Override
     public CommandResult doEval(final String code, final Object... args) {
         final Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
-    @Override
     public Object eval(final String code, final Object... args) {
         final CommandResult result = doEval(code, args);
         result.throwOnError();
         return result.get("retval");
     }
 
-    @Override
     public CommandResult getStats() {
         final Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
-    @Override
     public CommandResult getPreviousError() {
         final Command mongoCommand = new Command(new Document("getPrevError", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
-    @Override
     public void resetError() {
         final Command mongoCommand = new Command(new Document("resetError", 1));
         executeCommand(mongoCommand);
     }
 
-    @Override
     public void forceError() {
         final Command mongoCommand = new Command(new Document("forceerror", 1));
         executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand);
     }
 
-    @Override
     public void cleanCursors(final boolean force) {
     }
 
-    @Override
     public WriteResult addUser(final String username, final char[] passwd) {
         return addUser(username, passwd, false);
     }
 
-    @Override
     public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
         Document foundUserDocument = new FindUserOperation(getName(), getBufferPool(), username, getSession(), true).execute();
         Document userDocument;
@@ -425,40 +393,33 @@ public class DB implements IDB {
         return new WriteResult(new CommandResult(commandResult), getWriteConcern());
     }
 
-    @Override
     public WriteResult removeUser(final String username) {
         CommandResult commandResult = new CommandResult(new RemoveUserOperation(getName(), username, getBufferPool(),
                 getSession(), true).execute());
         return new WriteResult(commandResult, getWriteConcern());
     }
 
-    @Override
     @Deprecated
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
-    @Override
     public void addOption(final int option) {
         optionHolder.add(option);
     }
 
-    @Override
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
 
-    @Override
     public void resetOptions() {
         optionHolder.reset();
     }
 
-    @Override
     public int getOptions() {
         return optionHolder.get();
     }
 
-    @Override
     public String toString() {
         return "DB{" +
                 "name='" + name + '\'' +
