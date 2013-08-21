@@ -13,7 +13,7 @@ class QueryOpBuilder {
 	private String hintStr;
 	private boolean explain;
 	private boolean snapshot;
-	private DBObject readPref;
+	private ReadPreference readPref;
 
 	private DBObject specialFields;
 	
@@ -93,16 +93,17 @@ class QueryOpBuilder {
 	}
 
     /**
-     * Adds ReadPreference to the operation
-     * @param readPref
-     * @return
+     * Adds a read preference to the query operation
+     *
+     * @param readPref the read preference
+     * @return this
      */
-    public QueryOpBuilder addReadPreference(DBObject readPref){
+    public QueryOpBuilder addReadPreference(ReadPreference readPref) {
         this.readPref = readPref;
         return this;
     }
-	
-	/**
+
+    /**
 	 * Constructs the query operation DBObject
 	 * @return DBObject representing the query command to be sent to server
 	 */
@@ -128,8 +129,8 @@ class QueryOpBuilder {
                     queryop.put("$explain", true);
                 if (snapshot)
                     queryop.put("$snapshot", true);
-                if (readPref != null)
-                    queryop.put(READ_PREFERENCE_META_OPERATOR, readPref);
+                if (readPref != null && readPref != ReadPreference.primary())
+                    queryop.put(READ_PREFERENCE_META_OPERATOR, readPref.toDBObject());
 
                 return queryop;
             }
