@@ -22,14 +22,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionFactory;
+import org.mongodb.connection.ServerAddress;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.mongodb.Fixture.getBufferProvider;
-import static org.mongodb.Fixture.getPrimary;
-import static org.mongodb.Fixture.getSSLSettings;
 
 public class AuthenticatingConnectionTest {
     private Connection connection;
@@ -39,10 +36,11 @@ public class AuthenticatingConnectionTest {
 
     @Before
     public void setUp() throws Exception {
+        String host = System.getProperty("org.mongodb.test.host");
         userName = System.getProperty("org.mongodb.test.userName", "bob");
         password = System.getProperty("org.mongodb.test.password", "pwd123");
         source = System.getProperty("org.mongodb.test.source", "admin");
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(),
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
                 getSSLSettings(),  getBufferProvider(), Collections.<MongoCredential>emptyList());
         connection = connectionFactory.create(getPrimary());
     }
@@ -62,20 +60,13 @@ public class AuthenticatingConnectionTest {
     @Test
     @Ignore
     public void tesPlainAuthentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, source,
-                password.toCharArray())), getBufferProvider());
+        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, password.toCharArray())),
+                getBufferProvider());
     }
 
     @Test
     @Ignore
     public void tesGSSAPIAuthentication() {
         new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createGSSAPICredential(userName)), getBufferProvider());
-    }
-
-    @Test
-    @Ignore
-    public void testMongoX509Authentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createMongoX509Credential(
-                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")), getBufferProvider());
     }
 }

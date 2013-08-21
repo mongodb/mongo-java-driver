@@ -42,10 +42,10 @@ public class DefaultSingleServerClusterTest {
         cluster = new DefaultSingleServerCluster(getPrimary(),
                 new DefaultClusterableServerFactory(DefaultServerSettings.builder().build(),
                         new DefaultConnectionProviderFactory(DefaultConnectionProviderSettings.builder().maxSize(1).build(),
-                                new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(),
+                                new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
                                         getBufferProvider(), getCredentialList())),
                         null,
-                        new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(), getBufferProvider(),
+                        new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(), getBufferProvider(),
                                 getCredentialList()), Executors.newScheduledThreadPool(1), getBufferProvider()));
     }
 

@@ -43,11 +43,11 @@ import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
     private final ServerAddress serverAddress;
-    private DefaultConnectionSettings settings;
+    private ConnectionSettings settings;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
 
-    DefaultConnection(final ServerAddress serverAddress, final DefaultConnectionSettings settings, final BufferProvider bufferProvider) {
+    DefaultConnection(final ServerAddress serverAddress, final ConnectionSettings settings, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;

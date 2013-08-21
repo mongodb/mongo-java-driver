@@ -16,6 +16,16 @@
 
 package com.mongodb;
 
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Codec;
 import org.mongodb.Document;
@@ -28,12 +38,12 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
-import org.mongodb.connection.impl.DefaultConnectionSettings;
 import org.mongodb.connection.impl.DefaultServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.session.ClusterSession;
@@ -690,7 +700,7 @@ public class Mongo {
                 .maxConnectionIdleTime(options.getMaxConnectionIdleTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionLifeTime(options.getMaxConnectionLifeTime(), TimeUnit.MILLISECONDS)
                 .build();
-        final DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
+        final ConnectionSettings connectionSettings = ConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
@@ -709,7 +719,7 @@ public class Mongo {
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 null,
                 new DefaultConnectionFactory(
-                        DefaultConnectionSettings.builder()
+                        ConnectionSettings.builder()
                                 .connectTimeoutMS(options.getHeartbeatConnectTimeout())
                                 .readTimeoutMS(options.getHeartbeatSocketTimeout())
                                 .keepAlive(options.isSocketKeepAlive())

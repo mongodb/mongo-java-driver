@@ -30,13 +30,13 @@ import java.util.List;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class DefaultConnectionFactory implements ConnectionFactory {
-    private final DefaultConnectionSettings settings;
+    private final ConnectionSettings settings;
     private final SSLSettings sslSettings;
     private final SocketFactory socketFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultConnectionFactory(final DefaultConnectionSettings settings,
+    public DefaultConnectionFactory(final ConnectionSettings settings,
                                     final SSLSettings sslSettings, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
         this.settings = notNull("settings", settings);

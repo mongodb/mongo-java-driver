@@ -41,7 +41,7 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
                         newDescription = event.newValue
                     }
                 },
-                new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(),
+                new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
                         getBufferProvider(), getCredentialList()), getBufferProvider())
     }
 

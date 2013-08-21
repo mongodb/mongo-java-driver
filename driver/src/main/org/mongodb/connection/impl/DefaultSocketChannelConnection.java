@@ -31,7 +31,7 @@ import java.util.List;
 class DefaultSocketChannelConnection extends DefaultConnection {
     private final SocketChannel socketChannel;
 
-    public DefaultSocketChannelConnection(final ServerAddress address, final DefaultConnectionSettings settings,
+    public DefaultSocketChannelConnection(final ServerAddress address, final ConnectionSettings settings,
                                           final BufferProvider bufferProvider) {
         super(address, settings, bufferProvider);
         try {

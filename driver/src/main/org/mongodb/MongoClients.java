@@ -21,6 +21,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
@@ -28,7 +29,6 @@ import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
-import org.mongodb.connection.impl.DefaultConnectionSettings;
 import org.mongodb.connection.impl.DefaultServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
@@ -103,7 +103,7 @@ public final class MongoClients {
                 .maxConnectionIdleTime(options.getMaxConnectionIdleTime(), TimeUnit.MILLISECONDS)
                 .maxConnectionLifeTime(options.getMaxConnectionLifeTime(), TimeUnit.MILLISECONDS)
                 .build();
-        DefaultConnectionSettings connectionSettings = DefaultConnectionSettings.builder()
+        ConnectionSettings connectionSettings = ConnectionSettings.builder()
                 .connectTimeoutMS(options.getConnectTimeout())
                 .readTimeoutMS(options.getSocketTimeout())
                 .keepAlive(options.isSocketKeepAlive())
