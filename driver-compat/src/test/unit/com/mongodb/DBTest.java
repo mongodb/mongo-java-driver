@@ -25,11 +25,12 @@ import org.mongodb.connection.impl.NativeAuthenticationHelper;
 import org.mongodb.operation.FindUserOperation;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
+import static com.mongodb.Fixture.getOptions;
+import static com.mongodb.Fixture.getPrimary;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
@@ -218,9 +219,14 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
-        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
-                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException, InterruptedException {
+        Mongo m = new MongoClient(getPrimary(),
+                MongoClientOptions.builder()
+                        .connectionsPerHost(1)
+                        .maxWaitTime(10)
+                        .socketFactory(getOptions().getSocketFactory())
+                        .build()
+        );
         DB db = m.getDB("com_mongodb_unittest_DBTest");
 
         try {
