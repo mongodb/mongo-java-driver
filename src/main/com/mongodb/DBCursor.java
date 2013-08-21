@@ -362,7 +362,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
                 .addSpecialFields(_specialFields);
 
         if (_collection.getDB().getMongo().isMongosConnection()) {
-            builder.addReadPreference(_readPref.toDBObject());
+            builder.addReadPreference(_readPref);
         }
 
         _it = _collection.__find(builder.get(), _keysWanted, _skip, _batchSize, _limit,

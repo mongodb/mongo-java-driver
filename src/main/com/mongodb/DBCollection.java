@@ -722,7 +722,7 @@ public abstract class DBCollection {
         QueryOpBuilder queryOpBuilder = new QueryOpBuilder().addQuery(o).addOrderBy(orderBy);
 
         if (getDB().getMongo().isMongosConnection()) {
-            queryOpBuilder.addReadPreference(readPref.toDBObject());
+            queryOpBuilder.addReadPreference(readPref);
         }
 
         Iterator<DBObject> i = __find(queryOpBuilder.get(), fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
