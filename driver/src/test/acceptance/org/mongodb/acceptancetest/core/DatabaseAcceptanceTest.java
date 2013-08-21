@@ -22,7 +22,6 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoClient;
-import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClients;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
