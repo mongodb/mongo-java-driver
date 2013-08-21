@@ -14,15 +14,34 @@
  * limitations under the License.
  */
 
-package org.mongodb.util.management;
+package org.mongodb.management;
+
+import org.mongodb.management.jmx.JMXMBeanServer;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
+ * <p/>
+ * This class is used to insulate the rest of the driver from the possibility that JMX is not available, as currently is
+ * the case on Android VM
  */
-public class JMException extends Exception {
-    private static final long serialVersionUID = -2052972874393271421L;
-
-    public JMException(final Throwable cause) {
-        super(cause);
+public final class MBeanServerFactory {
+    private MBeanServerFactory() {
     }
+
+    static {
+        MBeanServer tmp;
+        try {
+            tmp = new JMXMBeanServer();
+        } catch (Throwable e) {
+            tmp = new NullMBeanServer();
+        }
+
+        M_BEAN_SERVER = tmp;
+    }
+
+    public static MBeanServer getMBeanServer() {
+        return M_BEAN_SERVER;
+    }
+
+    private static final MBeanServer M_BEAN_SERVER;
 }

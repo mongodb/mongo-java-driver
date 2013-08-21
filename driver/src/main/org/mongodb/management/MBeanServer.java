@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb.util.management;
+package org.mongodb.management;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
-public class NullMBeanServer implements MBeanServer {
-    @Override
-    public boolean isRegistered(final String mBeanName) {
-        return false;
-    }
+public interface MBeanServer {
+    void unregisterMBean(String mBeanName);
 
-    @Override
-    public void unregisterMBean(final String mBeanName) {
-    }
-
-    @Override
-    public void registerMBean(final Object mBean, final String mBeanName) {
-    }
+    void registerMBean(Object mBean, String mBeanName);
 }
