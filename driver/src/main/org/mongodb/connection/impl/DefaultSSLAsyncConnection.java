@@ -4,6 +4,7 @@ package org.mongodb.connection.impl;
 import java.io.IOException;
 import java.nio.channels.CompletionHandler;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import org.bson.ByteBuf;
 import org.mongodb.MongoInternalException;
@@ -16,8 +17,12 @@ import org.mongodb.connection.SingleResultCallback;
 
 class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
     private SocketClient socketClient;
-    public DefaultSSLAsyncConnection(final ServerAddress serverAddress, final BufferProvider bufferProvider) {
+    private final ExecutorService executorService;
+
+    public DefaultSSLAsyncConnection(final ServerAddress serverAddress, final BufferProvider bufferProvider,
+        final ExecutorService service) {
         super(serverAddress, bufferProvider);
+        executorService = service;
     }
 
     @Override
@@ -65,7 +70,7 @@ class DefaultSSLAsyncConnection extends DefaultAsyncConnection {
             if (socketClient != null) {
                 handler.completed();
             } else {
-                socketClient = new SocketClient(getServerAddress());
+                socketClient = new SocketClient(getServerAddress(), executorService);
                 socketClient.connect(handler);
             }
         } catch (IOException e) {

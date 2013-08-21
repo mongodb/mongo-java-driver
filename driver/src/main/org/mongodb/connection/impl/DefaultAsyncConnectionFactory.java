@@ -19,6 +19,10 @@ package org.mongodb.connection.impl;
 
 
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnection;
@@ -29,6 +33,7 @@ import org.mongodb.connection.ServerAddress;
 
 
 public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
+    private final ExecutorService service;
     private SSLSettings sslSettings;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
@@ -38,14 +43,15 @@ public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
         this.sslSettings = sslSettings;
         this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
+        service = new ThreadPoolExecutor(5, 20, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(20));
     }
 
     @Override
     public AsyncConnection create(final ServerAddress serverAddress) {
         AsyncConnection connection;
         if (sslSettings.isEnabled()) {
-            connection = new AuthenticatingAsyncConnection(new DefaultSSLAsyncConnection(serverAddress, bufferProvider), credentialList,
-                bufferProvider);
+            connection = new AuthenticatingAsyncConnection(new DefaultSSLAsyncConnection(serverAddress, bufferProvider, service),
+                credentialList, bufferProvider);
         } else {
             connection = new AuthenticatingAsyncConnection(new DefaultAsyncConnection(serverAddress, bufferProvider), credentialList,
                 bufferProvider);

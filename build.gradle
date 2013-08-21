@@ -77,7 +77,12 @@ configure(subprojects.findAll { it.name != 'util' }) {
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
-                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false')
+                'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
+                'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore', "${System.getProperty('user.home')}/.keystore"),
+       	        'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
+                'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword', 'changeit'),
+                'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword', 'changeit')
+            
         )
 
         if (project.buildingWith('ssl.enabled')) {

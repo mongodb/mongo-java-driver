@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 
@@ -53,14 +54,16 @@ public class SocketClient {
     private ServerAddress address = null;
     private final BlockingQueue<AsyncCompletionHandler> waitingReads = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
     private final BlockingQueue<AsyncCompletionHandler> waitingWrites = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
+    private ExecutorService executorService;
 
     private SSLHandler sslHandler = null;
 
     private boolean initConnDone = false;
     private boolean isClosed = false;
 
-    public SocketClient(final ServerAddress address) throws SSLException {
+    public SocketClient(final ServerAddress address, final ExecutorService service) throws SSLException {
         this.address = address;
+        executorService = service;
     }
 
     protected void buildSSLHandler() {
@@ -79,7 +82,7 @@ public class SocketClient {
         client.configureBlocking(false);
         client.connect(address.getSocketAddress());
 
-        new Thread(new NIOListener(handler)).start();
+        executorService.submit(new NIOListener(handler));
     }
 
     protected void readChannel() {
