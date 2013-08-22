@@ -109,7 +109,9 @@ class DefaultConnectionProvider implements ConnectionProvider {
      * Synchronously prune idle connections and ensure the minimum pool size.
      */
     public void doMaintenance() {
-        maintenanceTask.run();
+        if (maintenanceTask != null) {
+            maintenanceTask.run();
+        }
     }
 
     private Runnable createMaintenanceTask() {
