@@ -27,8 +27,6 @@ import org.bson.types.ObjectId;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Class that hold definitions of the wire protocol
@@ -37,37 +35,10 @@ import java.util.logging.Logger;
  */
 public class Bytes extends BSON {
 
-    static final Logger LOGGER = Logger.getLogger("com.mongodb");
-
-    static final boolean D = Boolean.getBoolean("DEBUG.MONGO");
-
-    static {
-        if (LOGGER.getLevel() == null) {
-            if (D) {
-                LOGGER.setLevel(Level.ALL);
-            }
-            else {
-                LOGGER.setLevel(Level.WARNING);
-            }
-        }
-    }
-
     /**
      * Little-endian
      */
     public static final ByteOrder ORDER = ByteOrder.LITTLE_ENDIAN;
-
-    /**
-     * this size is set low to 4MB, but just serves as safe default
-     */
-    static final int MAX_OBJECT_SIZE = 1024 * 1024 * 4;
-
-    /**
-     * default target size of an insert batch
-     */
-    static final int BATCH_INSERT_SIZE = 1024 * 1024 * 8;
-
-    static final int CONNECTIONS_PER_HOST = Integer.parseInt(System.getProperty("MONGO.POOLSIZE", "10"));
 
 
     // --- network protocol options
