@@ -114,27 +114,28 @@ final class MultiServerCluster extends BaseCluster {
         ClusterDescription currentDescription = getDescriptionNoWaiting();
 
         synchronized (this) {
-            ServerTuple serverTuple = addressToServerTupleMap.get(event.getNewValue().getAddress());
+            ServerDescription newDescription = event.getNewValue();
+            ServerTuple serverTuple = addressToServerTupleMap.get(newDescription.getAddress());
             if (serverTuple == null) {
                 return;
             }
 
-            serverTuple.description = event.getNewValue();
+            serverTuple.description = newDescription;
 
             if (event.getNewValue().isOk()) {
                 if (clusterType == Unknown) {
-                    clusterType = event.getNewValue().getClusterType();
+                    clusterType = newDescription.getClusterType();
                 }
 
                 switch (clusterType) {
                     case ReplicaSet:
-                        handleReplicaSetMemberChange(event);
+                        handleReplicaSetMemberChange(newDescription);
                         break;
                     case Sharded:
-                        handleShardRouterChanged(event);
+                        handleShardRouterChanged(newDescription);
                         break;
                     case StandAlone:
-                        handleStandAloneChanged(event);
+                        handleStandAloneChanged(newDescription);
                         break;
                     default:
                         break;
@@ -145,38 +146,38 @@ final class MultiServerCluster extends BaseCluster {
         fireChangeEvent(new ChangeEvent<ClusterDescription>(currentDescription, getDescriptionNoWaiting()));
     }
 
-    private void handleReplicaSetMemberChange(final ChangeEvent<ServerDescription> event) {
-        if (!event.getNewValue().isReplicaSetMember()) {
-            removeServer(event.getNewValue().getAddress());
+    private void handleReplicaSetMemberChange(final ServerDescription newDescription) {
+        if (!newDescription.isReplicaSetMember()) {
+            removeServer(newDescription.getAddress());
             return;
         }
 
         if (replicaSetName == null) {
-            replicaSetName = event.getNewValue().getSetName();
+            replicaSetName = newDescription.getSetName();
         }
 
-        if (replicaSetName != null && !replicaSetName.equals(event.getNewValue().getSetName())) {
-            removeServer(event.getNewValue().getAddress());
+        if (replicaSetName != null && !replicaSetName.equals(newDescription.getSetName())) {
+            removeServer(newDescription.getAddress());
             return;
         }
 
-        ensureServers(event);
+        ensureServers(newDescription);
 
-        if (event.getNewValue().isPrimary()) {
-            invalidateOldPrimaries(event.getNewValue().getAddress());
+        if (newDescription.isPrimary()) {
+            invalidateOldPrimaries(newDescription.getAddress());
         }
     }
 
-    private void handleShardRouterChanged(final ChangeEvent<ServerDescription> event) {
-        if (event.getNewValue().getClusterType() != Sharded) {
-            removeServer(event.getNewValue().getAddress());
+    private void handleShardRouterChanged(final ServerDescription newDescription) {
+        if (newDescription.getClusterType() != Sharded) {
+            removeServer(newDescription.getAddress());
         }
     }
 
-    private void handleStandAloneChanged(final ChangeEvent<ServerDescription> event) {
+    private void handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
             clusterType = Unknown;
-            removeServer(event.getNewValue().getAddress());
+            removeServer(newDescription.getAddress());
         }
     }
 
@@ -213,10 +214,10 @@ final class MultiServerCluster extends BaseCluster {
         return serverDescriptions;
     }
 
-    private void ensureServers(final ChangeEvent<ServerDescription> event) {
-        addNewHosts(event.getNewValue().getHosts());
-        addNewHosts(event.getNewValue().getPassives());
-        removeExtras(event.getNewValue());
+    private void ensureServers(final ServerDescription description) {
+        addNewHosts(description.getHosts());
+        addNewHosts(description.getPassives());
+        removeExtras(description);
     }
 
     private void addNewHosts(final Set<String> hosts) {
