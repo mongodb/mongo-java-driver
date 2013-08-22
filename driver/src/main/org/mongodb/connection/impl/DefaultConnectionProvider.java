@@ -43,7 +43,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 class DefaultConnectionProvider implements ConnectionProvider {
 
     private final ConcurrentPool<UsageTrackingConnection> pool;
-    private final DefaultConnectionProviderSettings settings;
+    private final ConnectionProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
     private final ExecutorService sizeMaintenanceTimer;
@@ -52,7 +52,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
     private final Runnable maintenanceTask;
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
-                                     final DefaultConnectionProviderSettings settings) {
+                                     final ConnectionProviderSettings settings) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
