@@ -180,7 +180,7 @@ public class Find extends Query {
         return result;
     }
 
-    public class Hint<T> {
+    public static class Hint<T> {
 
         private T value;
 
