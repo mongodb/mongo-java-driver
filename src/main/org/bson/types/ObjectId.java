@@ -328,16 +328,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * Gets the machine identifier.
      *
      * @return the machine identifier
-     */
-    public int getMachineIdentifier() {
-        return _machine;
-    }
-
-    /**
-     * Gets the machine identifier.
-     *
-     * @return the machine identifier
-     * @deprecated Please use {@code #getMachineIdentifier()} instead.
+     * @deprecated Please use {@code #toByteArray()} instead.
      */
     @Deprecated
     public int getMachine() {
@@ -345,18 +336,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * Gets the timestamp as a {@code Date} instance.
-     *
-     * @return the Date
-     */
-    public Date getDate() {
-        return new Date(_time * 1000L);
-    }
-
-    /**
      * Gets the time of this ID, in milliseconds
      *
-     * @deprecated Please use {@link #getDate()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public long getTime(){
@@ -364,39 +346,20 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * Gets the timestamp (number of seconds since the Unix epoch).
-     *
-     * @return the timestamp
-     */
-    public int getTimestamp() {
-        return _time;
-    }
-
-    /**
      * Gets the time of this ID, in seconds.
-     * @deprecated Please use {@link #getTimestamp()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public int getTimeSecond() {
         return _time;
     }
 
-    /**
-     * Gets the counter.
-     *
-     * @return the counter
-     */
-    public int getCounter() {
-        return _inc;
-    }
-
 
     /**
      * Gets the counter.
      *
      * @return the counter
-     * @see org.bson.types.ObjectId#getCounter()
-     * @deprecated Please use the {@link #getCounter()} instead.
+     * @deprecated Please use the {@link #toByteArray()} instead.
      */
     @Deprecated
     public int getInc() {
@@ -407,8 +370,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * Gets the timestamp.
      *
      * @return the timestamp
-     * @see org.bson.types.ObjectId#getTimestamp()
-     * @deprecated Please use {@link #getTimestamp()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public int _time(){
@@ -419,8 +381,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * Gets the machine identifier.
      *
      * @return the machine identifier
-     * @see org.bson.types.ObjectId#getMachineIdentifier()
-     * @deprecated Please use {@link #getMachineIdentifier()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public int _machine(){
@@ -431,8 +392,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * Gets the counter.
      *
      * @return the counter
-     * @see org.bson.types.ObjectId#getCounter()
-     * @deprecated Please use {@link #getCounter()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public int _inc(){
@@ -461,8 +421,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * Gets the machine identifier.
      *
      * @return the machine identifier
-     * @see org.bson.types.ObjectId#getMachineIdentifier()
-     * @deprecated Please use {@link #getMachineIdentifier()} instead.
+     * @deprecated Please use {@link #toByteArray()} instead.
      */
     @Deprecated
     public static int getGenMachineId() {
