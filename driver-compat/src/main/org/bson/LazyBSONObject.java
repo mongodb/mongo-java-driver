@@ -74,6 +74,10 @@ public class LazyBSONObject implements BSONObject {
         return offset;
     }
 
+    protected byte[] getBytes() {
+        return bytes;
+    }
+
     @Override
     public Object get(final String key) {
         final BSONBinaryReader reader = getBSONReader();
