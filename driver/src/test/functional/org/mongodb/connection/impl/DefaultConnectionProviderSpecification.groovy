@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -30,6 +32,9 @@ import org.mongodb.connection.ServerAddress
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Subject
+
+import javax.management.ObjectName
+import java.lang.management.ManagementFactory
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.mongodb.Fixture.getPrimary
@@ -48,7 +53,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should get non null connection'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
 
         expect:
         provider.get() != null
@@ -57,7 +62,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should reuse released connection'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
 
         when:
         provider.get().close();
@@ -70,11 +75,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .build());
+                connectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .build());
 
         when:
         provider.get().close();
@@ -86,7 +91,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
 
         when:
         Connection first = provider.get();
@@ -104,11 +109,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw on timeout'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxWaitTime(50, MILLISECONDS)
-                                                     .build());
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxWaitTime(50, MILLISECONDS)
+                        .build());
         provider.get();
 
         when:
@@ -125,11 +130,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw on wait queue full'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxWaitTime(1000, MILLISECONDS)
-                                                     .build());
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxWaitTime(1000, MILLISECONDS)
+                        .build());
 
         provider.get();
 
@@ -147,8 +152,8 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should expire connection after max life time'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build());
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
         provider.get().close();
@@ -162,11 +167,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should expire connection after max life time on close'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(20, MILLISECONDS).build());
+                connectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
         Connection connection = provider.get();
@@ -180,11 +185,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should expire connection after max idle time'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxConnectionIdleTime(5, MILLISECONDS).build());
+                connectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxConnectionIdleTime(5, MILLISECONDS).build());
 
         when:
         Connection connection = provider.get();
@@ -199,11 +204,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should close connection after expiration'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(20, MILLISECONDS).build());
+                connectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         when:
         provider.get().close();
@@ -217,11 +222,11 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should create new connection after expiration'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             connectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(1)
-                                                     .maxWaitQueueSize(1)
-                                                     .maxConnectionLifeTime(5, MILLISECONDS).build());
+                connectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(1)
+                        .maxWaitQueueSize(1)
+                        .maxConnectionLifeTime(5, MILLISECONDS).build());
 
         when:
         provider.get().close();
@@ -246,11 +251,11 @@ class DefaultConnectionProviderSpecification extends Specification {
         }
 
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
-                                             mockConnectionFactory,
-                                             DefaultConnectionProviderSettings.builder()
-                                                     .maxSize(2)
-                                                     .maxWaitQueueSize(1)
-                                                     .build());
+                mockConnectionFactory,
+                DefaultConnectionProviderSettings.builder()
+                        .maxSize(2)
+                        .maxWaitQueueSize(1)
+                        .build());
         when:
         Connection c1 = provider.get();
         Connection c2 = provider.get();
@@ -284,6 +289,48 @@ class DefaultConnectionProviderSpecification extends Specification {
         then:
         connectionFactory.createdConnections.size() == 0
     }
+
+    def 'statistics should be correct'() {
+        when:
+        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
+                DefaultConnectionProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build());
+        provider.get()
+        provider.get().close()
+
+        then:
+        with(provider.statistics) {
+            host == SERVER_ADDRESS.host
+            port == SERVER_ADDRESS.port
+            minSize == 0
+            maxSize == 5
+            total == 2
+            inUse == 1
+        }
+    }
+
+    def 'should register MBean'() {
+        when:
+        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
+                DefaultConnectionProviderSettings.builder().minSize(1).maxSize(5).build());
+
+        then:
+        new ObjectName(provider.statistics.objectName).domain == 'org.mongodb.driver'
+        ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName(provider.statistics.objectName))
+    }
+
+    def 'should unregister MBean'() {
+        given:
+        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
+                DefaultConnectionProviderSettings.builder().minSize(1).maxSize(5).build());
+        def beanName = new ObjectName(provider.statistics.objectName)
+
+        when:
+        provider.close();
+
+        then:
+        !ManagementFactory.getPlatformMBeanServer().isRegistered(beanName)
+    }
+
 
     @Ignore('Test is racy')
     def 'should ensure min pool size after size maintaining thread runs'() {

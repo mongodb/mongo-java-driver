@@ -27,8 +27,11 @@ import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.management.MBeanServerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,14 +42,19 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class DefaultConnectionProvider implements ConnectionProvider {
+    private static Map<ServerAddress, Integer> serverAddressIntegerMap = new HashMap<ServerAddress, Integer>();
+
     private final ConcurrentPool<UsageTrackingConnection> pool;
     private final DefaultConnectionProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
     private final ExecutorService sizeMaintenanceTimer;
+    private final ServerAddress serverAddress;
+    private final ConnectionPoolStatistics statistics;
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
+        this.serverAddress = serverAddress;
         pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
                 new ConcurrentPool.ItemFactory<UsageTrackingConnection>() {
                     @Override
@@ -65,6 +73,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
                     }
                 });
         this.settings = settings;
+        statistics = registerWithManagement();
         sizeMaintenanceTimer = createTimer();
     }
 
@@ -98,6 +107,11 @@ class DefaultConnectionProvider implements ConnectionProvider {
         if (sizeMaintenanceTimer != null) {
             sizeMaintenanceTimer.shutdownNow();
         }
+        unregisterWithManagement();
+    }
+
+    public ConnectionPoolStatistics getStatistics() {
+        return statistics;
     }
 
     private ExecutorService createTimer() {
@@ -151,6 +165,33 @@ class DefaultConnectionProvider implements ConnectionProvider {
         }
     }
 
+    private ConnectionPoolStatistics registerWithManagement() {
+        ConnectionPoolStatistics retVal = new ConnectionPoolStatistics(serverAddress, settings, pool, createObjectName());
+        MBeanServerFactory.getMBeanServer().registerMBean(retVal, retVal.getObjectName());
+        return retVal;
+    }
+
+    private void unregisterWithManagement() {
+        MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
+    }
+
+    private String createObjectName() {
+        return "org.mongodb.driver:type=ConnectionPool,host=" + serverAddress.getHost() + ",port=" + serverAddress.getPort()
+                + ",instance=" + getInstanceNumber(serverAddress);
+    }
+
+    public static synchronized int getInstanceNumber(final ServerAddress serverAddress) {
+        Integer instanceNumber = serverAddressIntegerMap.get(serverAddress);
+        if (instanceNumber == null) {
+            serverAddressIntegerMap.put(serverAddress, 1);
+            return 0;
+        }
+        else {
+           serverAddressIntegerMap.put(serverAddress, instanceNumber + 1);
+           return instanceNumber;
+        }
+    }
+
     private class PooledConnection implements Connection {
         private volatile UsageTrackingConnection wrapped;
 
@@ -199,4 +240,5 @@ class DefaultConnectionProvider implements ConnectionProvider {
             }
         }
     }
+
 }
