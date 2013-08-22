@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -184,7 +186,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should invalidate existing primary when a new primary notifies'() {
         given:
-        new MultiServerCluster(ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory)
+        def cluster = new MultiServerCluster(ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, ReplicaSetPrimary)
 
         when:
@@ -192,6 +194,7 @@ class MultiServerClusterSpecification extends Specification {
 
         then:
         getDescription(firstServer).state == Connecting
+        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should remove a server when a server in the seed list is not in hosts list, it should be removed'() {

@@ -185,7 +185,7 @@ final class MultiServerCluster extends BaseCluster {
         if (!addressToServerTupleMap.containsKey(serverAddress)) {
             ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server,
-                    ServerDescription.builder().state(Connecting).address(serverAddress).build()));
+                    getConnectingServerDescription(serverAddress)));
         }
     }
 
@@ -197,8 +197,13 @@ final class MultiServerCluster extends BaseCluster {
         for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
                 serverTuple.server.invalidate();
+                serverTuple.description = getConnectingServerDescription(serverTuple.description.getAddress());
             }
         }
+    }
+
+    private ServerDescription getConnectingServerDescription(final ServerAddress serverAddress) {
+        return ServerDescription.builder().state(Connecting).address(serverAddress).build();
     }
 
     private void updateDescription() {
