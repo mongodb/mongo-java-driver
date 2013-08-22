@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -192,7 +194,8 @@ class DefaultConnectionProviderSpecification extends Specification {
         when:
         Connection connection = provider.get();
         connection.close();
-        Thread.sleep(50);
+        Thread.sleep(10);
+        provider.doMaintenance()
         provider.get();
 
         then:
