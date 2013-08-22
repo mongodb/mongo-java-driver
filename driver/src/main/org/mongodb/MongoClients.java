@@ -118,8 +118,7 @@ public final class MongoClients {
         AsyncConnectionSettings asyncConnectionSettings = AsyncConnectionSettings.builder()
             .poolSize(options.getAsyncPoolSize())
             .maxPoolSize(options.getAsyncMaxPoolSize())
-            .keepAliveTime(options.getAsyncKeepAliveTime())
-            .keepAliveUnit(options.getAsyncKeepAliveUnit())
+            .keepAliveTime(options.getAsyncKeepAliveTimeMS())
             .build();
 
         ConnectionProviderSettings connectionProviderSettings = ConnectionProviderSettings.builder()

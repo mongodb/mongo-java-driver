@@ -16,11 +16,10 @@
 
 package org.mongodb;
 
+
 import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.AsyncConnectionSettings;
-
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -61,7 +60,6 @@ public final class MongoClientOptions {
     private final int asyncPoolSize;
     private final int asyncMaxPoolSize;
     private final int asyncKeepAliveTime;
-    private final TimeUnit asyncKeepAliveUnit;
     private final String requiredReplicaSetName;
 
     /**
@@ -109,8 +107,7 @@ public final class MongoClientOptions {
         private int heartbeatSocketTimeout = 20000;
         private int asyncPoolSize = AsyncConnectionSettings.POOL_SIZE;
         private int asyncMaxPoolSize = AsyncConnectionSettings.MAX_POOL_SIZE;
-        private int asyncKeepAliveTime = AsyncConnectionSettings.KEEP_ALIVE_TIME;
-        private TimeUnit asyncKeepAliveUnit = AsyncConnectionSettings.KEEP_ALIVE_UNIT;
+        private int asyncKeepAliveTimeMS = AsyncConnectionSettings.KEEP_ALIVE_TIME_MS;
 
         private String requiredReplicaSetName;
 
@@ -396,18 +393,7 @@ public final class MongoClientOptions {
          * @see MongoClientOptions#getAsyncKeepAliveTime() 
          */
         public Builder asyncKeepAliveTime(final int time) {
-            this.asyncKeepAliveTime = time;
-            return this;
-        }
-
-        /**
-         *  Sets the keep alive time unit for async threads in the pool
-         *
-         * @return {@code this}
-         * @see MongoClientOptions#getAsyncKeepAliveUnit()  
-         */
-        public Builder asyncKeepAliveUnit(final TimeUnit unit) {
-            this.asyncKeepAliveUnit = unit;
+            this.asyncKeepAliveTimeMS = time;
             return this;
         }
 
@@ -787,10 +773,6 @@ public final class MongoClientOptions {
         return asyncKeepAliveTime;
     }
 
-    public TimeUnit getAsyncKeepAliveUnit() {
-        return asyncKeepAliveUnit;
-    }
-
     public int getAsyncMaxPoolSize() {
         return asyncMaxPoolSize;
     }
@@ -827,7 +809,6 @@ public final class MongoClientOptions {
                 + ", asyncPoolSize=" + asyncPoolSize
                 + ", asyncMaxPoolSize=" + asyncMaxPoolSize
                 + ", asyncKeepAliveTime=" + asyncKeepAliveTime
-                + ", asyncKeepAliveUnit=" + asyncKeepAliveUnit
                 + ", requiredReplicaSetName=" + requiredReplicaSetName
                 + '}';
     }
@@ -857,8 +838,7 @@ public final class MongoClientOptions {
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
         asyncPoolSize = builder.asyncPoolSize;
         asyncMaxPoolSize = builder.asyncMaxPoolSize;
-        asyncKeepAliveTime = builder.asyncKeepAliveTime;
-        asyncKeepAliveUnit = builder.asyncKeepAliveUnit;
         requiredReplicaSetName = builder.requiredReplicaSetName;
+        asyncKeepAliveTime = builder.asyncKeepAliveTimeMS;
     }
 }

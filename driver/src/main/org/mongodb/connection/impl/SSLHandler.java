@@ -65,18 +65,17 @@ public class SSLHandler {
     static {
         try {
             SSL_CONTEXT = SSLContext.getInstance("TLS");
-            final KeyStore ks = KeyStore.getInstance("JKS");
-            final KeyStore ts = KeyStore.getInstance("JKS");
+            final KeyStore ks = KeyStore.getInstance(System.getProperty("javax.net.ssl.keyStoreType", "JKS"));
+            final KeyStore ts = KeyStore.getInstance(System.getProperty("javax.net.ssl.trustStoreType", "JKS"));
 
-            final char[] passphrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
+            final char[] ksPassPhrase = System.getProperty("javax.net.ssl.keyStorePassword").toCharArray();
+            final char[] tsPassPhrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
 
-            final String keyStoreFile = System.getProperty("javax.net.ssl.trustStore");
-
-            load(ks, passphrase, keyStoreFile);
-            load(ts, passphrase, keyStoreFile);
+            load(ks, ksPassPhrase, System.getProperty("javax.net.ssl.keyStore"));
+            load(ts, tsPassPhrase, System.getProperty("javax.net.ssl.trustStore"));
 
             final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(ks, passphrase);
+            kmf.init(ks, ksPassPhrase);
 
             final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
             tmf.init(ts);

@@ -31,6 +31,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 
 public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
     private final ExecutorService service;
@@ -43,8 +45,8 @@ public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
         this.sslSettings = sslSettings;
         this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
-        service = new ThreadPoolExecutor(asyncSettings.getPoolSize(), asyncSettings.getMaxPoolSize(), asyncSettings.getKeepAliveTime(),
-            asyncSettings.getKeepAliveUnit(), new ArrayBlockingQueue<Runnable>(asyncSettings.getMaxPoolSize()));
+        service = new ThreadPoolExecutor(asyncSettings.getPoolSize(), asyncSettings.getMaxPoolSize(), asyncSettings.getKeepAliveTimeMS(),
+            MILLISECONDS, new ArrayBlockingQueue<Runnable>(asyncSettings.getMaxPoolSize()));
     }
 
     @Override

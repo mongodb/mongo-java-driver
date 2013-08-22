@@ -27,26 +27,20 @@ public final class AsyncConnectionSettings {
 
     public static final int POOL_SIZE = 1;
     public static final int MAX_POOL_SIZE = 20;
-    public static final int KEEP_ALIVE_TIME = 60;
+    public static final int KEEP_ALIVE_TIME_MS = 60000;
     public static final TimeUnit KEEP_ALIVE_UNIT = SECONDS;
     private final int poolSize;
     private final int maxPoolSize;
-    private final int keepAliveTime;
-    private final TimeUnit keepAliveUnit;
+    private final long keepAliveTimeMS;
 
     private AsyncConnectionSettings(final Builder builder) {
         poolSize = builder.poolSize;
         maxPoolSize = builder.maxPoolSize;
-        keepAliveTime = builder.keepAliveTime;
-        keepAliveUnit = builder.keepAliveUnit;
+        keepAliveTimeMS = builder.keepAliveTimeMS;
     }
 
-    public int getKeepAliveTime() {
-        return keepAliveTime;
-    }
-
-    public TimeUnit getKeepAliveUnit() {
-        return keepAliveUnit;
+    public long getKeepAliveTimeMS() {
+        return keepAliveTimeMS;
     }
 
     public int getMaxPoolSize() {
@@ -64,30 +58,22 @@ public final class AsyncConnectionSettings {
     public static class Builder {
         private int poolSize = POOL_SIZE;
         private int maxPoolSize = MAX_POOL_SIZE;
-        private int keepAliveTime = KEEP_ALIVE_TIME;
-        private TimeUnit keepAliveUnit = KEEP_ALIVE_UNIT;
+        private long keepAliveTimeMS = KEEP_ALIVE_TIME_MS;
 
-        // CHECKSTYLE:OFF
-        public Builder keepAliveTime(int count) {
-            keepAliveTime = count;
+        public Builder keepAliveTime(final long time) {
+            keepAliveTimeMS = time;
             return this;
         }
 
-        public Builder keepAliveUnit(TimeUnit unit) {
-            keepAliveUnit = unit;
-            return this;
-        }
-
-        public Builder maxPoolSize(int count) {
+        public Builder maxPoolSize(final int count) {
             maxPoolSize = count;
             return this;
         }
-        public Builder poolSize(int count) {
+        public Builder poolSize(final int count) {
             poolSize = count;
             return this;
         }
 
-        // CHECKSTYLE:ON
         public AsyncConnectionSettings build() {
             return new AsyncConnectionSettings(this);
         }
