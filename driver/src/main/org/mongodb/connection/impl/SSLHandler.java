@@ -21,6 +21,17 @@
 package org.mongodb.connection.impl;
 
 
+import org.mongodb.connection.MongoSocketOpenException;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.MongoSocketWriteException;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -29,19 +40,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManagerFactory;
-
-import org.mongodb.connection.MongoSocketOpenException;
-import org.mongodb.connection.MongoSocketReadException;
-import org.mongodb.connection.MongoSocketWriteException;
 
 
 public class SSLHandler {
@@ -69,8 +71,9 @@ public class SSLHandler {
             final char[] passphrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
 
             final String keyStoreFile = System.getProperty("javax.net.ssl.trustStore");
-            ks.load(new FileInputStream(keyStoreFile), passphrase);
-            ts.load(new FileInputStream(keyStoreFile), passphrase);
+
+            load(ks, passphrase, keyStoreFile);
+            load(ts, passphrase, keyStoreFile);
 
             final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, passphrase);
@@ -83,6 +86,16 @@ public class SSLHandler {
             throw new RuntimeException(e.getMessage(), e);
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private static void load(final KeyStore ks, final char[] passphrase, final String keyStoreFile)
+        throws IOException, NoSuchAlgorithmException, CertificateException {
+        FileInputStream stream = new FileInputStream(keyStoreFile);
+        try {
+            ks.load(stream, passphrase);
+        } finally {
+            stream.close();
         }
     }
 

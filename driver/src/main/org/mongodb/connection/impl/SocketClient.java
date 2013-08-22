@@ -21,6 +21,15 @@
 package org.mongodb.connection.impl;
 
 
+import org.bson.ByteBuf;
+import org.mongodb.MongoException;
+import org.mongodb.connection.MongoSocketOpenException;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.MongoSocketWriteException;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SingleResultCallback;
+
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -34,15 +43,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLException;
-
-import org.bson.ByteBuf;
-import org.mongodb.MongoException;
-import org.mongodb.connection.MongoSocketOpenException;
-import org.mongodb.connection.MongoSocketReadException;
-import org.mongodb.connection.MongoSocketWriteException;
-import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.SingleResultCallback;
 
 
 /**
@@ -164,7 +164,7 @@ public class SocketClient {
 
     public void read(final ByteBuffer byteBuf, final CompletionHandler<Integer, Void> callback) {
         try {
-            waitingReads.offer(new AsyncCompletionHandler() {
+            boolean offer = waitingReads.offer(new AsyncCompletionHandler() {
                 @Override
                 public void completed() {
                     try {
@@ -180,8 +180,12 @@ public class SocketClient {
                     callback.failed(t, null);
                 }
             }, 1, TimeUnit.SECONDS);
-            client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
-            selector.wakeup();
+            if (offer) {
+                client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, this);
+                selector.wakeup();
+            } else {
+                throw new MongoSocketReadException("Timed out registering for a read", address);
+            }
         } catch (InterruptedException e) {
             throw new MongoSocketReadException(e.getMessage(), address, e);
         } catch (IOException e) {
@@ -194,7 +198,7 @@ public class SocketClient {
     }
 
     public void write(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
-        waitingWrites.offer(new AsyncCompletionHandler() {
+        if (waitingWrites.offer(new AsyncCompletionHandler() {
             @Override
             public void completed() {
                 try {
@@ -211,8 +215,11 @@ public class SocketClient {
             public void failed(final Throwable t) {
                 callback.onResult(null, t instanceof MongoException ? (MongoException) t : new MongoException(t.getMessage(), t));
             }
-        });
-        triggerWrite();
+        })) {
+            triggerWrite();
+        } else {
+            throw new MongoSocketWriteException("Timed out registering for a write", address);
+        }
     }
 
     private class NIOListener implements Runnable {

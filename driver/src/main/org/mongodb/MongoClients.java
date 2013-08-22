@@ -16,7 +16,9 @@
 
 package org.mongodb;
 
+
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.AsyncConnectionSettings;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
@@ -37,6 +39,13 @@ import org.mongodb.connection.impl.ServerSettings;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -106,6 +115,12 @@ public final class MongoClients {
                                                                                final MongoClientOptions options) {
         BufferProvider bufferProvider = new PowerOfTwoBufferPool();
         SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
+        AsyncConnectionSettings asyncConnectionSettings = AsyncConnectionSettings.builder()
+            .poolSize(options.getAsyncPoolSize())
+            .maxPoolSize(options.getAsyncMaxPoolSize())
+            .keepAliveTime(options.getAsyncKeepAliveTime())
+            .keepAliveUnit(options.getAsyncKeepAliveUnit())
+            .build();
 
         ConnectionProviderSettings connectionProviderSettings = ConnectionProviderSettings.builder()
                 .minSize(options.getMinConnectionPoolSize())
@@ -125,7 +140,7 @@ public final class MongoClients {
         DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
                 options.isAsyncEnabled()
                         ? new DefaultAsyncConnectionProviderFactory(connectionProviderSettings,
-                        new DefaultAsyncConnectionFactory(sslSettings, bufferProvider, credentialList))
+                        new DefaultAsyncConnectionFactory(asyncConnectionSettings, sslSettings, bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(
                 ServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).

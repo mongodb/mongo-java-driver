@@ -18,18 +18,18 @@
 package org.mongodb.connection.impl;
 
 
+import org.mongodb.MongoCredential;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.AsyncConnectionFactory;
+import org.mongodb.connection.AsyncConnectionSettings;
+import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.SSLSettings;
+import org.mongodb.connection.ServerAddress;
+
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.mongodb.MongoCredential;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.AsyncConnectionFactory;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerAddress;
 
 
 public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
@@ -38,12 +38,13 @@ public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultAsyncConnectionFactory(final SSLSettings sslSettings, final BufferProvider bufferProvider,
-        final List<MongoCredential> credentialList) {
+    public DefaultAsyncConnectionFactory(final AsyncConnectionSettings asyncSettings, final SSLSettings sslSettings,
+        final BufferProvider bufferProvider, final List<MongoCredential> credentialList) {
         this.sslSettings = sslSettings;
         this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
-        service = new ThreadPoolExecutor(5, 20, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(20));
+        service = new ThreadPoolExecutor(asyncSettings.getPoolSize(), asyncSettings.getMaxPoolSize(), asyncSettings.getKeepAliveTime(),
+            asyncSettings.getKeepAliveUnit(), new ArrayBlockingQueue<Runnable>(asyncSettings.getMaxPoolSize()));
     }
 
     @Override
