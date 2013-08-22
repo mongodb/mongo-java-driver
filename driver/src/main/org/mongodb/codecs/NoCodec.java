@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 
 public class NoCodec implements Codec<Object> {
-    private static final Logger LOGGER = Logger.getLogger("org.mongodb.codecs.NoOpCodec");
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.driver.codec");
 
     @Override
     public Object decode(final BSONReader reader) {

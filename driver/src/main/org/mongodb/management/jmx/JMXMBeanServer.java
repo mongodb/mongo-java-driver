@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
 public class JMXMBeanServer implements MBeanServer {
-    private static Logger logger = Logger.getLogger("org.mongodb.management");
+    private static Logger logger = Logger.getLogger("org.mongodb.driver.management");
 
     @Override
     public void registerMBean(final Object mBean, final String mBeanName) {

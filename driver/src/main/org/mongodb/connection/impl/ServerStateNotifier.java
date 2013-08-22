@@ -56,7 +56,7 @@ import static org.mongodb.connection.ServerType.Unknown;
 @ThreadSafe
 class ServerStateNotifier implements Runnable {
 
-    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection.monitor");
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.driver.cluster.monitor");
 
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;

@@ -52,7 +52,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class BaseCluster implements Cluster {
 
-    private static final Logger LOGGER = Logger.getLogger("org.mongodb.connection");
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.driver.cluster");
 
     private final Set<ChangeListener<ClusterDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ClusterDescription>, Boolean>());

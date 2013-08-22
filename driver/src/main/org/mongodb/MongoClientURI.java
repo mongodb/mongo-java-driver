@@ -157,7 +157,7 @@ public class MongoClientURI {
     private static final String PREFIX = "mongodb://";
     private static final String UTF_8 = "UTF-8";
 
-    private static final Logger LOGGER = Logger.getLogger("com.mongodb.MongoURI");
+    private static final Logger LOGGER = Logger.getLogger("org.mongodb.driver.uri");
 
     private final MongoClientOptions options;
     private final MongoCredential credentials;
