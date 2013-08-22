@@ -51,6 +51,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
     private final ExecutorService sizeMaintenanceTimer;
     private final ServerAddress serverAddress;
     private final ConnectionPoolStatistics statistics;
+    private final Runnable maintenanceTask;
 
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
@@ -74,6 +75,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
                 });
         this.settings = settings;
         statistics = registerWithManagement();
+        maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
     }
 
@@ -110,17 +112,28 @@ class DefaultConnectionProvider implements ConnectionProvider {
         unregisterWithManagement();
     }
 
+    /**
+     * Gets the statistics for the connection pool.
+     *
+     * @return the statistics.
+     */
     public ConnectionPoolStatistics getStatistics() {
         return statistics;
     }
 
-    private ExecutorService createTimer() {
-        ScheduledExecutorService newTimer = null;
+    /**
+     * Synchronously prune idle connections and ensure the minimum pool size.
+     */
+    public void doMaintenance() {
+        maintenanceTask.run();
+    }
+
+    private Runnable createMaintenanceTask() {
+        Runnable retVal = null;
         if (shouldPrune() || shouldEnsureMinSize()) {
-            newTimer = Executors.newSingleThreadScheduledExecutor();
-            newTimer.scheduleAtFixedRate(new Runnable() {
+            retVal = new Runnable() {
                 @Override
-                public void run() {
+                public synchronized void run() {
                     if (shouldPrune()) {
                         pool.prune();
                     }
@@ -128,10 +141,21 @@ class DefaultConnectionProvider implements ConnectionProvider {
                         pool.ensureMinSize(settings.getMinSize());
                     }
                 }
-            }, 0, settings.getMaintenanceFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+            };
         }
+        return retVal;
+    }
 
-        return newTimer;
+    private ExecutorService createTimer() {
+        if (maintenanceTask == null) {
+            return null;
+        }
+        else {
+            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
+            newTimer.scheduleAtFixedRate(maintenanceTask, 0, settings.getMaintenanceFrequency(TimeUnit.MILLISECONDS),
+                    TimeUnit.MILLISECONDS);
+            return newTimer;
+        }
     }
 
     private boolean shouldEnsureMinSize() {
@@ -187,8 +211,8 @@ class DefaultConnectionProvider implements ConnectionProvider {
             return 0;
         }
         else {
-           serverAddressIntegerMap.put(serverAddress, instanceNumber + 1);
-           return instanceNumber;
+            serverAddressIntegerMap.put(serverAddress, instanceNumber + 1);
+            return instanceNumber;
         }
     }
 

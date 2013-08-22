@@ -16,10 +16,6 @@
 
 
 
-
-
-
-
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -331,9 +327,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         !ManagementFactory.getPlatformMBeanServer().isRegistered(beanName)
     }
 
-
-    @Ignore('Test is racy')
-    def 'should ensure min pool size after size maintaining thread runs'() {
+    def 'should ensure min pool size after maintenance task runs'() {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
@@ -343,14 +337,13 @@ class DefaultConnectionProviderSpecification extends Specification {
                         .build());
 
         when:
-        Thread.sleep(50);
+        provider.doMaintenance()
 
         then:
         connectionFactory.createdConnections.size() == 5
     }
 
-    @Ignore('Test is racy')
-    def 'should prune after size maintaining thread runs'() {
+    def 'should prune after maintenance task runs'() {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
@@ -363,7 +356,8 @@ class DefaultConnectionProviderSpecification extends Specification {
         provider.get().close();
 
         when:
-        Thread.sleep(50);
+        Thread.sleep(10)
+        provider.doMaintenance()
 
         then:
         connectionFactory.createdConnections.get(0).isClosed()
