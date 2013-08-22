@@ -25,7 +25,6 @@ import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.MongoServerNotFoundException;
-import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 
@@ -40,6 +39,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.Unknown;
+import static org.mongodb.connection.ServerConnectionState.Connecting;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
@@ -47,8 +47,18 @@ import static org.mongodb.connection.ClusterType.Unknown;
 final class MultiServerCluster extends BaseCluster {
     private ClusterType clusterType;
     private String replicaSetName;
-    private final ConcurrentMap<ServerAddress, ClusterableServer> addressToServerMap =
-            new ConcurrentHashMap<ServerAddress, ClusterableServer>();
+    private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
+            new ConcurrentHashMap<ServerAddress, ServerTuple>();
+
+    private static final class ServerTuple {
+        private final ClusterableServer server;
+        private ServerDescription description;
+
+        private ServerTuple(final ClusterableServer server, final ServerDescription description) {
+            this.server = server;
+            this.description = description;
+        }
+    }
 
     public MultiServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(settings, serverFactory);
@@ -70,8 +80,8 @@ final class MultiServerCluster extends BaseCluster {
     public void close() {
         if (!isClosed()) {
             synchronized (this) {
-                for (ClusterableServer server : addressToServerMap.values()) {
-                    server.close();
+                for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
+                    serverTuple.server.close();
                 }
             }
             super.close();
@@ -82,11 +92,11 @@ final class MultiServerCluster extends BaseCluster {
     protected ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("is open", !isClosed());
 
-        ClusterableServer server = addressToServerMap.get(serverAddress);
-        if (server == null) {
+        ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);
+        if (serverTuple == null) {
             throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
         }
-        return server;
+        return serverTuple.server;
     }
 
 
@@ -104,8 +114,14 @@ final class MultiServerCluster extends BaseCluster {
         ClusterDescription currentDescription = getDescriptionNoWaiting();
 
         synchronized (this) {
-            if (event.getNewValue().isOk()) {
+            ServerTuple serverTuple = addressToServerTupleMap.get(event.getNewValue().getAddress());
+            if (serverTuple == null) {
+                return;
+            }
 
+            serverTuple.description = event.getNewValue();
+
+            if (event.getNewValue().isOk()) {
                 if (clusterType == Unknown) {
                     clusterType = event.getNewValue().getClusterType();
                 }
@@ -165,24 +181,21 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void addServer(final ServerAddress serverAddress) {
-        if (!addressToServerMap.containsKey(serverAddress)) {
-            ClusterableServer mongoServer = createServer(serverAddress, new DefaultServerStateListener());
-            addressToServerMap.put(serverAddress, mongoServer);
+        if (!addressToServerTupleMap.containsKey(serverAddress)) {
+            ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
+            addressToServerTupleMap.put(serverAddress, new ServerTuple(server,
+                    ServerDescription.builder().state(Connecting).address(serverAddress).build()));
         }
     }
 
     private void removeServer(final ServerAddress serverAddress) {
-        ClusterableServer server = addressToServerMap.remove(serverAddress);
-        if (server != null) {
-            server.close();
-        }
+         addressToServerTupleMap.remove(serverAddress).server.close();
     }
 
-
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {
-        for (ClusterableServer server : addressToServerMap.values()) {
-            if (!server.getDescription().getAddress().equals(newPrimary) && server.getDescription().isPrimary()) {
-                server.invalidate();
+        for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
+            if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
+                serverTuple.server.invalidate();
             }
         }
     }
@@ -194,8 +207,8 @@ final class MultiServerCluster extends BaseCluster {
 
     private List<ServerDescription> getNewServerDescriptionList() {
         List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
-        for (Server server : addressToServerMap.values()) {
-            serverDescriptions.add(server.getDescription());
+        for (ServerTuple cur : addressToServerTupleMap.values()) {
+            serverDescriptions.add(cur.description);
         }
         return serverDescriptions;
     }
@@ -214,9 +227,9 @@ final class MultiServerCluster extends BaseCluster {
 
     private void removeExtras(final ServerDescription serverDescription) {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-        for (Server cur : addressToServerMap.values()) {
-            if (!allServerAddresses.contains(cur.getDescription().getAddress())) {
-                removeServer(cur.getDescription().getAddress());
+        for (ServerTuple cur : addressToServerTupleMap.values()) {
+            if (!allServerAddresses.contains(cur.description.getAddress())) {
+                removeServer(cur.description.getAddress());
             }
         }
     }
