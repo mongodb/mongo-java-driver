@@ -29,20 +29,18 @@ import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.management.MBeanServerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class DefaultConnectionProvider implements ConnectionProvider {
-    private static Map<ServerAddress, Integer> serverAddressIntegerMap = new HashMap<ServerAddress, Integer>();
 
     private final ConcurrentPool<UsageTrackingConnection> pool;
     private final DefaultConnectionProviderSettings settings;
@@ -56,32 +54,18 @@ class DefaultConnectionProvider implements ConnectionProvider {
     public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
                                      final DefaultConnectionProviderSettings settings) {
         this.serverAddress = serverAddress;
-        pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
-                new ConcurrentPool.ItemFactory<UsageTrackingConnection>() {
-                    @Override
-                    public UsageTrackingConnection create() {
-                        return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
-                    }
-
-                    @Override
-                    public void close(final UsageTrackingConnection connection) {
-                        connection.close();
-                    }
-
-                    @Override
-                    public boolean shouldPrune(final UsageTrackingConnection usageTrackingConnection) {
-                        return DefaultConnectionProvider.this.shouldPrune(usageTrackingConnection);
-                    }
-                });
         this.settings = settings;
-        statistics = registerWithManagement();
+        pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
+                new UsageTrackingConnectionItemFactory(connectionFactory));
+        statistics = new ConnectionPoolStatistics(serverAddress, settings.getMinSize(), settings.getMaxSize(), pool);
+        MBeanServerFactory.getMBeanServer().registerMBean(statistics, statistics.getObjectName());
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
     }
 
     @Override
     public Connection get() {
-        return get(settings.getMaxWaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+        return get(settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
     }
 
     @Override
@@ -109,7 +93,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
         if (sizeMaintenanceTimer != null) {
             sizeMaintenanceTimer.shutdownNow();
         }
-        unregisterWithManagement();
+        MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
     }
 
     /**
@@ -129,9 +113,9 @@ class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     private Runnable createMaintenanceTask() {
-        Runnable retVal = null;
+        Runnable newMaintenanceTask = null;
         if (shouldPrune() || shouldEnsureMinSize()) {
-            retVal = new Runnable() {
+            newMaintenanceTask = new Runnable() {
                 @Override
                 public synchronized void run() {
                     if (shouldPrune()) {
@@ -143,7 +127,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
                 }
             };
         }
-        return retVal;
+        return newMaintenanceTask;
     }
 
     private ExecutorService createTimer() {
@@ -152,8 +136,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
         }
         else {
             ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
-            newTimer.scheduleAtFixedRate(maintenanceTask, 0, settings.getMaintenanceFrequency(TimeUnit.MILLISECONDS),
-                    TimeUnit.MILLISECONDS);
+            newTimer.scheduleAtFixedRate(maintenanceTask, 0, settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
             return newTimer;
         }
     }
@@ -163,14 +146,14 @@ class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     private boolean shouldPrune() {
-        return settings.getMaxConnectionIdleTime(TimeUnit.MILLISECONDS) > 0 || settings.getMaxConnectionLifeTime(TimeUnit.MILLISECONDS) > 0;
+        return settings.getMaxConnectionIdleTime(MILLISECONDS) > 0 || settings.getMaxConnectionLifeTime(MILLISECONDS) > 0;
     }
 
     private boolean shouldPrune(final UsageTrackingConnection connection) {
         final long curTime = System.currentTimeMillis();
         return generation.get() > connection.getGeneration()
-                || expired(connection.getOpenedAt(), curTime, settings.getMaxConnectionLifeTime(TimeUnit.MILLISECONDS))
-                || expired(connection.getLastUsedAt(), curTime, settings.getMaxConnectionIdleTime(TimeUnit.MILLISECONDS));
+                || expired(connection.getOpenedAt(), curTime, settings.getMaxConnectionLifeTime(MILLISECONDS))
+                || expired(connection.getLastUsedAt(), curTime, settings.getMaxConnectionIdleTime(MILLISECONDS));
     }
 
     private boolean expired(final long startTime, final long curTime, final long maxTime) {
@@ -186,33 +169,6 @@ class DefaultConnectionProvider implements ConnectionProvider {
     private void incrementGenerationOnSocketException(final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
             generation.incrementAndGet();
-        }
-    }
-
-    private ConnectionPoolStatistics registerWithManagement() {
-        ConnectionPoolStatistics retVal = new ConnectionPoolStatistics(serverAddress, settings, pool, createObjectName());
-        MBeanServerFactory.getMBeanServer().registerMBean(retVal, retVal.getObjectName());
-        return retVal;
-    }
-
-    private void unregisterWithManagement() {
-        MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
-    }
-
-    private String createObjectName() {
-        return "org.mongodb.driver:type=ConnectionPool,host=" + serverAddress.getHost() + ",port=" + serverAddress.getPort()
-                + ",instance=" + getInstanceNumber(serverAddress);
-    }
-
-    public static synchronized int getInstanceNumber(final ServerAddress serverAddress) {
-        Integer instanceNumber = serverAddressIntegerMap.get(serverAddress);
-        if (instanceNumber == null) {
-            serverAddressIntegerMap.put(serverAddress, 1);
-            return 0;
-        }
-        else {
-            serverAddressIntegerMap.put(serverAddress, instanceNumber + 1);
-            return instanceNumber;
         }
     }
 
@@ -265,4 +221,26 @@ class DefaultConnectionProvider implements ConnectionProvider {
         }
     }
 
+    private class UsageTrackingConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingConnection> {
+        private final ConnectionFactory connectionFactory;
+
+        public UsageTrackingConnectionItemFactory(final ConnectionFactory connectionFactory) {
+            this.connectionFactory = connectionFactory;
+        }
+
+        @Override
+        public UsageTrackingConnection create() {
+            return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
+        }
+
+        @Override
+        public void close(final UsageTrackingConnection connection) {
+            connection.close();
+        }
+
+        @Override
+        public boolean shouldPrune(final UsageTrackingConnection usageTrackingConnection) {
+            return DefaultConnectionProvider.this.shouldPrune(usageTrackingConnection);
+        }
+    }
 }

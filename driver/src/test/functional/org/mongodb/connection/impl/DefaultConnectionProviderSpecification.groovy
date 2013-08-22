@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -286,7 +288,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         connectionFactory.createdConnections.size() == 0
     }
 
-    def 'statistics should be correct'() {
+    def 'statistics should reflect values from the provider'() {
         when:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 DefaultConnectionProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build());
@@ -304,7 +306,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         }
     }
 
-    def 'should register MBean'() {
+    def 'should register MBean in org.mongodb.driver domain'() {
         when:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 DefaultConnectionProviderSettings.builder().minSize(1).maxSize(5).build());

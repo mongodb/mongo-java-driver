@@ -18,18 +18,28 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.connection.ServerAddress;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * An MBean implementation for connection pool statistics.
+ */
 final class ConnectionPoolStatistics implements ConnectionPoolStatisticsMBean {
+    private static Map<ServerAddress, Integer> serverAddressIntegerMap = new HashMap<ServerAddress, Integer>();
+
     private ServerAddress serverAddress;
-    private DefaultConnectionProviderSettings settings;
+    private final int minSize;
+    private final int maxSize;
     private ConcurrentPool<UsageTrackingConnection> pool;
     private String objectName;
 
-    ConnectionPoolStatistics(final ServerAddress serverAddress, final DefaultConnectionProviderSettings settings,
-                             final ConcurrentPool<UsageTrackingConnection> pool, final String objectName) {
+    ConnectionPoolStatistics(final ServerAddress serverAddress, final int minSize, final int maxSize,
+                             final ConcurrentPool<UsageTrackingConnection> pool) {
         this.serverAddress = serverAddress;
-        this.settings = settings;
+        this.minSize = minSize;
+        this.maxSize = maxSize;
         this.pool = pool;
-        this.objectName = objectName;
+        this.objectName = createObjectName();
     }
 
     /**
@@ -59,7 +69,7 @@ final class ConnectionPoolStatistics implements ConnectionPoolStatisticsMBean {
      */
     @Override
     public int getMinSize() {
-        return settings.getMinSize();
+        return minSize;
     }
 
     /**
@@ -69,7 +79,7 @@ final class ConnectionPoolStatistics implements ConnectionPoolStatisticsMBean {
      */
     @Override
     public int getMaxSize() {
-        return settings.getMaxSize();
+        return maxSize;
     }
 
     /**
@@ -94,5 +104,22 @@ final class ConnectionPoolStatistics implements ConnectionPoolStatisticsMBean {
 
     String getObjectName() {
         return objectName;
+    }
+
+    private String createObjectName() {
+        return "org.mongodb.driver:type=ConnectionPool,host=" + serverAddress.getHost() + ",port=" + serverAddress.getPort()
+                + ",instance=" + getInstanceNumber(serverAddress);
+    }
+
+    private static synchronized int getInstanceNumber(final ServerAddress serverAddress) {
+        Integer instanceNumber = serverAddressIntegerMap.get(serverAddress);
+        if (instanceNumber == null) {
+            serverAddressIntegerMap.put(serverAddress, 1);
+            return 0;
+        }
+        else {
+            serverAddressIntegerMap.put(serverAddress, instanceNumber + 1);
+            return instanceNumber;
+        }
     }
 }
