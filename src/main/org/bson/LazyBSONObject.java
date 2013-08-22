@@ -672,6 +672,10 @@ public class LazyBSONObject implements BSONObject {
         return _doc_start_offset;
     }
 
+    protected byte[] getBytes() {
+        return _input.array();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -711,7 +715,7 @@ public class LazyBSONObject implements BSONObject {
     protected final int _doc_start_offset;
 
     /**
-     *  @deprecated This field is NOT a part of public API and will be dropped in 3.x versions.
+     *  @deprecated Please use {@link #getBytes()} to access underlying bytes.
      */
     @Deprecated
     protected final BSONByteBuffer _input; // TODO - Guard this with synchronicity?
