@@ -17,19 +17,15 @@
 
 
 package org.mongodb.operation
-
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCredential
 import org.mongodb.connection.MongoSecurityException
+import org.mongodb.connection.impl.ConnectionSettings
 import org.mongodb.connection.impl.DefaultConnectionFactory
-import org.mongodb.connection.impl.DefaultConnectionSettings
 import org.mongodb.connection.impl.NativeAuthenticationHelper
 
-import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getPrimary
-import static org.mongodb.Fixture.getSSLSettings
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.*
 
 class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
@@ -38,7 +34,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def connectionFactory
 
     def setup() {
-        connectionFactory = new DefaultConnectionFactory(DefaultConnectionSettings.builder().build(), getSSLSettings(),
+        connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
                 getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, getDatabaseName(), password)))
     }
 

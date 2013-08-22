@@ -53,7 +53,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should get non null connection'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         expect:
         provider.get() != null
@@ -62,7 +62,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should reuse released connection'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
         provider.get().close()
@@ -76,7 +76,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .build())
@@ -91,7 +91,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
         Connection first = provider.get()
@@ -109,7 +109,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw on timeout'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(50, MILLISECONDS)
@@ -130,7 +130,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should throw on wait queue full'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(1000, MILLISECONDS)
@@ -152,7 +152,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should expire connection after max life time'() throws InterruptedException {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build())
 
         when:
@@ -169,7 +169,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build())
@@ -187,7 +187,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionIdleTime(5, MILLISECONDS).build())
@@ -207,7 +207,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build())
@@ -226,7 +226,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(5, MILLISECONDS).build())
@@ -256,7 +256,7 @@ class DefaultConnectionProviderSpecification extends Specification {
 
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 mockConnectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(2)
                         .maxWaitQueueSize(1)
                         .build())
@@ -283,7 +283,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(10)
                         .build())
 
@@ -297,7 +297,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'statistics should reflect values from the provider'() {
         when:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
+                ConnectionProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
         provider.get()
         provider.get().close()
 
@@ -315,7 +315,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should register MBean in org.mongodb.driver domain'() {
         when:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
+                ConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
 
         then:
         new ObjectName(provider.statistics.objectName).domain == 'org.mongodb.driver'
@@ -325,7 +325,7 @@ class DefaultConnectionProviderSpecification extends Specification {
     def 'should unregister MBean'() {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                DefaultConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
+                ConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
         def beanName = new ObjectName(provider.statistics.objectName)
 
         when:
@@ -339,7 +339,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(10)
                         .minSize(5)
                         .build())
@@ -355,7 +355,7 @@ class DefaultConnectionProviderSpecification extends Specification {
         given:
         provider = new DefaultConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceFrequency(5, MILLISECONDS)
