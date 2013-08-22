@@ -27,14 +27,14 @@ import org.mongodb.connection.ServerAddress;
 import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
-    private DefaultServerSettings settings;
+    private ServerSettings settings;
     private final ConnectionProviderFactory connectionProviderFactory;
     private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;
     private final ConnectionFactory heartbeatConnectionFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferProvider bufferProvider;
 
-    public DefaultClusterableServerFactory(final DefaultServerSettings settings,
+    public DefaultClusterableServerFactory(final ServerSettings settings,
                                            final ConnectionProviderFactory connectionProviderFactory,
                                            final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
                                            final ConnectionFactory heartbeatConnectionFactory,

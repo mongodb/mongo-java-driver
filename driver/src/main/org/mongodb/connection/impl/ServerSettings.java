@@ -18,7 +18,7 @@ package org.mongodb.connection.impl;
 
 import java.util.concurrent.TimeUnit;
 
-public class DefaultServerSettings {
+public class ServerSettings {
     private final long heartbeatFrequencyMS;
     private final long heartbeatConnectRetryFrequencyMS;
 
@@ -40,8 +40,8 @@ public class DefaultServerSettings {
             return this;
         }
 
-        public DefaultServerSettings build() {
-            return new DefaultServerSettings(this);
+        public ServerSettings build() {
+            return new ServerSettings(this);
         }
     }
 
@@ -53,7 +53,7 @@ public class DefaultServerSettings {
         return timeUnit.convert(heartbeatConnectRetryFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
-    DefaultServerSettings(final Builder builder) {
+    ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
         heartbeatConnectRetryFrequencyMS = builder.heartbeatConnectRetryFrequencyMS;
     }

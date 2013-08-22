@@ -40,8 +40,8 @@ public class DefaultSingleServerClusterTest {
     @Before
     public void setUp() throws Exception {
         cluster = new DefaultSingleServerCluster(getPrimary(),
-                new DefaultClusterableServerFactory(DefaultServerSettings.builder().build(),
-                        new DefaultConnectionProviderFactory(DefaultConnectionProviderSettings.builder().maxSize(1).build(),
+                new DefaultClusterableServerFactory(ServerSettings.builder().build(),
+                        new DefaultConnectionProviderFactory(ConnectionProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
                                         getBufferProvider(), getCredentialList())),
                         null,

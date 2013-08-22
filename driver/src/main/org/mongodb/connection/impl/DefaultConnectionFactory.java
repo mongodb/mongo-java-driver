@@ -16,16 +16,16 @@
 
 package org.mongodb.connection.impl;
 
+import java.util.List;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
-import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -46,7 +46,7 @@ public class DefaultConnectionFactory implements ConnectionFactory {
         this.credentialList = notNull("credentialList", credentialList);
     }
 
-    public DefaultConnectionFactory(final DefaultConnectionSettings settings,
+    public DefaultConnectionFactory(final ConnectionSettings settings,
                                     final SocketFactory socketFactory, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
         this.settings = notNull("settings", settings);

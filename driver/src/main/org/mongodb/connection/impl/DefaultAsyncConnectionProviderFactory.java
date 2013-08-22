@@ -22,10 +22,10 @@ import org.mongodb.connection.AsyncConnectionProviderFactory;
 import org.mongodb.connection.ServerAddress;
 
 public class DefaultAsyncConnectionProviderFactory implements AsyncConnectionProviderFactory {
-    private final DefaultConnectionProviderSettings settings;
+    private final ConnectionProviderSettings settings;
     private final AsyncConnectionFactory connectionFactory;
 
-    public DefaultAsyncConnectionProviderFactory(final DefaultConnectionProviderSettings settings,
+    public DefaultAsyncConnectionProviderFactory(final ConnectionProviderSettings settings,
                                                  final AsyncConnectionFactory connectionFactory) {
         this.settings = settings;
         this.connectionFactory = connectionFactory;

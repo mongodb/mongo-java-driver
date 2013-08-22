@@ -16,16 +16,6 @@
 
 package com.mongodb;
 
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Codec;
 import org.mongodb.Document;
@@ -38,14 +28,14 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.impl.ConnectionProviderSettings;
 import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
-import org.mongodb.connection.impl.DefaultServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
+import org.mongodb.connection.impl.ServerSettings;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.Session;
@@ -692,7 +682,7 @@ public class Mongo {
                                                                            final MongoClientOptions options) {
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-        final DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
+        final ConnectionProviderSettings connectionProviderSettings = ConnectionProviderSettings.builder()
                 .minSize(options.getMinConnectionsPerHost())
                 .maxSize(options.getConnectionsPerHost())
                 .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
@@ -714,7 +704,7 @@ public class Mongo {
         );
 
         return new DefaultClusterableServerFactory(
-                DefaultServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
+                ServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
                         connectRetryFrequency(options.getHeartbeatConnectRetryFrequency(), TimeUnit.MILLISECONDS).build(),
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 null,

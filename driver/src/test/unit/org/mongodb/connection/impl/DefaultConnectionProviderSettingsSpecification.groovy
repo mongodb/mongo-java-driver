@@ -45,10 +45,10 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
         where:
         settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS |
                 maxConnectionIdleTimeMS | minSize | maintancanceFrequencyMS
-        DefaultConnectionProviderSettings
+        ConnectionProviderSettings
                 .builder()
                 .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 60000
-        DefaultConnectionProviderSettings
+        ConnectionProviderSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
@@ -65,37 +65,37 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
 
     def 'should throw exception on invalid argument'() {
         when:
-        DefaultConnectionProviderSettings.builder().build()
+        ConnectionProviderSettings.builder().build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
+        ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        DefaultConnectionProviderSettings.builder().maxSize(1).maxConnectionLifeTime(-1, SECONDS).build()
+        ConnectionProviderSettings.builder().maxSize(1).maxConnectionLifeTime(-1, SECONDS).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        DefaultConnectionProviderSettings.builder().maxSize(1).maxConnectionIdleTime(-1, SECONDS).build()
+        ConnectionProviderSettings.builder().maxSize(1).maxConnectionIdleTime(-1, SECONDS).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        DefaultConnectionProviderSettings.builder().maxSize(1).minSize(2).build()
+        ConnectionProviderSettings.builder().maxSize(1).minSize(2).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        DefaultConnectionProviderSettings.builder().maintenanceFrequency(0, MILLISECONDS).build()
+        ConnectionProviderSettings.builder().maintenanceFrequency(0, MILLISECONDS).build()
 
         then:
         thrown(IllegalStateException)
@@ -103,8 +103,8 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
 
     def 'settings with same values should be equal'() {
         when:
-        def settings1 = DefaultConnectionProviderSettings.builder().maxSize(1).build()
-        def settings2 = DefaultConnectionProviderSettings.builder().maxSize(1).build()
+        def settings1 = ConnectionProviderSettings.builder().maxSize(1).build()
+        def settings2 = ConnectionProviderSettings.builder().maxSize(1).build()
 
         then:
         settings1 == settings2
@@ -112,8 +112,8 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
 
     def 'settings with same values should have the same hash code'() {
         when:
-        def settings1 = DefaultConnectionProviderSettings.builder().maxSize(1).build()
-        def settings2 = DefaultConnectionProviderSettings.builder().maxSize(1).build()
+        def settings1 = ConnectionProviderSettings.builder().maxSize(1).build()
+        def settings2 = ConnectionProviderSettings.builder().maxSize(1).build()
 
         then:
         settings1.hashCode() == settings2.hashCode()
@@ -121,9 +121,9 @@ class DefaultConnectionProviderSettingsSpecification extends Specification {
 
     def 'toString should be overridden'() {
         when:
-        def settings = DefaultConnectionProviderSettings.builder().maxSize(1).build()
+        def settings = ConnectionProviderSettings.builder().maxSize(1).build()
 
         then:
-        settings.toString().startsWith('DefaultConnectionProviderSettings')
+        settings.toString().startsWith('ConnectionProviderSettings')
     }
 }

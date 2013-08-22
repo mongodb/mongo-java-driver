@@ -56,12 +56,12 @@ class DefaultServer implements ClusterableServer {
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
-    private final DefaultServerSettings settings;
+    private final ServerSettings settings;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
     public DefaultServer(final ServerAddress serverAddress,
-                         final DefaultServerSettings settings,
+                         final ServerSettings settings,
                          final ConnectionProvider connectionProvider,
                          final AsyncConnectionProvider asyncConnectionProvider,
                          final ConnectionFactory heartbeatConnectionFactory,

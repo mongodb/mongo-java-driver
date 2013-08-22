@@ -36,11 +36,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     private final ConcurrentPool<AsyncConnection> pool;
-    private final DefaultConnectionProviderSettings settings;
+    private final ConnectionProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
-                                          final DefaultConnectionProviderSettings settings) {
+                                          final ConnectionProviderSettings settings) {
         this.settings = settings;
         pool = new ConcurrentPool<AsyncConnection>(settings.getMaxSize(), new ConcurrentPool.ItemFactory<AsyncConnection>() {
             @Override

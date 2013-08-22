@@ -18,8 +18,8 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.junit.Test;
+import org.mongodb.connection.impl.ConnectionProviderSettings;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProvider;
-import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +35,7 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldGetConnection() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
 
         AsyncConnection first = connectionProvider.get();
         assertNotNull(first);
@@ -44,7 +44,7 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldThrowIfPoolIsExhausted() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-                DefaultConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
+                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build());
 
         AsyncConnection first = connectionProvider.get();
         assertNotNull(first);
@@ -61,7 +61,7 @@ public class DefaultAsyncConnectionProviderTest {
     public void shouldThrowIfWaitQueueIsFull() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(),
                 new TestAsyncConnectionFactory(),
-                DefaultConnectionProviderSettings.builder()
+                ConnectionProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(1, TimeUnit.SECONDS)

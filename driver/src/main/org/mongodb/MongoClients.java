@@ -16,11 +16,19 @@
 
 package org.mongodb;
 
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.impl.ConnectionProviderSettings;
 import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
@@ -28,16 +36,9 @@ import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderSettings;
-import org.mongodb.connection.impl.DefaultServerSettings;
+import org.mongodb.connection.impl.ServerSettings;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
 public final class MongoClients {
@@ -95,7 +96,7 @@ public final class MongoClients {
         BufferProvider bufferProvider = new PowerOfTwoBufferPool();
         SSLSettings sslSettings = SSLSettings.builder().enabled(options.isSSLEnabled()).build();
 
-        DefaultConnectionProviderSettings connectionProviderSettings = DefaultConnectionProviderSettings.builder()
+        ConnectionProviderSettings connectionProviderSettings = ConnectionProviderSettings.builder()
                 .minSize(options.getMinConnectionPoolSize())
                 .maxSize(options.getMaxConnectionPoolSize())
                 .maxWaitQueueSize(options.getMaxConnectionPoolSize() * options.getThreadsAllowedToBlockForConnectionMultiplier())
@@ -116,12 +117,12 @@ public final class MongoClients {
                         new DefaultAsyncConnectionFactory(bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(
-                DefaultServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
+                ServerSettings.builder().heartbeatFrequency(options.getHeartbeatFrequency(), TimeUnit.MILLISECONDS).
                         connectRetryFrequency(options.getHeartbeatConnectRetryFrequency(), TimeUnit.MILLISECONDS).build(),
                 new DefaultConnectionProviderFactory(connectionProviderSettings, connectionFactory),
                 asyncConnectionProviderFactory,
                 new DefaultConnectionFactory(
-                        DefaultConnectionSettings.builder()
+                        ConnectionSettings.builder()
                                 .connectTimeoutMS(options.getHeartbeatConnectTimeout())
                                 .readTimeoutMS(options.getHeartbeatSocketTimeout())
                                 .keepAlive(options.isSocketKeepAlive())

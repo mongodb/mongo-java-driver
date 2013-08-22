@@ -22,10 +22,10 @@ import org.mongodb.connection.ConnectionProviderFactory;
 import org.mongodb.connection.ServerAddress;
 
 public class DefaultConnectionProviderFactory implements ConnectionProviderFactory {
-    private final DefaultConnectionProviderSettings settings;
+    private final ConnectionProviderSettings settings;
     private final ConnectionFactory connectionFactory;
 
-    public DefaultConnectionProviderFactory(final DefaultConnectionProviderSettings settings, final ConnectionFactory connectionFactory) {
+    public DefaultConnectionProviderFactory(final ConnectionProviderSettings settings, final ConnectionFactory connectionFactory) {
         this.settings = settings;
         this.connectionFactory = connectionFactory;
     }

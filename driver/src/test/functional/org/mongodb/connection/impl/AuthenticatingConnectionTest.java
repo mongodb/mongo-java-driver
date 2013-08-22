@@ -16,15 +16,17 @@
 
 package org.mongodb.connection.impl;
 
+
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerAddress;
-
-import java.util.Arrays;
+import org.mongodb.connection.ConnectionFactory;
 
 import static org.mongodb.Fixture.getBufferProvider;
 
