@@ -129,6 +129,27 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     /**
+     * Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it
+     * does not match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>,
+     * which requires four values, not three.  This major release of the Java driver conforms to the specification,
+     * but still supports clients that are relying on the behavior of the previous major release by providing this explicit factory
+     * method that takes three parameters instead of four.
+     * <p>
+     * Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.
+     * <p>
+     * NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
+     * driver releases.
+     *
+     * @param time time in seconds
+     * @param machine machine ID
+     * @param inc incremental value
+     * @since 2.12.0
+     */
+    public static ObjectId createFromLegacyFormat(final int time, final int machine, final int inc) {
+        return new ObjectId(time, machine, inc);
+    }
+
+    /**
      * Create a new object id.
      */
     public ObjectId() {
@@ -232,8 +253,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @param machineAndProcessIdentifier machine and process identifier
      * @param counter                     incremental value
      */
-    @Deprecated
-    public ObjectId(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
+    ObjectId(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
         this(legacyToBytes(timestamp, machineAndProcessIdentifier, counter));
     }
 
@@ -405,33 +425,9 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     // Deprecated methods
 
     /**
-     * Gets the machine identifier.
-     *
-     * @return the machine identifier
-     * @see org.bson.types.ObjectId#getMachineIdentifier()
-     * @deprecated
-     */
-    @Deprecated
-    public static int getGenMachineId() {
-        return MACHINE_IDENTIFIER;
-    }
-
-    /**
-     * Gets the current value of the auto-incrementing counter.
-     *
-     * @see org.bson.types.ObjectId#getCurrentCounter()
-     * @deprecated
-     */
-    @Deprecated
-    public static int getCurrentInc() {
-        return NEXT_COUNTER.get();
-    }
-
-    /**
      * Gets the time of this ID, in seconds.
      *
-     * @see org.bson.types.ObjectId#getTimestamp()
-     * @deprecated
+     * @deprecated Use #getTimestamp instead
      */
     @Deprecated
     public int getTimeSecond() {
@@ -441,76 +437,12 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     /**
      * Gets the time of this instance, in milliseconds.
      *
-     * @see org.bson.types.ObjectId#getDate()
-     * @deprecated
+     * @deprecated Use #getDate instead
      */
     @Deprecated
     public long getTime() {
         return timestamp * 1000L;
     }
-
-    /**
-     * Gets the counter.
-     *
-     * @return the counter
-     * @see org.bson.types.ObjectId#getCounter()
-     * @deprecated
-     */
-    @Deprecated
-    public int getInc() {
-        return counter;
-    }
-
-    /**
-     * Gets the machine identifier.
-     *
-     * @return the machine identifier
-     * @see org.bson.types.ObjectId#getMachineIdentifier()
-     * @deprecated
-     */
-    @Deprecated
-    public int getMachine() {
-        return machineIdentifier;
-    }
-
-    // CHECKSTYLE:OFF
-
-    /**
-     * Gets the timestamp.
-     *
-     * @return the timestamp
-     * @see org.bson.types.ObjectId#getTimestamp()
-     * @deprecated
-     */
-    @Deprecated
-    public int _time() {
-        return timestamp;
-    }
-
-    /**
-     * Gets the machine identifier.
-     *
-     * @return the machine identifier
-     * @see org.bson.types.ObjectId#getMachineIdentifier()
-     * @deprecated
-     */
-    @Deprecated
-    public int _machine() {
-        return machineIdentifier;
-    }
-
-    /**
-     * Gets the counter.
-     *
-     * @return the counter
-     * @see org.bson.types.ObjectId#getCounter()
-     * @deprecated
-     */
-    @Deprecated
-    public int _inc() {
-        return counter;
-    }
-    // CHECKSTYLE:ON
 
     /**
      * @return a string representation of the ObjectId in hexadecimal format

@@ -131,19 +131,20 @@ public class ObjectIdTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testDeprecatedMethods() {
-        assertEquals(ObjectId.getGeneratedMachineIdentifier(), ObjectId.getGenMachineId());
-        assertEquals(ObjectId.getCurrentCounter(), ObjectId.getCurrentInc());
 
         ObjectId id = new ObjectId();
         assertEquals(id.getTimestamp(), id.getTimeSecond());
-        assertEquals(id.getCounter(), id.getInc());
-        assertEquals(id.getCounter(), id._inc());
-        assertEquals(id.getTimeSecond(), id._time());
-        assertEquals(id.getMachineIdentifier(), id.getMachine());
-        assertEquals(id.getMachineIdentifier(), id._machine());
+        assertEquals(id.getDate().getTime(), id.getTime());
         assertEquals(id.toHexString(), id.toStringMongod());
         assertArrayEquals(new byte[]{0x12, 0x34, 0x56, 0x78, 0x43, 0x21, 0xffffff87, 0x65, 0x74, 0xffffff92, 0xffffff87, 0x56},
                 new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
+    }
+
+    // Got these values from 2.12.0 driver.  This test is ensuring that we properly round-trip old and new format ObjectIds.
+    @Test
+    public void testCreateFromLegacy() {
+        assertArrayEquals(new byte[] {82, 23, -82, -78, -80, -58, -95, -92, -75, -38, 118, -16},
+                ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
     }
 }
 
