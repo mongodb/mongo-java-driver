@@ -18,14 +18,17 @@ package org.mongodb.operation.protocol;
 
 import org.mongodb.ServerCursor;
 
+import java.util.Collections;
+import java.util.List;
+
 public class KillCursor {
-    private final ServerCursor serverCursor;
+    private final List<ServerCursor> serverCursors;
 
     public KillCursor(final ServerCursor serverCursor) {
-        this.serverCursor = serverCursor;
+        this.serverCursors = Collections.singletonList(serverCursor);
     }
 
-    public ServerCursor getServerCursor() {
-        return serverCursor;
+    public List<ServerCursor> getServerCursors() {
+        return serverCursors;
     }
 }
