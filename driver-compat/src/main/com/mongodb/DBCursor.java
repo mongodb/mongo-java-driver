@@ -20,6 +20,7 @@ import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
+import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
@@ -72,6 +73,9 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
     private MongoQueryCursor<DBObject> cursor;
+    // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
+    private final OptionalFinalizer optionalFinalizer; // IDEs will say it's unused, but don't believe them
+
 
     /**
      * Initializes a new database cursor
@@ -99,6 +103,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         this.find = new Find(find);
         this.resultDecoder = collection.getObjectCodec();
         this.decoderFactory = collection.getDBDecoderFactory();
+        optionalFinalizer = collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled()
+                ? new OptionalFinalizer() : null;
     }
 
     /**
@@ -264,7 +270,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         }
         try {
             return new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
-                            getCollection().getBufferPool(), getSession(), true).execute().next();
+                    getCollection().getBufferPool(), getSession(), true).execute().next();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -339,7 +345,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     public long getCursorId() {
         if (cursor != null) {
             return cursor.getServerCursor().getId();
-        } else {
+        }
+        else {
             return 0;
         }
     }
@@ -379,6 +386,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         closed = true;
         if (cursor != null) {
             cursor.close();
+            cursor = null;
         }
 
         currentObject = null;
@@ -524,7 +532,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     public ServerAddress getServerAddress() {
         if (cursor != null) {
             return new ServerAddress(cursor.getServerAddress());
-        } else {
+        }
+        else {
             return null;
         }
     }
@@ -617,7 +626,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         final Set<String> keys = query.keySet();
 
         for (DBObject hint : hints) {
-            if (keys.containsAll(hint.keySet())){
+            if (keys.containsAll(hint.keySet())) {
                 return hint;
             }
         }
@@ -631,4 +640,17 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
         ITERATOR,
         ARRAY
     }
+
+    private class OptionalFinalizer {
+        @Override
+        protected void finalize() {
+            if (cursor != null) {
+                ServerCursor serverCursor = cursor.getServerCursor();
+                if (serverCursor != null) {
+                    getCollection().getDB().getMongo().addOrphanedCursor(serverCursor);
+                }
+            }
+        }
+    }
+
 }

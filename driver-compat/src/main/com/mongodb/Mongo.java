@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Codec;
 import org.mongodb.Document;
+import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.ListDatabases;
@@ -29,6 +30,7 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
+import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
@@ -36,8 +38,12 @@ import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.connection.impl.SocketStreamFactory;
+import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.operation.protocol.KillCursor;
+import org.mongodb.operation.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
@@ -47,10 +53,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
@@ -74,6 +84,8 @@ public class Mongo {
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     private final ThreadLocal<SessionHolder> pinnedSession = new ThreadLocal<SessionHolder>();
+    private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
+    private final ExecutorService cursorCleaningService;
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -290,6 +302,7 @@ public class Mongo {
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = Collections.unmodifiableList(credentialsList);
+        cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
     }
 
     /**
@@ -482,6 +495,7 @@ public class Mongo {
      */
     public void close() {
         cluster.close();
+        cursorCleaningService.shutdownNow();
     }
 
     /**
@@ -646,10 +660,10 @@ public class Mongo {
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return new DefaultClusterFactory().create(
-                                                 ClusterSettings.builder().hosts(createNewSeedList(seedList))
-                                                                .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                                                .build(),
-                                                 createClusterableServerFactory(credentialsList, options));
+                ClusterSettings.builder().hosts(createNewSeedList(seedList))
+                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                        .build(),
+                createClusterableServerFactory(credentialsList, options));
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
@@ -744,6 +758,37 @@ public class Mongo {
         }
     }
 
+    void addOrphanedCursor(final ServerCursor serverCursor) {
+        orphanedCursors.add(serverCursor);
+    }
+
+    private ExecutorService createCursorCleaningService() {
+        ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
+        newTimer.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                cleanCursors();
+            }
+        }, 1, 1, SECONDS);
+        return newTimer;
+    }
+
+    private void cleanCursors() {
+        Session session = new ClusterSession(cluster);
+        ServerCursor cur;
+        try {
+            while ((cur = orphanedCursors.poll()) != null) {
+                ServerChannelProvider provider = session.createServerChannelProvider(
+                        new ServerChannelProviderOptions(false, new ServerAddressSelector(cur.getAddress())));
+                new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getChannel(),
+                        true).execute();
+
+            }
+        } finally {
+            session.close();
+        }
+    }
+
     private static ClusterConnectionMode getSingleServerClusterMode(final org.mongodb.MongoClientOptions options) {
         if (options.getRequiredReplicaSetName() == null) {
             return ClusterConnectionMode.Single;
@@ -813,7 +858,6 @@ public class Mongo {
         private String toKey(final MongoClientURI uri) {
             return uri.toString();
         }
-
     }
 
     private static class SessionHolder {

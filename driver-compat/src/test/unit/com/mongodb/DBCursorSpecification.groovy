@@ -42,16 +42,22 @@ import static org.mongodb.Fixture.getBufferProvider
 
 class DBCursorSpecification extends Specification {
     private final Session session = Mock()
-    private final DBCollection collection = Mock();
+    private final Mongo mongo = Mock()
+    private final DB db = Mock()
+    private final DBCollection collection = Mock()
 
     @Subject
-    private final DBCursor dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), PRIMARY);
+    private DBCursor dbCursor
 
     def setup() {
         collection.getDocumentCodec() >> { new DocumentCodec(PrimitiveCodecs.createDefault()) }
         collection.getNamespace() >> { new MongoNamespace('test', 'test') }
         collection.getSession() >> { session }
         collection.getBufferPool() >> { getBufferProvider() }
+        collection.getDB() >> { db }
+        db.getMongo() >> { mongo }
+        mongo.getMongoClientOptions() >> { MongoClientOptions.builder().build() }
+        dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), PRIMARY);
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
