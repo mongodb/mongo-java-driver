@@ -16,6 +16,8 @@
 
 package org.bson.types;
 
+import org.bson.diagnostics.Loggers;
+
 import java.net.NetworkInterface;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -47,7 +49,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
     private static final long serialVersionUID = 3670079982654483072L;
 
-    static final Logger LOGGER = Logger.getLogger("org.bson.ObjectId");
+    static final Logger LOGGER = Loggers.getLogger("ObjectId");
 
     private static final int LOW_ORDER_THREE_BYTES = 0x00ffffff;
 

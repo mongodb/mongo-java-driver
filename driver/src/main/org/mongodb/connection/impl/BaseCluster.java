@@ -33,6 +33,7 @@ import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
+import org.mongodb.diagnostics.Loggers;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +53,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class BaseCluster implements Cluster {
 
-    private static final Logger LOGGER = Logger.getLogger("org.mongodb.driver.cluster");
+    private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final Set<ChangeListener<ClusterDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ClusterDescription>, Boolean>());
