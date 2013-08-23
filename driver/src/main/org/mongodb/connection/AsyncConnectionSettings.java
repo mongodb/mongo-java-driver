@@ -20,27 +20,26 @@ package org.mongodb.connection;
 
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 public final class AsyncConnectionSettings {
 
     public static final int POOL_SIZE = 1;
     public static final int MAX_POOL_SIZE = 20;
-    public static final int KEEP_ALIVE_TIME_MS = 60000;
-    public static final TimeUnit KEEP_ALIVE_UNIT = SECONDS;
+    public static final int KEEP_ALIVE_TIME = 60;
     private final int poolSize;
     private final int maxPoolSize;
-    private final long keepAliveTimeMS;
+    private final long keepAliveTime;
 
     private AsyncConnectionSettings(final Builder builder) {
         poolSize = builder.poolSize;
         maxPoolSize = builder.maxPoolSize;
-        keepAliveTimeMS = builder.keepAliveTimeMS;
+        keepAliveTime = builder.keepAliveTime;
     }
 
-    public long getKeepAliveTimeMS() {
-        return keepAliveTimeMS;
+    public long getKeepAliveTime(final TimeUnit unit) {
+        return unit.convert(keepAliveTime, MILLISECONDS);
     }
 
     public int getMaxPoolSize() {
@@ -54,14 +53,14 @@ public final class AsyncConnectionSettings {
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static class Builder {
         private int poolSize = POOL_SIZE;
         private int maxPoolSize = MAX_POOL_SIZE;
-        private long keepAliveTimeMS = KEEP_ALIVE_TIME_MS;
+        private long keepAliveTime = KEEP_ALIVE_TIME;
 
-        public Builder keepAliveTime(final long time) {
-            keepAliveTimeMS = time;
+        public Builder keepAliveTime(final long count, final TimeUnit unit) {
+            keepAliveTime = MILLISECONDS.convert(count, unit);
             return this;
         }
 
@@ -69,6 +68,7 @@ public final class AsyncConnectionSettings {
             maxPoolSize = count;
             return this;
         }
+
         public Builder poolSize(final int count) {
             poolSize = count;
             return this;
@@ -77,6 +77,5 @@ public final class AsyncConnectionSettings {
         public AsyncConnectionSettings build() {
             return new AsyncConnectionSettings(this);
         }
-
     }
 }

@@ -45,8 +45,8 @@ public class DefaultAsyncConnectionFactory implements AsyncConnectionFactory {
         this.sslSettings = sslSettings;
         this.bufferProvider = bufferProvider;
         this.credentialList = credentialList;
-        service = new ThreadPoolExecutor(asyncSettings.getPoolSize(), asyncSettings.getMaxPoolSize(), asyncSettings.getKeepAliveTimeMS(),
-            MILLISECONDS, new ArrayBlockingQueue<Runnable>(asyncSettings.getMaxPoolSize()));
+        service = new ThreadPoolExecutor(asyncSettings.getPoolSize(), asyncSettings.getMaxPoolSize(),
+            asyncSettings.getKeepAliveTime(MILLISECONDS), MILLISECONDS, new ArrayBlockingQueue<Runnable>(asyncSettings.getMaxPoolSize()));
     }
 
     @Override

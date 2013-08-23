@@ -17,9 +17,11 @@
 package org.mongodb;
 
 
+
 import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.AsyncConnectionSettings;
+
 
 
 /**
@@ -107,7 +109,7 @@ public final class MongoClientOptions {
         private int heartbeatSocketTimeout = 20000;
         private int asyncPoolSize = AsyncConnectionSettings.POOL_SIZE;
         private int asyncMaxPoolSize = AsyncConnectionSettings.MAX_POOL_SIZE;
-        private int asyncKeepAliveTimeMS = AsyncConnectionSettings.KEEP_ALIVE_TIME_MS;
+        private int asyncKeepAliveTimeMS = AsyncConnectionSettings.KEEP_ALIVE_TIME;
 
         private String requiredReplicaSetName;
 
@@ -474,18 +476,6 @@ public final class MongoClientOptions {
                 throw new IllegalArgumentException("Minimum value is 0");
             }
             this.heartbeatSocketTimeout = aSocketTimeout;
-            return this;
-        }
-
-        /**
-         * Sets the required replica set name for the cluster.
-         *
-         * @param aRequiredReplicaSetName the required replica set name for the replica set.
-         * @return this
-         * @see MongoClientOptions#getRequiredReplicaSetName()
-         */
-        public Builder requiredReplicaSetName(final String aRequiredReplicaSetName) {
-            this.requiredReplicaSetName = aRequiredReplicaSetName;
             return this;
         }
 
