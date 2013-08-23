@@ -22,6 +22,7 @@ import com.mongodb.util.TestCase;
 import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 
@@ -143,6 +144,12 @@ public class ObjectIdTest extends TestCase {
             }
             prev = id;
         }
+    }
+
+    @Test
+    public void testCreateFromLegacyFormat() {
+        ObjectId id = new ObjectId();
+        assertEquals(id, ObjectId.createFromLegacyFormat(id.getTimeSecond(), id.getMachine(), id.getInc()));
     }
 
     public static void main( String args[] )
