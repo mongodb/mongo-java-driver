@@ -17,11 +17,13 @@
 package org.mongodb;
 
 
-
 import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.AsyncConnectionSettings;
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 /**
@@ -61,7 +63,7 @@ public final class MongoClientOptions {
     private final int heartbeatSocketTimeout;
     private final int asyncPoolSize;
     private final int asyncMaxPoolSize;
-    private final int asyncKeepAliveTime;
+    private final long asyncKeepAliveTime;
     private final String requiredReplicaSetName;
 
     /**
@@ -109,7 +111,7 @@ public final class MongoClientOptions {
         private int heartbeatSocketTimeout = 20000;
         private int asyncPoolSize = AsyncConnectionSettings.POOL_SIZE;
         private int asyncMaxPoolSize = AsyncConnectionSettings.MAX_POOL_SIZE;
-        private int asyncKeepAliveTimeMS = AsyncConnectionSettings.KEEP_ALIVE_TIME;
+        private long asyncKeepAliveTime = AsyncConnectionSettings.KEEP_ALIVE_TIME;
 
         private String requiredReplicaSetName;
 
@@ -392,10 +394,10 @@ public final class MongoClientOptions {
          *  Sets the keep alive time for async threads in the pool
          *
          * @return {@code this}
-         * @see MongoClientOptions#getAsyncKeepAliveTime() 
+         * @see MongoClientOptions#getAsyncKeepAliveTime(TimeUnit) 
          */
-        public Builder asyncKeepAliveTime(final int time) {
-            this.asyncKeepAliveTimeMS = time;
+        public Builder asyncKeepAliveTime(final long time, final TimeUnit unit) {
+            this.asyncKeepAliveTime = MILLISECONDS.convert(time, unit);
             return this;
         }
 
@@ -477,6 +479,18 @@ public final class MongoClientOptions {
             }
             this.heartbeatSocketTimeout = aSocketTimeout;
             return this;
+         }
+ 
+         /**
+          * Sets the required replica set name for the cluster.
+          *
+          * @param aRequiredReplicaSetName the required replica set name for the replica set.
+          * @return this
+          * @see MongoClientOptions#getRequiredReplicaSetName()
+          */
+         public Builder requiredReplicaSetName(final String aRequiredReplicaSetName) {
+             this.requiredReplicaSetName = aRequiredReplicaSetName;
+             return this;
         }
 
         /**
@@ -759,8 +773,8 @@ public final class MongoClientOptions {
         return requiredReplicaSetName;
     }
     
-    public int getAsyncKeepAliveTime() {
-        return asyncKeepAliveTime;
+    public long getAsyncKeepAliveTime(final TimeUnit unit) {
+        return unit.convert(asyncKeepAliveTime, TimeUnit.MILLISECONDS);
     }
 
     public int getAsyncMaxPoolSize() {
@@ -829,6 +843,6 @@ public final class MongoClientOptions {
         asyncPoolSize = builder.asyncPoolSize;
         asyncMaxPoolSize = builder.asyncMaxPoolSize;
         requiredReplicaSetName = builder.requiredReplicaSetName;
-        asyncKeepAliveTime = builder.asyncKeepAliveTimeMS;
+        asyncKeepAliveTime = builder.asyncKeepAliveTime;
     }
 }
