@@ -34,6 +34,7 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -83,7 +84,13 @@ public abstract class BaseCluster implements Cluster {
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
             final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable
-            while (serverDescriptions.isEmpty()) {
+            while (true) {
+                if (!serverDescriptions.isEmpty()) {
+                    ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
+                    if (server != null) {
+                        return new WrappedServer(server);
+                    }
+                }
 
                 if (!curDescription.isConnecting()) {
                     throw new MongoServerSelectionFailureException(
@@ -93,20 +100,19 @@ public abstract class BaseCluster implements Cluster {
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.log(Level.INFO, format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                              serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                        serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that satisfies the selector: %s "
-                                                           + "after  %d %s", serverSelector, timeout, timeUnit));
+                            + "after  %d %s", serverSelector, timeout, timeUnit));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
                 serverDescriptions = serverSelector.choose(curDescription);
             }
-            return new WrappedServer(getServer(getRandomServer(serverDescriptions).getAddress()));
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(format("Interrupted while waiting for a server that satisfies server selector %s ",
-                                                       serverSelector), e);
+                    serverSelector), e);
         }
     }
 
@@ -128,11 +134,11 @@ public abstract class BaseCluster implements Cluster {
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.log(Level.FINE, format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                              TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                        TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for the cluster description after waiting %d %s",
-                                                           timeout, timeUnit));
+                            timeout, timeUnit));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -177,6 +183,12 @@ public abstract class BaseCluster implements Cluster {
         return isClosed;
     }
 
+    /**
+     * Return the server at the given address.
+     *
+     * @param serverAddress the address
+     * @return the server, or null if the cluster no longer contains a server at this address.
+     */
     protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
@@ -198,8 +210,19 @@ public abstract class BaseCluster implements Cluster {
         }
     }
 
-    private ServerDescription getRandomServer(final List<ServerDescription> serverDescriptions) {
-        return serverDescriptions.get(getRandom().nextInt(serverDescriptions.size()));
+    // gets a random server that still exists in the cluster.  Returns null if there are none.
+    private ClusterableServer getRandomServer(final List<ServerDescription> serverDescriptions) {
+        while (!serverDescriptions.isEmpty()) {
+            int serverPos = getRandom().nextInt(serverDescriptions.size());
+            ClusterableServer server = getServer(serverDescriptions.get(serverPos).getAddress());
+            if (server != null) {
+                return server;
+            }
+            else {
+                serverDescriptions.remove(serverPos);
+            }
+        }
+        return null;
     }
 
     protected Random getRandom() {

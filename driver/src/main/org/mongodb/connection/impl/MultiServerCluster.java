@@ -94,7 +94,7 @@ final class MultiServerCluster extends BaseCluster {
 
         ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);
         if (serverTuple == null) {
-            throw new MongoServerNotFoundException("The requested server is not available: " + serverAddress);
+            return null;
         }
         return serverTuple.server;
     }
