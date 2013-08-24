@@ -87,8 +87,8 @@ public abstract class BaseWriteCommandMessage extends BaseQueryMessage {
     private void writeCommandPrologue(final BSONBinaryWriter writer) {
         writer.writeString(getCommandName(), getWriteNamespace().getCollectionName());
         writer.writeBoolean("continueOnError", getWriteConcern().getContinueOnErrorForInsert());
-        if (getWriteConcern().callGetLastError()) {
-            Document writeConcernDocument = getWriteConcern().getCommand();
+        if (getWriteConcern().isAcknowledged()) {
+            Document writeConcernDocument = getWriteConcern().asDocument();
             writeConcernDocument.remove("getlasterror");
             writer.writeName("writeConcern");
             getCommandEncoder().encode(writer, writeConcernDocument);

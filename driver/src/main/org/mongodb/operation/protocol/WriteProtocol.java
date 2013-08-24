@@ -50,7 +50,7 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         this.connection = connection;
         this.closeConnection = closeConnection;
 
-        if (writeConcern.callGetLastError()) {
+        if (writeConcern.isAcknowledged()) {
             getLastErrorCommand = new GetLastError(writeConcern);
         }
         else {

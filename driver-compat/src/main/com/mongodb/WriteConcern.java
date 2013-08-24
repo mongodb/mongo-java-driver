@@ -309,7 +309,7 @@ public class WriteConcern implements Serializable {
      * @return getlasterror command, even if <code>w <= 0</code>
      */
     public BasicDBObject getCommand() {
-        return DBObjects.toDBObject(proxied.getCommand());
+        return DBObjects.toDBObject(proxied.asDocument());
     }
 
     /**
@@ -383,7 +383,7 @@ public class WriteConcern implements Serializable {
      * @return whether this write concern will result in an an acknowledged write
      */
     public boolean callGetLastError() {
-        return proxied.callGetLastError();
+        return proxied.isAcknowledged();
     }
 
     /**

@@ -31,7 +31,7 @@ public final class GetLastError extends Command {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
 
     public GetLastError(final WriteConcern writeConcern) {
-        super(writeConcern.getCommand());
+        super(writeConcern.asDocument());
         readPreference(ReadPreference.primary());
     }
 

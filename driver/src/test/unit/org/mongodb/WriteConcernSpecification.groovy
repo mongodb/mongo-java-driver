@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb
 
 import spock.lang.Specification
@@ -59,7 +61,7 @@ class WriteConcernSpecification extends Specification {
 
     def 'test getters'() {
         expect:
-        wc.callGetLastError() == getLastError;
+        wc.isAcknowledged() == getLastError;
         wc.raiseNetworkErrors() == raiseNetworkErrors;
         wc.getWObject() == wObject;
 
@@ -83,7 +85,7 @@ class WriteConcernSpecification extends Specification {
 
     def 'test command'() {
         expect:
-        wc.getCommand() == commandDocument;
+        wc.asDocument() == commandDocument;
 
         where:
         wc                                | commandDocument

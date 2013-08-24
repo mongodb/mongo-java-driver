@@ -88,7 +88,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
             } catch (MongoException e) {
                 lastException = e;
                 if (!writeConcern.getContinueOnErrorForInsert()) {
-                    if (writeConcern.callGetLastError()) {
+                    if (writeConcern.isAcknowledged()) {
                         throw e;
                     }
                     else {
@@ -99,11 +99,11 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
             message = nextMessage;
         } while (message != null);
 
-        if (writeConcern.callGetLastError() && lastException != null) {
+        if (writeConcern.isAcknowledged() && lastException != null) {
             throw lastException;
         }
 
-        return writeConcern.callGetLastError() ? commandResult : null;
+        return writeConcern.isAcknowledged() ? commandResult : null;
     }
 
     private RequestMessage sendMessage(final RequestMessage message) {

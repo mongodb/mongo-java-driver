@@ -242,11 +242,12 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the getlasterror command for this write concern.
+     * Gets this write concern as a document
      *
-     * @return getlasterror command, even if <code>w <= 0</code>
+     * @return The write concern as a Document, even if <code>w <= 0</code>
+     * // TODO: Don't include getlasterror, let the caller do that.
      */
-    public Document getCommand() {
+    public Document asDocument() {
         final Document command = new Document("getlasterror", 1);
 
         if (w instanceof Integer && ((Integer) w > 1) || (w instanceof String)) {
@@ -402,11 +403,11 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Returns whether "getlasterror" should be called (w > 0)
+     * Returns whether write operations should be acknowledged
      *
-     * @return true if set to call last error
+     * @return true w != null or w > 0
      */
-    public boolean callGetLastError() {
+    public boolean isAcknowledged() {
         if (w instanceof Integer) {
             return (Integer) w > 0;
         }
