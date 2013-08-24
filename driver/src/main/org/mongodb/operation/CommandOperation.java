@@ -27,7 +27,7 @@ import org.mongodb.operation.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
-public class CommandOperation extends OperationBase<CommandResult> {
+public class CommandOperation extends BaseOperation<CommandResult> {
     private final Command command;
     private final Codec<Document> codec;
     private final String database;

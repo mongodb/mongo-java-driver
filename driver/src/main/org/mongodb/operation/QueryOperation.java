@@ -27,7 +27,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class QueryOperation<T> extends OperationBase<MongoCursor<T>> {
+public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;

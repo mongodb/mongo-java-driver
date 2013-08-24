@@ -31,7 +31,7 @@ import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class RemoveUserOperation extends OperationBase<CommandResult> {
+public class RemoveUserOperation extends BaseOperation<CommandResult> {
     private final String database;
     private final String userName;
 

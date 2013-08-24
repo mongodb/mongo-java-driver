@@ -22,12 +22,12 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public abstract class OperationBase<T> implements Operation<T> {
+public abstract class BaseOperation<T> implements Operation<T> {
     private final BufferProvider bufferProvider;
     private final Session session;
     private final boolean closeSession;
 
-    public OperationBase(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
+    public BaseOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.session = notNull("session", session);
         this.closeSession = closeSession;

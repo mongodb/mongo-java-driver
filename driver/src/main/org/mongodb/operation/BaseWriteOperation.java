@@ -33,7 +33,7 @@ import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public abstract class BaseWriteOperation extends OperationBase<CommandResult> {
+public abstract class BaseWriteOperation extends BaseOperation<CommandResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;

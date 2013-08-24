@@ -29,7 +29,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class InsertUserOperation extends OperationBase<CommandResult> {
+public class InsertUserOperation extends BaseOperation<CommandResult> {
     private final String database;
     private final Document userDocument;
 

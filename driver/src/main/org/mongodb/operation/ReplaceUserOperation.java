@@ -29,7 +29,7 @@ import org.mongodb.session.Session;
 
 import java.util.Arrays;
 
-public class ReplaceUserOperation extends OperationBase<CommandResult> {
+public class ReplaceUserOperation extends BaseOperation<CommandResult> {
     private final String database;
     private final Document userDocument;
 

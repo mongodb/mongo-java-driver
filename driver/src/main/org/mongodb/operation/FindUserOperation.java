@@ -28,7 +28,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class FindUserOperation extends OperationBase<Document> {
+public class FindUserOperation extends BaseOperation<Document> {
 
     private final String database;
     private final String userName;
