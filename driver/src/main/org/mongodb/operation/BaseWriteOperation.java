@@ -55,7 +55,8 @@ public abstract class BaseWriteOperation extends OperationBase<CommandResult> {
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
-            if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) >= 0) {
+            if (writeConcern.isAcknowledged()
+                    && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 2))) >= 0) {
                 return getCommandProtocol(provider.getServerDescription(), connection).execute();
             }
             else {
