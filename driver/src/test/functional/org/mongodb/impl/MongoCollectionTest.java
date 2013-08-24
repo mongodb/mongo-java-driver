@@ -19,6 +19,7 @@ package org.mongodb.impl;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.DatabaseTestCase;
@@ -129,6 +130,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore("Re-enable when the 2.6 write commands support removing a single document")
     public void testRemoveOne() {
 
         final List<Document> documents = new ArrayList<Document>();
