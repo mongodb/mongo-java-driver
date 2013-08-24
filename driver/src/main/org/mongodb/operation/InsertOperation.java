@@ -29,7 +29,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class InsertOperation<T> extends WriteOperationBase {
+public class InsertOperation<T> extends BaseWriteOperation {
     private final Insert<T> insert;
     private final Encoder<T> encoder;
 

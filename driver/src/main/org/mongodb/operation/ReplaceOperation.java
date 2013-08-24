@@ -34,7 +34,7 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class ReplaceOperation<T> extends WriteOperationBase {
+public class ReplaceOperation<T> extends BaseWriteOperation {
     private final List<Replace<T>> replaces;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;

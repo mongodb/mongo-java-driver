@@ -33,12 +33,12 @@ import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public abstract class WriteOperationBase extends OperationBase<CommandResult> {
+public abstract class BaseWriteOperation extends OperationBase<CommandResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
 
-    public WriteOperationBase(final MongoNamespace namespace, final WriteConcern writeConcern, final BufferProvider bufferProvider,
+    public BaseWriteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final BufferProvider bufferProvider,
                               final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.namespace = notNull("namespace", namespace);
