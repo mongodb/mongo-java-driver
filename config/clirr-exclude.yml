@@ -135,7 +135,10 @@ members:
   - getLastError(com.mongodb.WriteConcern)        # JAVA-900
 
   com.mongodb.WriteConcern:                       # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
-  - setWObject(java.lang.Object)
+  - setWObject(java.lang.Object)                  # JAVA-893
+  - continueOnErrorForInsert(boolean)             # JAVA-939
+  - getContinueOnErrorForInsert()                 # JAVA-939
+
 
   org.bson.io.OutputBuffer:                       # JAVA-880 Fix up org.bson.io.{OutputBuffer, BasicOutputBuffer}
   - asString()                                    # JAVA-880
