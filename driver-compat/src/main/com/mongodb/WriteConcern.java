@@ -255,10 +255,10 @@ public class WriteConcern implements Serializable {
      * @param wtimeout              timeout for write operation
      * @param fsync                 whether or not to fsync
      * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
+     * @param continueOnError       if batch writes should continue after the first error
      */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnInsertError);
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
+        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
     }
 
     /**
@@ -288,10 +288,10 @@ public class WriteConcern implements Serializable {
      * @param wtimeout              timeout for write operation
      * @param fsync                 whether or not to fsync
      * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
+     * @param continueOnError      if batch writes should continue after the first error
      */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnInsertError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnInsertError);
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
+        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
     }
 
     /**
@@ -434,11 +434,11 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the "continue inserts on error" mode
+     * Gets the "continue on error" mode
      *
      * @return true if set to continue on error
      */
-    public boolean getContinueOnErrorForInsert() {
+    public boolean getContinueOnError() {
         return proxied.getContinueOnErrorForInsert();
     }
 
@@ -451,10 +451,10 @@ public class WriteConcern implements Serializable {
      * which does not validate in the client, an exception will still be thrown in the client. This will return a new
      * WriteConcern instance with the specified continueOnInsert value.
      *
-     * @param continueOnErrorForInsert
+     * @param continueOnError
      */
-    public WriteConcern continueOnErrorForInsert(final boolean continueOnErrorForInsert) {
-        return new WriteConcern(proxied.withContinueOnErrorForInsert(continueOnErrorForInsert));
+    public WriteConcern continueOnError(final boolean continueOnError) {
+        return new WriteConcern(proxied.withContinueOnErrorForInsert(continueOnError));
     }
 
     /**

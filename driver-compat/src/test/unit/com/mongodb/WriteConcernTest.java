@@ -31,70 +31,70 @@ public class WriteConcernTest {
         assertEquals(0, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(1);
         assertEquals(1, wc.getW());
         assertEquals(0, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern("majority");
         assertEquals("majority", wc.getWString());
         assertEquals(0, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(1, 10);
         assertEquals(1, wc.getW());
         assertEquals(10, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(true);
         assertEquals(1, wc.getW());
         assertEquals(0, wc.getWtimeout());
         assertEquals(true, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(1, 10, true);
         assertEquals(1, wc.getW());
         assertEquals(10, wc.getWtimeout());
         assertEquals(true, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(1, 10, false, true);
         assertEquals(1, wc.getW());
         assertEquals(10, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(true, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern(1, 10, false, true, true);
         assertEquals(1, wc.getW());
         assertEquals(10, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(true, wc.getJ());
-        assertEquals(true, wc.getContinueOnErrorForInsert());
+        assertEquals(true, wc.getContinueOnError());
 
         wc = new WriteConcern("dc1", 10, false, true);
         assertEquals("dc1", wc.getWString());
         assertEquals(10, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(true, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern("dc1", 10, false, true, true);
         assertEquals("dc1", wc.getWString());
         assertEquals(10, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(true, wc.getJ());
-        assertEquals(true, wc.getContinueOnErrorForInsert());
+        assertEquals(true, wc.getContinueOnError());
     }
 
     @Test
@@ -167,10 +167,10 @@ public class WriteConcernTest {
 
     @Test
     public void testContinueOnErrorForInsert() {
-        assertTrue(WriteConcern.ACKNOWLEDGED.continueOnErrorForInsert(true).getContinueOnErrorForInsert());
-        assertFalse(new WriteConcern(1, 0, false, false, true).continueOnErrorForInsert(
-                                                                                       false)
-                                                              .getContinueOnErrorForInsert());
+        assertTrue(WriteConcern.ACKNOWLEDGED.continueOnError(true).getContinueOnError());
+        assertFalse(new WriteConcern(1, 0, false, false, true).continueOnError(
+                false)
+                                                              .getContinueOnError());
     }
 
     @Test
@@ -180,14 +180,14 @@ public class WriteConcernTest {
         assertEquals(0, wc.getWtimeout());
         assertEquals(false, wc.getFsync());
         assertEquals(false, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         wc = new WriteConcern.Majority(10, true, true);
         assertEquals("majority", wc.getWString());
         assertEquals(10, wc.getWtimeout());
         assertEquals(true, wc.getFsync());
         assertEquals(true, wc.getJ());
-        assertEquals(false, wc.getContinueOnErrorForInsert());
+        assertEquals(false, wc.getContinueOnError());
 
         assertEquals(new WriteConcern.Majority(10, true, true), WriteConcern.majorityWriteConcern(10, true, true));
     }

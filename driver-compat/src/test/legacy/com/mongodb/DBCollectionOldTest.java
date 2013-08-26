@@ -16,11 +16,11 @@
 
 package com.mongodb;
 
-import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -390,7 +390,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         final DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
         final WriteResult r = c.insert(inserted1, inserted2, inserted3);
         assertEquals(1, c.count());
-        assertFalse(c.getWriteConcern().getContinueOnErrorForInsert());
+        assertFalse(c.getWriteConcern().getContinueOnError());
 
         assertEquals(c.count(), 1);
     }
@@ -407,7 +407,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         final DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
         final DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
         final DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
-        final WriteConcern newWC = WriteConcern.SAFE.continueOnErrorForInsert(true);
+        final WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
         try {
             c.insert(newWC, inserted1, inserted2, inserted3);
             fail("Insert should have failed");
