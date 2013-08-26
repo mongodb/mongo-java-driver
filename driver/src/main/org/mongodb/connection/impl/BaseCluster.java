@@ -44,7 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
@@ -100,7 +99,7 @@ public abstract class BaseCluster implements Cluster {
 
                 final long timeout = endTime - System.nanoTime();
 
-                LOGGER.log(Level.INFO, format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
+                LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
                         serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
@@ -134,7 +133,7 @@ public abstract class BaseCluster implements Cluster {
 
                 final long timeout = endTime - System.nanoTime();
 
-                LOGGER.log(Level.FINE, format("Cluster description not yet available. Waiting for %d ms before timing out",
+                LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
                         TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
@@ -146,8 +145,7 @@ public abstract class BaseCluster implements Cluster {
             }
             return curDescription;
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(
-                    format("Interrupted while waiting for the cluster description"), e);
+            throw new MongoInterruptedException(format("Interrupted while waiting for the cluster description"), e);
         }
     }
 
@@ -193,7 +191,7 @@ public abstract class BaseCluster implements Cluster {
     protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
-        LOGGER.log(Level.FINE, format("Updating cluster description %s and notifying all waiters", newDescription));
+        LOGGER.fine(format("Updating cluster description to  %s", newDescription.getShortDescription()));
 
         description = newDescription;
         final CountDownLatch current = phase.getAndSet(new CountDownLatch(1));

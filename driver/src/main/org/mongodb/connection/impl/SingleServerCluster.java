@@ -26,22 +26,30 @@ import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
 final class SingleServerCluster extends BaseCluster {
+    private static final Logger LOGGER = Loggers.getLogger("cluster");
+
     private final ClusterableServer server;
 
     public SingleServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(settings, serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);
+
+        LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
+
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {

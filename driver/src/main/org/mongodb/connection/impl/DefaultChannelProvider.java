@@ -28,6 +28,7 @@ import org.mongodb.connection.MongoSocketInterruptedReadException;
 import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.management.MBeanServerFactory;
 
 import java.util.List;
@@ -36,12 +37,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class DefaultChannelProvider implements ChannelProvider {
+
+    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ConcurrentPool<UsageTrackingConnection> pool;
     private final ChannelProviderSettings settings;
@@ -73,7 +78,7 @@ class DefaultChannelProvider implements ChannelProvider {
     public Channel get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-                throw new MongoWaitQueueFullException(String.format("Too many threads are already waiting for a connection. "
+                throw new MongoWaitQueueFullException(format("Too many threads are already waiting for a connection. "
                         + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
                         settings.getMaxWaitQueueSize()));
             }
@@ -122,9 +127,11 @@ class DefaultChannelProvider implements ChannelProvider {
                 @Override
                 public synchronized void run() {
                     if (shouldPrune()) {
+                        LOGGER.fine(format("Pruning pooled connections to %s", serverAddress));
                         pool.prune();
                     }
                     if (shouldEnsureMinSize()) {
+                        LOGGER.fine(format("Ensuring minimum pooled connections to %s", serverAddress));
                         pool.ensureMinSize(settings.getMinSize());
                     }
                 }
@@ -153,10 +160,19 @@ class DefaultChannelProvider implements ChannelProvider {
     }
 
     private boolean shouldPrune(final UsageTrackingConnection connection) {
-        final long curTime = System.currentTimeMillis();
-        return generation.get() > connection.getGeneration()
-                || expired(connection.getOpenedAt(), curTime, settings.getMaxConnectionLifeTime(MILLISECONDS))
-                || expired(connection.getLastUsedAt(), curTime, settings.getMaxConnectionIdleTime(MILLISECONDS));
+        return fromPreviousGeneration(connection) || pastMaxLifeTime(connection) || pastMaxIdleTime(connection);
+    }
+
+    private boolean pastMaxIdleTime(final UsageTrackingConnection connection) {
+        return expired(connection.getLastUsedAt(), System.currentTimeMillis(), settings.getMaxConnectionIdleTime(MILLISECONDS));
+    }
+
+    private boolean pastMaxLifeTime(final UsageTrackingConnection connection) {
+        return expired(connection.getOpenedAt(), System.currentTimeMillis(), settings.getMaxConnectionLifeTime(MILLISECONDS));
+    }
+
+    private boolean fromPreviousGeneration(final UsageTrackingConnection connection) {
+        return generation.get() > connection.getGeneration();
     }
 
     private boolean expired(final long startTime, final long curTime, final long maxTime) {
@@ -171,6 +187,8 @@ class DefaultChannelProvider implements ChannelProvider {
      */
     private void incrementGenerationOnSocketException(final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
+            LOGGER.warning(format("Got socket exception on connection to %s. All connections to %s will be closed.", serverAddress,
+                    serverAddress));
             generation.incrementAndGet();
         }
     }
@@ -245,12 +263,28 @@ class DefaultChannelProvider implements ChannelProvider {
 
         @Override
         public UsageTrackingConnection create() {
-            return new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
+            UsageTrackingConnection connection = new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
+            LOGGER.info(format("Opened connection to %s", serverAddress));
+            return connection;
         }
 
         @Override
         public void close(final UsageTrackingConnection connection) {
+            String reason;
+            if (fromPreviousGeneration(connection)) {
+                reason = "there was a socket exception raised on another connection from this pool";
+            }
+            else if (pastMaxLifeTime(connection)) {
+                reason = "it is past its maximum allowed life time";
+            }
+            else if (pastMaxIdleTime(connection)) {
+                reason = "it is past its maximum allowed idle time";
+            }
+            else {
+                reason = "the pool has been closed";
+            }
             connection.close();
+            LOGGER.info(format("Closed connection to %s because %s.", serverAddress, reason));
         }
 
         @Override

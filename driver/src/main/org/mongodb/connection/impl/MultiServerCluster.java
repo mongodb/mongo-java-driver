@@ -26,6 +26,7 @@ import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,17 +34,23 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ClusterType.Unknown;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
+import static org.mongodb.connection.ServerType.ShardRouter;
+import static org.mongodb.connection.ServerType.StandAlone;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
  */
 final class MultiServerCluster extends BaseCluster {
+    private static final Logger LOGGER = Loggers.getLogger("cluster");
+
     private ClusterType clusterType;
     private String replicaSetName;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
@@ -64,6 +71,8 @@ final class MultiServerCluster extends BaseCluster {
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
+
+        LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
@@ -124,6 +133,7 @@ final class MultiServerCluster extends BaseCluster {
             if (event.getNewValue().isOk()) {
                 if (clusterType == Unknown) {
                     clusterType = newDescription.getClusterType();
+                    LOGGER.info(format("Discovered cluster type of %s", clusterType));
                 }
 
                 switch (clusterType) {
@@ -147,6 +157,8 @@ final class MultiServerCluster extends BaseCluster {
 
     private void handleReplicaSetMemberChange(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
+            LOGGER.severe(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
+                    newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return;
         }
@@ -156,6 +168,9 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (replicaSetName != null && !replicaSetName.equals(newDescription.getSetName())) {
+            LOGGER.severe(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
+                    + "Removing %s from client view of cluster.",
+                    replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return;
         }
@@ -169,12 +184,16 @@ final class MultiServerCluster extends BaseCluster {
 
     private void handleShardRouterChanged(final ServerDescription newDescription) {
         if (newDescription.getClusterType() != Sharded) {
+            LOGGER.severe(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
+                    ShardRouter, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
     }
 
     private void handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
+            LOGGER.severe(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
+                    StandAlone, newDescription.getAddress()));
             clusterType = Unknown;
             removeServer(newDescription.getAddress());
         }
@@ -182,6 +201,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void addServer(final ServerAddress serverAddress) {
         if (!addressToServerTupleMap.containsKey(serverAddress)) {
+            LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
             ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server,
                     getConnectingServerDescription(serverAddress)));
@@ -193,8 +213,10 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {
+        LOGGER.info(format("Replica set primary has changed to %s", newPrimary));
         for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
+                LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 serverTuple.server.invalidate();
                 serverTuple.description = getConnectingServerDescription(serverTuple.description.getAddress());
             }
@@ -234,6 +256,7 @@ final class MultiServerCluster extends BaseCluster {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
         for (ServerTuple cur : addressToServerTupleMap.values()) {
             if (!allServerAddresses.contains(cur.description.getAddress())) {
+                LOGGER.info(format("Removing server %s from client view of cluster", cur.description.getAddress()));
                 removeServer(cur.description.getAddress());
             }
         }

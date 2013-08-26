@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 import static org.mongodb.connection.ServerConnectionState.Unconnected;
@@ -57,7 +58,7 @@ import static org.mongodb.connection.impl.CommandHelper.executeCommand;
 @ThreadSafe
 class ServerStateNotifier implements Runnable {
 
-    private static final Logger LOGGER = Loggers.getLogger("cluster.monitor");
+    private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
@@ -92,8 +93,9 @@ class ServerStateNotifier implements Runnable {
                 connection = connectionFactory.create(serverAddress);
             }
             try {
+                LOGGER.fine(format("Checking status of %s", serverAddress));
                 final CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                                                                    connection, bufferProvider);
+                        connection, bufferProvider);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
@@ -120,12 +122,11 @@ class ServerStateNotifier implements Runnable {
                 // so this will not spam the logs too hard.
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
-                        LOGGER.log(Level.INFO, String.format(
-                                "Exception in monitor thread while connecting to server %s", serverAddress), throwable);
+                        LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
+                                throwable);
                     }
                     else {
-                        LOGGER.log(Level.INFO, String.format("Monitor thread successfully connected to server with description %s",
-                                serverDescription));
+                        LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
                     }
                 }
                 serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
