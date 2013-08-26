@@ -17,6 +17,7 @@
 package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
+import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
@@ -27,16 +28,16 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
-// TODO: migrate all the DBPort configuration
 class DefaultSocketConnection extends DefaultConnection {
     private final Socket socket;
 
     public DefaultSocketConnection(final ServerAddress address, final ConnectionSettings settings,
-                                   final BufferProvider bufferProvider, final SocketFactory socketFactory) {
-        super(address, settings, bufferProvider);
+                                   final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                                   final SocketFactory socketFactory)  {
+        super(address, settings, credentialList, bufferProvider);
         try {
             socket = socketFactory.createSocket();
-            initializeSocket(socket);
+            initialize(socket);
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getServerAddress(), e);

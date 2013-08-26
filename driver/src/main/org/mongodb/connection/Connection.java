@@ -54,4 +54,10 @@ public interface Connection extends BaseConnection {
      * @return the response
      */
     ResponseBuffers receiveMessage();
+
+    /**
+     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
+     * @return the id
+     */
+    String getId();
 }

@@ -16,16 +16,16 @@
 
 package org.mongodb.connection.impl;
 
-import java.util.List;
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
-
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -58,19 +58,18 @@ public class DefaultConnectionFactory implements ConnectionFactory {
 
     @Override
     public Connection create(final ServerAddress serverAddress) {
-        Connection socketConnection;
         if (socketFactory != null) {
-            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, socketFactory);
+            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider, socketFactory);
         }
         else if (sslSettings.isEnabled()) {
-            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, SSLSocketFactory.getDefault());
+            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider,
+                    SSLSocketFactory.getDefault());
         }
         else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            socketConnection = new DefaultSocketConnection(serverAddress, settings, bufferProvider, SocketFactory.getDefault());
+            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider, SocketFactory.getDefault());
         }
         else {
-            socketConnection = new DefaultSocketChannelConnection(serverAddress, settings, bufferProvider);
+            return new DefaultSocketChannelConnection(serverAddress, settings, credentialList, bufferProvider);
         }
-        return credentialList.isEmpty() ? socketConnection : new AuthenticatingConnection(socketConnection, credentialList, bufferProvider);
     }
 }

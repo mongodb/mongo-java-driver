@@ -65,4 +65,9 @@ class DelayedCloseChannel implements Channel {
         isTrue("open", !isClosed());
         return wrapped.getServerAddress();
     }
+
+    @Override
+    public String getId() {
+        return wrapped.getId();
+    }
 }

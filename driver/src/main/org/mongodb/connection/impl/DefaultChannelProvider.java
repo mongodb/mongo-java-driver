@@ -183,12 +183,13 @@ class DefaultChannelProvider implements ChannelProvider {
      * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that
      * any connections created prior will be discarded.
      *
+     * @param channel the channel that generated the exception
      * @param e the exception
      */
-    private void incrementGenerationOnSocketException(final MongoException e) {
+    private void incrementGenerationOnSocketException(final Channel channel, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-            LOGGER.warning(format("Got socket exception on connection to %s. All connections to %s will be closed.", serverAddress,
-                    serverAddress));
+            LOGGER.warning(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
+                    channel.getId(), serverAddress, serverAddress));
             generation.incrementAndGet();
         }
     }
@@ -225,7 +226,7 @@ class DefaultChannelProvider implements ChannelProvider {
             try {
                 wrapped.sendMessage(byteBuffers);
             } catch (MongoException e) {
-                incrementGenerationOnSocketException(e);
+                incrementGenerationOnSocketException(this, e);
                 throw e;
             }
         }
@@ -248,9 +249,14 @@ class DefaultChannelProvider implements ChannelProvider {
 
                 return responseBuffers;
             } catch (MongoException e) {
-                incrementGenerationOnSocketException(e);
+                incrementGenerationOnSocketException(this, e);
                 throw e;
             }
+        }
+
+        @Override
+        public String getId() {
+            return wrapped.getId();
         }
     }
 
@@ -264,7 +270,7 @@ class DefaultChannelProvider implements ChannelProvider {
         @Override
         public UsageTrackingConnection create() {
             UsageTrackingConnection connection = new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
-            LOGGER.info(format("Opened connection to %s", serverAddress));
+            LOGGER.info(format("Opened connection [%s] to %s", connection.getId(), serverAddress));
             return connection;
         }
 
@@ -284,7 +290,7 @@ class DefaultChannelProvider implements ChannelProvider {
                 reason = "the pool has been closed";
             }
             connection.close();
-            LOGGER.info(format("Closed connection to %s because %s.", serverAddress, reason));
+            LOGGER.info(format("Closed connection [%s] to %s because %s.", connection.getId(), serverAddress, reason));
         }
 
         @Override

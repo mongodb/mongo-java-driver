@@ -57,6 +57,11 @@ class TestConnectionFactory implements ConnectionFactory {
         }
 
         @Override
+        public String getId() {
+            return Integer.toString(hashCode());
+        }
+
+        @Override
         public void close() {
             closed = true;
         }

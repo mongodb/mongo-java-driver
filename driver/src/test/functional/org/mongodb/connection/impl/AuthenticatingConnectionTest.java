@@ -55,28 +55,36 @@ public class AuthenticatingConnectionTest {
 
     @Test
     @Ignore
-    public void testMongoCRAuthentication() {
-        new AuthenticatingConnection(connection,
-                Arrays.asList(MongoCredential.createMongoCRCredential(userName, source, password.toCharArray())), getBufferProvider());
+    public void testMongoCRAuthentication() throws InterruptedException {
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
+                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, source,
+                password.toCharArray())));
+        connection = connectionFactory.create(getPrimary());
     }
 
     @Test
     @Ignore
-    public void tesPlainAuthentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createPlainCredential(userName, source,
-                password.toCharArray())), getBufferProvider());
+    public void tesPlainAuthentication() throws InterruptedException {
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
+                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createPlainCredential(userName, source,
+                password.toCharArray())));
+        connection = connectionFactory.create(getPrimary());
     }
 
     @Test
     @Ignore
-    public void tesGSSAPIAuthentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createGSSAPICredential(userName)), getBufferProvider());
+    public void tesGSSAPIAuthentication() throws InterruptedException {
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
+                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)));
+        connection = connectionFactory.create(getPrimary());
     }
 
     @Test
     @Ignore
-    public void testMongoX509Authentication() {
-        new AuthenticatingConnection(connection, Arrays.asList(MongoCredential.createMongoX509Credential(
-                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")), getBufferProvider());
+    public void testMongoX509Authentication() throws InterruptedException {
+        ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
+                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
+                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")));
+        connection = connectionFactory.create(getPrimary());
     }
 }

@@ -158,6 +158,11 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
+        public String getId() {
+            return wrapped.getId();
+        }
+
+        @Override
         public void close() {
             isClosed = true;
         }

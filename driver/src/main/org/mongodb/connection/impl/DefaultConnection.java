@@ -18,9 +18,15 @@ package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
+import org.mongodb.CommandResult;
+import org.mongodb.Document;
+import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.command.Command;
+import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSocketReadException;
@@ -35,21 +41,28 @@ import java.io.InterruptedIOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
+import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
     private final ServerAddress serverAddress;
     private ConnectionSettings settings;
+    private List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
+    private int id;
 
-    DefaultConnection(final ServerAddress serverAddress, final ConnectionSettings settings, final BufferProvider bufferProvider) {
-        this.serverAddress = serverAddress;
-        this.settings = settings;
-        this.bufferProvider = bufferProvider;
+    DefaultConnection(final ServerAddress serverAddress, final ConnectionSettings settings, final List<MongoCredential> credentialList,
+                      final BufferProvider bufferProvider) {
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.settings = notNull("settings", settings);
+        notNull("credentialList", credentialList);
+        this.credentialList = new ArrayList<MongoCredential>(credentialList);
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 
     @Override
@@ -64,6 +77,11 @@ abstract class DefaultConnection implements Connection {
 
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    @Override
+    public String getId() {
+        return Integer.toString(id);
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers) {
@@ -132,7 +150,7 @@ abstract class DefaultConnection implements Connection {
         return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
     }
 
-    protected final void initializeSocket(final Socket socket) throws IOException {
+    protected final void initialize(final Socket socket) throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeoutMS());
         socket.setKeepAlive(settings.isKeepAlive());
@@ -143,5 +161,41 @@ abstract class DefaultConnection implements Connection {
             socket.setSendBufferSize(settings.getSendBufferSize());
         }
         socket.connect(getServerAddress().getSocketAddress(), settings.getConnectTimeoutMS());
+        initializeConnectionId();
+        authenticateAll();
+    }
+
+    private void initializeConnectionId() {
+        try {
+            CommandResult result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this,
+                    bufferProvider);
+            id = result.getResponse().getInteger("connectionId");
+
+        } catch (MongoCommandFailureException e) {
+            id = e.getCommandResult().getResponse().getInteger("connectionId");
+        } catch (Exception e) {
+            id = hashCode();
+        }
+    }
+
+    private void authenticateAll() {
+        for (MongoCredential cur : credentialList) {
+            createAuthenticator(cur).authenticate();
+        }
+    }
+
+    private Authenticator createAuthenticator(final MongoCredential credential) {
+        switch (credential.getMechanism()) {
+            case MONGODB_CR:
+                return new NativeAuthenticator(credential, this, bufferProvider);
+            case GSSAPI:
+                return new GSSAPIAuthenticator(credential, this, bufferProvider);
+            case PLAIN:
+                return new PlainAuthenticator(credential, this, bufferProvider);
+            case MONGODB_X509:
+                return new X509Authenticator(credential, this, bufferProvider);
+            default:
+                throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
+        }
     }
 }

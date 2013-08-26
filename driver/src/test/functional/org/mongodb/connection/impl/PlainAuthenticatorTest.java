@@ -25,6 +25,8 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.ServerAddress;
 
+import java.util.Collections;
+
 import static org.mongodb.Fixture.getBufferProvider;
 
 @Ignore
@@ -41,7 +43,7 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         connection = new DefaultSocketChannelConnection(new ServerAddress(host), ConnectionSettings.builder().build(),
-                new PowerOfTwoBufferPool());
+                Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool());
     }
 
     @After

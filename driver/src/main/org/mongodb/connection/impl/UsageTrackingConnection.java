@@ -71,6 +71,11 @@ class UsageTrackingConnection implements Connection {
         return responseBuffers;
     }
 
+    @Override
+    public String getId() {
+        return wrapped.getId();
+    }
+
     /**
      * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
      *

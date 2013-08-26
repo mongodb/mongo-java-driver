@@ -76,6 +76,11 @@ class AuthenticatingConnection implements Connection {
         return wrapped.receiveMessage();
     }
 
+    @Override
+    public String getId() {
+        return wrapped.getId();
+    }
+
     private void authenticateAll() {
         if (!authenticated) {
             for (MongoCredential cur : credentialList) {

@@ -196,6 +196,11 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
+        public String getId() {
+            return wrapped.getId();
+        }
+
+        @Override
         public void close() {
             if (wrapped != null) {
                 wrapped.close();

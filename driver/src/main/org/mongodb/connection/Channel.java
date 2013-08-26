@@ -61,6 +61,13 @@ public interface Channel {
      */
     ServerAddress getServerAddress();
 
+
+    /**
+     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
+     * @return the id
+     */
+    String getId();
+
     /**
      * Closes the connection.
      */
