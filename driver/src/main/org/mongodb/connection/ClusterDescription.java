@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 
@@ -177,6 +178,19 @@ public class ClusterDescription {
                 + ", connectionMode=" + connectionMode
                 + ", all=" + all
                 + '}';
+    }
+
+    public String getShortDescription() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(format("{type=%s", type));
+        builder.append(", servers=[");
+        String delimiter = "";
+        for (ServerDescription cur : all) {
+            builder.append(delimiter).append(cur.getShortDescription());
+            delimiter = ", ";
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
     private interface Predicate {

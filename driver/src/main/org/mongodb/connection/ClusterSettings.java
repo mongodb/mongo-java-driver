@@ -73,8 +73,7 @@ public final class ClusterSettings {
          * @return this;
          */
         public Builder mode(final ClusterConnectionMode mode) {
-            notNull("mode", mode);
-            this.mode = mode;
+            this.mode = notNull("mode", mode);
             return this;
         }
 
@@ -96,7 +95,7 @@ public final class ClusterSettings {
          * @return this
          */
         public Builder requiredClusterType(final ClusterType requiredClusterType) {
-            this.requiredClusterType = requiredClusterType;
+            this.requiredClusterType = notNull("requiredClusterType", requiredClusterType);
             return this;
         }
 
@@ -145,6 +144,61 @@ public final class ClusterSettings {
      */
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final ClusterSettings that = (ClusterSettings) o;
+
+        if (!hosts.equals(that.hosts)) {
+            return false;
+        }
+        if (mode != that.mode) {
+            return false;
+        }
+        if (requiredClusterType != that.requiredClusterType) {
+            return false;
+        }
+        if (requiredReplicaSetName != null
+                ? !requiredReplicaSetName.equals(that.requiredReplicaSetName) : that.requiredReplicaSetName != null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hosts.hashCode();
+        result = 31 * result + mode.hashCode();
+        result = 31 * result + requiredClusterType.hashCode();
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "{"
+                + "hosts=" + hosts
+                + ", mode=" + mode
+                + ", requiredClusterType=" + requiredClusterType
+                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
+                + '}';
+    }
+
+    public String getShortDescription() {
+        return "{"
+                + "hosts=" + hosts
+                + ", mode=" + mode
+                + ", requiredClusterType=" + requiredClusterType
+                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
+                + '}';
     }
 
     private ClusterSettings(final Builder builder) {

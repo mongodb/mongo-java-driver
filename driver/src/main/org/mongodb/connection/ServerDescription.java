@@ -24,7 +24,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -366,6 +369,16 @@ public class ServerDescription {
                 + ", ok=" + ok
                 + ", state=" + state
                 + ", version=" + version
+                + '}';
+    }
+
+    public String getShortDescription() {
+        return "{"
+                + "address=" + address
+                + ", type=" + type
+                + (tags.isEmpty() ? "" : tags)
+                + (state == Connected ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
+                + ", state=" + state
                 + '}';
     }
 
