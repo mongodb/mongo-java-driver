@@ -19,29 +19,18 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.mongodb.Codec;
-import org.mongodb.diagnostics.Loggers;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
 public class NoCodec implements Codec<Object> {
-    private static final Logger LOGGER = Loggers.getLogger("codec");
-
     @Override
     public Object decode(final BSONReader reader) {
-        LOGGER.log(Level.WARNING, "NoOpCodec used to decode an Object.  This should not be registered for decoding.");
         throw new DecodingException("NoOpCodec used to decode an Object.  This should not be registered for decoding.");
     }
 
     @Override
     public void encode(final BSONWriter bsonWriter, final Object value) {
-        LOGGER.log(Level.WARNING, "NoOpCodec used to encode object:" + value + " of type: " + value.getClass()
-                                  + ".  You should call Codecs.setDefaultObjectCodec with a custom Codec for this type"
-                                  + ", or try PojoCodec.");
-        throw new EncodingException(format("Could not find an encoder for object '%s' of class '%s'.",
-                                           value, value.getClass()));
+        throw new EncodingException(format("Could not find an encoder for object '%s' of class '%s'.", value, value.getClass()));
     }
 
     @Override
