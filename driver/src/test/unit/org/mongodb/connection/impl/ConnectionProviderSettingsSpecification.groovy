@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import spock.lang.Specification
@@ -30,7 +32,7 @@ import spock.lang.Unroll
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class DefaultConnectionProviderSettingsSpecification extends Specification {
+class ConnectionProviderSettingsSpecification extends Specification {
     @Unroll
     def 'should set up connection provider settings #settings correctly'() {
         expect:
