@@ -52,7 +52,7 @@ public class WriteConcern implements Serializable {
 
     private final boolean j;
 
-    private final boolean continueOnErrorForInsert;
+    private final boolean continueOnError;
 
     /**
      * No exceptions are raised, even for network issues.
@@ -188,15 +188,15 @@ public class WriteConcern implements Serializable {
      * @param wtimeout                 timeout for write operation
      * @param fsync                    whether or not to fsync
      * @param j                        whether writes should wait for a journaling group commit
-     * @param continueOnErrorForInsert if batch inserts should continue after the first error
+     * @param continueOnError if batch inserts should continue after the first error
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j,
-                        final boolean continueOnErrorForInsert) {
+                        final boolean continueOnError) {
         this.w = w;
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnErrorForInsert = continueOnErrorForInsert;
+        this.continueOnError = continueOnError;
     }
 
     /**
@@ -226,10 +226,10 @@ public class WriteConcern implements Serializable {
      * @param wtimeout                 timeout for write operation
      * @param fsync                    whether or not to fsync
      * @param j                        whether writes should wait for a journaling group commit
-     * @param continueOnErrorForInsert if batch inserts should continue after the first error
+     * @param continueOnError if batch inserts should continue after the first error
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j,
-                        final boolean continueOnErrorForInsert) {
+                        final boolean continueOnError) {
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
         }
@@ -238,7 +238,7 @@ public class WriteConcern implements Serializable {
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnErrorForInsert = continueOnErrorForInsert;
+        this.continueOnError = continueOnError;
     }
 
     /**
@@ -328,8 +328,8 @@ public class WriteConcern implements Serializable {
      *
      * @return true if set to continue on error
      */
-    public boolean getContinueOnErrorForInsert() {
-        return continueOnErrorForInsert;
+    public boolean getContinueOnError() {
+        return continueOnError;
     }
 
     //CHECKSTYLE:OFF
@@ -339,7 +339,7 @@ public class WriteConcern implements Serializable {
      * @return the WriteConcern
      */
     public WriteConcern withW(final int w) {
-        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnError());
     }
 
     /**
@@ -347,7 +347,7 @@ public class WriteConcern implements Serializable {
      * @return the WriteConcern
      */
     public WriteConcern withW(final String w) {
-        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnErrorForInsert());
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnError());
     }
 
     /**
@@ -356,10 +356,10 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withFsync(final boolean fsync) {
         if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnErrorForInsert());
+            return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnError());
         }
         else {
-            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ(), getContinueOnErrorForInsert());
+            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ(), getContinueOnError());
         }
     }
 
@@ -369,23 +369,23 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withJ(final boolean j) {
         if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnErrorForInsert());
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnError());
         }
         else {
-            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j, getContinueOnErrorForInsert());
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j, getContinueOnError());
         }
     }
 
     /**
-     * @param continueOnErrorForInsert
+     * @param continueOnError
      * @return the WriteConcern
      */
-    public WriteConcern withContinueOnErrorForInsert(final boolean continueOnErrorForInsert) {
+    public WriteConcern withContinueOnError(final boolean continueOnError) {
         if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnError);
         }
         else {
-            return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnErrorForInsert);
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnError);
         }
     }
     //CHECKSTYLE:ON
@@ -418,8 +418,18 @@ public class WriteConcern implements Serializable {
     @Override
     public String toString() {
         return "WriteConcern{w=" + w + ", wtimeout=" + wtimeout + ", fsync=" + fsync + ", j=" + j
-               + ", continueOnErrorForInsert=" + continueOnErrorForInsert + '}';
+               + ", continueOnError=" + continueOnError + '}';
     }
+
+    public String getShortDescription() {
+        return "{w=" + w
+                + (wtimeout != 0 ? (", wtimeout=" + wtimeout) : "")
+                + (fsync ? (", fsync=" + fsync) : "")
+                + (j ? (", j=" + j) : "")
+                + (continueOnError ? ", continueOnError=" + continueOnError : "")
+                + '}';
+    }
+
 
     @Override
     public boolean equals(final Object o) {
@@ -432,7 +442,7 @@ public class WriteConcern implements Serializable {
 
         final WriteConcern that = (WriteConcern) o;
 
-        if (continueOnErrorForInsert != that.continueOnErrorForInsert) {
+        if (continueOnError != that.continueOnError) {
             return false;
         }
         if (fsync != that.fsync) {
@@ -453,7 +463,7 @@ public class WriteConcern implements Serializable {
         result = 31 * result + wtimeout;
         result = 31 * result + (fsync ? 1 : 0);
         result = 31 * result + (j ? 1 : 0);
-        result = 31 * result + (continueOnErrorForInsert ? 1 : 0);
+        result = 31 * result + (continueOnError ? 1 : 0);
         return result;
     }
 

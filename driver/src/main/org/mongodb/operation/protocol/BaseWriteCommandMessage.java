@@ -98,7 +98,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
 
     private void writeCommandPrologue(final BSONBinaryWriter writer) {
         writer.writeString(getCommandName(), getWriteNamespace().getCollectionName());
-        writer.writeBoolean("continueOnError", getWriteConcern().getContinueOnErrorForInsert());
+        writer.writeBoolean("continueOnError", getWriteConcern().getContinueOnError());
         if (getWriteConcern().isAcknowledged()) {
             Document writeConcernDocument = getWriteConcern().asDocument();
             writeConcernDocument.remove("getlasterror");

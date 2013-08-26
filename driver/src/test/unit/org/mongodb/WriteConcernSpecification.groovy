@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb
 
 import spock.lang.Specification
@@ -30,10 +32,10 @@ class WriteConcernSpecification extends Specification {
         wc.getWtimeout() == wTimeout;
         wc.getFsync() == fsync;
         wc.getJ() == j;
-        wc.getContinueOnErrorForInsert() == continueOnErrorForInsert;
+        wc.getContinueOnError() == continueOnError;
 
         where:
-        wc                                         | w | wTimeout | fsync | j     | continueOnErrorForInsert
+        wc                                         | w | wTimeout | fsync | j     | continueOnError
         new WriteConcern()                         | 0 | 0        | false | false | false
         new WriteConcern(1)                        | 1 | 0        | false | false | false
         new WriteConcern(1, 10)                    | 1 | 10       | false | false | false
@@ -50,10 +52,10 @@ class WriteConcernSpecification extends Specification {
         wc.getWtimeout() == wTimeout;
         wc.getFsync() == fsync;
         wc.getJ() == j;
-        wc.getContinueOnErrorForInsert() == continueOnErrorForInsert;
+        wc.getContinueOnError() == continueOnError;
 
         where:
-        wc                                             | wString    | wTimeout | fsync | j     | continueOnErrorForInsert
+        wc                                             | wString    | wTimeout | fsync | j     | continueOnError
         new WriteConcern('majority')                   | 'majority' | 0        | false | false | false
         new WriteConcern('dc1', 10, false, true)       | 'dc1'      | 10       | false | true  | false
         new WriteConcern('dc1', 10, false, true, true) | 'dc1'      | 10       | false | true  | true
@@ -79,8 +81,8 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern('dc1') == WriteConcern.UNACKNOWLEDGED.withW('dc1');
         new WriteConcern('dc1', 0, true, false) == new WriteConcern('dc1').withFsync(true);
         new WriteConcern('dc1', 0, false, true) == new WriteConcern('dc1').withJ(true);
-        new WriteConcern('dc1', 0, false, false, true) == new WriteConcern('dc1').withContinueOnErrorForInsert(true);
-        new WriteConcern(1, 0, false, false, true) == WriteConcern.ACKNOWLEDGED.withContinueOnErrorForInsert(true);
+        new WriteConcern('dc1', 0, false, false, true) == new WriteConcern('dc1').withContinueOnError(true);
+        new WriteConcern(1, 0, false, false, true) == WriteConcern.ACKNOWLEDGED.withContinueOnError(true);
     }
 
     def 'test command'() {

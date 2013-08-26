@@ -439,7 +439,7 @@ public class WriteConcern implements Serializable {
      * @return true if set to continue on error
      */
     public boolean getContinueOnError() {
-        return proxied.getContinueOnErrorForInsert();
+        return proxied.getContinueOnError();
     }
 
     public org.mongodb.WriteConcern toNew() {
@@ -454,7 +454,7 @@ public class WriteConcern implements Serializable {
      * @param continueOnError
      */
     public WriteConcern continueOnError(final boolean continueOnError) {
-        return new WriteConcern(proxied.withContinueOnErrorForInsert(continueOnError));
+        return new WriteConcern(proxied.withContinueOnError(continueOnError));
     }
 
     /**

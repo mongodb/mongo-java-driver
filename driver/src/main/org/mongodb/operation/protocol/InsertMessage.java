@@ -50,7 +50,7 @@ public class InsertMessage<T> extends RequestMessage {
 
     private void writeInsertPrologue(final WriteConcern concern, final OutputBuffer buffer) {
         int flags = 0;
-        if (concern.getContinueOnErrorForInsert()) {
+        if (concern.getContinueOnError()) {
             flags |= 1;
         }
         buffer.writeInt(flags);
