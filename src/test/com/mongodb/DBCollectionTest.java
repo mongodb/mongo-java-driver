@@ -328,7 +328,7 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-        WriteConcern newWC = WriteConcern.SAFE.continueOnErrorForInsert(true);
+        WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
         try {
             c.insert(newWC, inserted1, inserted2, inserted3);
             fail("Insert should have failed");

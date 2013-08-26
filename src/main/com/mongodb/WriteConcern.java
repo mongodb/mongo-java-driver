@@ -243,14 +243,14 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
+     * @param continueOnError if batch writes should continue after the first error
      */
-    public WriteConcern( int w , int wtimeout , boolean fsync , boolean j, boolean continueOnInsertError) {
+    public WriteConcern( int w , int wtimeout , boolean fsync , boolean j, boolean continueOnError) {
         _w = w;
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
-        _continueOnErrorForInsert = continueOnInsertError;
+        _continueOnError = continueOnError;
     }
 
     /**
@@ -288,10 +288,10 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
-     * @param continueOnInsertError if batch inserts should continue after the first error
+     * @param continueOnError if batched writes should continue after the first error
      * @return
      */
-    public WriteConcern( String w , int wtimeout , boolean fsync, boolean j, boolean continueOnInsertError ){
+    public WriteConcern( String w , int wtimeout , boolean fsync, boolean j, boolean continueOnError ){
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
         }
@@ -300,7 +300,7 @@ public class WriteConcern implements Serializable {
         _wtimeout = wtimeout;
         _fsync = fsync;
         _j = j;
-        _continueOnErrorForInsert = continueOnInsertError;
+        _continueOnError = continueOnError;
     }
 
     /**
@@ -439,7 +439,7 @@ public class WriteConcern implements Serializable {
 
     @Override
     public String toString() {
-        return "WriteConcern " + getCommand() + " / (Continue Inserting on Errors? " + getContinueOnErrorForInsert() + ")";
+        return "WriteConcern " + getCommand() + " / (Continue on error? " + getContinueOnErrorForInsert() + ")";
     }
 
     @Override
@@ -449,7 +449,7 @@ public class WriteConcern implements Serializable {
 
         WriteConcern that = (WriteConcern) o;
 
-        if (_continueOnErrorForInsert != that._continueOnErrorForInsert) return false;
+        if (_continueOnError != that._continueOnError) return false;
         if (_fsync != that._fsync) return false;
         if (_j != that._j) return false;
         if (_wtimeout != that._wtimeout) return false;
@@ -464,7 +464,7 @@ public class WriteConcern implements Serializable {
         result = 31 * result + _wtimeout;
         result = 31 * result + (_fsync ? 1 : 0);
         result = 31 * result + (_j ? 1 : 0);
-        result = 31 * result + (_continueOnErrorForInsert ? 1 : 0);
+        result = 31 * result + (_continueOnError ? 1 : 0);
         return result;
     }
 
@@ -480,25 +480,50 @@ public class WriteConcern implements Serializable {
      * Toggles the "continue inserts on error" mode. This only applies to server side errors.
      * If there is a document which does not validate in the client, an exception will still
      * be thrown in the client.
-     * This will return a *NEW INSTANCE* of WriteConcern with your preferred continueOnInsert value
+     * This will return a new instance of WriteConcern with your preferred continueOnInsert value
      *
-     * @param continueOnErrorForInsert
+     * @param continueOnError
      */
-    public WriteConcern continueOnErrorForInsert(boolean continueOnErrorForInsert) {
+    public WriteConcern continueOnError(boolean continueOnError) {
         if ( _w instanceof Integer )
-            return new WriteConcern((Integer) _w, _wtimeout, _fsync, _j, continueOnErrorForInsert);
+            return new WriteConcern((Integer) _w, _wtimeout, _fsync, _j, continueOnError);
         else if ( _w instanceof String )
-            return new WriteConcern((String) _w, _wtimeout, _fsync, _j, continueOnErrorForInsert);
+            return new WriteConcern((String) _w, _wtimeout, _fsync, _j, continueOnError);
         else
             throw new IllegalStateException("The w parameter must be an int or a String");
     }
 
     /**
      * Gets the "continue inserts on error" mode
-     * @return
+     *
+     * @return the continue on error mode
      */
+    public boolean getContinueOnError() {
+        return _continueOnError;
+    }
+
+    /**
+     * Toggles the "continue inserts on error" mode. This only applies to server side errors.
+     * If there is a document which does not validate in the client, an exception will still
+     * be thrown in the client.
+     * This will return a new instance of WriteConcern with your preferred continueOnInsert value
+     *
+     * @param continueOnErrorForInsert
+     * @deprecated Use continueOnError instead
+     */
+    @Deprecated
+    public WriteConcern continueOnErrorForInsert(boolean continueOnErrorForInsert) {
+        return continueOnError(continueOnErrorForInsert);
+    }
+
+    /**
+     * Gets the "continue inserts on error" mode
+     * @return
+     * @deprecated Use getContinueOnError instead
+     */
+    @Deprecated
     public boolean getContinueOnErrorForInsert() {
-        return _continueOnErrorForInsert;
+        return getContinueOnError();
     }
 
     /**
@@ -518,7 +543,7 @@ public class WriteConcern implements Serializable {
     final int _wtimeout;
     final boolean _fsync;
     final boolean _j;
-    final boolean _continueOnErrorForInsert ;
+    final boolean _continueOnError;
 
     public static class Majority extends WriteConcern {
 

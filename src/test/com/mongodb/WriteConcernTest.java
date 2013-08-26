@@ -57,7 +57,7 @@ public class WriteConcernTest extends TestCase {
         Assert.assertEquals(1, object2.getW());
         Assert.assertEquals(false, object2.getFsync());
         Assert.assertEquals(false, object2.getJ());
-        Assert.assertEquals(false, object2.getContinueOnErrorForInsert());
+        Assert.assertEquals(false, object2.getContinueOnError());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class WriteConcernTest extends TestCase {
         Assert.assertEquals("majority", object2.getWString());
         Assert.assertEquals(false, object2.getFsync());
         Assert.assertEquals(false, object2.getJ());
-        Assert.assertEquals(false, object2.getContinueOnErrorForInsert());
+        Assert.assertEquals(false, object2.getContinueOnError());
     }
 
     @Test
