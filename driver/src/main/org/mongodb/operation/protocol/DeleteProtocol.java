@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
@@ -23,11 +24,17 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Remove;
 
 import java.util.List;
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
 
 public class DeleteProtocol extends WriteProtocol {
+    private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
+
     private final List<Remove> deletes;
     private final Encoder<Document> queryEncoder;
 
@@ -40,7 +47,21 @@ public class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
+    public CommandResult execute() {
+        LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                getChannel().getId(), getChannel().getServerAddress()));
+        CommandResult commandResult = super.execute();
+        LOGGER.fine("Delete completed");
+        return commandResult;
+    }
+
+    @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new DeleteMessage(getNamespace().getFullName(), deletes, queryEncoder, settings);
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 }

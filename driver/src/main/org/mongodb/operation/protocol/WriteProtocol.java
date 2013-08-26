@@ -29,6 +29,9 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.mongodb.command.GetLastError.parseGetLastErrorResponse;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
@@ -73,7 +76,14 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             RequestMessage nextMessage = createRequestMessage(getMessageSettings(serverDescription)).encode(buffer);
+            int batchNum = 1;
+            if (nextMessage != null) {
+                getLogger().fine(format("Sending batch %d", batchNum));
+            }
+
             while (nextMessage != null) {
+                batchNum++;
+                getLogger().fine(format("Sending batch %d", batchNum));
                 nextMessage = nextMessage.encode(buffer);
             }
             CommandMessage getLastErrorMessage = null;
@@ -100,10 +110,10 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
                 new ChannelReceiveArgs(requestMessage.getId()));
         try {
             return parseGetLastErrorResponse(createCommandResult(
-                                                                new ReplyMessage<Document>(responseBuffers,
-                                                                                            new DocumentCodec(),
-                                                                                            requestMessage.getId()),
-                                                                 channel.getServerAddress()));
+                    new ReplyMessage<Document>(responseBuffers,
+                            new DocumentCodec(),
+                            requestMessage.getId()),
+                    channel.getServerAddress()));
         } finally {
             responseBuffers.close();
         }
@@ -114,4 +124,10 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
     protected MongoNamespace getNamespace() {
         return namespace;
     }
+
+    protected Channel getChannel() {
+        return channel;
+    }
+
+    protected abstract Logger getLogger();
 }

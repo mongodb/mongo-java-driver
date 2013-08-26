@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
@@ -23,14 +24,20 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Replace;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
 public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
+
+    private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
+
     private final List<Replace<T>> replaces;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
@@ -45,8 +52,22 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected RequestMessage createRequestMessage() {
+    public CommandResult execute() {
+        LOGGER.fine(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
+                getConnection().getServerAddress()));
+        CommandResult commandResult = super.execute();
+        LOGGER.fine("Replace  completed");
+        return commandResult;
+    }
+
+    @Override
+    protected ReplaceCommandMessage<T> createRequestMessage() {
         return new ReplaceCommandMessage<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder,
                 getMessageSettings(getServerDescription()));
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 }

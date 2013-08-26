@@ -16,6 +16,7 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
@@ -23,11 +24,17 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Update;
 
 import java.util.List;
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
 
 public class UpdateProtocol extends WriteProtocol {
+    private static final Logger LOGGER = Loggers.getLogger("protocol.update");
+
     private final List<Update> updates;
     private final Encoder<Document> queryEncoder;
 
@@ -40,8 +47,22 @@ public class UpdateProtocol extends WriteProtocol {
     }
 
     @Override
+    public CommandResult execute() {
+        LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getChannel().getId(),
+                getChannel().getServerAddress()));
+        CommandResult commandResult = super.execute();
+        LOGGER.fine("Update completed");
+        return commandResult;
+    }
+
+    @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new UpdateMessage(getNamespace().getFullName(), updates, queryEncoder, settings);
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
 }

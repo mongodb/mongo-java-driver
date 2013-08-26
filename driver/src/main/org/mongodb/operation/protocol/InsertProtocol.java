@@ -16,14 +16,23 @@
 
 package org.mongodb.operation.protocol;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Insert;
 
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
+
 public class InsertProtocol<T> extends WriteProtocol {
+
+    private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
+
     private final Insert<T> insert;
     private final Encoder<T> encoder;
 
@@ -35,8 +44,21 @@ public class InsertProtocol<T> extends WriteProtocol {
         this.encoder = encoder;
     }
 
+    @Override
+    public CommandResult execute() {
+        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insert.getDocuments().size(),
+                getNamespace(), getChannel().getId(), getChannel().getServerAddress()));
+        CommandResult commandResult = super.execute();
+        LOGGER.fine("Insert completed");
+        return commandResult;
+    }
+
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
     }
 
+    @Override
+    protected Logger getLogger() {
+        return LOGGER;
+    }
 }

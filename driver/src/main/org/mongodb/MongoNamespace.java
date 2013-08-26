@@ -18,6 +18,10 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 
+/**
+ *
+ * @since 3.0
+ */
 @Immutable
 public final class MongoNamespace {
     private static final String NAMESPACE_TEMPLATE = "%s.%s";
@@ -69,6 +73,16 @@ public final class MongoNamespace {
         }
 
         return true;
+    }
+
+    /**
+     * Returns the standard MongoDB representation of a namespace, which is {@code &lt;database&gt;.&lt;collection&gt;}.
+     *
+     * @return string representation of the namespace.
+     */
+    @Override
+    public String toString() {
+        return databaseName + "." + collectionName;
     }
 
     @Override

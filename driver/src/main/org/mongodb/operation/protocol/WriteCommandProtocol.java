@@ -37,7 +37,9 @@ import org.mongodb.connection.ServerDescription;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
 
 public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
@@ -74,20 +76,25 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    protected abstract RequestMessage createRequestMessage();
+    protected abstract BaseWriteCommandMessage createRequestMessage();
 
     private CommandResult sendAndReceiveAllMessages() {
-        RequestMessage message = createRequestMessage();
+        BaseWriteCommandMessage message = createRequestMessage();
         CommandResult commandResult;
         MongoException lastException = null;
+        int batchNum = 0;
         do {
-            RequestMessage nextMessage = sendMessage(message);
+            batchNum++;
+            BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum);
             commandResult = receiveMessage(message);
+            if (nextMessage != null || batchNum > 1) {
+                getLogger().fine(format("Received response for batch %d", batchNum));
+            }
             try {
-               commandResult = parseWriteCommandResult(commandResult);
+                commandResult = parseWriteCommandResult(commandResult);
             } catch (MongoException e) {
                 lastException = e;
-                if (!writeConcern.getContinueOnErrorForInsert()) {
+                if (!writeConcern.getContinueOnError()) {
                     if (writeConcern.isAcknowledged()) {
                         throw e;
                     }
@@ -106,10 +113,13 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         return writeConcern.isAcknowledged() ? commandResult : null;
     }
 
-    private RequestMessage sendMessage(final RequestMessage message) {
+    private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final RequestMessage nextMessage = message.encode(buffer);
+            final BaseWriteCommandMessage nextMessage = message.encode(buffer);
+            if (nextMessage != null || batchNum > 1) {
+                getLogger().fine(format("Sending batch %d", batchNum));
+            }
             channel.sendMessage(buffer.getByteBuffers());
             return nextMessage;
         } finally {
@@ -143,6 +153,8 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     public Channel getConnection() {
         return channel;
     }
+
+    protected abstract Logger getLogger();
 
     protected static class CommandCodec<T> extends DocumentCodec {
         public CommandCodec(final Encoder<T> encoder) {

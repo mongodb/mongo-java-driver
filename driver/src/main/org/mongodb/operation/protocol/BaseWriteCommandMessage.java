@@ -57,7 +57,11 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return commandEncoder;
     }
 
-    @Override
+    public BaseWriteCommandMessage encode(final OutputBuffer buffer) {
+        return (BaseWriteCommandMessage) super.encode(buffer);
+    }
+
+        @Override
     protected BaseWriteCommandMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         BaseWriteCommandMessage nextMessage = null;
 

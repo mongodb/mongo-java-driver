@@ -28,11 +28,18 @@ import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Find;
 
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
 public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
+
+    public static final Logger LOGGER = Loggers.getLogger("protocol.query");
+
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
@@ -58,7 +65,11 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     @Override
     public QueryResult<T> execute() {
         try {
-            return receiveMessage(sendMessage());
+            LOGGER.fine(format("Sending query to namespace %s on connection [%s] to server %s", namespace, channel.getId(),
+                    channel.getServerAddress()));
+            QueryResult<T> queryResult = receiveMessage(sendMessage());
+            LOGGER.fine("Query completed");
+            return queryResult;
         } finally {
             if (closeChannel) {
                 channel.close();

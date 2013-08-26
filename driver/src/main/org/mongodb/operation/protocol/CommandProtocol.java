@@ -27,11 +27,18 @@ import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.Loggers;
 
+import java.util.logging.Logger;
+
+import static java.lang.String.format;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
 public class CommandProtocol implements Protocol<CommandResult> {
+
+    public static final Logger LOGGER = Loggers.getLogger("protocol.command");
+
     private final MongoNamespace namespace;
     private final Document command;
     private final Decoder<Document> commandEncoder;
@@ -56,8 +63,12 @@ public class CommandProtocol implements Protocol<CommandResult> {
 
     public CommandResult execute() {
         try {
-            final CommandMessage sentMessage = sendMessage();
-            return receiveMessage(sentMessage.getId());
+            LOGGER.fine(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
+                    command.keySet().iterator().next(), command.values().iterator().next(),
+                    namespace.getDatabaseName(), channel.getId(), channel.getServerAddress()));
+            CommandResult commandResult = receiveMessage(sendMessage().getId());
+            LOGGER.fine("Command execution complete");
+            return commandResult;
         } finally {
             if (closeChannel) {
                 channel.close();
