@@ -61,6 +61,7 @@ public class ServerDescription {
     private final boolean ok;
     private final ServerConnectionState state;
     private final ServerVersion version;
+    private final Integer setVersion;
 
     public static class Builder {
         private ServerAddress address;
@@ -73,6 +74,7 @@ public class ServerDescription {
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
+        private Integer setVersion;
         private long averagePingTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
@@ -131,6 +133,11 @@ public class ServerDescription {
 
         public Builder setName(final String setName) {
             this.setName = setName;
+            return this;
+        }
+
+        public Builder setVersion(final Integer setVersion) {
+            this.setVersion = setVersion;
             return this;
         }
 
@@ -270,6 +277,10 @@ public class ServerDescription {
         return version;
     }
 
+    public Integer getSetVersion() {
+        return setVersion;
+    }
+
     public long getAveragePingTimeNanos() {
         return averagePingTimeNanos;
     }
@@ -318,6 +329,9 @@ public class ServerDescription {
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
             return false;
         }
+        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
+            return false;
+        }
         if (state != that.state) {
             return false;
         }
@@ -346,6 +360,7 @@ public class ServerDescription {
         result = 31 * result + maxMessageSize;
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
+        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
@@ -365,6 +380,7 @@ public class ServerDescription {
                 + ", maxMessageSize=" + maxMessageSize
                 + ", tags=" + tags
                 + ", setName='" + setName + '\''
+                + ", setVersion='" + setVersion + '\''
                 + ", averagePingTimeNanos=" + averagePingTimeNanos
                 + ", ok=" + ok
                 + ", state=" + state
@@ -395,6 +411,7 @@ public class ServerDescription {
         maxMessageSize = builder.maxMessageSize;
         tags = builder.tags;
         setName = builder.setName;
+        setVersion = builder.setVersion;
         averagePingTimeNanos = builder.averagePingTimeNanos;
         ok = builder.ok;
     }

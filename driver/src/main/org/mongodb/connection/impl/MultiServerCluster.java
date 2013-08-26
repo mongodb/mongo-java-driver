@@ -53,6 +53,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private ClusterType clusterType;
     private String replicaSetName;
+    private int latestSetVersion = Integer.MIN_VALUE;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
             new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
@@ -175,7 +176,13 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
-        ensureServers(newDescription);
+        if (newDescription.getSetVersion() == null || newDescription.getSetVersion() > latestSetVersion) {
+            if (newDescription.getSetVersion() != null) {
+                latestSetVersion = newDescription.getSetVersion();
+            }
+
+            ensureServers(newDescription);
+        }
 
         if (newDescription.isPrimary()) {
             invalidateOldPrimaries(newDescription.getAddress());
@@ -209,7 +216,7 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void removeServer(final ServerAddress serverAddress) {
-         addressToServerTupleMap.remove(serverAddress).server.close();
+        addressToServerTupleMap.remove(serverAddress).server.close();
     }
 
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {

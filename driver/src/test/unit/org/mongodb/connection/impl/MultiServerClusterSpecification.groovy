@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -271,6 +273,18 @@ class MultiServerClusterSpecification extends Specification {
         cluster.description.all == getDescriptions(firstServer, thirdServer)
     }
 
+    def 'should ignore replica set member lists from a server that has an older replica set version'() {
+        given:
+        def cluster = new MultiServerCluster(ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory)
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], 'test', 2)
+
+        when:
+        sendNotification(secondServer, ReplicaSetSecondary, [firstServer, secondServer], 'test', 1)
+
+        then:
+        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+    }
+
     def 'should ignore a notification from a server that is not ok'() {
         given:
         def cluster = new MultiServerCluster(ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory)
@@ -291,12 +305,16 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(serverAddress, serverType, hosts, null)
     }
 
-    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String requiredSetName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, requiredSetName).build())
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName, int setVersion) {
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, setVersion).build())
+    }
+
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName) {
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, null).build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, ok, null).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, ok, null, null).build())
     }
 
     def getDescription(ServerAddress server) {
@@ -307,13 +325,15 @@ class MultiServerClusterSpecification extends Specification {
         servers.collect { factory.getServer(it).description } as Set
     }
 
-    def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok, String requiredSetName) {
+    def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok, String setName,
+                   Integer setVersion) {
         ServerDescription.builder()
                 .address(serverAddress)
                 .type(serverType)
                 .ok(ok)
                 .state(Connected)
                 .hosts(hosts*.toString() as Set)
-                .setName(requiredSetName)
+                .setName(setName)
+                .setVersion(setVersion)
     }
 }

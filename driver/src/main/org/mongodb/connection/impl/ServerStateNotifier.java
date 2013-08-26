@@ -162,6 +162,7 @@ class ServerStateNotifier implements Runnable {
                         ServerDescription.getDefaultMaxMessageSize()))
                 .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
                 .setName(commandResult.getResponse().getString("setName"))
+                .setVersion(commandResult.getResponse().getInteger("setVersion"))
                 .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
                 .ok(commandResult.isOk()).build();
     }

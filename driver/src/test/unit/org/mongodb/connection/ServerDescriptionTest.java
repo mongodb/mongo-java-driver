@@ -74,6 +74,7 @@ public class ServerDescriptionTest {
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
+        assertNull(serverDescription.getSetVersion());
         assertEquals(new ServerVersion(), serverDescription.getVersion());
     }
 
@@ -84,6 +85,7 @@ public class ServerDescriptionTest {
                 .type(ServerType.ShardRouter)
                 .tags(new Tags("dc", "ny"))
                 .setName("test")
+                .setVersion(11)
                 .maxDocumentSize(100)
                 .maxMessageSize(200)
                 .averagePingTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
