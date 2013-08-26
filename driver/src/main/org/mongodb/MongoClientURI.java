@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import static java.lang.String.format;
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
 import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
@@ -313,7 +314,7 @@ public class MongoClientURI {
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
         for (String key : optionsMap.keySet()) {
             if (!allKeys.contains(key)) {
-                LOGGER.warning("Unknown or Unsupported Option '" + key + "'");
+                LOGGER.warning(format("Unsupported option '%s' on URI '%s'.", key, uri));
             }
         }
     }
