@@ -629,7 +629,7 @@ public abstract class DB {
     }
 
     /**
-     * Authenticates to db with the given credentials.  If this method (or {@code authenticateCommand} has already been
+     * Authenticates to db with the given credentials.  If this method (or {@code authenticateCommand}) has already been
      * called with the same credentials and the authentication test succeeded, this method will return {@code true}.  If this method
      * has already been called with different credentials and the authentication test succeeded,
      * this method will throw an {@code IllegalStateException}.  If this method has already been called with any credentials
@@ -652,7 +652,7 @@ public abstract class DB {
     }
 
     /**
-     * Authenticates to db with the given credentials.  If this method (or {@code authenticate} has already been
+     * Authenticates to db with the given credentials.  If this method (or {@code authenticate}) has already been
      * called with the same credentials and the authentication test succeeded, this method will return true.  If this method
      * has already been called with different credentials and the authentication test succeeded,
      * this method will throw an {@code IllegalStateException}.  If this method has already been called with any credentials
