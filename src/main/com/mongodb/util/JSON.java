@@ -33,7 +33,7 @@ public class JSON {
      *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
      *
      * @param o object to serialize
-     * @return  String containing JSON form of the object
+     * @return  a String containing the JSON form of the object
      * @see com.mongodb.util.JSONSerializers#getLegacy()
      */
     public static String serialize( Object o ){
@@ -57,20 +57,39 @@ public class JSON {
     }
 
     /**
-     *  Parses a JSON string representing a JSON value
+     *  Parses a JSON string and returns a corresponding Java object.
+     *  The returned value is either a {@link com.mongodb.DBObject DBObject}
+     *  (if the string is a JSON object or array), or a boxed primitive
+     *  value according to the following mapping:
+     *  <p>
+     *  <code>java.lang.Boolean</code> for <code>true</code> or <code>false</code><br>
+     *  <code>java.lang.Integer</code> for integers between
+     *  Integer.MIN_VALUE and Integer.MAX_VALUE<br>
+     *  <code>java.lang.Long</code> for integers outside of this range<br>
+     *  <code>java.lang.Double</code> for floating point numbers
+     *  <p>
+     *  If the parameter is a string that contains a single-quoted
+     *  or double-quoted string, it is returned as an unquoted
+     *  <code>java.lang.String</code>.
      *
      * @param s the string to parse
-     * @return the object
+     * @return a Java object representing the JSON data
+     * @throws JSONParseException if s is not valid JSON 
      */
     public static Object parse( String s ){
 	return parse(s, null);
     }
 
     /**
-     * Parses a JSON string representing a JSON value
-     *
+     * Parses a JSON string and constructs a corresponding Java object by calling
+     * the methods of a {@link org.bson.BSONCallback BSONCallback} during parsing.
+     * If the callback <code>c</code> is null, this method is equivalent to
+     * {@link com.mongodb.JSON#parse(String) parse(String)}.
+     * 
      * @param s the string to parse
-     * @return the object
+     * @param c the BSONCallback to call during parsing
+     * @return a Java object representing the JSON data
+     * @throws JSONParseException if s is not valid JSON 
      */
     public static Object parse( String s, BSONCallback c ){
         if (s == null || (s=s.trim()).equals("")) {
