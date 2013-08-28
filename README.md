@@ -14,10 +14,10 @@
 * Trisha Gee           trisha.gee@10gen.com
 
 ### Contributors:
-* Scott Hernandez      scott@10gen.com
-* Craig Wilson         craig.wilson@10gen.com
-* Ryan Nitz            ryan@10gen.com
 * Uladzmir Mihura      trnl.me@gmail.com
+* Justin Lee           justin.lee@10gen.com
+* Craig Wilson         craig.wilson@10gen.com
+* Scott Hernandez      scott@10gen.com
 
 ### Build status:
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
