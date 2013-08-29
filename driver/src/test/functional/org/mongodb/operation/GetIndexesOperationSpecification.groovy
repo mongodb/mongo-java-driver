@@ -21,7 +21,6 @@ import org.mongodb.Decoder
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
-import org.mongodb.MongoClientOptions
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterSettings
@@ -37,17 +36,17 @@ import org.mongodb.session.Session
 
 import static java.util.concurrent.Executors.newScheduledThreadPool
 import static org.mongodb.Fixture.getBufferProvider
+import static org.mongodb.Fixture.getOptions
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.OrderBy.ASC
 import static org.mongodb.connection.ClusterConnectionMode.Single
 
 class GetIndexesOperationSpecification extends FunctionalSpecification {
-    private final MongoClientOptions options = MongoClientOptions.builder().build();
-    private final ConnectionFactory connectionFactory = new DefaultConnectionFactory(options.connectionSettings,
+    private final ConnectionFactory connectionFactory = new DefaultConnectionFactory(getOptions().connectionSettings,
                                                                                      getSSLSettings(), getBufferProvider(), [])
 
     private final ClusterableServerFactory clusterableServerFactory = new DefaultClusterableServerFactory(
-            options.serverSettings, new DefaultConnectionProviderFactory(options.connectionProviderSettings, connectionFactory),
+            getOptions().serverSettings, new DefaultConnectionProviderFactory(getOptions().connectionProviderSettings, connectionFactory),
             null, connectionFactory, newScheduledThreadPool(3), getBufferProvider())
 
     private final ClusterSettings clusterSettings = ClusterSettings.builder()

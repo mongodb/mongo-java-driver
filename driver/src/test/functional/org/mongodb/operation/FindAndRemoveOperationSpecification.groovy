@@ -2,7 +2,6 @@ package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoClientOptions
 import org.mongodb.MongoCollection
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Cluster
@@ -21,18 +20,18 @@ import org.mongodb.test.WorkerCodec
 
 import static java.util.concurrent.Executors.newScheduledThreadPool
 import static org.mongodb.Fixture.getBufferProvider
+import static org.mongodb.Fixture.getOptions
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.connection.ClusterConnectionMode.Single
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
     private final DocumentCodec documentDecoder = new DocumentCodec()
 
-    private final MongoClientOptions options = MongoClientOptions.builder().build();
-    private final ConnectionFactory connectionFactory = new DefaultConnectionFactory(options.connectionSettings,
+    private final ConnectionFactory connectionFactory = new DefaultConnectionFactory(getOptions().connectionSettings,
                                                                                      getSSLSettings(), getBufferProvider(), [])
 
     private final ClusterableServerFactory clusterableServerFactory = new DefaultClusterableServerFactory(
-            options.serverSettings, new DefaultConnectionProviderFactory(options.connectionProviderSettings, connectionFactory),
+            getOptions().serverSettings, new DefaultConnectionProviderFactory(getOptions().connectionProviderSettings, connectionFactory),
             null, connectionFactory, newScheduledThreadPool(3), getBufferProvider())
 
     private final ClusterSettings clusterSettings = ClusterSettings.builder()
