@@ -7,8 +7,8 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.bufferProvider
+import static org.mongodb.Fixture.session
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
     private final DocumentCodec documentDecoder = new DocumentCodec()
@@ -25,8 +25,8 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove findAndRemove = new FindAndRemove().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(collection.namespace, findAndRemove,
-                                                                                          documentDecoder, getBufferProvider(),
-                                                                                          getSession(), false)
+                                                                                          documentDecoder, bufferProvider,
+                                                                                          session, false)
         Document returnedDocument = operation.execute()
 
         then:
@@ -48,7 +48,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(collection.namespace, findAndRemove,
-                                                                                      new WorkerCodec(), getBufferProvider(), getSession(),
+                                                                                      new WorkerCodec(), bufferProvider, session,
                                                                                       false)
         Worker returnedDocument = operation.execute()
 

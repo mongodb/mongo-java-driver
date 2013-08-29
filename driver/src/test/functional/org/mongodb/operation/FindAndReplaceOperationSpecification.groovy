@@ -22,8 +22,8 @@ import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.bufferProvider
+import static org.mongodb.Fixture.session
 
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
     private MongoCollection<Worker> workerCollection
@@ -48,7 +48,7 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
 
         FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(workerCollection.namespace, findAndReplace,
                                                                                         new WorkerCodec(), new WorkerCodec(),
-                                                                                        getBufferProvider(), getSession(), false)
+                                                                                        bufferProvider, session, false)
         Worker returnedValue = operation.execute()
 
         then:

@@ -23,14 +23,14 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.codecs.DocumentCodec
 
-import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.bufferProvider
+import static org.mongodb.Fixture.session
 import static org.mongodb.OrderBy.ASC
 
 class GetIndexesOperationSpecification extends FunctionalSpecification {
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new DocumentCodec());
+        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new DocumentCodec());
         collection.insert(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -43,7 +43,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should be able to use custom decoder for index information'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new IndexDecoder());
+        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new IndexDecoder());
         collection.insert(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -57,7 +57,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new DocumentCodec());
+        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new DocumentCodec());
         collection.tools().ensureIndex(Index.builder().addKey('theField', ASC).build());
 
         when:

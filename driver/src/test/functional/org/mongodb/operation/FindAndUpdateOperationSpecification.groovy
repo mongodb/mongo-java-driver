@@ -22,8 +22,8 @@ import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.bufferProvider
+import static org.mongodb.Fixture.session
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
     private MongoCollection<Worker> workerCollection
@@ -47,7 +47,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
                                                                  .returnNew(true);
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(workerCollection.namespace, findAndUpdate,
-                                                                                      new WorkerCodec(), getBufferProvider(), getSession(),
+                                                                                      new WorkerCodec(), bufferProvider, session,
                                                                                       false)
         Worker returnedValue = operation.execute()
 
