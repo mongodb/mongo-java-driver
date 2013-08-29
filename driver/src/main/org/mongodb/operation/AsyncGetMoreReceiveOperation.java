@@ -20,9 +20,8 @@ import org.mongodb.AsyncOperation;
 import org.mongodb.Decoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.operation.protocol.QueryResult;
-
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class AsyncGetMoreReceiveOperation<T> implements AsyncOperation<QueryResult<T>> {
 
@@ -37,7 +36,7 @@ public class AsyncGetMoreReceiveOperation<T> implements AsyncOperation<QueryResu
     @Override
     public MongoFuture<QueryResult<T>> execute(final AsyncServerConnection connection) {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo), new GetMoreResultCallback<T>(
+        connection.receiveMessage(new ChannelReceiveArgs(responseTo), new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, 0, connection, responseTo));
 
         return retVal;

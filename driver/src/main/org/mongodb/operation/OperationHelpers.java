@@ -19,9 +19,8 @@ package org.mongodb.operation;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.ResponseSettings;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
@@ -30,9 +29,9 @@ import org.mongodb.operation.protocol.RequestMessage;
 // TODO: these should move somewhere else.
 public final class OperationHelpers {
 
-    public static CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final Connection connection) {
-        CommandResult commandResult = new CommandResult(connection.getServerAddress(),
-                replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds());
+    public static CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final ServerAddress serverAddress) {
+        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
+                replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);
         }
@@ -44,11 +43,6 @@ public final class OperationHelpers {
         return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
                 .getMaxMessageSize()).build();
     }
-
-    public static ResponseSettings getResponseSettings(final ServerDescription serverDescription, final int responseTo) {
-        return ResponseSettings.builder().maxMessageSize(serverDescription.getMaxMessageSize()).responseTo(responseTo).build();
-    }
-
 
     public static RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {
         try {

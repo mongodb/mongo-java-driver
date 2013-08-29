@@ -18,31 +18,31 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.connection.AsyncConnectionProviderFactory;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ChannelProviderFactory;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.ConnectionProviderFactory;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private ServerSettings settings;
-    private final ConnectionProviderFactory connectionProviderFactory;
+    private final ChannelProviderFactory channelProviderFactory;
     private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;
     private final ConnectionFactory heartbeatConnectionFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferProvider bufferProvider;
 
     public DefaultClusterableServerFactory(final ServerSettings settings,
-                                           final ConnectionProviderFactory connectionProviderFactory,
+                                           final ChannelProviderFactory channelProviderFactory,
                                            final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
                                            final ConnectionFactory heartbeatConnectionFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
                                            final BufferProvider bufferProvider) {
 
         this.settings = settings;
-        this.connectionProviderFactory = connectionProviderFactory;
+        this.channelProviderFactory = channelProviderFactory;
         this.asyncConnectionProviderFactory = asyncConnectionProviderFactory;
         this.heartbeatConnectionFactory = heartbeatConnectionFactory;
         this.scheduledExecutorService = scheduledExecutorService;
@@ -51,7 +51,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        return new DefaultServer(serverAddress, settings, connectionProviderFactory.create(serverAddress),
+        return new DefaultServer(serverAddress, settings, channelProviderFactory.create(serverAddress),
                 asyncConnectionProviderFactory != null ? asyncConnectionProviderFactory.create(serverAddress) : null,
                 heartbeatConnectionFactory, scheduledExecutorService, bufferProvider);
     }

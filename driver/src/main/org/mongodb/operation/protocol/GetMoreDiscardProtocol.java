@@ -16,31 +16,26 @@
 
 package org.mongodb.operation.protocol;
 
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerDescription;
-
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class GetMoreDiscardProtocol implements Protocol<Void> {
     private final long cursorId;
     private final int responseTo;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
+    private final Channel channel;
 
-    public GetMoreDiscardProtocol(final long cursorId, final int responseTo, final ServerDescription serverDescription,
-                                  final Connection connection) {
+    public GetMoreDiscardProtocol(final long cursorId, final int responseTo, final Channel channel) {
         this.cursorId = cursorId;
         this.responseTo = responseTo;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
+        this.channel = channel;
     }
 
     public Void execute() {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
-            final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(serverDescription, curResponseTo));
+            final ResponseBuffers responseBuffers = channel.receiveMessage(new ChannelReceiveArgs(curResponseTo));
             try {
                 curCursorId = responseBuffers.getReplyHeader().getCursorId();
                 curResponseTo = responseBuffers.getReplyHeader().getRequestId();

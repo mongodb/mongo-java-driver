@@ -20,7 +20,7 @@ import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.AsyncConnectionSettings;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.impl.ConnectionProviderSettings;
+import org.mongodb.connection.impl.ChannelProviderSettings;
 import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.ServerSettings;
 
@@ -71,7 +71,7 @@ public final class MongoClientOptions {
     private final ConnectionSettings connectionSettings;
     private final ConnectionSettings heartbeatConnectionSettings;
     private final AsyncConnectionSettings asyncConnectionSettings;
-    private final ConnectionProviderSettings connectionProviderSettings;
+    private final ChannelProviderSettings channelProviderSettings;
     private final ServerSettings serverSettings;
     private final SSLSettings sslSettings;
 
@@ -782,12 +782,12 @@ public final class MongoClientOptions {
      * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
      * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
      *
-     * @return a ConnectionProviderSettings populated with the settings from this options instance that relate to the connection
+     * @return a ChannelProviderSettings populated with the settings from this options instance that relate to the connection
      *         provider.
-     * @see ConnectionProviderSettings
+     * @see org.mongodb.connection.impl.ChannelProviderSettings
      */
-    ConnectionProviderSettings getConnectionProviderSettings() {
-        return connectionProviderSettings;
+    ChannelProviderSettings getChannelProviderSettings() {
+        return channelProviderSettings;
     }
 
     /**
@@ -914,7 +914,7 @@ public final class MongoClientOptions {
                                                          .keepAliveTime(MILLISECONDS.convert(asyncKeepAliveTime, MILLISECONDS),
                                                                         MILLISECONDS)
                                                          .build();
-        connectionProviderSettings = ConnectionProviderSettings.builder()
+        channelProviderSettings = ChannelProviderSettings.builder()
                                                                .minSize(minConnectionPoolSize)
                                                                .maxSize(maxConnectionPoolSize)
                                                                .maxWaitQueueSize(maxConnectionPoolSize

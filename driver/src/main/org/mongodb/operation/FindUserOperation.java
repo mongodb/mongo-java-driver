@@ -23,7 +23,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.QueryProtocol;
 import org.mongodb.operation.protocol.QueryResult;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -42,13 +42,13 @@ public class FindUserOperation extends BaseOperation<Document> {
 
     @Override
     public Document execute() {
-        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        ServerChannelProvider serverChannelProvider = getSession().createServerChannelProvider(
+                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         QueryResult<Document> result = new QueryProtocol<Document>(namespace,
                 new Find(new Document("user", userName)), codec, codec, getBufferProvider(),
-                serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true).execute();
+                serverChannelProvider.getServerDescription(), serverChannelProvider.getChannel(), true).execute();
         if (result.getResults().isEmpty()) {
             return null;
         }

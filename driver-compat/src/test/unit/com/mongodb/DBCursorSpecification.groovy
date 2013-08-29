@@ -24,6 +24,8 @@
 
 
 
+
+
 package com.mongodb
 
 import com.mongodb.codecs.DocumentCodec
@@ -54,7 +56,7 @@ class DBCursorSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {
         given:
-        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerChannelProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         dbCursor.explain()
@@ -65,7 +67,7 @@ class DBCursorSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in hasNext'() {
         given:
-        session.createServerConnectionProvider(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }
+        session.createServerChannelProvider(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }
 
         when:
         dbCursor.hasNext()

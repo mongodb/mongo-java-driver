@@ -20,13 +20,13 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.operation.protocol.WriteCommandProtocol;
 import org.mongodb.operation.protocol.WriteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
@@ -51,19 +51,19 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> {
 
     @Override
     public CommandResult execute() {
-        ServerConnectionProvider provider = getSession().createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-        Connection connection = provider.getConnection();
+        ServerChannelProvider provider = getSession().createServerChannelProvider(
+                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+        Channel channel = provider.getChannel();
         try {
             if (writeConcern.isAcknowledged()
                     && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
-                return getCommandProtocol(provider.getServerDescription(), connection).execute();
+                return getCommandProtocol(provider.getServerDescription(), channel).execute();
             }
             else {
-                return getWriteProtocol(provider.getServerDescription(), connection).execute();
+                return getWriteProtocol(provider.getServerDescription(), channel).execute();
             }
         } finally {
-            connection.close();
+            channel.close();
             if (isCloseSession()) {
                 getSession().close();
             }
@@ -74,7 +74,7 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> {
         return namespace;
     }
 
-    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Connection connection);
+    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Channel channel);
 
-    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection);
+    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel);
 }

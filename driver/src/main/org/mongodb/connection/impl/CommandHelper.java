@@ -24,7 +24,6 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
@@ -54,10 +53,10 @@ final class CommandHelper {
     }
 
     private static CommandResult receiveMessage(final Codec<Document> codec, final Connection connection, final CommandMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(ResponseSettings.builder().responseTo(message.getId()).build());
+        final ResponseBuffers responseBuffers = connection.receiveMessage();
         try {
             final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-            return createCommandResult(replyMessage, connection);
+            return createCommandResult(replyMessage, connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

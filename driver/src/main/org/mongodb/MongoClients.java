@@ -25,10 +25,10 @@ import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
+import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 
 import java.net.UnknownHostException;
@@ -115,12 +115,12 @@ public final class MongoClients {
 
         final DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
                 options.isAsyncEnabled()
-                        ? new DefaultAsyncConnectionProviderFactory(options.getConnectionProviderSettings(),
+                        ? new DefaultAsyncConnectionProviderFactory(options.getChannelProviderSettings(),
                         new DefaultAsyncConnectionFactory(options.getAsyncConnectionSettings(), options.getSslSettings(),
                                                           bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(options.getServerSettings(),
-                                                   new DefaultConnectionProviderFactory(options.getConnectionProviderSettings(),
+                                                   new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
                                                                                         connectionFactory),
                                                    asyncConnectionProviderFactory,
                                                    new DefaultConnectionFactory(options.getHeartbeatConnectionSettings(),

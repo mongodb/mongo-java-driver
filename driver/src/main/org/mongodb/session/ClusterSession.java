@@ -17,11 +17,11 @@
 package org.mongodb.session;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.ServerConnectionProvider;
+import org.mongodb.operation.ServerChannelProvider;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -44,21 +44,21 @@ public class ClusterSession implements Session {
     }
 
     @Override
-    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+    public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
         final Server server = cluster.getServer(options.getServerSelector());
-        return new ServerConnectionProvider() {
+        return new ServerChannelProvider() {
             @Override
             public ServerDescription getServerDescription() {
                 return server.getDescription();
             }
 
             @Override
-            public Connection getConnection() {
-                return server.getConnection();
+            public Channel getChannel() {
+                return server.getChannel();
             }
         };
     }

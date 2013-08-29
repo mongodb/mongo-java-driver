@@ -17,7 +17,7 @@
 package org.mongodb.operation.protocol;
 
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerDescription;
 
@@ -26,18 +26,18 @@ import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 public class KillCursorProtocol implements Protocol<Void> {
     private final KillCursor killCursor;
     private final ServerDescription serverDescription;
-    private final Connection connection;
-    private boolean closeConnection;
+    private final Channel channel;
+    private boolean closeChannel;
     private final BufferProvider bufferProvider;
 
     public KillCursorProtocol(final KillCursor killCursor, final BufferProvider bufferProvider,
-                              final ServerDescription serverDescription, final Connection connection,
-                              final boolean closeConnection) {
+                              final ServerDescription serverDescription, final Channel channel,
+                              final boolean closeChannel) {
         this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
         this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.channel = channel;
+        this.closeChannel = closeChannel;
     }
 
     public Void execute() {
@@ -45,12 +45,12 @@ public class KillCursorProtocol implements Protocol<Void> {
         try {
             final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            channel.sendMessage(buffer.getByteBuffers());
             return null;
         } finally {
             buffer.close();
-            if (closeConnection) {
-                connection.close();
+            if (closeChannel) {
+                channel.close();
             }
         }
     }

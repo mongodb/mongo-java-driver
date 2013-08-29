@@ -20,7 +20,6 @@ import org.bson.ByteBuf;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ class TestConnectionFactory implements ConnectionFactory {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+        public ResponseBuffers receiveMessage() {
             return null;
         }
 

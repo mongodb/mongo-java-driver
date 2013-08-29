@@ -18,14 +18,15 @@ package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;
-import org.mongodb.connection.Connection;
+import org.mongodb.MongoInternalException;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelProvider;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.ConnectionProvider;
 import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.MongoSocketInterruptedReadException;
 import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.management.MBeanServerFactory;
 
@@ -40,10 +41,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultConnectionProvider implements ConnectionProvider {
+class DefaultChannelProvider implements ChannelProvider {
 
     private final ConcurrentPool<UsageTrackingConnection> pool;
-    private final ConnectionProviderSettings settings;
+    private final ChannelProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
     private final ExecutorService sizeMaintenanceTimer;
@@ -51,8 +52,8 @@ class DefaultConnectionProvider implements ConnectionProvider {
     private final ConnectionPoolStatistics statistics;
     private final Runnable maintenanceTask;
 
-    public DefaultConnectionProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
-                                     final ConnectionProviderSettings settings) {
+    public DefaultChannelProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
+                                  final ChannelProviderSettings settings) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
@@ -64,12 +65,12 @@ class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     @Override
-    public Connection get() {
+    public Channel get() {
         return get(settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
     }
 
     @Override
-    public Connection get(final long timeout, final TimeUnit timeUnit) {
+    public Channel get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException(String.format("Too many threads are already waiting for a connection. "
@@ -81,7 +82,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
                 pool.release(connection, true);
                 connection = pool.get(timeout, timeUnit);
             }
-            return new PooledConnection(connection);
+            return new PooledChannel(connection);
         } finally {
             waitQueueSize.decrementAndGet();
         }
@@ -174,10 +175,10 @@ class DefaultConnectionProvider implements ConnectionProvider {
         }
     }
 
-    private class PooledConnection implements Connection {
+    private class PooledChannel implements Channel {
         private volatile UsageTrackingConnection wrapped;
 
-        public PooledConnection(final UsageTrackingConnection wrapped) {
+        public PooledChannel(final UsageTrackingConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -212,10 +213,22 @@ class DefaultConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
             isTrue("open", wrapped != null);
             try {
-                return wrapped.receiveMessage(responseSettings);
+                ResponseBuffers responseBuffers = wrapped.receiveMessage();
+                if (responseBuffers.getReplyHeader().getResponseTo() != channelReceiveArgs.getResponseTo()) {
+                    throw new MongoInternalException(
+                            String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
+                                    responseBuffers.getReplyHeader().getResponseTo(), channelReceiveArgs.getResponseTo()));
+                }
+
+//                if (responseBuffers.getReplyHeader().getMessageLength() > channelReceiveArgs.getMaxMessageSize()) {
+//                    throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
+//                            responseBuffers.getReplyHeader().getMessageLength(), channelReceiveArgs.getMaxMessageSize()));
+//                }
+
+                return responseBuffers;
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(e);
                 throw e;
@@ -242,7 +255,7 @@ class DefaultConnectionProvider implements ConnectionProvider {
 
         @Override
         public boolean shouldPrune(final UsageTrackingConnection usageTrackingConnection) {
-            return DefaultConnectionProvider.this.shouldPrune(usageTrackingConnection);
+            return DefaultChannelProvider.this.shouldPrune(usageTrackingConnection);
         }
     }
 }

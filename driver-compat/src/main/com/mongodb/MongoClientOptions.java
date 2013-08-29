@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.connection.impl.ConnectionProviderSettings;
+import org.mongodb.connection.impl.ChannelProviderSettings;
 import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.ServerSettings;
 
@@ -43,7 +43,7 @@ public class MongoClientOptions {
     private final DBEncoderFactory dbEncoderFactory;
     private final SocketFactory socketFactory;
     private final boolean cursorFinalizerEnabled;
-    private final ConnectionProviderSettings connectionProviderSettings;
+    private final ChannelProviderSettings channelProviderSettings;
     private final ConnectionSettings connectionSettings;
     private final ServerSettings serverSettings;
     private final ConnectionSettings heartbeatConnectionSettings;
@@ -69,7 +69,7 @@ public class MongoClientOptions {
         this.cursorFinalizerEnabled = cursorFinalizerEnabled;
 
         final int maxWaitQueueSize = proxied.getMaxConnectionPoolSize() * proxied.getThreadsAllowedToBlockForConnectionMultiplier();
-        connectionProviderSettings = ConnectionProviderSettings.builder()
+        channelProviderSettings = ChannelProviderSettings.builder()
                                                                .minSize(proxied.getMinConnectionPoolSize())
                                                                .maxSize(proxied.getMaxConnectionPoolSize())
                                                                .maxWaitQueueSize(maxWaitQueueSize)
@@ -405,8 +405,8 @@ public class MongoClientOptions {
     }
 
 
-    ConnectionProviderSettings getConnectionProviderSettings() {
-        return connectionProviderSettings;
+    ChannelProviderSettings getChannelProviderSettings() {
+        return channelProviderSettings;
     }
 
     ConnectionSettings getConnectionSettings() {

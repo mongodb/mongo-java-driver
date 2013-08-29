@@ -25,7 +25,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
@@ -55,11 +55,11 @@ public class CommandOperation extends BaseOperation<CommandResult> {
     @Override
     public CommandResult execute() {
         try {
-            final ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(isQuery(commandDocument),
+            final ServerChannelProviderOptions options = new ServerChannelProviderOptions(isQuery(commandDocument),
                                                                                                 getServerSelector());
-            final ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
+            final ServerChannelProvider provider = getSession().createServerChannelProvider(options);
             return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
-                                       provider.getServerDescription(), provider.getConnection(), true).execute();
+                                       provider.getServerDescription(), provider.getChannel(), true).execute();
         } finally {
             if (isCloseSession()) {
                 getSession().close();

@@ -21,7 +21,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.ArrayList;
@@ -72,9 +71,9 @@ class AuthenticatingConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+    public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
-        return wrapped.receiveMessage(responseSettings);
+        return wrapped.receiveMessage();
     }
 
     private void authenticateAll() {

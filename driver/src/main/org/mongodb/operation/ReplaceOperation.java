@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.ReplaceCommandProtocol;
 import org.mongodb.operation.protocol.ReplaceProtocol;
@@ -56,13 +56,13 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new ReplaceProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
-                serverDescription, connection, false); }
+                serverDescription, channel, false); }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new ReplaceCommandProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
-                serverDescription, connection, false);
+                serverDescription, channel, false);
     }
 }

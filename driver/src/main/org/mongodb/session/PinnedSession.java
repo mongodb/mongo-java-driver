@@ -17,12 +17,12 @@
 package org.mongodb.session;
 
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.ServerConnectionProvider;
+import org.mongodb.operation.ServerChannelProvider;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -35,8 +35,8 @@ public class PinnedSession implements Session {
     private ServerSelector lastRequestedServerSelector;
     private Server serverForReads;
     private Server serverForWrites;
-    private Connection connectionForReads;
-    private Connection connectionForWrites;
+    private Channel channelForReads;
+    private Channel channelForWrites;
     private Cluster cluster;
     private boolean isClosed;
 
@@ -53,13 +53,13 @@ public class PinnedSession implements Session {
     public void close() {
         if (!isClosed()) {
             synchronized (this) {
-                if (connectionForReads != null) {
-                    connectionForReads.close();
-                    connectionForReads = null;
+                if (channelForReads != null) {
+                    channelForReads.close();
+                    channelForReads = null;
                 }
-                if (connectionForWrites != null) {
-                    connectionForWrites.close();
-                    connectionForWrites = null;
+                if (channelForWrites != null) {
+                    channelForWrites.close();
+                    channelForWrites = null;
                 }
                 isClosed = true;
             }
@@ -72,43 +72,43 @@ public class PinnedSession implements Session {
     }
 
     @Override
-    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+    public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed());
 
         synchronized (this) {
             final Server serverToUse;
-            final Connection connectionToUse;
+            final Channel channelToUse;
             if (options.isQuery()) {
-                if (connectionForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
+                if (channelForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
                     lastRequestedServerSelector = options.getServerSelector();
-                    if (connectionForReads != null) {
-                        connectionForReads.close();
+                    if (channelForReads != null) {
+                        channelForReads.close();
                     }
                     serverForReads = cluster.getServer(options.getServerSelector());
-                    connectionForReads = serverForReads.getConnection();
+                    channelForReads = serverForReads.getChannel();
                 }
                 serverToUse = serverForReads;
-                connectionToUse = connectionForReads;
+                channelToUse = channelForReads;
             }
             else {
-                if (connectionForWrites == null) {
+                if (channelForWrites == null) {
                     serverForWrites = cluster.getServer(new PrimaryServerSelector());
-                    connectionForWrites = serverForWrites.getConnection();
+                    channelForWrites = serverForWrites.getChannel();
                 }
                 serverToUse = serverForWrites;
-                connectionToUse = connectionForWrites;
+                channelToUse = channelForWrites;
             }
-            return new ServerConnectionProvider() {
+            return new ServerChannelProvider() {
                 @Override
                 public ServerDescription getServerDescription() {
                     return serverToUse.getDescription();
                 }
 
                 @Override
-                public Connection getConnection() {
-                    return new DelayedCloseConnection(connectionToUse);
+                public Channel getChannel() {
+                    return new DelayedCloseChannel(channelToUse);
                 }
             };
         }

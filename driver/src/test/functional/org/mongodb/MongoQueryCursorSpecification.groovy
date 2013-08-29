@@ -25,6 +25,8 @@
 
 
 
+
+
 package org.mongodb
 
 import category.Slow
@@ -404,7 +406,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
                 collection.getOptions().getDocumentCodec(),
                 collection.getCodec(), getBufferProvider(), getSession(), false);
         new KillCursorProtocol(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
-                cursor.serverConnectionProvider.serverDescription, cursor.serverConnectionProvider.getConnection(), true).execute();
+                cursor.serverChannelProvider.serverDescription, cursor.serverChannelProvider.getChannel(), true).execute();
         cursor.next();
         cursor.next();
         then:
@@ -419,8 +421,8 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
-                collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.serverConnectionProvider.serverDescription,
-                cursor.serverConnectionProvider.getConnection(), true).execute();
+                collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.serverChannelProvider.serverDescription,
+                cursor.serverChannelProvider.getChannel(), true).execute();
     }
 
 }

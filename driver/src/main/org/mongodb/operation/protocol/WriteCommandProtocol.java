@@ -29,7 +29,8 @@ import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.command.MongoDuplicateKeyException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -38,7 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
@@ -47,17 +47,17 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
+    private final Channel channel;
+    private final boolean closeChannel;
 
     public WriteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final BufferProvider bufferProvider,
-                                final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                                final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.channel = channel;
+        this.closeChannel = closeChannel;
     }
 
     public WriteConcern getWriteConcern() {
@@ -68,8 +68,8 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         try {
             return sendAndReceiveAllMessages();
         } finally {
-            if (closeConnection) {
-                connection.close();
+            if (closeChannel) {
+                channel.close();
             }
         }
     }
@@ -110,7 +110,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             final RequestMessage nextMessage = message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            channel.sendMessage(buffer.getByteBuffers());
             return nextMessage;
         } finally {
             buffer.close();
@@ -118,11 +118,11 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     }
 
     private CommandResult receiveMessage(final RequestMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(serverDescription, message.getId()));
+        final ResponseBuffers responseBuffers = channel.receiveMessage(
+                new ChannelReceiveArgs(message.getId()));
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
-            return createCommandResult(replyMessage, connection);
+            return createCommandResult(replyMessage, channel.getServerAddress());
         } finally {
             responseBuffers.close();
         }
@@ -140,8 +140,8 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         return serverDescription;
     }
 
-    public Connection getConnection() {
-        return connection;
+    public Channel getConnection() {
+        return channel;
     }
 
     protected static class CommandCodec<T> extends DocumentCodec {

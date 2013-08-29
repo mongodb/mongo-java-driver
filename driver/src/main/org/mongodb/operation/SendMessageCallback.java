@@ -19,10 +19,9 @@ package org.mongodb.operation;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
-
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
     private final OutputBuffer buffer;
@@ -48,7 +47,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
             future.init(null, e);
         }
         else {
-            connection.receiveMessage(getResponseSettings(connection.getDescription(), requestId), receiveMessageCallback);
+            connection.receiveMessage(new ChannelReceiveArgs(requestId), receiveMessageCallback);
         }
     }
 }

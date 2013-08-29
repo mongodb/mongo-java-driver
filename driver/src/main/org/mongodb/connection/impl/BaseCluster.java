@@ -20,13 +20,13 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoServerSelectionFailureException;
 import org.mongodb.connection.MongoTimeoutException;
 import org.mongodb.connection.Server;
@@ -250,8 +250,8 @@ public abstract class BaseCluster implements Cluster {
         }
 
         @Override
-        public Connection getConnection() {
-            return wrapped.getConnection();
+        public Channel getChannel() {
+            return wrapped.getChannel();
         }
 
         @Override

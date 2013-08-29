@@ -14,25 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.connection;
 
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
-
-/**
- * A provider of connections to a single server.
- */
-public interface ServerConnectionProvider {
-    /**
-     *
-     * @return  the description of the server that this provider is providing connections to.=
-     */
-    ServerDescription getServerDescription();
-
-    /**
-     * Provide a connection to the server.  A provider may choose to return th
-     *
-     * @return a connection to the server
-     */
-    Connection getConnection();
+public interface ChannelProviderFactory {
+    ChannelProvider create(ServerAddress serverAddress);
 }

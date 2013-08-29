@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.DeleteCommandProtocol;
 import org.mongodb.operation.protocol.DeleteProtocol;
@@ -52,14 +52,14 @@ public class RemoveOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new DeleteProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                connection, false);
+                channel, false);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new DeleteCommandProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                connection, false);
+                channel, false);
     }
 }

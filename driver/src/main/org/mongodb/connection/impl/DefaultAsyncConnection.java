@@ -18,6 +18,20 @@
 package org.mongodb.connection.impl;
 
 
+import org.bson.ByteBuf;
+import org.bson.io.BasicInputBuffer;
+import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
+import org.mongodb.connection.AsyncConnection;
+import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.MongoSocketOpenException;
+import org.mongodb.connection.MongoSocketReadException;
+import org.mongodb.connection.ReplyHeader;
+import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SingleResultCallback;
+
 import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
@@ -25,20 +39,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.Iterator;
 import java.util.List;
-
-import org.bson.ByteBuf;
-import org.bson.io.BasicInputBuffer;
-import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
-import org.mongodb.connection.AsyncConnection;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.MongoSocketOpenException;
-import org.mongodb.connection.MongoSocketReadException;
-import org.mongodb.connection.ReplyHeader;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
-import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.SingleResultCallback;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
@@ -100,8 +100,8 @@ class DefaultAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(responseSettings, System.nanoTime(),
+    public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(channelReceiveArgs, System.nanoTime(),
             callback));
     }
 
@@ -117,7 +117,8 @@ class DefaultAsyncConnection implements AsyncConnection {
             public void completed() {
                 if (iter.hasNext()) {
                     pipeOneBuffer(byteChannel, iter.next(), this);
-                } else {
+                }
+                else {
                     handler.completed();
                 }
             }
@@ -136,7 +137,8 @@ class DefaultAsyncConnection implements AsyncConnection {
             public void completed() {
                 if (byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), this);
-                } else {
+                }
+                else {
                     outerHandler.completed();
                 }
             }
@@ -226,13 +228,13 @@ class DefaultAsyncConnection implements AsyncConnection {
     }
 
     private class ResponseHeaderCallback implements SingleResultCallback<ByteBuf> {
-        private ResponseSettings responseSettings;
+        private ChannelReceiveArgs channelReceiveArgs;
         private final SingleResultCallback<ResponseBuffers> callback;
         private final long start;
 
-        public ResponseHeaderCallback(final ResponseSettings responseSettings, final long start,
+        public ResponseHeaderCallback(final ChannelReceiveArgs channelReceiveArgs, final long start,
             final SingleResultCallback<ResponseBuffers> callback) {
-            this.responseSettings = responseSettings;
+            this.channelReceiveArgs = channelReceiveArgs;
             this.callback = callback;
             this.start = start;
         }
@@ -250,20 +252,20 @@ class DefaultAsyncConnection implements AsyncConnection {
                     headerInputBuffer.close();
                 }
 
-                if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
+                if (replyHeader.getResponseTo() != channelReceiveArgs.getResponseTo()) {
                     callback.onResult(null, new MongoInternalException(String.format(
                         "The responseTo (%d) in the response does not match the requestId (%d) in the request", replyHeader.getResponseTo(),
-                        responseSettings.getResponseTo())));
+                        channelReceiveArgs.getResponseTo())));
                 }
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
                 } else {
-                    if (replyHeader.getMessageLength() > responseSettings.getMaxMessageSize()) {
-                        callback.onResult(null, new MongoInternalException(String.format(
-                            "Unexpectedly large message length of %d exceeds maximum of %d", replyHeader.getMessageLength(),
-                            responseSettings.getMaxMessageSize())));
-                    }
+//                    if (replyHeader.getMessageLength() > channelReceiveArgs.getMaxMessageSize()) {
+//                        callback.onResult(null, new MongoInternalException(String.format(
+//                            "Unexpectedly large message length of %d exceeds maximum of %d", replyHeader.getMessageLength(),
+//                            channelReceiveArgs.getMaxMessageSize())));
+//                    }
 
                     fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH), new ResponseBodyCallback(
                         replyHeader));

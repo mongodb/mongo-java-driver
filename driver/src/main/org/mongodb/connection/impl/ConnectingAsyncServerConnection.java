@@ -19,8 +19,8 @@ package org.mongodb.connection.impl;
 import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerConnectionState;
 import org.mongodb.connection.ServerDescription;
@@ -47,8 +47,8 @@ class ConnectingAsyncServerConnection implements AsyncServerConnection {
     }
 
     @Override
-    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
-        connection.receiveMessage(responseSettings, callback);
+    public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        connection.receiveMessage(channelReceiveArgs, callback);
     }
 
     @Override

@@ -17,21 +17,21 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
-import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.annotations.ThreadSafe;
 
 import java.util.List;
 
 /**
- * A connection to a MongoDB server with blocking operations.
+ * A channel to a MongoDB server with blocking operations.
  * <p>
- * This class is not completely thread safe.  At most one thread can have an active call to sendMessage, and one thread an active call
- * to receiveMessage.
+ * Implementations of this class are thread safe.  At a minimum, they must support concurrent calls to sendMessage and receiveMessage,
+ * but at most one of each.  But multiple concurrent calls to either sendMessage or receiveMessage may block.
  * </p>
  *
  * @since 3.0
  */
-@NotThreadSafe
-public interface Connection extends BaseConnection {
+@ThreadSafe
+public interface Channel {
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
@@ -51,7 +51,25 @@ public interface Connection extends BaseConnection {
      * active call to this method.
      * </p>
      *
+     * @param channelReceiveArgs the settings that the response should conform to.
      * @return the response
      */
-    ResponseBuffers receiveMessage();
+    ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs);
+
+    /**
+     * Gets the server address of this connection
+     */
+    ServerAddress getServerAddress();
+
+    /**
+     * Closes the connection.
+     */
+    void close();
+
+    /**
+     * Returns the closed state of the connection
+     *
+     * @return true if connection is closed
+     */
+    boolean isClosed();
 }

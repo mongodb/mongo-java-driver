@@ -23,7 +23,8 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -32,24 +33,23 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.mongodb.command.GetLastError.parseGetLastErrorResponse;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public abstract class WriteProtocol implements Protocol<CommandResult> {
 
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
     private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
+    private final Channel channel;
+    private final boolean closeChannel;
     private final GetLastError getLastErrorCommand;
 
     public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
-                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                         final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.channel = channel;
+        this.closeChannel = closeChannel;
 
         if (writeConcern.isAcknowledged()) {
             getLastErrorCommand = new GetLastError(writeConcern);
@@ -63,8 +63,8 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         try {
             return receiveMessage(sendMessage());
         } finally {
-            if (closeConnection) {
-                connection.close();
+            if (closeChannel) {
+                channel.close();
             }
         }
     }
@@ -85,7 +85,7 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
                 );
                 getLastErrorMessage.encode(buffer);
             }
-            connection.sendMessage(buffer.getByteBuffers());
+            channel.sendMessage(buffer.getByteBuffers());
             return getLastErrorMessage;
         } finally {
             buffer.close();
@@ -96,14 +96,14 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         if (requestMessage == null) {
             return null;
         }
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(serverDescription, requestMessage.getId()));
+        final ResponseBuffers responseBuffers = channel.receiveMessage(
+                new ChannelReceiveArgs(requestMessage.getId()));
         try {
             return parseGetLastErrorResponse(createCommandResult(
                                                                 new ReplyMessage<Document>(responseBuffers,
                                                                                             new DocumentCodec(),
                                                                                             requestMessage.getId()),
-                                                                 connection));
+                                                                 channel.getServerAddress()));
         } finally {
             responseBuffers.close();
         }

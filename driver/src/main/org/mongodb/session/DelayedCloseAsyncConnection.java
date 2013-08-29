@@ -18,9 +18,9 @@ package org.mongodb.session;
 
 import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncServerConnection;
-import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 
@@ -28,7 +28,8 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 
-class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements AsyncServerConnection {
+class DelayedCloseAsyncConnection implements AsyncServerConnection {
+    private boolean isClosed;
     private AsyncServerConnection wrapped;
 
     public DelayedCloseAsyncConnection(final AsyncServerConnection asyncConnection) {
@@ -42,19 +43,30 @@ class DelayedCloseAsyncConnection extends DelayedCloseBaseConnection implements 
     }
 
     @Override
-    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.receiveMessage(responseSettings, callback);
-    }
-
-    @Override
-    protected BaseConnection getWrapped() {
-        return wrapped;
+        wrapped.receiveMessage(channelReceiveArgs, callback);
     }
 
     @Override
     public ServerDescription getDescription() {
         isTrue("open", !isClosed());
         return wrapped.getDescription();
+    }
+
+    @Override
+    public void close() {
+        isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+    @Override
+    public ServerAddress getServerAddress() {
+        isTrue("open", !isClosed());
+        return wrapped.getServerAddress();
     }
 }

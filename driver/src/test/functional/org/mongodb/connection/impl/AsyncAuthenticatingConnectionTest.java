@@ -27,8 +27,8 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -137,8 +137,8 @@ public class AsyncAuthenticatingConnectionTest {
         }
 
         @Override
-        public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
-            wrapped.receiveMessage(responseSettings, callback);
+        public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+            wrapped.receiveMessage(channelReceiveArgs, callback);
         }
     }
 }

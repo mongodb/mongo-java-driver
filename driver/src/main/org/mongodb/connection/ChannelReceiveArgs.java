@@ -14,29 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.connection;
 
-import org.mongodb.connection.ServerSelector;
+public final class ChannelReceiveArgs {
 
-import static org.mongodb.assertions.Assertions.notNull;
+    private final int responseTo;
 
-/**
- * @since 3.0
- */
-public class ServerConnectionProviderOptions {
-    private final boolean isQuery;
-    private final ServerSelector serverSelector;
-
-    public ServerConnectionProviderOptions(final boolean query, final ServerSelector serverSelector) {
-        isQuery = query;
-        this.serverSelector = notNull("serverSelector", serverSelector);
+    public ChannelReceiveArgs(final int responseTo) {
+        this.responseTo = responseTo;
     }
 
-    public boolean isQuery() {
-        return isQuery;
-    }
-
-    public ServerSelector getServerSelector() {
-        return serverSelector;
+    public int getResponseTo() {
+        return responseTo;
     }
 }

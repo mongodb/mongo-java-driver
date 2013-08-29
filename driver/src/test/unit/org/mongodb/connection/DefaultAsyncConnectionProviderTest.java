@@ -20,7 +20,7 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.junit.Test;
-import org.mongodb.connection.impl.ConnectionProviderSettings;
+import org.mongodb.connection.impl.ChannelProviderSettings;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProvider;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldGetConnection() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-            ConnectionProviderSettings.builder()
+            ChannelProviderSettings.builder()
                 .maxSize(1)
                 .maxWaitQueueSize(1)
                 .build());
@@ -50,7 +50,7 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldThrowIfPoolIsExhausted() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-            ConnectionProviderSettings.builder()
+            ChannelProviderSettings.builder()
                 .maxSize(1)
                 .maxWaitQueueSize(1)
                 .build());
@@ -69,7 +69,7 @@ public class DefaultAsyncConnectionProviderTest {
     @Test
     public void shouldThrowIfWaitQueueIsFull() throws InterruptedException {
         AsyncConnectionProvider connectionProvider = new DefaultAsyncConnectionProvider(getPrimary(), new TestAsyncConnectionFactory(),
-            ConnectionProviderSettings.builder()
+            ChannelProviderSettings.builder()
                 .maxSize(1)
                 .maxWaitQueueSize(1)
                 .maxWaitTime(1, TimeUnit.SECONDS)
@@ -130,7 +130,8 @@ public class DefaultAsyncConnectionProviderTest {
                 }
 
                 @Override
-                public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+                public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs,
+                                           final SingleResultCallback<ResponseBuffers> callback) {
                     throw new UnsupportedOperationException();
                 }
 

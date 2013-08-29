@@ -45,7 +45,7 @@ public class SingleServerClusterTest {
         cluster = new SingleServerCluster(
                 ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts(Arrays.asList(getPrimary())).build(),
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
-                        new DefaultConnectionProviderFactory(ConnectionProviderSettings.builder().maxSize(1).build(),
+                        new DefaultChannelProviderFactory(ChannelProviderSettings.builder().maxSize(1).build(),
                                 new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
                                         getBufferProvider(), getCredentialList())),
                         null,

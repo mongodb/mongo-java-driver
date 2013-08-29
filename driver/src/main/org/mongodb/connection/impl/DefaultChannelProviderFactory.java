@@ -16,22 +16,22 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.connection.ChannelProvider;
+import org.mongodb.connection.ChannelProviderFactory;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.ConnectionProvider;
-import org.mongodb.connection.ConnectionProviderFactory;
 import org.mongodb.connection.ServerAddress;
 
-public class DefaultConnectionProviderFactory implements ConnectionProviderFactory {
-    private final ConnectionProviderSettings settings;
+public class DefaultChannelProviderFactory implements ChannelProviderFactory {
+    private final ChannelProviderSettings settings;
     private final ConnectionFactory connectionFactory;
 
-    public DefaultConnectionProviderFactory(final ConnectionProviderSettings settings, final ConnectionFactory connectionFactory) {
+    public DefaultChannelProviderFactory(final ChannelProviderSettings settings, final ConnectionFactory connectionFactory) {
         this.settings = settings;
         this.connectionFactory = connectionFactory;
     }
 
     @Override
-    public ConnectionProvider create(final ServerAddress serverAddress) {
-        return new DefaultConnectionProvider(serverAddress, connectionFactory, settings);
+    public ChannelProvider create(final ServerAddress serverAddress) {
+        return new DefaultChannelProvider(serverAddress, connectionFactory, settings);
     }
 }

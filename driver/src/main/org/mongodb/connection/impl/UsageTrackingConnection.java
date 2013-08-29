@@ -19,7 +19,6 @@ package org.mongodb.connection.impl;
 import org.bson.ByteBuf;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.List;
@@ -66,8 +65,8 @@ class UsageTrackingConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
-        ResponseBuffers responseBuffers = wrapped.receiveMessage(responseSettings);
+    public ResponseBuffers receiveMessage() {
+        ResponseBuffers responseBuffers = wrapped.receiveMessage();
         lastUsedAt = System.currentTimeMillis();
         return responseBuffers;
     }

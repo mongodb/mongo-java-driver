@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -39,30 +41,30 @@ import java.lang.management.ManagementFactory
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.mongodb.Fixture.getPrimary
 
-class DefaultConnectionProviderSpecification extends Specification {
+class DefaultChannelProviderSpecification extends Specification {
     private static final ServerAddress SERVER_ADDRESS = getPrimary()
     private final TestConnectionFactory connectionFactory = Spy(TestConnectionFactory)
 
     @Subject
-    private DefaultConnectionProvider provider
+    private DefaultChannelProvider provider
 
     def cleanup() {
         provider.close()
     }
 
-    def 'should get non null connection'() throws InterruptedException {
+    def 'should get non null channel'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         expect:
         provider.get() != null
     }
 
-    def 'should reuse released connection'() throws InterruptedException {
+    def 'should reuse released channel'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
         provider.get().close()
@@ -72,11 +74,11 @@ class DefaultConnectionProviderSpecification extends Specification {
         1 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
+    def 'should release a channel back into the pool on close, not close the underlying channel'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .build())
@@ -90,11 +92,11 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
-        Connection first = provider.get()
+        def first = provider.get()
 
         then:
         first != null
@@ -108,8 +110,8 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should throw on timeout'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder()
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(50, MILLISECONDS)
@@ -129,8 +131,8 @@ class DefaultConnectionProviderSpecification extends Specification {
     @Ignore
     def 'should throw on wait queue full'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder()
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(1000, MILLISECONDS)
@@ -149,10 +151,10 @@ class DefaultConnectionProviderSpecification extends Specification {
         thrown(MongoWaitQueueFullException)
     }
 
-    def 'should expire connection after max life time'() throws InterruptedException {
+    def 'should expire channel after max life time'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder()
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder()
                         .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build())
 
         when:
@@ -165,36 +167,36 @@ class DefaultConnectionProviderSpecification extends Specification {
         2 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    def 'should expire connection after max life time on close'() throws InterruptedException {
+    def 'should expire channel after max life time on close'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build())
 
         when:
-        Connection connection = provider.get()
+        def channel = provider.get()
         Thread.sleep(50)
-        connection.close()
+        channel.close()
 
         then:
         connectionFactory.getCreatedConnections().get(0).isClosed()
     }
 
-    def 'should expire connection after max idle time'() throws InterruptedException {
+    def 'should expire channel after max idle time'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionIdleTime(5, MILLISECONDS).build())
 
         when:
-        Connection connection = provider.get()
-        connection.close()
+        def channel = provider.get()
+        channel.close()
         Thread.sleep(10)
         provider.doMaintenance()
         provider.get()
@@ -203,11 +205,11 @@ class DefaultConnectionProviderSpecification extends Specification {
         2 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    def 'should close connection after expiration'() throws InterruptedException {
+    def 'should close channel after expiration'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build())
@@ -222,11 +224,11 @@ class DefaultConnectionProviderSpecification extends Specification {
         connectionFactory.getCreatedConnections().get(0).isClosed()
     }
 
-    def 'should create new connection after expiration'() throws InterruptedException {
+    def 'should create new channel after expiration'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(5, MILLISECONDS).build())
@@ -235,14 +237,14 @@ class DefaultConnectionProviderSpecification extends Specification {
         provider.get().close()
         Thread.sleep(50)
         provider.doMaintenance()
-        Connection secondConnection = provider.get()
+        def secondChannel = provider.get()
 
         then:
-        secondConnection != null
+        secondChannel != null
         2 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    def 'should expire all connections after exception'() throws InterruptedException {
+    def 'should expire all channel after exception'() throws InterruptedException {
         given:
         int numberOfConnectionsCreated = 0
 
@@ -254,15 +256,15 @@ class DefaultConnectionProviderSpecification extends Specification {
             }
         }
 
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 mockConnectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(2)
                         .maxWaitQueueSize(1)
                         .build())
         when:
-        Connection c1 = provider.get()
-        Connection c2 = provider.get()
+        def c1 = provider.get()
+        def c2 = provider.get()
 
         and:
         c2.sendMessage(Collections.<ByteBuf> emptyList())
@@ -281,9 +283,9 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should have size of 0 with default settings'() {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(10)
                         .build())
 
@@ -296,8 +298,8 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'statistics should reflect values from the provider'() {
         when:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
         provider.get()
         provider.get().close()
 
@@ -314,8 +316,8 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should register MBean in org.mongodb.driver domain'() {
         when:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().minSize(1).maxSize(5).build())
 
         then:
         new ObjectName(provider.statistics.objectName).domain == 'org.mongodb.driver'
@@ -324,8 +326,8 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should unregister MBean'() {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionProviderSettings.builder().minSize(1).maxSize(5).build())
+        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+                ChannelProviderSettings.builder().minSize(1).maxSize(5).build())
         def beanName = new ObjectName(provider.statistics.objectName)
 
         when:
@@ -337,9 +339,9 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should ensure min pool size after maintenance task runs'() {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(10)
                         .minSize(5)
                         .build())
@@ -353,9 +355,9 @@ class DefaultConnectionProviderSpecification extends Specification {
 
     def 'should prune after maintenance task runs'() {
         given:
-        provider = new DefaultConnectionProvider(SERVER_ADDRESS,
+        provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionProviderSettings.builder()
+                ChannelProviderSettings.builder()
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceFrequency(5, MILLISECONDS)

@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import spock.lang.Specification
@@ -32,7 +34,7 @@ import spock.lang.Unroll
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class ConnectionProviderSettingsSpecification extends Specification {
+class ChannelProviderSettingsSpecification extends Specification {
     @Unroll
     def 'should set up connection provider settings #settings correctly'() {
         expect:
@@ -47,10 +49,10 @@ class ConnectionProviderSettingsSpecification extends Specification {
         where:
         settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS |
                 maxConnectionIdleTimeMS | minSize | maintancanceFrequencyMS
-        ConnectionProviderSettings
+        ChannelProviderSettings
                 .builder()
                 .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 60000
-        ConnectionProviderSettings
+        ChannelProviderSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
@@ -67,37 +69,37 @@ class ConnectionProviderSettingsSpecification extends Specification {
 
     def 'should throw exception on invalid argument'() {
         when:
-        ConnectionProviderSettings.builder().build()
+        ChannelProviderSettings.builder().build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        ConnectionProviderSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
+        ChannelProviderSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        ConnectionProviderSettings.builder().maxSize(1).maxConnectionLifeTime(-1, SECONDS).build()
+        ChannelProviderSettings.builder().maxSize(1).maxConnectionLifeTime(-1, SECONDS).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        ConnectionProviderSettings.builder().maxSize(1).maxConnectionIdleTime(-1, SECONDS).build()
+        ChannelProviderSettings.builder().maxSize(1).maxConnectionIdleTime(-1, SECONDS).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        ConnectionProviderSettings.builder().maxSize(1).minSize(2).build()
+        ChannelProviderSettings.builder().maxSize(1).minSize(2).build()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        ConnectionProviderSettings.builder().maintenanceFrequency(0, MILLISECONDS).build()
+        ChannelProviderSettings.builder().maintenanceFrequency(0, MILLISECONDS).build()
 
         then:
         thrown(IllegalStateException)
@@ -105,8 +107,8 @@ class ConnectionProviderSettingsSpecification extends Specification {
 
     def 'settings with same values should be equal'() {
         when:
-        def settings1 = ConnectionProviderSettings.builder().maxSize(1).build()
-        def settings2 = ConnectionProviderSettings.builder().maxSize(1).build()
+        def settings1 = ChannelProviderSettings.builder().maxSize(1).build()
+        def settings2 = ChannelProviderSettings.builder().maxSize(1).build()
 
         then:
         settings1 == settings2
@@ -114,8 +116,8 @@ class ConnectionProviderSettingsSpecification extends Specification {
 
     def 'settings with same values should have the same hash code'() {
         when:
-        def settings1 = ConnectionProviderSettings.builder().maxSize(1).build()
-        def settings2 = ConnectionProviderSettings.builder().maxSize(1).build()
+        def settings1 = ChannelProviderSettings.builder().maxSize(1).build()
+        def settings2 = ChannelProviderSettings.builder().maxSize(1).build()
 
         then:
         settings1.hashCode() == settings2.hashCode()
@@ -123,9 +125,9 @@ class ConnectionProviderSettingsSpecification extends Specification {
 
     def 'toString should be overridden'() {
         when:
-        def settings = ConnectionProviderSettings.builder().maxSize(1).build()
+        def settings = ChannelProviderSettings.builder().maxSize(1).build()
 
         then:
-        settings.toString().startsWith('ConnectionProviderSettings')
+        settings.toString().startsWith('ChannelProviderSettings')
     }
 }

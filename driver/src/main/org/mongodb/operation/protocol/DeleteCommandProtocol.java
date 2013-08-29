@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Remove;
 
@@ -36,8 +36,8 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
 
     public DeleteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> removes,
                                  final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
-                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, writeConcern,  bufferProvider, serverDescription, connection, closeConnection);
+                                 final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
+        super(namespace, writeConcern,  bufferProvider, serverDescription, channel, closeChannel);
         this.removes = notNull("removes", removes);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }

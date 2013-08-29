@@ -28,7 +28,6 @@ import org.mongodb.connection.MongoSocketReadTimeoutException;
 import org.mongodb.connection.MongoSocketWriteException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 
 import java.io.IOException;
@@ -78,10 +77,10 @@ abstract class DefaultConnection implements Connection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+    public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
         try {
-            return receiveMessage(responseSettings, System.nanoTime());
+            return receiveMessage(System.nanoTime());
         } catch (IOException e) {
             close();
             throw translateReadException(e);
@@ -111,7 +110,7 @@ abstract class DefaultConnection implements Connection {
         }
     }
 
-    private ResponseBuffers receiveMessage(final ResponseSettings responseSettings, final long start) throws IOException {
+    private ResponseBuffers receiveMessage(final long start) throws IOException {
         ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
 
         final ReplyHeader replyHeader;
@@ -121,17 +120,6 @@ abstract class DefaultConnection implements Connection {
             replyHeader = new ReplyHeader(headerInputBuffer);
         } finally {
             headerInputBuffer.close();
-        }
-
-        if (replyHeader.getResponseTo() != responseSettings.getResponseTo()) {
-            throw new MongoInternalException(
-                    String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                            replyHeader.getResponseTo(), responseSettings.getResponseTo()));
-        }
-
-        if (replyHeader.getMessageLength() > responseSettings.getMaxMessageSize()) {
-            throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
-                    replyHeader.getMessageLength(), responseSettings.getMaxMessageSize()));
         }
 
         ByteBuf bodyByteBuffer = null;

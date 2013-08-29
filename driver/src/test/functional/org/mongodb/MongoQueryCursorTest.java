@@ -344,7 +344,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
                 collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getSession(), false);
         new KillCursorProtocol(new KillCursor(cursor.getServerCursor()), getBufferProvider(),
-                cursor.getServerConnectionProvider().getServerDescription(), cursor.getServerConnectionProvider().getConnection(),
+                cursor.getServerChannelProvider().getServerDescription(), cursor.getServerChannelProvider().getChannel(),
                 true).execute();
         cursor.next();
         cursor.next();
@@ -360,7 +360,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
     private void makeAdditionalGetMoreCall() {
         new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(cursor.getServerCursor(), 1, 1, 1),
-                collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.getServerConnectionProvider()
-                .getServerDescription(), cursor.getServerConnectionProvider().getConnection(), true).execute();
+                collection.getOptions().getDocumentCodec(), getBufferProvider(), cursor.getServerChannelProvider()
+                .getServerDescription(), cursor.getServerChannelProvider().getChannel(), true).execute();
     }
 }

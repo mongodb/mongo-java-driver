@@ -19,18 +19,17 @@ package org.mongodb;
 import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.BaseConnection;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.operation.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.EnumSet;
@@ -73,36 +72,36 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
         Server server = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()));
-        Connection connection = server.getConnection();
+        Channel channel = server.getChannel();
         try {
-            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);
+            SingleChannelSession singleChannelSession = new SingleChannelSession(server.getDescription(), channel);
 
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleChannelSession, false);
 
             cursor.next();
             cursor.close();
 
             cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleChannelSession, false);
             assertEquals(new Document("_id", 999), cursor.next());
 
-            singleConnectionSession.connection.close();
+            singleChannelSession.channel.close();
         } finally {
-            connection.close();
+            channel.close();
         }
     }
 
-    private static class SingleConnectionSession implements Session {
+    private static class SingleChannelSession implements Session {
         private ServerDescription description;
-        private Connection connection;
+        private Channel channel;
         private boolean isClosed;
 
-        public SingleConnectionSession(final ServerDescription description, final Connection connection) {
+        public SingleChannelSession(final ServerDescription description, final Channel channel) {
             this.description = description;
-            this.connection = connection;
+            this.channel = channel;
         }
 
         @Override
@@ -116,34 +115,34 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
-            return new ServerConnectionProvider() {
+        public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
+            return new ServerChannelProvider() {
                 @Override
                 public ServerDescription getServerDescription() {
                     return description;
                 }
 
                 @Override
-                public Connection getConnection() {
-                    return new DelayedCloseConnection(connection);
+                public Channel getChannel() {
+                    return new DelayedCloseChannel(channel);
                 }
             };
         }
     }
 
-    private static class DelayedCloseConnection implements Connection {
-        private Connection wrapped;
+    private static class DelayedCloseChannel implements Channel {
+        private Channel wrapped;
         private boolean isClosed;
 
 
-        public DelayedCloseConnection(final Connection wrapped) {
+        public DelayedCloseChannel(final Channel wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
         @Override
         public ServerAddress getServerAddress() {
             isTrue("open", !isClosed());
-            return getWrapped().getServerAddress();
+            return wrapped.getServerAddress();
         }
 
         @Override
@@ -153,13 +152,9 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
             isTrue("open", !isClosed());
-            return wrapped.receiveMessage(responseSettings);
-        }
-
-        protected BaseConnection getWrapped() {
-            return wrapped;
+            return wrapped.receiveMessage(channelReceiveArgs);
         }
 
         @Override

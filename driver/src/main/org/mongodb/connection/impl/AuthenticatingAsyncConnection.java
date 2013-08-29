@@ -22,8 +22,8 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 
@@ -81,12 +81,12 @@ class AuthenticatingAsyncConnection implements AsyncConnection {
     }
 
     @Override
-    public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         authenticateAll(new AuthenticationCallback<ResponseBuffers>(callback) {
             @Override
             protected void proceed() {
-                wrapped.receiveMessage(responseSettings, callback);
+                wrapped.receiveMessage(channelReceiveArgs, callback);
             }
         });
     }

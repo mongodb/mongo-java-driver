@@ -24,34 +24,34 @@ import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerCursor;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.GetMore;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
     private ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
+    private final Channel channel;
+    private final boolean closeChannel;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
     public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
-                           final BufferProvider bufferProvider, final ServerDescription serverDescription, final Connection connection,
-                           final boolean closeConnection) {
+                           final BufferProvider bufferProvider, final ServerDescription serverDescription, final Channel channel,
+                           final boolean closeChannel) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
         this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.channel = channel;
+        this.closeChannel = closeChannel;
     }
 
     @Override
@@ -59,8 +59,8 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         try {
             return receiveMessage(sendMessage());
         } finally {
-            if (closeConnection) {
-                connection.close();
+            if (closeChannel) {
+                channel.close();
             }
         }
     }
@@ -71,7 +71,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
             final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            channel.sendMessage(buffer.getByteBuffers());
             return message;
         } finally {
             buffer.close();
@@ -79,21 +79,21 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final GetMoreMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(serverDescription, message.getId()));
+        final ResponseBuffers responseBuffers = channel.receiveMessage(
+                new ChannelReceiveArgs(message.getId()));
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
+                throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), channel.getServerAddress()));
             }
 
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 final Document errorDocument =
                         new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+                throw new MongoQueryFailureException(channel.getServerAddress(), errorDocument);
             }
 
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
-                    connection.getServerAddress());
+                    channel.getServerAddress());
         } finally {
             responseBuffers.close();
         }

@@ -24,9 +24,9 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.operation.ServerConnectionProvider;
+import org.mongodb.operation.ServerChannelProvider;
 import org.mongodb.operation.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 public class CountOperation extends BaseCountOperation implements Operation<Long> {
@@ -44,11 +44,11 @@ public class CountOperation extends BaseCountOperation implements Operation<Long
 
     public Long execute() {
         try {
-            final ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
-                    new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(getCount().getReadPreference())));
+            final ServerChannelProvider serverChannelProvider = session.createServerChannelProvider(
+                    new ServerChannelProviderOptions(true, new ReadPreferenceServerSelector(getCount().getReadPreference())));
             return getCount(new CommandProtocol(getCount().getNamespace().getDatabaseName(), getCount().toDocument(), commandEncoder,
-                                                getCodec(), getBufferProvider(), serverConnectionProvider.getServerDescription(),
-                                                serverConnectionProvider.getConnection(), true).execute());
+                                                getCodec(), getBufferProvider(), serverChannelProvider.getServerDescription(),
+                                                serverChannelProvider.getChannel(), true).execute());
         } finally {
             if (closeSession) {
                 session.close();

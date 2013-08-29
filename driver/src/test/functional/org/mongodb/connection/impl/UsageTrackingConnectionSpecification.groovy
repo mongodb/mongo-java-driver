@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.Fixture
-import org.mongodb.connection.ResponseSettings
 import spock.lang.Specification
 
 class UsageTrackingConnectionSpecification extends Specification {
@@ -63,7 +64,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingConnection(new TestConnectionFactory().create(Fixture.primary), 0);
 
         when:
-        connection.receiveMessage(ResponseSettings.builder().responseTo(1).maxMessageSize(500).build())
+        connection.receiveMessage()
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()

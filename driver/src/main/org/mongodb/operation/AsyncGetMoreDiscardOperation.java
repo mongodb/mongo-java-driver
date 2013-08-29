@@ -20,10 +20,9 @@ import org.mongodb.AsyncOperation;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
-
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class AsyncGetMoreDiscardOperation implements AsyncOperation<Void> {
     private final long cursorId;
@@ -42,7 +41,7 @@ public class AsyncGetMoreDiscardOperation implements AsyncOperation<Void> {
             retVal.init(null, null);
         }
         else {
-            connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo),
+            connection.receiveMessage(new ChannelReceiveArgs(responseTo),
                     new DiscardCallback(connection, retVal));
         }
 
@@ -66,7 +65,7 @@ public class AsyncGetMoreDiscardOperation implements AsyncOperation<Void> {
                 future.init(null, null);
             }
             else {
-                connection.receiveMessage(getResponseSettings(connection.getDescription(), responseTo),
+                connection.receiveMessage(new ChannelReceiveArgs(responseTo),
                         new DiscardCallback(connection, future));
             }
         }

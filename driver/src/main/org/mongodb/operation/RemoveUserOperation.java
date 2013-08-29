@@ -24,7 +24,7 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.DeleteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
@@ -44,13 +44,13 @@ public class RemoveUserOperation extends BaseOperation<CommandResult> {
 
     @Override
     public CommandResult execute() {
-        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        ServerChannelProvider serverChannelProvider = getSession().createServerChannelProvider(
+                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new DeleteProtocol(namespace, WriteConcern.ACKNOWLEDGED,
                 Arrays.asList(new Remove(WriteConcern.ACKNOWLEDGED, new Document("user", userName))), codec,
-                getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(),
+                getBufferProvider(), serverChannelProvider.getServerDescription(), serverChannelProvider.getChannel(),
                 true).execute();
     }
 }

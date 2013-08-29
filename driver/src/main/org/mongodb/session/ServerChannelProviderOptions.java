@@ -16,14 +16,27 @@
 
 package org.mongodb.session;
 
-import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.connection.ServerSelector;
 
-import java.io.Closeable;
+import static org.mongodb.assertions.Assertions.notNull;
 
-public interface Session extends Closeable {
-    ServerChannelProvider createServerChannelProvider(ServerChannelProviderOptions options);
+/**
+ * @since 3.0
+ */
+public class ServerChannelProviderOptions {
+    private final boolean isQuery;
+    private final ServerSelector serverSelector;
 
-    void close();
+    public ServerChannelProviderOptions(final boolean query, final ServerSelector serverSelector) {
+        isQuery = query;
+        this.serverSelector = notNull("serverSelector", serverSelector);
+    }
 
-    boolean isClosed();
+    public boolean isQuery() {
+        return isQuery;
+    }
+
+    public ServerSelector getServerSelector() {
+        return serverSelector;
+    }
 }

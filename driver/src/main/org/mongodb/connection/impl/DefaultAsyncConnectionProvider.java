@@ -20,9 +20,9 @@ import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.AsyncConnectionFactory;
 import org.mongodb.connection.AsyncConnectionProvider;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.MongoWaitQueueFullException;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 
@@ -36,11 +36,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
 
     private final ConcurrentPool<AsyncConnection> pool;
-    private final ConnectionProviderSettings settings;
+    private final ChannelProviderSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
 
     public DefaultAsyncConnectionProvider(final ServerAddress serverAddress, final AsyncConnectionFactory connectionFactory,
-                                          final ConnectionProviderSettings settings) {
+                                          final ChannelProviderSettings settings) {
         this.settings = settings;
         pool = new ConcurrentPool<AsyncConnection>(settings.getMaxSize(), new ConcurrentPool.ItemFactory<AsyncConnection>() {
             @Override
@@ -125,9 +125,9 @@ public class DefaultAsyncConnectionProvider implements AsyncConnectionProvider {
         }
 
         @Override
-        public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessage(responseSettings, callback);
+            wrapped.receiveMessage(channelReceiveArgs, callback);
         }
     }
 }

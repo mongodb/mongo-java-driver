@@ -19,7 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.protocol.InsertCommandProtocol;
 import org.mongodb.operation.protocol.InsertProtocol;
@@ -41,12 +41,12 @@ public class InsertOperation<T> extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, connection, false);
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
+        return new InsertProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, channel, false);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new InsertCommandProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, connection, false);
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
+        return new InsertCommandProtocol<T>(getNamespace(), insert, encoder, getBufferProvider(), serverDescription, channel, false);
     }
 }

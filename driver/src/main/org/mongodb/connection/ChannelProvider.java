@@ -14,31 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.connection;
 
-import org.mongodb.connection.BaseConnection;
-import org.mongodb.connection.ServerAddress;
+import java.io.Closeable;
+import java.util.concurrent.TimeUnit;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+public interface ChannelProvider extends Closeable {
 
-abstract class DelayedCloseBaseConnection implements BaseConnection {
-    private boolean isClosed;
+    Channel get();
 
-    @Override
-    public void close() {
-        isClosed = true;
-    }
+    Channel get(final long timeout, final TimeUnit timeUnit);
 
-    @Override
-    public boolean isClosed() {
-        return isClosed;
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        isTrue("open", !isClosed());
-        return getWrapped().getServerAddress();
-    }
-
-    protected abstract BaseConnection getWrapped();
+    void close();
 }

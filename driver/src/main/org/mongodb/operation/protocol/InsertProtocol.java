@@ -19,7 +19,7 @@ package org.mongodb.operation.protocol;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Insert;
 
@@ -29,8 +29,8 @@ public class InsertProtocol<T> extends WriteProtocol {
 
     public InsertProtocol(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
                           final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                          final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, insert.getWriteConcern(), serverDescription, connection, closeConnection);
+                          final Channel channel, final boolean closeChannel) {
+        super(namespace, bufferProvider, insert.getWriteConcern(), serverDescription, channel, closeChannel);
         this.insert = insert;
         this.encoder = encoder;
     }

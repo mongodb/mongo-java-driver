@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.operation;
 
-import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ServerDescription;
 
-public interface ConnectionProvider extends Closeable {
+/**
+ * A provider of channels to a single server.
+ */
+public interface ServerChannelProvider {
+    /**
+     *
+     * @return  the description of the server that this provider is providing channels to.
+     */
+    ServerDescription getServerDescription();
 
-    Connection get();
-
-    Connection get(final long timeout, final TimeUnit timeUnit);
-
-    void close();
+    /**
+     * Provide a channel to the server.  A provider may choose to return the same Channel
+     *
+     * @return a channel to the server
+     */
+    Channel getChannel();
 }

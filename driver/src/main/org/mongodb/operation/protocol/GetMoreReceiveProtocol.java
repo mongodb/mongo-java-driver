@@ -17,31 +17,27 @@
 package org.mongodb.operation.protocol;
 
 import org.mongodb.Decoder;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerDescription;
-
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
 
     private final Decoder<T> resultDecoder;
     private final int responseTo;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
+    private final Channel channel;
 
-    public GetMoreReceiveProtocol(final Decoder<T> resultDecoder, final int responseTo, final ServerDescription serverDescription,
-                                  final Connection connection) {
+    public GetMoreReceiveProtocol(final Decoder<T> resultDecoder, final int responseTo,
+                                  final Channel channel) {
         this.resultDecoder = resultDecoder;
         this.responseTo = responseTo;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
+        this.channel = channel;
     }
 
     public QueryResult<T> execute() {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(getResponseSettings(serverDescription, responseTo));
+        final ResponseBuffers responseBuffers = channel.receiveMessage(new ChannelReceiveArgs(responseTo));
         try {
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), channel.getServerAddress());
         } finally {
             responseBuffers.close();
         }

@@ -30,10 +30,10 @@ import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
-import org.mongodb.connection.impl.DefaultConnectionProviderFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
@@ -673,7 +673,7 @@ public class Mongo {
                                                                                  createNewCredentialList(credentialList));
 
         return new DefaultClusterableServerFactory(options.getServerSettings(),
-                                                   new DefaultConnectionProviderFactory(options.getConnectionProviderSettings(),
+                                                   new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
                                                                                         connectionFactory),
                                                    null,
                                                    new DefaultConnectionFactory(options.getHeartbeatConnectionSettings(),

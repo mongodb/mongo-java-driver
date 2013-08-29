@@ -23,36 +23,36 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.Find;
 
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
-import static org.mongodb.operation.OperationHelpers.getResponseSettings;
 
 public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
     private final ServerDescription serverDescription;
-    private final Connection connection;
-    private boolean closeConnection;
+    private final Channel channel;
+    private boolean closeChannel;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
     public QueryProtocol(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
-                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                         final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
         this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.channel = channel;
+        this.closeChannel = closeChannel;
     }
 
     @Override
@@ -60,8 +60,8 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         try {
             return receiveMessage(sendMessage());
         } finally {
-            if (closeConnection) {
-                connection.close();
+            if (closeChannel) {
+                channel.close();
             }
         }
     }
@@ -72,7 +72,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            channel.sendMessage(buffer.getByteBuffers());
             return message;
         } finally {
             buffer.close();
@@ -80,17 +80,17 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final QueryMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                getResponseSettings(serverDescription, message.getId()));
+        final ResponseBuffers responseBuffers = channel.receiveMessage(
+                new ChannelReceiveArgs(message.getId()));
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 final Document errorDocument =
                         new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+                throw new MongoQueryFailureException(channel.getServerAddress(), errorDocument);
             }
             final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
-            return new QueryResult<T>(replyMessage, connection.getServerAddress());
+            return new QueryResult<T>(replyMessage, channel.getServerAddress());
         } finally {
             responseBuffers.close();
         }

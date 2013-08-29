@@ -25,7 +25,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 /**
  * @since 3.0
  */
-public class ConnectionProviderSettings {
+public class ChannelProviderSettings {
     private final int maxSize;
     private final int minSize;
     private final int maxWaitQueueSize;
@@ -84,8 +84,8 @@ public class ConnectionProviderSettings {
         }
         // CHECKSTYLE:ON
 
-        public ConnectionProviderSettings build() {
-            return new ConnectionProviderSettings(this);
+        public ChannelProviderSettings build() {
+            return new ChannelProviderSettings(this);
         }
     }
 
@@ -126,7 +126,7 @@ public class ConnectionProviderSettings {
             return false;
         }
 
-        final ConnectionProviderSettings that = (ConnectionProviderSettings) o;
+        final ChannelProviderSettings that = (ChannelProviderSettings) o;
 
         if (maxConnectionIdleTimeMS != that.maxConnectionIdleTimeMS) {
             return false;
@@ -167,7 +167,7 @@ public class ConnectionProviderSettings {
 
     @Override
     public String toString() {
-        return "ConnectionProviderSettings{"
+        return "ChannelProviderSettings{"
                 + "maxSize=" + maxSize
                 + ", minSize=" + minSize
                 + ", maxWaitQueueSize=" + maxWaitQueueSize
@@ -178,7 +178,7 @@ public class ConnectionProviderSettings {
                 + '}';
     }
 
-    ConnectionProviderSettings(final Builder builder) {
+    ChannelProviderSettings(final Builder builder) {
         isTrue("maxSize > 0", builder.maxSize > 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
         isTrue("maxWaitQueueSize >= 0", builder.maxWaitQueueSize >= 0);

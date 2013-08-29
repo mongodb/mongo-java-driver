@@ -24,12 +24,12 @@ import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ChannelProvider;
+import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ClusterableServer;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.ConnectionProvider;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ResponseSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -50,7 +50,7 @@ import static org.mongodb.connection.ServerConnectionState.Unconnected;
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
-    private final ConnectionProvider connectionProvider;
+    private final ChannelProvider channelProvider;
     private final AsyncConnectionProvider asyncConnectionProvider;
     private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
@@ -62,20 +62,20 @@ class DefaultServer implements ClusterableServer {
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
-                         final ConnectionProvider connectionProvider,
+                         final ChannelProvider channelProvider,
                          final AsyncConnectionProvider asyncConnectionProvider,
                          final ConnectionFactory heartbeatConnectionFactory,
                          final ScheduledExecutorService scheduledExecutorService,
                          final BufferProvider bufferProvider) {
         this.settings = settings;
-        notNull("connectionProvider", connectionProvider);
+        notNull("channelProvider", channelProvider);
         notNull("heartbeatConnectionFactory", heartbeatConnectionFactory);
         notNull("scheduledExecutorService", scheduledExecutorService);
         notNull("bufferProvider", bufferProvider);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionProvider = connectionProvider;
+        this.channelProvider = channelProvider;
         this.asyncConnectionProvider = asyncConnectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatConnectionFactory,
@@ -85,10 +85,10 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public Connection getConnection() {
+    public Channel getChannel() {
         isTrue("open", !isClosed());
 
-        return new DefaultServerConnection(connectionProvider.get());
+        return new DefaultServerChannel(channelProvider.get());
     }
 
     @Override
@@ -126,7 +126,7 @@ class DefaultServer implements ClusterableServer {
     @Override
     public void close() {
         if (!isClosed()) {
-            connectionProvider.close();
+            channelProvider.close();
             if (asyncConnectionProvider != null) {
                 asyncConnectionProvider.close();
             }
@@ -160,10 +160,10 @@ class DefaultServer implements ClusterableServer {
 
     }
 
-    private class DefaultServerConnection implements Connection {
-        private Connection wrapped;
+    private class DefaultServerChannel implements Channel {
+        private Channel wrapped;
 
-        public DefaultServerConnection(final Connection wrapped) {
+        public DefaultServerChannel(final Channel wrapped) {
             this.wrapped = wrapped;
         }
 
@@ -185,10 +185,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ResponseSettings responseSettings) {
+        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
             isTrue("open", !isClosed());
             try {
-                return wrapped.receiveMessage(responseSettings);
+                return wrapped.receiveMessage(channelReceiveArgs);
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -230,9 +230,9 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void receiveMessage(final ResponseSettings responseSettings, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessage(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessage(responseSettings, new InvalidatingSingleResultCallback<ResponseBuffers>(callback));
+            wrapped.receiveMessage(channelReceiveArgs, new InvalidatingSingleResultCallback<ResponseBuffers>(callback));
         }
 
         @Override
