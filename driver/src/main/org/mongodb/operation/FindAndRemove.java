@@ -19,9 +19,6 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 
 public class FindAndRemove<T> extends FindAndModify {
-    public boolean isRemove() {
-        return true;
-    }
 
     @Override
     public FindAndRemove<T> where(final Document filter) {

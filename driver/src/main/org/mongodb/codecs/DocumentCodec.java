@@ -20,7 +20,6 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.mongodb.Codec;
-import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
@@ -29,7 +28,6 @@ import java.util.Map;
 
 // TODO: decode into DBRef?
 public class DocumentCodec implements Codec<Document> {
-    private final PrimitiveCodecs primitiveCodecs;
     private final Validator<String> fieldNameValidator;
     private final Codecs codecs;
 
@@ -42,24 +40,19 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
-        this(primitiveCodecs, fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry()));
+        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry()));
     }
 
     protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
                             final EncoderRegistry encoderRegistry) {
-        this(primitiveCodecs, fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry));
+        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry));
     }
 
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
-                            final Codecs codecs) {
-        if (primitiveCodecs == null) {
-            throw new IllegalArgumentException("primitiveCodecs is null");
-        }
+    protected DocumentCodec(final Validator<String> fieldNameValidator, final Codecs codecs) {
         if (codecs == null) {
             throw new IllegalArgumentException("codecs is null");
         }
         this.fieldNameValidator = fieldNameValidator;
-        this.primitiveCodecs = primitiveCodecs;
         this.codecs = codecs;
     }
 
@@ -111,7 +104,7 @@ public class DocumentCodec implements Codec<Document> {
     protected Object readValue(final BSONReader reader, final String fieldName) {
         final BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
-            return getDecoderForField(fieldName).decode(reader);
+            return this.decode(reader);
         } else {
             return codecs.decode(reader);
         }
@@ -122,15 +115,4 @@ public class DocumentCodec implements Codec<Document> {
         return Document.class;
     }
 
-    protected PrimitiveCodecs getPrimitiveCodecs() {
-        return primitiveCodecs;
-    }
-
-    protected Codecs getCodecs() {
-        return codecs;
-    }
-
-    protected Decoder<Document> getDecoderForField(final String fieldName) {
-        return this;
-    }
 }

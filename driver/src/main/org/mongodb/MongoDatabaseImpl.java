@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import org.mongodb.codecs.CollectibleDocumentCodec;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
-import org.mongodb.command.Command;
 import org.mongodb.operation.CommandOperation;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -26,14 +26,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
     private final MongoClientImpl client;
     private final DatabaseAdministration admin;
-    private final Codec<Document> documentCodec;
+    private final Codec<Document> commandCodec = new DocumentCodec();
 
     public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
         this.name = name;
         this.client = client;
         this.options = options;
-        documentCodec = options.getDocumentCodec();
-        this.admin = new DatabaseAdministrationImpl(name, client, documentCodec);
+        this.admin = new DatabaseAdministrationImpl(name, client);
     }
 
     @Override
@@ -75,16 +74,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final Command commandOperation) {
-        commandOperation.readPreferenceIfAbsent(options.getReadPreference());
-        return new CommandOperation(getName(), commandOperation, documentCodec, client.getCluster().getDescription(),
+    public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
+        ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
+        return new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec, client.getCluster().getDescription(),
                 client.getBufferProvider(), client.getSession(), false).execute();
     }
-
-//    @Override
-//    public MongoClient getClient() {
-//        return null;
-//    }
 
     @Override
     public MongoDatabaseOptions getOptions() {

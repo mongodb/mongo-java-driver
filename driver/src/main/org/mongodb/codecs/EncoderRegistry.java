@@ -43,6 +43,7 @@ public class EncoderRegistry {
         classToEncoderMap.put(DBRef.class, new DBRefEncoder(codecs));
     }
 
+    @SuppressWarnings("rawtypes")
     public Encoder getDefaultEncoder() {
         return (Encoder) new DocumentCodec(primitiveCodecs, defaultValidator, this);
     }

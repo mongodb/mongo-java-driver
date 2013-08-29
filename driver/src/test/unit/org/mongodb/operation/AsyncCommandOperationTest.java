@@ -18,9 +18,7 @@ package org.mongodb.operation;
 
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Command;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterType;
@@ -32,6 +30,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.ReadPreference.primary;
+import static org.mongodb.ReadPreference.secondary;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 
@@ -42,9 +41,8 @@ public class AsyncCommandOperationTest {
                 Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build())
         );
 
-        AsyncCommandOperation operation = new AsyncCommandOperation("test",
-                new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
-                new DocumentCodec(), clusterDescription, getBufferProvider());
+        AsyncCommandOperation operation = new AsyncCommandOperation("test", new Document("shutdown", 1), secondary(), new DocumentCodec(),
+                                                                    clusterDescription, getBufferProvider());
         assertEquals(new ReadPreferenceServerSelector(primary()), operation.getServerSelector());
     }
 }

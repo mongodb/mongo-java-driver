@@ -21,13 +21,14 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+
+import static org.mongodb.connection.impl.CommandHelper.executeCommand;
 
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
@@ -37,12 +38,12 @@ abstract class SaslAuthenticator extends Authenticator {
     }
 
     public void authenticate() {
-        SaslClient saslClient = createSaslClient();
+        final SaslClient saslClient = createSaslClient();
         try {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
             CommandResult res = sendSaslStart(response);
 
-            int conversationId = (Integer) res.getResponse().get("conversationId");
+            final int conversationId = (Integer) res.getResponse().get("conversationId");
 
             while (!(Boolean) res.getResponse().get("done")) {
                 response = saslClient.evaluateChallenge(((Binary) res.getResponse().get("payload")).getData());
@@ -66,23 +67,23 @@ abstract class SaslAuthenticator extends Authenticator {
     protected abstract SaslClient createSaslClient();
 
     private CommandResult sendSaslStart(final byte[] outToken) {
-        return CommandHelper.executeCommand(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                getConnection(), getBufferProvider());
+        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), new DocumentCodec(),
+                              getConnection(), getBufferProvider());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
-        return CommandHelper.executeCommand(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(), getConnection(), getBufferProvider());
+        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), new DocumentCodec(),
+                              getConnection(), getBufferProvider());
     }
 
-    private Command createSaslStartCommand(final byte[] outToken) {
-        return new Command(new Document("saslStart", 1).append("mechanism", getMechanismName())
-                .append("payload", outToken != null ? outToken : new byte[0]));
+    private Document createSaslStartCommandDocument(final byte[] outToken) {
+        return new Document("saslStart", 1).append("mechanism", getMechanismName())
+                                           .append("payload", outToken != null ? outToken : new byte[0]);
     }
 
-    private Command createSaslContinueCommand(final int conversationId, final byte[] outToken) {
-        return new Command(new Document("saslContinue", 1).append("conversationId", conversationId).
-                append("payload", outToken));
+    private Document createSaslContinueDocument(final int conversationId, final byte[] outToken) {
+        return new Document("saslContinue", 1).append("conversationId", conversationId).
+                append("payload", outToken);
     }
 
     private void disposeOfSaslClient(final SaslClient saslClient) {

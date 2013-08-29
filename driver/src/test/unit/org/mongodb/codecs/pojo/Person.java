@@ -16,7 +16,6 @@
 
 package org.mongodb.codecs.pojo;
 
-//CHECKSTYLE:OFF
 public class Person {
     private Address address;
     private Name name;

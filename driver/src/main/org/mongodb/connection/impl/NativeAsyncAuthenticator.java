@@ -17,15 +17,14 @@
 package org.mongodb.connection.impl;
 
 import org.mongodb.CommandResult;
+import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
@@ -33,6 +32,9 @@ import org.mongodb.operation.AsyncCommandOperation;
 import java.util.Collections;
 
 import static org.mongodb.connection.ClusterConnectionMode.Single;
+import static org.mongodb.connection.ClusterType.Unknown;
+import static org.mongodb.connection.impl.NativeAuthenticationHelper.getAuthCommand;
+import static org.mongodb.connection.impl.NativeAuthenticationHelper.getNonceCommand;
 
 class NativeAsyncAuthenticator extends AsyncAuthenticator {
     NativeAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
@@ -42,10 +44,8 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
 
     @Override
     public void authenticate(final SingleResultCallback<CommandResult> callback) {
-        new AsyncCommandOperation(getCredential().getSource(),
-                new Command(NativeAuthenticationHelper.getNonceCommand()),
-                new DocumentCodec(PrimitiveCodecs.createDefault()),
-                new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()),
+        new AsyncCommandOperation(getCredential().getSource(), getNonceCommand(), null, new DocumentCodec(PrimitiveCodecs.createDefault()),
+                new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()),
                 getBufferProvider())
                 .execute(new ConnectingAsyncServerConnection(getConnection()))
                 .register(new SingleResultCallback<CommandResult>() {
@@ -55,12 +55,13 @@ class NativeAsyncAuthenticator extends AsyncAuthenticator {
                             callback.onResult(result, e);
                         }
                         else {
-                            new AsyncCommandOperation(getCredential().getSource(),
-                                    new Command(NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
-                                            getCredential().getPassword(), (String) result.getResponse().get("nonce"))),
-                                    new DocumentCodec(PrimitiveCodecs.createDefault()),
-                                    new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()),
-                                    getBufferProvider())
+                            final Document command = getAuthCommand(getCredential().getUserName(),
+                                                                    getCredential().getPassword(),
+                                                                    (String) result.getResponse().get("nonce"));
+                            new AsyncCommandOperation(getCredential().getSource(), command, null,
+                                                      new DocumentCodec(PrimitiveCodecs.createDefault()),
+                                                      new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()),
+                                                      getBufferProvider())
                                     .execute(new ConnectingAsyncServerConnection(getConnection()))
                                     .register(new SingleResultCallback<CommandResult>() {
                                         @Override

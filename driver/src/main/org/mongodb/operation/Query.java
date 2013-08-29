@@ -23,8 +23,6 @@ import java.util.EnumSet;
 
 public abstract class Query {
     private ReadPreference readPreference;
-    //CHECKSTYLE:OFF
-    //CHECKSTYLE:ON
     private int skip;
     private int limit;
     private QueryOptions options = new QueryOptions();
@@ -95,7 +93,7 @@ public abstract class Query {
 
     public EnumSet<QueryFlag> getFlags() {
         if (readPreference != null && readPreference.isSlaveOk()) {
-            EnumSet<QueryFlag> retVal = EnumSet.copyOf(options.getFlags());
+            final EnumSet<QueryFlag> retVal = EnumSet.copyOf(options.getFlags());
             retVal.add(QueryFlag.SlaveOk);
             return retVal;
         } else {
@@ -135,7 +133,7 @@ public abstract class Query {
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public int getNumberToReturn() {
-        int numberToReturn;
+        final int numberToReturn;
         if (getLimit() < 0) {
             numberToReturn = getLimit();
         }

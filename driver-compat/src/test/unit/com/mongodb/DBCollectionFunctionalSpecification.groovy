@@ -17,22 +17,27 @@
 package com.mongodb
 
 class DBCollectionFunctionalSpecification extends FunctionalSpecification {
+    private idOfExistingDocument
 
     def setupSpec() {
         Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
     }
 
     def setup() {
-        collection.insert(new BasicDBObject('a', new BasicDBObject()).append('b', new BasicDBObject()));
+        def existingDocument = ~['a': ~[:],
+                                 'b': ~[:]]
+        collection.insert(existingDocument);
+        idOfExistingDocument = existingDocument.get('_id')
         collection.setObjectClass(BasicDBObject)
     }
 
     def 'should use top-level class for findAndModify'() {
-        setup:
+        given:
         collection.setObjectClass(ClassA)
 
         when:
-        DBObject document = collection.findAndModify(new BasicDBObject(), new BasicDBObject('c', 1))
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument,
+                                                             'c'  : 1])
 
         then:
         document instanceof ClassA
@@ -45,7 +50,8 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setInternalClass('b', ClassB);
 
         when:
-        DBObject document = collection.findAndModify(new BasicDBObject(), new BasicDBObject('c', 1))
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument,
+                                                             'c'  : 1])
 
         then:
         document.get('a') instanceof ClassA
@@ -55,10 +61,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should support index options'() {
         given:
         def options = ~[
-                'sparse': true,
-                'background': true,
+                'sparse'            : true,
+                'background'        : true,
                 'expireAfterSeconds': 42,
-                'somethingOdd': 'jeff'
+                'somethingOdd'      : 'jeff'
         ]
 
         when:
@@ -82,7 +88,8 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setDBDecoderFactory(factory)
 
         when:
-        collection.findAndModify(new BasicDBObject(), new BasicDBObject('c', 1))
+        collection.findAndModify(null, ~['_id': idOfExistingDocument,
+                                         'c'  : 1])
 
         then:
         1 * decoder.decode(_ as byte[], collection)

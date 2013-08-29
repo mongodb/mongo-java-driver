@@ -20,7 +20,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
-import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.SingleResultCallback;
@@ -28,8 +27,8 @@ import org.mongodb.connection.SingleResultCallback;
 class CommandResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
 
-    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Command commandOperation,
-                                 final Decoder<Document> decoder, final AsyncServerConnection connection, final long requestId) {
+    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<Document> decoder,
+                                 final AsyncServerConnection connection, final long requestId) {
         super(decoder, connection, requestId);
         this.callback = callback;
     }

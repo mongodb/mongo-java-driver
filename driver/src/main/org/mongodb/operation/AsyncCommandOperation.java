@@ -22,7 +22,7 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.Command;
+import org.mongodb.ReadPreference;
 import org.mongodb.connection.AsyncServerConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
@@ -30,28 +30,28 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.operation.protocol.CommandMessage;
 
+import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
 public class AsyncCommandOperation implements AsyncServerSelectingOperation<CommandResult> {
 
-    private final Command command;
     private final Codec<Document> codec;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
     private final ClusterDescription clusterDescription;
+    private final Document command;
+    private final ReadPreference readPreference;
 
-    public AsyncCommandOperation(final String database, final Command command, final Codec<Document> codec,
-                                 final ClusterDescription clusterDescription, final BufferProvider bufferProvider) {
+    public AsyncCommandOperation(final String database, final Document command, final ReadPreference readPreference,
+                                 final Codec<Document> codec, final ClusterDescription clusterDescription,
+                                 final BufferProvider bufferProvider) {
         this.clusterDescription = clusterDescription;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.bufferProvider = bufferProvider;
-        this.command = command;
         this.codec = codec;
-    }
-
-    public Command getCommand() {
-        return command;
+        this.readPreference = readPreference;
+        this.command = command;
     }
 
     @Override
@@ -64,14 +64,14 @@ public class AsyncCommandOperation implements AsyncServerSelectingOperation<Comm
         encodeMessageToBuffer(message, buffer);
         connection.sendMessage(buffer.getByteBuffers(),
                 new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal,
-                        new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), command, codec, connection,
+                        new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), codec, connection,
                         message.getId())));
         return retVal;
     }
 
     @Override
     public ServerSelector getServerSelector() {
-        return new ReadPreferenceServerSelector(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
+        return new ReadPreferenceServerSelector(getCommandReadPreference(command, readPreference, clusterDescription));
     }
 
     @Override

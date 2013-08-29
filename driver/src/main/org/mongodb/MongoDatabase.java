@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.command.Command;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -26,7 +25,7 @@ import org.mongodb.command.Command;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(Command commandOperation);
+    CommandResult executeCommand(final Document command, final ReadPreference readPreference);
 
 //    MongoClient getClient();
 

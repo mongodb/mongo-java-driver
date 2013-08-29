@@ -16,10 +16,9 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.Command;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
@@ -33,9 +32,9 @@ class X509Authenticator extends Authenticator {
     @Override
     void authenticate() {
         try {
-            CommandHelper.executeCommand(getCredential().getSource(),
-                    new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
-                    new DocumentCodec(PrimitiveCodecs.createDefault()), getConnection(), getBufferProvider());
+            final Document authCommand = X509AuthenticationHelper.getAuthCommand(getCredential().getUserName());
+            CommandHelper.executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getConnection(),
+                                         getBufferProvider());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

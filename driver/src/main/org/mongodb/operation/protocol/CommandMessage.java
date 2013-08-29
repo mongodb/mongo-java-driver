@@ -19,27 +19,28 @@ package org.mongodb.operation.protocol;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.command.Command;
 
-public class CommandMessage extends BaseQueryMessage {
-    private final Command command;
+import static org.mongodb.operation.protocol.RequestMessage.OpCode.OP_QUERY;
+
+public class CommandMessage extends RequestMessage {
     private final Encoder<Document> encoder;
+    private final Document command;
 
-    public CommandMessage(final String collectionName, final Command command, final Encoder<Document> encoder,
+    public CommandMessage(final String collectionName, final Document command, final Encoder<Document> encoder,
                           final MessageSettings settings) {
-        super(collectionName, settings);
-        this.command = command;
+        super(collectionName, OP_QUERY, settings);
         this.encoder = encoder;
+        this.command = command;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeQueryPrologue(command, buffer);
-        addDocument(command.toDocument(), encoder, buffer);
-        return null;
-    }
+        buffer.writeInt(0);
+        buffer.writeCString(getCollectionName());
 
-    public Command getCommand() {
-        return command;
+        buffer.writeInt(0);
+        buffer.writeInt(-1);
+        addDocument(command, encoder, buffer);
+        return null;
     }
 }

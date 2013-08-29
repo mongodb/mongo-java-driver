@@ -25,7 +25,7 @@ import org.mongodb.codecs.validators.QueryFieldNameValidator;
 
 public class DocumentCodec extends org.mongodb.codecs.DocumentCodec {
     public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        super(primitiveCodecs, new QueryFieldNameValidator(), constructCustomCodecs(primitiveCodecs));
+        super(new QueryFieldNameValidator(), constructCustomCodecs(primitiveCodecs));
     }
 
     private static Codecs constructCustomCodecs(final PrimitiveCodecs primitiveCodecs) {

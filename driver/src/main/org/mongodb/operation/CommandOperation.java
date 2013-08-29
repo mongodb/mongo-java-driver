@@ -16,10 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.command.Command;
+import org.mongodb.Encoder;
+import org.mongodb.ReadPreference;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerSelector;
@@ -27,32 +28,38 @@ import org.mongodb.operation.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
+import static org.mongodb.operation.CommandReadPreferenceHelper.isQuery;
+
 public class CommandOperation extends BaseOperation<CommandResult> {
-    private final Command command;
-    private final Codec<Document> codec;
+    private final Encoder<Document> commandEncoder;
+    private final Decoder<Document> commandDecoder;
     private final String database;
     private final ClusterDescription clusterDescription;
+    private final Document commandDocument;
+    private final ReadPreference readPreference;
 
-    public CommandOperation(final String database, final Command command, final Codec<Document> codec,
-                            final ClusterDescription clusterDescription, final BufferProvider bufferProvider,
-                            final Session session, final boolean closeSession) {
+    public CommandOperation(final String database, final Document command, final ReadPreference readPreference,
+                            final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder,
+                            final ClusterDescription clusterDescription, final BufferProvider bufferProvider, final Session session,
+                            final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.database = database;
         this.clusterDescription = clusterDescription;
-        this.command = command;
-        this.codec = codec;
+        this.commandEncoder = commandEncoder;
+        this.commandDecoder = commandDecoder;
+        this.commandDocument = command;
+        this.readPreference = readPreference;
     }
 
-    public Command getCommand() {
-        return command;
-    }
-
+    @Override
     public CommandResult execute() {
         try {
-            ServerConnectionProvider provider = getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(isQuery(),
-                    getServerSelector()));
-            return new CommandProtocol(database, command, codec, getBufferProvider(), provider.getServerDescription(),
-                    provider.getConnection(), true).execute();
+            final ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(isQuery(commandDocument),
+                                                                                                getServerSelector());
+            final ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
+            return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
+                                       provider.getServerDescription(), provider.getConnection(), true).execute();
         } finally {
             if (isCloseSession()) {
                 getSession().close();
@@ -61,10 +68,6 @@ public class CommandOperation extends BaseOperation<CommandResult> {
     }
 
     private ServerSelector getServerSelector() {
-        return new ReadPreferenceServerSelector(CommandReadPreferenceHelper.getCommandReadPreference(command, clusterDescription));
-    }
-
-    private boolean isQuery() {
-        return CommandReadPreferenceHelper.isQuery(command);
+        return new ReadPreferenceServerSelector(getCommandReadPreference(commandDocument, readPreference, clusterDescription));
     }
 }

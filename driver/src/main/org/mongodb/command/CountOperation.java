@@ -20,6 +20,7 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.Operation;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.ReadPreferenceServerSelector;
@@ -32,6 +33,7 @@ public class CountOperation extends BaseCountOperation implements Operation<Long
 
     private final Session session;
     private final boolean closeSession;
+    private final DocumentCodec commandEncoder = new DocumentCodec();
 
     public CountOperation(final Find find, final MongoNamespace namespace, final Codec<Document> codec,
                           final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
@@ -42,11 +44,11 @@ public class CountOperation extends BaseCountOperation implements Operation<Long
 
     public Long execute() {
         try {
-            ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
+            final ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
                     new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(getCount().getReadPreference())));
-            return getCount(new CommandProtocol(getCount().getNamespace().getDatabaseName(), getCount(), getCodec(),
-                    getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true)
-                    .execute());
+            return getCount(new CommandProtocol(getCount().getNamespace().getDatabaseName(), getCount().toDocument(), commandEncoder,
+                                                getCodec(), getBufferProvider(), serverConnectionProvider.getServerDescription(),
+                                                serverConnectionProvider.getConnection(), true).execute());
         } finally {
             if (closeSession) {
                 session.close();

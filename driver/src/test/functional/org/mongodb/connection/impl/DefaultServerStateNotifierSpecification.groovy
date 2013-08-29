@@ -16,9 +16,9 @@
 
 package org.mongodb.connection.impl
 
+import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.command.Command
 import org.mongodb.connection.ChangeEvent
 import org.mongodb.connection.ChangeListener
 import org.mongodb.connection.ServerDescription
@@ -51,8 +51,9 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
 
     def 'should return server version'() {
         given:
-        def expectedVersion = new ServerVersion((database.executeCommand(new Command(new Document('buildinfo', 1)))
-                .getResponse().get('versionArray') as List<Integer>).subList(0, 3))
+        CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), null)
+        def expectedVersion = new ServerVersion((commandResult.getResponse().get('versionArray') as List<Integer>).subList(0, 3))
+
         when:
         serverStateNotifier.run()
 

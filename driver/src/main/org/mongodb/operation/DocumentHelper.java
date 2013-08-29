@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.command;
+package org.mongodb.operation;
 
 import org.mongodb.Document;
 
-public final class CollStats extends Command {
-    public CollStats(final String collectionName) {
-        super(new Document("collStats", collectionName));
+final class DocumentHelper {
+
+    private DocumentHelper() { }
+
+    static void putIfTrue(final Document command, final String key, final boolean condition) {
+        if (condition) {
+            command.put(key, condition);
+        }
+    }
+
+    static void putIfNotNull(final Document command, final String key, final Document value) {
+        if (value != null) {
+            command.put(key, value);
+        }
     }
 }

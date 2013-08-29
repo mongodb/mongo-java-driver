@@ -21,8 +21,7 @@ import org.mongodb.command.MongoCommandFailureException;
 // TODO: should also check for ok?
 final class ErrorHandling {
     static void handleErrors(final CommandResult commandResult) {
-        final Object serverErrorMessage = commandResult.getResponse().get("errmsg");
-        if (serverErrorMessage != null) {
+        if (commandResult.getErrorMessage() != null) {
             throw new MongoCommandFailureException(commandResult);
         }
     }

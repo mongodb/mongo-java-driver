@@ -32,8 +32,8 @@ import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
 /**
- * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecifcation.  This fixture allows
- * Test super-classes to share functionality whilst minimising duplication.
+ * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
+ * super-classes to share functionality whilst minimising duplication.
  */
 public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
@@ -60,22 +60,22 @@ public final class Fixture {
         if (mongoClientURI == null) {
             final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
             final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                    ? DEFAULT_URI : mongoURIProperty;
+                                          ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;
     }
 
     /**
-     * Will initialise a collection for testing.  This method gets the collection from the given database and drops
-     * it, so any collection passed into this method will be empty after initialisation.
+     * Will initialise a collection for testing.  This method gets the collection from the given database and drops it, so any collection
+     * passed into this method will be empty after initialisation.
      *
-     * @param database the MongoDatabase that contains the required collection
+     * @param database       the MongoDatabase that contains the required collection
      * @param collectionName the name of the collection to be initialised
      * @return the MongoCollection for collectionName
      */
     public static MongoCollection<Document> initialiseCollection(final MongoDatabase database, final String collectionName) {
-        MongoCollection<Document> collection = database.getCollection(collectionName);
+        final MongoCollection<Document> collection = database.getCollection(collectionName);
         collection.tools().drop();
         return collection;
     }
@@ -100,7 +100,7 @@ public final class Fixture {
     }
 
     public static SSLSettings getSSLSettings() {
-        return SSLSettings.builder().enabled(getMongoClientURI().getOptions().isSSLEnabled()).build();
+        return getOptions().getSslSettings();
     }
 
     public static MongoClientOptions getOptions() {

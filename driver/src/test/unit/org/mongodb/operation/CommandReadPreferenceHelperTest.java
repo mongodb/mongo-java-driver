@@ -18,91 +18,86 @@ package org.mongodb.operation;
 
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.ReadPreference;
-import org.mongodb.command.Command;
-import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 
-import java.util.Arrays;
-
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.ReadPreference.primary;
+import static org.mongodb.ReadPreference.secondary;
+import static org.mongodb.connection.ClusterConnectionMode.Multiple;
+import static org.mongodb.connection.ClusterConnectionMode.Single;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 import static org.mongodb.connection.ClusterType.Sharded;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
 import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
 import static org.mongodb.connection.ServerType.ShardRouter;
+import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
 
 public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testObedience() {
-        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Multiple, ReplicaSet, Arrays.asList(
-                ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetPrimary).build())
-        );
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("group", "test.test").append("key", "x")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("collstats", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("dbstats", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("count", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("distinct", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("collstats", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("geoSearch", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("geoNear", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("geoWalk", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("text", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("mapReduce", "test.test").append("out", new Document("inline",
-                        true))).readPreference(ReadPreference.secondary()),
-                clusterDescription));
+        ClusterDescription clusterDescription = new ClusterDescription(Multiple,
+                                                                       ReplicaSet,
+                                                                       asList(ServerDescription.builder()
+                                                                                               .state(Connected)
+                                                                                               .address(new ServerAddress())
+                                                                                               .type(ReplicaSetPrimary)
+                                                                                               .build()));
+        assertEquals(secondary(), getCommandReadPreference(new Document("group", "test.test").append("key", "x"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("collstats", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("dbstats", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("count", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("distinct", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("collstats", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("geoSearch", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("geoNear", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("geoWalk", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("text", "test.test"), secondary(),
+                                                           clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("mapReduce", "test.test")
+                                                           .append("out", new Document("inline", true)),
+                                                           secondary(),
+                                                           clusterDescription));
 
-        assertEquals(ReadPreference.primary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("mapReduce", "test.test")).readPreference(ReadPreference.secondary()),
-                clusterDescription));
+        assertEquals(primary(), getCommandReadPreference(new Document("mapReduce", "test.test"), secondary(),
+                                                         clusterDescription));
 
-        assertEquals(ReadPreference.primary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
-                clusterDescription));
+        assertEquals(primary(), getCommandReadPreference(new Document("shutdown", 1), secondary(),
+                                                         clusterDescription));
     }
 
     @Test
     public void testIgnoreObedienceForDirectConnection() {
-        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Single, ReplicaSet,
-                Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ReplicaSetSecondary).build()));
+        ClusterDescription clusterDescription = new ClusterDescription(Single, ReplicaSet,
+                                                                       asList(ServerDescription.builder()
+                                                                                               .state(Connected)
+                                                                                               .address(new ServerAddress())
+                                                                                               .type(ReplicaSetSecondary).build()));
 
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
-                clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("shutdown", 1), secondary(), clusterDescription));
     }
 
     @Test
     public void testIgnoreObedienceForMongosDiscovering() {
-        ClusterDescription clusterDescription = new ClusterDescription(ClusterConnectionMode.Multiple, Sharded,
-                Arrays.asList(ServerDescription.builder().state(Connected).address(new ServerAddress()).type(ShardRouter).build()));
+        ClusterDescription clusterDescription = new ClusterDescription(Multiple, Sharded,
+                                                                       asList(ServerDescription.builder()
+                                                                                               .state(Connected)
+                                                                                               .address(new ServerAddress())
+                                                                                               .type(ShardRouter).build()));
 
-        assertEquals(ReadPreference.secondary(), CommandReadPreferenceHelper.getCommandReadPreference(
-                new Command(new Document("shutdown", 1)).readPreference(ReadPreference.secondary()),
-                clusterDescription));
+        assertEquals(secondary(), getCommandReadPreference(new Document("shutdown", 1), secondary(), clusterDescription));
     }
 }

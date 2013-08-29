@@ -32,6 +32,7 @@ import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.RequestMessage;
 import org.mongodb.session.PrimaryServerSelector;
 
+import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.mongodb.operation.OperationHelpers.encodeMessageToBuffer;
 import static org.mongodb.operation.OperationHelpers.getMessageSettings;
 
@@ -52,9 +53,11 @@ public abstract class AsyncWriteOperation implements AsyncServerSelectingOperati
                 buffer);
         if (getWriteConcern().isAcknowledged()) {
             final GetLastError getLastError = new GetLastError(getWriteConcern());
-            final CommandMessage getLastErrorMessage =
-                    new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), MongoNamespace.COMMAND_COLLECTION_NAME)
-                            .getFullName(), getLastError, new DocumentCodec(), getMessageSettings(connection.getDescription()));
+            final CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                                                                                             COMMAND_COLLECTION_NAME).getFullName(),
+                                                                          getLastError.toDocument(),
+                                                                          new DocumentCodec(),
+                                                                          getMessageSettings(connection.getDescription()));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendMessage(buffer.getByteBuffers(),
                     new SendMessageCallback<CommandResult>(connection, buffer, getLastErrorMessage.getId(), retVal,

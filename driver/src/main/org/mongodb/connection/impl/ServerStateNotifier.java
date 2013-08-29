@@ -20,7 +20,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
@@ -53,6 +52,7 @@ import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
 import static org.mongodb.connection.ServerType.ShardRouter;
 import static org.mongodb.connection.ServerType.StandAlone;
 import static org.mongodb.connection.ServerType.Unknown;
+import static org.mongodb.connection.impl.CommandHelper.executeCommand;
 
 @ThreadSafe
 class ServerStateNotifier implements Runnable {
@@ -85,20 +85,20 @@ class ServerStateNotifier implements Runnable {
             return;
         }
 
-        ServerDescription currentServerDescription = serverDescription;
+        final ServerDescription currentServerDescription = serverDescription;
         Throwable throwable = null;
         try {
             if (connection == null) {
                 connection = connectionFactory.create(serverAddress);
             }
             try {
-                final CommandResult isMasterResult = CommandHelper.executeCommand("admin", new Command(new Document("ismaster", 1)),
-                        new DocumentCodec(), connection, bufferProvider);
+                final CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
+                                                                    connection, bufferProvider);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
-                final CommandResult buildInfoResult = CommandHelper.executeCommand("admin", new Command(new Document("buildinfo", 1)),
-                        new DocumentCodec(), connection, bufferProvider);
+                final CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
+                                                                     connection, bufferProvider);
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {

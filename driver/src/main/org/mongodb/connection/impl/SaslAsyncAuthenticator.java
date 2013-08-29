@@ -22,11 +22,9 @@ import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -37,6 +35,7 @@ import javax.security.sasl.SaslException;
 import java.util.Collections;
 
 import static org.mongodb.connection.ClusterConnectionMode.Single;
+import static org.mongodb.connection.ClusterType.Unknown;
 
 abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
     SaslAsyncAuthenticator(final MongoCredential credential, final AsyncConnection connection,
@@ -92,29 +91,28 @@ abstract class SaslAsyncAuthenticator extends AsyncAuthenticator {
     protected abstract SaslClient createSaslClient();
 
     private void asyncSendSaslStart(final byte[] outToken, final SingleResultCallback<CommandResult> callback) {
-        new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), new DocumentCodec(),
-                new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()),
+        new AsyncCommandOperation(getCredential().getSource(), createSaslStartCommand(outToken), null, new DocumentCodec(),
+                                  new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()),
                 getBufferProvider())
                 .execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 
     private void asyncSendSaslContinue(final int conversationId, final byte[] outToken,
                                        final SingleResultCallback<CommandResult> callback) {
-        new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken),
-                new DocumentCodec(),
-                new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()),
-                getBufferProvider())
-                .execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
+        new AsyncCommandOperation(getCredential().getSource(), createSaslContinueCommand(conversationId, outToken), null,
+                                  new DocumentCodec(), new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()),
+                                  getBufferProvider())
+        .execute(new ConnectingAsyncServerConnection(getConnection())).register(callback);
     }
 
-    private Command createSaslStartCommand(final byte[] outToken) {
-        return new Command(new Document("saslStart", 1).append("mechanism", getMechanismName())
-                .append("payload", outToken != null ? outToken : new byte[0]));
+    private Document createSaslStartCommand(final byte[] outToken) {
+        return new Document("saslStart", 1).append("mechanism", getMechanismName())
+                                           .append("payload", outToken != null ? outToken : new byte[0]);
     }
 
-    private Command createSaslContinueCommand(final int conversationId, final byte[] outToken) {
-        return new Command(new Document("saslContinue", 1).append("conversationId", conversationId).
-                append("payload", outToken));
+    private Document createSaslContinueCommand(final int conversationId, final byte[] outToken) {
+        return new Document("saslContinue", 1).append("conversationId", conversationId)
+                                              .append("payload", outToken);
     }
 
     private void disposeOfSaslClient(final SaslClient saslClient) {

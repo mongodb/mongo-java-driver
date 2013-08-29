@@ -20,7 +20,6 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
@@ -30,21 +29,22 @@ import org.mongodb.operation.protocol.CommandMessage;
 import org.mongodb.operation.protocol.MessageSettings;
 import org.mongodb.operation.protocol.ReplyMessage;
 
+import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.mongodb.operation.OperationHelpers.createCommandResult;
 
 final class CommandHelper {
 
-    static CommandResult executeCommand(final String database, final Command command, final Codec<Document> codec,
+    static CommandResult executeCommand(final String database, final Document command, final Codec<Document> codec,
                                         final Connection connection, final BufferProvider bufferProvider) {
         return receiveMessage(codec, connection, sendMessage(database, command, codec, connection, bufferProvider));
     }
 
-    private static CommandMessage sendMessage(final String database, final Command command, final Codec<Document> codec,
+    private static CommandMessage sendMessage(final String database, final Document command, final Codec<Document> codec,
                                               final Connection connection, final BufferProvider bufferProvider) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = new CommandMessage(new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME)
-                    .getFullName(), command, codec, MessageSettings.builder().build());
+            final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
+                                                              command, codec, MessageSettings.builder().build());
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers());
             return message;
@@ -56,7 +56,7 @@ final class CommandHelper {
     private static CommandResult receiveMessage(final Codec<Document> codec, final Connection connection, final CommandMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(ResponseSettings.builder().responseTo(message.getId()).build());
         try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
+            final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
             return createCommandResult(replyMessage, connection);
         } finally {
             responseBuffers.close();

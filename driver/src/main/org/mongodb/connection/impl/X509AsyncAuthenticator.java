@@ -20,12 +20,9 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.Command;
 import org.mongodb.connection.AsyncConnection;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncCommandOperation;
@@ -33,6 +30,8 @@ import org.mongodb.operation.AsyncCommandOperation;
 import java.util.Collections;
 
 import static org.mongodb.connection.ClusterConnectionMode.Single;
+import static org.mongodb.connection.ClusterType.Unknown;
+import static org.mongodb.connection.impl.X509AuthenticationHelper.getAuthCommand;
 
 class X509AsyncAuthenticator extends AsyncAuthenticator {
 
@@ -42,16 +41,15 @@ class X509AsyncAuthenticator extends AsyncAuthenticator {
 
     @Override
     void authenticate(final SingleResultCallback<CommandResult> callback) {
-        new AsyncCommandOperation(getCredential().getSource(),
-                new Command(X509AuthenticationHelper.getAuthCommand(getCredential().getUserName())),
-                new DocumentCodec(PrimitiveCodecs.createDefault()),
-                new ClusterDescription(Single, ClusterType.Unknown, Collections.<ServerDescription>emptyList()), getBufferProvider())
-                .execute(new ConnectingAsyncServerConnection(getConnection()))
-                .register(new SingleResultCallback<CommandResult>() {
-                    @Override
-                    public void onResult(final CommandResult result, final MongoException e) {
-                        callback.onResult(result, e);
-                    }
-                });
+        new AsyncCommandOperation(getCredential().getSource(), getAuthCommand(getCredential().getUserName()), null,
+                                  new DocumentCodec(),
+                                  new ClusterDescription(Single, Unknown, Collections.<ServerDescription>emptyList()), getBufferProvider()
+        ).execute(new ConnectingAsyncServerConnection(getConnection()))
+         .register(new SingleResultCallback<CommandResult>() {
+             @Override
+             public void onResult(final CommandResult result, final MongoException e) {
+                 callback.onResult(result, e);
+             }
+         });
     }
 }

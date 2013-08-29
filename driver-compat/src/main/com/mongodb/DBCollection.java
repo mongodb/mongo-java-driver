@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.mongodb;
 
 
@@ -39,15 +38,11 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.AggregateCommand;
-import org.mongodb.command.CollStats;
 import org.mongodb.command.Command;
 import org.mongodb.command.CountOperation;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
-import org.mongodb.command.Drop;
 import org.mongodb.command.DropIndex;
-import org.mongodb.command.FindAndModifyCommandResult;
-import org.mongodb.command.FindAndModifyCommandResultCodec;
 import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
@@ -58,8 +53,12 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
+import org.mongodb.operation.FindAndRemoveOperation;
 import org.mongodb.operation.FindAndReplace;
+import org.mongodb.operation.FindAndReplaceOperation;
 import org.mongodb.operation.FindAndUpdate;
+import org.mongodb.operation.FindAndUpdateOperation;
+import org.mongodb.operation.GetIndexesOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.QueryOperation;
@@ -141,6 +140,7 @@ public class DBCollection {
     private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
+    private final Codec<Document> commandCodec = new org.mongodb.codecs.DocumentCodec();
     private CompoundDBObjectCodec objectCodec;
 
 
@@ -667,7 +667,7 @@ public class DBCollection {
                 .batchSize(-1);
 
         try {
-            MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool(),
+            final MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool(),
                     getSession(), false).execute();
 
             return cursor.hasNext() ? cursor.next() : null;
@@ -865,7 +865,7 @@ public class DBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
+        final Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
 
         return executeOperation(new CountOperation(find, getNamespace(), getDocumentCodec(), getBufferPool(), getSession(), false));
     }
@@ -894,8 +894,8 @@ public class DBCollection {
         final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
-            new CommandOperation("admin", renameCommand, getDocumentCodec(), getDB().getClusterDescription(), getBufferPool(),
-                    getSession(), false).execute();
+            new CommandOperation("admin", renameCommand.toDocument(), renameCommand.getReadPreference(), commandCodec, commandCodec,
+                                 getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
@@ -1103,11 +1103,9 @@ public class DBCollection {
 
         Command newStyleCommand = command.toNew();
         try {
-            executionResult = new CommandOperation(getDB().getName(),
-                    newStyleCommand,
-                    mapReduceCodec,
-                    getDB().getClusterDescription(),
-                    getBufferPool(), getSession(), false).execute();
+            executionResult = new CommandOperation(getDB().getName(), newStyleCommand.toDocument(), newStyleCommand.getReadPreference(),
+                                                   mapReduceCodec, commandCodec, getDB().getClusterDescription(), getBufferPool(),
+                                                   getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -1142,7 +1140,7 @@ public class DBCollection {
     public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
         final List<Document> pipeline = new ArrayList<Document>(additionalOps.length + 1);
         pipeline.add(toDocument(firstOp));
-        for (DBObject op : additionalOps) {
+        for (final DBObject op : additionalOps) {
             pipeline.add(toDocument(op));
         }
 
@@ -1368,55 +1366,45 @@ public class DBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final Command mongoCommand;
+        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                                                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                                                : getObjectCodec();
 
+        final Operation<DBObject> operation;
         if (remove) {
-            final FindAndRemove<DBObject> mongoFindAndRemove = new FindAndRemove<DBObject>()
-                    .where(toNullableDocument(query))
-                    .sortBy(toNullableDocument(sort))
-                    .returnNew(returnNew);
-            mongoCommand = new org.mongodb.command.FindAndRemove(mongoFindAndRemove, getName());
-        }
-        else {
+            final FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
+                                                                                       .sortBy(toNullableDocument(sort))
+                                                                                       .returnNew(returnNew);
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder, getBufferPool(),
+                                                             getSession(), false);
+        } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                final FindAndUpdate<DBObject> mongoFindAndUpdate = new FindAndUpdate<DBObject>()
-                        .where(toNullableDocument(query))
-                        .sortBy(toNullableDocument(sort))
-                        .returnNew(returnNew)
-                        .select(toFieldSelectorDocument(fields))
-                        .updateWith(toUpdateOperationsDocument(update))
-                        .upsert(upsert);
-                mongoCommand = new org.mongodb.command.FindAndUpdate<DBObject>(mongoFindAndUpdate, getName());
-            }
-            else {
-                final FindAndReplace<DBObject> mongoFindAndReplace
-                        = new FindAndReplace<DBObject>(update)
-                        .where(toNullableDocument(query))
-                        .sortBy(toNullableDocument(sort))
-                        .select(toFieldSelectorDocument(fields))
-                        .returnNew(returnNew)
-                        .upsert(upsert);
-                mongoCommand = new org.mongodb.command.FindAndReplace<DBObject>(mongoFindAndReplace, getName());
+                final FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
+                                                              .where(toNullableDocument(query))
+                                                              .sortBy(toNullableDocument(sort))
+                                                              .returnNew(returnNew)
+                                                              .select(toFieldSelectorDocument(fields))
+                                                              .updateWith(toUpdateOperationsDocument(update))
+                                                              .upsert(upsert);
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder, getBufferPool(),
+                                                                 getSession(), false);
+            } else {
+                final FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
+                                                                .where(toNullableDocument(query))
+                                                                .sortBy(toNullableDocument(sort))
+                                                                .select(toFieldSelectorDocument(fields))
+                                                                .returnNew(returnNew)
+                                                                .upsert(upsert);
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
+                                                                  getBufferPool(), getSession(), false);
             }
         }
 
-        final FindAndModifyCommandResultCodec<DBObject> findAndModifyCommandResultCodec =
-                new FindAndModifyCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
-
-        final FindAndModifyCommandResult<DBObject> commandResult;
-        try {
-            final org.mongodb.CommandResult executionResult = new CommandOperation(getDB().getName(), mongoCommand,
-                    findAndModifyCommandResultCodec, getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
-            commandResult = new FindAndModifyCommandResult<DBObject>(executionResult);
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
-
-        return commandResult.getValue();
+        return executeOperation(operation);
     }
 
     /**
@@ -1501,7 +1489,7 @@ public class DBCollection {
      */
     public void drop() {
         try {
-            getDB().executeCommand(new Drop(getName()));
+            getDB().executeCommand(new Command(new Document("drop", getName())));
         } catch (CommandFailureException ex) {
             if (!"ns not found".equals(ex.getCommandResult().getErrorMessage())) {
                 throw ex;
@@ -1540,7 +1528,6 @@ public class DBCollection {
         this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
     }
 
-
     /**
      * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
      *
@@ -1548,21 +1535,8 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        final ArrayList<DBObject> res = new ArrayList<DBObject>();
-
-        final Find queryForCollectionNamespace = new Find(
-                new Document(NAMESPACE_KEY_NAME, getNamespace().getFullName()))
-                .readPreference(org.mongodb.ReadPreference.primary());
-
         try {
-            MongoCursor<Document> cursor =
-                    new QueryOperation<Document>(new MongoNamespace(database.getName(), "system.indexes"), queryForCollectionNamespace,
-                            documentCodec, documentCodec, getBufferPool(), getSession(), false).execute();
-
-            while (cursor.hasNext()) {
-                res.add(DBObjects.toDBObject(cursor.next()));
-            }
-            return res;
+            return new GetIndexesOperation<DBObject>(getBufferPool(), getSession(), getNamespace(), objectCodec).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -1589,7 +1563,7 @@ public class DBCollection {
     }
 
     public CommandResult getStats() {
-        final org.mongodb.CommandResult commandResult = getDB().executeCommand(new CollStats(getName()));
+        final org.mongodb.CommandResult commandResult = getDB().executeCommand(new Command(new Document("collStats", getName())));
         return new CommandResult(commandResult);
     }
 

@@ -68,10 +68,6 @@ public abstract class FindAndModify extends Query {
         return sortCriteria;
     }
 
-    public boolean isRemove() {
-        return false;
-    }
-
     // TODO: Doesn't make sense for find and remove
     public boolean isReturnNew() {
         return returnNew;

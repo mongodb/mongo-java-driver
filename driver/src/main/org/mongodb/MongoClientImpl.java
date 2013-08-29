@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
@@ -35,7 +34,6 @@ class MongoClientImpl implements MongoClient {
 
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
-    private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
     private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -90,7 +88,7 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientAdministration tools() {
-        return new ClientAdministrationImpl(this, primitiveCodecs);
+        return new ClientAdministrationImpl(this);
     }
 
     public AsyncServerSelectingSession getAsyncSession() {

@@ -36,7 +36,7 @@ public class RenameCollectionOptions {
         this.dropTarget = dropTarget;
     }
 
-    Document toDocument(final String databaseName) {
+    public Document toDocument(final String databaseName) {
         return new Document("renameCollection", asNamespaceString(databaseName, originalCollectionName))
                .append("to", asNamespaceString(databaseName, newCollectionName))
                .append("dropTarget", dropTarget);

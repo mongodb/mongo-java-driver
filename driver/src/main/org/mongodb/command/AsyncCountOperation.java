@@ -42,7 +42,9 @@ public class AsyncCountOperation extends BaseCountOperation implements AsyncServ
     public MongoFuture<Long> execute(final AsyncServerConnection connection) {
 
         MongoFuture<CommandResult> commandResultFuture = new AsyncCommandOperation(getCount().getNamespace().getDatabaseName(),
-                getCount(), getCodec(), null, getBufferProvider()).execute(connection);
+                                                                                   getCount().toDocument(), getCount().getReadPreference(),
+                                                                                   getCodec(), null, getBufferProvider()
+        ).execute(connection);
         return new MappingFuture<CommandResult, Long>(commandResultFuture, new Function<CommandResult, Long>() {
             @Override
             public Long apply(final CommandResult commandResult) {

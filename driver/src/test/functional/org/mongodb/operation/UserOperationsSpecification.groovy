@@ -17,6 +17,7 @@
 
 
 package org.mongodb.operation
+
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCredential
@@ -25,7 +26,10 @@ import org.mongodb.connection.impl.ConnectionSettings
 import org.mongodb.connection.impl.DefaultConnectionFactory
 import org.mongodb.connection.impl.NativeAuthenticationHelper
 
-import static org.mongodb.Fixture.*
+import static org.mongodb.Fixture.getBufferProvider
+import static org.mongodb.Fixture.getPrimary
+import static org.mongodb.Fixture.getSSLSettings
+import static org.mongodb.Fixture.getSession
 
 class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'

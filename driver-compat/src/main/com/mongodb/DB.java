@@ -58,6 +58,7 @@ public class DB {
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
     private final Bytes.OptionHolder optionHolder;
     private final Codec<Document> documentCodec;
+    private final Codec<Document> commandCodec = new org.mongodb.codecs.DocumentCodec();
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -176,7 +177,7 @@ public class DB {
         final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         try {
-            MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, documentCodec, documentCodec,
+            MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec,
                     getBufferPool(), getSession(), false).execute();
 
             final HashSet<String> collections = new HashSet<String>();
@@ -293,7 +294,7 @@ public class DB {
 
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
                                  final DBEncoder encoder) {
-        final Document document = toDocument(cmd, encoder, documentCodec);
+        final Document document = toDocument(cmd, encoder, commandCodec);
         final Command mongoCommand = new Command(document)
                 .readPreference(readPrefs.toNew())
                 .addFlags(QueryFlag.toSet(options));
@@ -437,8 +438,8 @@ public class DB {
     org.mongodb.CommandResult executeCommand(final Command command) {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
-            return new CommandOperation(getName(), command, documentCodec, getClusterDescription(), getBufferPool(),
-                    getSession(), false).execute();
+            return new CommandOperation(getName(), command.toDocument(), command.getReadPreference(), commandCodec, commandCodec,
+                                        getClusterDescription(), getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -447,8 +448,8 @@ public class DB {
     org.mongodb.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
         mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
         try {
-            return new CommandOperation(getName(), mongoCommand, documentCodec, getClusterDescription(), getBufferPool(), getSession(),
-                    false).execute();
+            return new CommandOperation(getName(), mongoCommand.toDocument(), mongoCommand.getReadPreference(), commandCodec, commandCodec,
+                                        getClusterDescription(), getBufferPool(), getSession(), false).execute();
         } catch (MongoCommandFailureException ex) {
             return ex.getCommandResult();
         } catch (org.mongodb.MongoException ex) {

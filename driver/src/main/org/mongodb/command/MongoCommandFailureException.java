@@ -19,6 +19,8 @@ package org.mongodb.command;
 import org.mongodb.CommandResult;
 import org.mongodb.operation.MongoServerException;
 
+import static java.lang.String.format;
+
 /**
  * Exception thrown when a command fails.
  */
@@ -28,8 +30,8 @@ public class MongoCommandFailureException extends MongoServerException {
     private final CommandResult commandResult;
 
     public MongoCommandFailureException(final CommandResult commandResult) {
-        super("Command failed with response " + commandResult.getResponse() + " on server " + commandResult.getAddress(),
-             commandResult.getAddress());
+        super(format("Command failed with error %s: '%s' on server %s", commandResult.getErrorCode(),
+                     commandResult.getErrorMessage(), commandResult.getAddress()), commandResult.getAddress());
         this.commandResult = commandResult;
     }
 

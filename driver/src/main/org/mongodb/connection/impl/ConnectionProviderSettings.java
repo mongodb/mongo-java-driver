@@ -18,6 +18,8 @@ package org.mongodb.connection.impl;
 
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 /**
@@ -43,7 +45,7 @@ public class ConnectionProviderSettings {
         private long maxWaitTimeMS;
         private long maxConnectionLifeTimeMS;
         private long maxConnectionIdleTimeMS;
-        private long maintenanceFrequencyMS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
 
         // CHECKSTYLE:OFF
         public Builder maxSize(final int maxSize) {
@@ -62,22 +64,22 @@ public class ConnectionProviderSettings {
         }
 
         public Builder maxWaitTime(final long maxWaitTime, final TimeUnit timeUnit) {
-            this.maxWaitTimeMS = TimeUnit.MILLISECONDS.convert(maxWaitTime, timeUnit);
+            this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
             return this;
         }
 
         public Builder maxConnectionLifeTime(final long maxConnectionLifeTime, final TimeUnit timeUnit) {
-            this.maxConnectionLifeTimeMS = TimeUnit.MILLISECONDS.convert(maxConnectionLifeTime, timeUnit);
+            this.maxConnectionLifeTimeMS = MILLISECONDS.convert(maxConnectionLifeTime, timeUnit);
             return this;
         }
 
         public Builder maxConnectionIdleTime(final long maxConnectionIdleTime, final TimeUnit timeUnit) {
-            this.maxConnectionIdleTimeMS = TimeUnit.MILLISECONDS.convert(maxConnectionIdleTime, timeUnit);
+            this.maxConnectionIdleTimeMS = MILLISECONDS.convert(maxConnectionIdleTime, timeUnit);
             return this;
         }
 
         public Builder maintenanceFrequency(final long maintenanceFrequency, final TimeUnit timeUnit) {
-            this.maintenanceFrequencyMS = TimeUnit.MILLISECONDS.convert(maintenanceFrequency, timeUnit);
+            this.maintenanceFrequencyMS = MILLISECONDS.convert(maintenanceFrequency, timeUnit);
             return this;
         }
         // CHECKSTYLE:ON
@@ -100,19 +102,19 @@ public class ConnectionProviderSettings {
     }
 
     public long getMaxWaitTime(final TimeUnit timeUnit) {
-        return timeUnit.convert(maxWaitTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxWaitTimeMS, MILLISECONDS);
     }
 
     public long getMaxConnectionLifeTime(final TimeUnit timeUnit) {
-        return timeUnit.convert(maxConnectionLifeTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxConnectionLifeTimeMS, MILLISECONDS);
     }
 
     public long getMaxConnectionIdleTime(final TimeUnit timeUnit) {
-        return timeUnit.convert(maxConnectionIdleTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxConnectionIdleTimeMS, MILLISECONDS);
     }
 
     public long getMaintenanceFrequency(final TimeUnit timeUnit) {
-        return timeUnit.convert(maintenanceFrequencyMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maintenanceFrequencyMS, MILLISECONDS);
     }
 
     @Override

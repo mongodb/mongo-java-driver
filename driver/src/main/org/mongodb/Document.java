@@ -248,6 +248,8 @@ public class Document implements Map<String, Object>, Serializable {
      */
     @Override
     public String toString() {
+        //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
+        // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
         final StringWriter writer = new StringWriter();
         final BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
         final Codec<Document> codec = new DocumentCodec(PrimitiveCodecs.createDefault());

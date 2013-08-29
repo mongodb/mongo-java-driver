@@ -18,7 +18,6 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 import org.mongodb.ReadPreference;
-import org.mongodb.command.Command;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterType;
 
@@ -50,47 +49,46 @@ public final class CommandReadPreferenceHelper {
     /**
      * Returns true if the command is a query in disguise.
      *
-     * @param command the command
+     * @param command the Document containing the details of the command
      * @return true if the command is a query, false otherwise.
      */
-    public static boolean isQuery(final Command command) {
-       return !isPrimaryRequired(command);
+    public static boolean isQuery(final Document command) {
+        return !isPrimaryRequired(command);
     }
 
     /**
      * Returns the recommended read preference for the given command when run against a cluster with the given description.
      *
-     * @param command the command
+     * @param commandDocument the Document describing the command to run
+     * @param readPreference the ReadPreference requested for the command
      * @param clusterDescription the cluster description
      * @return the recommended read preference for the given command when run against a cluster with the given description
      */
-    public static ReadPreference getCommandReadPreference(final Command command, final ClusterDescription clusterDescription) {
+    public static ReadPreference getCommandReadPreference(final Document commandDocument, final ReadPreference readPreference,
+                                                          final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == Single || clusterDescription.getType() != ClusterType.ReplicaSet) {
-            return command.getReadPreference();
+            return readPreference;
         }
 
-        boolean primaryRequired = isPrimaryRequired(command);
+        final boolean primaryRequired = isPrimaryRequired(commandDocument);
 
         if (primaryRequired) {
             return ReadPreference.primary();
-        }
-        else {
-            return command.getReadPreference();
+        } else {
+            return readPreference;
         }
     }
 
-    private static boolean isPrimaryRequired(final Command command) {
-        Document commandDocument = command.toDocument();
-        String commandName = commandDocument.keySet().iterator().next().toLowerCase();
+    private static boolean isPrimaryRequired(final Document commandDocument) {
+        final String commandName = commandDocument.keySet().iterator().next().toLowerCase();
 
-        boolean primaryRequired;
+        final boolean primaryRequired;
 
         // explicitly check for inline mapreduce commands
         if (commandName.equals("mapreduce")) {
             primaryRequired = !(commandDocument.get("out") instanceof Document)
-                    || ((Document) commandDocument.get("out")).get("inline") == null;
-        }
-        else {
+                              || ((Document) commandDocument.get("out")).get("inline") == null;
+        } else {
             primaryRequired = !OBEDIENT_COMMANDS.contains(commandName);
         }
         return primaryRequired;

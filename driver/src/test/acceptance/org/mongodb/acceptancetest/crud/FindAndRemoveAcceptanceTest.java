@@ -151,4 +151,21 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
         assertThat(documentRetrieved, is(nullValue()));
     }
 
+    @Test
+    public void shouldReturnFullDocumentThatWasRemoved() {
+        // given
+        final Document pete = new Document("name", "Pete").append("job", "handyman");
+        final Document sam = new Document("name", "Sam").append("job", "plumber");
+
+        collection.insert(pete);
+        collection.insert(sam);
+
+        // when
+        final Document removedDocument = collection.find(new Document("name", "Pete")).getOneAndRemove();
+
+        // then
+        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.find().getOne(), is(sam));
+        assertThat(removedDocument, is(pete));
+    }
 }

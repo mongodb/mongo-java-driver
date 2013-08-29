@@ -3,6 +3,9 @@
     <Match>
         <Class name="org.bson.JSONWriterSettings"/>
     </Match>
+    <Match>
+        <Bug code="EI,EI2"/>
+    </Match>
 
     <!-- ignore driver-compat for now - this should be addressed after bson/driver warnings fixed -->
     <Match>
@@ -10,11 +13,6 @@
     </Match>
 
     <!-- these specific issues are deliberate design decisions -->
-    <Match>
-        <Class name="org.bson.LazyBSONObject">
-            <Bug pattern="EI_EXPOSE_REP2"/>
-        </Class>
-    </Match>
     <Match>
         <Class name="com.mongodb.codecs.DocumentCodec">
             <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
@@ -34,15 +32,6 @@
         <Class name="com.mongodb.DatabaseTestCase">
             <Bug pattern="MS_PKGPROTECT"/>
         </Class>
-    </Match>
-    <Match>
-        <Class name="org.mongodb.BSONDocumentBuffer"/>
-        <Method name="&lt;init&gt;"/>
-        <Bug pattern="EI_EXPOSE_REP2"/>
-    </Match>
-    <Match>
-        <Class name="org.mongodb.codecs.pojo.ArrayWrapper"/>
-        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
     <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
