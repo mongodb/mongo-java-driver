@@ -17,7 +17,9 @@
 package com.mongodb.util;
 
 /**
- * Exception throw when invalid JSON is passed to JSONParser.
+ * Exception that is thrown when invalid JSON is encountered by the parser.
+ * <p>
+ * The error message is formatted so that it points to the first 
  * <p/>
  * This exception creates a message that points to the first
  * offending character in the JSON string:
