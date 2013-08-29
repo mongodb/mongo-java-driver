@@ -22,43 +22,15 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.connection.Cluster
-import org.mongodb.connection.ClusterSettings
-import org.mongodb.connection.ClusterableServerFactory
-import org.mongodb.connection.ConnectionFactory
-import org.mongodb.connection.ServerAddress
-import org.mongodb.connection.impl.DefaultClusterFactory
-import org.mongodb.connection.impl.DefaultClusterableServerFactory
-import org.mongodb.connection.impl.DefaultConnectionFactory
-import org.mongodb.connection.impl.DefaultConnectionProviderFactory
-import org.mongodb.session.ClusterSession
-import org.mongodb.session.Session
 
-import static java.util.concurrent.Executors.newScheduledThreadPool
 import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.Fixture.getOptions
-import static org.mongodb.Fixture.getSSLSettings
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
-import static org.mongodb.connection.ClusterConnectionMode.Single
 
 class GetIndexesOperationSpecification extends FunctionalSpecification {
-    private final ConnectionFactory connectionFactory = new DefaultConnectionFactory(getOptions().connectionSettings,
-                                                                                     getSSLSettings(), getBufferProvider(), [])
-
-    private final ClusterableServerFactory clusterableServerFactory = new DefaultClusterableServerFactory(
-            getOptions().serverSettings, new DefaultConnectionProviderFactory(getOptions().connectionProviderSettings, connectionFactory),
-            null, connectionFactory, newScheduledThreadPool(3), getBufferProvider())
-
-    private final ClusterSettings clusterSettings = ClusterSettings.builder()
-                                                                   .mode(Single)
-                                                                   .hosts([new ServerAddress()])
-                                                                   .build()
-    private final Cluster cluster = new DefaultClusterFactory().create(clusterSettings, clusterableServerFactory)
-    private final Session session = new ClusterSession(cluster)
-
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new DocumentCodec());
+        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new DocumentCodec());
         collection.insert(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -71,7 +43,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should be able to use custom decoder for index information'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new IndexDecoder());
+        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new IndexDecoder());
         collection.insert(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -85,7 +57,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(bufferProvider, session, collection.getNamespace(), new DocumentCodec());
+        def operation = new GetIndexesOperation(bufferProvider, getSession(), collection.getNamespace(), new DocumentCodec());
         collection.tools().ensureIndex(Index.builder().addKey('theField', ASC).build());
 
         when:
