@@ -39,6 +39,10 @@ class TestConnectionFactory implements ConnectionFactory {
         return createdConnections;
     }
 
+    int getNumCreatedConnections() {
+        return createdConnections.size();
+    }
+
     public static class TestConnection implements Connection {
         private final ServerAddress serverAddress;
         private boolean closed;

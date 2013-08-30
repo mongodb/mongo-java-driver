@@ -18,12 +18,6 @@
 
 
 
-
-
-
-
-
-
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -31,9 +25,7 @@ import org.mongodb.connection.Connection
 import org.mongodb.connection.ConnectionFactory
 import org.mongodb.connection.MongoSocketWriteException
 import org.mongodb.connection.MongoTimeoutException
-import org.mongodb.connection.MongoWaitQueueFullException
 import org.mongodb.connection.ServerAddress
-import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -128,122 +120,6 @@ class DefaultChannelProviderSpecification extends Specification {
 
         then:
         connectionGetter.gotTimeout
-    }
-
-    @Ignore
-    def 'should throw on wait queue full'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxWaitTime(1000, MILLISECONDS)
-                        .build())
-
-        provider.get()
-
-        TimeoutTrackingConnectionGetter timeoutTrackingGetter = new TimeoutTrackingConnectionGetter(provider)
-        Thread.sleep(100)
-        new Thread(timeoutTrackingGetter).start()
-
-        when:
-        provider.get()
-
-        then:
-        thrown(MongoWaitQueueFullException)
-    }
-
-    def 'should expire channel after max life time'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build())
-
-        when:
-        provider.get().close()
-        Thread.sleep(50)
-        provider.doMaintenance()
-        provider.get()
-
-        then:
-        2 * connectionFactory.create(SERVER_ADDRESS)
-    }
-
-    def 'should expire channel after max life time on close'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
-                connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build())
-
-        when:
-        def channel = provider.get()
-        Thread.sleep(50)
-        channel.close()
-
-        then:
-        connectionFactory.getCreatedConnections().get(0).isClosed()
-    }
-
-    def 'should expire channel after max idle time'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
-                connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxConnectionIdleTime(20, MILLISECONDS).build())
-
-        when:
-        def channel = provider.get()
-        channel.close()
-        Thread.sleep(50)
-        provider.doMaintenance()
-        provider.get()
-
-        then:
-        2 * connectionFactory.create(SERVER_ADDRESS)
-    }
-
-    def 'should close channel after expiration'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
-                connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build())
-
-        when:
-        provider.get().close()
-        Thread.sleep(50)
-        provider.doMaintenance()
-        provider.get()
-
-        then:
-        connectionFactory.getCreatedConnections().get(0).isClosed()
-    }
-
-    def 'should create new channel after expiration'() throws InterruptedException {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
-                connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(5, MILLISECONDS).build())
-
-        when:
-        provider.get().close()
-        Thread.sleep(50)
-        provider.doMaintenance()
-        def secondChannel = provider.get()
-
-        then:
-        secondChannel != null
-        2 * connectionFactory.create(SERVER_ADDRESS)
     }
 
     def 'should expire all channel after exception'() throws InterruptedException {
@@ -353,25 +229,5 @@ class DefaultChannelProviderSpecification extends Specification {
 
         then:
         connectionFactory.createdConnections.size() == 5
-    }
-
-    def 'should prune after maintenance task runs'() {
-        given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
-                connectionFactory,
-                ChannelProviderSettings.builder()
-                        .maxSize(10)
-                        .maxConnectionLifeTime(1, MILLISECONDS)
-                        .maintenanceFrequency(5, MILLISECONDS)
-                        .maxWaitQueueSize(1)
-                        .build())
-        provider.get().close()
-
-        when:
-        Thread.sleep(10)
-        provider.doMaintenance()
-
-        then:
-        connectionFactory.createdConnections.get(0).isClosed()
     }
 }
