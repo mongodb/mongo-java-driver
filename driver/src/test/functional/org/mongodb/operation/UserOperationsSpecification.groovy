@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -25,12 +27,14 @@ import org.mongodb.connection.MongoSecurityException
 import org.mongodb.connection.impl.ConnectionSettings
 import org.mongodb.connection.impl.DefaultConnectionFactory
 import org.mongodb.connection.impl.NativeAuthenticationHelper
+import spock.lang.Ignore
 
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
 
+@Ignore
 class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
     def password = '123'.toCharArray()
