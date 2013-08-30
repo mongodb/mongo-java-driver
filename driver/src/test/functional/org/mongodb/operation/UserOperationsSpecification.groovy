@@ -18,15 +18,18 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCredential
 import org.mongodb.connection.MongoSecurityException
-import org.mongodb.connection.impl.ConnectionSettings
 import org.mongodb.connection.impl.DefaultConnectionFactory
 import org.mongodb.connection.impl.NativeAuthenticationHelper
+import org.mongodb.connection.impl.SocketSettings
+import org.mongodb.connection.impl.SocketStreamFactory
 import spock.lang.Ignore
 
 import static org.mongodb.Fixture.getBufferProvider
@@ -42,7 +45,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def connectionFactory
 
     def setup() {
-        connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
+        connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                 getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, getDatabaseName(), password)))
     }
 

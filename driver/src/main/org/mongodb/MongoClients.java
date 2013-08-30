@@ -30,6 +30,7 @@ import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
+import org.mongodb.connection.impl.SocketStreamFactory;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -110,7 +111,8 @@ public final class MongoClients {
                                                                                final MongoClientOptions options) {
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(options.getConnectionSettings(), options.getSslSettings(),
+        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(options.getSocketSettings(),
+                                                                                                         options.getSslSettings()),
                                                                                  bufferProvider, credentialList);
 
         final DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
@@ -123,9 +125,11 @@ public final class MongoClients {
                                                    new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
                                                                                         connectionFactory),
                                                    asyncConnectionProviderFactory,
-                                                   new DefaultConnectionFactory(options.getHeartbeatConnectionSettings(),
-                                                                                options.getSslSettings(),
-                                                                                bufferProvider,
+                                                   new DefaultConnectionFactory(
+                                                           new SocketStreamFactory(
+                                                                                   options.getHeartbeatSocketSettings(),
+                                                                                   options.getSslSettings()),
+                                                           bufferProvider,
                                                                                 Collections.<org.mongodb.MongoCredential>emptyList()),
                                                    Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                                                    bufferProvider);

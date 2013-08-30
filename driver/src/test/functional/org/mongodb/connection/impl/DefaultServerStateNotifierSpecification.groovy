@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.CommandResult
@@ -41,7 +43,7 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
                         newDescription = event.newValue
                     }
                 },
-                new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
+                new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                         getBufferProvider(), getCredentialList()), getBufferProvider())
     }
 

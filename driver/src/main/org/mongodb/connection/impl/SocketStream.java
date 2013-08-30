@@ -17,60 +17,81 @@
 package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
-import org.mongodb.MongoCredential;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.Stream;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
-class DefaultSocketConnection extends DefaultConnection {
+class SocketStream implements Stream {
     private final Socket socket;
+    private final ServerAddress address;
+    private final SocketSettings settings;
+    private volatile boolean isClosed;
 
-    public DefaultSocketConnection(final ServerAddress address, final ConnectionSettings settings,
-                                   final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
-                                   final SocketFactory socketFactory)  {
-        super(address, settings, credentialList, bufferProvider);
+    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory)  {
+        this.address = address;
+        this.settings = settings;
         try {
             socket = socketFactory.createSocket();
-            initialize(socket);
+            SocketStreamHelper.initialize(socket, address, settings);
         } catch (IOException e) {
             close();
-            throw new MongoSocketOpenException("Exception opening socket", getServerAddress(), e);
+            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
     }
 
     @Override
-    protected void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers) throws IOException {
         for (ByteBuf cur : buffers) {
             socket.getOutputStream().write(cur.array(), 0, cur.limit());
         }
     }
 
-    protected void read(final ByteBuf buffer) throws IOException {
+    public void read(final ByteBuf buffer) throws IOException {
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {
             final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
             if (bytesRead == -1) {
-                throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
+                throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }
             totalBytesRead += bytesRead;
         }
     }
 
+    @Override
+    public ServerAddress getAddress() {
+        return address;
+    }
+
+    /**
+     * Get the settings for this socket.
+     *
+     * @return the settings
+     */
+    SocketSettings getSettings() {
+        return settings;
+    }
+
+    @Override
     public void close() {
         try {
+            isClosed = true;
             if (socket != null) {
                 socket.close();
             }
-            super.close();
         } catch (IOException e) {
             // ignore
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

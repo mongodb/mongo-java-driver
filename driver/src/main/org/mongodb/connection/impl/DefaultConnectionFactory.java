@@ -20,56 +20,27 @@ import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
-import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.StreamFactory;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class DefaultConnectionFactory implements ConnectionFactory {
-    private final ConnectionSettings settings;
-    private final SSLSettings sslSettings;
-    private final SocketFactory socketFactory;
+    private StreamFactory streamFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultConnectionFactory(final ConnectionSettings settings,
-                                    final SSLSettings sslSettings, final BufferProvider bufferProvider,
+    public DefaultConnectionFactory(final StreamFactory streamFactory, final BufferProvider bufferProvider,
                                     final List<MongoCredential> credentialList) {
-        this.settings = notNull("settings", settings);
-        this.sslSettings = notNull("sslSettings", sslSettings);
-        this.socketFactory = null;
-        this.bufferProvider = notNull("bufferProvider", bufferProvider);
-        this.credentialList = notNull("credentialList", credentialList);
-    }
-
-    public DefaultConnectionFactory(final ConnectionSettings settings,
-                                    final SocketFactory socketFactory, final BufferProvider bufferProvider,
-                                    final List<MongoCredential> credentialList) {
-        this.settings = notNull("settings", settings);
-        this.sslSettings = null;
-        this.socketFactory = notNull("socketFactory", socketFactory);
+        this.streamFactory = streamFactory;
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
     }
 
     @Override
     public Connection create(final ServerAddress serverAddress) {
-        if (socketFactory != null) {
-            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider, socketFactory);
-        }
-        else if (sslSettings.isEnabled()) {
-            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider,
-                    SSLSocketFactory.getDefault());
-        }
-        else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            return new DefaultSocketConnection(serverAddress, settings, credentialList, bufferProvider, SocketFactory.getDefault());
-        }
-        else {
-            return new DefaultSocketChannelConnection(serverAddress, settings, credentialList, bufferProvider);
-        }
+        return new DefaultConnection(streamFactory.create(serverAddress), credentialList, bufferProvider);
     }
 }

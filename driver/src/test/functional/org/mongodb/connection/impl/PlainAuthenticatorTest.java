@@ -42,7 +42,7 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        connection = new DefaultSocketChannelConnection(new ServerAddress(host), ConnectionSettings.builder().build(),
+        connection = new DefaultConnection(new SocketChannelStream(new ServerAddress(host), SocketSettings.builder().build()),
                 Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool());
     }
 

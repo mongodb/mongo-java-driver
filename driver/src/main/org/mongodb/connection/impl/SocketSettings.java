@@ -16,7 +16,7 @@
 
 package org.mongodb.connection.impl;
 
-public class ConnectionSettings {
+public class SocketSettings {
     private final int connectTimeoutMS;
     private final int readTimeoutMS;
     private final boolean keepAlive;
@@ -60,8 +60,8 @@ public class ConnectionSettings {
             return this;
         }
 
-        public ConnectionSettings build() {
-            return new ConnectionSettings(this);
+        public SocketSettings build() {
+            return new SocketSettings(this);
         }
         // CHECKSTYLE:ON
     }
@@ -86,7 +86,7 @@ public class ConnectionSettings {
         return sendBufferSize;
     }
 
-    ConnectionSettings(final Builder builder) {
+    SocketSettings(final Builder builder) {
         connectTimeoutMS = builder.connectTimeoutMS;
         readTimeoutMS = builder.readTimeoutMS;
         keepAlive = builder.keepAlive;

@@ -46,11 +46,11 @@ public class SingleServerClusterTest {
                 ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts(Arrays.asList(getPrimary())).build(),
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
                         new DefaultChannelProviderFactory(ChannelProviderSettings.builder().maxSize(1).build(),
-                                new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(),
+                                new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                         getBufferProvider(), getCredentialList())),
                         null,
-                        new DefaultConnectionFactory(ConnectionSettings.builder().build(), getSSLSettings(), getBufferProvider(),
-                                getCredentialList()), Executors.newScheduledThreadPool(1), getBufferProvider()));
+                        new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                getBufferProvider(), getCredentialList()), Executors.newScheduledThreadPool(1), getBufferProvider()));
     }
 
     @After

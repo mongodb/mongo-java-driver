@@ -21,8 +21,8 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.AsyncConnectionSettings;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.impl.ChannelProviderSettings;
-import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.ServerSettings;
+import org.mongodb.connection.impl.SocketSettings;
 
 import java.util.concurrent.TimeUnit;
 
@@ -68,8 +68,8 @@ public final class MongoClientOptions {
     private final int asyncMaxPoolSize;
     private final long asyncKeepAliveTime;
     private final String requiredReplicaSetName;
-    private final ConnectionSettings connectionSettings;
-    private final ConnectionSettings heartbeatConnectionSettings;
+    private final SocketSettings socketSettings;
+    private final SocketSettings heartbeatSocketSettings;
     private final AsyncConnectionSettings asyncConnectionSettings;
     private final ChannelProviderSettings channelProviderSettings;
     private final ServerSettings serverSettings;
@@ -759,22 +759,22 @@ public final class MongoClientOptions {
      * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout,
      * socketTimeout and socketKeepAlive.
      *
-     * @return a ConnectionSettings object populated with the connection settings from this MongoClientOptions instance.
-     * @see ConnectionSettings
+     * @return a SocketSettings object populated with the connection settings from this MongoClientOptions instance.
+     * @see org.mongodb.connection.impl.SocketSettings
      */
-    ConnectionSettings getConnectionSettings() {
-        return connectionSettings;
+    SocketSettings getSocketSettings() {
+        return socketSettings;
     }
 
     /**
      * Gets the connection settings for the heartbeat thread (the background task that checks the state of the cluster) wrapped in a
      * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
      *
-     * @return a ConnectionSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
-     * @see ConnectionSettings
+     * @return a SocketSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
+     * @see org.mongodb.connection.impl.SocketSettings
      */
-    ConnectionSettings getHeartbeatConnectionSettings() {
-        return heartbeatConnectionSettings;
+    SocketSettings getHeartbeatSocketSettings() {
+        return heartbeatSocketSettings;
     }
 
     /**
@@ -896,13 +896,13 @@ public final class MongoClientOptions {
         requiredReplicaSetName = builder.requiredReplicaSetName;
         asyncKeepAliveTime = builder.asyncKeepAliveTime;
 
-        connectionSettings = ConnectionSettings.builder()
+        socketSettings = SocketSettings.builder()
                                                .connectTimeoutMS(connectTimeout)
                                                .readTimeoutMS(socketTimeout)
                                                .keepAlive(socketKeepAlive)
                                                .build();
 
-        heartbeatConnectionSettings = ConnectionSettings.builder()
+        heartbeatSocketSettings = SocketSettings.builder()
                                                         .connectTimeoutMS(heartbeatConnectTimeout)
                                                         .readTimeoutMS(heartbeatSocketTimeout)
                                                         .keepAlive(socketKeepAlive)

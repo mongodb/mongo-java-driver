@@ -17,34 +17,40 @@
 package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
-import org.mongodb.MongoCredential;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.Stream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 
-class DefaultSocketChannelConnection extends DefaultConnection {
-    private final SocketChannel socketChannel;
+import static org.mongodb.assertions.Assertions.isTrue;
 
-    public DefaultSocketChannelConnection(final ServerAddress address, final ConnectionSettings settings,
-                                          final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
-        super(address, settings, credentialList, bufferProvider);
+class SocketChannelStream implements Stream {
+    private final SocketChannel socketChannel;
+    private final ServerAddress address;
+    private final SocketSettings settings;
+    private volatile boolean isClosed;
+
+    public SocketChannelStream(final ServerAddress address, final SocketSettings settings) {
+        this.address = address;
+        this.settings = settings;
         try {
             socketChannel = SocketChannel.open();
-            initialize(socketChannel.socket());
+            SocketStreamHelper.initialize(socketChannel.socket(), address, settings);
         } catch (IOException e) {
             close();
-            throw new MongoSocketOpenException("Exception opening socket", getServerAddress(), e);
+            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
     }
 
     @Override
-    protected void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers) throws IOException {
+        isTrue("open", !isClosed());
+
         int totalSize = 0;
         ByteBuffer[] byteBufferArray = new ByteBuffer[buffers.size()];
         for (int i = 0; i < buffers.size(); i++) {
@@ -58,26 +64,48 @@ class DefaultSocketChannelConnection extends DefaultConnection {
         }
     }
 
-    protected void read(final ByteBuf buffer) throws IOException {
+    public void read(final ByteBuf buffer) throws IOException {
+        isTrue("open", !isClosed());
+
         int totalBytesRead = 0;
         while (totalBytesRead < buffer.limit()) {
             final int bytesRead = socketChannel.read(buffer.asNIO());
             if (bytesRead == -1) {
-                throw new MongoSocketReadException("Prematurely reached end of stream", getServerAddress());
+                throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }
             totalBytesRead += bytesRead;
         }
         buffer.flip();
     }
 
+    @Override
+    public ServerAddress getAddress() {
+        return address;
+    }
+
+    /**
+     * Get the settings for this socket.
+     *
+     * @return the settings
+     */
+    SocketSettings getSettings() {
+        return settings;
+    }
+
+    @Override
     public void close() {
         try {
+            isClosed = true;
             if (socketChannel != null) {
                 socketChannel.close();
             }
-            super.close();
         } catch (IOException e) {
             // ignore
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 }

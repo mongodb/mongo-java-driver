@@ -34,10 +34,10 @@ import org.mongodb.connection.MongoSocketWriteException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.Stream;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
@@ -48,24 +48,22 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
-abstract class DefaultConnection implements Connection {
+class DefaultConnection implements Connection {
 
     private final AtomicInteger incrementingId = new AtomicInteger();
 
-    private final ServerAddress serverAddress;
-    private ConnectionSettings settings;
+    private final Stream stream;
     private List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
     private String id;
 
-    DefaultConnection(final ServerAddress serverAddress, final ConnectionSettings settings, final List<MongoCredential> credentialList,
-                      final BufferProvider bufferProvider) {
-        this.serverAddress = notNull("serverAddress", serverAddress);
-        this.settings = notNull("settings", settings);
+    DefaultConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+        this.stream = stream;
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
+        initialize();
     }
 
     @Override
@@ -79,7 +77,7 @@ abstract class DefaultConnection implements Connection {
     }
 
     public ServerAddress getServerAddress() {
-        return serverAddress;
+        return stream.getAddress();
     }
 
     @Override
@@ -90,7 +88,7 @@ abstract class DefaultConnection implements Connection {
     public void sendMessage(final List<ByteBuf> byteBuffers) {
         isTrue("open", !isClosed());
         try {
-            write(byteBuffers);
+            stream.write(byteBuffers);
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -114,20 +112,16 @@ abstract class DefaultConnection implements Connection {
         }
     }
 
-    protected abstract void write(final List<ByteBuf> buffers) throws IOException;
-
-    protected abstract void read(final ByteBuf buffer) throws IOException;
-
     private MongoException translateReadException(final IOException e) {
         close();
         if (e instanceof SocketTimeoutException) {
-            throw new MongoSocketReadTimeoutException("Timeout while receiving message", serverAddress, (SocketTimeoutException) e);
+            throw new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), (SocketTimeoutException) e);
         }
         else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
             throw new MongoInterruptedException("Interrupted while receiving message", e);
         }
         else {
-            throw new MongoSocketReadException("Exception receiving message", serverAddress, e);
+            throw new MongoSocketReadException("Exception receiving message", getServerAddress(), e);
         }
     }
 
@@ -135,7 +129,7 @@ abstract class DefaultConnection implements Connection {
         ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
 
         final ReplyHeader replyHeader;
-        read(headerByteBuffer);
+        stream.read(headerByteBuffer);
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         try {
             replyHeader = new ReplyHeader(headerInputBuffer);
@@ -147,23 +141,13 @@ abstract class DefaultConnection implements Connection {
 
         if (replyHeader.getNumberReturned() > 0) {
             bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
-            read(bodyByteBuffer);
+            stream.read(bodyByteBuffer);
         }
 
         return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
     }
 
-    protected final void initialize(final Socket socket) throws IOException {
-        socket.setTcpNoDelay(true);
-        socket.setSoTimeout(settings.getReadTimeoutMS());
-        socket.setKeepAlive(settings.isKeepAlive());
-        if (settings.getReceiveBufferSize() > 0) {
-            socket.setReceiveBufferSize(settings.getReceiveBufferSize());
-        }
-        if (settings.getSendBufferSize() > 0) {
-            socket.setSendBufferSize(settings.getSendBufferSize());
-        }
-        socket.connect(getServerAddress().getSocketAddress(), settings.getConnectTimeoutMS());
+    private void initialize() {
         initializeConnectionId();
         authenticateAll();
         // try again if there was an exception calling getlasterror before authenticating

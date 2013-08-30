@@ -18,8 +18,8 @@ package com.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.impl.ChannelProviderSettings;
-import org.mongodb.connection.impl.ConnectionSettings;
 import org.mongodb.connection.impl.ServerSettings;
+import org.mongodb.connection.impl.SocketSettings;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
@@ -44,9 +44,9 @@ public class MongoClientOptions {
     private final SocketFactory socketFactory;
     private final boolean cursorFinalizerEnabled;
     private final ChannelProviderSettings channelProviderSettings;
-    private final ConnectionSettings connectionSettings;
+    private final SocketSettings socketSettings;
     private final ServerSettings serverSettings;
-    private final ConnectionSettings heartbeatConnectionSettings;
+    private final SocketSettings heartbeatSocketSettings;
 
     MongoClientOptions(final org.mongodb.MongoClientOptions proxied) {
         this(proxied, DefaultDBDecoder.FACTORY, DefaultDBEncoder.FACTORY,
@@ -78,12 +78,12 @@ public class MongoClientOptions {
                                                                .maxConnectionLifeTime(proxied.getMaxConnectionLifeTime(), MILLISECONDS)
                                                                .build();
 
-        connectionSettings = ConnectionSettings.builder()
+        socketSettings = SocketSettings.builder()
                                                .connectTimeoutMS(proxied.getConnectTimeout())
                                                .readTimeoutMS(proxied.getSocketTimeout())
                                                .keepAlive(proxied.isSocketKeepAlive())
                                                .build();
-        heartbeatConnectionSettings = ConnectionSettings.builder()
+        heartbeatSocketSettings = SocketSettings.builder()
                                                         .connectTimeoutMS(proxied.getHeartbeatConnectTimeout())
                                                         .readTimeoutMS(proxied.getHeartbeatSocketTimeout())
                                                         .keepAlive(proxied.isSocketKeepAlive())
@@ -409,16 +409,16 @@ public class MongoClientOptions {
         return channelProviderSettings;
     }
 
-    ConnectionSettings getConnectionSettings() {
-        return connectionSettings;
+    SocketSettings getSocketSettings() {
+        return socketSettings;
     }
 
     ServerSettings getServerSettings() {
         return serverSettings;
     }
 
-    ConnectionSettings getHeartbeatConnectionSettings() {
-        return heartbeatConnectionSettings;
+    SocketSettings getHeartbeatSocketSettings() {
+        return heartbeatSocketSettings;
     }
 
     @Override
