@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
@@ -39,10 +41,10 @@ import javax.management.ObjectName
 import java.lang.management.ManagementFactory
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static org.mongodb.Fixture.getPrimary
 
 class DefaultChannelProviderSpecification extends Specification {
-    private static final ServerAddress SERVER_ADDRESS = getPrimary()
+    private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
+
     private final TestConnectionFactory connectionFactory = Spy(TestConnectionFactory)
 
     @Subject
@@ -192,12 +194,12 @@ class DefaultChannelProviderSpecification extends Specification {
                 ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionIdleTime(5, MILLISECONDS).build())
+                        .maxConnectionIdleTime(20, MILLISECONDS).build())
 
         when:
         def channel = provider.get()
         channel.close()
-        Thread.sleep(10)
+        Thread.sleep(50)
         provider.doMaintenance()
         provider.get()
 
