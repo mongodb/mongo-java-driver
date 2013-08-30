@@ -42,18 +42,22 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 abstract class DefaultConnection implements Connection {
+
+    private final AtomicInteger incrementingId = new AtomicInteger();
+
     private final ServerAddress serverAddress;
     private ConnectionSettings settings;
     private List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
-    private int id;
+    private String id;
 
     DefaultConnection(final ServerAddress serverAddress, final ConnectionSettings settings, final List<MongoCredential> credentialList,
                       final BufferProvider bufferProvider) {
@@ -80,7 +84,7 @@ abstract class DefaultConnection implements Connection {
 
     @Override
     public String getId() {
-        return Integer.toString(id);
+        return id;
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers) {
@@ -166,14 +170,18 @@ abstract class DefaultConnection implements Connection {
 
     private void initializeConnectionId() {
         try {
-            CommandResult result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this,
-                    bufferProvider);
-            id = result.getResponse().getInteger("connectionId");
+            int connectionIdFromServer;
+            try {
+                CommandResult result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this,
+                        bufferProvider);
+                connectionIdFromServer = result.getResponse().getInteger("connectionId");
 
-        } catch (MongoCommandFailureException e) {
-            id = e.getCommandResult().getResponse().getInteger("connectionId");
+            } catch (MongoCommandFailureException e) {
+                connectionIdFromServer = e.getCommandResult().getResponse().getInteger("connectionId");
+            }
+            id = "conn" + connectionIdFromServer;
         } catch (Exception e) {
-            id = hashCode();
+            id = "conn*" + incrementingId.incrementAndGet() + "*";
         }
     }
 
