@@ -174,7 +174,7 @@ public class DefaultChannelProviderTest {
                 ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(5, MILLISECONDS).build());
+                        .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         // when
         provider.get().close();
