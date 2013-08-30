@@ -94,11 +94,11 @@ public class DefaultChannelProviderTest {
         // given
         provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
                 ChannelProviderSettings.builder()
-                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(20, MILLISECONDS).build());
+                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(50, MILLISECONDS).build());
 
         // when
         provider.get().close();
-        Thread.sleep(50);
+        Thread.sleep(100);
         provider.doMaintenance();
         provider.get();
 
@@ -126,19 +126,18 @@ public class DefaultChannelProviderTest {
     }
 
     @Test
-    public void shouldExpireChanelAfterMaxIdleTime() throws InterruptedException {
+    public void shouldExpireChannelAfterMaxIdleTime() throws InterruptedException {
         // given
         provider = new DefaultChannelProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ChannelProviderSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionIdleTime(20, MILLISECONDS).build());
+                        .maxConnectionIdleTime(50, MILLISECONDS).build());
 
         // when
-        Channel channel = provider.get();
-        channel.close();
-        Thread.sleep(50);
+        provider.get().close();
+        Thread.sleep(100);
         provider.doMaintenance();
         provider.get();
 
