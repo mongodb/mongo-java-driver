@@ -166,6 +166,10 @@ abstract class DefaultConnection implements Connection {
         socket.connect(getServerAddress().getSocketAddress(), settings.getConnectTimeoutMS());
         initializeConnectionId();
         authenticateAll();
+        // try again if there was an exception calling getlasterror before authenticating
+        if (id.contains("*")) {
+            initializeConnectionId();
+        }
     }
 
     private void initializeConnectionId() {
