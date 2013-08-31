@@ -16,7 +16,6 @@
 
 package org.mongodb.connection.impl;
 
-import org.bson.types.Binary;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCredential;
@@ -46,7 +45,7 @@ abstract class SaslAuthenticator extends Authenticator {
             final int conversationId = (Integer) res.getResponse().get("conversationId");
 
             while (!(Boolean) res.getResponse().get("done")) {
-                response = saslClient.evaluateChallenge(((Binary) res.getResponse().get("payload")).getData());
+                response = saslClient.evaluateChallenge(((byte[]) res.getResponse().get("payload")));
 
                 if (response == null) {
                     throw new MongoSecurityException(getCredential(),
