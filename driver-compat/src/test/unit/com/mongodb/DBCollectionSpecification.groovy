@@ -34,8 +34,9 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.Fixture.getBufferProvider
 
+//we want to explicitly state the namespaces of the exceptions that are thrown
+@SuppressWarnings('UnnecessaryQualifiedReference')
 class DBCollectionSpecification extends Specification {
-//    private final Mongo mongo = Mock()
     private final DB database = Mock()
     private final Session session = Mock()
     private final Cluster cluster = Mock()
@@ -104,6 +105,7 @@ class DBCollectionSpecification extends Specification {
         thrown(com.mongodb.MongoException)
     }
 
+    @SuppressWarnings('GrDeprecatedAPIUsage') //yes this is deprecated but still needs to be tested
     def 'should throw com.mongodb.CommandFailureException when group fails'() {
         given:
         database.executeCommand(_) >> {
@@ -151,37 +153,13 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.MongoException when drop fails'() {
         given:
-        database.executeCommand(_) >> {
-            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document(),
-                    15L))
-            throw mapException(exception)
-        }
+        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         collection.drop();
 
         then:
         thrown(com.mongodb.MongoException)
-    }
-
-    def 'should not throw com.mongodb.MongoException when ns not found'() {
-        given:
-        database.executeCommand(_) >> {
-            org.mongodb.MongoException exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document('errmsg', 'ns not found'),
-                    15L));
-
-            throw mapException(exception);
-        }
-
-        when:
-        collection.drop();
-
-        then:
-        notThrown(com.mongodb.MongoException)
     }
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException for findAndModify'() {

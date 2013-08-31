@@ -19,7 +19,7 @@ package org.mongodb;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.DropIndex;
-import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.GetIndexesOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
@@ -94,13 +94,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void drop() {
-        try {
-            database.executeCommand(dropCollectionCommand, null);
-        } catch (MongoCommandFailureException e) {
-            if (!e.getCommandResult().getErrorMessage().equals("ns not found")) {
-                throw e;
-            }
-        }
+        new DropCollectionOperation(client.getBufferProvider(), client.getSession(), false, collectionNamespace).execute();
     }
 
     @Override

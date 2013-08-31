@@ -51,6 +51,7 @@ import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
 import org.mongodb.operation.FindAndRemoveOperation;
@@ -1489,12 +1490,9 @@ public class DBCollection {
      */
     public void drop() {
         try {
-            getDB().executeCommand(new Command(new Document("drop", getName())));
-        } catch (CommandFailureException ex) {
-            if (!"ns not found".equals(ex.getCommandResult().getErrorMessage())) {
-                throw ex;
-            }
-            //otherwise ignore this, as dropping a DB that doesn't exist is fine
+            new DropCollectionOperation(getBufferPool(), getSession(), false, getNamespace()).execute();
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
         }
     }
 

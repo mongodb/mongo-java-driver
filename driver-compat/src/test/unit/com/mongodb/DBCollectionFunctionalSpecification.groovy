@@ -31,6 +31,28 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(BasicDBObject)
     }
 
+    def 'should drop collection that exists'() {
+        given:
+        collection.insert(~['name':'myName']);
+
+        when:
+        collection.drop();
+
+        then:
+        !(this.collectionName in database.getCollectionNames())
+    }
+
+    def 'should not error when dropping a collection that does not exist'() {
+        given:
+        !(this.collectionName in database.getCollectionNames())
+
+        when:
+        collection.drop();
+
+        then:
+        notThrown(MongoException)
+    }
+
     def 'should use top-level class for findAndModify'() {
         given:
         collection.setObjectClass(ClassA)

@@ -48,7 +48,6 @@ import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -68,17 +67,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(ReadPreference.primary(), collection.getReadPreference());
         assertEquals(WriteConcern.ACKNOWLEDGED, collection.getWriteConcern());
         assertEquals(0, collection.getOptions());
-    }
-
-    @Test
-    public void shouldDropCollection() {
-        //ensure collection exists
-        collection.insert(new BasicDBObject("name", "myName"));
-        assertThat(database.getCollectionNames(), hasItem(this.collectionName));
-
-        collection.drop();
-
-        assertThat(database.getCollectionNames(), not(hasItem(this.collectionName)));
     }
 
     @Test
@@ -501,6 +489,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         private static final long serialVersionUID = 3352369936048544621L;
     }
 
+    // used via reflection
+    @SuppressWarnings("UnusedDeclaration")
     public static class Tweet extends ReflectionDBObject {
         private long userId;
         private String message;
