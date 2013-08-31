@@ -147,20 +147,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testDropIndexAllIndexes() {
-        final DBCollection c = collection;
-
-        c.save(new BasicDBObject("x", 1));
-        assertEquals(1, c.getIndexInfo().size());
-
-        c.ensureIndex(new BasicDBObject("x", 1));
-        assertEquals(2, c.getIndexInfo().size());
-
-        c.dropIndexes();
-        assertEquals(1, c.getIndexInfo().size());
-    }
-
-    @Test
     public void testDropIndividualIndexes() {
         final DBCollection c = database.getCollection("dropindex2");
         c.drop();
@@ -301,19 +287,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldDropUniqueIndex() {
-        final DBCollection c = collection;
-
-        final BasicDBObject index = new BasicDBObject("x", 1);
-        c.ensureIndex(index, new BasicDBObject("unique", true));
-        assertEquals(2, c.getIndexInfo().size());
-        assertEquals(Boolean.TRUE, c.getIndexInfo().get(1).get("unique"));
-
-        c.dropIndex(index);
-        assertEquals(1, c.getIndexInfo().size());
-    }
-
-    @Test
     public void testEnsureNestedIndex() {
         final DBCollection c = collection;
 
@@ -323,23 +296,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, c.getIndexInfo().size());
         c.ensureIndex(new BasicDBObject("x.y", 1), "nestedIdx1", false);
         assertEquals(2, c.getIndexInfo().size());
-    }
-
-    @Test
-    public void shouldDropNestedIndexes() {
-        final DBCollection c = collection;
-
-        final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
-        c.save(newDoc);
-
-        final BasicDBObject index = new BasicDBObject("x.y", 1);
-
-        assertEquals(1, c.getIndexInfo().size());
-        c.ensureIndex(index);
-        assertEquals(2, c.getIndexInfo().size());
-
-        c.dropIndex(index);
-        assertEquals(1, c.getIndexInfo().size());
     }
 
     @Test

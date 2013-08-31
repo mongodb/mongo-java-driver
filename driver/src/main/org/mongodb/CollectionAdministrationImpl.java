@@ -18,8 +18,8 @@ package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.DropIndex;
 import org.mongodb.operation.DropCollectionOperation;
+import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.GetIndexesOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
@@ -97,19 +97,11 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void dropIndex(final Index index) {
-        final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), index.getName());
-        final CommandResult commandResult = database.executeCommand(dropIndex.toDocument(), dropIndex.getReadPreference());
-
-        ErrorHandling.handleErrors(commandResult);
-        //TODO: currently doesn't deal with errors
+        new DropIndexOperation(collectionNamespace, index.getName(), client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     @Override
     public void dropIndexes() {
-        final DropIndex dropIndex = new DropIndex(collectionNamespace.getCollectionName(), "*");
-        final CommandResult commandResult = database.executeCommand(dropIndex.toDocument(), dropIndex.getReadPreference());
-
-        ErrorHandling.handleErrors(commandResult);
-        //TODO: currently doesn't deal with errors
+        new DropIndexOperation(collectionNamespace, "*", client.getBufferProvider(), client.getSession(), false).execute();
     }
 }

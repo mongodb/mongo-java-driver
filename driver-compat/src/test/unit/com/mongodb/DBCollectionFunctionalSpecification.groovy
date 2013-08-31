@@ -33,7 +33,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop collection that exists'() {
         given:
-        collection.insert(~['name':'myName']);
+        collection.insert(~['name': 'myName']);
 
         when:
         collection.drop();
@@ -115,6 +115,65 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         1 * decoder.decode(_ as byte[], collection)
+    }
+
+    def 'drop index should not fail if collection does not exist'() {
+        given:
+        collection.drop();
+
+        expect:
+        collection.dropIndex('indexOnCollectionThatDoesNotExist');
+    }
+
+    def 'drop index should error if index does not exist'() {
+        given:
+        collection.ensureIndex(new BasicDBObject('x', 1));
+
+        when:
+        collection.dropIndex('y_1');
+
+        then:
+        CommandFailureException exception = thrown(CommandFailureException)
+        exception.getCommandResult().getErrorMessage() == 'index not found'
+    }
+
+    def 'should drop nested index'() {
+        given:
+        collection.save(new BasicDBObject('x', new BasicDBObject('y', 1)));
+        BasicDBObject index = new BasicDBObject('x.y', 1);
+        collection.ensureIndex(index);
+        assert collection.indexInfo.size() == 2
+
+        when:
+        collection.dropIndex(index);
+
+        then:
+        collection.indexInfo.size() == 1
+    }
+
+    def 'should drop all indexes except the default index on _id'() {
+        given:
+        collection.ensureIndex(new BasicDBObject('x', 1));
+        collection.ensureIndex(new BasicDBObject('x.y', 1));
+        assert collection.indexInfo.size() == 3
+
+        when:
+        collection.dropIndexes();
+
+        then:
+        collection.indexInfo.size() == 1
+    }
+
+    def 'should drop unique index'() {
+        given:
+        BasicDBObject index = new BasicDBObject('x', 1);
+        collection.ensureIndex(index, new BasicDBObject('unique', true));
+
+        when:
+        collection.dropIndex(index);
+
+        then:
+        collection.indexInfo.size() == 1
     }
 
     static class ClassA extends BasicDBObject { }

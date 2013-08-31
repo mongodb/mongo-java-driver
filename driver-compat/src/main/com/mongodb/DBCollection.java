@@ -42,7 +42,6 @@ import org.mongodb.command.Command;
 import org.mongodb.command.CountOperation;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
-import org.mongodb.command.DropIndex;
 import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
@@ -52,6 +51,7 @@ import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.DropCollectionOperation;
+import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
 import org.mongodb.operation.FindAndRemoveOperation;
@@ -1533,27 +1533,21 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        try {
-            return new GetIndexesOperation<DBObject>(getNamespace(), objectCodec, getBufferPool(), getSession()).execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return executeOperation(new GetIndexesOperation<DBObject>(getNamespace(), objectCodec, getBufferPool(), getSession()));
     }
 
     public void dropIndex(final DBObject keys) {
         final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(keys);
         final Index indexToDrop = Index.builder().addKeys(keysFromDBObject).build();
-        final DropIndex dropIndex = new DropIndex(getName(), indexToDrop.getName());
-        getDB().executeCommand(dropIndex);
+        dropIndex(indexToDrop.getName());
     }
 
     public void dropIndex(final String name) {
-        final DropIndex dropIndex = new DropIndex(getName(), name);
-        getDB().executeCommand(dropIndex);
+        executeOperation(new DropIndexOperation(getNamespace(), name, getBufferPool(), getSession(), false));
     }
 
     public void dropIndexes() {
-        dropIndexes("*");
+        dropIndex("*");
     }
 
     public void dropIndexes(final String name) {
