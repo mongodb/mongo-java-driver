@@ -25,7 +25,7 @@ import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.protocol.CommandProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProviderOptions;
+import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 public class DropCollectionOperation extends BaseOperation<CommandResult> {
@@ -43,9 +43,9 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
     @Override
     public CommandResult execute() {
         try {
-            final ServerConnectionProvider provider = getServerConnectionProvider();
+            final ServerChannelProvider provider = getServerChannelProvider();
             return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec, getBufferProvider(),
-                                       provider.getServerDescription(), provider.getConnection(), true).execute();
+                                       provider.getServerDescription(), provider.getChannel(), true).execute();
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptionsWhenDroppingACollection(e);
         }
@@ -58,8 +58,7 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
         return e.getCommandResult();
     }
 
-    private ServerConnectionProvider getServerConnectionProvider() {
-        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+    private ServerChannelProvider getServerChannelProvider() {
+        return getSession().createServerChannelProvider(new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
     }
-
 }

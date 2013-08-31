@@ -153,7 +153,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw com.mongodb.MongoException when drop fails'() {
         given:
-        session.createServerConnectionProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
+        session.createServerChannelProvider(_) >> { throw new org.mongodb.MongoInternalException('Exception that should not escape') }
 
         when:
         collection.drop();

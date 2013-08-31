@@ -17,6 +17,7 @@
 package org.mongodb.operation
 
 import org.mongodb.CommandResult
+import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoException
 import org.mongodb.MongoNamespace
@@ -40,6 +41,18 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         notThrown(MongoException)
         !commandResult.isOk()
         commandResult.errorMessage == 'ns not found'
+    }
+
+    def 'should drop a collection that exists'() {
+        given:
+        collection.insert(new Document('documentTo', 'createTheCollection'))
+        assert collectionName in database.tools().collectionNames
+
+        when:
+        new DropCollectionOperation(bufferProvider, session, false, getNamespace()).execute()
+
+        then:
+        !(collectionName in database.tools().collectionNames)
     }
 
 }
