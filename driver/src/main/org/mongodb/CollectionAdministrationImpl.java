@@ -44,7 +44,6 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     private final MongoNamespace collectionNamespace;
 
     private final Document collStatsCommand;
-    private final Document dropCollectionCommand;
 
     CollectionAdministrationImpl(final MongoClientImpl client,
                                  final PrimitiveCodecs primitiveCodecs,
@@ -56,7 +55,6 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new Document("collStats", collectionNamespace.getCollectionName());
-        dropCollectionCommand = new Document("drop", collectionNamespace.getCollectionName());
     }
 
     @Override

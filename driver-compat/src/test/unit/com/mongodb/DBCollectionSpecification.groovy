@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import org.mongodb.Document
