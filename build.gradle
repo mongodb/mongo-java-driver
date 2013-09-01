@@ -18,10 +18,12 @@ def configDir = new File(rootDir, 'config')
 
 buildscript {
     repositories {
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         mavenCentral()
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
+        classpath 'me.trnl:github-release-gradle-plugin:0.1-SNAPSHOT'
     }
 }
 
@@ -276,5 +278,4 @@ gradle.buildFinished { BuildResult result ->
 }
 
 apply from: 'gradle/ide-settings.gradle'
-apply from: 'gradle/maven-deployment.gradle'
-apply from: 'gradle/osgi-compatibility.gradle'
+apply from: 'gradle/release-process.gradle'
