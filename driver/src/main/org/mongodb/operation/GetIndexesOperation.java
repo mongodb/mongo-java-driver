@@ -22,8 +22,8 @@ public class GetIndexesOperation<T> extends BaseOperation<List<T>> {
     private final Find queryForCollectionNamespace;
     private final Decoder<T> resultDecoder;
 
-    public GetIndexesOperation(final BufferProvider bufferProvider, final Session session, final MongoNamespace collectionNamespace,
-                               final Decoder<T> resultDecoder) {
+    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> resultDecoder,
+                               final BufferProvider bufferProvider, final Session session) {
         super(bufferProvider, session, false);
         this.resultDecoder = notNull("resultDecoder", resultDecoder);
         notNull("collectionNamespace", collectionNamespace);

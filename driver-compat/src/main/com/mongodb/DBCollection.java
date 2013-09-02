@@ -1536,7 +1536,7 @@ public class DBCollection {
      */
     public List<DBObject> getIndexInfo() {
         try {
-            return new GetIndexesOperation<DBObject>(getBufferPool(), getSession(), getNamespace(), objectCodec).execute();
+            return new GetIndexesOperation<DBObject>(getNamespace(), objectCodec, getBufferPool(), getSession()).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

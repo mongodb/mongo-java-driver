@@ -72,8 +72,8 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public List<Document> getIndexes() {
-        return new GetIndexesOperation<Document>(client.getBufferProvider(), client.getSession(),
-                                                 collectionNamespace, documentCodec).execute();
+        return new GetIndexesOperation<Document>(collectionNamespace, documentCodec, client.getBufferProvider(), client.getSession())
+               .execute();
     }
 
     @Override
