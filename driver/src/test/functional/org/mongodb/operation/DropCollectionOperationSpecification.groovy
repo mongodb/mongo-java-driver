@@ -30,9 +30,9 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
 
     def 'should not throw an Exception when the namespace is not found'() {
         given:
-        DropCollectionOperation operation = new DropCollectionOperation(bufferProvider, session, false,
-                                                                        new MongoNamespace('non-existing-database' + currentTimeMillis(),
-                                                                                           'coll'))
+        DropCollectionOperation operation = new DropCollectionOperation(new MongoNamespace('non-existing-database' + currentTimeMillis(),
+                                                                                           'coll'),
+                                                                        bufferProvider, session, false)
 
         when:
         CommandResult commandResult = operation.execute()
@@ -49,7 +49,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionName in database.tools().collectionNames
 
         when:
-        new DropCollectionOperation(bufferProvider, session, false, getNamespace()).execute()
+        new DropCollectionOperation(getNamespace(), bufferProvider, session, false).execute()
 
         then:
         !(collectionName in database.tools().collectionNames)

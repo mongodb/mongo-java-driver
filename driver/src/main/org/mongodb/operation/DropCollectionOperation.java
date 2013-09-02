@@ -28,13 +28,24 @@ import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
+/**
+ * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong,
+ * but it will not throw an Exception if the collection does not exist before trying to drop it.
+ */
 public class DropCollectionOperation extends BaseOperation<CommandResult> {
     private final MongoNamespace namespace;
     private final Document dropCollectionCommand;
     private final Codec<Document> commandCodec = new DocumentCodec();
 
-    public DropCollectionOperation(final BufferProvider bufferProvider, final Session session,
-                                   final boolean closeSession, final MongoNamespace namespace) {
+    /**
+     * Create the Operation to drop a Collection from MongoDB.
+     * @param namespace the database/collection namespace for the collection to be dropped
+     * @param bufferProvider the BufferProvider to use
+     * @param session the Session to use
+     * @param closeSession true of you want this operation to close the session after completion
+     */
+    public DropCollectionOperation(final MongoNamespace namespace, final BufferProvider bufferProvider, final Session session,
+                                   final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.namespace = namespace;
         dropCollectionCommand = new Document("drop", namespace.getCollectionName());

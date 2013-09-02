@@ -92,7 +92,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void drop() {
-        new DropCollectionOperation(client.getBufferProvider(), client.getSession(), false, collectionNamespace).execute();
+        new DropCollectionOperation(collectionNamespace, client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     @Override

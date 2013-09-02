@@ -1489,11 +1489,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop() {
-        try {
-            new DropCollectionOperation(getBufferPool(), getSession(), false, getNamespace()).execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        executeOperation(new DropCollectionOperation(getNamespace(), getBufferPool(), getSession(), false));
     }
 
     public synchronized DBDecoderFactory getDBDecoderFactory() {
@@ -1536,22 +1532,41 @@ public class DBCollection {
         return executeOperation(new GetIndexesOperation<DBObject>(getNamespace(), objectCodec, getBufferPool(), getSession()));
     }
 
-    public void dropIndex(final DBObject keys) {
-        final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(keys);
+    /**
+     * Drops an index from this collection.  The DBObject index parameter must match the specification of the index to drop, i.e. correct
+     * key name and type must be specified.
+     * @param index the specification of the index to drop
+     * @throws MongoException if the index does not exist
+     */
+    public void dropIndex(final DBObject index) {
+        final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(index);
         final Index indexToDrop = Index.builder().addKeys(keysFromDBObject).build();
         dropIndex(indexToDrop.getName());
     }
 
-    public void dropIndex(final String name) {
-        executeOperation(new DropIndexOperation(getNamespace(), name, getBufferPool(), getSession(), false));
+    /**
+     * Drops the index with the given name from this collection.
+     * @param indexName name of index to drop
+     * @throws MongoException if the index does not exist
+     */
+    public void dropIndex(final String indexName) {
+        executeOperation(new DropIndexOperation(getNamespace(), indexName, getBufferPool(), getSession(), false));
     }
 
+    /**
+     * Drop all indexes on this collection.  The default index on the _id field will not be deleted.
+     */
     public void dropIndexes() {
         dropIndex("*");
     }
 
-    public void dropIndexes(final String name) {
-        dropIndex(name);
+    /**
+     * Drops the index with the given name from this collection.  This method is exactly the same as {@code dropIndex(indexName)}.
+     * @param indexName name of index to drop
+     * @throws MongoException if the index does not exist
+     */
+    public void dropIndexes(final String indexName) {
+        dropIndex(indexName);
     }
 
     public CommandResult getStats() {

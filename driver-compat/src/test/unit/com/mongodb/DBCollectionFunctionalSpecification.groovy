@@ -137,6 +137,19 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         exception.getCommandResult().getErrorMessage() == 'index not found'
     }
 
+    def 'should throw Exception if dropping an index with an incorrect type'() {
+        given:
+        BasicDBObject index = new BasicDBObject('x', 1);
+        collection.ensureIndex(index);
+
+        when:
+        collection.dropIndex(new BasicDBObject('x', '2d'));
+
+        then:
+        CommandFailureException exception = thrown(CommandFailureException)
+        exception.getCommandResult().getErrorMessage() == 'index not found'
+    }
+
     def 'should drop nested index'() {
         given:
         collection.save(new BasicDBObject('x', new BasicDBObject('y', 1)));
