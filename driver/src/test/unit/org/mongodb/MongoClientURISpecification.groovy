@@ -26,6 +26,8 @@
 
 
 
+
+
 package org.mongodb
 
 import org.mongodb.connection.Tags
@@ -164,6 +166,10 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://jeff@localhost/?' +
                            'authMechanism=MONGODB-X509')      | Arrays.asList(MongoCredential.createMongoX509Credential('jeff'))
 
+        new MongoClientURI('mongodb://jeff@localhost/?' +
+                          'authMechanism=GSSAPI' +
+                          '&gssapiServiceName=foo')           | Arrays.asList(MongoCredential.createGSSAPICredential('jeff')
+                                                                                             .withMechanismProperty('SERVICE_NAME', 'foo'))
     }
 
     @Unroll

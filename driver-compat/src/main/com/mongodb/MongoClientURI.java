@@ -127,6 +127,8 @@ import static com.mongodb.MongoExceptions.mapException;
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
+ * </li>
  * <ul>
  * <p>
  * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in

@@ -85,13 +85,27 @@ public final class MongoCredential {
 
 
     /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default
+     * of {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
      *
      * @param userName the user name
      * @return the credential
+     * @see #withMechanismProperty(String, Object)
      */
     public static MongoCredential createGSSAPICredential(String userName) {
         return new MongoCredential(org.mongodb.MongoCredential.createGSSAPICredential(userName));
+    }
+
+    /**
+     * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
+     *
+     * @param key the key to the property
+     * @param value the value of the property
+     * @param <T> the property type
+     * @return the credential
+     */
+    public <T> MongoCredential withMechanismProperty(String key, T value) {
+         return new MongoCredential(proxied.withMechanismProperty(key, value));
     }
 
     /**
@@ -138,6 +152,19 @@ public final class MongoCredential {
     public char[] getPassword() {
         return proxied.getPassword();
     }
+
+    /**
+     * Get the value of the given key to a mechanism property, or defaultValue if there is no mapping.
+     *
+     * @param key the mechanism property key
+     * @param defaultValue the default value, if no mapping exists
+     * @param <T> the value type
+     * @return the mechanism property value
+     */
+    public <T> T getMechanismProperty(String key, T defaultValue) {
+        return proxied.getMechanismProperty(key, defaultValue);
+    }
+
 
     @Override
     public boolean equals(final Object o) {

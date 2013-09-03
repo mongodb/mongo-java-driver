@@ -35,6 +35,8 @@ import static org.mongodb.AuthenticationMechanism.GSSAPI;
 class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
     private static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
+    public static final String SERVICE_NAME_KEY = "SERVICE_NAME";
+    public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
 
     GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection,
                         final BufferProvider bufferProvider) {
@@ -58,7 +60,8 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
-                    MONGODB_PROTOCOL, getInternalConnection().getServerAddress().getHost(), props, null);
+                    credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
+                    getInternalConnection().getServerAddress().getHost(), props, null);
             if (saslClient == null) {
                 throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }

@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class MongoCredentialTest {
     @Test
@@ -69,6 +70,38 @@ public class MongoCredentialTest {
     }
 
     @Test
+    public void testMechanismPropertyDefaulting() {
+        // given
+        String firstKey = "firstKey";
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user");
+
+        // then
+        assertEquals("mongodb", credential.getMechanismProperty(firstKey, "mongodb"));
+    }
+
+    @Test
+    public void testMechanismPropertyMapping() {
+        // given
+        String firstKey = "firstKey";
+        String firstValue = "firstValue";
+        String secondKey = "secondKey";
+        Integer secondValue = 2;
+
+        // when
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user").withMechanismProperty(firstKey, firstValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+
+        // when
+        credential = credential.withMechanismProperty(secondKey, secondValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+        assertEquals(secondValue, credential.getMechanismProperty(secondKey, 1));
+    }
+
+    @Test
     public void testX509Mechanism() {
         MongoCredential credential;
 
@@ -86,10 +119,10 @@ public class MongoCredentialTest {
     public void testObjectOverrides() {
         final String userName = "user";
         final String database = "test";
-        final char[] password = "pwd".toCharArray();
-        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
-        assertEquals(MongoCredential.createMongoCRCredential(userName, database, password), credential);
-        assertEquals(MongoCredential.createMongoCRCredential(userName, database, password).hashCode(), credential.hashCode());
-        assertEquals("MongoCredential{mechanism='MONGODB-CR', userName='user', source='test', password=<hidden>}", credential.toString());
+        final String password = "pwd";
+        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password.toCharArray());
+        assertEquals(MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()), credential);
+        assertEquals(MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()).hashCode(), credential.hashCode());
+        assertFalse(credential.toString().contains(password));
     }
 }

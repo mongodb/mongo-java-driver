@@ -32,6 +32,8 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
 import static org.mongodb.assertions.Assertions.isTrue;
 
 class PlainAuthenticator extends SaslAuthenticator {
+    private static final String DEFAULT_PROTOCOL = "mongodb";
+
     PlainAuthenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
         super(credential, internalConnection, bufferProvider);
     }
@@ -47,7 +49,7 @@ class PlainAuthenticator extends SaslAuthenticator {
         isTrue("mechanism is PLAIN", credential.getMechanism() == PLAIN);
         try {
             return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()}, credential.getUserName(),
-                    MONGODB_PROTOCOL, getInternalConnection().getServerAddress().getHost(), null, new CallbackHandler() {
+                    DEFAULT_PROTOCOL, getInternalConnection().getServerAddress().getHost(), null, new CallbackHandler() {
                 @Override
                 public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                     for (Callback callback : callbacks) {

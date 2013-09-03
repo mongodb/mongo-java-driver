@@ -16,8 +16,6 @@
 
 
 
-
-
 package org.mongodb
 
 import spock.lang.Specification
@@ -126,6 +124,49 @@ class MongoCredentialSpecification extends Specification {
         null == credential.getPassword()
     }
 
+    def 'should get default value of mechanism property when there is no mapping'() {
+        when:
+        def credential = MongoCredential.createGSSAPICredential('user')
+
+        then:
+        credential.getMechanismProperty('unmappedKey', 'mongodb') == 'mongodb'
+    }
+
+    def 'should get mapped mechanism properties when there is a mapping'() {
+        given:
+        String firstKey = 'firstKey'
+        String firstValue = 'firstValue'
+        String secondKey = 'secondKey'
+        Integer secondValue = 2
+
+        when:
+        def credential = MongoCredential.createGSSAPICredential('user').withMechanismProperty(firstKey, firstValue)
+
+        then:
+        credential.getMechanismProperty(firstKey, 'default') == firstValue
+
+        when:
+        credential = credential.withMechanismProperty(secondKey, secondValue)
+
+        then:
+        credential.getMechanismProperty(firstKey, 'default') == firstValue
+        credential.getMechanismProperty(secondKey, 1) == secondValue
+    }
+
+    def 'should preserve other properties when adding a mechanism property'() {
+        given:
+        def  credential = MongoCredential.createPlainCredential('user', 'source', 'pwd'.toCharArray())
+
+        when:
+        def newCredential = credential.withMechanismProperty('foo', 'bar')
+
+        then:
+        newCredential.mechanism == credential.mechanism
+        newCredential.userName == credential.userName
+        newCredential.password == credential.password
+        newCredential.source == credential.source
+    }
+
     def 'should throw IllegalArgumentException if username is not provided to a GSSAPI credential'() {
         when:
         MongoCredential.createGSSAPICredential(null);
@@ -135,14 +176,25 @@ class MongoCredentialSpecification extends Specification {
     }
 
     def 'testObjectOverrides'() {
-        String userName = 'user';
-        String database = 'test';
-        char[] password = 'pwd'.toCharArray();
+        given:
+        String userName = 'user'
+        String database = 'test'
+        def password = 'pwd'
+        def propertyKey = 'keyOne'
+        def propertyValue = 'valueOne'
 
-        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
-        MongoCredential.createMongoCRCredential(userName, database, password) == credential
-        MongoCredential.createMongoCRCredential(userName, database, password).hashCode() == credential.hashCode()
-        "MongoCredential{mechanism='MONGODB-CR', userName='user', source='test', password=<hidden>}" == credential.toString()
+        when:
+        def credentialOne = MongoCredential.createMongoCRCredential(userName, database, password.toCharArray())
+        def credentialTwo = credentialOne.withMechanismProperty(propertyKey, propertyValue)
+
+        then:
+        MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()) == credentialOne
+        credentialOne.withMechanismProperty(propertyKey, propertyValue) == credentialTwo
+        credentialOne != credentialTwo
+
+        MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()).hashCode() == credentialOne.hashCode()
+        credentialOne.hashCode() != credentialTwo.hashCode()
+
+        !credentialOne.toString().contains(password)
     }
-
 }

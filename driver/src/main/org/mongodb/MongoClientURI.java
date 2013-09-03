@@ -147,6 +147,8 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
+ * </li>
  * <ul>
  * <p>
  *
@@ -304,6 +306,7 @@ public class MongoClientURI {
 
         authKeys.add("authmechanism");
         authKeys.add("authsource");
+        authKeys.add("gssapiservicename");
 
         allKeys.addAll(generalOptionsKeys);
         allKeys.addAll(authKeys);
@@ -441,6 +444,7 @@ public class MongoClientURI {
 
         AuthenticationMechanism mechanism = MONGODB_CR;
         String authSource = (database == null) ? "admin" : database;
+        String gssapiServiceName = null;
 
         for (String key : authKeys) {
             String value = getLastValue(optionsMap, key);
@@ -455,10 +459,17 @@ public class MongoClientURI {
             else if (key.equals("authsource")) {
                 authSource = value;
             }
+            else if (key.equals("gssapiservicename")) {
+                gssapiServiceName = value;
+            }
         }
 
         if (mechanism == GSSAPI) {
-            return MongoCredential.createGSSAPICredential(userName);
+            MongoCredential gssapiCredential = MongoCredential.createGSSAPICredential(userName);
+            if (gssapiServiceName != null) {
+               gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+            }
+            return gssapiCredential;
         }
         else if (mechanism == PLAIN) {
             return MongoCredential.createPlainCredential(userName, authSource, password);
