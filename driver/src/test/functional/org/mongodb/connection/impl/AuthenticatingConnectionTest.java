@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionFactory;
+import org.mongodb.connection.ServerAddress;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,15 +38,18 @@ public class AuthenticatingConnectionTest {
     private String userName;
     private String password;
     private String source;
+    private ServerAddress serverAddress;
 
     @Before
     public void setUp() throws Exception {
         userName = System.getProperty("org.mongodb.test.userName", "bob");
         password = System.getProperty("org.mongodb.test.password", "pwd123");
         source = System.getProperty("org.mongodb.test.source", "admin");
+        serverAddress = new ServerAddress(System.getProperty("org.mongodb.test.serverAddress", getPrimary().toString()));
+
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
-                getSSLSettings(),  getBufferProvider(), Collections.<MongoCredential>emptyList());
-        connection = connectionFactory.create(getPrimary());
+                getSSLSettings(), getBufferProvider(), Collections.<MongoCredential>emptyList());
+        connection = connectionFactory.create(serverAddress);
     }
 
     @After
@@ -57,34 +61,34 @@ public class AuthenticatingConnectionTest {
     @Ignore
     public void testMongoCRAuthentication() throws InterruptedException {
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
-                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, source,
+                getSSLSettings(), getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, source,
                 password.toCharArray())));
-        connection = connectionFactory.create(getPrimary());
+        connection = connectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
-    public void tesPlainAuthentication() throws InterruptedException {
+    public void testPlainAuthentication() throws InterruptedException {
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
-                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createPlainCredential(userName, source,
+                getSSLSettings(), getBufferProvider(), Arrays.asList(MongoCredential.createPlainCredential(userName, source,
                 password.toCharArray())));
-        connection = connectionFactory.create(getPrimary());
+        connection = connectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
-    public void tesGSSAPIAuthentication() throws InterruptedException {
+    public void testGSSAPIAuthentication() throws InterruptedException {
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
-                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)));
-        connection = connectionFactory.create(getPrimary());
+                getSSLSettings(), getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)));
+        connection = connectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
     public void testMongoX509Authentication() throws InterruptedException {
         ConnectionFactory connectionFactory = new DefaultConnectionFactory(ConnectionSettings.builder().build(),
-                getSSLSettings(),  getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
+                getSSLSettings(), getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
                 "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")));
-        connection = connectionFactory.create(getPrimary());
+        connection = connectionFactory.create(serverAddress);
     }
 }
