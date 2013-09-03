@@ -244,7 +244,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets this write concern as a document
      *
-     * @return The write concern as a Document, even if <code>w <= 0</code>
+     * @return The write concern as a Document, even if {@code w <= 0}
      * // TODO: Don't include getlasterror, let the caller do that.
      */
     public Document asDocument() {

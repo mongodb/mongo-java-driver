@@ -68,7 +68,7 @@ public class QueryBuilder implements ConvertibleToDocument {
     }
 
     /**
-     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable, e.g. {@code
+     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g. {@code
      * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
@@ -420,7 +420,7 @@ public class QueryBuilder implements ConvertibleToDocument {
     }
 
     /**
-     * Creates a <code>Document</code> query to be used for the driver's find operations
+     * Creates a {@code Document} query to be used for the driver's find operations
      *
      * @return Returns a Document query instance
      * @throws RuntimeException if a key does not have a matching operand

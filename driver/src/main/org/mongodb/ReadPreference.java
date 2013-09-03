@@ -35,12 +35,12 @@ public abstract class ReadPreference implements ConvertibleToDocument {
     }
 
     /**
-     * @return <code>true</code> if this preference allows reads or commands from secondary nodes
+     * @return {@code true} if this preference allows reads or commands from secondary nodes
      */
     public abstract boolean isSlaveOk();
 
     /**
-     * @return <code>DBObject</code> representation of this preference
+     * @return {@code DBObject} representation of this preference
      */
     @Override
     public abstract Document toDocument();

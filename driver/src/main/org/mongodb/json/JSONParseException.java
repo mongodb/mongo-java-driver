@@ -17,6 +17,8 @@
 package org.mongodb.json;
 
 
+import static java.lang.String.format;
+
 /**
  * JSONParseException indicates some exception happened during JSON processing.
  */
@@ -42,15 +44,19 @@ public class JSONParseException extends RuntimeException {
     }
 
     /**
-     * Constructs a new runtime exception with string formated using specified pattern and arguments.
+     * Constructs a new runtime exception with string formatted using specified pattern and arguments.
      *
      * @param pattern A {@link  java.util.Formatter format string}.
-     * @param args
+     * @param args the arguments to insert into the pattern String
      */
     public JSONParseException(final String pattern, final Object... args) {
-        super(String.format(pattern, args));
+        super(format(pattern, args));
     }
 
+    /**
+     * Create a JSONParseException with the given {@link Throwable} cause.
+     * @param t the throwable root case
+     */
     public JSONParseException(final Throwable t) {
         super(t);
     }

@@ -72,7 +72,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     /**
-     * Checks if a string could be an <code>ObjectId</code>.
+     * Checks if a string could be an {@code ObjectId}.
      *
      * @return whether the string could be an object id
      * @throws IllegalArgumentException if hexString is null

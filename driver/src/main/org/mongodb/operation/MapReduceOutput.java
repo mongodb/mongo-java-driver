@@ -61,7 +61,7 @@ public class MapReduceOutput {
     /**
      * Specify the {@code Action} to be used when writing to a collection that already exists.
      *
-     * @param action
+     * @param action an {@link Action} to perform on the Collection
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
     public MapReduceOutput action(final Action action) {
