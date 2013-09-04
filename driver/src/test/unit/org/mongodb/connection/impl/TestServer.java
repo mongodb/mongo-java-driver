@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
+
+import org.mongodb.connection.AsyncServerConnection;
+import org.mongodb.connection.ChangeEvent;
+import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.Channel;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 

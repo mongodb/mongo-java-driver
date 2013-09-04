@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -33,7 +35,6 @@ import org.mongodb.connection.ClusterType
 import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerDescription
 import org.mongodb.connection.ServerType
-import org.mongodb.connection.TestClusterableServerFactory
 import org.mongodb.session.PrimaryServerSelector
 import spock.lang.Specification
 

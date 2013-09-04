@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
+
+import org.mongodb.connection.Channel;
 
 import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 
-public interface ChannelProvider extends Closeable {
+interface ChannelProvider extends Closeable {
 
     Channel get();
 

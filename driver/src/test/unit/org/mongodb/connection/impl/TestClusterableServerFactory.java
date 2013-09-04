@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
+
+import org.mongodb.connection.ServerAddress;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,11 +16,17 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.MongoCredential;
+import org.mongodb.connection.AsyncConnectionProviderFactory;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterFactory;
 import org.mongodb.connection.ClusterSettings;
-import org.mongodb.connection.ClusterableServerFactory;
+import org.mongodb.connection.StreamFactory;
+
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * The default factory for cluster implementations.
@@ -28,12 +34,25 @@ import org.mongodb.connection.ClusterableServerFactory;
  * @since 3.0
  */
 public final class DefaultClusterFactory implements ClusterFactory {
-
     public DefaultClusterFactory() {
     }
 
     @Override
-    public Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
+                          final ChannelProviderSettings channelProviderSettings, final StreamFactory streamFactory,
+                          final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
+                          final StreamFactory heartbeatStreamFactory, final ScheduledExecutorService scheduledExecutorService,
+                          final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(
+                serverSettings,
+                channelProviderSettings,
+                streamFactory,
+                asyncConnectionProviderFactory,
+                heartbeatStreamFactory,
+                scheduledExecutorService,
+                credentialList,
+                bufferProvider);
+
         if (settings.getMode() == ClusterConnectionMode.Single) {
             return new SingleServerCluster(settings, serverFactory);
         }

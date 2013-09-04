@@ -28,12 +28,9 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
-import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
-import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.connection.impl.SocketStreamFactory;
 import org.mongodb.operation.ServerChannelProvider;
@@ -657,39 +654,36 @@ public class Mongo {
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        return new DefaultClusterFactory().create(
+        return createCluster(
                 ClusterSettings.builder().hosts(createNewSeedList(seedList))
                         .requiredReplicaSetName(options.getRequiredReplicaSetName())
                         .build(),
-                createClusterableServerFactory(credentialsList, options));
+                credentialsList, options);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
-        return new DefaultClusterFactory().create(
-                                                 ClusterSettings.builder()
-                                                                .mode(getSingleServerClusterMode(options.toNew()))
-                                                                .hosts(Arrays.asList(serverAddress.toNew()))
-                                                                .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                                                .build(),
-                                                 createClusterableServerFactory(credentialsList, options)
-                                                 );
+        return createCluster(
+                ClusterSettings.builder()
+                        .mode(getSingleServerClusterMode(options.toNew()))
+                        .hosts(Arrays.asList(serverAddress.toNew()))
+                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                        .build(),
+                credentialsList, options);
     }
 
-    private static ClusterableServerFactory createClusterableServerFactory(final List<MongoCredential> credentialList,
-                                                                           final MongoClientOptions options) {
-        final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
-
-        final StreamFactory streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory());
-
-        return new DefaultClusterableServerFactory(options.getServerSettings(),
-                                                   options.getChannelProviderSettings(),
-                                                   streamFactory,
-                                                   null,
-                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
-                                                                           options.getSocketFactory()),
-                                                   Executors.newScheduledThreadPool(3),  // TODO: allow configuration
-                                                   createNewCredentialList(credentialList), bufferProvider);
+    private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
+                                         final MongoClientOptions options) {
+        return new DefaultClusterFactory().create(
+                settings,
+                options.getServerSettings(),
+                options.getChannelProviderSettings(),
+                new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
+                null,
+                new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSocketFactory()),
+                Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                createNewCredentialList(credentialsList),
+                new PowerOfTwoBufferPool());
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {

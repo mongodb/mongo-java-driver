@@ -19,15 +19,13 @@ package org.mongodb.connection.impl;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnectionProviderFactory;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ClusterableServer;
-import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.StreamFactory;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
+class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private ServerSettings settings;
     private final ChannelProviderFactory channelProviderFactory;
     private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;

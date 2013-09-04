@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ClusterSettings
@@ -21,7 +23,6 @@ import org.mongodb.connection.ClusterType
 import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerDescription
 import org.mongodb.connection.ServerType
-import org.mongodb.connection.TestClusterableServerFactory
 import spock.lang.Specification
 
 import static org.mongodb.connection.ClusterConnectionMode.Single

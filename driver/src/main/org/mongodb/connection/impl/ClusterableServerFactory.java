@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
 
-public interface ClusterableServerFactory {
+import org.mongodb.connection.ServerAddress;
+
+interface ClusterableServerFactory {
     ClusterableServer create(ServerAddress serverAddress);
 
     void close();

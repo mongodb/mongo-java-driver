@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
+
+import org.mongodb.connection.ChangeListener;
+import org.mongodb.connection.Server;
+import org.mongodb.connection.ServerDescription;
 
 /**
  * A logical connection to a MongoDB server that supports clustering along with other servers.
  */
-public interface ClusterableServer extends Server {
+interface ClusterableServer extends Server {
     /**
      * Adds a change listener to this server.
      *

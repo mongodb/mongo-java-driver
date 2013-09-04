@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.mongodb.connection.ChangeEvent
@@ -32,7 +34,6 @@ import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerConnectionState
 import org.mongodb.connection.ServerDescription
 import org.mongodb.connection.ServerType
-import org.mongodb.connection.TestClusterableServerFactory
 import spock.lang.Specification
 
 class DefaultSingleServerClusterSpecification extends Specification {
@@ -48,7 +49,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
     def 'should fire change event on cluster change'() {
         given:
         ChangeEvent<ClusterDescription> changeEvent = null
-        Cluster cluster = new DefaultClusterFactory().create(
+        Cluster cluster = new SingleServerCluster(
                 ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory)
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override

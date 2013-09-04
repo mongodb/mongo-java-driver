@@ -16,7 +16,6 @@
 
 package org.mongodb.connection.impl;
 
-import org.mongodb.connection.ChannelProvider;
 import org.mongodb.connection.ServerAddress;
 
 interface ChannelProviderFactory {

@@ -20,7 +20,6 @@ import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelProvider;
 import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.MongoSocketInterruptedReadException;

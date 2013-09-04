@@ -18,7 +18,6 @@ package org.mongodb.connection.impl;
 
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ChannelProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.StreamFactory;
 

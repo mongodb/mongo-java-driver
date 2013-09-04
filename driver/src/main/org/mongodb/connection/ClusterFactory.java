@@ -16,18 +16,49 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.MongoCredential;
+import org.mongodb.connection.impl.ChannelProviderSettings;
+import org.mongodb.connection.impl.ServerSettings;
+
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * Factory for {@code Cluster} implementations.
  *
  * @since 3.0
  */
 public interface ClusterFactory {
-    /**
+
+    /*
      * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
      *
-     * @param settings the settings
+     * @param settings      the settings
      * @param serverFactory the server factory that the cluster implementation should use to create instances of {@code ClusterableServer}.
      * @return the cluster
      */
-     Cluster create(final ClusterSettings settings, final ClusterableServerFactory serverFactory);
+
+    /**
+     * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
+     *
+     * @param settings the cluster settings
+     * @param serverSettings the server settings
+     * @param channelProviderSettings the connection pool settings
+     * @param streamFactory the stream factory
+     * @param asyncConnectionProviderFactory the async factory
+     * @param heartbeatStreamFactory the heartbeat stream factory
+     * @param scheduledExecutorService the executor service used to monitor servers.
+     * @param credentialList the credential list
+     * @param bufferProvider the buffer provider
+     * @return the cluster
+     */
+    Cluster create(final ClusterSettings settings,
+                   final ServerSettings serverSettings,
+                   final ChannelProviderSettings channelProviderSettings,
+                   final StreamFactory streamFactory,
+                   final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
+                   final StreamFactory heartbeatStreamFactory,
+                   final ScheduledExecutorService scheduledExecutorService,
+                   final List<MongoCredential> credentialList,
+                   final BufferProvider bufferProvider);
 }
