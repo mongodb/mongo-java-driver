@@ -21,8 +21,8 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChannelProviderFactory;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.StreamFactory;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -30,21 +30,21 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     private ServerSettings settings;
     private final ChannelProviderFactory channelProviderFactory;
     private final AsyncConnectionProviderFactory asyncConnectionProviderFactory;
-    private final ConnectionFactory heartbeatConnectionFactory;
+    private final StreamFactory heartbeatStreamFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferProvider bufferProvider;
 
     public DefaultClusterableServerFactory(final ServerSettings settings,
                                            final ChannelProviderFactory channelProviderFactory,
                                            final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
-                                           final ConnectionFactory heartbeatConnectionFactory,
+                                           final StreamFactory heartbeatStreamFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
                                            final BufferProvider bufferProvider) {
 
         this.settings = settings;
         this.channelProviderFactory = channelProviderFactory;
         this.asyncConnectionProviderFactory = asyncConnectionProviderFactory;
-        this.heartbeatConnectionFactory = heartbeatConnectionFactory;
+        this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.scheduledExecutorService = scheduledExecutorService;
         this.bufferProvider = bufferProvider;
     }
@@ -53,7 +53,7 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     public ClusterableServer create(final ServerAddress serverAddress) {
         return new DefaultServer(serverAddress, settings, channelProviderFactory.create(serverAddress),
                 asyncConnectionProviderFactory != null ? asyncConnectionProviderFactory.create(serverAddress) : null,
-                heartbeatConnectionFactory, scheduledExecutorService, bufferProvider);
+                heartbeatStreamFactory, scheduledExecutorService, bufferProvider);
     }
 
     @Override

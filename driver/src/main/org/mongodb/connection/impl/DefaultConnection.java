@@ -27,7 +27,6 @@ import org.mongodb.MongoInterruptedException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSocketReadException;
 import org.mongodb.connection.MongoSocketReadTimeoutException;
 import org.mongodb.connection.MongoSocketWriteException;
@@ -69,6 +68,7 @@ class DefaultConnection implements Connection {
     @Override
     public void close() {
         isClosed = true;
+        stream.close();
     }
 
     @Override

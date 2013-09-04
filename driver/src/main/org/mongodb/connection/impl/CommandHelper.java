@@ -21,7 +21,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.protocol.CommandMessage;

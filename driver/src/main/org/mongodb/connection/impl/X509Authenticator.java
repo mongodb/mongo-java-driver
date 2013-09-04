@@ -21,7 +21,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 
 class X509Authenticator extends Authenticator {

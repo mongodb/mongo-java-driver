@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
 
 import org.bson.ByteBuf;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.BaseConnection;
+import org.mongodb.connection.ResponseBuffers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ import java.util.List;
  * @since 3.0
  */
 @NotThreadSafe
-public interface Connection extends BaseConnection {
+interface Connection extends BaseConnection {
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.

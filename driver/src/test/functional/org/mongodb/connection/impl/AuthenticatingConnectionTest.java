@@ -22,8 +22,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoCredential;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.Arrays;

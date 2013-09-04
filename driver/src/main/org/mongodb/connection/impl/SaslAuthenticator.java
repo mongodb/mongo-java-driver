@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 
 import javax.security.sasl.SaslClient;

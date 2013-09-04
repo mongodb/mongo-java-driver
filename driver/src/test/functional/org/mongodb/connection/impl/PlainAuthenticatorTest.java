@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.MongoCredential;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.connection.ServerAddress;
 

@@ -18,11 +18,11 @@
 
 
 
+
+
 package org.mongodb.connection.impl
 
 import org.bson.ByteBuf
-import org.mongodb.connection.Connection
-import org.mongodb.connection.ConnectionFactory
 import org.mongodb.connection.MongoSocketWriteException
 import org.mongodb.connection.MongoTimeoutException
 import org.mongodb.connection.ServerAddress

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.connection.impl;
 
-public interface ConnectionFactory {
+import org.mongodb.connection.ServerAddress;
+
+interface ConnectionFactory {
     Connection create(final ServerAddress serverAddress);
 }

@@ -16,22 +16,32 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.MongoCredential;
+import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChannelProvider;
 import org.mongodb.connection.ChannelProviderFactory;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.StreamFactory;
+
+import java.util.List;
 
 public class DefaultChannelProviderFactory implements ChannelProviderFactory {
     private final ChannelProviderSettings settings;
-    private final ConnectionFactory connectionFactory;
+    private final StreamFactory streamFactory;
+    private final List<MongoCredential> credentialList;
+    private final BufferProvider bufferProvider;
 
-    public DefaultChannelProviderFactory(final ChannelProviderSettings settings, final ConnectionFactory connectionFactory) {
+    public DefaultChannelProviderFactory(final ChannelProviderSettings settings, final StreamFactory streamFactory,
+                                         final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
         this.settings = settings;
-        this.connectionFactory = connectionFactory;
+        this.streamFactory = streamFactory;
+        this.credentialList = credentialList;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public ChannelProvider create(final ServerAddress serverAddress) {
-        return new DefaultChannelProvider(serverAddress, connectionFactory, settings);
+        return new DefaultChannelProvider(serverAddress, new DefaultConnectionFactory(streamFactory, bufferProvider, credentialList),
+                settings);
     }
 }

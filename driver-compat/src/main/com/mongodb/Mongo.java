@@ -29,13 +29,12 @@ import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterableServerFactory;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
-import org.mongodb.connection.impl.DefaultConnectionFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
 import org.mongodb.connection.impl.SocketStreamFactory;
 import org.mongodb.operation.ServerChannelProvider;
@@ -682,20 +681,16 @@ public class Mongo {
                                                                            final MongoClientOptions options) {
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-        final ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(options.getSocketSettings(),
-                                                                                                         options.getSocketFactory()),
-                                                                                 bufferProvider,
-                                                                                 createNewCredentialList(credentialList));
+        final StreamFactory streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory());
+
 
         return new DefaultClusterableServerFactory(options.getServerSettings(),
                                                    new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
-                                                                                        connectionFactory),
+                                                                                     streamFactory, createNewCredentialList(credentialList),
+                                                                                     bufferProvider),
                                                    null,
-                                                   new DefaultConnectionFactory(
-                                                           new SocketStreamFactory(options.getHeartbeatSocketSettings(),
-                                                                                   options.getSocketFactory()),
-                                                           bufferProvider,
-                                                           Collections.<org.mongodb.MongoCredential>emptyList()),
+                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
+                                                                           options.getSocketFactory()),
                                                    Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                                                    bufferProvider);
     }

@@ -22,7 +22,6 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 
 import static org.mongodb.connection.impl.CommandHelper.executeCommand;
@@ -36,8 +35,8 @@ class NativeAuthenticator extends Authenticator {
     public void authenticate() {
         try {
             final CommandResult nonceResponse = executeCommand(getCredential().getSource(),
-                                                         NativeAuthenticationHelper.getNonceCommand(), new DocumentCodec(),
-                                                         getConnection(), getBufferProvider());
+                    NativeAuthenticationHelper.getNonceCommand(), new DocumentCodec(),
+                    getConnection(), getBufferProvider());
 
             final Document authCommand = NativeAuthenticationHelper.getAuthCommand(getCredential().getUserName(),
                                                                                    getCredential().getPassword(),

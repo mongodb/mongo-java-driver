@@ -23,8 +23,6 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChangeEvent;
 import org.mongodb.connection.ChangeListener;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;

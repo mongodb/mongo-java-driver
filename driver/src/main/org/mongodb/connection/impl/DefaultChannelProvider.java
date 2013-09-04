@@ -22,7 +22,6 @@ import org.mongodb.MongoInternalException;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ChannelProvider;
 import org.mongodb.connection.ChannelReceiveArgs;
-import org.mongodb.connection.ConnectionFactory;
 import org.mongodb.connection.MongoSocketException;
 import org.mongodb.connection.MongoSocketInterruptedReadException;
 import org.mongodb.connection.MongoWaitQueueFullException;
@@ -261,7 +260,7 @@ class DefaultChannelProvider implements ChannelProvider {
     }
 
     private class UsageTrackingConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingConnection> {
-        private final ConnectionFactory connectionFactory;
+        private ConnectionFactory connectionFactory;
 
         public UsageTrackingConnectionItemFactory(final ConnectionFactory connectionFactory) {
             this.connectionFactory = connectionFactory;

@@ -19,7 +19,6 @@ package org.mongodb.connection.impl;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Connection;
 
 import javax.security.sasl.SaslClient;
 

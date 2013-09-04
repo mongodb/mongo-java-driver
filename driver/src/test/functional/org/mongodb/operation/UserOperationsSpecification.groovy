@@ -20,13 +20,16 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCredential
 import org.mongodb.connection.MongoSecurityException
-import org.mongodb.connection.impl.DefaultConnectionFactory
+import org.mongodb.connection.impl.ChannelProviderSettings
+import org.mongodb.connection.impl.DefaultChannelProviderFactory
 import org.mongodb.connection.impl.NativeAuthenticationHelper
 import org.mongodb.connection.impl.SocketSettings
 import org.mongodb.connection.impl.SocketStreamFactory
@@ -42,11 +45,12 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
     def password = '123'.toCharArray()
 
-    def connectionFactory
+    def channelProvider
 
     def setup() {
-        connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, getDatabaseName(), password)))
+        channelProvider = new DefaultChannelProviderFactory(ChannelProviderSettings.builder().maxSize(1).build(),
+                new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                Arrays.asList(MongoCredential.createMongoCRCredential(userName, getDatabaseName(), password)), getBufferProvider())
     }
 
     def 'an added user should be found'() {
@@ -78,7 +82,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new InsertUserOperation(getDatabaseName(), userDocument, getBufferProvider(), getSession(), true).execute()
 
         then:
-        connectionFactory.create(getPrimary())
+        channelProvider.create(getPrimary())
 
         cleanup:
         new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
@@ -93,7 +97,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         when:
         new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
-        connectionFactory.create(getPrimary())
+        channelProvider.create(getPrimary())
 
         then:
         thrown(MongoSecurityException)
