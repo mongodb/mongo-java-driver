@@ -253,7 +253,8 @@ final class MultiServerCluster extends BaseCluster {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
         for (ServerTuple cur : addressToServerTupleMap.values()) {
             if (!allServerAddresses.contains(cur.description.getAddress())) {
-                LOGGER.info(format("Removing server %s from client view of cluster", cur.description.getAddress()));
+                LOGGER.info(format("Server %s is no longer a member of the replica set.  Removing from client view of cluster.",
+                        cur.description.getAddress()));
                 removeServer(cur.description.getAddress());
             }
         }

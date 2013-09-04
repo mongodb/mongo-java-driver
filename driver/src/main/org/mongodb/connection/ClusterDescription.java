@@ -181,16 +181,13 @@ public class ClusterDescription {
     }
 
     public String getShortDescription() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(format("{type=%s", type));
-        builder.append(", servers=[");
+        StringBuilder serverDescriptions = new StringBuilder();
         String delimiter = "";
         for (ServerDescription cur : all) {
-            builder.append(delimiter).append(cur.getShortDescription());
+            serverDescriptions.append(delimiter).append(cur.getShortDescription());
             delimiter = ", ";
         }
-        builder.append("]");
-        return builder.toString();
+        return format("{type=%s, servers=[%s]", type, serverDescriptions);
     }
 
     private interface Predicate {
