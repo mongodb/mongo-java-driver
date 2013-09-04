@@ -84,7 +84,7 @@ public class JSON {
      * Parses a JSON string and constructs a corresponding Java object by calling
      * the methods of a {@link org.bson.BSONCallback BSONCallback} during parsing.
      * If the callback <code>c</code> is null, this method is equivalent to
-     * {@link com.mongodb.JSON#parse(String) parse(String)}.
+     * {@link com.mongodb.util.JSON#parse(String) parse(String)}.
      * 
      * @param s the string to parse
      * @param c the BSONCallback to call during parsing
