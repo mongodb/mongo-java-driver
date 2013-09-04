@@ -25,7 +25,6 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
 import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
-import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
@@ -119,11 +118,12 @@ public final class MongoClients {
                                                           bufferProvider, credentialList))
                         : null;
         return new DefaultClusterableServerFactory(options.getServerSettings(),
-                                                   new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
-                                                                                     streamFactory, credentialList, bufferProvider),
+                                                   options.getChannelProviderSettings(),
+                                                   streamFactory,
                                                    asyncConnectionProviderFactory,
                                                    new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings()),
-                Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                                                   Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                                                   credentialList,
                                                    bufferProvider);
     }
 }

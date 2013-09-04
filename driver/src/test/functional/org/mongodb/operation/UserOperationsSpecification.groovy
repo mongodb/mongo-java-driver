@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -40,12 +42,14 @@ import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
 
+// TODO: This needs to be re-written because it relies on a non-public class.
 @Ignore
 class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
     def password = '123'.toCharArray()
 
     def channelProvider
+    def cluster
 
     def setup() {
         channelProvider = new DefaultChannelProviderFactory(ChannelProviderSettings.builder().maxSize(1).build(),

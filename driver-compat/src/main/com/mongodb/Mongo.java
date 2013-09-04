@@ -32,7 +32,6 @@ import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.StreamFactory;
-import org.mongodb.connection.impl.DefaultChannelProviderFactory;
 import org.mongodb.connection.impl.DefaultClusterFactory;
 import org.mongodb.connection.impl.DefaultClusterableServerFactory;
 import org.mongodb.connection.impl.PowerOfTwoBufferPool;
@@ -683,16 +682,14 @@ public class Mongo {
 
         final StreamFactory streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory());
 
-
         return new DefaultClusterableServerFactory(options.getServerSettings(),
-                                                   new DefaultChannelProviderFactory(options.getChannelProviderSettings(),
-                                                                                     streamFactory, createNewCredentialList(credentialList),
-                                                                                     bufferProvider),
+                                                   options.getChannelProviderSettings(),
+                                                   streamFactory,
                                                    null,
                                                    new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                            options.getSocketFactory()),
                                                    Executors.newScheduledThreadPool(3),  // TODO: allow configuration
-                                                   bufferProvider);
+                                                   createNewCredentialList(credentialList), bufferProvider);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {

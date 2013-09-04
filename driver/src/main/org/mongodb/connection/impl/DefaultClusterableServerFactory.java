@@ -16,14 +16,15 @@
 
 package org.mongodb.connection.impl;
 
+import org.mongodb.MongoCredential;
 import org.mongodb.connection.AsyncConnectionProviderFactory;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ChannelProviderFactory;
 import org.mongodb.connection.ClusterableServer;
 import org.mongodb.connection.ClusterableServerFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.StreamFactory;
 
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 public final class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -35,14 +36,17 @@ public final class DefaultClusterableServerFactory implements ClusterableServerF
     private final BufferProvider bufferProvider;
 
     public DefaultClusterableServerFactory(final ServerSettings settings,
-                                           final ChannelProviderFactory channelProviderFactory,
+                                           final ChannelProviderSettings channelProviderSettings,
+                                           final StreamFactory streamFactory,
                                            final AsyncConnectionProviderFactory asyncConnectionProviderFactory,
                                            final StreamFactory heartbeatStreamFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
+                                           final List<MongoCredential> credentialList,
                                            final BufferProvider bufferProvider) {
 
         this.settings = settings;
-        this.channelProviderFactory = channelProviderFactory;
+        this.channelProviderFactory = new DefaultChannelProviderFactory(channelProviderSettings, streamFactory, credentialList,
+                bufferProvider);
         this.asyncConnectionProviderFactory = asyncConnectionProviderFactory;
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.scheduledExecutorService = scheduledExecutorService;

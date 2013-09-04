@@ -19,13 +19,12 @@ package org.mongodb.connection.impl;
 import org.mongodb.MongoCredential;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ChannelProvider;
-import org.mongodb.connection.ChannelProviderFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.StreamFactory;
 
 import java.util.List;
 
-public class DefaultChannelProviderFactory implements ChannelProviderFactory {
+class DefaultChannelProviderFactory implements ChannelProviderFactory {
     private final ChannelProviderSettings settings;
     private final StreamFactory streamFactory;
     private final List<MongoCredential> credentialList;
