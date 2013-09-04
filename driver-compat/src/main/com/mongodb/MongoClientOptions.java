@@ -404,20 +404,39 @@ public class MongoClientOptions {
         return cursorFinalizerEnabled;
     }
 
-
-    ChannelProviderSettings getChannelProviderSettings() {
+    /**
+     * The channel provider settings.
+     *
+     * @return the channel provider settings
+     */
+    public ChannelProviderSettings getChannelProviderSettings() {
         return channelProviderSettings;
     }
 
-    SocketSettings getSocketSettings() {
+    /**
+     * The socket settings.
+     *
+     * @return the socket settings
+     */
+    public SocketSettings getSocketSettings() {
         return socketSettings;
     }
 
-    ServerSettings getServerSettings() {
+    /**
+     * The server settings.
+     *
+     * @return the server settings
+     */
+    public ServerSettings getServerSettings() {
         return serverSettings;
     }
 
-    SocketSettings getHeartbeatSocketSettings() {
+    /**
+     * The heartbeat socket settings.
+     *
+     * @return the heartbeat socket settings
+     */
+    public SocketSettings getHeartbeatSocketSettings() {
         return heartbeatSocketSettings;
     }
 
