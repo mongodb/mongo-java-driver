@@ -762,7 +762,7 @@ public final class MongoClientOptions {
      * @return a SocketSettings object populated with the connection settings from this MongoClientOptions instance.
      * @see org.mongodb.connection.impl.SocketSettings
      */
-    SocketSettings getSocketSettings() {
+    public SocketSettings getSocketSettings() {
         return socketSettings;
     }
 
@@ -773,7 +773,7 @@ public final class MongoClientOptions {
      * @return a SocketSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
      * @see org.mongodb.connection.impl.SocketSettings
      */
-    SocketSettings getHeartbeatSocketSettings() {
+    public SocketSettings getHeartbeatSocketSettings() {
         return heartbeatSocketSettings;
     }
 
@@ -786,7 +786,7 @@ public final class MongoClientOptions {
      *         provider.
      * @see org.mongodb.connection.impl.ChannelProviderSettings
      */
-    ChannelProviderSettings getChannelProviderSettings() {
+    public ChannelProviderSettings getChannelProviderSettings() {
         return channelProviderSettings;
     }
 
@@ -797,7 +797,7 @@ public final class MongoClientOptions {
      * @return a ServerSettings object populated with settings from this MongoClientOptions instance
      * @see ServerSettings
      */
-    ServerSettings getServerSettings() {
+    public ServerSettings getServerSettings() {
         return serverSettings;
     }
 
@@ -807,7 +807,7 @@ public final class MongoClientOptions {
      * @return an SSLSettings wrapping the SSL settings from this MongoClientOptions.
      * @see SSLSettings
      */
-    SSLSettings getSslSettings() {
+    public SSLSettings getSslSettings() {
         return sslSettings;
     }
 
