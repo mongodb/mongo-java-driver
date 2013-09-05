@@ -283,7 +283,7 @@ public abstract class GridFSFile implements DBObject {
      *
      * @param fs gridFS instance
      */
-    protected void setGridFS(final GridFS fs) {
+    public void setGridFS(GridFS fs) {
         this.fs = fs;
     }
 
