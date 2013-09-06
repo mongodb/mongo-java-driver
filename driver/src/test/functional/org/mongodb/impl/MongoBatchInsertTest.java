@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.CountOperation;
+import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
@@ -49,7 +49,7 @@ public class MongoBatchInsertTest extends DatabaseTestCase {
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
                 false).execute();
         assertEquals((long) documents.size(),
-                (long) new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(),
+                (long) new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(),
                         getBufferProvider(), getSession(), false).execute());
     }
 

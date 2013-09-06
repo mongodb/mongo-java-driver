@@ -21,7 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.Document;
-import org.mongodb.connection.impl.NativeAuthenticationHelper;
+import org.mongodb.connection.NativeAuthenticationHelper;
 import org.mongodb.operation.FindUserOperation;
 
 import java.net.UnknownHostException;

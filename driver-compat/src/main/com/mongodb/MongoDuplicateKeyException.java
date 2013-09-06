@@ -30,7 +30,7 @@ public class MongoDuplicateKeyException extends WriteConcernException{
      *
      * @param e the exception from the new Java layer
      */
-    MongoDuplicateKeyException(final org.mongodb.command.MongoDuplicateKeyException e) {
+    MongoDuplicateKeyException(final org.mongodb.MongoDuplicateKeyException e) {
         super(e);
     }
 

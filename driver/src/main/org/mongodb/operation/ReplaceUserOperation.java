@@ -22,8 +22,9 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.ReplaceProtocol;
+import org.mongodb.protocol.ReplaceProtocol;
 import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerChannelProvider;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 

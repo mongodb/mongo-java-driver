@@ -18,12 +18,14 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
+import org.mongodb.MongoCommandFailureException
+import org.mongodb.MongoWriteConcernException
 import org.mongodb.ServerCursor
-import org.mongodb.command.MongoCommandFailureException
-import org.mongodb.command.MongoWriteConcernException
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
@@ -51,7 +53,7 @@ class MongoExceptionsSpecification extends Specification {
         exceptionToBeMapped                                                                        | exceptionForCompatibilityApi | errorCode
         new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause'))      | MongoInterruptedException    | -4
         new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))       | MongoSocketException         | -2
-        new org.mongodb.command.MongoDuplicateKeyException(commandResultWithErrorCode(ERROR_CODE)) | MongoException.DuplicateKey  | ERROR_CODE
+        new org.mongodb.MongoDuplicateKeyException(commandResultWithErrorCode(ERROR_CODE)) | MongoException.DuplicateKey  | ERROR_CODE
         new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))                   | CommandFailureException      | ERROR_CODE
         new org.mongodb.MongoInternalException(MESSAGE)                                            | MongoInternalException       | -4
         new MongoWriteConcernException(commandResultWithErrorCode(ERROR_CODE))                     | WriteConcernException        | ERROR_CODE

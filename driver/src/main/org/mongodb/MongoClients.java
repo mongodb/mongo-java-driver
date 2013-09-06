@@ -18,17 +18,17 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
+import org.mongodb.connection.DefaultClusterFactory;
+import org.mongodb.connection.PowerOfTwoBufferPool;
+import org.mongodb.connection.SSLNIOStreamFactory;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
-import org.mongodb.connection.impl.DefaultAsyncConnectionFactory;
-import org.mongodb.connection.impl.DefaultAsyncConnectionProviderFactory;
-import org.mongodb.connection.impl.DefaultClusterFactory;
-import org.mongodb.connection.impl.PowerOfTwoBufferPool;
-import org.mongodb.connection.impl.SocketStreamFactory;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -83,21 +83,22 @@ public final class MongoClients {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(
                     ClusterSettings.builder()
-                                   .mode(ClusterConnectionMode.Single)
-                                   .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
-                                   .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                   .build(),
+                            .mode(ClusterConnectionMode.Single)
+                            .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
+                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                            .build(),
                     mongoURI.getCredentialList(), options));
-        } else {
+        }
+        else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
             return new MongoClientImpl(options, createCluster(
                     ClusterSettings.builder()
-                                   .hosts(seedList)
-                                   .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                   .build(),
+                            .hosts(seedList)
+                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                            .build(),
                     mongoURI.getCredentialList(), options));
         }
     }
@@ -109,19 +110,28 @@ public final class MongoClients {
                                          final MongoClientOptions options) {
         final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-        final StreamFactory streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
+        final StreamFactory streamFactory;
+        final StreamFactory heartbeatStreamFactory;
 
-        final DefaultAsyncConnectionProviderFactory asyncConnectionProviderFactory =
-                options.isAsyncEnabled()
-                        ? new DefaultAsyncConnectionProviderFactory(options.getChannelProviderSettings(),
-                        new DefaultAsyncConnectionFactory(options.getAsyncConnectionSettings(), options.getSslSettings(),
-                                bufferProvider, credentialList))
-                        : null;
-
+        if (!options.isAsyncEnabled()) {
+            streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
+            heartbeatStreamFactory = streamFactory;
+        }
+        else {
+            if (options.getSslSettings().isEnabled()) {
+                streamFactory = new SSLNIOStreamFactory(bufferProvider, Executors.newFixedThreadPool(5));
+                heartbeatStreamFactory = streamFactory;
+            }
+            else {
+                streamFactory = new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(),
+                        options.getSslSettings());
+                heartbeatStreamFactory = new AsynchronousSocketChannelStreamFactory(options.getHeartbeatSocketSettings(),
+                        options.getSslSettings());
+            }
+        }
         return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
-                options.getChannelProviderSettings(), streamFactory,
-                asyncConnectionProviderFactory,
-                new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings()),
+                options.getConnectionPoolSettings(), streamFactory,
+                heartbeatStreamFactory,
                 Executors.newScheduledThreadPool(3),
                 credentialList, bufferProvider);
 

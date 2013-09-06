@@ -16,17 +16,18 @@
 
 package com.mongodb;
 
-import java.io.IOException;
+import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoDuplicateKeyException;
+import org.mongodb.MongoWriteConcernException;
 
-import org.mongodb.command.MongoCommandFailureException;
-import org.mongodb.command.MongoWriteConcernException;
+import java.io.IOException;
 
 public class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
         final Throwable cause = e.getCause();
-        if (e instanceof org.mongodb.command.MongoDuplicateKeyException) {
-            return new MongoException.DuplicateKey((org.mongodb.command.MongoDuplicateKeyException) e);
+        if (e instanceof org.mongodb.MongoDuplicateKeyException) {
+            return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
         } else if (e instanceof MongoWriteConcernException) {
             return new WriteConcernException((MongoWriteConcernException) e);
         } else if (e instanceof org.mongodb.MongoInternalException) {

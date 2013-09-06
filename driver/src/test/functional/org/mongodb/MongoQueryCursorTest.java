@@ -25,9 +25,9 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.protocol.GetMoreProtocol;
-import org.mongodb.operation.protocol.KillCursor;
-import org.mongodb.operation.protocol.KillCursorProtocol;
+import org.mongodb.protocol.GetMoreProtocol;
+import org.mongodb.protocol.KillCursor;
+import org.mongodb.protocol.KillCursorProtocol;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
+import org.mongodb.MongoCommandFailureException
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
 import org.mongodb.connection.ClusterDescription
@@ -79,7 +81,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
         session.createServerChannelProvider(_) >> {
-            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(
+            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))
@@ -125,7 +127,7 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
         session.createServerChannelProvider(_) >> {
-            throw new org.mongodb.command.MongoDuplicateKeyException(new org.mongodb.CommandResult(
+            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
                     15L))

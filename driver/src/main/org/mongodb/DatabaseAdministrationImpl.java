@@ -26,7 +26,7 @@ import org.mongodb.operation.QueryOperation;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mongodb.connection.impl.NativeAuthenticationHelper.createAuthenticationHash;
+import static org.mongodb.connection.NativeAuthenticationHelper.createAuthenticationHash;
 
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are

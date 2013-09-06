@@ -17,23 +17,28 @@
 package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.operation.protocol.WriteCommandProtocol;
-import org.mongodb.operation.protocol.WriteProtocol;
+import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.protocol.WriteCommandProtocol;
+import org.mongodb.protocol.WriteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerChannelProvider;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.getChannelAsync;
 
-public abstract class BaseWriteOperation extends BaseOperation<CommandResult> {
+public abstract class BaseWriteOperation extends BaseOperation<CommandResult> implements AsyncOperation<CommandResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -68,6 +73,28 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> {
                 getSession().close();
             }
         }
+    }
+
+    @Override
+    public MongoFuture<CommandResult> executeAsync() {
+        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        getChannelAsync(getSession(), new ServerChannelProviderOptions(false, new PrimaryServerSelector()))
+                .register(new SingleResultCallback<ServerDescriptionChannelPair>() {
+                    @Override
+                    public void onResult(final ServerDescriptionChannelPair pair, final MongoException e) {
+                        MongoFuture<CommandResult> protocolFuture;
+                        if (writeConcern.isAcknowledged()
+                                && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
+                            protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getChannel()).executeAsync();
+                        }
+                        else {
+                            protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getChannel()).executeAsync();
+                        }
+                        protocolFuture.register(
+                                new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
+                    }
+                });
+        return retVal;
     }
 
     public MongoNamespace getNamespace() {

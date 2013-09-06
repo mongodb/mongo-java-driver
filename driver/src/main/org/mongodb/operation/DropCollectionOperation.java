@@ -19,12 +19,13 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.MongoCommandFailureException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.protocol.CommandProtocol;
+import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerChannelProvider;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 

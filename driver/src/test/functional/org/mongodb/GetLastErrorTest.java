@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.junit.Test;
-import org.mongodb.command.MongoDuplicateKeyException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

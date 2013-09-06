@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -219,100 +217,3 @@ public class MongoViewTest extends DatabaseTestCase {
     }
 }
 
-class Concrete {
-    private ObjectId id;
-    private final String str;
-    private final int i;
-    private final long l;
-    private final double d;
-    private final long date;
-
-    public Concrete(final String str, final int i, final long l, final double d, final long date) {
-        this.str = str;
-        this.i = i;
-        this.l = l;
-        this.d = d;
-        this.date = date;
-    }
-
-    public Concrete(final ObjectId id, final String str, final int i, final long l, final double d, final long date) {
-        this(str, i, l, d, date);
-        this.id = id;
-    }
-
-    @Override
-    public String toString() {
-        return "Concrete{id=" + getId() + ", str='" + getStr() + '\'' + ", i=" + getI() + ", l=" + getL() + ", d="
-                + getD() + ", date=" + getDate() + '}';
-    }
-
-    ObjectId getId() {
-        return id;
-    }
-
-    String getStr() {
-        return str;
-    }
-
-    int getI() {
-        return i;
-    }
-
-    long getL() {
-        return l;
-    }
-
-    double getD() {
-        return d;
-    }
-
-    long getDate() {
-        return date;
-    }
-
-    public void setId(final ObjectId id) {
-        this.id = id;
-    }
-}
-
-class ConcreteCodec implements CollectibleCodec<Concrete> {
-
-    @Override
-    public void encode(final BSONWriter bsonWriter, final Concrete c) {
-        bsonWriter.writeStartDocument();
-        if (c.getId() == null) {
-            c.setId(new ObjectId());
-        }
-        bsonWriter.writeObjectId("_id", c.getId());
-        bsonWriter.writeString("str", c.getStr());
-        bsonWriter.writeInt32("i", c.getI());
-        bsonWriter.writeInt64("l", c.getL());
-        bsonWriter.writeDouble("d", c.getD());
-        bsonWriter.writeDateTime("date", c.getDate());
-        bsonWriter.writeEndDocument();
-    }
-
-    @Override
-    public Concrete decode(final BSONReader reader) {
-        reader.readStartDocument();
-        final ObjectId id = reader.readObjectId("_id");
-        final String str = reader.readString("str");
-        final int i = reader.readInt32("i");
-        final long l = reader.readInt64("l");
-        final double d = reader.readDouble("d");
-        final long date = reader.readDateTime("date");
-
-        reader.readEndDocument();
-        return new Concrete(id, str, i, l, d, date);
-    }
-
-    @Override
-    public Class<Concrete> getEncoderClass() {
-        return Concrete.class;
-    }
-
-    @Override
-    public Object getId(final Concrete document) {
-        return document.getId();
-    }
-}

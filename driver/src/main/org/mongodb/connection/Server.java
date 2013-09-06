@@ -46,18 +46,4 @@ public interface Server {
      * @return a channel this server
      */
     Channel getChannel();
-
-    /**
-     * Gets an asynchronous connection to this server.  The connection should be closed after the caller is done with it.
-     * <p>
-     * Implementations of this method are allowed to block while waiting for a free connection from a pool of available connections.
-     * </p>
-     * <p>
-     * Implementations of this method will likely pool the underlying connections, so the effect of closing the returned connection will
-     * be to return the connection to the pool.
-     * </p>
-     *
-     * @return an asynchronous connection to this server
-     */
-    AsyncServerConnection getAsyncConnection();
 }

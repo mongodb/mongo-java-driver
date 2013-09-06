@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.command.MongoWriteConcernException;
+import org.mongodb.MongoWriteConcernException;
 
 /**
  * An exception representing an error reported due to a write failure.

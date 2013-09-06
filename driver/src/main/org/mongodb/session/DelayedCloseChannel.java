@@ -22,6 +22,7 @@ import org.mongodb.connection.Channel;
 import org.mongodb.connection.ChannelReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SingleResultCallback;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 @NotThreadSafe
 class DelayedCloseChannel implements Channel {
     private Channel wrapped;
+    private boolean isClosed;
 
     public DelayedCloseChannel(final Channel wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
@@ -48,7 +50,17 @@ class DelayedCloseChannel implements Channel {
         return wrapped.receiveMessage(channelReceiveArgs);
     }
 
-    private boolean isClosed;
+    @Override
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        isTrue("open", !isClosed());
+        wrapped.sendMessageAsync(byteBuffers, callback);
+    }
+
+    @Override
+    public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        isTrue("open", !isClosed());
+        wrapped.receiveMessageAsync(channelReceiveArgs, callback);
+    }
 
     @Override
     public void close() {

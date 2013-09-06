@@ -28,16 +28,16 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
+import org.mongodb.connection.DefaultClusterFactory;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.impl.DefaultClusterFactory;
-import org.mongodb.connection.impl.PowerOfTwoBufferPool;
-import org.mongodb.connection.impl.SocketStreamFactory;
-import org.mongodb.operation.ServerChannelProvider;
-import org.mongodb.operation.protocol.KillCursor;
-import org.mongodb.operation.protocol.KillCursorProtocol;
+import org.mongodb.connection.SocketStreamFactory;
+import org.mongodb.protocol.KillCursor;
+import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
+import org.mongodb.session.ServerChannelProvider;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
@@ -677,9 +677,8 @@ public class Mongo {
         return new DefaultClusterFactory().create(
                 settings,
                 options.getServerSettings(),
-                options.getChannelProviderSettings(),
+                options.getConnectionPoolSettings(),
                 new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
-                null,
                 new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSocketFactory()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 createNewCredentialList(credentialsList),

@@ -25,10 +25,12 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.operation.SingleResultFuture;
+import org.mongodb.session.ServerChannelProvider;
 import org.mongodb.session.ServerChannelProviderOptions;
 import org.mongodb.session.Session;
 
@@ -116,17 +118,35 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
         @Override
         public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
-            return new ServerChannelProvider() {
-                @Override
-                public ServerDescription getServerDescription() {
-                    return description;
-                }
+            return new DelayedCloseServerChannelProvider();
+        }
 
-                @Override
-                public Channel getChannel() {
-                    return new DelayedCloseChannel(channel);
-                }
-            };
+        /**
+         * Asynchronously creates a server channel provider.
+         *
+         * @param options the server channel provider options
+         * @return a future for the server channel provider
+         */
+        @Override
+        public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
+            return new SingleResultFuture<ServerChannelProvider>(new DelayedCloseServerChannelProvider(), null);
+        }
+
+        private class DelayedCloseServerChannelProvider implements ServerChannelProvider {
+            @Override
+            public ServerDescription getServerDescription() {
+                return description;
+            }
+
+            @Override
+            public Channel getChannel() {
+                return new DelayedCloseChannel(channel);
+            }
+
+            @Override
+            public MongoFuture<Channel> getChannelAsync() {
+                return new SingleResultFuture<Channel>(channel, null);
+            }
         }
     }
 
@@ -155,6 +175,18 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
             isTrue("open", !isClosed());
             return wrapped.receiveMessage(channelReceiveArgs);
+        }
+
+        @Override
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+            isTrue("open", !isClosed());
+            wrapped.sendMessageAsync(byteBuffers, callback);
+        }
+
+        @Override
+        public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed());
+            wrapped.receiveMessageAsync(channelReceiveArgs, callback);
         }
 
         @Override

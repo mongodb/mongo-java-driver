@@ -46,6 +46,24 @@ public interface Stream {
     void read(final ByteBuf buffer) throws IOException;
 
     /**
+     * Write each buffer in the list to the stream in order, asynchronously.  This method should return immediately,
+     * and invoke the given callback on completion.
+     *
+     * @param buffers the buffers to write
+     * @param handler invoked when the read operation has completed
+     */
+    void writeAsync(final List<ByteBuf> buffers, AsyncCompletionHandler handler);
+
+    /**
+     * Read from the stream into the given buffer, asynchronously.  This method should return immediately,
+     * and invoke the given callback on completion
+     *
+     * @param buffer the buffer to read into
+     * @param handler invoked when the read operation has completed
+     */
+    void readAsync(final ByteBuf buffer, AsyncCompletionHandler handler);
+
+    /**
      * The address that this stream is connected to.
      *
      * @return the address

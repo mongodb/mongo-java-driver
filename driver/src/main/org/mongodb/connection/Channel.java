@@ -57,10 +57,25 @@ public interface Channel {
     ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs);
 
     /**
+     * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
+     *
+     * @param byteBuffers the list of byte buffers to send
+     * @param callback the callback to invoke on completion
+     */
+    void sendMessageAsync(List<ByteBuf> byteBuffers, SingleResultCallback<Void> callback);
+
+    /**
+     * Asynchronously receive a response to a sent message from the server.
+     *
+     * @param channelReceiveArgs the channel receive arguments
+     * @param callback the callback to invoke on completion
+     */
+    void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, SingleResultCallback<ResponseBuffers> callback);
+
+    /**
      * Gets the server address of this connection
      */
     ServerAddress getServerAddress();
-
 
     /**
      * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.

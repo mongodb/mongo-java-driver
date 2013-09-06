@@ -18,13 +18,10 @@ package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.AsyncConnectionSettings;
+import org.mongodb.connection.ConnectionPoolSettings;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.impl.ChannelProviderSettings;
-import org.mongodb.connection.impl.ServerSettings;
-import org.mongodb.connection.impl.SocketSettings;
-
-import java.util.concurrent.TimeUnit;
+import org.mongodb.connection.ServerSettings;
+import org.mongodb.connection.SocketSettings;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -64,14 +61,10 @@ public final class MongoClientOptions {
     private final int heartbeatConnectRetryFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
-    private final int asyncPoolSize;
-    private final int asyncMaxPoolSize;
-    private final long asyncKeepAliveTime;
     private final String requiredReplicaSetName;
     private final SocketSettings socketSettings;
     private final SocketSettings heartbeatSocketSettings;
-    private final AsyncConnectionSettings asyncConnectionSettings;
-    private final ChannelProviderSettings channelProviderSettings;
+    private final ConnectionPoolSettings connectionPoolSettings;
     private final ServerSettings serverSettings;
     private final SSLSettings sslSettings;
 
@@ -82,10 +75,6 @@ public final class MongoClientOptions {
      */
     public static Builder builder() {
         return new Builder();
-    }
-
-    public AsyncConnectionSettings getAsyncConnectionSettings() {
-        return asyncConnectionSettings;
     }
 
     /**
@@ -121,9 +110,6 @@ public final class MongoClientOptions {
         private int heartbeatConnectRetryFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
-        private int asyncPoolSize = AsyncConnectionSettings.POOL_SIZE;
-        private int asyncMaxPoolSize = AsyncConnectionSettings.MAX_POOL_SIZE;
-        private long asyncKeepAliveTime = AsyncConnectionSettings.KEEP_ALIVE_TIME;
 
         private String requiredReplicaSetName;
 
@@ -376,39 +362,6 @@ public final class MongoClientOptions {
                 throw new IllegalArgumentException("Can not enable async if the platform version is not supported");
             }
             this.asyncEnabled = aAsyncEnabled;
-            return this;
-        }
-
-        /**
-         * Sets the pool size for async connections
-         *
-         * @return {@code this}
-         * @see org.mongodb.MongoClientOptions#getAsyncPoolSize()
-         */
-        public Builder asyncPoolSize(final int count) {
-            this.asyncPoolSize = count;
-            return this;
-        }
-
-        /**
-         * Sets the max pool size for async connections
-         *
-         * @return {@code this}
-         * @see org.mongodb.MongoClientOptions#getAsyncMaxPoolSize()
-         */
-        public Builder asyncMaxPoolSize(final int count) {
-            this.asyncMaxPoolSize = count;
-            return this;
-        }
-
-        /**
-         * Sets the keep alive time for async threads in the pool
-         *
-         * @return {@code this}
-         * @see MongoClientOptions#getAsyncKeepAliveTime(TimeUnit)
-         */
-        public Builder asyncKeepAliveTime(final long time, final TimeUnit unit) {
-            this.asyncKeepAliveTime = MILLISECONDS.convert(time, unit);
             return this;
         }
 
@@ -760,7 +713,7 @@ public final class MongoClientOptions {
      * socketTimeout and socketKeepAlive.
      *
      * @return a SocketSettings object populated with the connection settings from this MongoClientOptions instance.
-     * @see org.mongodb.connection.impl.SocketSettings
+     * @see org.mongodb.connection.SocketSettings
      */
     SocketSettings getSocketSettings() {
         return socketSettings;
@@ -771,7 +724,7 @@ public final class MongoClientOptions {
      * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
      *
      * @return a SocketSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
-     * @see org.mongodb.connection.impl.SocketSettings
+     * @see org.mongodb.connection.SocketSettings
      */
     SocketSettings getHeartbeatSocketSettings() {
         return heartbeatSocketSettings;
@@ -782,12 +735,12 @@ public final class MongoClientOptions {
      * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
      * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
      *
-     * @return a ChannelProviderSettings populated with the settings from this options instance that relate to the connection
+     * @return a ConnectionPoolSettings populated with the settings from this options instance that relate to the connection
      *         provider.
-     * @see org.mongodb.connection.impl.ChannelProviderSettings
+     * @see org.mongodb.connection.ConnectionPoolSettings
      */
-    ChannelProviderSettings getChannelProviderSettings() {
-        return channelProviderSettings;
+    ConnectionPoolSettings getConnectionPoolSettings() {
+        return connectionPoolSettings;
     }
 
     /**
@@ -824,18 +777,6 @@ public final class MongoClientOptions {
         return requiredReplicaSetName;
     }
 
-    public long getAsyncKeepAliveTime(final TimeUnit unit) {
-        return unit.convert(asyncKeepAliveTime, TimeUnit.MILLISECONDS);
-    }
-
-    public int getAsyncMaxPoolSize() {
-        return asyncMaxPoolSize;
-    }
-
-    public int getAsyncPoolSize() {
-        return asyncPoolSize;
-    }
-
     @Override
     public String toString() {
         return "MongoClientOptions {"
@@ -861,9 +802,6 @@ public final class MongoClientOptions {
                + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
-               + ", asyncPoolSize=" + asyncPoolSize
-               + ", asyncMaxPoolSize=" + asyncMaxPoolSize
-               + ", asyncKeepAliveTime=" + asyncKeepAliveTime
                + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
@@ -891,10 +829,7 @@ public final class MongoClientOptions {
         heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
-        asyncPoolSize = builder.asyncPoolSize;
-        asyncMaxPoolSize = builder.asyncMaxPoolSize;
         requiredReplicaSetName = builder.requiredReplicaSetName;
-        asyncKeepAliveTime = builder.asyncKeepAliveTime;
 
         socketSettings = SocketSettings.builder()
                                                .connectTimeoutMS(connectTimeout)
@@ -908,13 +843,7 @@ public final class MongoClientOptions {
                                                         .keepAlive(socketKeepAlive)
                                                         .build();
 
-        asyncConnectionSettings = AsyncConnectionSettings.builder()
-                                                         .poolSize(asyncPoolSize)
-                                                         .maxPoolSize(asyncMaxPoolSize)
-                                                         .keepAliveTime(MILLISECONDS.convert(asyncKeepAliveTime, MILLISECONDS),
-                                                                        MILLISECONDS)
-                                                         .build();
-        channelProviderSettings = ChannelProviderSettings.builder()
+        connectionPoolSettings = ConnectionPoolSettings.builder()
                                                                .minSize(minConnectionPoolSize)
                                                                .maxSize(maxConnectionPoolSize)
                                                                .maxWaitQueueSize(maxConnectionPoolSize

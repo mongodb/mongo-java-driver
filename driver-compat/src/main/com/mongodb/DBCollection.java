@@ -32,14 +32,12 @@ import org.mongodb.Encoder;
 import org.mongodb.Index;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.Operation;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.AggregateCommand;
 import org.mongodb.command.Command;
-import org.mongodb.command.CountOperation;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.GroupCommandResult;
@@ -50,6 +48,7 @@ import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.Find;
@@ -62,6 +61,7 @@ import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.GetIndexesOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
@@ -868,7 +868,7 @@ public class DBCollection {
         // TODO: investigate case of int to long for skip
         final Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
 
-        return executeOperation(new CountOperation(find, getNamespace(), getDocumentCodec(), getBufferPool(), getSession(), false));
+        return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getBufferPool(), getSession(), false));
     }
 
     /**

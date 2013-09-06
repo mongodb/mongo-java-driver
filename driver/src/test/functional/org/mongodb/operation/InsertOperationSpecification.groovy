@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.junit.Test
@@ -25,7 +27,6 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.command.CountOperation
 
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
@@ -87,7 +88,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
         then:
         documents.size() ==
-                new CountOperation(new Find(), collection.getNamespace(), new DocumentCodec(), getBufferProvider(), getSession(), false)
+                new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
                         .execute()
     }
 

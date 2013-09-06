@@ -16,12 +16,17 @@
 
 package org.mongodb.session;
 
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.operation.SingleResultFuture;
+
+import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -31,7 +36,8 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 @ThreadSafe
 public class ClusterSession implements Session {
-    private Cluster cluster;
+    private final Cluster cluster;
+    private final Executor executor;
     private volatile boolean isClosed;
 
     /**
@@ -40,6 +46,12 @@ public class ClusterSession implements Session {
      * @param cluster the cluster, which may not be null
      */
     public ClusterSession(final Cluster cluster) {
+        this.cluster = notNull("cluster", cluster);
+        executor = null;
+    }
+
+    public ClusterSession(final Cluster cluster, final Executor executor) {
+        this.executor = notNull("executor", executor);
         this.cluster = notNull("cluster", cluster);
     }
 
@@ -50,17 +62,38 @@ public class ClusterSession implements Session {
         isTrue("open", !isClosed);
 
         final Server server = cluster.getServer(options.getServerSelector());
-        return new ServerChannelProvider() {
-            @Override
-            public ServerDescription getServerDescription() {
-                return server.getDescription();
-            }
+        return new SimpleServerChannelProvider(server, executor);
+    }
 
+    /**
+     * Asynchronously creates a server channel provider.
+     *
+     * @param options the server channel provider options
+     * @return a future for the server channel provider
+     */
+    @Override
+    public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
+        notNull("options", options);
+        notNull("serverSelector", options.getServerSelector());
+        isTrue("open", !isClosed);
+
+        final SingleResultFuture<ServerChannelProvider> retVal = new SingleResultFuture<ServerChannelProvider>();
+
+        executor.execute(new Runnable() {
             @Override
-            public Channel getChannel() {
-                return server.getChannel();
+            public void run() {
+                try {
+                    Server server = cluster.getServer(options.getServerSelector());
+                    retVal.init(new SimpleServerChannelProvider(server, executor), null);
+                } catch (MongoException e) {
+                    retVal.init(null, e);
+                } catch (Throwable e) {
+                    retVal.init(null, new MongoInternalException("Unexpected exception", e));
+                }
             }
-        };
+        });
+
+        return retVal;
     }
 
     @Override
@@ -71,6 +104,48 @@ public class ClusterSession implements Session {
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    private static class SimpleServerChannelProvider implements ServerChannelProvider {
+        private final Server server;
+        private Executor executor;
+
+        public SimpleServerChannelProvider(final Server server, final Executor executor) {
+            this.server = server;
+            this.executor = executor;
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
+        }
+
+        @Override
+        public Channel getChannel() {
+            return server.getChannel();
+        }
+
+        @Override
+        public MongoFuture<Channel> getChannelAsync() {
+            final SingleResultFuture<Channel> retVal = new SingleResultFuture<Channel>();
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Channel connection = server.getChannel();
+                        retVal.init(connection, null);
+                    } catch (MongoException e) {
+                        retVal.init(null, e);
+                    } catch (Throwable e) {
+                        retVal.init(null, new MongoInternalException("Unexpected exception", e));
+                    }
+                }
+            });
+
+            return retVal;
+        }
+
     }
 }
 

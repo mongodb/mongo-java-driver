@@ -16,12 +16,31 @@
 
 package org.mongodb.session;
 
-import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.MongoFuture;
 
 import java.io.Closeable;
 
+/**
+ * A session.
+ *
+ * @since 3.0
+ */
 public interface Session extends Closeable {
+    /**
+     * Creates a server channel provider.
+     *
+     * @param options the server channel provider options
+     * @return the server channel provider
+     */
     ServerChannelProvider createServerChannelProvider(ServerChannelProviderOptions options);
+
+    /**
+     * Asynchronously creates a server channel provider.
+     *
+     * @param options the server channel provider options
+     * @return a future for the server channel provider
+     */
+    MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(ServerChannelProviderOptions options);
 
     void close();
 

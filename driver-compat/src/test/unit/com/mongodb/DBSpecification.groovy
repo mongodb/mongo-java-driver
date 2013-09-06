@@ -16,14 +16,16 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
+import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.Command
-import org.mongodb.command.MongoCommandFailureException
 import org.mongodb.command.Ping
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription

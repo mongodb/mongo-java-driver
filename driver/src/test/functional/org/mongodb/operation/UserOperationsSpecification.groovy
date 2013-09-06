@@ -24,22 +24,20 @@
 
 
 
+
+
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoCredential
 import org.mongodb.connection.MongoSecurityException
-import org.mongodb.connection.impl.ChannelProviderSettings
-import org.mongodb.connection.impl.DefaultChannelProviderFactory
-import org.mongodb.connection.impl.NativeAuthenticationHelper
-import org.mongodb.connection.impl.SocketSettings
-import org.mongodb.connection.impl.SocketStreamFactory
+import org.mongodb.connection.NativeAuthenticationHelper
 import spock.lang.Ignore
 
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getPrimary
-import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
 
 // TODO: This needs to be re-written because it relies on a non-public class.
@@ -49,13 +47,6 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def password = '123'.toCharArray()
 
     def channelProvider
-    def cluster
-
-    def setup() {
-        channelProvider = new DefaultChannelProviderFactory(ChannelProviderSettings.builder().maxSize(1).build(),
-                new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                Arrays.asList(MongoCredential.createMongoCRCredential(userName, getDatabaseName(), password)), getBufferProvider())
-    }
 
     def 'an added user should be found'() {
         given:

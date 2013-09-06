@@ -18,15 +18,14 @@ package org.mongodb;
 
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.impl.PowerOfTwoBufferPool;
-import org.mongodb.session.AsyncClusterSession;
-import org.mongodb.session.AsyncServerSelectingSession;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.Session;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -91,19 +90,19 @@ class MongoClientImpl implements MongoClient {
         return new ClientAdministrationImpl(this);
     }
 
-    public AsyncServerSelectingSession getAsyncSession() {
-        return new AsyncClusterSession(cluster, executorService);
-    }
-
     public Session getSession() {
         if (pinnedSession.get() != null) {
             return pinnedSession.get();
         }
-        return new ClusterSession(cluster);
+        return new ClusterSession(cluster, executorService);
     }
 
     public Cluster getCluster() {
         return cluster;
+    }
+
+    public Executor getExecutor() {
+        return executorService;
     }
 
     public BufferProvider getBufferProvider() {
@@ -114,7 +113,7 @@ class MongoClientImpl implements MongoClient {
         if (pinnedSession.get() != null) {
             throw new IllegalStateException();
         }
-        pinnedSession.set(new PinnedSession(cluster));
+        pinnedSession.set(new PinnedSession(cluster, executorService));
     }
 
     private void unpinSession() {

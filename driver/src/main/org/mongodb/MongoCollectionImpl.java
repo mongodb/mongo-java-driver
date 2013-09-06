@@ -17,13 +17,9 @@
 package org.mongodb;
 
 import org.mongodb.async.AsyncBlock;
-import org.mongodb.async.MongoAsyncQueryCursor;
-import org.mongodb.command.AsyncCountOperation;
-import org.mongodb.command.CountOperation;
 import org.mongodb.command.MapReduceCommand;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.AsyncQueryOperation;
-import org.mongodb.operation.AsyncReplaceOperation;
+import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
 import org.mongodb.operation.FindAndRemoveOperation;
@@ -42,7 +38,6 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.Update;
 import org.mongodb.operation.UpdateOperation;
-import org.mongodb.operation.protocol.QueryResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -240,7 +235,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public long count() {
-            return new CountOperation(findOp, getNamespace(), getDocumentCodec(), client.getBufferProvider(), client.getSession(), false)
+            return new CountOperation(getNamespace(), findOp, getDocumentCodec(), client.getBufferProvider(), client.getSession(), false)
                     .execute();
         }
 
@@ -248,7 +243,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoIterable<T> mapReduce(final String map, final String reduce) {
             final MapReduceCommand commandOperation = new MapReduceCommand(findOp, getName(), map, reduce);
             final CommandResult commandResult = getDatabase().executeCommand(commandOperation.toDocument(),
-                                                                             commandOperation.getReadPreference());
+                    commandOperation.getReadPreference());
             return new SingleShotCommandIterable<T>(commandResult);
         }
 
@@ -393,41 +388,42 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
             final FindAndUpdate<T> findAndUpdate = new FindAndUpdate<T>().where(findOp.getFilter())
-                                                                         .updateWith(updateOperations)
-                                                                         .returnNew(asBoolean(beforeOrAfter))
-                                                                         .select(findOp.getFields())
-                                                                         .sortBy(findOp.getOrder())
-                                                                         .upsert(upsert);
+                    .updateWith(updateOperations)
+                    .returnNew(asBoolean(beforeOrAfter))
+                    .select(findOp.getFields())
+                    .sortBy(findOp.getOrder())
+                    .upsert(upsert);
 
             return new FindAndUpdateOperation<T>(getNamespace(), findAndUpdate, getCodec(), client.getBufferProvider(), client.getSession(),
-                                                 false).execute();
+                    false).execute();
         }
 
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
             final FindAndReplace<T> findAndReplace = new FindAndReplace<T>(replacement).where(findOp.getFilter())
-                                                                                       .returnNew(asBoolean(beforeOrAfter))
-                                                                                       .select(findOp.getFields())
-                                                                                       .sortBy(findOp.getOrder())
-                                                                                       .upsert(upsert);
+                    .returnNew(asBoolean(beforeOrAfter))
+                    .select(findOp.getFields())
+                    .sortBy(findOp.getOrder())
+                    .upsert(upsert);
             return new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec(), getCodec(), client.getBufferProvider(),
-                                                  client.getSession(), false).execute();
+                    client.getSession(), false).execute();
         }
 
         @Override
         public T getOneAndRemove() {
             final FindAndRemove<T> findAndRemove = new FindAndRemove<T>().where(findOp.getFilter())
-                                                                         .select(findOp.getFields())
-                                                                         .sortBy(findOp.getOrder());
+                    .select(findOp.getFields())
+                    .sortBy(findOp.getOrder());
 
             return new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec(), client.getBufferProvider(), client.getSession(),
-                                                 false).execute();
+                    false).execute();
         }
 
         @Override
         public MongoFuture<WriteResult> asyncReplace(final T replacement) {
             final Replace<T> replace = new Replace<T>(writeConcern, findOp.getFilter(), replacement).upsert(upsert);
-            final MongoFuture<CommandResult> commandResultFuture = client.getAsyncSession().execute(
-                    new AsyncReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(), client.getBufferProvider()));
+            final MongoFuture<CommandResult> commandResultFuture =
+                    new ReplaceOperation<T>(getNamespace(), replace, getDocumentCodec(), getCodec(),
+                            client.getBufferProvider(), client.getSession(), false).executeAsync();
             return new MappingFuture<CommandResult, WriteResult>(commandResultFuture, new Function<CommandResult, WriteResult>() {
                 @Override
                 public WriteResult apply(final CommandResult commandResult) {
@@ -442,28 +438,41 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<T> asyncOne() {
-            final MongoFuture<QueryResult<T>> queryResultFuture =
-                    client.getAsyncSession().execute(
-                            new AsyncQueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                                    client.getBufferProvider()));
-            return new MappingFuture<QueryResult<T>, T>(queryResultFuture, new Function<QueryResult<T>, T>() {
-                @Override
-                public T apply(final QueryResult<T> queryResult) {
-                    if (queryResult.getResults().isEmpty()) {
-                        return null;
-                    }
-                    else {
-                        return queryResult.getResults().get(0);
-                    }
-                }
-            });
+            final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
+            new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
+                    client.getBufferProvider(), client.getSession(), false).executeAsync()
+                    .register(new SingleResultCallback<MongoAsyncCursor<T>>() {
+                        @Override
+                        public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
+                            if (e != null) {
+                                retVal.init(null, e);
+                            }
+                            else {
+                                cursor.start(new AsyncBlock<T>() {
+                                    @Override
+                                    public void done() {
+                                        if (!retVal.isDone()) {
+                                            retVal.init(null, null);
+                                        }
+                                        // TODO: deal with errors
+                                    }
+
+                                    @Override
+                                    public boolean run(final T t) {
+                                        retVal.init(t, null);
+                                        return false;
+                                    }
+                                });
+                            }
+                        }
+                    });
+            return retVal;
         }
 
         @Override
         public MongoFuture<Long> asyncCount() {
-            return client.getAsyncSession().execute(new AsyncCountOperation(findOp, getNamespace(), getDocumentCodec(),
-                                                                            client.getBufferProvider()
-            ));
+            return new CountOperation(getNamespace(), findOp, getDocumentCodec(), client.getBufferProvider(), client.getSession(), false)
+                    .executeAsync();
         }
 
         private boolean getMultiFromLimit() {
@@ -485,8 +494,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new MongoAsyncQueryCursor<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferProvider(),
-                    client.getAsyncSession(), block).start();
+            new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(), client.getBufferProvider(),
+                    client.getSession(), false).executeAsync().register(new SingleResultCallback<MongoAsyncCursor<T>>() {
+                @Override
+                public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
+                    cursor.start(block);  // TODO: deal with exceptions
+                }
+            });
         }
 
         @Override

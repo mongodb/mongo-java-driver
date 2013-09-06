@@ -19,7 +19,9 @@ package org.mongodb.operation;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.connection.BufferProvider;
@@ -27,7 +29,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> {
+public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements AsyncOperation<MongoAsyncCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
@@ -46,5 +48,10 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> {
     @Override
     public MongoCursor<T> execute() {
          return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getBufferProvider(), getSession(), isCloseSession());
+    }
+
+    public MongoFuture<MongoAsyncCursor<T>> executeAsync() {
+        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace, find, queryEncoder, resultDecoder,
+                getBufferProvider(), getSession(), isCloseSession()), null);
     }
 }

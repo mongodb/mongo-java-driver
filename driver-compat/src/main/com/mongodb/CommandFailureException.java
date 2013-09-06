@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.MongoCommandFailureException;
 
 public class CommandFailureException extends MongoException {
     private static final long serialVersionUID = -1180715413196161037L;
@@ -27,11 +27,6 @@ public class CommandFailureException extends MongoException {
      *
      * @param commandResult the result of running the command
      */
-    public CommandFailureException(final CommandResult commandResult) {
-        super(ServerError.getCode(commandResult), commandResult.toString());
-        this.commandResult = commandResult;
-    }
-
     public CommandFailureException(final CommandResult commandResult, final String message) {
         super(ServerError.getCode(commandResult), message);
         this.commandResult = commandResult;

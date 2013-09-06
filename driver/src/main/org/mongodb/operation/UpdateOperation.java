@@ -23,10 +23,10 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.protocol.UpdateCommandProtocol;
-import org.mongodb.operation.protocol.UpdateProtocol;
-import org.mongodb.operation.protocol.WriteCommandProtocol;
-import org.mongodb.operation.protocol.WriteProtocol;
+import org.mongodb.protocol.UpdateCommandProtocol;
+import org.mongodb.protocol.UpdateProtocol;
+import org.mongodb.protocol.WriteCommandProtocol;
+import org.mongodb.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
@@ -55,12 +55,12 @@ public class UpdateOperation extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new UpdateProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                channel, false);
+                channel, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new UpdateCommandProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                channel, false);
+                channel, true);
     }
 }

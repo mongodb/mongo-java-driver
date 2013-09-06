@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Index;
-import org.mongodb.command.MongoCommandFailureException;
+import org.mongodb.MongoCommandFailureException;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

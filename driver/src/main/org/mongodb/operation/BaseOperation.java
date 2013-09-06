@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Operation;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.Session;
 

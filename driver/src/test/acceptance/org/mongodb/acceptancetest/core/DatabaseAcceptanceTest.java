@@ -25,11 +25,11 @@ import org.mongodb.MongoClient;
 import org.mongodb.MongoClients;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCredential;
+import org.mongodb.MongoServerException;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.MongoSecurityException;
-import org.mongodb.operation.MongoServerException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
 import java.util.ArrayList;

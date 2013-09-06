@@ -16,13 +16,18 @@
 
 package org.mongodb.session;
 
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.ServerChannelProvider;
+import org.mongodb.operation.SingleResultFuture;
+
+import java.util.concurrent.Executor;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -37,6 +42,7 @@ public class PinnedSession implements Session {
     private Server serverForWrites;
     private Channel channelForReads;
     private Channel channelForWrites;
+    private final Executor executor;
     private Cluster cluster;
     private boolean isClosed;
 
@@ -47,6 +53,17 @@ public class PinnedSession implements Session {
      */
     public PinnedSession(final Cluster cluster) {
         this.cluster = notNull("cluster", cluster);
+        this.executor = null;
+    }
+
+    /**
+     * Create a new session with the given cluster.
+     *
+     * @param cluster the cluster, which may not be null
+     */
+    public PinnedSession(final Cluster cluster, final Executor executor) {
+        this.cluster = notNull("cluster", cluster);
+        this.executor = notNull("executor", executor);
     }
 
     @Override
@@ -100,17 +117,57 @@ public class PinnedSession implements Session {
                 serverToUse = serverForWrites;
                 channelToUse = channelForWrites;
             }
-            return new ServerChannelProvider() {
-                @Override
-                public ServerDescription getServerDescription() {
-                    return serverToUse.getDescription();
-                }
+            return new DelayedCloseServerChannelProvider(serverToUse, channelToUse);
+        }
+    }
 
-                @Override
-                public Channel getChannel() {
-                    return new DelayedCloseChannel(channelToUse);
+    @Override
+    public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
+        notNull("options", options);
+        notNull("serverSelector", options.getServerSelector());
+        isTrue("open", !isClosed);
+
+        final SingleResultFuture<ServerChannelProvider> retVal = new SingleResultFuture<ServerChannelProvider>();
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    retVal.init(createServerChannelProvider(options), null);
+                } catch (MongoException e) {
+                    retVal.init(null, e);
+                } catch (Throwable e) {
+                    retVal.init(null, new MongoInternalException("Unexpected exception", e));
                 }
-            };
+            }
+        });
+
+        return retVal;
+
+    }
+
+    private static final class DelayedCloseServerChannelProvider implements ServerChannelProvider {
+        private final Server server;
+        private final Channel connection;
+
+        public DelayedCloseServerChannelProvider(final Server server, final Channel connection) {
+            this.server = server;
+            this.connection = connection;
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
+        }
+
+        @Override
+        public Channel getChannel() {
+            return new DelayedCloseChannel(connection);
+        }
+
+        @Override
+        public MongoFuture<Channel> getChannelAsync() {
+            return new SingleResultFuture<Channel>(connection, null);
         }
     }
 }

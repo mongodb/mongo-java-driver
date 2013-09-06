@@ -18,15 +18,15 @@ package org.mongodb;
 
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.impl.PowerOfTwoBufferPool;
-import org.mongodb.session.AsyncServerSelectingSession;
 import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -90,9 +90,9 @@ public final class Fixture {
         return mongoClient.getCluster();
     }
 
-    public static AsyncServerSelectingSession getAsyncSession() {
+    public static Executor getExecutor() {
         getMongoClient();
-        return mongoClient.getAsyncSession();
+        return mongoClient.getExecutor();
     }
 
     public static BufferProvider getBufferProvider() {

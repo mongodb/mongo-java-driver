@@ -17,6 +17,8 @@
 package org.mongodb.command;
 
 import org.mongodb.CommandResult;
+import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
 

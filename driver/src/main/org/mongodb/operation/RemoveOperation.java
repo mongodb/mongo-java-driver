@@ -23,10 +23,10 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Channel;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.operation.protocol.DeleteCommandProtocol;
-import org.mongodb.operation.protocol.DeleteProtocol;
-import org.mongodb.operation.protocol.WriteCommandProtocol;
-import org.mongodb.operation.protocol.WriteProtocol;
+import org.mongodb.protocol.DeleteCommandProtocol;
+import org.mongodb.protocol.DeleteProtocol;
+import org.mongodb.protocol.WriteCommandProtocol;
+import org.mongodb.protocol.WriteProtocol;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
@@ -54,12 +54,12 @@ public class RemoveOperation extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new DeleteProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                channel, false);
+                channel, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
         return new DeleteCommandProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                channel, false);
+                channel, true);
     }
 }
