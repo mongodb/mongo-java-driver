@@ -23,7 +23,7 @@ buildscript {
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
-        classpath 'me.trnl:github-release-gradle-plugin:0.1-SNAPSHOT'
+        classpath 'me.trnl:github-release-gradle-plugin:0.1'
     }
 }
 
