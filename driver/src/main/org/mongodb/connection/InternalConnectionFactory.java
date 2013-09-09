@@ -16,21 +16,6 @@
 
 package org.mongodb.connection;
 
-public interface BaseConnection {
-    /**
-     * Closes the connection.
-     */
-    void close();
-
-    /**
-     * Returns the closed state of the connection
-     *
-     * @return true if connection is closed
-     */
-    boolean isClosed();
-
-    /**
-     * Gets the server address of this connection
-     */
-    ServerAddress getServerAddress();
+interface InternalConnectionFactory {
+    InternalConnection create(final ServerAddress serverAddress);
 }

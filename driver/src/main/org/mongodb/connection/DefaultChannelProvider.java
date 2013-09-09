@@ -39,7 +39,7 @@ class DefaultChannelProvider implements ChannelProvider {
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
-    private final ConcurrentPool<UsageTrackingConnection> pool;
+    private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
@@ -48,12 +48,12 @@ class DefaultChannelProvider implements ChannelProvider {
     private final ConnectionPoolStatistics statistics;
     private final Runnable maintenanceTask;
 
-    public DefaultChannelProvider(final ServerAddress serverAddress, final ConnectionFactory connectionFactory,
+    public DefaultChannelProvider(final ServerAddress serverAddress, final InternalConnectionFactory internalConnectionFactory,
                                   final ConnectionPoolSettings settings) {
         this.serverAddress = serverAddress;
         this.settings = settings;
-        pool = new ConcurrentPool<UsageTrackingConnection>(settings.getMaxSize(),
-                new UsageTrackingConnectionItemFactory(connectionFactory));
+        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
+                new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory));
         statistics = new ConnectionPoolStatistics(serverAddress, settings.getMinSize(), settings.getMaxSize(), pool);
         MBeanServerFactory.getMBeanServer().registerMBean(statistics, statistics.getObjectName());
         maintenanceTask = createMaintenanceTask();
@@ -73,12 +73,12 @@ class DefaultChannelProvider implements ChannelProvider {
                         + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
                         settings.getMaxWaitQueueSize()));
             }
-            UsageTrackingConnection connection = pool.get(timeout, timeUnit);
-            while (shouldPrune(connection)) {
-                pool.release(connection, true);
-                connection = pool.get(timeout, timeUnit);
+            UsageTrackingInternalConnection internalConnection = pool.get(timeout, timeUnit);
+            while (shouldPrune(internalConnection)) {
+                pool.release(internalConnection, true);
+                internalConnection = pool.get(timeout, timeUnit);
             }
-            return new PooledChannel(connection);
+            return new PooledChannel(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
         }
@@ -150,19 +150,19 @@ class DefaultChannelProvider implements ChannelProvider {
         return settings.getMaxConnectionIdleTime(MILLISECONDS) > 0 || settings.getMaxConnectionLifeTime(MILLISECONDS) > 0;
     }
 
-    private boolean shouldPrune(final UsageTrackingConnection connection) {
+    private boolean shouldPrune(final UsageTrackingInternalConnection connection) {
         return fromPreviousGeneration(connection) || pastMaxLifeTime(connection) || pastMaxIdleTime(connection);
     }
 
-    private boolean pastMaxIdleTime(final UsageTrackingConnection connection) {
+    private boolean pastMaxIdleTime(final UsageTrackingInternalConnection connection) {
         return expired(connection.getLastUsedAt(), System.currentTimeMillis(), settings.getMaxConnectionIdleTime(MILLISECONDS));
     }
 
-    private boolean pastMaxLifeTime(final UsageTrackingConnection connection) {
+    private boolean pastMaxLifeTime(final UsageTrackingInternalConnection connection) {
         return expired(connection.getOpenedAt(), System.currentTimeMillis(), settings.getMaxConnectionLifeTime(MILLISECONDS));
     }
 
-    private boolean fromPreviousGeneration(final UsageTrackingConnection connection) {
+    private boolean fromPreviousGeneration(final UsageTrackingInternalConnection connection) {
         return generation.get() > connection.getGeneration();
     }
 
@@ -186,9 +186,9 @@ class DefaultChannelProvider implements ChannelProvider {
     }
 
     private class PooledChannel implements Channel {
-        private volatile UsageTrackingConnection wrapped;
+        private volatile UsageTrackingInternalConnection wrapped;
 
-        public PooledChannel(final UsageTrackingConnection wrapped) {
+        public PooledChannel(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -263,22 +263,23 @@ class DefaultChannelProvider implements ChannelProvider {
         }
     }
 
-    private class UsageTrackingConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingConnection> {
-        private ConnectionFactory connectionFactory;
+    private class UsageTrackingInternalConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingInternalConnection> {
+        private InternalConnectionFactory internalConnectionFactory;
 
-        public UsageTrackingConnectionItemFactory(final ConnectionFactory connectionFactory) {
-            this.connectionFactory = connectionFactory;
+        public UsageTrackingInternalConnectionItemFactory(final InternalConnectionFactory internalConnectionFactory) {
+            this.internalConnectionFactory = internalConnectionFactory;
         }
 
         @Override
-        public UsageTrackingConnection create() {
-            UsageTrackingConnection connection = new UsageTrackingConnection(connectionFactory.create(serverAddress), generation.get());
-            LOGGER.info(format("Opened connection [%s] to %s", connection.getId(), serverAddress));
-            return connection;
+        public UsageTrackingInternalConnection create() {
+            UsageTrackingInternalConnection internalConnection =
+                    new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
+            LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
+            return internalConnection;
         }
 
         @Override
-        public void close(final UsageTrackingConnection connection) {
+        public void close(final UsageTrackingInternalConnection connection) {
             String reason;
             if (fromPreviousGeneration(connection)) {
                 reason = "there was a socket exception raised on another connection from this pool";
@@ -297,7 +298,7 @@ class DefaultChannelProvider implements ChannelProvider {
         }
 
         @Override
-        public boolean shouldPrune(final UsageTrackingConnection usageTrackingConnection) {
+        public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
             return DefaultChannelProvider.this.shouldPrune(usageTrackingConnection);
         }
     }

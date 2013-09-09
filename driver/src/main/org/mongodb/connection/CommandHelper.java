@@ -30,29 +30,30 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 final class CommandHelper {
 
     static CommandResult executeCommand(final String database, final Document command, final Codec<Document> codec,
-                                        final Connection connection, final BufferProvider bufferProvider) {
-        return receiveMessage(codec, connection, sendMessage(database, command, codec, connection, bufferProvider));
+                                        final InternalConnection internalConnection, final BufferProvider bufferProvider) {
+        return receiveMessage(codec, internalConnection, sendMessage(database, command, codec, internalConnection, bufferProvider));
     }
 
     private static CommandMessage sendMessage(final String database, final Document command, final Codec<Document> codec,
-                                              final Connection connection, final BufferProvider bufferProvider) {
+                                              final InternalConnection internalConnection, final BufferProvider bufferProvider) {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                               command, codec, MessageSettings.builder().build());
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            internalConnection.sendMessage(buffer.getByteBuffers());
             return message;
         } finally {
             buffer.close();
         }
     }
 
-    private static CommandResult receiveMessage(final Codec<Document> codec, final Connection connection, final CommandMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage();
+    private static CommandResult receiveMessage(final Codec<Document> codec, final InternalConnection internalConnection,
+                                                final CommandMessage message) {
+        final ResponseBuffers responseBuffers = internalConnection.receiveMessage();
         try {
             final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
-            return createCommandResult(replyMessage, connection.getServerAddress());
+            return createCommandResult(replyMessage, internalConnection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

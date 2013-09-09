@@ -21,17 +21,17 @@ import org.bson.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-class TestConnectionFactory implements ConnectionFactory {
-    private List<TestConnection> createdConnections = new ArrayList<TestConnection>();
+class TestInternalConnectionFactory implements InternalConnectionFactory {
+    private List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
 
     @Override
-    public Connection create(final ServerAddress serverAddress) {
-        TestConnection connection = new TestConnection(serverAddress);
+    public InternalConnection create(final ServerAddress serverAddress) {
+        TestInternalConnection connection = new TestInternalConnection(serverAddress);
         createdConnections.add(connection);
         return connection;
     }
 
-    List<TestConnection> getCreatedConnections() {
+    List<TestInternalConnection> getCreatedConnections() {
         return createdConnections;
     }
 
@@ -39,11 +39,11 @@ class TestConnectionFactory implements ConnectionFactory {
         return createdConnections.size();
     }
 
-    public static class TestConnection implements Connection {
+    public static class TestInternalConnection implements InternalConnection {
         private final ServerAddress serverAddress;
         private boolean closed;
 
-        public TestConnection(final ServerAddress serverAddress) {
+        public TestInternalConnection(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;
         }
 

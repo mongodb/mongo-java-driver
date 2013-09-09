@@ -62,7 +62,7 @@ class DefaultServer implements ClusterableServer {
         this.channelProvider = channelProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(),
-                new DefaultConnectionFactory(heartbeatStreamFactory, bufferProvider, Collections.<MongoCredential>emptyList()),
+                new InternalStreamConnectionFactory(heartbeatStreamFactory, bufferProvider, Collections.<MongoCredential>emptyList()),
                 bufferProvider);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                 settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);

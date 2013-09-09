@@ -22,20 +22,20 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultConnectionFactory implements ConnectionFactory {
+class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private StreamFactory streamFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
 
-    public DefaultConnectionFactory(final StreamFactory streamFactory, final BufferProvider bufferProvider,
-                                    final List<MongoCredential> credentialList) {
+    public InternalStreamConnectionFactory(final StreamFactory streamFactory, final BufferProvider bufferProvider,
+                                           final List<MongoCredential> credentialList) {
         this.streamFactory = streamFactory;
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
     }
 
     @Override
-    public Connection create(final ServerAddress serverAddress) {
-        return new DefaultConnection(streamFactory.create(serverAddress), credentialList, bufferProvider);
+    public InternalConnection create(final ServerAddress serverAddress) {
+        return new InternalStreamConnection(streamFactory.create(serverAddress), credentialList, bufferProvider);
     }
 }

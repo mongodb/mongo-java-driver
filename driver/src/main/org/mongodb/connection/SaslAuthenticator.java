@@ -29,8 +29,8 @@ import static org.mongodb.connection.CommandHelper.executeCommand;
 abstract class SaslAuthenticator extends Authenticator {
     public static final String MONGODB_PROTOCOL = "mongodb";
 
-    SaslAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
-        super(credential, connection, bufferProvider);
+    SaslAuthenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
+        super(credential, internalConnection, bufferProvider);
     }
 
     public void authenticate() {
@@ -64,12 +64,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), new DocumentCodec(),
-                              getConnection(), getBufferProvider());
+                              getInternalConnection(), getBufferProvider());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), new DocumentCodec(),
-                              getConnection(), getBufferProvider());
+                              getInternalConnection(), getBufferProvider());
     }
 
     private Document createSaslStartCommandDocument(final byte[] outToken) {

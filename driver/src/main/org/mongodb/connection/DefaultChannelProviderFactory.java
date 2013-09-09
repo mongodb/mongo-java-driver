@@ -36,7 +36,7 @@ class DefaultChannelProviderFactory implements ChannelProviderFactory {
 
     @Override
     public ChannelProvider create(final ServerAddress serverAddress) {
-        return new DefaultChannelProvider(serverAddress, new DefaultConnectionFactory(streamFactory, bufferProvider, credentialList),
-                settings);
+        return new DefaultChannelProvider(serverAddress,
+                new InternalStreamConnectionFactory(streamFactory, bufferProvider, credentialList), settings);
     }
 }

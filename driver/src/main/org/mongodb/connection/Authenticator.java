@@ -20,12 +20,12 @@ import org.mongodb.MongoCredential;
 
 abstract class Authenticator {
     private final MongoCredential credential;
-    private final Connection connection;
+    private final InternalConnection internalConnection;
     private final BufferProvider bufferProvider;
 
-    Authenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
+    Authenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
         this.credential = credential;
-        this.connection = connection;
+        this.internalConnection = internalConnection;
         this.bufferProvider = bufferProvider;
     }
 
@@ -33,8 +33,8 @@ abstract class Authenticator {
         return credential;
     }
 
-    Connection getConnection() {
-        return connection;
+    InternalConnection getInternalConnection() {
+        return internalConnection;
     }
 
     BufferProvider getBufferProvider() {

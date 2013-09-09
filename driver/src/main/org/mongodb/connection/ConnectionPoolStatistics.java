@@ -28,11 +28,11 @@ final class ConnectionPoolStatistics implements ConnectionPoolStatisticsMBean {
     private ServerAddress serverAddress;
     private final int minSize;
     private final int maxSize;
-    private ConcurrentPool<UsageTrackingConnection> pool;
+    private ConcurrentPool<UsageTrackingInternalConnection> pool;
     private String objectName;
 
     ConnectionPoolStatistics(final ServerAddress serverAddress, final int minSize, final int maxSize,
-                             final ConcurrentPool<UsageTrackingConnection> pool) {
+                             final ConcurrentPool<UsageTrackingInternalConnection> pool) {
         this.serverAddress = serverAddress;
         this.minSize = minSize;
         this.maxSize = maxSize;

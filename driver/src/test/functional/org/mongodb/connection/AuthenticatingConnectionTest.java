@@ -31,7 +31,7 @@ import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 
 public class AuthenticatingConnectionTest {
-    private Connection connection;
+    private InternalConnection internalConnection;
     private String userName;
     private String password;
     private String source;
@@ -44,48 +44,53 @@ public class AuthenticatingConnectionTest {
         source = System.getProperty("org.mongodb.test.source", "admin");
         serverAddress = new ServerAddress(System.getProperty("org.mongodb.test.serverAddress", getPrimary().toString()));
 
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+        InternalConnectionFactory internalConnectionFactory =
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Collections.<MongoCredential>emptyList());
-        connection = connectionFactory.create(serverAddress);
+        internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
     @After
     public void tearDown() throws Exception {
-        connection.close();
+        internalConnection.close();
     }
 
     @Test
     @Ignore
     public void testMongoCRAuthentication() throws InterruptedException {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+        InternalConnectionFactory internalConnectionFactory =
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, source,
                 password.toCharArray())));
-        connection = connectionFactory.create(serverAddress);
+        internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
     public void testPlainAuthentication() throws InterruptedException {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+        InternalConnectionFactory internalConnectionFactory =
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createPlainCredential(userName, source,
                 password.toCharArray())));
-        connection = connectionFactory.create(serverAddress);
+        internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
     public void testGSSAPIAuthentication() throws InterruptedException {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+        InternalConnectionFactory internalConnectionFactory =
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)));
-        connection = connectionFactory.create(serverAddress);
+        internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
     @Test
     @Ignore
     public void testMongoX509Authentication() throws InterruptedException {
-        ConnectionFactory connectionFactory = new DefaultConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+        InternalConnectionFactory internalConnectionFactory =
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
                 "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")));
-        connection = connectionFactory.create(serverAddress);
+        internalConnection = internalConnectionFactory.create(serverAddress);
     }
 }

@@ -31,7 +31,7 @@ import static org.junit.Assert.fail;
 public class DefaultChannelProviderTest {
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
 
-    private final TestConnectionFactory connectionFactory = new TestConnectionFactory();
+    private final TestInternalConnectionFactory connectionFactory = new TestInternalConnectionFactory();
 
     private DefaultChannelProvider provider;
 

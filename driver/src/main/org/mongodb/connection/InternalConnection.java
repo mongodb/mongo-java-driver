@@ -31,7 +31,18 @@ import java.util.List;
  * @since 3.0
  */
 @NotThreadSafe
-interface Connection extends BaseConnection {
+interface InternalConnection {
+
+    /**
+     * Gets the server address of this connection
+     */
+    ServerAddress getServerAddress();
+
+    /**
+     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
+     * @return the id
+     */
+    String getId();
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
@@ -48,12 +59,6 @@ interface Connection extends BaseConnection {
     ResponseBuffers receiveMessage();
 
     /**
-     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
-     * @return the id
-     */
-    String getId();
-
-    /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers the list of byte buffers to send
@@ -67,4 +72,16 @@ interface Connection extends BaseConnection {
      * @param callback the callback to invoke on completion
      */
     void receiveMessageAsync(SingleResultCallback<ResponseBuffers> callback);
+
+    /**
+     * Closes the connection.
+     */
+    void close();
+
+    /**
+     * Returns the closed state of the connection
+     *
+     * @return true if connection is closed
+     */
+    boolean isClosed();
 }

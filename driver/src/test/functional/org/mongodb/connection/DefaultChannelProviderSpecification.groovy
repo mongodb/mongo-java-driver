@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -38,7 +40,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 class DefaultChannelProviderSpecification extends Specification {
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
 
-    private final TestConnectionFactory connectionFactory = Spy(TestConnectionFactory)
+    private final TestInternalConnectionFactory connectionFactory = Spy(TestInternalConnectionFactory)
 
     @Subject
     private DefaultChannelProvider provider
@@ -127,10 +129,10 @@ class DefaultChannelProviderSpecification extends Specification {
         given:
         int numberOfConnectionsCreated = 0
 
-        ConnectionFactory mockConnectionFactory = Mock()
+        InternalConnectionFactory mockConnectionFactory = Mock()
         mockConnectionFactory.create(_) >> {
             numberOfConnectionsCreated++
-            Mock(Connection) {
+            Mock(InternalConnection) {
                 sendMessage(_) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
             }
         }

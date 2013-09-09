@@ -39,7 +39,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
-class DefaultConnection implements Connection {
+class InternalStreamConnection implements InternalConnection {
 
     private final AtomicInteger incrementingId = new AtomicInteger();
 
@@ -49,7 +49,7 @@ class DefaultConnection implements Connection {
     private volatile boolean isClosed;
     private String id;
 
-    DefaultConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+    InternalStreamConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
         this.stream = stream;
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);

@@ -23,15 +23,15 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 
 class X509Authenticator extends Authenticator {
-    X509Authenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
-        super(credential, connection, bufferProvider);
+    X509Authenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
+        super(credential, internalConnection, bufferProvider);
     }
 
     @Override
     void authenticate() {
         try {
             final Document authCommand = getAuthCommand(getCredential().getUserName());
-            CommandHelper.executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getConnection(),
+            CommandHelper.executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection(),
                                          getBufferProvider());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);

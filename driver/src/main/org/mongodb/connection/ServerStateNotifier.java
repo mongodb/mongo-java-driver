@@ -51,19 +51,19 @@ class ServerStateNotifier implements Runnable {
 
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
-    private final ConnectionFactory connectionFactory;
+    private final InternalConnectionFactory internalConnectionFactory;
     private final BufferProvider bufferProvider;
-    private Connection connection;
+    private InternalConnection internalConnection;
     private int count;
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
 
     ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                        final ConnectionFactory connectionFactory, final BufferProvider bufferProvider) {
+                        final InternalConnectionFactory internalConnectionFactory, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
-        this.connectionFactory = connectionFactory;
+        this.internalConnectionFactory = internalConnectionFactory;
         serverDescription = getConnectingServerDescription();
         this.bufferProvider = bufferProvider;
     }
@@ -78,23 +78,23 @@ class ServerStateNotifier implements Runnable {
         final ServerDescription currentServerDescription = serverDescription;
         Throwable throwable = null;
         try {
-            if (connection == null) {
-                connection = connectionFactory.create(serverAddress);
+            if (internalConnection == null) {
+                internalConnection = internalConnectionFactory.create(serverAddress);
             }
             try {
                 LOGGER.fine(format("Checking status of %s", serverAddress));
                 final CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                        connection, bufferProvider);
+                        internalConnection, bufferProvider);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
                 final CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
-                                                                     connection, bufferProvider);
+                        internalConnection, bufferProvider);
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {
-                    connection.close();
-                    connection = null;
+                    internalConnection.close();
+                    internalConnection = null;
                     count = 0;
                     elapsedNanosSum = 0;
                     throw e;
@@ -127,9 +127,9 @@ class ServerStateNotifier implements Runnable {
 
     public void close() {
         isClosed = true;
-        if (connection != null) {
-            connection.close();
-            connection = null;
+        if (internalConnection != null) {
+            internalConnection.close();
+            internalConnection = null;
         }
     }
 

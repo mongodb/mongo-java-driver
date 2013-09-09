@@ -36,8 +36,9 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
     private static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
 
-    GSSAPIAuthenticator(final MongoCredential credential, final Connection connection, final BufferProvider bufferProvider) {
-        super(credential, connection, bufferProvider);
+    GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection,
+                        final BufferProvider bufferProvider) {
+        super(credential, internalConnection, bufferProvider);
 
         if (getCredential().getMechanism() != GSSAPI) {
             throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());
@@ -57,7 +58,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
-                    MONGODB_PROTOCOL, getConnection().getServerAddress().getHost(), props, null);
+                    MONGODB_PROTOCOL, getInternalConnection().getServerAddress().getHost(), props, null);
             if (saslClient == null) {
                 throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }

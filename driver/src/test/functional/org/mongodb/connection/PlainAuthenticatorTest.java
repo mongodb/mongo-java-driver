@@ -28,7 +28,7 @@ import static org.mongodb.Fixture.getBufferProvider;
 
 @Ignore
 public class PlainAuthenticatorTest {
-    private Connection connection;
+    private InternalConnection internalConnection;
     private String userName;
     private String source;
     private String password;
@@ -39,26 +39,27 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        connection = new DefaultConnection(new SocketChannelStream(new ServerAddress(host), SocketSettings.builder().build()),
+        internalConnection = new InternalStreamConnection(
+                new SocketChannelStream(new ServerAddress(host), SocketSettings.builder().build()),
                 Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool());
     }
 
     @After
     public void tearDown() throws Exception {
-        connection.close();
+        internalConnection.close();
     }
 
     @Test
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, source, password.toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, password.toCharArray()), internalConnection, getBufferProvider());
         authenticator.authenticate();
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, source, "wrong".toCharArray()), connection, getBufferProvider());
+                MongoCredential.createPlainCredential(userName, source, "wrong".toCharArray()), internalConnection, getBufferProvider());
         authenticator.authenticate();
     }
 }

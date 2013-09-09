@@ -25,13 +25,13 @@ import static org.mongodb.assertions.Assertions.isTrue;
 /**
  * A connection that tracks when it was opened and when it was last used.
  */
-class UsageTrackingConnection implements Connection {
+class UsageTrackingInternalConnection implements InternalConnection {
     private final long openedAt;
     private volatile long lastUsedAt;
     private final int generation;
-    private volatile Connection wrapped;
+    private volatile InternalConnection wrapped;
 
-    UsageTrackingConnection(final Connection wrapped, final int generation) {
+    UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
         this.wrapped = wrapped;
         this.generation = generation;
         openedAt = System.currentTimeMillis();
