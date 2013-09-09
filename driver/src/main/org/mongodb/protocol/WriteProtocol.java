@@ -24,8 +24,8 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -50,18 +50,18 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
     private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
-    private final Channel channel;
-    private final boolean closeChannel;
+    private final Connection connection;
+    private final boolean closeConnection;
     private final GetLastError getLastErrorCommand;
 
     public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
-                         final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
+                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
-        this.channel = channel;
-        this.closeChannel = closeChannel;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
 
         if (writeConcern.isAcknowledged()) {
             getLastErrorCommand = new GetLastError(writeConcern);
@@ -75,8 +75,8 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         try {
             return receiveMessage(sendMessage());
         } finally {
-            if (closeChannel) {
-                channel.close();
+            if (closeConnection) {
+                connection.close();
             }
         }
     }
@@ -94,15 +94,15 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
                     new DocumentCodec(),
                     getMessageSettings(serverDescription));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
-            channel.sendMessageAsync(buffer.getByteBuffers(),
-                    new SendMessageCallback<CommandResult>(channel, buffer, getLastErrorMessage.getId(), retVal,
+            connection.sendMessageAsync(buffer.getByteBuffers(),
+                    new SendMessageCallback<CommandResult>(connection, buffer, getLastErrorMessage.getId(), retVal,
                             new WriteResultCallback(retVal, new DocumentCodec(),
                                     getNamespace(), nextMessage, writeConcern, getLastErrorMessage.getId(), bufferProvider,
-                                    serverDescription, channel, closeChannel)));
+                                    serverDescription, connection, closeConnection)));
         }
         else {
-            channel.sendMessageAsync(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(retVal,
-                    getNamespace(), nextMessage, buffer, bufferProvider, serverDescription, channel, closeChannel));
+            connection.sendMessageAsync(buffer.getByteBuffers(), new UnacknowledgedWriteResultCallback(retVal,
+                    getNamespace(), nextMessage, buffer, bufferProvider, serverDescription, connection, closeConnection));
         }
         return retVal;
     }
@@ -131,7 +131,7 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
                 );
                 getLastErrorMessage.encode(buffer);
             }
-            channel.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers());
             return getLastErrorMessage;
         } finally {
             buffer.close();
@@ -142,14 +142,14 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         if (requestMessage == null) {
             return null;
         }
-        final ResponseBuffers responseBuffers = channel.receiveMessage(
-                new ChannelReceiveArgs(requestMessage.getId()));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(
+                new ConnectionReceiveArgs(requestMessage.getId()));
         try {
             return parseGetLastErrorResponse(createCommandResult(
                     new ReplyMessage<Document>(responseBuffers,
                             new DocumentCodec(),
                             requestMessage.getId()),
-                    channel.getServerAddress()));
+                    connection.getServerAddress()));
         } finally {
             responseBuffers.close();
         }
@@ -161,8 +161,8 @@ public abstract class WriteProtocol implements Protocol<CommandResult> {
         return namespace;
     }
 
-    protected Channel getChannel() {
-        return channel;
+    protected Connection getConnection() {
+        return connection;
     }
 
     protected abstract Logger getLogger();

@@ -23,7 +23,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
@@ -37,13 +37,14 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final OutputBuffer writtenBuffer;
     private final BufferProvider bufferProvider;
     private final ServerDescription serverDescription;
-    private final Channel connection;
+    private final Connection connection;
     private final boolean closeConnection;
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<CommandResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final OutputBuffer writtenBuffer, final BufferProvider bufferProvider,
-                                      final ServerDescription serverDescription, final Channel connection, final boolean closeConnection) {
+                                      final ServerDescription serverDescription, final Connection connection,
+                                      final boolean closeConnection) {
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;

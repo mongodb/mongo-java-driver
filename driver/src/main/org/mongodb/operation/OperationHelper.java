@@ -18,33 +18,34 @@ package org.mongodb.operation;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 final class OperationHelper {
 
-    static MongoFuture<ServerDescriptionChannelPair> getChannelAsync(final Session session,
-                                                                     final ServerChannelProviderOptions serverChannelProviderOptions) {
-        final SingleResultFuture<ServerDescriptionChannelPair> retVal = new SingleResultFuture<ServerDescriptionChannelPair>();
-        session.createServerChannelProviderAsync(serverChannelProviderOptions)
-                .register(new SingleResultCallback<ServerChannelProvider>() {
+    static MongoFuture<ServerDescriptionConnectionPair> getConnectionAsync(final Session session,
+                                                                           final ServerConnectionProviderOptions
+                                                                                   serverConnectionProviderOptions) {
+        final SingleResultFuture<ServerDescriptionConnectionPair> retVal = new SingleResultFuture<ServerDescriptionConnectionPair>();
+        session.createServerConnectionProviderAsync(serverConnectionProviderOptions)
+                .register(new SingleResultCallback<ServerConnectionProvider>() {
                     @Override
-                    public void onResult(final ServerChannelProvider provider, final MongoException e) {
+                    public void onResult(final ServerConnectionProvider provider, final MongoException e) {
                         if (e != null) {
                             retVal.init(null, e);
                         }
                         else {
-                            provider.getChannelAsync().register(new SingleResultCallback<Channel>() {
+                            provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                                 @Override
-                                public void onResult(final Channel channel, final MongoException e) {
+                                public void onResult(final Connection connection, final MongoException e) {
                                     if (e != null) {
                                         retVal.init(null, e);
                                     }
                                     else {
-                                        retVal.init(new ServerDescriptionChannelPair(provider.getServerDescription(), channel), null);
+                                        retVal.init(new ServerDescriptionConnectionPair(provider.getServerDescription(), connection), null);
                                     }
                                 }
                             });

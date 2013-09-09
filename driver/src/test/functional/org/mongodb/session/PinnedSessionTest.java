@@ -40,17 +40,17 @@ public class PinnedSessionTest extends DatabaseTestCase {
 
     @Test
     public void shouldPinReadsToSameServer() throws InterruptedException {
-        final ServerAddress serverAddress = session.createServerChannelProvider(new ServerChannelProviderOptions(true,
+        final ServerAddress serverAddress = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                 new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress();
         // there is randomization in the selection, so have to try a bunch of times.
         for (int i = 0; i < 100; i++) {
-            assertEquals(serverAddress, session.createServerChannelProvider(new ServerChannelProviderOptions(true,
+            assertEquals(serverAddress, session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                     new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress());
         }
 
-        session.createServerChannelProvider(new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+        session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
 
-        assertEquals(serverAddress, session.createServerChannelProvider(new ServerChannelProviderOptions(true,
+        assertEquals(serverAddress, session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                 new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress());
     }
 }

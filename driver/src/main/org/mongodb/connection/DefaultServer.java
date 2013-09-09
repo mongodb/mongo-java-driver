@@ -36,7 +36,7 @@ import static org.mongodb.connection.ServerConnectionState.Unconnected;
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
-    private final ChannelProvider channelProvider;
+    private final ConnectionProvider connectionProvider;
     private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
@@ -47,19 +47,19 @@ class DefaultServer implements ClusterableServer {
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
-                         final ChannelProvider channelProvider,
+                         final ConnectionProvider connectionProvider,
                          final StreamFactory heartbeatStreamFactory,
                          final ScheduledExecutorService scheduledExecutorService,
                          final BufferProvider bufferProvider) {
         this.settings = settings;
-        notNull("channelProvider", channelProvider);
+        notNull("connectionProvider", connectionProvider);
         notNull("heartbeatStreamFactory", heartbeatStreamFactory);
         notNull("scheduledExecutorService", scheduledExecutorService);
         notNull("bufferProvider", bufferProvider);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.channelProvider = channelProvider;
+        this.connectionProvider = connectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(),
                 new InternalStreamConnectionFactory(heartbeatStreamFactory, bufferProvider, Collections.<MongoCredential>emptyList()),
@@ -69,10 +69,10 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public Channel getChannel() {
+    public Connection getConnection() {
         isTrue("open", !isClosed());
 
-        return new DefaultServerChannel(channelProvider.get());
+        return new DefaultServerConnection(connectionProvider.get());
     }
 
     @Override
@@ -100,7 +100,7 @@ class DefaultServer implements ClusterableServer {
     @Override
     public void close() {
         if (!isClosed()) {
-            channelProvider.close();
+            connectionProvider.close();
             scheduledFuture.cancel(true);
             stateNotifier.close();
             isClosed = true;
@@ -131,10 +131,10 @@ class DefaultServer implements ClusterableServer {
 
     }
 
-    private class DefaultServerChannel implements Channel {
-        private Channel wrapped;
+    private class DefaultServerConnection implements Connection {
+        private Connection wrapped;
 
-        public DefaultServerChannel(final Channel wrapped) {
+        public DefaultServerConnection(final Connection wrapped) {
             this.wrapped = wrapped;
         }
 
@@ -156,10 +156,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
+        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
             isTrue("open", !isClosed());
             try {
-                return wrapped.receiveMessage(channelReceiveArgs);
+                return wrapped.receiveMessage(connectionReceiveArgs);
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -173,9 +173,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+                                        final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(channelReceiveArgs, callback);  // TODO: handle asynchronous exceptions
+            wrapped.receiveMessageAsync(connectionReceiveArgs, callback);  // TODO: handle asynchronous exceptions
         }
 
         @Override

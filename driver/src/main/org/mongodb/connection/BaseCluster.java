@@ -232,8 +232,8 @@ public abstract class BaseCluster implements Cluster {
         }
 
         @Override
-        public Channel getChannel() {
-            return wrapped.getChannel();
+        public Connection getConnection() {
+            return wrapped.getConnection();
         }
 
     }

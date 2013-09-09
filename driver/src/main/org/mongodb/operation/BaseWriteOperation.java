@@ -22,21 +22,21 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.getChannelAsync;
+import static org.mongodb.operation.OperationHelper.getConnectionAsync;
 
 public abstract class BaseWriteOperation extends BaseOperation<CommandResult> implements AsyncOperation<CommandResult> {
 
@@ -56,19 +56,19 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
 
     @Override
     public CommandResult execute() {
-        ServerChannelProvider provider = getSession().createServerChannelProvider(
-                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
-        Channel channel = provider.getChannel();
+        ServerConnectionProvider provider = getSession().createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        Connection connection = provider.getConnection();
         try {
             if (writeConcern.isAcknowledged()
                     && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
-                return getCommandProtocol(provider.getServerDescription(), channel).execute();
+                return getCommandProtocol(provider.getServerDescription(), connection).execute();
             }
             else {
-                return getWriteProtocol(provider.getServerDescription(), channel).execute();
+                return getWriteProtocol(provider.getServerDescription(), connection).execute();
             }
         } finally {
-            channel.close();
+            connection.close();
             if (isCloseSession()) {
                 getSession().close();
             }
@@ -78,17 +78,17 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
     @Override
     public MongoFuture<CommandResult> executeAsync() {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-        getChannelAsync(getSession(), new ServerChannelProviderOptions(false, new PrimaryServerSelector()))
-                .register(new SingleResultCallback<ServerDescriptionChannelPair>() {
+        getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
+                .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
                     @Override
-                    public void onResult(final ServerDescriptionChannelPair pair, final MongoException e) {
+                    public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
                         MongoFuture<CommandResult> protocolFuture;
                         if (writeConcern.isAcknowledged()
                                 && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
-                            protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getChannel()).executeAsync();
+                            protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                         }
                         else {
-                            protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getChannel()).executeAsync();
+                            protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                         }
                         protocolFuture.register(
                                 new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
@@ -101,7 +101,7 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
         return namespace;
     }
 
-    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Channel channel);
+    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Connection connection);
 
-    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel);
+    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection);
 }

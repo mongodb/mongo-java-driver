@@ -14,29 +14,25 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.operation;
 
-import org.mongodb.connection.ServerSelector;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 
-import static org.mongodb.assertions.Assertions.notNull;
+class ServerDescriptionConnectionPair {
+    private final ServerDescription serverDescription;
+    private final Connection connection;
 
-/**
- * @since 3.0
- */
-public class ServerChannelProviderOptions {
-    private final boolean isQuery;
-    private final ServerSelector serverSelector;
-
-    public ServerChannelProviderOptions(final boolean query, final ServerSelector serverSelector) {
-        isQuery = query;
-        this.serverSelector = notNull("serverSelector", serverSelector);
+    ServerDescriptionConnectionPair(final ServerDescription serverDescription, final Connection connection) {
+        this.serverDescription = serverDescription;
+        this.connection = connection;
     }
 
-    public boolean isQuery() {
-        return isQuery;
+    ServerDescription getServerDescription() {
+        return serverDescription;
     }
 
-    public ServerSelector getServerSelector() {
-        return serverSelector;
+    Connection getConnection() {
+        return connection;
     }
 }

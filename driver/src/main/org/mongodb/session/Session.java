@@ -27,20 +27,20 @@ import java.io.Closeable;
  */
 public interface Session extends Closeable {
     /**
-     * Creates a server channel provider.
+     * Creates a server connection provider.
      *
-     * @param options the server channel provider options
-     * @return the server channel provider
+     * @param options the server connection provider options
+     * @return the server connection provider
      */
-    ServerChannelProvider createServerChannelProvider(ServerChannelProviderOptions options);
+    ServerConnectionProvider createServerConnectionProvider(ServerConnectionProviderOptions options);
 
     /**
-     * Asynchronously creates a server channel provider.
+     * Asynchronously creates a server connection provider.
      *
-     * @param options the server channel provider options
-     * @return a future for the server channel provider
+     * @param options the server connection provider options
+     * @return a future for the server connection provider
      */
-    MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(ServerChannelProviderOptions options);
+    MongoFuture<ServerConnectionProvider> createServerConnectionProviderAsync(ServerConnectionProviderOptions options);
 
     void close();
 

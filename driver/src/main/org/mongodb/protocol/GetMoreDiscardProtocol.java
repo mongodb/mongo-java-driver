@@ -18,8 +18,8 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
@@ -27,19 +27,19 @@ import org.mongodb.operation.SingleResultFuture;
 public class GetMoreDiscardProtocol implements Protocol<Void> {
     private final long cursorId;
     private final int responseTo;
-    private final Channel channel;
+    private final Connection connection;
 
-    public GetMoreDiscardProtocol(final long cursorId, final int responseTo, final Channel channel) {
+    public GetMoreDiscardProtocol(final long cursorId, final int responseTo, final Connection connection) {
         this.cursorId = cursorId;
         this.responseTo = responseTo;
-        this.channel = channel;
+        this.connection = connection;
     }
 
     public Void execute() {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
-            final ResponseBuffers responseBuffers = channel.receiveMessage(new ChannelReceiveArgs(curResponseTo));
+            final ResponseBuffers responseBuffers = connection.receiveMessage(new ConnectionReceiveArgs(curResponseTo));
             try {
                 curCursorId = responseBuffers.getReplyHeader().getCursorId();
                 curResponseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -57,7 +57,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
             retVal.init(null, null);
         }
         else {
-            channel.receiveMessageAsync(new ChannelReceiveArgs(responseTo), new DiscardCallback(retVal));
+            connection.receiveMessageAsync(new ConnectionReceiveArgs(responseTo), new DiscardCallback(retVal));
         }
 
         return retVal;
@@ -77,7 +77,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
                 future.init(null, null);
             }
             else {
-                channel.receiveMessageAsync(new ChannelReceiveArgs(responseTo), this);
+                connection.receiveMessageAsync(new ConnectionReceiveArgs(responseTo), this);
             }
         }
     }

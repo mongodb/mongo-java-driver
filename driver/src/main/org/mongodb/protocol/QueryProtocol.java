@@ -24,8 +24,8 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -50,35 +50,35 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
     private final ServerDescription serverDescription;
-    private final Channel channel;
-    private boolean closeChannel;
+    private final Connection connection;
+    private boolean closeConnection;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
     public QueryProtocol(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
-                         final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
+                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
         this.serverDescription = serverDescription;
-        this.channel = channel;
-        this.closeChannel = closeChannel;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
     }
 
     @Override
     public QueryResult<T> execute() {
         try {
-            LOGGER.fine(format("Sending query to namespace %s on connection [%s] to server %s", namespace, channel.getId(),
-                    channel.getServerAddress()));
+            LOGGER.fine(format("Sending query to namespace %s on connection [%s] to server %s", namespace, connection.getId(),
+                    connection.getServerAddress()));
             QueryResult<T> queryResult = receiveMessage(sendMessage());
             LOGGER.fine("Query completed");
             return queryResult;
         } finally {
-            if (closeChannel) {
-                channel.close();
+            if (closeConnection) {
+                connection.close();
             }
         }
     }
@@ -90,11 +90,11 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         final QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
-        channel.sendMessageAsync(buffer.getByteBuffers(),
-                new SendMessageCallback<QueryResult<T>>(channel, buffer, message.getId(), retVal,
+        connection.sendMessageAsync(buffer.getByteBuffers(),
+                new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
                         new QueryResultCallback<T>(
-                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, message.getId(), channel,
-                                closeChannel)));
+                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, message.getId(), connection,
+                                closeConnection)));
         return retVal;
 
     }
@@ -105,7 +105,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
-            channel.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers());
             return message;
         } finally {
             buffer.close();
@@ -113,17 +113,17 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final QueryMessage message) {
-        final ResponseBuffers responseBuffers = channel.receiveMessage(
-                new ChannelReceiveArgs(message.getId()));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(
+                new ConnectionReceiveArgs(message.getId()));
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 final Document errorDocument =
                         new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(channel.getServerAddress(), errorDocument);
+                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
             }
             final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
-            return new QueryResult<T>(replyMessage, channel.getServerAddress());
+            return new QueryResult<T>(replyMessage, connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

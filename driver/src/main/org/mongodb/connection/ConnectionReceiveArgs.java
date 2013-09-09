@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
-public final class ChannelReceiveArgs {
+public final class ConnectionReceiveArgs {
 
     private final int responseTo;
 
-    public ChannelReceiveArgs(final int responseTo) {
+    public ConnectionReceiveArgs(final int responseTo) {
         this.responseTo = responseTo;
     }
 

@@ -22,7 +22,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Remove;
@@ -43,8 +43,8 @@ public class DeleteProtocol extends WriteProtocol {
 
     public DeleteProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> deletes,
                           final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
-                          final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
-        super(namespace, bufferProvider, writeConcern, serverDescription, channel, closeChannel);
+                          final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
         this.deletes = deletes;
         this.queryEncoder = queryEncoder;
     }
@@ -52,7 +52,7 @@ public class DeleteProtocol extends WriteProtocol {
     @Override
     public CommandResult execute() {
         LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                getChannel().getId(), getChannel().getServerAddress()));
+                getConnection().getId(), getConnection().getServerAddress()));
         CommandResult commandResult = super.execute();
         LOGGER.fine("Delete completed");
         return commandResult;

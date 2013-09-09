@@ -26,6 +26,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -37,30 +39,30 @@ import java.lang.management.ManagementFactory
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-class DefaultChannelProviderSpecification extends Specification {
+class PooledConnectionProviderSpecification extends Specification {
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
 
     private final TestInternalConnectionFactory connectionFactory = Spy(TestInternalConnectionFactory)
 
     @Subject
-    private DefaultChannelProvider provider
+    private PooledConnectionProvider provider
 
     def cleanup() {
         provider.close()
     }
 
-    def 'should get non null channel'() throws InterruptedException {
+    def 'should get non null connection'() throws InterruptedException {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         expect:
         provider.get() != null
     }
 
-    def 'should reuse released channel'() throws InterruptedException {
+    def 'should reuse released connection'() throws InterruptedException {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
@@ -71,9 +73,9 @@ class DefaultChannelProviderSpecification extends Specification {
         1 * connectionFactory.create(SERVER_ADDRESS)
     }
 
-    def 'should release a channel back into the pool on close, not close the underlying channel'() throws InterruptedException {
+    def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
@@ -89,7 +91,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
 
         when:
@@ -107,7 +109,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should throw on timeout'() throws InterruptedException {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
@@ -125,7 +127,7 @@ class DefaultChannelProviderSpecification extends Specification {
         connectionGetter.gotTimeout
     }
 
-    def 'should expire all channel after exception'() throws InterruptedException {
+    def 'should expire all connection after exception'() throws InterruptedException {
         given:
         int numberOfConnectionsCreated = 0
 
@@ -137,7 +139,7 @@ class DefaultChannelProviderSpecification extends Specification {
             }
         }
 
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 mockConnectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(2)
@@ -164,7 +166,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should have size of 0 with default settings'() {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
@@ -179,7 +181,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'statistics should reflect values from the provider'() {
         when:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
         provider.get()
         provider.get().close()
@@ -197,7 +199,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should register MBean in org.mongodb.driver domain'() {
         when:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(1).maxSize(5).build())
 
         then:
@@ -207,7 +209,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should unregister MBean'() {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(1).maxSize(5).build())
         def beanName = new ObjectName(provider.statistics.objectName)
 
@@ -220,7 +222,7 @@ class DefaultChannelProviderSpecification extends Specification {
 
     def 'should ensure min pool size after maintenance task runs'() {
         given:
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)

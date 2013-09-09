@@ -22,7 +22,7 @@ import org.mongodb.annotations.ThreadSafe;
 import java.util.List;
 
 /**
- * A channel to a MongoDB server with blocking operations.
+ * A connection to a MongoDB server with blocking and non-blocking operations.
  * <p>
  * Implementations of this class are thread safe.  At a minimum, they must support concurrent calls to sendMessage and receiveMessage,
  * but at most one of each.  But multiple concurrent calls to either sendMessage or receiveMessage may block.
@@ -31,7 +31,7 @@ import java.util.List;
  * @since 3.0
  */
 @ThreadSafe
-public interface Channel {
+public interface Connection {
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
@@ -51,10 +51,10 @@ public interface Channel {
      * active call to this method.
      * </p>
      *
-     * @param channelReceiveArgs the settings that the response should conform to.
+     * @param connectionReceiveArgs the settings that the response should conform to.
      * @return the response
      */
-    ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs);
+    ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
@@ -67,10 +67,10 @@ public interface Channel {
     /**
      * Asynchronously receive a response to a sent message from the server.
      *
-     * @param channelReceiveArgs the channel receive arguments
+     * @param connectionReceiveArgs the connection receive arguments
      * @param callback the callback to invoke on completion
      */
-    void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs, SingleResultCallback<ResponseBuffers> callback);
 
     /**
      * Gets the server address of this connection

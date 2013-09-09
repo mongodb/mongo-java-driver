@@ -28,12 +28,12 @@ import static org.junit.Assert.fail;
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
  */
-public class DefaultChannelProviderTest {
+public class PooledConnectionProviderTest {
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
 
     private final TestInternalConnectionFactory connectionFactory = new TestInternalConnectionFactory();
 
-    private DefaultChannelProvider provider;
+    private PooledConnectionProvider provider;
 
     @After
     public void cleanup() {
@@ -43,7 +43,7 @@ public class DefaultChannelProviderTest {
     @Test
     public void shouldThrowOnTimeout() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
@@ -64,7 +64,7 @@ public class DefaultChannelProviderTest {
     @Test
     public void shouldThrowOnWaitQueueFull() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
@@ -87,9 +87,9 @@ public class DefaultChannelProviderTest {
     }
 
     @Test
-    public void shouldExpireChannelAfterMaxLifeTime() throws InterruptedException {
+    public void shouldExpireConnectionAfterMaxLifeTime() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(50, MILLISECONDS).build());
 
@@ -104,9 +104,9 @@ public class DefaultChannelProviderTest {
     }
 
     @Test
-    public void shouldExpireChannelAfterLifeTimeOnClose() throws InterruptedException {
+    public void shouldExpireConnectionAfterLifeTimeOnClose() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
@@ -114,18 +114,18 @@ public class DefaultChannelProviderTest {
                         .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         // when
-        Channel channel = provider.get();
+        Connection connection = provider.get();
         Thread.sleep(50);
-        channel.close();
+        connection.close();
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
     }
 
     @Test
-    public void shouldExpireChannelAfterMaxIdleTime() throws InterruptedException {
+    public void shouldExpireConnectionAfterMaxIdleTime() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
@@ -143,9 +143,9 @@ public class DefaultChannelProviderTest {
    }
 
     @Test
-    public void shouldCloseChannelAfterExpiration() throws InterruptedException {
+    public void shouldCloseConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
@@ -163,9 +163,9 @@ public class DefaultChannelProviderTest {
     }
 
     @Test
-    public void shouldCreateNewChannelAfterExpiration() throws InterruptedException {
+    public void shouldCreateNewConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
@@ -176,17 +176,17 @@ public class DefaultChannelProviderTest {
         provider.get().close();
         Thread.sleep(50);
         provider.doMaintenance();
-        Channel secondChannel = provider.get();
+        Connection secondConnection = provider.get();
 
         // then
-        assertNotNull(secondChannel);
+        assertNotNull(secondConnection);
         assertEquals(2, connectionFactory.getNumCreatedConnections());
     }
 
     @Test
     public void shouldPruneAfterMaintenanceTaskRuns() throws InterruptedException {
         // given
-        provider = new DefaultChannelProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)

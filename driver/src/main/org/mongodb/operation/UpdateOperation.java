@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.UpdateCommandProtocol;
 import org.mongodb.protocol.UpdateProtocol;
@@ -53,14 +53,14 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Channel channel) {
+    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new UpdateProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                channel, true);
+                connection, true);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Channel channel) {
+    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new UpdateCommandProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                channel, true);
+                connection, true);
     }
 }

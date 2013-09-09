@@ -21,14 +21,14 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 
 class CommandResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
 
     public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<Document> decoder,
-                                 final long requestId, final Channel connection, final boolean closeConnection) {
+                                 final long requestId, final Connection connection, final boolean closeConnection) {
         super(decoder, requestId, connection, closeConnection);
         this.callback = callback;
     }

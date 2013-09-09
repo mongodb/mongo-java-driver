@@ -35,7 +35,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class DefaultChannelProvider implements ChannelProvider {
+class PooledConnectionProvider implements ConnectionProvider {
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
@@ -48,8 +48,8 @@ class DefaultChannelProvider implements ChannelProvider {
     private final ConnectionPoolStatistics statistics;
     private final Runnable maintenanceTask;
 
-    public DefaultChannelProvider(final ServerAddress serverAddress, final InternalConnectionFactory internalConnectionFactory,
-                                  final ConnectionPoolSettings settings) {
+    public PooledConnectionProvider(final ServerAddress serverAddress, final InternalConnectionFactory internalConnectionFactory,
+                                    final ConnectionPoolSettings settings) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
@@ -61,12 +61,12 @@ class DefaultChannelProvider implements ChannelProvider {
     }
 
     @Override
-    public Channel get() {
+    public Connection get() {
         return get(settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
     }
 
     @Override
-    public Channel get(final long timeout, final TimeUnit timeUnit) {
+    public Connection get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException(format("Too many threads are already waiting for a connection. "
@@ -78,7 +78,7 @@ class DefaultChannelProvider implements ChannelProvider {
                 pool.release(internalConnection, true);
                 internalConnection = pool.get(timeout, timeUnit);
             }
-            return new PooledChannel(internalConnection);
+            return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
         }
@@ -174,21 +174,21 @@ class DefaultChannelProvider implements ChannelProvider {
      * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that
      * any connections created prior will be discarded.
      *
-     * @param channel the channel that generated the exception
+     * @param connection the connection that generated the exception
      * @param e the exception
      */
-    private void incrementGenerationOnSocketException(final Channel channel, final MongoException e) {
+    private void incrementGenerationOnSocketException(final Connection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
             LOGGER.warning(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                    channel.getId(), serverAddress, serverAddress));
+                    connection.getId(), serverAddress, serverAddress));
             generation.incrementAndGet();
         }
     }
 
-    private class PooledChannel implements Channel {
+    private class PooledConnection implements Connection {
         private volatile UsageTrackingInternalConnection wrapped;
 
-        public PooledChannel(final UsageTrackingInternalConnection wrapped) {
+        public PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -223,19 +223,19 @@ class DefaultChannelProvider implements ChannelProvider {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
+        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
             isTrue("open", wrapped != null);
             try {
                 ResponseBuffers responseBuffers = wrapped.receiveMessage();
-                if (responseBuffers.getReplyHeader().getResponseTo() != channelReceiveArgs.getResponseTo()) {
+                if (responseBuffers.getReplyHeader().getResponseTo() != connectionReceiveArgs.getResponseTo()) {
                     throw new MongoInternalException(
                             String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                                    responseBuffers.getReplyHeader().getResponseTo(), channelReceiveArgs.getResponseTo()));
+                                    responseBuffers.getReplyHeader().getResponseTo(), connectionReceiveArgs.getResponseTo()));
                 }
 
-//                if (responseBuffers.getReplyHeader().getMessageLength() > channelReceiveArgs.getMaxMessageSize()) {
+//                if (responseBuffers.getReplyHeader().getMessageLength() > connectionReceiveArgs.getMaxMessageSize()) {
 //                    throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
-//                            responseBuffers.getReplyHeader().getMessageLength(), channelReceiveArgs.getMaxMessageSize()));
+//                            responseBuffers.getReplyHeader().getMessageLength(), connectionReceiveArgs.getMaxMessageSize()));
 //                }
 
                 return responseBuffers;
@@ -252,7 +252,8 @@ class DefaultChannelProvider implements ChannelProvider {
         }
 
         @Override
-        public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+                                        final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", wrapped != null);
             wrapped.receiveMessageAsync(callback);                // TODO: handle async exceptions
         }
@@ -299,7 +300,7 @@ class DefaultChannelProvider implements ChannelProvider {
 
         @Override
         public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
-            return DefaultChannelProvider.this.shouldPrune(usageTrackingConnection);
+            return PooledConnectionProvider.this.shouldPrune(usageTrackingConnection);
         }
     }
 }

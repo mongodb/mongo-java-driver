@@ -24,8 +24,8 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.ReplaceProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.Arrays;
@@ -44,13 +44,13 @@ public class ReplaceUserOperation extends BaseOperation<CommandResult> {
     @Override
     @SuppressWarnings("unchecked")
     public CommandResult execute() {
-        ServerChannelProvider serverChannelProvider = getSession().createServerChannelProvider(
-                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new ReplaceProtocol<Document>(namespace, WriteConcern.ACKNOWLEDGED,
                 Arrays.asList(new Replace<Document>(WriteConcern.ACKNOWLEDGED, new Document("_id", userDocument.get("_id")),
-                        userDocument)), codec, codec, getBufferProvider(), serverChannelProvider.getServerDescription(),
-                serverChannelProvider.getChannel(), true).execute();
+                        userDocument)), codec, codec, getBufferProvider(), serverConnectionProvider.getServerDescription(),
+                serverConnectionProvider.getConnection(), true).execute();
     }
 }

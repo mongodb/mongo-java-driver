@@ -28,7 +28,7 @@ import org.mongodb.MongoCredential;
 import org.mongodb.MongoServerException;
 import org.mongodb.ReadPreference;
 import org.mongodb.command.RenameCollectionOptions;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.MongoSecurityException;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
@@ -187,7 +187,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldBeAbleToAuthenticateAfterAddingUser() throws InterruptedException {
         //TODO Cleanup needed. connection and newCredentialList are redundant.
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        Channel channel = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getChannel();
+        Connection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             List<MongoCredential> newCredentialList = new ArrayList<MongoCredential>(getCredentialList());
@@ -197,14 +197,14 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             // implicitly, we're asserting that authenticate does not throw an exception, which would happen if auth failed./
         } finally {
             database.tools().removeUser(credential.getUserName());
-            channel.close();
+            connection.close();
         }
     }
 
     @Test
     public void shouldNotBeAbleToAuthenticateAfterRemovingUser() throws InterruptedException {
         MongoCredential credential = MongoCredential.createMongoCRCredential("xx", getDatabaseName(), "e".toCharArray());
-        Channel channel = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getChannel();
+        Connection connection = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary())).getConnection();
         try {
             database.tools().addUser(credential.getUserName(), credential.getPassword(), true);
             database.tools().removeUser(credential.getUserName());
@@ -216,7 +216,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
                 // the addUser to setUp, but that would require its own test class.
             }
         } finally {
-            channel.close();
+            connection.close();
         }
     }
 

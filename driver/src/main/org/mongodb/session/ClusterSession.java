@@ -20,8 +20,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.SingleResultFuture;
@@ -56,35 +56,35 @@ public class ClusterSession implements Session {
     }
 
     @Override
-    public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
+    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
         final Server server = cluster.getServer(options.getServerSelector());
-        return new SimpleServerChannelProvider(server, executor);
+        return new SimpleServerConnectionProvider(server, executor);
     }
 
     /**
-     * Asynchronously creates a server channel provider.
+     * Asynchronously creates a server connection provider.
      *
-     * @param options the server channel provider options
-     * @return a future for the server channel provider
+     * @param options the server connection provider options
+     * @return a future for the server connection provider
      */
     @Override
-    public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
+    public MongoFuture<ServerConnectionProvider> createServerConnectionProviderAsync(final ServerConnectionProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
-        final SingleResultFuture<ServerChannelProvider> retVal = new SingleResultFuture<ServerChannelProvider>();
+        final SingleResultFuture<ServerConnectionProvider> retVal = new SingleResultFuture<ServerConnectionProvider>();
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     Server server = cluster.getServer(options.getServerSelector());
-                    retVal.init(new SimpleServerChannelProvider(server, executor), null);
+                    retVal.init(new SimpleServerConnectionProvider(server, executor), null);
                 } catch (MongoException e) {
                     retVal.init(null, e);
                 } catch (Throwable e) {
@@ -106,11 +106,11 @@ public class ClusterSession implements Session {
         return isClosed;
     }
 
-    private static class SimpleServerChannelProvider implements ServerChannelProvider {
+    private static class SimpleServerConnectionProvider implements ServerConnectionProvider {
         private final Server server;
         private Executor executor;
 
-        public SimpleServerChannelProvider(final Server server, final Executor executor) {
+        public SimpleServerConnectionProvider(final Server server, final Executor executor) {
             this.server = server;
             this.executor = executor;
         }
@@ -121,19 +121,19 @@ public class ClusterSession implements Session {
         }
 
         @Override
-        public Channel getChannel() {
-            return server.getChannel();
+        public Connection getConnection() {
+            return server.getConnection();
         }
 
         @Override
-        public MongoFuture<Channel> getChannelAsync() {
-            final SingleResultFuture<Channel> retVal = new SingleResultFuture<Channel>();
+        public MongoFuture<Connection> getConnectionAsync() {
+            final SingleResultFuture<Connection> retVal = new SingleResultFuture<Connection>();
 
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        Channel connection = server.getChannel();
+                        Connection connection = server.getConnection();
                         retVal.init(connection, null);
                     } catch (MongoException e) {
                         retVal.init(null, e);

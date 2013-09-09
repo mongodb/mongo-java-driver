@@ -21,7 +21,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Insert;
@@ -41,8 +41,8 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     public InsertCommandProtocol(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
                                  final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                 final Channel channel, final boolean closeChannel) {
-        super(namespace, insert.getWriteConcern(), bufferProvider, serverDescription, channel, closeChannel);
+                                 final Connection connection, final boolean closeConnection) {
+        super(namespace, insert.getWriteConcern(), bufferProvider, serverDescription, connection, closeConnection);
         this.insert = insert;
         this.encoder = encoder;
     }

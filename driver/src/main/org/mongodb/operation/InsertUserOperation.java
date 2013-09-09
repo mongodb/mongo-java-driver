@@ -24,8 +24,8 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -43,12 +43,12 @@ public class InsertUserOperation extends BaseOperation<CommandResult> {
 
     @Override
     public CommandResult execute() {
-        ServerChannelProvider serverChannelProvider = getSession().createServerChannelProvider(
-                new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
+                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new InsertProtocol<Document>(namespace, new Insert<Document>(WriteConcern.ACKNOWLEDGED, userDocument), codec,
-                getBufferProvider(), serverChannelProvider.getServerDescription(), serverChannelProvider.getChannel(),
+                getBufferProvider(), serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(),
                 true).execute();
     }
 }

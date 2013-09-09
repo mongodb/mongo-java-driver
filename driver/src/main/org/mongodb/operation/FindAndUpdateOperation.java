@@ -25,8 +25,8 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static java.lang.String.format;
@@ -51,10 +51,10 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
     @Override
     public T execute() {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        final ServerChannelProvider provider = createServerChannelProvider();
+        final ServerConnectionProvider provider = createServerConnectionProvider();
         final CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
                                                                 commandEncoder, resultDecoder, getBufferProvider(),
-                                                                provider.getServerDescription(), provider.getChannel(), true).execute();
+                                                                provider.getServerDescription(), provider.getConnection(), true).execute();
         return (T) commandResult.getResponse().get("value");
     }
 
@@ -80,7 +80,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
         return command;
     }
 
-    private ServerChannelProvider createServerChannelProvider() {
-        return getSession().createServerChannelProvider(new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+    private ServerConnectionProvider createServerConnectionProvider() {
+        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
     }
 }

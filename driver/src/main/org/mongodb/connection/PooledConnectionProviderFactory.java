@@ -20,14 +20,14 @@ import org.mongodb.MongoCredential;
 
 import java.util.List;
 
-class DefaultChannelProviderFactory implements ChannelProviderFactory {
+class PooledConnectionProviderFactory implements ConnectionProviderFactory {
     private final ConnectionPoolSettings settings;
     private final StreamFactory streamFactory;
     private final List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
 
-    public DefaultChannelProviderFactory(final ConnectionPoolSettings settings, final StreamFactory streamFactory,
-                                         final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+    public PooledConnectionProviderFactory(final ConnectionPoolSettings settings, final StreamFactory streamFactory,
+                                           final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
         this.settings = settings;
         this.streamFactory = streamFactory;
         this.credentialList = credentialList;
@@ -35,8 +35,8 @@ class DefaultChannelProviderFactory implements ChannelProviderFactory {
     }
 
     @Override
-    public ChannelProvider create(final ServerAddress serverAddress) {
-        return new DefaultChannelProvider(serverAddress,
+    public ConnectionProvider create(final ServerAddress serverAddress) {
+        return new PooledConnectionProvider(serverAddress,
                 new InternalStreamConnectionFactory(streamFactory, bufferProvider, credentialList), settings);
     }
 }

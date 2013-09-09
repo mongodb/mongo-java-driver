@@ -19,7 +19,7 @@ package org.mongodb.protocol;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -31,18 +31,18 @@ import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 public class KillCursorProtocol implements Protocol<Void> {
     private final KillCursor killCursor;
     private final ServerDescription serverDescription;
-    private final Channel channel;
-    private boolean closeChannel;
+    private final Connection connection;
+    private boolean closeConnection;
     private final BufferProvider bufferProvider;
 
     public KillCursorProtocol(final KillCursor killCursor, final BufferProvider bufferProvider,
-                              final ServerDescription serverDescription, final Channel channel,
-                              final boolean closeChannel) {
+                              final ServerDescription serverDescription, final Connection connection,
+                              final boolean closeConnection) {
         this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
         this.serverDescription = serverDescription;
-        this.channel = channel;
-        this.closeChannel = closeChannel;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
     }
 
     @Override
@@ -51,12 +51,12 @@ public class KillCursorProtocol implements Protocol<Void> {
         try {
             final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
-            channel.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers());
             return null;
         } finally {
             buffer.close();
-            if (closeChannel) {
-                channel.close();
+            if (closeConnection) {
+                connection.close();
             }
         }
     }
@@ -67,12 +67,12 @@ public class KillCursorProtocol implements Protocol<Void> {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
             final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
-            channel.sendMessageAsync(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
+            connection.sendMessageAsync(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {
                     buffer.close();
-                    if (closeChannel) {
-                        channel.close();
+                    if (closeConnection) {
+                        connection.close();
                     }
                     retVal.init(result, e);
                 }

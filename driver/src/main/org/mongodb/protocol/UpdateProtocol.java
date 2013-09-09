@@ -22,7 +22,7 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.Update;
@@ -43,16 +43,16 @@ public class UpdateProtocol extends WriteProtocol {
 
     public UpdateProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Update> updates,
                           final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
-                          final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
-        super(namespace, bufferProvider, writeConcern, serverDescription, channel, closeChannel);
+                          final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
         this.updates = updates;
         this.queryEncoder = queryEncoder;
     }
 
     @Override
     public CommandResult execute() {
-        LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getChannel().getId(),
-                getChannel().getServerAddress()));
+        LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
+                getConnection().getServerAddress()));
         CommandResult commandResult = super.execute();
         LOGGER.fine("Update completed");
         return commandResult;

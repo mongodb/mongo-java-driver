@@ -37,8 +37,8 @@ import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
@@ -763,9 +763,9 @@ public class Mongo {
         ServerCursor cur;
         try {
             while ((cur = orphanedCursors.poll()) != null) {
-                ServerChannelProvider provider = session.createServerChannelProvider(
-                        new ServerChannelProviderOptions(false, new ServerAddressSelector(cur.getAddress())));
-                new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getChannel(),
+                ServerConnectionProvider provider = session.createServerConnectionProvider(
+                        new ServerConnectionProviderOptions(false, new ServerAddressSelector(cur.getAddress())));
+                new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
                         true).execute();
 
             }

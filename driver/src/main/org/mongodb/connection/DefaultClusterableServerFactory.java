@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private ServerSettings settings;
-    private final ChannelProviderFactory channelProviderFactory;
+    private final ConnectionProviderFactory connectionProviderFactory;
     private final StreamFactory heartbeatStreamFactory;
     private final ScheduledExecutorService scheduledExecutorService;
     private final BufferProvider bufferProvider;
@@ -37,7 +37,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final BufferProvider bufferProvider) {
 
         this.settings = settings;
-        this.channelProviderFactory = new DefaultChannelProviderFactory(connectionPoolSettings, streamFactory, credentialList,
+        this.connectionProviderFactory = new PooledConnectionProviderFactory(connectionPoolSettings, streamFactory, credentialList,
                 bufferProvider);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.scheduledExecutorService = scheduledExecutorService;
@@ -46,7 +46,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        return new DefaultServer(serverAddress, settings, channelProviderFactory.create(serverAddress),
+        return new DefaultServer(serverAddress, settings, connectionProviderFactory.create(serverAddress),
                 heartbeatStreamFactory, scheduledExecutorService, bufferProvider);
     }
 

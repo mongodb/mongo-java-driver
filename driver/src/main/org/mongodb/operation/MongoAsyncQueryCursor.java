@@ -25,15 +25,15 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.async.AsyncBlock;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 // TODO: kill cursor on early breakout
@@ -45,9 +45,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Decoder<T> decoder;
     private final BufferProvider bufferProvider;
     private final Session session;
-    private ServerChannelProvider serverChannelProvider;
+    private ServerConnectionProvider serverConnectionProvider;
     private final boolean closeSession;
-    private Channel exhaustChannel;
+    private Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
     private AsyncBlock<? super T> block;
@@ -67,27 +67,27 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     @Override
     public void start(final AsyncBlock<? super T> aBlock) {
         this.block = aBlock;
-        session.createServerChannelProviderAsync(new ServerChannelProviderOptions(true,
-                new ReadPreferenceServerSelector(find.getReadPreference()))).register(new SingleResultCallback<ServerChannelProvider>() {
+        session.createServerConnectionProviderAsync(new ServerConnectionProviderOptions(true,
+                new ReadPreferenceServerSelector(find.getReadPreference()))).register(new SingleResultCallback<ServerConnectionProvider>() {
             @Override
-            public void onResult(final ServerChannelProvider provider, final MongoException e) {
+            public void onResult(final ServerConnectionProvider provider, final MongoException e) {
                 if (e != null) {
                     close(0);
                 }
                 else {
-                    serverChannelProvider = provider;
-                    provider.getChannelAsync().register(new SingleResultCallback<Channel>() {
+                    serverConnectionProvider = provider;
+                    provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                         @Override
-                        public void onResult(final Channel channel, final MongoException e) {
+                        public void onResult(final Connection connection, final MongoException e) {
                             if (e != null) {
                                 close(0);
                             }
                             else {
                                 if (isExhaust()) {
-                                    exhaustChannel = channel;
+                                    exhaustConnection = connection;
                                 }
                                 new QueryProtocol<T>(namespace, find, queryEncoder, decoder, bufferProvider,
-                                        provider.getServerDescription(), channel, !isExhaust()).executeAsync()
+                                        provider.getServerDescription(), connection, !isExhaust()).executeAsync()
                                         .register(new QueryResultSingleResultCallback());
                             }
                         }
@@ -115,7 +115,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private void handleExhaustCleanup(final int responseTo) {
-        new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo, exhaustChannel).executeAsync()
+        new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo, exhaustConnection).executeAsync()
                 .register(new SingleResultCallback<Void>() {
                     @Override
                     public void onResult(final Void result, final MongoException e) {
@@ -158,19 +158,19 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             else {
                 // get more results
                 if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
-                    new GetMoreReceiveProtocol<T>(decoder, result.getRequestId(), exhaustChannel).executeAsync().register(this);
+                    new GetMoreReceiveProtocol<T>(decoder, result.getRequestId(), exhaustConnection).executeAsync().register(this);
                 }
                 else {
-                    serverChannelProvider.getChannelAsync().register(new SingleResultCallback<Channel>() {
+                    serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                         @Override
-                        public void onResult(final Channel channel, final MongoException e) {
+                        public void onResult(final Connection connection, final MongoException e) {
                             if (e != null) {
                                 close(0);
                             }
                             else {
                                 new GetMoreProtocol<T>(namespace, new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
-                                        numFetchedSoFar), decoder, bufferProvider, serverChannelProvider.getServerDescription(), channel,
-                                        true).executeAsync().register(QueryResultSingleResultCallback.this);
+                                        numFetchedSoFar), decoder, bufferProvider, serverConnectionProvider.getServerDescription(),
+                                        connection, true).executeAsync().register(QueryResultSingleResultCallback.this);
                             }
                         }
                     });

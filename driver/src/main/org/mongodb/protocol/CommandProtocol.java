@@ -23,8 +23,8 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -51,33 +51,33 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final Encoder<Document> commandEncoder;
     private final BufferProvider bufferProvider;
     private final ServerDescription serverDescription;
-    private final Channel channel;
-    private final boolean closeChannel;
+    private final Connection connection;
+    private final boolean closeConnection;
 
     public CommandProtocol(final String database, final Document command, final Encoder<Document> commandEncoder,
                            final Decoder<Document> commandResultDecoder, final BufferProvider bufferProvider,
-                           final ServerDescription serverDescription, final Channel channel, final boolean closeChannel) {
+                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
         this.commandEncoder = commandEncoder;
         this.bufferProvider = bufferProvider;
         this.serverDescription = serverDescription;
-        this.channel = channel;
-        this.closeChannel = closeChannel;
+        this.connection = connection;
+        this.closeConnection = closeConnection;
     }
 
     public CommandResult execute() {
         try {
             LOGGER.fine(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                     command.keySet().iterator().next(), command.values().iterator().next(),
-                    namespace.getDatabaseName(), channel.getId(), channel.getServerAddress()));
+                    namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
             CommandResult commandResult = receiveMessage(sendMessage().getId());
             LOGGER.fine("Command execution complete");
             return commandResult;
         } finally {
-            if (closeChannel) {
-                channel.close();
+            if (closeConnection) {
+                connection.close();
             }
         }
     }
@@ -88,7 +88,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
             final CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
                                                               getMessageSettings(serverDescription));
             message.encode(buffer);
-            channel.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers());
             return message;
         } finally {
             buffer.close();
@@ -96,10 +96,10 @@ public class CommandProtocol implements Protocol<CommandResult> {
     }
 
     private CommandResult receiveMessage(final int messageId) {
-        final ResponseBuffers responseBuffers = channel.receiveMessage(new ChannelReceiveArgs(messageId));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(new ConnectionReceiveArgs(messageId));
         try {
             final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, commandResultDecoder, messageId);
-            return createCommandResult(replyMessage, channel.getServerAddress());
+            return createCommandResult(replyMessage, connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }
@@ -112,10 +112,10 @@ public class CommandProtocol implements Protocol<CommandResult> {
         final CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
-        channel.sendMessageAsync(buffer.getByteBuffers(),
-                new SendMessageCallback<CommandResult>(channel, buffer, message.getId(), retVal,
+        connection.sendMessageAsync(buffer.getByteBuffers(),
+                new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal,
                 new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), commandResultDecoder, message.getId(),
-                        channel, closeChannel)));
+                        connection, closeConnection)));
         return retVal;
     }
 }

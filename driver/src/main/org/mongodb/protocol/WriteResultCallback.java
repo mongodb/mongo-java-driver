@@ -25,7 +25,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
@@ -40,14 +40,14 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
-    private final Channel connection;
+    private final Connection connection;
     private boolean closeConnection;
 
     public WriteResultCallback(final SingleResultFuture<CommandResult> future,
                                final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage,
                                final WriteConcern writeConcern, final long requestId, final BufferProvider bufferProvider,
-                               final ServerDescription serverDescription, final Channel connection, final boolean closeConnection) {
+                               final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         super(decoder, requestId, connection, closeConnection);
         this.future = future;
         this.namespace = namespace;

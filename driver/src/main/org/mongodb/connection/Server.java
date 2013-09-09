@@ -34,16 +34,16 @@ public interface Server {
     ServerDescription getDescription();
 
     /**
-     * Gets a channel to this server.  The channel should be closed after the caller is done with it.
+     * Gets a connection to this server.  The connection should be closed after the caller is done with it.
      * <p>
-     * Implementations of this method are allowed to block while waiting for a free channel from a pool of available channels.
+     * Implementations of this method are allowed to block while waiting for a free connection from a pool of available connection.
      * </p>
      * <p>
-     * Implementations of this method will likely pool the underlying channels, so the effect of closing the returned channel will
-     * be to return the channel to the pool.
+     * Implementations of this method will likely pool the underlying connection, so the effect of closing the returned connection will
+     * be to return the connection to the pool.
      * </p>
      *
-     * @return a channel this server
+     * @return a connection this server
      */
-    Channel getChannel();
+    Connection getConnection();
 }

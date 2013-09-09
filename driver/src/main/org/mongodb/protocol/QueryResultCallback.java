@@ -22,7 +22,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.message.ReplyMessage;
@@ -32,7 +32,7 @@ class QueryResultCallback<T> extends ResponseCallback {
     private final Decoder<T> decoder;
 
     public QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                               final int requestId, final Channel connection, final boolean closeConnection) {
+                               final int requestId, final Connection connection, final boolean closeConnection) {
         super(requestId, connection, closeConnection);
         this.callback = callback;
         this.decoder = decoder;

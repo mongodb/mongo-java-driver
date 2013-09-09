@@ -19,8 +19,8 @@ package org.mongodb;
 import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
@@ -30,8 +30,8 @@ import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.EnumSet;
@@ -74,36 +74,36 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
         Server server = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()));
-        Channel channel = server.getChannel();
+        Connection connection = server.getConnection();
         try {
-            SingleChannelSession singleChannelSession = new SingleChannelSession(server.getDescription(), channel);
+            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);
 
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleChannelSession, false);
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
 
             cursor.next();
             cursor.close();
 
             cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleChannelSession, false);
+                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
             assertEquals(new Document("_id", 999), cursor.next());
 
-            singleChannelSession.channel.close();
+            singleConnectionSession.connection.close();
         } finally {
-            channel.close();
+            connection.close();
         }
     }
 
-    private static class SingleChannelSession implements Session {
+    private static class SingleConnectionSession implements Session {
         private ServerDescription description;
-        private Channel channel;
+        private Connection connection;
         private boolean isClosed;
 
-        public SingleChannelSession(final ServerDescription description, final Channel channel) {
+        public SingleConnectionSession(final ServerDescription description, final Connection connection) {
             this.description = description;
-            this.channel = channel;
+            this.connection = connection;
         }
 
         @Override
@@ -117,45 +117,39 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
-            return new DelayedCloseServerChannelProvider();
+        public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
+            return new DelayedCloseServerConnectionProvider();
         }
 
-        /**
-         * Asynchronously creates a server channel provider.
-         *
-         * @param options the server channel provider options
-         * @return a future for the server channel provider
-         */
         @Override
-        public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
-            return new SingleResultFuture<ServerChannelProvider>(new DelayedCloseServerChannelProvider(), null);
+        public MongoFuture<ServerConnectionProvider> createServerConnectionProviderAsync(final ServerConnectionProviderOptions options) {
+            return new SingleResultFuture<ServerConnectionProvider>(new DelayedCloseServerConnectionProvider(), null);
         }
 
-        private class DelayedCloseServerChannelProvider implements ServerChannelProvider {
+        private class DelayedCloseServerConnectionProvider implements ServerConnectionProvider {
             @Override
             public ServerDescription getServerDescription() {
                 return description;
             }
 
             @Override
-            public Channel getChannel() {
-                return new DelayedCloseChannel(channel);
+            public Connection getConnection() {
+                return new DelayedCloseConnection(connection);
             }
 
             @Override
-            public MongoFuture<Channel> getChannelAsync() {
-                return new SingleResultFuture<Channel>(channel, null);
+            public MongoFuture<Connection> getConnectionAsync() {
+                return new SingleResultFuture<Connection>(connection, null);
             }
         }
     }
 
-    private static class DelayedCloseChannel implements Channel {
-        private Channel wrapped;
+    private static class DelayedCloseConnection implements Connection {
+        private Connection wrapped;
         private boolean isClosed;
 
 
-        public DelayedCloseChannel(final Channel wrapped) {
+        public DelayedCloseConnection(final Connection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -172,9 +166,9 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
+        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
             isTrue("open", !isClosed());
-            return wrapped.receiveMessage(channelReceiveArgs);
+            return wrapped.receiveMessage(connectionReceiveArgs);
         }
 
         @Override
@@ -184,9 +178,10 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+                                        final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(channelReceiveArgs, callback);
+            wrapped.receiveMessageAsync(connectionReceiveArgs, callback);
         }
 
         @Override

@@ -16,6 +16,14 @@
 
 package org.mongodb.connection;
 
-interface ChannelProviderFactory {
-    ChannelProvider create(ServerAddress serverAddress);
+import java.io.Closeable;
+import java.util.concurrent.TimeUnit;
+
+interface ConnectionProvider extends Closeable {
+
+    Connection get();
+
+    Connection get(final long timeout, final TimeUnit timeUnit);
+
+    void close();
 }

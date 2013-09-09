@@ -25,8 +25,8 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.PrimaryServerSelector;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
@@ -48,10 +48,10 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T execute() {
-        final ServerChannelProvider provider = getServerChannelProvider();
+        final ServerConnectionProvider provider = getServerConnectionProvider();
         final CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                                                 commandEncoder, resultDecoder, getBufferProvider(),
-                                                                provider.getServerDescription(), provider.getChannel(), true).execute();
+                                                                provider.getServerDescription(), provider.getConnection(), true).execute();
         return (T) commandResult.getResponse().get("value");
     }
 
@@ -64,8 +64,8 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
         return command;
     }
 
-    private ServerChannelProvider getServerChannelProvider() {
-        return getSession().createServerChannelProvider(new ServerChannelProviderOptions(false, new PrimaryServerSelector()));
+    private ServerConnectionProvider getServerConnectionProvider() {
+        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
     }
 
 }

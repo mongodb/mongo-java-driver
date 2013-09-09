@@ -28,6 +28,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -46,7 +48,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def userName = 'jeff'
     def password = '123'.toCharArray()
 
-    def channelProvider
+    def connectionProvider
 
     def 'an added user should be found'() {
         given:
@@ -77,7 +79,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new InsertUserOperation(getDatabaseName(), userDocument, getBufferProvider(), getSession(), true).execute()
 
         then:
-        channelProvider.create(getPrimary())
+        connectionProvider.create(getPrimary())
 
         cleanup:
         new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
@@ -92,7 +94,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         when:
         new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
-        channelProvider.create(getPrimary())
+        connectionProvider.create(getPrimary())
 
         then:
         thrown(MongoSecurityException)

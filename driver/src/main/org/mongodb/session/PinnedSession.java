@@ -20,8 +20,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.Channel;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
@@ -40,8 +40,8 @@ public class PinnedSession implements Session {
     private ServerSelector lastRequestedServerSelector;
     private Server serverForReads;
     private Server serverForWrites;
-    private Channel channelForReads;
-    private Channel channelForWrites;
+    private Connection connectionForReads;
+    private Connection connectionForWrites;
     private final Executor executor;
     private Cluster cluster;
     private boolean isClosed;
@@ -70,13 +70,13 @@ public class PinnedSession implements Session {
     public void close() {
         if (!isClosed()) {
             synchronized (this) {
-                if (channelForReads != null) {
-                    channelForReads.close();
-                    channelForReads = null;
+                if (connectionForReads != null) {
+                    connectionForReads.close();
+                    connectionForReads = null;
                 }
-                if (channelForWrites != null) {
-                    channelForWrites.close();
-                    channelForWrites = null;
+                if (connectionForWrites != null) {
+                    connectionForWrites.close();
+                    connectionForWrites = null;
                 }
                 isClosed = true;
             }
@@ -89,51 +89,51 @@ public class PinnedSession implements Session {
     }
 
     @Override
-    public ServerChannelProvider createServerChannelProvider(final ServerChannelProviderOptions options) {
+    public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed());
 
         synchronized (this) {
             final Server serverToUse;
-            final Channel channelToUse;
+            final Connection connectionToUse;
             if (options.isQuery()) {
-                if (channelForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
+                if (connectionForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
                     lastRequestedServerSelector = options.getServerSelector();
-                    if (channelForReads != null) {
-                        channelForReads.close();
+                    if (connectionForReads != null) {
+                        connectionForReads.close();
                     }
                     serverForReads = cluster.getServer(options.getServerSelector());
-                    channelForReads = serverForReads.getChannel();
+                    connectionForReads = serverForReads.getConnection();
                 }
                 serverToUse = serverForReads;
-                channelToUse = channelForReads;
+                connectionToUse = connectionForReads;
             }
             else {
-                if (channelForWrites == null) {
+                if (connectionForWrites == null) {
                     serverForWrites = cluster.getServer(new PrimaryServerSelector());
-                    channelForWrites = serverForWrites.getChannel();
+                    connectionForWrites = serverForWrites.getConnection();
                 }
                 serverToUse = serverForWrites;
-                channelToUse = channelForWrites;
+                connectionToUse = connectionForWrites;
             }
-            return new DelayedCloseServerChannelProvider(serverToUse, channelToUse);
+            return new DelayedCloseServerConnectionProvider(serverToUse, connectionToUse);
         }
     }
 
     @Override
-    public MongoFuture<ServerChannelProvider> createServerChannelProviderAsync(final ServerChannelProviderOptions options) {
+    public MongoFuture<ServerConnectionProvider> createServerConnectionProviderAsync(final ServerConnectionProviderOptions options) {
         notNull("options", options);
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
-        final SingleResultFuture<ServerChannelProvider> retVal = new SingleResultFuture<ServerChannelProvider>();
+        final SingleResultFuture<ServerConnectionProvider> retVal = new SingleResultFuture<ServerConnectionProvider>();
 
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    retVal.init(createServerChannelProvider(options), null);
+                    retVal.init(createServerConnectionProvider(options), null);
                 } catch (MongoException e) {
                     retVal.init(null, e);
                 } catch (Throwable e) {
@@ -146,11 +146,11 @@ public class PinnedSession implements Session {
 
     }
 
-    private static final class DelayedCloseServerChannelProvider implements ServerChannelProvider {
+    private static final class DelayedCloseServerConnectionProvider implements ServerConnectionProvider {
         private final Server server;
-        private final Channel connection;
+        private final Connection connection;
 
-        public DelayedCloseServerChannelProvider(final Server server, final Channel connection) {
+        public DelayedCloseServerConnectionProvider(final Server server, final Connection connection) {
             this.server = server;
             this.connection = connection;
         }
@@ -161,13 +161,13 @@ public class PinnedSession implements Session {
         }
 
         @Override
-        public Channel getChannel() {
-            return new DelayedCloseChannel(connection);
+        public Connection getConnection() {
+            return new DelayedCloseConnection(connection);
         }
 
         @Override
-        public MongoFuture<Channel> getChannelAsync() {
-            return new SingleResultFuture<Channel>(connection, null);
+        public MongoFuture<Connection> getConnectionAsync() {
+            return new SingleResultFuture<Connection>(connection, null);
         }
     }
 }

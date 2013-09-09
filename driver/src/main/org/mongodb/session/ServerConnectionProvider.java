@@ -17,25 +17,25 @@
 package org.mongodb.session;
 
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 
 /**
- * A provider of channels to a single server.
+ * A provider of connections to a single server.
  */
-public interface ServerChannelProvider {
+public interface ServerConnectionProvider {
     /**
      *
-     * @return  the description of the server that this provider is providing channels to.
+     * @return  the description of the server that this provider is providing connections to.
      */
     ServerDescription getServerDescription();
 
     /**
-     * Provide a channel to the server.  A provider may choose to return the same Channel
+     * Provide a connection to the server.  A provider may choose to return the same Connection
      *
-     * @return a channel to the server
+     * @return a connection to the server
      */
-    Channel getChannel();
+    Connection getConnection();
 
-    MongoFuture<Channel> getChannelAsync();
+    MongoFuture<Connection> getConnectionAsync();
 }

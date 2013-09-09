@@ -18,23 +18,23 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 
 abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
-    private final Channel connection;
+    private final Connection connection;
     private final long requestId;
     private final boolean closeConnection;
 
-    public ResponseCallback(final long requestId, final Channel connection, final boolean closeConnection) {
+    public ResponseCallback(final long requestId, final Connection connection, final boolean closeConnection) {
         this.connection = connection;
         this.requestId = requestId;
         this.closeConnection = closeConnection;
     }
 
-    protected Channel getConnection() {
+    protected Connection getConnection() {
         return connection;
     }
 

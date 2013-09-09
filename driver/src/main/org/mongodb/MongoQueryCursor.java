@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Channel;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetMore;
@@ -31,8 +31,8 @@ import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerChannelProvider;
-import org.mongodb.session.ServerChannelProviderOptions;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -51,11 +51,11 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Find find;
     private final Session session;
     private final boolean closeSession;
-    private final Channel exhaustChannel;
+    private final Connection exhaustConnection;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BufferProvider bufferProvider;
-    private final ServerChannelProvider provider;
+    private final ServerConnectionProvider provider;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
@@ -71,12 +71,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.bufferProvider = bufferProvider;
         this.session = session;
         this.closeSession = closeSession;
-        provider = session.createServerChannelProvider(new ServerChannelProviderOptions(true,
+        provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                 new ReadPreferenceServerSelector(find.getReadPreference())));
-        Channel channel = provider.getChannel();
-        exhaustChannel = isExhaust() ? channel : null;
+        Connection connection = provider.getConnection();
+        exhaustConnection = isExhaust() ? connection : null;
         QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder, this.bufferProvider,
-                provider.getServerDescription(), channel, !isExhaust());
+                provider.getServerDescription(), connection, !isExhaust());
         currentResult = operation.execute();
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -94,10 +94,10 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         }
         else if (currentResult.getCursor() != null && !limitReached()) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider,
-                    provider.getServerDescription(), getChannel(), !isExhaust()).execute();
+                    provider.getServerDescription(), getConnection(), !isExhaust()).execute();
         }
-        if (exhaustChannel != null) {
-            exhaustChannel.close();
+        if (exhaustConnection != null) {
+            exhaustConnection.close();
         }
         if (closeSession) {
             session.close();
@@ -195,12 +195,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private void getMore() {
         if (isExhaust()) {
             currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId(),
-                    getChannel()).execute();
+                    getConnection()).execute();
         }
         else {
             currentResult = new GetMoreProtocol<T>(namespace,
                     new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider,
-                    provider.getServerDescription(), getChannel(), true).execute();
+                    provider.getServerDescription(), getConnection(), true).execute();
         }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -217,14 +217,14 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         return "MongoQueryCursor{namespace=" + namespace + ", find=" + find + ", cursor=" + currentResult.getCursor() + '}';
     }
 
-    ServerChannelProvider getServerChannelProvider() {
+    ServerConnectionProvider getServerConnectionProvider() {
         return provider;
     }
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
-                    provider.getChannel(), !isExhaust()).execute();
+                    provider.getConnection(), !isExhaust()).execute();
         }
     }
 
@@ -239,19 +239,19 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void discardRemainingGetMoreResponses() {
         new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(),
-                getChannel()).execute();
+                getConnection()).execute();
     }
 
     private boolean isExhaust() {
         return find.getOptions().getFlags().contains(QueryFlag.Exhaust);
     }
 
-    private Channel getChannel() {
+    private Connection getConnection() {
         if (isExhaust()) {
-            return exhaustChannel;
+            return exhaustConnection;
         }
         else {
-            return provider.getChannel();
+            return provider.getConnection();
         }
     }
 

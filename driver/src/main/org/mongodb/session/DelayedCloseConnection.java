@@ -18,8 +18,8 @@ package org.mongodb.session;
 
 import org.bson.ByteBuf;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.Channel;
-import org.mongodb.connection.ChannelReceiveArgs;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
@@ -30,11 +30,11 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
-class DelayedCloseChannel implements Channel {
-    private Channel wrapped;
+class DelayedCloseConnection implements Connection {
+    private Connection wrapped;
     private boolean isClosed;
 
-    public DelayedCloseChannel(final Channel wrapped) {
+    public DelayedCloseConnection(final Connection wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -45,9 +45,9 @@ class DelayedCloseChannel implements Channel {
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final ChannelReceiveArgs channelReceiveArgs) {
+    public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
         isTrue("open", !isClosed());
-        return wrapped.receiveMessage(channelReceiveArgs);
+        return wrapped.receiveMessage(connectionReceiveArgs);
     }
 
     @Override
@@ -57,9 +57,10 @@ class DelayedCloseChannel implements Channel {
     }
 
     @Override
-    public void receiveMessageAsync(final ChannelReceiveArgs channelReceiveArgs, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+                                    final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
-        wrapped.receiveMessageAsync(channelReceiveArgs, callback);
+        wrapped.receiveMessageAsync(connectionReceiveArgs, callback);
     }
 
     @Override
