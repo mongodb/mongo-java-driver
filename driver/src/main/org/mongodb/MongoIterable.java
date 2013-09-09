@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncIterable;
-
 public interface MongoIterable<T> extends MongoSyncIterable<T>, MongoAsyncIterable<T> {
     <U> MongoIterable<U> map(Function<T, U> mapper);
 }

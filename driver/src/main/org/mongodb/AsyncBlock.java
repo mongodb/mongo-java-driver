@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.async;
+package org.mongodb;
 
-import org.mongodb.MongoFuture;
-
-/**
- * Interface describing the asynchronous read operations.
- *
- * @param <T> the document type to read
- */
-public interface MongoAsyncReadableView<T> {
-
-    MongoFuture<T> asyncOne();
-
-    MongoFuture<Long> asyncCount();
+public interface AsyncBlock<T> extends Block<T> {
+    void done();
 }

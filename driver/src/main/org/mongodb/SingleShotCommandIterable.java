@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.async.AsyncBlock;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;

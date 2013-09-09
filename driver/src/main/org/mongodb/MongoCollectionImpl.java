@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.async.AsyncBlock;
 import org.mongodb.command.MapReduceCommand;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CountOperation;

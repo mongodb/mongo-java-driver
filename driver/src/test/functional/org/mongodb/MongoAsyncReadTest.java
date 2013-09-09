@@ -20,7 +20,6 @@ import category.Async;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.async.AsyncBlock;
 import org.mongodb.connection.SingleResultCallback;
 
 import java.util.ArrayList;

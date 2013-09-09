@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.AsyncBlock;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
@@ -23,7 +24,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.async.AsyncBlock;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;

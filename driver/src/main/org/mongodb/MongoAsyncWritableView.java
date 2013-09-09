@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-package org.mongodb.async;
+package org.mongodb;
 
-import org.mongodb.Block;
-
-public interface AsyncBlock<T> extends Block<T> {
-    void done();
+/**
+ * Asynchronous write operations.
+ *
+ * @param <T>
+ *
+ * @since 3.0
+ */
+public interface MongoAsyncWritableView<T> {
+    MongoFuture<WriteResult> asyncReplace(T replacement);
 }

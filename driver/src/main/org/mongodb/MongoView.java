@@ -16,9 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.async.MongoAsyncReadableView;
-import org.mongodb.async.MongoAsyncWritableView;
-
 public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableView<T>,
         MongoReadableView<T>, MongoAsyncReadableView<T>, MongoIterable<T> {
 

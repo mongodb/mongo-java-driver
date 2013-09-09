@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.async;
-
-import org.mongodb.MongoFuture;
-import org.mongodb.WriteResult;
+package org.mongodb;
 
 /**
- * Asynchronous write operations.
+ * Interface describing the asynchronous read operations.
  *
- * @param <T>
- *
- * @since 3.0
+ * @param <T> the document type to read
  */
-public interface MongoAsyncWritableView<T> {
-    MongoFuture<WriteResult> asyncReplace(T replacement);
+public interface MongoAsyncReadableView<T> {
+
+    MongoFuture<T> asyncOne();
+
+    MongoFuture<Long> asyncCount();
 }

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.async;
-
-import org.mongodb.MongoFuture;
+package org.mongodb;
 
 import java.util.Collection;
 

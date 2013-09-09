@@ -16,8 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.async.AsyncBlock;
-
 public interface MongoAsyncCursor<T> {
     void start(final AsyncBlock<? super T> block);
 }
