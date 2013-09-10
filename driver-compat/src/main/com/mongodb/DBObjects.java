@@ -32,10 +32,7 @@ import java.util.Map;
 
 import static com.mongodb.MongoExceptions.mapException;
 
-public class DBObjects {
-    private DBObjects() {
-    }
-
+final class DBObjects {
     public static Document toDocument(final DBObject obj) {
         final Document res = new Document();
         fill(obj, res);
@@ -125,5 +122,8 @@ public class DBObjects {
             }
         }
         return dbList;
+    }
+
+    private DBObjects() {
     }
 }
