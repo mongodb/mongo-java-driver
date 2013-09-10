@@ -55,8 +55,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
         return new DefaultServer(clusterId, serverAddress, settings, connectionProviderFactory.create(serverAddress),
-                new InternalStreamConnectionFactory(heartbeatStreamFactory, bufferProvider, Collections.<MongoCredential>emptyList(),
-                        connectionListener),
+                new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory, bufferProvider,
+                        Collections.<MongoCredential>emptyList(), connectionListener),
                 scheduledExecutorService, bufferProvider);
     }
 

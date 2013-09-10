@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -135,7 +137,7 @@ class PooledConnectionProviderSpecification extends Specification {
         mockConnectionFactory.create(_) >> {
             numberOfConnectionsCreated++
             Mock(InternalConnection) {
-                sendMessage(_) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
+                sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
             }
         }
 
@@ -151,7 +153,7 @@ class PooledConnectionProviderSpecification extends Specification {
         def c2 = provider.get()
 
         and:
-        c2.sendMessage(Collections.<ByteBuf> emptyList())
+        c2.sendMessage(Collections.<ByteBuf> emptyList(), 1)
 
         then:
         thrown(MongoSocketWriteException)

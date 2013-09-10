@@ -48,8 +48,9 @@ interface InternalConnection {
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers the list of byte buffers to send.
+     * @param lastRequestId the request id of the last message in byteBuffers
      */
-    void sendMessage(final List<ByteBuf> byteBuffers);
+    void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId);
 
     /**
      * Receive a response to a sent message from the server.
@@ -62,9 +63,10 @@ interface InternalConnection {
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers the list of byte buffers to send
+     * @param lastRequestId the request id of the last message in byteBuffers
      * @param callback the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, final int lastRequestId, SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.

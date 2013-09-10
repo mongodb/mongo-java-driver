@@ -19,7 +19,6 @@ package org.mongodb.protocol;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
@@ -48,7 +47,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
             future.init(null, e);
         }
         else {
-            connection.receiveMessageAsync(new ConnectionReceiveArgs(requestId), receiveMessageCallback);
+            connection.receiveMessageAsync(requestId, receiveMessageCallback);
         }
     }
 }

@@ -40,11 +40,11 @@ public interface ConnectionListener extends EventListener {
     void connectionClosed(ConnectionEvent event);
 
     /**
-     * Publish a connection message sent event.
+     * Publish a connection messages sent event.
      *
      * @param event the event
      */
-    void messageSent(ConnectionMessageSentEvent event);
+    void messagesSent(ConnectionMessagesSentEvent event);
 
     /**
      * Publish a connection message received event.

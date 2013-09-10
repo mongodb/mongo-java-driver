@@ -25,7 +25,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
@@ -89,7 +88,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
             final CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
                                                               getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
         } finally {
             buffer.close();
@@ -97,7 +96,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     }
 
     private CommandResult receiveMessage(final int messageId) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(new ConnectionReceiveArgs(messageId));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
             final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, commandResultDecoder, messageId);
             return createCommandResult(replyMessage, connection.getServerAddress());
@@ -114,7 +113,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal,
+                message.getId(), new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal,
                 new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), commandResultDecoder, message.getId(),
                         connection, closeConnection)));
         return retVal;

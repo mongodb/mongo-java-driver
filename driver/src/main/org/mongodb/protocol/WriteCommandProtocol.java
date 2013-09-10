@@ -30,7 +30,6 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -122,7 +121,7 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
             if (nextMessage != null || batchNum > 1) {
                 getLogger().fine(format("Sending batch %d", batchNum));
             }
-            connection.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return nextMessage;
         } finally {
             buffer.close();
@@ -130,8 +129,7 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
     }
 
     private WriteResult receiveMessage(final RequestMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                new ConnectionReceiveArgs(message.getId()));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
             WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),

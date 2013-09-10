@@ -33,7 +33,7 @@ public abstract class ConnectionListenerAdapter implements ConnectionListener {
     }
 
     @Override
-    public void messageSent(final ConnectionMessageSentEvent event) {
+    public void messagesSent(final ConnectionMessagesSentEvent event) {
     }
 
     @Override

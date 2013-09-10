@@ -147,10 +147,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", !isClosed());
             try {
-                wrapped.sendMessage(byteBuffers);
+                wrapped.sendMessage(byteBuffers, lastRequestId);
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -158,10 +158,10 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
+        public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed());
             try {
-                return wrapped.receiveMessage(connectionReceiveArgs);
+                return wrapped.receiveMessage(responseTo);
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -169,16 +169,15 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessageAsync(byteBuffers, callback);            // TODO: handle asynchronous exceptions
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);            // TODO: handle asynchronous exceptions
         }
 
         @Override
-        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
-                                        final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(connectionReceiveArgs, callback);  // TODO: handle asynchronous exceptions
+            wrapped.receiveMessageAsync(responseTo, callback);  // TODO: handle asynchronous exceptions
         }
 
         @Override

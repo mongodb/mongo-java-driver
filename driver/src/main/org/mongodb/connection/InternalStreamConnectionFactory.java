@@ -24,15 +24,16 @@ import java.util.List;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
+    private final String clusterId;
     private StreamFactory streamFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
     private ConnectionListener connectionListener;
 
-    public InternalStreamConnectionFactory(final StreamFactory streamFactory, final BufferProvider bufferProvider,
-                                           final List<MongoCredential> credentialList,
-                                           final ConnectionListener connectionListener) {
-        this.streamFactory = streamFactory;
+    public InternalStreamConnectionFactory(final String clusterId, final StreamFactory streamFactory, final BufferProvider bufferProvider,
+                                           final List<MongoCredential> credentialList, final ConnectionListener connectionListener) {
+        this.clusterId = notNull("clusterId", clusterId);
+        this.streamFactory = notNull("streamFactory", streamFactory);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
         this.connectionListener = notNull("connectionListener", connectionListener);
@@ -40,6 +41,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
 
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {
-        return new InternalStreamConnection(streamFactory.create(serverAddress), credentialList, bufferProvider, connectionListener);
+        return new InternalStreamConnection(clusterId, streamFactory.create(serverAddress), credentialList, bufferProvider,
+                connectionListener);
     }
 }

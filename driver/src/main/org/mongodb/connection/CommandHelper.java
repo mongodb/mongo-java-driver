@@ -41,7 +41,7 @@ final class CommandHelper {
             final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                               command, codec, MessageSettings.builder().build());
             message.encode(buffer);
-            internalConnection.sendMessage(buffer.getByteBuffers());
+            internalConnection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
         } finally {
             buffer.close();

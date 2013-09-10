@@ -47,7 +47,7 @@ class PooledConnectionProviderFactory implements ConnectionProviderFactory {
     @Override
     public ConnectionProvider create(final ServerAddress serverAddress) {
         return new PooledConnectionProvider(clusterId, serverAddress,
-                new InternalStreamConnectionFactory(streamFactory, bufferProvider, credentialList, connectionListener), settings,
+                new InternalStreamConnectionFactory(clusterId, streamFactory, bufferProvider, credentialList, connectionListener), settings,
                 connectionPoolListener);
     }
 }

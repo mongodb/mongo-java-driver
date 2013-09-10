@@ -48,7 +48,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         }
 
         @Override
@@ -57,7 +57,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         }
 
         @Override

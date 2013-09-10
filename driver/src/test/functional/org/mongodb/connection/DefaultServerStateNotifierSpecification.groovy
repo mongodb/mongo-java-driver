@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -47,7 +49,7 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
                         newDescription = event.newValue
                     }
                 },
-                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                new InternalStreamConnectionFactory('1', new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                         getBufferProvider(), getCredentialList(), new NoOpConnectionListener()), getBufferProvider())
     }
 

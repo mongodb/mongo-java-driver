@@ -20,7 +20,6 @@ import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
@@ -160,28 +159,28 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", !isClosed());
-            wrapped.sendMessage(byteBuffers);
+            wrapped.sendMessage(byteBuffers, lastRequestId);
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
+        public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed());
-            return wrapped.receiveMessage(connectionReceiveArgs);
+            return wrapped.receiveMessage(responseTo);
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed());
-            wrapped.sendMessageAsync(byteBuffers, callback);
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
         }
 
         @Override
-        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+        public void receiveMessageAsync(final int responseTo,
                                         final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(connectionReceiveArgs, callback);
+            wrapped.receiveMessageAsync(responseTo, callback);
         }
 
         @Override

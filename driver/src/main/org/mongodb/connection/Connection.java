@@ -41,8 +41,9 @@ public interface Connection {
      * </p>
      *
      * @param byteBuffers the list of byte buffers to send.
+     * @param lastRequestId the request id of the last message in byteBuffers
      */
-    void sendMessage(final List<ByteBuf> byteBuffers);
+    void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId);
 
     /**
      * Receive a response to a sent message from the server.
@@ -51,26 +52,27 @@ public interface Connection {
      * active call to this method.
      * </p>
      *
-     * @param connectionReceiveArgs the settings that the response should conform to.
+     * @param responseTo the expected responseTo of the received message
      * @return the response
      */
-    ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs);
+    ResponseBuffers receiveMessage(final int responseTo);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers the list of byte buffers to send
+     * @param lastRequestId the request id of the last message in byteBuffers
      * @param callback the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, final int lastRequestId, SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.
      *
-     * @param connectionReceiveArgs the connection receive arguments
+     * @param responseTo the request id that this message is a response to
      * @param callback the callback to invoke on completion
      */
-    void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(final int responseTo, SingleResultCallback<ResponseBuffers> callback);
 
     /**
      * Gets the server address of this connection

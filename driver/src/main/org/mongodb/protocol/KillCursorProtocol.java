@@ -51,7 +51,7 @@ public class KillCursorProtocol implements Protocol<Void> {
         try {
             final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return null;
         } finally {
             buffer.close();
@@ -67,7 +67,7 @@ public class KillCursorProtocol implements Protocol<Void> {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
             final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessageAsync(buffer.getByteBuffers(), new SingleResultCallback<Void>() {
+            connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {
                     buffer.close();

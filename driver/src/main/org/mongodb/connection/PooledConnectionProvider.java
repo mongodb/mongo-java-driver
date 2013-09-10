@@ -234,10 +234,10 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", wrapped != null);
             try {
-                wrapped.sendMessage(byteBuffers);
+                wrapped.sendMessage(byteBuffers, lastRequestId);
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(this, e);
                 throw e;
@@ -245,21 +245,16 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final ConnectionReceiveArgs connectionReceiveArgs) {
+        public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", wrapped != null);
             try {
                 ResponseBuffers responseBuffers = wrapped.receiveMessage();
-                if (responseBuffers.getReplyHeader().getResponseTo() != connectionReceiveArgs.getResponseTo()) {
+                if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
                     throw new MongoInternalException(
-                            String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                                    responseBuffers.getReplyHeader().getResponseTo(), connectionReceiveArgs.getResponseTo()));
+                            String.format(
+                                    "The responseTo (%d) in the reply message does not match the requestId (%d) in the request message",
+                                    responseBuffers.getReplyHeader().getResponseTo(), responseTo));
                 }
-
-//                if (responseBuffers.getReplyHeader().getMessageLength() > connectionReceiveArgs.getMaxMessageSize()) {
-//                    throw new MongoInternalException(String.format("Unexpectedly large message length of %d exceeds maximum of %d",
-//                            responseBuffers.getReplyHeader().getMessageLength(), connectionReceiveArgs.getMaxMessageSize()));
-//                }
-
                 return responseBuffers;
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(this, e);
@@ -268,13 +263,13 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", wrapped != null);
-            wrapped.sendMessageAsync(byteBuffers, callback);      // TODO: handle async exceptions
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);      // TODO: handle async exceptions
         }
 
         @Override
-        public void receiveMessageAsync(final ConnectionReceiveArgs connectionReceiveArgs,
+        public void receiveMessageAsync(final int responseTo,
                                         final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", wrapped != null);
             wrapped.receiveMessageAsync(callback);                // TODO: handle async exceptions

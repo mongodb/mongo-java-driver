@@ -19,7 +19,6 @@ package org.mongodb.protocol;
 import org.mongodb.Decoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
@@ -38,7 +37,7 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public QueryResult<T> execute() {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(new ConnectionReceiveArgs(responseTo));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
         try {
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
         } finally {
@@ -48,7 +47,7 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
 
     public MongoFuture<QueryResult<T>> executeAsync() {
         final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        connection.receiveMessageAsync(new ConnectionReceiveArgs(responseTo), new GetMoreResultCallback<T>(
+        connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(
                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, 0, responseTo, connection, false));
 
         return retVal;

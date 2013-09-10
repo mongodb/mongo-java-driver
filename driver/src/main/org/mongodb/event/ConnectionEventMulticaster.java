@@ -61,9 +61,9 @@ public class ConnectionEventMulticaster implements ConnectionListener {
     }
 
     @Override
-    public void messageSent(final ConnectionMessageSentEvent event) {
+    public void messagesSent(final ConnectionMessagesSentEvent event) {
         for (ConnectionListener cur : connectionListeners) {
-            cur.messageSent(event);
+            cur.messagesSent(event);
         }
     }
 

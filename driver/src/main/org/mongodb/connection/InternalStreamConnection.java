@@ -26,7 +26,10 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
+import org.mongodb.event.ConnectionMessageReceivedEvent;
+import org.mongodb.event.ConnectionMessagesSentEvent;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -44,6 +47,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private final AtomicInteger incrementingId = new AtomicInteger();
 
+    private final String clusterId;
     private final Stream stream;
     private final ConnectionListener eventPublisher;
     private List<MongoCredential> credentialList;
@@ -51,20 +55,23 @@ class InternalStreamConnection implements InternalConnection {
     private volatile boolean isClosed;
     private String id;
 
-    InternalStreamConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
-                             final ConnectionListener eventPublisher) {
+    InternalStreamConnection(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
+                             final BufferProvider bufferProvider, final ConnectionListener eventPublisher) {
+        this.clusterId = notNull("clusterId", clusterId);
         this.stream = notNull("stream", stream);
         this.eventPublisher = notNull("eventPublisher", eventPublisher);
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         initialize();
+        eventPublisher.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
     }
 
     @Override
     public void close() {
         isClosed = true;
         stream.close();
+        eventPublisher.connectionClosed(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
     }
 
     @Override
@@ -81,10 +88,12 @@ class InternalStreamConnection implements InternalConnection {
         return id;
     }
 
-    public void sendMessage(final List<ByteBuf> byteBuffers) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         isTrue("open", !isClosed());
         try {
             stream.write(byteBuffers);
+            eventPublisher.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(), getId(), lastRequestId,
+                    getTotalRemaining(byteBuffers)));
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -95,7 +104,10 @@ class InternalStreamConnection implements InternalConnection {
     public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
         try {
-            return receiveMessage(System.nanoTime());
+            ResponseBuffers responseBuffers = receiveMessage(System.nanoTime());
+            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId, stream.getAddress(), getId(),
+                    responseBuffers.getReplyHeader().getResponseTo(), responseBuffers.getReplyHeader().getMessageLength()));
+            return responseBuffers;
         } catch (IOException e) {
             close();
             throw translateReadException(e);
@@ -109,11 +121,13 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         isTrue("open", !isClosed());
         stream.writeAsync(byteBuffers, new AsyncCompletionHandler() {
             @Override
             public void completed() {
+                eventPublisher.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(), getId(), lastRequestId,
+                        getTotalRemaining(byteBuffers)));
                 callback.onResult(null, null);
             }
 
@@ -266,13 +280,19 @@ class InternalStreamConnection implements InternalConnection {
                 }
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
-                    callback.onResult(new ResponseBuffers(replyHeader, null, System.nanoTime() - start), null);
+                    onSuccess(new ResponseBuffers(replyHeader, null, System.nanoTime() - start));
                 }
                 else {
                     fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
                             new ResponseBodyCallback(replyHeader));
                 }
             }
+        }
+
+        private void onSuccess(final ResponseBuffers responseBuffers) {
+            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId, stream.getAddress(), getId(),
+                    responseBuffers.getReplyHeader().getResponseTo(), responseBuffers.getReplyHeader().getMessageLength()));
+            callback.onResult(responseBuffers, null);
         }
 
         private class ResponseBodyCallback implements SingleResultCallback<ByteBuf> {
@@ -288,9 +308,18 @@ class InternalStreamConnection implements InternalConnection {
                     callback.onResult(null, e);
                 }
                 else {
-                    callback.onResult(new ResponseBuffers(replyHeader, result, System.nanoTime() - start), null);
+                    onSuccess(new ResponseBuffers(replyHeader, result, System.nanoTime() - start));
                 }
             }
         }
     }
+
+    private int getTotalRemaining(final List<ByteBuf> byteBuffers) {
+        int messageSize = 0;
+        for (ByteBuf cur : byteBuffers) {
+            messageSize += cur.remaining();
+        }
+        return messageSize;
+    }
+
 }

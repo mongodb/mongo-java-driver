@@ -26,7 +26,6 @@ import org.mongodb.ServerCursor;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -90,7 +89,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                message.getId(), new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
                         new GetMoreResultCallback<T>(
                                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder,
                                 getMore.getServerCursor().getId(), message.getId(), connection, closeConnection)));
@@ -101,10 +100,9 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private GetMoreMessage sendMessage() {
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
-                    getMessageSettings(serverDescription));
+            final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
         } finally {
             buffer.close();
@@ -112,8 +110,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final GetMoreMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                new ConnectionReceiveArgs(message.getId()));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                 throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));

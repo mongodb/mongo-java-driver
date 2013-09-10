@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.Fixture
@@ -57,7 +59,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         Thread.sleep(5);
 
         when:
-        connection.sendMessage(Arrays.asList())
+        connection.sendMessage(Arrays.asList(), 1)
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()

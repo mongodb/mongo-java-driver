@@ -34,7 +34,7 @@ public class SSLNIOStreamTest {
     @Test
     public void testIt() {
         InternalConnection internalConnection = new InternalStreamConnection(
-                new SSLNIOStream(new ServerAddress(), getBufferProvider(), Executors.newFixedThreadPool(1)),
+                "1", new SSLNIOStream(new ServerAddress(), getBufferProvider(), Executors.newFixedThreadPool(1)),
                 Collections.<MongoCredential>emptyList(), getBufferProvider(), new NoOpConnectionListener());
         assertNotNull(internalConnection);
         CommandHelper.executeCommand("test", new Document("getlasterror", 1), new DocumentCodec(), internalConnection, getBufferProvider());

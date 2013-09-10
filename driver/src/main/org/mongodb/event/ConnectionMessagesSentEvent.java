@@ -23,7 +23,7 @@ import org.mongodb.connection.ServerAddress;
  *
  * @since 3.0
  */
-public class ConnectionMessageSentEvent extends ConnectionEvent {
+public class ConnectionMessagesSentEvent extends ConnectionEvent {
     private final int requestId;
     private final int size;
 
@@ -36,8 +36,8 @@ public class ConnectionMessageSentEvent extends ConnectionEvent {
      * @param requestId the request id
      * @param size the size of the sent message
      */
-    public ConnectionMessageSentEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
-                                      final int requestId, final int size) {
+    public ConnectionMessagesSentEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
+                                       final int requestId, final int size) {
         super(clusterId, serverAddress, connectionId);
         this.requestId = requestId;
         this.size = size;
@@ -73,7 +73,7 @@ public class ConnectionMessageSentEvent extends ConnectionEvent {
             return false;
         }
 
-        final ConnectionMessageSentEvent that = (ConnectionMessageSentEvent) o;
+        final ConnectionMessagesSentEvent that = (ConnectionMessagesSentEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

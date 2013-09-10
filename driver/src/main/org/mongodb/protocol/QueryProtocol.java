@@ -25,7 +25,6 @@ import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
@@ -91,7 +90,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                message.getId(), new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
                         new QueryResultCallback<T>(
                                 new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, message.getId(), connection,
                                 closeConnection)));
@@ -105,7 +104,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                     getMessageSettings(serverDescription));
             message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers());
+            connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
         } finally {
             buffer.close();
@@ -113,8 +112,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final QueryMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(
-                new ConnectionReceiveArgs(message.getId()));
+        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 final Document errorDocument =
