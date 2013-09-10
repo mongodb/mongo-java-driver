@@ -16,9 +16,13 @@
 
 package org.mongodb.connection;
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 public class SocketSettings {
-    private final int connectTimeoutMS;
-    private final int readTimeoutMS;
+    private final long connectTimeoutMS;
+    private final long readTimeoutMS;
     private final boolean keepAlive;
     private final int receiveBufferSize;
     private final int sendBufferSize;
@@ -28,20 +32,20 @@ public class SocketSettings {
     }
 
     public static class Builder {
-        private int connectTimeoutMS = 10000;
-        private int readTimeoutMS;
+        private long connectTimeoutMS = 10000;    // TODO: not the right place to default this
+        private long readTimeoutMS;
         private boolean keepAlive;
         private int receiveBufferSize;
         private int sendBufferSize;
 
         // CHECKSTYLE:OFF
-        public Builder connectTimeoutMS(final int connectTimeoutMS) {
-            this.connectTimeoutMS = connectTimeoutMS;
+        public Builder connectTimeout(final int connectTimeout, final TimeUnit timeUnit) {
+            this.connectTimeoutMS = MILLISECONDS.convert(connectTimeout, timeUnit);
             return this;
         }
 
-        public Builder readTimeoutMS(final int readTimeoutMS) {
-            this.readTimeoutMS = readTimeoutMS;
+        public Builder readTimeout(final int readTimeout, final TimeUnit timeUnit) {
+            this.readTimeoutMS = MILLISECONDS.convert(readTimeout, timeUnit);
             return this;
         }
 
@@ -66,12 +70,12 @@ public class SocketSettings {
         // CHECKSTYLE:ON
     }
 
-    public int getConnectTimeoutMS() {
-        return connectTimeoutMS;
+    public int getConnectTimeout(final TimeUnit timeUnit) {
+        return (int) timeUnit.convert(connectTimeoutMS, MILLISECONDS);
     }
 
-    public int getReadTimeoutMS() {
-        return readTimeoutMS;
+    public int getReadTimeout(final TimeUnit timeUnit) {
+        return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
     }
 
     public boolean isKeepAlive() {

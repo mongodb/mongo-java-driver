@@ -832,14 +832,14 @@ public final class MongoClientOptions {
         requiredReplicaSetName = builder.requiredReplicaSetName;
 
         socketSettings = SocketSettings.builder()
-                                               .connectTimeoutMS(connectTimeout)
-                                               .readTimeoutMS(socketTimeout)
+                                               .connectTimeout(connectTimeout, MILLISECONDS)
+                                               .readTimeout(socketTimeout, MILLISECONDS)
                                                .keepAlive(socketKeepAlive)
                                                .build();
 
         heartbeatSocketSettings = SocketSettings.builder()
-                                                        .connectTimeoutMS(heartbeatConnectTimeout)
-                                                        .readTimeoutMS(heartbeatSocketTimeout)
+                                                        .connectTimeout(heartbeatConnectTimeout, MILLISECONDS)
+                                                        .readTimeout(heartbeatSocketTimeout, MILLISECONDS)
                                                         .keepAlive(socketKeepAlive)
                                                         .build();
 

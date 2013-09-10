@@ -19,10 +19,12 @@ package org.mongodb.connection;
 import java.io.IOException;
 import java.net.Socket;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 final class SocketStreamHelper {
     static void initialize(final Socket socket, final ServerAddress address, final SocketSettings settings) throws IOException {
         socket.setTcpNoDelay(true);
-        socket.setSoTimeout(settings.getReadTimeoutMS());
+        socket.setSoTimeout(settings.getReadTimeout(MILLISECONDS));
         socket.setKeepAlive(settings.isKeepAlive());
         if (settings.getReceiveBufferSize() > 0) {
             socket.setReceiveBufferSize(settings.getReceiveBufferSize());
@@ -30,7 +32,7 @@ final class SocketStreamHelper {
         if (settings.getSendBufferSize() > 0) {
             socket.setSendBufferSize(settings.getSendBufferSize());
         }
-        socket.connect(address.getSocketAddress(), settings.getConnectTimeoutMS());
+        socket.connect(address.getSocketAddress(), settings.getConnectTimeout(MILLISECONDS));
     }
 
     private SocketStreamHelper() {

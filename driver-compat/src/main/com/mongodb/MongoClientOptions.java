@@ -79,13 +79,13 @@ public class MongoClientOptions {
                                                                .build();
 
         socketSettings = SocketSettings.builder()
-                                               .connectTimeoutMS(proxied.getConnectTimeout())
-                                               .readTimeoutMS(proxied.getSocketTimeout())
+                                               .connectTimeout(proxied.getConnectTimeout(), MILLISECONDS)
+                                               .readTimeout(proxied.getSocketTimeout(), MILLISECONDS)
                                                .keepAlive(proxied.isSocketKeepAlive())
                                                .build();
         heartbeatSocketSettings = SocketSettings.builder()
-                                                        .connectTimeoutMS(proxied.getHeartbeatConnectTimeout())
-                                                        .readTimeoutMS(proxied.getHeartbeatSocketTimeout())
+                                                        .connectTimeout(proxied.getHeartbeatConnectTimeout(), MILLISECONDS)
+                                                        .readTimeout(proxied.getHeartbeatSocketTimeout(), MILLISECONDS)
                                                         .keepAlive(proxied.isSocketKeepAlive())
                                                         .build();
         serverSettings = ServerSettings.builder()
