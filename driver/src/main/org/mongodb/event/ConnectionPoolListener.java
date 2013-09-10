@@ -30,7 +30,7 @@ public interface ConnectionPoolListener extends EventListener {
      *
      * @param event the event
      */
-    void connectionPoolOpened(ConnectionPoolEvent event);
+    void connectionPoolOpened(ConnectionPoolOpenedEvent event);
 
     /**
      * Invoked when a connection pool is closed.

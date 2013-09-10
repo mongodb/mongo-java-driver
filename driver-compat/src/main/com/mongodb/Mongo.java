@@ -33,6 +33,7 @@ import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
+import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
@@ -683,7 +684,7 @@ public class Mongo {
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 createNewCredentialList(credentialsList),
                 new PowerOfTwoBufferPool(),
-                null, null, null);
+                null, new JMXConnectionPoolListener(), null);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {

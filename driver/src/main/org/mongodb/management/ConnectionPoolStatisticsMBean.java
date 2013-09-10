@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.management;
 
 /**
  * A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.
@@ -53,16 +53,23 @@ public interface ConnectionPoolStatisticsMBean {
     int getMaxSize();
 
     /**
-     * Gets the total number of pool members, including idle and and in-use members.
+     * Gets the current size of the pool, including idle and and in-use members.
      *
-     * @return total number of members
+     * @return the size
      */
-    int getTotal();
+    int getSize();
 
     /**
-     * Gets the number of pool members that are currently in use.
+     * Gets the count of connections that are currently in use.
      *
-     * @return number of in-use members
+     * @return count of in-use connections
      */
-    int getInUse();
+    int getCheckedOutCount();
+
+    /**
+     * Gets the size of the wait queue for a connection from this pool.
+     * *
+     * @return size of the wait queue
+     */
+    int getWaitQueueSize();
 }

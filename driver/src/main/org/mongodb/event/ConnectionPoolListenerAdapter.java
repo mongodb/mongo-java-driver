@@ -25,7 +25,7 @@ package org.mongodb.event;
 public abstract class ConnectionPoolListenerAdapter implements ConnectionPoolListener {
 
     @Override
-    public void connectionPoolOpened(final ConnectionPoolEvent event) {
+    public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
     }
 
     @Override

@@ -20,18 +20,18 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
 import org.mongodb.event.ConnectionEvent
 import org.mongodb.event.ConnectionPoolEvent
 import org.mongodb.event.ConnectionPoolListener
+import org.mongodb.event.ConnectionPoolOpenedEvent
 import org.mongodb.event.ConnectionPoolWaitQueueEvent
 import spock.lang.Specification
 import spock.lang.Subject
-
-import javax.management.ObjectName
-import java.lang.management.ManagementFactory
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -183,50 +183,6 @@ class PooledConnectionProviderSpecification extends Specification {
         connectionFactory.createdConnections.size() == 0
     }
 
-    def 'statistics should reflect values from the provider'() {
-        when:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
-                new NoOpConnectionPoolListener())
-        provider.get()
-        provider.get().close()
-
-        then:
-        with(provider.statistics) {
-            host == SERVER_ADDRESS.host
-            port == SERVER_ADDRESS.port
-            minSize == 0
-            maxSize == 5
-            total == 2
-            inUse == 1
-        }
-    }
-
-    def 'should register MBean in org.mongodb.driver domain'() {
-        when:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build(),
-                new NoOpConnectionPoolListener())
-
-        then:
-        new ObjectName(provider.statistics.objectName).domain == 'org.mongodb.driver'
-        ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName(provider.statistics.objectName))
-    }
-
-    def 'should unregister MBean'() {
-        given:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build(),
-                new NoOpConnectionPoolListener())
-        def beanName = new ObjectName(provider.statistics.objectName)
-
-        when:
-        provider.close()
-
-        then:
-        !ManagementFactory.getPlatformMBeanServer().isRegistered(beanName)
-    }
-
     def 'should ensure min pool size after maintenance task runs'() {
         given:
         provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
@@ -247,25 +203,23 @@ class PooledConnectionProviderSpecification extends Specification {
     def 'should invoke connection pool opened event'() {
         given:
         def listener = Mock(ConnectionPoolListener)
+        def settings = ConnectionPoolSettings.builder().maxSize(10).minSize(5).build()
 
         when:
         provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(10).minSize(5).build(),
+                settings,
                 listener)
 
         then:
-        1 * listener.connectionPoolOpened(new ConnectionPoolEvent(CLUSTER_ID, SERVER_ADDRESS))
+        1 * listener.connectionPoolOpened(new ConnectionPoolOpenedEvent(CLUSTER_ID, SERVER_ADDRESS, settings))
     }
 
     def 'should invoke connection pool closed event'() {
         given:
         def listener = Mock(ConnectionPoolListener)
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
-                connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(10).minSize(5).build(),
-                listener)
-
+        def settings = ConnectionPoolSettings.builder().maxSize(10).minSize(5).build()
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory, settings, listener)
         when:
         provider.close()
 

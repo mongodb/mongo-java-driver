@@ -23,8 +23,8 @@ import org.mongodb.diagnostics.Loggers;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionPoolEvent;
 import org.mongodb.event.ConnectionPoolListener;
+import org.mongodb.event.ConnectionPoolOpenedEvent;
 import org.mongodb.event.ConnectionPoolWaitQueueEvent;
-import org.mongodb.management.MBeanServerFactory;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +50,6 @@ class PooledConnectionProvider implements ConnectionProvider {
     private final ExecutorService sizeMaintenanceTimer;
     private final String clusterId;
     private final ServerAddress serverAddress;
-    private final ConnectionPoolStatistics statistics;
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener eventPublisher;
     private volatile boolean closed;
@@ -63,12 +62,10 @@ class PooledConnectionProvider implements ConnectionProvider {
         this.settings = settings;
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory));
-        statistics = new ConnectionPoolStatistics(serverAddress, settings.getMinSize(), settings.getMaxSize(), pool);
-        MBeanServerFactory.getMBeanServer().registerMBean(statistics, statistics.getObjectName());
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
         this.eventPublisher = eventPublisher;
-        eventPublisher.connectionPoolOpened(new ConnectionPoolEvent(clusterId, serverAddress));
+        eventPublisher.connectionPoolOpened(new ConnectionPoolOpenedEvent(clusterId, serverAddress, settings));
     }
 
     @Override
@@ -107,20 +104,8 @@ class PooledConnectionProvider implements ConnectionProvider {
             if (sizeMaintenanceTimer != null) {
                 sizeMaintenanceTimer.shutdownNow();
             }
-            MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
-            final String clusterId1 = clusterId;
-            final ServerAddress serverAddress1 = serverAddress;
-            eventPublisher.connectionPoolClosed(new ConnectionPoolEvent(clusterId1, serverAddress1));
+            eventPublisher.connectionPoolClosed(new ConnectionPoolEvent(clusterId, serverAddress));
         }
-    }
-
-    /**
-     * Gets the statistics for the connection pool.
-     *
-     * @return the statistics.
-     */
-    public ConnectionPoolStatistics getStatistics() {
-        return statistics;
     }
 
     /**

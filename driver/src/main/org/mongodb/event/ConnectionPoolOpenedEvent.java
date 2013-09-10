@@ -16,35 +16,36 @@
 
 package org.mongodb.event;
 
+import org.mongodb.connection.ConnectionPoolSettings;
 import org.mongodb.connection.ServerAddress;
 
 /**
- * An event related to the connection pool's wait queue..
+ * An event signifying the opening of a connection pool.
  *
  * @since 3.0
  */
-public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
-    private final long threadId;
+public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
+    private final ConnectionPoolSettings settings;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param threadId the identifier of the waiting thread
+     * @param settings the connection pool settings
      */
-    public ConnectionPoolWaitQueueEvent(final String clusterId, final ServerAddress serverAddress, final long threadId) {
+    public ConnectionPoolOpenedEvent(final String clusterId, final ServerAddress serverAddress, final ConnectionPoolSettings settings) {
         super(clusterId, serverAddress);
-        this.threadId = threadId;
+        this.settings = settings;
     }
 
     /**
-     * Gets the identifier of the waiting thread.
+     * Gets the settings for this connection pool.
      *
-     * @return the thread id
+     * @return the settings
      */
-    public long getThreadId() {
-        return threadId;
+    public ConnectionPoolSettings getSettings() {
+        return settings;
     }
 
     @Override
@@ -56,7 +57,7 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
             return false;
         }
 
-        final ConnectionPoolWaitQueueEvent that = (ConnectionPoolWaitQueueEvent) o;
+        final ConnectionPoolOpenedEvent that = (ConnectionPoolOpenedEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;
@@ -64,7 +65,7 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
         if (!getServerAddress().equals(that.getServerAddress())) {
             return false;
         }
-        if (threadId != that.threadId) {
+        if (!settings.equals(that.getSettings())) {
             return false;
         }
 
@@ -74,8 +75,7 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + (int) (threadId ^ (threadId >>> 32));
+        result = 31 * result + settings.hashCode();
         return result;
     }
 }
-

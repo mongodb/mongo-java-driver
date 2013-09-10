@@ -48,7 +48,7 @@ public class ConnectionPoolEventMulticaster implements ConnectionPoolListener {
     }
 
     @Override
-    public void connectionPoolOpened(final ConnectionPoolEvent event) {
+    public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             cur.connectionPoolOpened(event);
         }

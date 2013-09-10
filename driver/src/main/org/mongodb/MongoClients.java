@@ -29,6 +29,7 @@ import org.mongodb.connection.SSLNIOStreamFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
+import org.mongodb.management.JMXConnectionPoolListener;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -133,6 +134,6 @@ public final class MongoClients {
                 options.getConnectionPoolSettings(), streamFactory,
                 heartbeatStreamFactory,
                 Executors.newScheduledThreadPool(3),
-                credentialList, bufferProvider, null, null, null);
+                credentialList, bufferProvider, null, new JMXConnectionPoolListener(), null);
     }
 }
