@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.event.ClusterListener;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -57,8 +58,9 @@ final class MultiServerCluster extends BaseCluster {
         }
     }
 
-    public MultiServerCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(settings, serverFactory);
+    public MultiServerCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                              final ClusterListener clusterListener) {
+        super(clusterId, settings, serverFactory, clusterListener);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();

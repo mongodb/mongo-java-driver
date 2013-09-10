@@ -17,26 +17,37 @@
 package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.event.ConnectionListener;
+import org.mongodb.event.ConnectionPoolListener;
 
 import java.util.List;
 
 class PooledConnectionProviderFactory implements ConnectionProviderFactory {
+    private final String clusterId;
     private final ConnectionPoolSettings settings;
     private final StreamFactory streamFactory;
     private final List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
+    private final ConnectionListener connectionListener;
+    private final ConnectionPoolListener connectionPoolListener;
 
-    public PooledConnectionProviderFactory(final ConnectionPoolSettings settings, final StreamFactory streamFactory,
-                                           final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+    public PooledConnectionProviderFactory(final String clusterId, final ConnectionPoolSettings settings, final StreamFactory streamFactory,
+                                           final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                                           final ConnectionListener connectionListener,
+                                           final ConnectionPoolListener connectionPoolListener) {
+        this.clusterId = clusterId;
         this.settings = settings;
         this.streamFactory = streamFactory;
         this.credentialList = credentialList;
         this.bufferProvider = bufferProvider;
+        this.connectionListener = connectionListener;
+        this.connectionPoolListener = connectionPoolListener;
     }
 
     @Override
     public ConnectionProvider create(final ServerAddress serverAddress) {
-        return new PooledConnectionProvider(serverAddress,
-                new InternalStreamConnectionFactory(streamFactory, bufferProvider, credentialList), settings);
+        return new PooledConnectionProvider(clusterId, serverAddress,
+                new InternalStreamConnectionFactory(streamFactory, bufferProvider, credentialList, connectionListener), settings,
+                connectionPoolListener);
     }
 }

@@ -20,6 +20,10 @@ import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.event.ConnectionEvent;
+import org.mongodb.event.ConnectionPoolEvent;
+import org.mongodb.event.ConnectionPoolListener;
+import org.mongodb.event.ConnectionPoolWaitQueueEvent;
 import org.mongodb.management.MBeanServerFactory;
 
 import java.util.List;
@@ -44,12 +48,17 @@ class PooledConnectionProvider implements ConnectionProvider {
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
     private final ExecutorService sizeMaintenanceTimer;
+    private final String clusterId;
     private final ServerAddress serverAddress;
     private final ConnectionPoolStatistics statistics;
     private final Runnable maintenanceTask;
+    private final ConnectionPoolListener eventPublisher;
+    private volatile boolean closed;
 
-    public PooledConnectionProvider(final ServerAddress serverAddress, final InternalConnectionFactory internalConnectionFactory,
-                                    final ConnectionPoolSettings settings) {
+    public PooledConnectionProvider(final String clusterId, final ServerAddress serverAddress,
+                                    final InternalConnectionFactory internalConnectionFactory, final ConnectionPoolSettings settings,
+                                    final ConnectionPoolListener eventPublisher) {
+        this.clusterId = clusterId;
         this.serverAddress = serverAddress;
         this.settings = settings;
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
@@ -58,6 +67,8 @@ class PooledConnectionProvider implements ConnectionProvider {
         MBeanServerFactory.getMBeanServer().registerMBean(statistics, statistics.getObjectName());
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
+        this.eventPublisher = eventPublisher;
+        eventPublisher.connectionPoolOpened(new ConnectionPoolEvent(clusterId, serverAddress));
     }
 
     @Override
@@ -73,24 +84,34 @@ class PooledConnectionProvider implements ConnectionProvider {
                         + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
                         settings.getMaxWaitQueueSize()));
             }
+            eventPublisher.waitQueueEntered(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, Thread.currentThread().getId()));
             UsageTrackingInternalConnection internalConnection = pool.get(timeout, timeUnit);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
                 internalConnection = pool.get(timeout, timeUnit);
             }
+            final String connectionId = internalConnection.getId();
+            eventPublisher.connectionCheckedOut(new ConnectionEvent(clusterId, serverAddress, connectionId));
             return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
+            eventPublisher.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, Thread.currentThread().getId()));
         }
     }
 
     @Override
     public void close() {
-        pool.close();
-        if (sizeMaintenanceTimer != null) {
-            sizeMaintenanceTimer.shutdownNow();
+        if (!closed) {
+            closed = true;
+            pool.close();
+            if (sizeMaintenanceTimer != null) {
+                sizeMaintenanceTimer.shutdownNow();
+            }
+            MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
+            final String clusterId1 = clusterId;
+            final ServerAddress serverAddress1 = serverAddress;
+            eventPublisher.connectionPoolClosed(new ConnectionPoolEvent(clusterId1, serverAddress1));
         }
-        MBeanServerFactory.getMBeanServer().unregisterMBean(statistics.getObjectName());
     }
 
     /**
@@ -175,7 +196,7 @@ class PooledConnectionProvider implements ConnectionProvider {
      * any connections created prior will be discarded.
      *
      * @param connection the connection that generated the exception
-     * @param e the exception
+     * @param e          the exception
      */
     private void incrementGenerationOnSocketException(final Connection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
@@ -195,6 +216,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         @Override
         public void close() {
             if (wrapped != null) {
+                eventPublisher.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;
             }
@@ -276,6 +298,10 @@ class PooledConnectionProvider implements ConnectionProvider {
             UsageTrackingInternalConnection internalConnection =
                     new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
             LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
+            final String clusterId1 = clusterId;
+            final ServerAddress serverAddress1 = serverAddress;
+            final String connectionId = internalConnection.getId();
+            eventPublisher.connectionAdded(new ConnectionEvent(clusterId1, serverAddress1, connectionId));
             return internalConnection;
         }
 
@@ -294,6 +320,8 @@ class PooledConnectionProvider implements ConnectionProvider {
             else {
                 reason = "the pool has been closed";
             }
+            final String connectionId = connection.getId();
+            eventPublisher.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connectionId));
             connection.close();
             LOGGER.info(format("Closed connection [%s] to %s because %s.", connection.getId(), serverAddress, reason));
         }

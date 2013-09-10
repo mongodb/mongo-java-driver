@@ -18,6 +18,9 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.event.ClusterDescriptionChangedEvent;
+import org.mongodb.event.ClusterEvent;
+import org.mongodb.event.ClusterListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,14 +51,20 @@ public abstract class BaseCluster implements Cluster {
             return new Random();
         }
     };
+    private final String clusterId;
     private final ClusterSettings settings;
+    private final ClusterListener clusterListener;
 
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public BaseCluster(final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    public BaseCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                       final ClusterListener clusterListener) {
+        this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
+        this.clusterListener = notNull("clusterListener", clusterListener);
+        clusterListener.clusterOpened(new ClusterEvent(clusterId));
     }
 
     @Override
@@ -158,6 +167,7 @@ public abstract class BaseCluster implements Cluster {
             isClosed = true;
             serverFactory.close();
             phase.get().countDown();
+            clusterListener.clusterClosed(new ClusterEvent(clusterId));
         }
     }
 
@@ -191,6 +201,7 @@ public abstract class BaseCluster implements Cluster {
         for (final ChangeListener<ClusterDescription> listener : changeListeners) {
             listener.stateChanged(changeEvent);
         }
+        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, changeEvent.getNewValue()));
     }
 
     // gets a random server that still exists in the cluster.  Returns null if there are none.

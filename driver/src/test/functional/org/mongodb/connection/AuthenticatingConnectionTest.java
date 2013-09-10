@@ -46,7 +46,7 @@ public class AuthenticatingConnectionTest {
 
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                getSSLSettings()), getBufferProvider(), Collections.<MongoCredential>emptyList());
+                getSSLSettings()), getBufferProvider(), Collections.<MongoCredential>emptyList(), new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
@@ -61,7 +61,7 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createMongoCRCredential(userName, source,
-                password.toCharArray())));
+                password.toCharArray())), new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
@@ -71,7 +71,7 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createPlainCredential(userName, source,
-                password.toCharArray())));
+                password.toCharArray())), new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
@@ -80,7 +80,8 @@ public class AuthenticatingConnectionTest {
     public void testGSSAPIAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)));
+                getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createGSSAPICredential(userName)),
+                        new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
     }
 
@@ -90,7 +91,7 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
-                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")));
+                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")), new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
     }
 }

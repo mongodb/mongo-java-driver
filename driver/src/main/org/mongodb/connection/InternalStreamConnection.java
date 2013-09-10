@@ -26,6 +26,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.event.ConnectionListener;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -44,13 +45,16 @@ class InternalStreamConnection implements InternalConnection {
     private final AtomicInteger incrementingId = new AtomicInteger();
 
     private final Stream stream;
+    private final ConnectionListener eventPublisher;
     private List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
     private String id;
 
-    InternalStreamConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
-        this.stream = stream;
+    InternalStreamConnection(final Stream stream, final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                             final ConnectionListener eventPublisher) {
+        this.stream = notNull("stream", stream);
+        this.eventPublisher = notNull("eventPublisher", eventPublisher);
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);

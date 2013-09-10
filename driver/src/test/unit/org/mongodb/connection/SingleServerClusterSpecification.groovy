@@ -18,21 +18,29 @@
 
 
 
+
+
+
+
 package org.mongodb.connection
 
+import org.mongodb.event.ClusterListener
 import spock.lang.Specification
 
 import static org.mongodb.connection.ClusterConnectionMode.Single
 import static org.mongodb.connection.ServerConnectionState.Connected
 
 class SingleServerClusterSpecification extends Specification {
+    private static final String CLUSTER_ID = '1'
+    private static final ClusterListener CLUSTER_LISTENER = new NoOpClusterListener()
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
     def 'should update description when the server connects'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
         sendNotification(firstServer, ServerType.StandAlone)
@@ -45,7 +53,8 @@ class SingleServerClusterSpecification extends Specification {
 
     def 'should get server when open'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
         sendNotification(firstServer, ServerType.StandAlone)
@@ -57,7 +66,8 @@ class SingleServerClusterSpecification extends Specification {
 
     def 'should not get server when closed'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
         cluster.close()
 
         when:
@@ -69,9 +79,9 @@ class SingleServerClusterSpecification extends Specification {
 
     def 'should have no servers of the wrong type in the description'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single)
-                .requiredClusterType(ClusterType.Sharded)
-                .hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).requiredClusterType(ClusterType.Sharded).hosts(Arrays.asList(firstServer)).build(),
+                factory, CLUSTER_LISTENER)
 
         when:
         sendNotification(firstServer, ServerType.ReplicaSetPrimary)
@@ -83,9 +93,9 @@ class SingleServerClusterSpecification extends Specification {
 
     def 'should have server in description when replica set name does matches required one'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single)
-                .requiredReplicaSetName('test1')
-                .hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                factory, CLUSTER_LISTENER)
 
         when:
         sendNotification(firstServer, ServerType.ReplicaSetPrimary, 'test1')
@@ -97,9 +107,9 @@ class SingleServerClusterSpecification extends Specification {
 
     def 'should have no replica set servers in description when replica set name does not match required one'() {
         given:
-        def cluster = new SingleServerCluster(ClusterSettings.builder().mode(Single)
-                .requiredReplicaSetName('test1')
-                .hosts(Arrays.asList(firstServer)).build(), factory)
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                factory, CLUSTER_LISTENER)
 
         when:
         sendNotification(firstServer, ServerType.ReplicaSetPrimary, 'test2')

@@ -133,7 +133,6 @@ public final class MongoClients {
                 options.getConnectionPoolSettings(), streamFactory,
                 heartbeatStreamFactory,
                 Executors.newScheduledThreadPool(3),
-                credentialList, bufferProvider);
-
+                credentialList, bufferProvider, null, null, null);
     }
 }

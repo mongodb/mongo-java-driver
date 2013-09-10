@@ -17,9 +17,13 @@
 package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.event.ClusterListener;
+import org.mongodb.event.ConnectionListener;
+import org.mongodb.event.ConnectionPoolListener;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The default factory for cluster implementations.
@@ -27,31 +31,44 @@ import java.util.concurrent.ScheduledExecutorService;
  * @since 3.0
  */
 public final class DefaultClusterFactory implements ClusterFactory {
+    private static final AtomicInteger NEXT_CLUSTER_ID = new AtomicInteger(1);
+
     public DefaultClusterFactory() {
     }
 
+    // CHECKSTYLE:OFF
     @Override
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
                           final StreamFactory heartbeatStreamFactory, final ScheduledExecutorService scheduledExecutorService,
-                          final List<MongoCredential> credentialList, final BufferProvider bufferProvider) {
+                          final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                          final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
+                          final ConnectionListener connectionListener) {
+        String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
+
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(
+                clusterId,
                 serverSettings,
                 connectionPoolSettings,
                 streamFactory,
                 heartbeatStreamFactory,
                 scheduledExecutorService,
                 credentialList,
-                bufferProvider);
+                bufferProvider,
+                connectionListener != null ? connectionListener : new NoOpConnectionListener(),
+                connectionPoolListener != null ? connectionPoolListener : new NoOpConnectionPoolListener());
 
         if (settings.getMode() == ClusterConnectionMode.Single) {
-            return new SingleServerCluster(settings, serverFactory);
+            return new SingleServerCluster(clusterId, settings, serverFactory,
+                    clusterListener != null ? clusterListener : new NoOpClusterListener());
         }
         else if (settings.getMode() == ClusterConnectionMode.Multiple) {
-            return new MultiServerCluster(settings, serverFactory);
+            return new MultiServerCluster(clusterId, settings, serverFactory,
+                    clusterListener != null ? clusterListener : new NoOpClusterListener());
         }
         else {
             throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
         }
     }
+    // CHECKSTYLE:ON
 }

@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.event.ConnectionListener;
 
 import java.util.List;
 
@@ -26,16 +27,19 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private StreamFactory streamFactory;
     private BufferProvider bufferProvider;
     private List<MongoCredential> credentialList;
+    private ConnectionListener connectionListener;
 
     public InternalStreamConnectionFactory(final StreamFactory streamFactory, final BufferProvider bufferProvider,
-                                           final List<MongoCredential> credentialList) {
+                                           final List<MongoCredential> credentialList,
+                                           final ConnectionListener connectionListener) {
         this.streamFactory = streamFactory;
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.credentialList = notNull("credentialList", credentialList);
+        this.connectionListener = notNull("connectionListener", connectionListener);
     }
 
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {
-        return new InternalStreamConnection(streamFactory.create(serverAddress), credentialList, bufferProvider);
+        return new InternalStreamConnection(streamFactory.create(serverAddress), credentialList, bufferProvider, connectionListener);
     }
 }

@@ -36,13 +36,14 @@ public class SingleServerClusterTest {
 
     @Before
     public void setUp() throws Exception {
-        cluster = new SingleServerCluster(
+        cluster = new SingleServerCluster("1",
                 ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts(Arrays.asList(getPrimary())).build(),
-                new DefaultClusterableServerFactory(ServerSettings.builder().build(),
+                new DefaultClusterableServerFactory("1", ServerSettings.builder().build(),
                         ConnectionPoolSettings.builder().maxSize(1).build(),
                         new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                         new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()), Executors.newScheduledThreadPool(1),
-                        getCredentialList(), getBufferProvider()));
+                        getCredentialList(), getBufferProvider(), new NoOpConnectionListener(), new NoOpConnectionPoolListener()),
+                new NoOpClusterListener());
     }
 
     @After

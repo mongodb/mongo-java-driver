@@ -51,7 +51,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public ServerAddress getServerAddress() {
-        isTrue("open", !isClosed());
         return wrapped.getServerAddress();
     }
 

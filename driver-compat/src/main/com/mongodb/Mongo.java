@@ -682,7 +682,8 @@ public class Mongo {
                 new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSocketFactory()),
                 Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                 createNewCredentialList(credentialsList),
-                new PowerOfTwoBufferPool());
+                new PowerOfTwoBufferPool(),
+                null, null, null);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {

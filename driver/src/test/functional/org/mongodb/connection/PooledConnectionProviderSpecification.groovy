@@ -18,19 +18,13 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.connection
 
 import org.bson.ByteBuf
+import org.mongodb.event.ConnectionEvent
+import org.mongodb.event.ConnectionPoolEvent
+import org.mongodb.event.ConnectionPoolListener
+import org.mongodb.event.ConnectionPoolWaitQueueEvent
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -40,6 +34,7 @@ import java.lang.management.ManagementFactory
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class PooledConnectionProviderSpecification extends Specification {
+    private static final String CLUSTER_ID = '1'
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
 
     private final TestInternalConnectionFactory connectionFactory = Spy(TestInternalConnectionFactory)
@@ -53,8 +48,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should get non null connection'() throws InterruptedException {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                new NoOpConnectionPoolListener())
 
         expect:
         provider.get() != null
@@ -62,8 +58,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should reuse released connection'() throws InterruptedException {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                new NoOpConnectionPoolListener())
 
         when:
         provider.get().close()
@@ -75,12 +72,13 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .build())
+                        .build(),
+                new NoOpConnectionPoolListener())
 
         when:
         provider.get().close()
@@ -91,8 +89,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                new NoOpConnectionPoolListener())
 
         when:
         def first = provider.get()
@@ -109,12 +108,13 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should throw on timeout'() throws InterruptedException {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(50, MILLISECONDS)
-                        .build())
+                        .build(),
+                new NoOpConnectionPoolListener())
         provider.get()
 
         when:
@@ -131,7 +131,7 @@ class PooledConnectionProviderSpecification extends Specification {
         given:
         int numberOfConnectionsCreated = 0
 
-        InternalConnectionFactory mockConnectionFactory = Mock()
+        def mockConnectionFactory = Mock(InternalConnectionFactory)
         mockConnectionFactory.create(_) >> {
             numberOfConnectionsCreated++
             Mock(InternalConnection) {
@@ -139,12 +139,13 @@ class PooledConnectionProviderSpecification extends Specification {
             }
         }
 
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 mockConnectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(2)
                         .maxWaitQueueSize(1)
-                        .build())
+                        .build(),
+                new NoOpConnectionPoolListener())
         when:
         def c1 = provider.get()
         def c2 = provider.get()
@@ -166,11 +167,12 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should have size of 0 with default settings'() {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
-                        .build())
+                        .build(),
+                new NoOpConnectionPoolListener())
 
         when:
         provider.doMaintenance()
@@ -181,8 +183,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'statistics should reflect values from the provider'() {
         when:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
+                new NoOpConnectionPoolListener())
         provider.get()
         provider.get().close()
 
@@ -199,8 +202,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should register MBean in org.mongodb.driver domain'() {
         when:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build(),
+                new NoOpConnectionPoolListener())
 
         then:
         new ObjectName(provider.statistics.objectName).domain == 'org.mongodb.driver'
@@ -209,8 +213,9 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should unregister MBean'() {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build())
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+                ConnectionPoolSettings.builder().minSize(1).maxSize(5).build(),
+                new NoOpConnectionPoolListener())
         def beanName = new ObjectName(provider.statistics.objectName)
 
         when:
@@ -222,17 +227,106 @@ class PooledConnectionProviderSpecification extends Specification {
 
     def 'should ensure min pool size after maintenance task runs'() {
         given:
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
                         .minSize(5)
-                        .build())
+                        .build(),
+                new NoOpConnectionPoolListener())
 
         when:
         provider.doMaintenance()
 
         then:
         connectionFactory.createdConnections.size() == 5
+    }
+
+    def 'should invoke connection pool opened event'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+
+        when:
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(10).minSize(5).build(),
+                listener)
+
+        then:
+        1 * listener.connectionPoolOpened(new ConnectionPoolEvent(CLUSTER_ID, SERVER_ADDRESS))
+    }
+
+    def 'should invoke connection pool closed event'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(10).minSize(5).build(),
+                listener)
+
+        when:
+        provider.close()
+
+        then:
+        1 * listener.connectionPoolClosed(new ConnectionPoolEvent(CLUSTER_ID, SERVER_ADDRESS))
+    }
+
+    def 'should fire connection added to pool event'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(10).maxWaitQueueSize(1).build(),
+                listener)
+
+        when:
+        provider.get()
+
+        then:
+        1 * listener.connectionAdded(_)
+    }
+
+    def 'should fire connection removed from pool event'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(10).maxWaitQueueSize(1).build(),
+                listener)
+        def connection = provider.get()
+        def connectionId = connection.getId()
+        connection.close()
+
+        when:
+        provider.close()
+
+        then:
+        1 * listener.connectionRemoved(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+    }
+
+    def 'should fire connection pool events on check out and check in'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                listener)
+        def connection = provider.get()
+        def connectionId = connection.getId()
+        connection.close()
+
+        when:
+        connection = provider.get()
+
+        then:
+        1 * listener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(CLUSTER_ID, SERVER_ADDRESS, Thread.currentThread().getId()))
+        1 * listener.connectionCheckedOut(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+        1 * listener.waitQueueExited(new ConnectionPoolWaitQueueEvent(CLUSTER_ID, SERVER_ADDRESS, Thread.currentThread().getId()))
+
+        when:
+        connection.close()
+
+        then:
+        1 * listener.connectionCheckedIn(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
     }
 }

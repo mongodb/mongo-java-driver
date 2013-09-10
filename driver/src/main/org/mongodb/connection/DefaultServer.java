@@ -17,7 +17,6 @@
 package org.mongodb.connection;
 
 import org.bson.ByteBuf;
-import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 
 import java.util.Collections;
@@ -41,32 +40,35 @@ class DefaultServer implements ClusterableServer {
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
             Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
+    private final String clusterId;
     private final ServerSettings settings;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final ServerAddress serverAddress,
+    public DefaultServer(final String clusterId,
+                         final ServerAddress serverAddress,
                          final ServerSettings settings,
                          final ConnectionProvider connectionProvider,
-                         final StreamFactory heartbeatStreamFactory,
+                         final InternalConnectionFactory heartbeatStreamConnectionFactory,
                          final ScheduledExecutorService scheduledExecutorService,
                          final BufferProvider bufferProvider) {
-        this.settings = settings;
+        this.clusterId = notNull("clusterId", clusterId);
+        this.settings = notNull("settings", settings);
         notNull("connectionProvider", connectionProvider);
-        notNull("heartbeatStreamFactory", heartbeatStreamFactory);
-        notNull("scheduledExecutorService", scheduledExecutorService);
+        notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
         notNull("bufferProvider", bufferProvider);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionProvider = connectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(),
-                new InternalStreamConnectionFactory(heartbeatStreamFactory, bufferProvider, Collections.<MongoCredential>emptyList()),
+        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatStreamConnectionFactory,
                 bufferProvider);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                 settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
     }
+
+
 
     @Override
     public Connection getConnection() {

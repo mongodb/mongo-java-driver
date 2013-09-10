@@ -17,6 +17,9 @@
 package org.mongodb.connection;
 
 import org.mongodb.MongoCredential;
+import org.mongodb.event.ClusterListener;
+import org.mongodb.event.ConnectionListener;
+import org.mongodb.event.ConnectionPoolListener;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,13 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public interface ClusterFactory {
 
-    /*
-     * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
-     *
-     * @param settings      the settings
-     * @param serverFactory the server factory that the cluster implementation should use to create instances of {@code ClusterableServer}.
-     * @return the cluster
-     */
+    // CHECKSTYLE:OFF
 
     /**
      * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
@@ -45,9 +42,13 @@ public interface ClusterFactory {
      * @param connectionPoolSettings the connection pool settings
      * @param streamFactory the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param scheduledExecutorService the executor service used to monitor servers.
+     * @param scheduledExecutorService the executor service used to monitor servers
      * @param credentialList the credential list
      * @param bufferProvider the buffer provider
+     * @param clusterListener an optional listener for cluster-related events
+     * @param connectionPoolListener an optional listener for connection pool-related events
+     * @param connectionListener an optional listener for connection-related events
+     *
      * @return the cluster
      */
     Cluster create(final ClusterSettings settings,
@@ -57,5 +58,10 @@ public interface ClusterFactory {
                    final StreamFactory heartbeatStreamFactory,
                    final ScheduledExecutorService scheduledExecutorService,
                    final List<MongoCredential> credentialList,
-                   final BufferProvider bufferProvider);
+                   final BufferProvider bufferProvider,
+                   final ClusterListener clusterListener,
+                   final ConnectionPoolListener connectionPoolListener,
+                   final ConnectionListener connectionListener);
+
+    // CHECKSTYLE:ON
 }

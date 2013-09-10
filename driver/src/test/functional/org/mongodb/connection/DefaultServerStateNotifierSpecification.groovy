@@ -20,6 +20,10 @@
 
 
 
+
+
+
+
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -44,7 +48,7 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
                     }
                 },
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                        getBufferProvider(), getCredentialList()), getBufferProvider())
+                        getBufferProvider(), getCredentialList(), new NoOpConnectionListener()), getBufferProvider())
     }
 
     def cleanup() {

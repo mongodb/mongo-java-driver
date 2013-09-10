@@ -24,6 +24,10 @@
 
 
 
+
+
+
+
 package org.mongodb.connection
 
 import spock.lang.Specification
@@ -41,8 +45,9 @@ class DefaultSingleServerClusterSpecification extends Specification {
     def 'should fire change event on cluster change'() {
         given:
         ChangeEvent<ClusterDescription> changeEvent = null
-        Cluster cluster = new SingleServerCluster(
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory)
+        Cluster cluster = new SingleServerCluster('1',
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory,
+                new NoOpClusterListener())
         cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ClusterDescription> event) {

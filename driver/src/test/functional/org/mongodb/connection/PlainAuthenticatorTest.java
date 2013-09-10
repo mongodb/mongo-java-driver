@@ -41,7 +41,7 @@ public class PlainAuthenticatorTest {
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnection(
                 new SocketChannelStream(new ServerAddress(host), SocketSettings.builder().build()),
-                Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool());
+                Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool(), new NoOpConnectionListener());
     }
 
     @After

@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
  */
 public class PooledConnectionProviderTest {
+    private static final String CLUSTER_ID = "1";
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
 
     private final TestInternalConnectionFactory connectionFactory = new TestInternalConnectionFactory();
@@ -43,12 +44,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldThrowOnTimeout() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(50, MILLISECONDS)
-                        .build());
+                        .build(),
+                new NoOpConnectionPoolListener());
         provider.get();
 
         // when
@@ -64,12 +66,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldThrowOnWaitQueueFull() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
                         .maxWaitTime(500, MILLISECONDS)
-                        .build());
+                        .build(),
+                new NoOpConnectionPoolListener());
 
         provider.get();
 
@@ -89,9 +92,10 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterMaxLifeTime() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS, connectionFactory,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder()
-                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(50, MILLISECONDS).build());
+                        .maxSize(1).maxWaitQueueSize(1).maxConnectionLifeTime(50, MILLISECONDS).build(),
+                new NoOpConnectionPoolListener());
 
         // when
         provider.get().close();
@@ -106,12 +110,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterLifeTimeOnClose() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                new NoOpConnectionPoolListener());
 
         // when
         Connection connection = provider.get();
@@ -125,12 +130,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterMaxIdleTime() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionIdleTime(50, MILLISECONDS).build());
+                        .maxConnectionIdleTime(50, MILLISECONDS).build(),
+                new NoOpConnectionPoolListener());
 
         // when
         provider.get().close();
@@ -145,12 +151,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldCloseConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                new NoOpConnectionPoolListener());
 
         // when
         provider.get().close();
@@ -165,12 +172,13 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldCreateNewConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
-                        .maxConnectionLifeTime(20, MILLISECONDS).build());
+                        .maxConnectionLifeTime(20, MILLISECONDS).build(),
+                new NoOpConnectionPoolListener());
 
         // when
         provider.get().close();
@@ -186,14 +194,15 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldPruneAfterMaintenanceTaskRuns() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(SERVER_ADDRESS,
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceFrequency(5, MILLISECONDS)
                         .maxWaitQueueSize(1)
-                        .build());
+                        .build(),
+                new NoOpConnectionPoolListener());
         provider.get().close();
 
         // when
