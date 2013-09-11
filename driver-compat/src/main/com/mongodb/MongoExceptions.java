@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoDuplicateKeyException;
-import org.mongodb.MongoWriteConcernException;
+import org.mongodb.MongoWriteException;
 
 import java.io.IOException;
 
@@ -28,8 +28,8 @@ public class MongoExceptions {
         final Throwable cause = e.getCause();
         if (e instanceof org.mongodb.MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
-        } else if (e instanceof MongoWriteConcernException) {
-            return new WriteConcernException((MongoWriteConcernException) e);
+        } else if (e instanceof MongoWriteException) {
+            return new WriteConcernException((MongoWriteException) e);
         } else if (e instanceof org.mongodb.MongoInternalException) {
             return new MongoInternalException((org.mongodb.MongoInternalException) e);
         } else if (e instanceof org.mongodb.connection.MongoTimeoutException) {

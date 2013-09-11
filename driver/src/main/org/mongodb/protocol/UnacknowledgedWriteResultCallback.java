@@ -17,11 +17,11 @@
 package org.mongodb.protocol;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -31,7 +31,7 @@ import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
-    private final SingleResultFuture<CommandResult> future;
+    private final SingleResultFuture<WriteResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
@@ -40,7 +40,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final Connection connection;
     private final boolean closeConnection;
 
-    UnacknowledgedWriteResultCallback(final SingleResultFuture<CommandResult> future,
+    UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final OutputBuffer writtenBuffer, final BufferProvider bufferProvider,
                                       final ServerDescription serverDescription, final Connection connection,
@@ -62,9 +62,9 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
             future.init(null, e);
         }
         else if (nextMessage != null) {
-            MongoFuture<CommandResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
+            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
                     WriteConcern.UNACKNOWLEDGED, serverDescription, connection, closeConnection).executeAsync();
-            newFuture.register(new SingleResultFutureCallback<CommandResult>(future));
+            newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
         }
         else {
             future.init(null, null);

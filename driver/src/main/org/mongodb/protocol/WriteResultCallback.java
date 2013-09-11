@@ -19,11 +19,11 @@ package org.mongodb.protocol;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -31,10 +31,10 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
 
-import static org.mongodb.command.GetLastError.getCommandException;
+import static org.mongodb.protocol.ProtocolHelper.getWriteException;
 
 class WriteResultCallback extends CommandResultBaseCallback {
-    private final SingleResultFuture<CommandResult> future;
+    private final SingleResultFuture<WriteResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private final BufferProvider bufferProvider;
@@ -43,7 +43,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final Connection connection;
     private boolean closeConnection;
 
-    public WriteResultCallback(final SingleResultFuture<CommandResult> future,
+    public WriteResultCallback(final SingleResultFuture<WriteResult> future,
                                final Decoder<Document> decoder, final MongoNamespace namespace,
                                final RequestMessage nextMessage,
                                final WriteConcern writeConcern, final long requestId, final BufferProvider bufferProvider,
@@ -65,23 +65,21 @@ class WriteResultCallback extends CommandResultBaseCallback {
         if (e != null) {
             future.init(null, e);
         }
-        else if (!commandResult.isOk()) {
-            future.init(null, new MongoCommandFailureException(commandResult));
-        }
         else {
-            MongoCommandFailureException commandException = getCommandException(commandResult);
+            WriteResult writeResult = new WriteResult(commandResult, writeConcern);
+            MongoException exception = getWriteException(writeResult);
 
-            if (commandException != null) {
-                future.init(null, commandException);
+            if (exception != null) {
+                future.init(null, exception);
             }
             else if (nextMessage != null) {
-                MongoFuture<CommandResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
+                MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
                         writeConcern, serverDescription, connection, closeConnection).executeAsync();
-                newFuture.register(new SingleResultFutureCallback<CommandResult>(future));
+                newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
                 done = false;
             }
             else {
-                future.init(commandResult, null);
+                future.init(writeResult, null);
             }
         }
         return done;

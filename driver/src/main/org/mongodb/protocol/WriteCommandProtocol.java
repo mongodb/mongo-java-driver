@@ -19,12 +19,11 @@ package org.mongodb.protocol;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.EncoderRegistry;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -39,16 +38,11 @@ import org.mongodb.protocol.message.BaseWriteCommandMessage;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
-import static org.mongodb.protocol.ProtocolHelper.createCommandResult;
 
-public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
-    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
-
+public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
@@ -70,7 +64,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         return writeConcern;
     }
 
-    public CommandResult execute() {
+    public WriteResult execute() {
         try {
             return sendAndReceiveAllMessages();
         } finally {
@@ -81,26 +75,25 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync() {
+    public MongoFuture<WriteResult> executeAsync() {
         throw new UnsupportedOperationException();  // TODO!!!!!!!!!!!!!!!!
     }
 
     protected abstract BaseWriteCommandMessage createRequestMessage();
 
-    private CommandResult sendAndReceiveAllMessages() {
+    private WriteResult sendAndReceiveAllMessages() {
         BaseWriteCommandMessage message = createRequestMessage();
-        CommandResult commandResult;
+        WriteResult writeResult = null;
         MongoException lastException = null;
         int batchNum = 0;
         do {
             batchNum++;
             BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum);
-            commandResult = receiveMessage(message);
-            if (nextMessage != null || batchNum > 1) {
-                getLogger().fine(format("Received response for batch %d", batchNum));
-            }
             try {
-                commandResult = parseWriteCommandResult(commandResult);
+                writeResult = receiveMessage(message);
+                if (nextMessage != null || batchNum > 1) {
+                    getLogger().fine(format("Received response for batch %d", batchNum));
+                }
             } catch (MongoException e) {
                 lastException = e;
                 if (!writeConcern.getContinueOnError()) {
@@ -119,7 +112,7 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
             throw lastException;
         }
 
-        return writeConcern.isAcknowledged() ? commandResult : null;
+        return writeConcern.isAcknowledged() ? writeResult : null;
     }
 
     private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
@@ -136,14 +129,24 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    private CommandResult receiveMessage(final RequestMessage message) {
+    private WriteResult receiveMessage(final RequestMessage message) {
         final ResponseBuffers responseBuffers = connection.receiveMessage(
                 new ConnectionReceiveArgs(message.getId()));
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
-            return createCommandResult(replyMessage, connection.getServerAddress());
+            WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),
+                    replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), writeConcern);
+            throwIfWriteException(result);
+            return result;
         } finally {
             responseBuffers.close();
+        }
+    }
+
+    private void throwIfWriteException(final WriteResult result) {
+        MongoException exception = ProtocolHelper.getWriteException(result);
+        if (exception != null) {
+            throw exception;
         }
     }
 
@@ -175,34 +178,5 @@ public abstract class WriteCommandProtocol implements Protocol<CommandResult> {
             encoderRegistry.register(encoder.getEncoderClass(), encoder);
             return encoderRegistry;
         }
-    }
-
-    private static CommandResult parseWriteCommandResult(final CommandResult commandResult) {
-        MongoCommandFailureException exception = getWriteCommandException(commandResult);
-        if (exception != null) {
-            throw exception;
-        }
-        return mungeCommandResult(commandResult, getResults(commandResult).get(0));
-    }
-
-    private static CommandResult mungeCommandResult(final CommandResult commandResult, final Document aResult) {
-        return new CommandResult(commandResult.getAddress(), aResult, commandResult.getElapsedNanoseconds());
-    }
-
-    private static MongoCommandFailureException getWriteCommandException(final CommandResult commandResult) {
-        List<Document> results = getResults(commandResult);
-        for (Document cur : results) {
-            final Integer code = (Integer) cur.get("code");
-            if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-                return new MongoDuplicateKeyException(mungeCommandResult(commandResult, cur));
-            }
-        }
-        return null;
-    }
-
-
-    @SuppressWarnings("unchecked")
-    private static List<Document> getResults(final CommandResult commandResult) {
-        return (List<Document>) commandResult.getResponse().get("results", List.class);
     }
 }

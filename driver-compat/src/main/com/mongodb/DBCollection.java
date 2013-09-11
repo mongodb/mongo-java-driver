@@ -251,7 +251,7 @@ public class DBCollection {
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
         final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
-        return new WriteResult(insert(insert, objectCodec), aWriteConcern);
+        return insert(insert, objectCodec, aWriteConcern);
     }
 
     /**
@@ -284,28 +284,28 @@ public class DBCollection {
         final Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
         final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
-        return new WriteResult(insert(insert, encoder), aWriteConcern);
+        return insert(insert, encoder, aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
         return dbEncoder != null ? new DBEncoderAdapter(dbEncoder, new ObjectIdGenerator()) : objectCodec;
     }
 
-    private CommandResult insert(final Insert<DBObject> insert, final Encoder<DBObject> encoder) {
+    private WriteResult insert(final Insert<DBObject> insert, final Encoder<DBObject> encoder, final WriteConcern writeConcern) {
         try {
-            return translateCommandResult(new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool(), getSession(),
-                    false).execute());
+            return translateWriteResult(new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool(), getSession(),
+                    false).execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
 
-    private CommandResult translateCommandResult(final org.mongodb.CommandResult commandResult) {
+    private WriteResult translateWriteResult(final org.mongodb.WriteResult commandResult, WriteConcern writeConcern) {
         if (commandResult == null) {
             return null;
         }
 
-        return new CommandResult(commandResult);
+        return new WriteResult(new CommandResult(commandResult.getCommandResult()), writeConcern);
     }
 
     /**
@@ -362,8 +362,8 @@ public class DBCollection {
 
             final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
 
-            return new WriteResult(translateCommandResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(),
-                    getObjectCodec(), getBufferPool(), getSession(), false).execute()), wc);
+            return translateWriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(),
+                    getObjectCodec(), getBufferPool(), getSession(), false).execute(), wc);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -394,7 +394,7 @@ public class DBCollection {
                 .upsert(upsert)
                 .multi(multi);
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+        return updateInternal(mongoUpdate, aWriteConcern);
     }
 
     /**
@@ -426,13 +426,13 @@ public class DBCollection {
                 .upsert(upsert)
                 .multi(multi);
 
-        return new WriteResult(updateInternal(mongoUpdate), aWriteConcern);
+        return updateInternal(mongoUpdate, aWriteConcern);
     }
 
-    private CommandResult updateInternal(final Update update) {
+    private WriteResult updateInternal(final Update update, WriteConcern writeConcern) {
         try {
-            return translateCommandResult(new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool(), getSession(),
-                    false).execute());
+            return translateWriteResult(new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool(), getSession(),
+                    false).execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -497,8 +497,8 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         final Remove remove = new Remove(writeConcern.toNew(), toDocument(query));
         try {
-            return new WriteResult(translateCommandResult(new RemoveOperation(getNamespace(), remove, documentCodec,
-                    getBufferPool(), getSession(), false).execute()), writeConcern);
+            return translateWriteResult(new RemoveOperation(getNamespace(), remove, documentCodec,
+                    getBufferPool(), getSession(), false).execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -518,8 +518,8 @@ public class DBCollection {
         final Remove remove = new Remove(aWriteConcern.toNew(), filter);
 
         try {
-            return new WriteResult(translateCommandResult(
-                    new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool(), getSession(), false).execute()),
+            return translateWriteResult(
+                    new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool(), getSession(), false).execute(),
                     aWriteConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);

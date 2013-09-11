@@ -16,40 +16,16 @@
 
 package org.mongodb.command;
 
-import org.mongodb.CommandResult;
-import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteConcern;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * The getlasterror command.
  */
 public final class GetLastError extends Command {
 
-    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
-
     public GetLastError(final WriteConcern writeConcern) {
         super(writeConcern.asDocument());
         readPreference(ReadPreference.primary());
-    }
-
-    public static CommandResult parseGetLastErrorResponse(final CommandResult commandResult) {
-        MongoCommandFailureException exception = getCommandException(commandResult);
-        if (exception != null) {
-            throw exception;
-        }
-        return commandResult;
-    }
-
-    public static MongoCommandFailureException getCommandException(final CommandResult commandResult) {
-        final Integer code = (Integer) commandResult.getResponse().get("code");
-        if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            return new MongoDuplicateKeyException(commandResult);
-        }
-        return null;
     }
 }

@@ -16,25 +16,37 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoDuplicateKeyException;
+import org.mongodb.MongoException;
+import org.mongodb.MongoWriteException;
+import org.mongodb.WriteResult;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.message.MessageSettings;
-import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
-final class ProtocolHelper {
-    public static CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
-                replyMessage.getElapsedNanoseconds());
-        if (!commandResult.isOk()) {
-            throw new MongoCommandFailureException(commandResult);
-        }
+import java.util.Arrays;
+import java.util.List;
 
-        return commandResult;
+final class ProtocolHelper {
+    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
+
+    static MongoException getWriteException(final WriteResult writeResult) {
+        if (!writeResult.getCommandResult().isOk()) {
+            return new MongoCommandFailureException(writeResult.getCommandResult());
+        }
+        else if (writeResult.getErrorMessage() != null) {
+            if (DUPLICATE_KEY_ERROR_CODES.contains(writeResult.getCommandResult().getErrorCode())) {
+                return new MongoDuplicateKeyException(writeResult);
+            }
+            else {
+                return new MongoWriteException(writeResult);
+            }
+        }
+        else {
+            return null;
+        }
     }
 
     public static MessageSettings getMessageSettings(final ServerDescription serverDescription) {

@@ -31,6 +31,7 @@ public class WriteResultTest {
         WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         WriteResult writeResult = new WriteResult(commandResult, writeConcern);
         assertTrue(writeResult.toString().startsWith("WriteResult"));
+
     }
 
 }

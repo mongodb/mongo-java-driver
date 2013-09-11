@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -38,7 +38,7 @@ import java.util.Arrays;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.getConnectionAsync;
 
-public abstract class BaseWriteOperation extends BaseOperation<CommandResult> implements AsyncOperation<CommandResult> {
+public abstract class BaseWriteOperation extends BaseOperation<WriteResult> implements AsyncOperation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -55,7 +55,7 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
     }
 
     @Override
-    public CommandResult execute() {
+    public WriteResult execute() {
         ServerConnectionProvider provider = getSession().createServerConnectionProvider(
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
@@ -76,13 +76,13 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync() {
-        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+    public MongoFuture<WriteResult> executeAsync() {
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
         getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
                 .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
                     @Override
                     public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                        MongoFuture<CommandResult> protocolFuture;
+                        MongoFuture<WriteResult> protocolFuture;
                         if (writeConcern.isAcknowledged()
                                 && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
                             protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
@@ -91,7 +91,7 @@ public abstract class BaseWriteOperation extends BaseOperation<CommandResult> im
                             protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                         }
                         protocolFuture.register(
-                                new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
+                                new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
                     }
                 });
         return retVal;

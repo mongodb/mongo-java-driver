@@ -384,20 +384,19 @@ public class DB {
         }
         userDocument.append("pwd", NativeAuthenticationHelper.createAuthenticationHash(username, passwd));
         userDocument.append("readOnly", readOnly);
-        org.mongodb.CommandResult commandResult;
+        org.mongodb.WriteResult writeResult;
         if (foundUserDocument == null) {
-            commandResult = new InsertUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+            writeResult = new InsertUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
         }
         else {
-            commandResult = new ReplaceUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+            writeResult = new ReplaceUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
         }
-        return new WriteResult(new CommandResult(commandResult), getWriteConcern());
+        return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
     public WriteResult removeUser(final String username) {
-        CommandResult commandResult = new CommandResult(new RemoveUserOperation(getName(), username, getBufferPool(),
-                getSession(), true).execute());
-        return new WriteResult(commandResult, getWriteConcern());
+        org.mongodb.WriteResult writeResult = new RemoveUserOperation(getName(), username, getBufferPool(), getSession(), true).execute();
+        return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
     @Deprecated

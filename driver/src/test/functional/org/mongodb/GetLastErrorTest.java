@@ -31,7 +31,7 @@ public class GetLastErrorTest extends DatabaseTestCase {
             collection.insert(doc);
             fail("Should throw MongoDuplicateKeyException");
         } catch (MongoDuplicateKeyException e) {
-            assertThat(e.getCommandResult().getErrorCode(), is(11000));
+            assertThat(e.getWriteResult().getErrorCode(), is(11000));
         }
     }
 }

@@ -20,6 +20,7 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
@@ -27,6 +28,7 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.ConnectionReceiveArgs;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.SingleResultFuture;
@@ -37,7 +39,6 @@ import org.mongodb.protocol.message.ReplyMessage;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
-import static org.mongodb.protocol.ProtocolHelper.createCommandResult;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
@@ -117,5 +118,15 @@ public class CommandProtocol implements Protocol<CommandResult> {
                 new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal), commandResultDecoder, message.getId(),
                         connection, closeConnection)));
         return retVal;
+    }
+
+    private CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final ServerAddress serverAddress) {
+        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
+                replyMessage.getElapsedNanoseconds());
+        if (!commandResult.isOk()) {
+            throw new MongoCommandFailureException(commandResult);
+        }
+
+        return commandResult;
     }
 }

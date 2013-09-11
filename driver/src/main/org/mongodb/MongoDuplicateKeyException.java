@@ -16,10 +16,15 @@
 
 package org.mongodb;
 
-public class MongoDuplicateKeyException extends MongoWriteConcernException {
+/**
+ * A duplicate key error.
+ *
+ * @since 3.0
+ */
+public class MongoDuplicateKeyException extends MongoWriteException {
     private static final long serialVersionUID = 3661905154229799985L;
 
-    public MongoDuplicateKeyException(final CommandResult commandResult) {
-        super(commandResult);
+    public MongoDuplicateKeyException(final WriteResult writeResult) {
+        super(writeResult);
     }
 }

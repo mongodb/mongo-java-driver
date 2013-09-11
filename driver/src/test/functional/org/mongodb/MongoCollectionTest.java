@@ -74,10 +74,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(documents);
 
         WriteResult res = collection.find().update(new Document("$set", new Document("x", 1)));
-        assertEquals(10, res.getResult().getResponse().get("n"));
+        assertEquals(10, res.getCommandResult().getResponse().get("n"));
 
         res = collection.find().limit(0).update(new Document("$set", new Document("x", 1)));
-        assertEquals(10, res.getResult().getResponse().get("n"));
+        assertEquals(10, res.getCommandResult().getResponse().get("n"));
     }
 
     @Test
@@ -90,7 +90,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(documents);
 
         WriteResult res = collection.find().limit(1).update(new Document("$set", new Document("x", 1)));
-        assertEquals(1, res.getResult().getResponse().get("n"));
+        assertEquals(1, res.getCommandResult().getResponse().get("n"));
     }
 
     @Test

@@ -21,26 +21,43 @@ package org.mongodb;
  * @since 3.0
  */
 public class WriteResult {
-    private final CommandResult getLastErrorResult;
+    private final CommandResult commandResult;
     private WriteConcern writeConcern;
 
     public WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
-        this.getLastErrorResult = commandResult;
+        this.commandResult = commandResult;
         this.writeConcern = writeConcern;
     }
 
-    public CommandResult getResult() {
-        return getLastErrorResult;
+    public CommandResult getCommandResult() {
+        return commandResult;
     }
 
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    public long getNumDocumentsAffected() {
+        return ((Number) commandResult.getResponse().get("n")).longValue();
+    }
+
+    public String getErrorMessage() {
+        return commandResult.getResponse().getString("err");
+    }
+
+    public boolean updatedExisting() {
+        Boolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting");
+        return updatedExisting != null ? updatedExisting : false;
+    }
+
+    public int getErrorCode() {
+        return commandResult.getErrorCode();
+    }
+
     @Override
     public String toString() {
         return "WriteResult{"
-                + "getLastErrorResult=" + getLastErrorResult
+                + "commandResult=" + commandResult
                 + ", writeConcern=" + writeConcern
                 + '}';
     }

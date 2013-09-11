@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.DeleteProtocol;
@@ -32,7 +32,7 @@ import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class RemoveUserOperation extends BaseOperation<CommandResult> {
+public class RemoveUserOperation extends BaseOperation<WriteResult> {
     private final String database;
     private final String userName;
 
@@ -44,7 +44,7 @@ public class RemoveUserOperation extends BaseOperation<CommandResult> {
     }
 
     @Override
-    public CommandResult execute() {
+    public WriteResult execute() {
         ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         MongoNamespace namespace = new MongoNamespace(database, "system.users");

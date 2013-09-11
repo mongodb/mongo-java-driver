@@ -20,11 +20,13 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.MongoCommandFailureException
-import org.mongodb.MongoWriteConcernException
+import org.mongodb.MongoWriteException
 import org.mongodb.ServerCursor
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.ServerAddress
@@ -50,15 +52,15 @@ class MongoExceptionsSpecification extends Specification {
         !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
 
         where:
-        exceptionToBeMapped                                                                        | exceptionForCompatibilityApi | errorCode
-        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause'))      | MongoInterruptedException    | -4
-        new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))       | MongoSocketException         | -2
-        new org.mongodb.MongoDuplicateKeyException(commandResultWithErrorCode(ERROR_CODE)) | MongoException.DuplicateKey  | ERROR_CODE
-        new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))                   | CommandFailureException      | ERROR_CODE
-        new org.mongodb.MongoInternalException(MESSAGE)                                            | MongoInternalException       | -4
-        new MongoWriteConcernException(commandResultWithErrorCode(ERROR_CODE))                     | WriteConcernException        | ERROR_CODE
-        new org.mongodb.connection.MongoTimeoutException(MESSAGE)                                  | MongoTimeoutException        | -3
-        new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                            | MongoWaitQueueFullException  | -3
+        exceptionToBeMapped                                                                    | exceptionForCompatibilityApi | errorCode
+        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause'))  | MongoInterruptedException    | -4
+        new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))   | MongoSocketException         | -2
+        new org.mongodb.MongoDuplicateKeyException(writeResultWithErrorCode(ERROR_CODE))       | MongoException.DuplicateKey  | ERROR_CODE
+        new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))               | CommandFailureException      | ERROR_CODE
+        new org.mongodb.MongoInternalException(MESSAGE)                                        | MongoInternalException       | -4
+        new MongoWriteException(writeResultWithErrorCode(ERROR_CODE   ))                       | WriteConcernException        | ERROR_CODE
+        new org.mongodb.connection.MongoTimeoutException(MESSAGE)                              | MongoTimeoutException        | -3
+        new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                        | MongoWaitQueueFullException  | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {
@@ -97,6 +99,10 @@ class MongoExceptionsSpecification extends Specification {
         actualException.getMessage() == expectedMessage
         !(actualException.getCause() instanceof org.mongodb.MongoException)
         !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
+    }
+
+    private static org.mongodb.WriteResult writeResultWithErrorCode(int expectedErrorCode) {
+        new org.mongodb.WriteResult(commandResultWithErrorCode(expectedErrorCode), org.mongodb.WriteConcern.ACKNOWLEDGED)
     }
 
     private static org.mongodb.CommandResult commandResultWithErrorCode(int expectedErrorCode) {

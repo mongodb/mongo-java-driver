@@ -16,11 +16,11 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -53,12 +53,12 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    public CommandResult execute() {
+    public WriteResult execute() {
         LOGGER.fine(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
                 getConnection().getServerAddress()));
-        CommandResult commandResult = super.execute();
+        WriteResult writeResult = super.execute();
         LOGGER.fine("Replace  completed");
-        return commandResult;
+        return writeResult;
     }
 
     @Override

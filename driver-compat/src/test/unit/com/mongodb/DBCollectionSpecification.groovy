@@ -18,6 +18,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -39,9 +41,9 @@ import static org.mongodb.Fixture.getBufferProvider
 //we want to explicitly state the namespaces of the exceptions that are thrown
 @SuppressWarnings('UnnecessaryQualifiedReference')
 class DBCollectionSpecification extends Specification {
-    private final DB database = Mock()
-    private final Session session = Mock()
-    private final Cluster cluster = Mock()
+    private final DB database = Mock(DB)
+    private final Session session = Mock(Session)
+    private final Cluster cluster = Mock(Cluster)
 
     @Subject
     private final DBCollection collection = new DBCollection('collectionName', database, new DocumentCodec())
@@ -83,10 +85,10 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.CommandResult(
+            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.WriteResult(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
-                    15L))
+                    15L), org.mongodb.WriteConcern.ACKNOWLEDGED))
         }
 
         when:
@@ -129,10 +131,10 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.CommandResult(
+            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.WriteResult(new org.mongodb.CommandResult(
                     new org.mongodb.connection.ServerAddress(),
                     new Document(),
-                    15L))
+                    15L), org.mongodb.WriteConcern.ACKNOWLEDGED))
         }
 
         when:
