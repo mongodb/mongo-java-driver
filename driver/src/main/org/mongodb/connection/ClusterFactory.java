@@ -51,17 +51,17 @@ public interface ClusterFactory {
      *
      * @return the cluster
      */
-    Cluster create(final ClusterSettings settings,
-                   final ServerSettings serverSettings,
-                   final ConnectionPoolSettings connectionPoolSettings,
-                   final StreamFactory streamFactory,
-                   final StreamFactory heartbeatStreamFactory,
-                   final ScheduledExecutorService scheduledExecutorService,
-                   final List<MongoCredential> credentialList,
-                   final BufferProvider bufferProvider,
-                   final ClusterListener clusterListener,
-                   final ConnectionPoolListener connectionPoolListener,
-                   final ConnectionListener connectionListener);
+    Cluster create(ClusterSettings settings,
+                   ServerSettings serverSettings,
+                   ConnectionPoolSettings connectionPoolSettings,
+                   StreamFactory streamFactory,
+                   StreamFactory heartbeatStreamFactory,
+                   ScheduledExecutorService scheduledExecutorService,
+                   List<MongoCredential> credentialList,
+                   BufferProvider bufferProvider,
+                   ClusterListener clusterListener,
+                   ConnectionPoolListener connectionPoolListener,
+                   ConnectionListener connectionListener);
 
     // CHECKSTYLE:ON
 }
