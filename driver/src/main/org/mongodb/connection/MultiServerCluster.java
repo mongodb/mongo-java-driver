@@ -75,6 +75,7 @@ final class MultiServerCluster extends BaseCluster {
             }
             updateDescription();
         }
+        fireChangeEvent();
     }
 
     @Override
@@ -112,7 +113,6 @@ final class MultiServerCluster extends BaseCluster {
         if (isClosed()) {
             return;
         }
-        ClusterDescription currentDescription = getDescriptionNoWaiting();
 
         synchronized (this) {
             ServerDescription newDescription = event.getNewValue();
@@ -145,7 +145,7 @@ final class MultiServerCluster extends BaseCluster {
             }
             updateDescription();
         }
-        fireChangeEvent(new ChangeEvent<ClusterDescription>(currentDescription, getDescriptionNoWaiting()));
+        fireChangeEvent();
     }
 
     private void handleReplicaSetMemberChange(final ServerDescription newDescription) {

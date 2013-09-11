@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.event.ClusterEvent
@@ -96,31 +98,9 @@ class MultiServerClusterSpecification extends Specification {
         cluster.description.all == getDescriptions(firstServer, secondServer)
     }
 
-    def 'should remove change listener'() {
-        given:
-        def changeEvent = null
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
-                CLUSTER_LISTENER)
-        def listener = new ChangeListener<ClusterDescription>() {
-            @Override
-            void stateChanged(final ChangeEvent<ClusterDescription> event) {
-                changeEvent = event
-            }
-        }
-        cluster.addChangeListener(listener)
-        cluster.removeChangeListener(listener)
-
-        when:
-        sendNotification(firstServer, ReplicaSetPrimary)
-
-        then:
-        changeEvent == null
-    }
-
     def 'should remove a server of the wrong type when type is replica set'() {
         given:
         def cluster = new MultiServerCluster(
-
                 CLUSTER_ID, ClusterSettings.builder().requiredClusterType(ReplicaSet).hosts([firstServer, secondServer]).build(), factory,
                 CLUSTER_LISTENER)
 
@@ -302,26 +282,13 @@ class MultiServerClusterSpecification extends Specification {
     def 'should fire cluster description changed event'() {
         given:
         def clusterListener = Mock(ClusterListener)
-        ChangeEvent<ClusterDescription> changeEvent = null
-        Cluster cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(),
-                factory, clusterListener)
-        cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
-            @Override
-            void stateChanged(final ChangeEvent<ClusterDescription> event) {
-                changeEvent = event
-            }
-        })
+        new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory, clusterListener)
 
         when:
         sendNotification(firstServer, ReplicaSetPrimary)
 
         then:
         1 * clusterListener.clusterDescriptionChanged(_)
-        changeEvent != null
-        changeEvent.oldValue != null
-        changeEvent.oldValue.all.size() == 1
-        changeEvent.newValue != null
-        changeEvent.newValue.all.size() == 3
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {

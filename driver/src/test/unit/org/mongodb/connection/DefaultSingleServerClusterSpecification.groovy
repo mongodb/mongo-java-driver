@@ -16,20 +16,9 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.connection
 
+import org.mongodb.event.ClusterListener
 import spock.lang.Specification
 
 class DefaultSingleServerClusterSpecification extends Specification {
@@ -44,27 +33,14 @@ class DefaultSingleServerClusterSpecification extends Specification {
 
     def 'should fire change event on cluster change'() {
         given:
-        ChangeEvent<ClusterDescription> changeEvent = null
-        Cluster cluster = new SingleServerCluster('1',
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory,
-                new NoOpClusterListener())
-        cluster.addChangeListener(new ChangeListener<ClusterDescription>() {
-            @Override
-            void stateChanged(final ChangeEvent<ClusterDescription> event) {
-                changeEvent = event
-            }
-        })
+        def listener = Mock(ClusterListener)
+        new SingleServerCluster('1',
+                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory, listener)
 
         when:
         factory.getServer(SERVER_ADDRESS).sendNotification(CONNECTED_DESCRIPTION_BUILDER.build())
 
         then:
-        changeEvent != null
-        changeEvent.oldValue != null
-        changeEvent.oldValue.all.size() == 1
-        changeEvent.oldValue.all.iterator().next().type == ServerType.Unknown
-        changeEvent.newValue != null
-        changeEvent.newValue.all.size() == 1
-        changeEvent.newValue.all.iterator().next().type == ServerType.ReplicaSetSecondary
+        1 * listener.clusterDescriptionChanged(_)
     }
 }

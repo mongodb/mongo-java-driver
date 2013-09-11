@@ -21,20 +21,6 @@ public interface Cluster {
 
     ClusterDescription getDescription();
 
-    /**
-     * Adds a change listener to this cluster.
-     *
-     * @param changeListener the listener for change events to the description of this cluster
-     */
-    void addChangeListener(ChangeListener<ClusterDescription> changeListener);
-
-    /**
-     * Removes a change listener from this cluster.  The first registered listener that compares equal to the given one will be removed.
-     *
-     * @param changeListener the change listener to remove.
-     */
-    void removeChangeListener(final ChangeListener<ClusterDescription> changeListener);
-
     Server getServer(ServerSelector serverSelector);
 
     void close();

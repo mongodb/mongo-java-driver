@@ -77,11 +77,8 @@ final class SingleServerCluster extends BaseCluster {
         ClusterDescription description = new ClusterDescription(ClusterConnectionMode.Single, clusterType,
                 serverDescription == null ? Collections.<ServerDescription>emptyList() : Arrays.asList(serverDescription));
 
-        ClusterDescription oldDescription = getDescriptionNoWaiting();
         updateDescription(description);
-        if (oldDescription != null) {
-            fireChangeEvent(new ChangeEvent<ClusterDescription>(oldDescription, getDescriptionNoWaiting()));
-        }
+        fireChangeEvent();
     }
 
     @Override

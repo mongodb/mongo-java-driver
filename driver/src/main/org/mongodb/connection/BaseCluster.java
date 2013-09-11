@@ -23,11 +23,8 @@ import org.mongodb.event.ClusterEvent;
 import org.mongodb.event.ClusterListener;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,8 +38,6 @@ public abstract class BaseCluster implements Cluster {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
-    private final Set<ChangeListener<ClusterDescription>> changeListeners =
-            Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ClusterDescription>, Boolean>());
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
@@ -142,21 +137,6 @@ public abstract class BaseCluster implements Cluster {
         }
     }
 
-    @Override
-    public void addChangeListener(final ChangeListener<ClusterDescription> changeListener) {
-        isTrue("open", !isClosed());
-
-        changeListeners.add(changeListener);
-    }
-
-    @Override
-    public void removeChangeListener(final ChangeListener<ClusterDescription> changeListener) {
-        isTrue("open", !isClosed());
-        isTrue("listener is not null", changeListener != null);
-
-        changeListeners.remove(changeListener);
-    }
-
     public ClusterSettings getSettings() {
         return settings;
     }
@@ -197,11 +177,8 @@ public abstract class BaseCluster implements Cluster {
         return description;
     }
 
-    protected void fireChangeEvent(final ChangeEvent<ClusterDescription> changeEvent) {
-        for (final ChangeListener<ClusterDescription> listener : changeListeners) {
-            listener.stateChanged(changeEvent);
-        }
-        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, changeEvent.getNewValue()));
+    protected void fireChangeEvent() {
+        clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description));
     }
 
     // gets a random server that still exists in the cluster.  Returns null if there are none.
