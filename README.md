@@ -10,14 +10,14 @@
  * Jira: http://jira.mongodb.org/browse/JAVA
 
 ### Maintainers
-* Jeff Yemin           jeff.yemin@10gen.com
-* Trisha Gee           trisha.gee@10gen.com
+* Jeff Yemin           jeff.yemin@mongodb.com
+* Trisha Gee           trisha.gee@mongodb.com
 
 ### Contributors:
 * Uladzmir Mihura      trnl.me@gmail.com
-* Justin Lee           justin.lee@10gen.com
-* Craig Wilson         craig.wilson@10gen.com
-* Scott Hernandez      scott@10gen.com
+* Justin Lee           justin.lee@mongodb.com
+* Craig Wilson         craig.wilson@mongodb.com
+* Scott Hernandez      scott@mongodb.com
 
 ### Build status:
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
