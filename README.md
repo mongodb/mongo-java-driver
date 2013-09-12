@@ -14,16 +14,14 @@
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
 
 ### Maintainers
-* Jeff Yemin           jeff.yemin@10gen.com
-* Trisha Gee           trisha.gee@10gen.com
+* Jeff Yemin           jeff.yemin@mongodb.com
+* Trisha Gee           trisha.gee@mongodb.com
 
 ### Contributors:
-* Scott Hernandez      scott@10gen.com
-* Ryan Nitz            ryan@10gen.com
-* Antoine Girbal       antoine@10gen.com
-* Brendan McAdams      brendan@10gen.com
-* Eliot Horowitz       eliot@10gen.com
-* Kristina Chodorow    kristina@10gen.com
+* Scott Hernandez      scott@mongodb.com
+* Ryan Nitz            ryan@mongodb.com
+* Antoine Girbal       antoine@mongodb.com
+* Eliot Horowitz       eliot@mongodb.com
 * Geir Magnusson       geir@pobox.com
 * Keith Branton        mongoDBjira@branton.co.uk
 * Dave Brosius         dbrosius@mebigfatguy.com
@@ -38,9 +36,8 @@
 * Jon Hoffman          jonhoffman@gmail.com
 * Daniel Kunnath       dan@gameattain.com
 * Harry Heymann        harryh@gmail.com
-* Mike Dirolf          mike@10gen.com
 * Zsombor Gegesy       gzsombor@gmail.com
-* Richard Kreuter      richard@10gen.com
+* Richard Kreuter      richard@mongodb.com
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
 * Jorge Ortiz          jorge.ortiz@gmail.com
