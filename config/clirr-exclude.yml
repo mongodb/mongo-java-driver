@@ -56,7 +56,6 @@ classes:
 - com.mongodb.DBPort                                                # JAVA-893
 - com.mongodb.DBPortPool                                            # JAVA-893
 - com.mongodb.ReadPreference.TaggedReadPreference                   # JAVA-893
-- com.mongodb.MongoOptions                                          # JAVA-893
 - com.mongodb.util.MyAsserts.MyAssert                               # JAVA-893
 - com.mongodb.DBPointer                                             # JAVA-893
 - org.bson.BasicBSONDecoder$BSONInput                               # JAVA-895 Fix-up org.bson.BasicBSONDecoder
@@ -85,7 +84,6 @@ members:
   - _fs                                                              # JAVA-924
 
   com.mongodb.Mongo:
-  - getMongoOptions()                              # JAVA-882 Cleanup com.mongodb.Mongo
   - getMinorVersion()                              # JAVA-882
   - getMajorVersion()                              # JAVA-882
   - debugString()                                  # JAVA-882
