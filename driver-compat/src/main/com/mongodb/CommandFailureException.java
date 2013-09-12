@@ -32,6 +32,16 @@ public class CommandFailureException extends MongoException {
         this.commandResult = commandResult;
     }
 
+    /**
+     * Construct a new instance with the CommandResult from a failed command
+     *
+     * @param commandResult the result of running the command
+     */
+    public CommandFailureException(final CommandResult commandResult) {
+        super(ServerError.getCode(commandResult), commandResult.toString());
+        this.commandResult = commandResult;
+    }
+
     CommandFailureException(final MongoCommandFailureException e) {
         this(new CommandResult(e.getCommandResult()), e.getMessage());
     }
