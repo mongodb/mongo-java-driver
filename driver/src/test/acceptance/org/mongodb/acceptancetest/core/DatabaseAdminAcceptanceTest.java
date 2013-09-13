@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoClient;
+import org.mongodb.MongoDatabase;
 
 import java.util.Set;
 
@@ -32,21 +33,27 @@ import static org.mongodb.Fixture.getMongoClient;
 public class DatabaseAdminAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldListAllTheDatabasesAvailable() {
-        //given
-        final MongoClient mongoClient = getMongoClient();
-        mongoClient.getDatabase("FirstNewDatabase").getCollection("coll").insert(new Document("aDoc", "to force database creation"));
-        mongoClient.getDatabase("SecondNewDatabase").getCollection("coll").insert(new Document("aDoc", "to force database creation"));
-        mongoClient.getDatabase("DatabaseThatDoesNotExistYet");
+        MongoClient mongoClient = getMongoClient();
+        MongoDatabase firstDatabase = mongoClient.getDatabase("FirstNewDatabase");
+        MongoDatabase secondDatabase = mongoClient.getDatabase("SecondNewDatabase");
+        MongoDatabase otherDatabase = mongoClient.getDatabase("DatabaseThatDoesNotExistYet");
 
-        //when
-        final Set<String> databaseNames = mongoClient.tools().getDatabaseNames();
+        try {
+            // given
+            firstDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
+            secondDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
 
-        //then
-        assertThat(databaseNames, hasItems("FirstNewDatabase", "SecondNewDatabase", "admin", "local", getDatabaseName()));
-        assertThat(databaseNames, not(hasItem("DatabaseThatDoesNotExistYet")));
 
-        //tear down
-        mongoClient.getDatabase("FirstNewDatabase").tools().drop();
-        mongoClient.getDatabase("SecondNewDatabase").tools().drop();
+            //when
+            final Set<String> databaseNames = mongoClient.tools().getDatabaseNames();
+
+            //then
+            assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));
+            assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
+        } finally {
+            //tear down
+            firstDatabase.tools().drop();
+            secondDatabase.tools().drop();
+        }
     }
 }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.CommandResult
@@ -24,15 +26,16 @@ import org.mongodb.MongoNamespace
 
 import static java.lang.System.currentTimeMillis
 import static org.mongodb.Fixture.bufferProvider
+import static org.mongodb.Fixture.getMongoClient
 import static org.mongodb.Fixture.session
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
 
     def 'should not throw an Exception when the namespace is not found'() {
         given:
-        DropCollectionOperation operation = new DropCollectionOperation(new MongoNamespace('non-existing-database' + currentTimeMillis(),
-                                                                                           'coll'),
-                                                                        bufferProvider, session, false)
+        def namespace = new MongoNamespace('non-existing-database' + currentTimeMillis(), 'coll')
+        DropCollectionOperation operation = new DropCollectionOperation(
+                namespace, bufferProvider, session, false)
 
         when:
         CommandResult commandResult = operation.execute()
@@ -41,6 +44,9 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         notThrown(MongoException)
         !commandResult.isOk()
         commandResult.errorMessage == 'ns not found'
+
+        cleanup:
+        getMongoClient().getDatabase(namespace.getDatabaseName()).tools().drop();
     }
 
     def 'should drop a collection that exists'() {
