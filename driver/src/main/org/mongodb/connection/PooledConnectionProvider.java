@@ -100,11 +100,11 @@ class PooledConnectionProvider implements ConnectionProvider {
     @Override
     public void close() {
         if (!closed) {
-            closed = true;
             pool.close();
             if (sizeMaintenanceTimer != null) {
                 sizeMaintenanceTimer.shutdownNow();
             }
+            closed = true;
             connectionPoolListener.connectionPoolClosed(new ConnectionPoolEvent(clusterId, serverAddress));
         }
     }
@@ -202,7 +202,9 @@ class PooledConnectionProvider implements ConnectionProvider {
         @Override
         public void close() {
             if (wrapped != null) {
-                connectionPoolListener.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
+                if (!closed) {
+                    connectionPoolListener.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
+                }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;
             }
@@ -298,7 +300,9 @@ class PooledConnectionProvider implements ConnectionProvider {
             else {
                 reason = "the pool has been closed";
             }
-            connectionPoolListener.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connection.getId()));
+            if (!closed) {
+                connectionPoolListener.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connection.getId()));
+            }
             connection.close();
             LOGGER.info(format("Closed connection [%s] to %s because %s.", connection.getId(), serverAddress, reason));
         }

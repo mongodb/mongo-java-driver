@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -284,5 +286,22 @@ class PooledConnectionProviderSpecification extends Specification {
 
         then:
         1 * listener.connectionCheckedIn(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+    }
+
+    def 'should not fire any more events after pool is closed'() {
+        def listener = Mock(ConnectionPoolListener)
+        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                listener)
+        def connection = provider.get()
+        provider.close()
+
+        when:
+        connection.close()
+
+        then:
+        0 * listener.connectionCheckedIn(_)
+        0 * listener.connectionRemoved(_)
     }
 }
