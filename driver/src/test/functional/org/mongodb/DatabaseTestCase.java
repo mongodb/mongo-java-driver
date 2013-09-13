@@ -18,28 +18,20 @@ package org.mongodb;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
-import static org.mongodb.Fixture.getMongoClient;
+import static org.mongodb.Fixture.getDefaultDatabase;
 import static org.mongodb.Fixture.initialiseCollection;
 
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
-    protected static MongoDatabase database;
+    protected MongoDatabase database;
     protected MongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
-    @BeforeClass
-    public static void setupTestSuite() {
-        if (database == null) {
-            database = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-        }
-    }
-
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
+        database = getDefaultDatabase();
         collection = initialiseCollection(database, getClass().getName());
     }
 
@@ -57,15 +49,4 @@ public class DatabaseTestCase {
     protected String getCollectionName() {
         return collection.getName();
     }
-
-    static class ShutdownHook extends Thread {
-        @Override
-        public void run() {
-            if (database != null) {
-                database.tools().drop();
-                getMongoClient().close();
-            }
-        }
-    }
-
 }

@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import spock.lang.Specification
 
-import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.Fixture.getDefaultDatabase
 
 class FunctionalSpecification extends Specification {
-    protected static DB database;
+    protected DB database;
     protected DBCollection collection;
 
-    def setupSpec() {
-        if (database == null) {
-            database = getMongoClient().getDB('DriverTest-' + System.nanoTime());
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-        }
-    }
-
     def setup() {
+        database = getDefaultDatabase();
         collection = database.getCollection(getClass().getName());
         collection.drop();
     }
@@ -43,20 +39,10 @@ class FunctionalSpecification extends Specification {
     }
 
     String getDatabaseName() {
-        database.getName();
+        getDefaultDatabase().getName();
     }
 
     String getCollectionName() {
         collection.getName();
-    }
-
-    static class ShutdownHook extends Thread {
-        @Override
-        void run() {
-            if (database != null) {
-                database.dropDatabase();
-                getMongoClient().close();
-            }
-        }
     }
 }

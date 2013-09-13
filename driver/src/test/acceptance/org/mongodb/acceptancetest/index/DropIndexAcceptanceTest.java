@@ -29,10 +29,11 @@ import static org.junit.Assert.assertThat;
 public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Before
     public void setUp() {
+        super.setUp();
         //create a brand new collection for each test
         collection = database.getCollection("Collection" + System.currentTimeMillis());
         assertThat("Should be no indexes on the database at all at this stage", collection.tools().getIndexes().size(),
-                   is(0));
+                is(0));
     }
 
     @Test
@@ -41,7 +42,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         collection.tools().ensureIndex(Index.builder().addKey("theField").build());
 
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
-                   is(2));
+                is(2));
 
         // When
         collection.tools().dropIndex(Index.builder().addKey("theField").build());
@@ -57,7 +58,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         collection.tools().ensureIndex(Index.builder().addKey("aSecondIndex").build());
 
         assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
-                   is(3));
+                is(3));
 
         // When
         collection.tools().dropIndexes();
@@ -66,7 +67,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         assertThat("Should only be the default index on the collection", collection.tools().getIndexes().size(), is(1));
     }
 
-    @Test (expected = MongoCommandFailureException.class)
+    @Test(expected = MongoCommandFailureException.class)
     public void shouldErrorWhenDroppingAnIndexThatDoesNotExist() {
         //Given
         collection.insert(new Document("to", "createTheCollection"));

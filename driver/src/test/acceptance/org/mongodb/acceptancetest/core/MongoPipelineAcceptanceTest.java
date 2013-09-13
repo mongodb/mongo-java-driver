@@ -35,7 +35,7 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
     private List<Document> documents = new ArrayList<Document>();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         documents.add(new Document("_id", "01778").append("city", "WAYLAND").append("state", "MA").append("population", 13100)
                 .append("loc", Arrays.asList(42.3635, 71.3619)).append("tags", Arrays.asList("driver")));

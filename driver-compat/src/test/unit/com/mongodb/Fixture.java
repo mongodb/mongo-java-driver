@@ -30,6 +30,7 @@ public final class Fixture {
 
     private static MongoClient mongoClient;
     private static MongoClientURI mongoClientURI;
+    private static DB defaultDatabase;
 
     private Fixture() {
     }
@@ -42,10 +43,32 @@ public final class Fixture {
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
             }
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
+    public static synchronized DB getDefaultDatabase() {
+        if (defaultDatabase == null) {
+            defaultDatabase = getMongoClient().getDB("DriverTest-" + System.nanoTime());
+        }
+        return defaultDatabase;
+    }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            synchronized (Fixture.class) {
+                if (mongoClient != null) {
+                    if (defaultDatabase != null) {
+                        defaultDatabase.dropDatabase();
+                    }
+                    mongoClient.close();
+                    mongoClient = null;
+                }
+            }
+        }
+    }
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
@@ -70,5 +93,4 @@ public final class Fixture {
         }
         return new ServerAddress(serverDescriptions.get(0).getAddress());
     }
-
 }

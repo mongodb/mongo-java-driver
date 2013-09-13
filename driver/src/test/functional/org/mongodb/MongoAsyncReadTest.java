@@ -39,7 +39,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
     private List<Document> documentList;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         latch = new CountDownLatch(1);
         documentList = new ArrayList<Document>();

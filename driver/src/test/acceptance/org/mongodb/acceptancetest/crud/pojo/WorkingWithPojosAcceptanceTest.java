@@ -38,10 +38,11 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
+        super.setUp();
         pojoCollection = Fixture.getMongoClient()
-                                .getDatabase(getDatabaseName())
-                                .getCollection(COLLECTION_NAME,
-                                               new PojoCodec<Person>(Codecs.createDefault(), Person.class));
+                .getDatabase(getDatabaseName())
+                .getCollection(COLLECTION_NAME,
+                        new PojoCodec<Person>(Codecs.createDefault(), Person.class));
         pojoCollection.tools().drop();
     }
 
@@ -59,16 +60,16 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
         pojoCollection.insert(person);
 
         final Person result = pojoCollection.find(new Document("firstName", person.getFirstName())
-                                                    .append("lastName", person.getLastName())).getOne();
+                .append("lastName", person.getLastName())).getOne();
         assertThat(result, is(person));
     }
 
     @Test
     public void shouldCorrectlyInsertAndRetrievePojosContainingOtherPojos() {
         final MongoCollection<Address> addresses = Fixture.getMongoClient()
-                                                          .getDatabase(getDatabaseName())
-                                                          .getCollection("addresses",
-                                                                         new PojoCodec<Address>(Codecs.createDefault(), Address.class));
+                .getDatabase(getDatabaseName())
+                .getCollection("addresses",
+                        new PojoCodec<Address>(Codecs.createDefault(), Address.class));
         addresses.tools().drop();
 
         final Address address = new Address("Address Line 1", "Town", new Postcode("W12"));
@@ -87,7 +88,7 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
         final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
         final Document personInCollection = personCollection.find(new Document("firstName", person.getFirstName())
-                                                                    .append("lastName", person.getLastName())).getOne();
+                .append("lastName", person.getLastName())).getOne();
 
         assertThat(personInCollection.get("ignoredValue"), is(nullValue()));
     }
@@ -97,7 +98,7 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
         final List<Document> results = new ArrayList<Document>();
         personCollection.find(new Document("firstName", person.getFirstName())
-                                .append("lastName", person.getLastName())).into(results);
+                .append("lastName", person.getLastName())).into(results);
 
         assertThat(results.size(), is(1));
     }

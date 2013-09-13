@@ -42,7 +42,10 @@ public final class Fixture {
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
     private static BufferProvider bufferProvider = new PowerOfTwoBufferPool();
-    private Fixture() { }
+    private static MongoDatabase defaultDatabase;
+
+    private Fixture() {
+    }
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
@@ -52,15 +55,37 @@ public final class Fixture {
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
             }
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
+    }
+
+
+    public static synchronized MongoDatabase getDefaultDatabase() {
+        if (defaultDatabase == null) {
+            defaultDatabase = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+        }
+        return defaultDatabase;
+    }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (mongoClient != null) {
+                if (defaultDatabase != null) {
+                    defaultDatabase.tools().drop();
+                }
+                mongoClient.close();
+                mongoClient = null;
+            }
+        }
     }
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
             final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
             final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                          ? DEFAULT_URI : mongoURIProperty;
+                    ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;

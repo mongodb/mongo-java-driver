@@ -26,7 +26,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class MapReduceTest extends DatabaseTestCase {
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         collection.save(new Document("_id", 0).append("x", new String[]{"a", "b"}));
         collection.save(new Document("_id", 1).append("x", new String[]{"a", "b"}));

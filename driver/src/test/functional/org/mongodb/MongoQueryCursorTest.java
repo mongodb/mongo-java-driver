@@ -49,7 +49,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
     private MongoQueryCursor<Document> cursor;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document("_id", i));

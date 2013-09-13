@@ -47,7 +47,7 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
     private List<Document> documents;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         final byte[] hugeByteArray = new byte[1024 * 1024 * 15];
 
         documents = new ArrayList<Document>();

@@ -48,7 +48,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     private final byte[] bytes = new byte[10000];
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {

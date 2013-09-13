@@ -33,7 +33,7 @@ public class PinnedSessionTest extends DatabaseTestCase {
     private PinnedSession session;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         session = new PinnedSession(getCluster());
     }

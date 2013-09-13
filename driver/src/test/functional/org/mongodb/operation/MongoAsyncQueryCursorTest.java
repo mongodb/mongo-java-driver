@@ -52,7 +52,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     private Session session;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         super.setUp();
         latch = new CountDownLatch(1);
         documentResultList = new ArrayList<Document>();
