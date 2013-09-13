@@ -51,21 +51,21 @@ class PooledConnectionProvider implements ConnectionProvider {
     private final String clusterId;
     private final ServerAddress serverAddress;
     private final Runnable maintenanceTask;
-    private final ConnectionPoolListener eventPublisher;
+    private final ConnectionPoolListener connectionPoolListener;
     private volatile boolean closed;
 
     public PooledConnectionProvider(final String clusterId, final ServerAddress serverAddress,
                                     final InternalConnectionFactory internalConnectionFactory, final ConnectionPoolSettings settings,
-                                    final ConnectionPoolListener eventPublisher) {
-        this.clusterId = clusterId;
-        this.serverAddress = serverAddress;
-        this.settings = settings;
+                                    final ConnectionPoolListener connectionPoolListener) {
+        this.clusterId = notNull("clusterId", clusterId);
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.settings = notNull("settings", settings);
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory));
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
-        this.eventPublisher = eventPublisher;
-        eventPublisher.connectionPoolOpened(new ConnectionPoolOpenedEvent(clusterId, serverAddress, settings));
+        this.connectionPoolListener = notNull("connectionPoolListener", connectionPoolListener);
+        connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(clusterId, serverAddress, settings));
     }
 
     @Override
@@ -81,18 +81,19 @@ class PooledConnectionProvider implements ConnectionProvider {
                         + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
                         settings.getMaxWaitQueueSize()));
             }
-            eventPublisher.waitQueueEntered(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, Thread.currentThread().getId()));
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress,
+                    Thread.currentThread().getId()));
             UsageTrackingInternalConnection internalConnection = pool.get(timeout, timeUnit);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
                 internalConnection = pool.get(timeout, timeUnit);
             }
-            final String connectionId = internalConnection.getId();
-            eventPublisher.connectionCheckedOut(new ConnectionEvent(clusterId, serverAddress, connectionId));
+            connectionPoolListener.connectionCheckedOut(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
-            eventPublisher.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, Thread.currentThread().getId()));
+            connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress,
+                    Thread.currentThread().getId()));
         }
     }
 
@@ -104,7 +105,7 @@ class PooledConnectionProvider implements ConnectionProvider {
             if (sizeMaintenanceTimer != null) {
                 sizeMaintenanceTimer.shutdownNow();
             }
-            eventPublisher.connectionPoolClosed(new ConnectionPoolEvent(clusterId, serverAddress));
+            connectionPoolListener.connectionPoolClosed(new ConnectionPoolEvent(clusterId, serverAddress));
         }
     }
 
@@ -201,7 +202,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         @Override
         public void close() {
             if (wrapped != null) {
-                eventPublisher.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
+                connectionPoolListener.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;
             }
@@ -278,10 +279,7 @@ class PooledConnectionProvider implements ConnectionProvider {
             UsageTrackingInternalConnection internalConnection =
                     new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
             LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
-            final String clusterId1 = clusterId;
-            final ServerAddress serverAddress1 = serverAddress;
-            final String connectionId = internalConnection.getId();
-            eventPublisher.connectionAdded(new ConnectionEvent(clusterId1, serverAddress1, connectionId));
+            connectionPoolListener.connectionAdded(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             return internalConnection;
         }
 
@@ -300,8 +298,7 @@ class PooledConnectionProvider implements ConnectionProvider {
             else {
                 reason = "the pool has been closed";
             }
-            final String connectionId = connection.getId();
-            eventPublisher.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connectionId));
+            connectionPoolListener.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connection.getId()));
             connection.close();
             LOGGER.info(format("Closed connection [%s] to %s because %s.", connection.getId(), serverAddress, reason));
         }

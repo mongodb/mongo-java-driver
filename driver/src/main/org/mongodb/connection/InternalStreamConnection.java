@@ -56,15 +56,15 @@ class InternalStreamConnection implements InternalConnection {
     private String id;
 
     InternalStreamConnection(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
-                             final BufferProvider bufferProvider, final ConnectionListener eventPublisher) {
+                             final BufferProvider bufferProvider, final ConnectionListener connectionListener) {
         this.clusterId = notNull("clusterId", clusterId);
         this.stream = notNull("stream", stream);
-        this.eventPublisher = notNull("eventPublisher", eventPublisher);
+        this.eventPublisher = notNull("connectionListener", connectionListener);
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         initialize();
-        eventPublisher.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
+        connectionListener.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
     }
 
     @Override
