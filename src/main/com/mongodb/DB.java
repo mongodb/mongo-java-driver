@@ -143,6 +143,7 @@ public abstract class DB {
      * @return the collection
      */
     protected abstract DBCollection doGetCollection( String name );
+    protected abstract DBCollection doGetCollection( String name,boolean transkeys );
 
     /**
      * Gets a collection with a given name.
@@ -153,6 +154,10 @@ public abstract class DB {
      */
     public DBCollection getCollection( String name ){
         DBCollection c = doGetCollection( name );
+        return c;
+    }
+    public DBCollection getCollection( String name,boolean transkeys ){
+        DBCollection c = doGetCollection( name,transkeys );
         return c;
     }
 
