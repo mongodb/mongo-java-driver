@@ -25,7 +25,6 @@ import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.PowerOfTwoBufferPool;
-import org.mongodb.connection.SSLNIOStreamFactory;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
@@ -120,7 +119,7 @@ public final class MongoClients {
         }
         else {
             if (options.getSslSettings().isEnabled()) {
-                streamFactory = new SSLNIOStreamFactory(bufferProvider, Executors.newFixedThreadPool(5));
+                streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
                 heartbeatStreamFactory = streamFactory;
             }
             else {
