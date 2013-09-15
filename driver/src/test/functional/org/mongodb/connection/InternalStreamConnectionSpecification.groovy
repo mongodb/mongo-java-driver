@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.Document
-import org.mongodb.MongoException
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
@@ -28,8 +29,6 @@ import org.mongodb.protocol.message.KillCursorsMessage
 import org.mongodb.protocol.message.MessageSettings
 import spock.lang.Specification
 
-import java.util.concurrent.CountDownLatch
-
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
@@ -37,7 +36,7 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 
 class InternalStreamConnectionSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
-    def stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary())
+    def stream = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary())
 
     def cleanup() {
         stream.close();
@@ -79,19 +78,6 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         1 * listener.messagesSent(_)
-
-        when:
-        def latch = new CountDownLatch(1)
-        connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
-            @Override
-            void onResult(final Void result, final MongoException e) {
-                latch.countDown()
-            }
-        })
-        latch.await()
-
-        then:
-        1 * listener.messagesSent(_)
     }
 
     def 'should fire message received event'() {
@@ -105,20 +91,6 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessage(buffer.getByteBuffers(), message.getId())
         connection.receiveMessage()
-
-        then:
-        1 * listener.messageReceived(_)
-
-        when:
-        connection.sendMessage(buffer.getByteBuffers(), message.getId())
-        def latch = new CountDownLatch(1)
-        connection.receiveMessageAsync(new SingleResultCallback<ResponseBuffers>() {
-            @Override
-            void onResult(final ResponseBuffers result, final MongoException e) {
-                latch.countDown()
-            }
-        })
-        latch.await()
 
         then:
         1 * listener.messageReceived(_)
