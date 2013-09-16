@@ -219,20 +219,15 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void initializeConnectionId() {
+        CommandResult result;
         try {
-            int connectionIdFromServer;
-            try {
-                CommandResult result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this,
-                        bufferProvider);
-                connectionIdFromServer = result.getResponse().getInteger("connectionId");
+            result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this, bufferProvider);
 
-            } catch (MongoCommandFailureException e) {
-                connectionIdFromServer = e.getCommandResult().getResponse().getInteger("connectionId");
-            }
-            id = "conn" + connectionIdFromServer;
         } catch (MongoCommandFailureException e) {
-            id = "conn*" + incrementingId.incrementAndGet() + "*";
+            result = e.getCommandResult();
         }
+        Integer connectionIdFromServer = result.getResponse().getInteger("connectionId");
+        id = "conn" + (connectionIdFromServer != null ? connectionIdFromServer : "*" + incrementingId.incrementAndGet() + "*");
     }
 
     private void authenticateAll() {
