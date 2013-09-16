@@ -203,7 +203,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeString("name", "value");
         writer.writeEndDocument();
-        final String expected = "{\n  \"name\" : \"value\"\n}";
+        final String expected = String.format("{%n  \"name\" : \"value\"%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -214,7 +214,7 @@ public class JSONWriterTest {
         writer.writeString("a", "x");
         writer.writeString("b", "y");
         writer.writeEndDocument();
-        final String expected = "{\n  \"a\" : \"x\",\n  \"b\" : \"y\"\n}";
+        final String expected = String.format("{%n  \"a\" : \"x\",%n  \"b\" : \"y\"%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -322,7 +322,7 @@ public class JSONWriterTest {
         writer.writeInt32("b", 2);
         writer.writeEndDocument();
         writer.writeEndDocument();
-        final String expected = "{\n  \"doc\" : {\n    \"a\" : 1,\n    \"b\" : 2\n  }\n}";
+        final String expected = String.format("{%n  \"doc\" : {%n    \"a\" : 1,%n    \"b\" : 2%n  }%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
