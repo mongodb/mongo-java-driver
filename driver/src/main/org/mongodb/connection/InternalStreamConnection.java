@@ -230,7 +230,7 @@ class InternalStreamConnection implements InternalConnection {
                 connectionIdFromServer = e.getCommandResult().getResponse().getInteger("connectionId");
             }
             id = "conn" + connectionIdFromServer;
-        } catch (Exception e) {
+        } catch (MongoCommandFailureException e) {
             id = "conn*" + incrementingId.incrementAndGet() + "*";
         }
     }
