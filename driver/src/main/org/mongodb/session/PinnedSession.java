@@ -107,7 +107,13 @@ public class PinnedSession implements Session {
                     connectionForReads = serverForReads.getConnection();
                 }
                 serverToUse = serverForReads;
-                connectionToUse = connectionForReads;
+                if (serverForWrites != null
+                        && serverToUse.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
+                    connectionToUse = connectionForWrites;
+                }
+                else {
+                    connectionToUse = connectionForReads;
+                }
             }
             else {
                 if (connectionForWrites == null) {

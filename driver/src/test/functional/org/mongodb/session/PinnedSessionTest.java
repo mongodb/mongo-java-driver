@@ -53,4 +53,16 @@ public class PinnedSessionTest extends DatabaseTestCase {
         assertEquals(serverAddress, session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
                 new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress());
     }
+
+    @Test
+    public void shouldPinReadsToSameConnectionAsAPreviousWrite() throws InterruptedException {
+        ServerConnectionProvider writeProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false,
+                new PrimaryServerSelector()));
+        String connectionId = writeProvider.getConnection().getId();
+
+        ServerConnectionProvider readProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
+                new ReadPreferenceServerSelector(ReadPreference
+                        .primary())));
+        assertEquals(connectionId, readProvider.getConnection().getId());
+    }
 }
