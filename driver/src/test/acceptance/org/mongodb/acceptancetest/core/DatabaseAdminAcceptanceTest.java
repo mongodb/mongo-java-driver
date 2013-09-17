@@ -22,7 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoDatabase;
 
-import java.util.Set;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -44,7 +44,7 @@ public class DatabaseAdminAcceptanceTest extends DatabaseTestCase {
             secondDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
 
             //when
-            Set<String> databaseNames = mongoClient.tools().getDatabaseNames();
+            List<String> databaseNames = mongoClient.tools().getDatabaseNames();
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));

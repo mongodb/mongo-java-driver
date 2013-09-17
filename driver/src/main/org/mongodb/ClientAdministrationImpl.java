@@ -19,12 +19,9 @@ package org.mongodb;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.GetDatabaseNamesOperation;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import static java.util.Collections.unmodifiableSet;
 
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
@@ -33,7 +30,6 @@ import static java.util.Collections.unmodifiableSet;
 class ClientAdministrationImpl implements ClientAdministration {
     private static final String ADMIN_DATABASE = "admin";
     private static final Document PING_COMMAND = new Document("ping", 1);
-    private static final Document LIST_DATABASES = new Document("listDatabases", 1);
 
     private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoClientImpl client;
@@ -55,20 +51,8 @@ class ClientAdministrationImpl implements ClientAdministration {
     }
 
     @Override
-    public Set<String> getDatabaseNames() {
-        CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, null, commandCodec, commandCodec,
-                                                                 client.getCluster().getDescription(), getBufferPool(), client.getSession(),
-                                                                 false)
-                                                .execute();
-
-        @SuppressWarnings("unchecked")
-        List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
-
-        Set<String> databaseNames = new HashSet<String>();
-        for (final Document database : databases) {
-            databaseNames.add(database.get("name", String.class));
-        }
-        return unmodifiableSet(databaseNames);
+    public List<String> getDatabaseNames() {
+        return new GetDatabaseNamesOperation(client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     public BufferProvider getBufferPool() {
