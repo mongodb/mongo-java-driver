@@ -27,7 +27,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.command.Create;
-import org.mongodb.command.DropDatabase;
 import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
@@ -148,7 +147,7 @@ public class DB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        executeCommand(new DropDatabase());
+        executeCommand(new Document("dropDatabase", 1), null);
     }
 
     /**
@@ -422,8 +421,12 @@ public class DB {
 
     org.mongodb.CommandResult executeCommand(final Command command) {
         command.readPreferenceIfAbsent(getReadPreference().toNew());
+        return executeCommand(command.toDocument(), command.getReadPreference());
+    }
+
+    private org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference readPreference) {
         try {
-            return new CommandOperation(getName(), command.toDocument(), command.getReadPreference(), commandCodec, commandCodec,
+            return new CommandOperation(getName(), commandDocument, readPreference, commandCodec, commandCodec,
                                         getClusterDescription(), getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
