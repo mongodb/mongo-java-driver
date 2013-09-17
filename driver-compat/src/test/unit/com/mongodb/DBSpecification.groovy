@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -28,7 +22,7 @@ import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.Command
-import org.mongodb.command.Ping
+import org.mongodb.command.GetLastError
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
@@ -39,6 +33,7 @@ import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.primary
 import static org.mongodb.Fixture.getBufferProvider
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.connection.ClusterConnectionMode.Single
 import static org.mongodb.connection.ClusterType.Unknown
 
@@ -99,7 +94,7 @@ class DBSpecification extends Specification {
         }
 
         when:
-        database.executeCommand(new Ping());
+        database.executeCommand(new GetLastError(ACKNOWLEDGED));
 
         then:
         thrown(com.mongodb.CommandFailureException)
@@ -129,7 +124,7 @@ class DBSpecification extends Specification {
         }
 
         when:
-        database.executeCommandAndReturnCommandResultIfCommandFailureException(new Ping())
+        database.executeCommandAndReturnCommandResultIfCommandFailureException(new GetLastError(ACKNOWLEDGED))
 
         then:
         thrown(com.mongodb.MongoException)
@@ -145,7 +140,7 @@ class DBSpecification extends Specification {
 
         when:
         org.mongodb.CommandResult actualCommandResult = database.executeCommandAndReturnCommandResultIfCommandFailureException(
-                new Ping())
+                new GetLastError(ACKNOWLEDGED))
 
         then:
         actualCommandResult == expectedCommandResult
