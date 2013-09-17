@@ -424,9 +424,9 @@ public class DB {
         return executeCommand(command.toDocument(), command.getReadPreference());
     }
 
-    private org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference readPreference) {
+    org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
         try {
-            return new CommandOperation(getName(), commandDocument, readPreference, commandCodec, commandCodec,
+            return new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
                                         getClusterDescription(), getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);

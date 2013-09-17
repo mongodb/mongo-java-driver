@@ -44,7 +44,6 @@ import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.command.MapReduceInlineCommandResult;
-import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
@@ -877,11 +876,9 @@ public class DBCollection {
      * @throws MongoException if target is the name of an existing collection and {@code dropTarget=false}.
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
-
-        RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
-        RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
+        final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         try {
-            new CommandOperation("admin", renameCommand.toDocument(), renameCommand.getReadPreference(), commandCodec, commandCodec,
+            new CommandOperation("admin", renameCollectionOptions.toDocument(getDB().getName()), null, commandCodec, commandCodec,
                                  getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
             return getDB().getCollection(newName);
         } catch (org.mongodb.MongoException e) {

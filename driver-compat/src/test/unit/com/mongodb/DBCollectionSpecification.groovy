@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -34,7 +28,6 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.MongoExceptions.mapException
-import static com.mongodb.ReadPreference.primary
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.Fixture.getBufferProvider
 
@@ -55,9 +48,6 @@ class DBCollectionSpecification extends Specification {
         database.getClusterDescription() >> { cluster.getDescription() }
         database.getBufferPool() >> { getBufferProvider() }
         cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Multiple, ClusterType.Unknown, []) }
-
-        //TODO: this shouldn't be required.  I think.
-        database.setReadPreference(primary())
     }
 
     def 'should throw com.mongodb.MongoException if rename fails'() {

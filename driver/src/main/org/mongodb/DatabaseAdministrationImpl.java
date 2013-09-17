@@ -88,11 +88,9 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
-        CommandResult commandResult = new CommandOperation("admin", renameCollectionOptions.toDocument(databaseName), null,
-                                                           commandCodec, new DocumentCodec(PrimitiveCodecs.createDefault()),
-                                                           client.getCluster().getDescription(), client.getBufferProvider(),
-                                                           client.getSession(), false).execute();
-        ErrorHandling.handleErrors(commandResult);
+        new CommandOperation("admin", renameCollectionOptions.toDocument(databaseName), null, commandCodec,
+                             new DocumentCodec(PrimitiveCodecs.createDefault()), client.getCluster().getDescription(),
+                             client.getBufferProvider(), client.getSession(), false).execute();
     }
 
 }
