@@ -131,7 +131,7 @@ final class MultiServerCluster extends BaseCluster {
 
                 switch (clusterType) {
                     case ReplicaSet:
-                        handleReplicaSetMemberChange(newDescription);
+                        handleReplicaSetMemberChanged(newDescription);
                         break;
                     case Sharded:
                         handleShardRouterChanged(newDescription);
@@ -148,7 +148,7 @@ final class MultiServerCluster extends BaseCluster {
         fireChangeEvent();
     }
 
-    private void handleReplicaSetMemberChange(final ServerDescription newDescription) {
+    private void handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
             LOGGER.severe(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
                     newDescription.getType(), newDescription.getAddress()));
