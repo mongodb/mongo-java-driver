@@ -16,10 +16,13 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.connection.ServerVersion;
+import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.PrimaryServerSelector;
@@ -27,34 +30,54 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class FindUserOperation extends BaseOperation<Document> {
+/**
+ * An operation to determine if a user exists.
+ *
+ * @since 3.0
+ */
+public class FindUserOperation extends BaseOperation<Boolean> {
 
     private final String database;
     private final String userName;
 
-    public FindUserOperation(final String database, final BufferProvider bufferProvider, final String userName, final Session session,
-                             final boolean closeSession) {
+    public FindUserOperation(final String database, final String userName, final BufferProvider bufferProvider,
+                             final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.database = notNull("database", database);
         this.userName = notNull("userName", userName);
     }
 
     @Override
-    public Document execute() {
+    public Boolean execute() {
         ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
                 new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0){
+            return executeCommandBasedProtocol(serverConnectionProvider);
+        } else {
+            return executeCollectionBasedProtocol(serverConnectionProvider);
+        }
+    }
+
+    private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+        CommandProtocol commandProtocol = new CommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
+                                                              new DocumentCodec(), getBufferProvider(),
+                                                              serverConnectionProvider.getServerDescription(),
+                                                              serverConnectionProvider.getConnection(), true);
+        CommandResult commandResult = commandProtocol.execute();
+        return !commandResult.getResponse().get("users", List.class).isEmpty();
+    }
+
+    private Boolean executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         QueryResult<Document> result = new QueryProtocol<Document>(namespace,
                 new Find(new Document("user", userName)), codec, codec, getBufferProvider(),
                 serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true).execute();
-        if (result.getResults().isEmpty()) {
-            return null;
-        }
-        else {
-            return result.getResults().get(0);
-        }
+        return !result.getResults().isEmpty();
     }
 }

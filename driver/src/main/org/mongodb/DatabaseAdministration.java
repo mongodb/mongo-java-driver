@@ -43,8 +43,4 @@ public interface DatabaseAdministration {
     void renameCollection(String oldCollectionName, String newCollectionName);
 
     void renameCollection(RenameCollectionOptions renameCollectionOptions);
-
-    void addUser(String userName, char[] password, boolean readOnly);
-
-    void removeUser(String userName);
 }

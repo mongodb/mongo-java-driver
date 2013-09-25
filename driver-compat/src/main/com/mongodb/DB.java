@@ -32,7 +32,6 @@ import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.NativeAuthenticationHelper;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindUserOperation;
@@ -41,6 +40,7 @@ import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.RemoveUserOperation;
 import org.mongodb.operation.ReplaceUserOperation;
+import org.mongodb.operation.User;
 import org.mongodb.session.Session;
 
 import java.util.HashSet;
@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
+import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 
 @ThreadSafe
@@ -374,22 +375,13 @@ public class DB {
     }
 
     public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
-        Document foundUserDocument = new FindUserOperation(getName(), getBufferPool(), username, getSession(), true).execute();
-        Document userDocument;
-        if (foundUserDocument == null) {
-            userDocument = new Document("user", username);
-        }
-        else {
-            userDocument = foundUserDocument;
-        }
-        userDocument.append("pwd", NativeAuthenticationHelper.createAuthenticationHash(username, passwd));
-        userDocument.append("readOnly", readOnly);
+        User user = new User(createMongoCRCredential(username, getName(), passwd), readOnly);
         org.mongodb.WriteResult writeResult;
-        if (foundUserDocument == null) {
-            writeResult = new InsertUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+        if (new FindUserOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
+            writeResult = new ReplaceUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         else {
-            writeResult = new ReplaceUserOperation(getName(), userDocument, getBufferPool(), getSession(), true).execute();
+            writeResult = new InsertUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }

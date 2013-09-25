@@ -16,87 +16,160 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.codecs.DocumentCodec
+import org.mongodb.connection.ClusterSettings
+import org.mongodb.connection.ConnectionPoolSettings
+import org.mongodb.connection.DefaultClusterFactory
 import org.mongodb.connection.MongoSecurityException
-import org.mongodb.connection.NativeAuthenticationHelper
-import spock.lang.Ignore
+import org.mongodb.connection.ServerSettings
+import org.mongodb.connection.SocketSettings
+import org.mongodb.connection.SocketStreamFactory
+import org.mongodb.session.ClusterSession
+import org.mongodb.session.PrimaryServerSelector
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+
+import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getBufferProvider
+import static org.mongodb.Fixture.getExecutor
 import static org.mongodb.Fixture.getPrimary
+import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
+import static org.mongodb.MongoCredential.createMongoCRCredential
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
-// TODO: This needs to be re-written because it relies on a non-public class.
-@Ignore
 class UserOperationsSpecification extends FunctionalSpecification {
-    def userName = 'jeff'
-    def password = '123'.toCharArray()
+    private ScheduledExecutorService scheduledExecutorService
+    private User readOnlyUser
+    private User readWriteUser
 
-    def connectionProvider
+    def setup() {
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+        readOnlyUser = new User(createMongoCRCredential('jeff', getDatabaseName(), '123'.toCharArray()), true)
+        readWriteUser = new User(createMongoCRCredential('jeff', getDatabaseName(), '123'.toCharArray()), false)
+    }
+
+    def cleanup() {
+        scheduledExecutorService.shutdown()
+    }
 
     def 'an added user should be found'() {
         given:
-        def userDocument = new Document('user', userName)
-                .append('pwd', NativeAuthenticationHelper.createAuthenticationHash(userName, password))
-                .append('readOnly', true)
+        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
 
         when:
-        new InsertUserOperation(getDatabaseName(), userDocument, getBufferProvider(), getSession(), true).execute()
-        def foundUserDocument = new FindUserOperation(getDatabaseName(), getBufferProvider(), userName, getSession(), true).execute()
+        def found = new FindUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
+                .execute()
 
         then:
-        foundUserDocument.get('user') == 'jeff'
-        foundUserDocument.get('pwd') == NativeAuthenticationHelper.createAuthenticationHash(userName, password);
-        foundUserDocument.get('readOnly') == true
+        found
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
+        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
     }
 
     def 'an added user should authenticate'() {
         given:
-        def userDocument = new Document('user', userName)
-                .append('pwd', NativeAuthenticationHelper.createAuthenticationHash(userName, password))
-                .append('readOnly', true);
+        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        def cluster = getCluster()
 
         when:
-        new InsertUserOperation(getDatabaseName(), userDocument, getBufferProvider(), getSession(), true).execute()
+        def server = cluster.getServer(new PrimaryServerSelector())
+        def connection = server.getConnection()
 
         then:
-        connectionProvider.create(getPrimary())
+        connection
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
+        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        cluster?.close()
     }
 
     def 'a removed user should not authenticate'() {
         given:
-        def userDocument = new Document('user', userName)
-                .append('pwd', NativeAuthenticationHelper.createAuthenticationHash(userName, password))
-                .append('readOnly', true);
-        new InsertUserOperation(getDatabaseName(), userDocument, getBufferProvider(), getSession(), true).execute()
+        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        def cluster = getCluster()
 
         when:
-        new RemoveUserOperation(getDatabaseName(), userName, getBufferProvider(), getSession(), true).execute()
-        connectionProvider.create(getPrimary())
+        def server = cluster.getServer(new PrimaryServerSelector())
+        server.getConnection()
 
         then:
         thrown(MongoSecurityException)
+
+        cleanup:
+        cluster?.close()
+    }
+
+    def 'a replaced user should authenticate with its new password'() {
+        given:
+        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
+                                                       '234'.toCharArray()), true)
+        new ReplaceUserOperation(newUser, getBufferProvider(), getSession(), true).execute()
+        def cluster = getCluster(newUser)
+
+        when:
+        def server = cluster.getServer(new PrimaryServerSelector())
+        def connection = server.getConnection()
+
+        then:
+        connection
+
+        cleanup:
+        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        cluster?.close()
+    }
+
+    def 'a read write user should be able to write'() {
+        given:
+        new InsertUserOperation(readWriteUser, getBufferProvider(), getSession(), true).execute()
+        def cluster = getCluster()
+
+        when:
+        def result = new InsertOperation<Document>(getNamespace(), new Insert<Document>(ACKNOWLEDGED, new Document()), new DocumentCodec(),
+                                                   getBufferProvider(), new ClusterSession(cluster, getExecutor()), true).execute()
+        then:
+        result.commandResult.isOk()
+
+        cleanup:
+        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        cluster?.close()
+    }
+
+    // This test is in UserOperationTest because the assertion is conditional on auth being enabled, and there's no way to do that in Spock
+//    def 'a read only user should not be able to write'() {
+//        given:
+//        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+//        def cluster = createCluster()
+//
+//        when:
+//        new InsertOperation<Document>(getNamespace(), new Insert<Document>(ACKNOWLEDGED, new Document()), new DocumentCodec(),
+//                                      getBufferProvider(), new ClusterSession(cluster, getExecutor()), true).execute()
+//        then:
+//        thrown(MongoWriteException)
+//
+//        cleanup:
+//        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+//        cluster?.close()
+//    }
+
+    def getCluster() {
+        getCluster(readOnlyUser)
+    }
+
+    def getCluster(User user) {
+        new DefaultClusterFactory().create(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
+                                           ServerSettings.builder().build(),
+                                           ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                           scheduledExecutorService, asList(user.credential), getBufferProvider(), null, null, null)
     }
 }

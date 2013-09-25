@@ -20,8 +20,6 @@ import category.ReplicaSet;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.Document;
-import org.mongodb.connection.NativeAuthenticationHelper;
 import org.mongodb.operation.FindUserOperation;
 
 import java.net.UnknownHostException;
@@ -36,7 +34,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.Fixture.getSession;
@@ -173,21 +171,15 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("Until we figure out how these should be run on 2.6")
     public void shouldAddUser() {
         String userName = "jeff";
         char[] password = "123".toCharArray();
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
-        Document userDocument = new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
-                true).execute();
-        assertEquals(userName, userDocument.get("user"));
-        assertEquals(NativeAuthenticationHelper.createAuthenticationHash(userName, password), userDocument.get("pwd"));
-        assertEquals(readOnly, userDocument.get("readOnly"));
+        assertTrue(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test
-    @Ignore("Until we figure out how these should be run on 2.6")
     public void shouldUpdateUser() {
         String userName = "jeff";
 
@@ -199,15 +191,10 @@ public class DBTest extends DatabaseTestCase {
         boolean newReadOnly = false;
         database.addUser(userName, newPassword, newReadOnly);
 
-        Document userDocument = new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
-                true).execute();
-        assertEquals(userName, userDocument.get("user"));
-        assertEquals(NativeAuthenticationHelper.createAuthenticationHash(userName, newPassword), userDocument.get("pwd"));
-        assertEquals(newReadOnly, userDocument.get("readOnly"));
+        assertTrue(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test
-    @Ignore("Until we figure out how these should be run on 2.6")
     public void shouldRemoveUser() {
         String userName = "jeff";
 
@@ -217,8 +204,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertNull(new FindUserOperation(database.getName(), database.getBufferPool(), userName, getSession(),
-                true).execute());
+        assertFalse(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test

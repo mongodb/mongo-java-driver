@@ -26,8 +26,6 @@ import org.mongodb.operation.QueryOperation;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mongodb.connection.NativeAuthenticationHelper.createAuthenticationHash;
-
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are
  * not implemented in MongoDatabase in order to keep the API very simple, these should be the methods that are not
@@ -98,17 +96,4 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
         ErrorHandling.handleErrors(commandResult);
     }
 
-    @Override
-    public void addUser(final String userName, final char[] password, final boolean readOnly) {
-        MongoCollection<Document> collection = client.getDatabase(databaseName).getCollection("system.users");
-        Document doc = new Document("user", userName).append("pwd", createAuthenticationHash(userName, password))
-                .append("readOnly", readOnly);
-        collection.save(doc);
-    }
-
-    @Override
-    public void removeUser(final String userName) {
-        MongoCollection<Document> collection = client.getDatabase(databaseName).getCollection("system.users");
-        collection.find(new Document("user", userName)).remove();
-    }
 }
