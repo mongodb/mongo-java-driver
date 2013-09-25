@@ -45,10 +45,10 @@ public class RemoveUserOperation extends BaseOperation<WriteResult> {
     private final String database;
     private final String userName;
 
-    public RemoveUserOperation(final String database, final String userName, final BufferProvider bufferProvider,
+    public RemoveUserOperation(final String source, final String userName, final BufferProvider bufferProvider,
                                final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
-        this.database = notNull("database", database);
+        this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
 

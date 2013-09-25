@@ -33,13 +33,13 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindUserOperation;
-import org.mongodb.operation.InsertUserOperation;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.RemoveUserOperation;
-import org.mongodb.operation.ReplaceUserOperation;
+import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.session.Session;
 
@@ -378,10 +378,10 @@ public class DB {
         User user = new User(createMongoCRCredential(username, getName(), passwd), readOnly);
         org.mongodb.WriteResult writeResult;
         if (new FindUserOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
-            writeResult = new ReplaceUserOperation(user, getBufferPool(), getSession(), true).execute();
+            writeResult = new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         else {
-            writeResult = new InsertUserOperation(user, getBufferPool(), getSession(), true).execute();
+            writeResult = new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }

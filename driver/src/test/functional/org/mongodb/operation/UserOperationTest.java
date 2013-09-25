@@ -70,7 +70,7 @@ public class UserOperationTest extends DatabaseTestCase {
             return;
         }
         // given:
-        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute();
+        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute();
         Cluster cluster = createCluster();
 
         // when:

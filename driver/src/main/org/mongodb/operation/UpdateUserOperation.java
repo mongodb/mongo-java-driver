@@ -43,11 +43,10 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class ReplaceUserOperation extends BaseOperation<WriteResult> {
+public class UpdateUserOperation extends BaseOperation<WriteResult> {
     private final User user;
 
-    public ReplaceUserOperation(final User user, final BufferProvider bufferProvider,
-                                final Session session, final boolean closeSession) {
+    public UpdateUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.user = user;
     }

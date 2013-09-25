@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -60,7 +62,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should be found'() {
         given:
-        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
 
         when:
         def found = new FindUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
@@ -75,7 +77,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should authenticate'() {
         given:
-        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
         def cluster = getCluster()
 
         when:
@@ -92,7 +94,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a removed user should not authenticate'() {
         given:
-        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
         new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         def cluster = getCluster()
 
@@ -109,10 +111,10 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
                                                        '234'.toCharArray()), true)
-        new ReplaceUserOperation(newUser, getBufferProvider(), getSession(), true).execute()
+        new UpdateUserOperation(newUser, getBufferProvider(), getSession(), true).execute()
         def cluster = getCluster(newUser)
 
         when:
@@ -129,7 +131,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a read write user should be able to write'() {
         given:
-        new InsertUserOperation(readWriteUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readWriteUser, getBufferProvider(), getSession(), true).execute()
         def cluster = getCluster()
 
         when:
@@ -146,7 +148,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
     // This test is in UserOperationTest because the assertion is conditional on auth being enabled, and there's no way to do that in Spock
 //    def 'a read only user should not be able to write'() {
 //        given:
-//        new InsertUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+//        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
 //        def cluster = createCluster()
 //
 //        when:

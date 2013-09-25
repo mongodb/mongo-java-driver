@@ -41,10 +41,10 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class InsertUserOperation extends BaseOperation<WriteResult> {
+public class CreateUserOperation extends BaseOperation<WriteResult> {
     private final User user;
 
-    public InsertUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
+    public CreateUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.user = notNull("user", user);
     }
