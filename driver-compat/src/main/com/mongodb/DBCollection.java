@@ -29,14 +29,14 @@ import org.mongodb.CollectibleCodec;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.Function;
 import org.mongodb.Index;
-import org.mongodb.MongoCursor;
+import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.AggregateCommand;
 import org.mongodb.command.Command;
 import org.mongodb.command.Distinct;
 import org.mongodb.command.DistinctCommandResult;
@@ -47,6 +47,7 @@ import org.mongodb.command.MapReduceInlineCommandResult;
 import org.mongodb.command.RenameCollection;
 import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.DropCollectionOperation;
@@ -59,6 +60,7 @@ import org.mongodb.operation.FindAndReplaceOperation;
 import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.GetIndexesOperation;
+import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.Operation;
@@ -146,7 +148,7 @@ public class DBCollection {
 
 
     /**
-     * Constructs new {@code DBCollection} instance. This opertation not reflected on the server.
+     * Constructs new {@code DBCollection} instance. This operation not reflected on the server.
      *
      * @param name the name of the collection
      * @param database the database to which this collections belongs to
@@ -668,8 +670,8 @@ public class DBCollection {
                 .batchSize(-1);
 
         try {
-            final MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec, getBufferPool(),
-                    getSession(), false).execute();
+            final org.mongodb.MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
+                getBufferPool(), getSession(), false).execute();
 
             return cursor.hasNext() ? cursor.next() : null;
         } catch (org.mongodb.MongoException e) {
@@ -1137,21 +1139,82 @@ public class DBCollection {
      * @param firstOp       requisite first operation to be performed in the aggregation pipeline
      * @param additionalOps additional operations to be performed in the aggregation pipeline
      * @return the aggregation operation's result set
+     * @deprecated @see aggregate(List<DBObject>) instead
      */
+    @Deprecated
+    @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
-        final List<Document> pipeline = new ArrayList<Document>(additionalOps.length + 1);
-        pipeline.add(toDocument(firstOp));
-        for (final DBObject op : additionalOps) {
-            pipeline.add(toDocument(op));
+        List<DBObject> pipeline = new ArrayList<DBObject>();
+        pipeline.add(firstOp);
+        Collections.addAll(pipeline, additionalOps);
+        return aggregate(pipeline);
         }
 
-        final AggregateCommand aggregateCommand = new AggregateCommand(getNamespace(), pipeline);
-        final org.mongodb.CommandResult commandResult = database.executeCommand(aggregateCommand);
-
-        //TODO: Fix it. We getting DBObjects in result due to explicit conversion in CommandResultConstructor
-        return new AggregationOutput(toDBObject(aggregateCommand.toDocument()), new CommandResult(commandResult));
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @return the aggregation's result set
+     */
+    public AggregationOutput aggregate(final List<DBObject> pipeline) {
+        return aggregate(pipeline, getReadPreference());
     }
 
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @return the aggregation's result set
+     */
+    public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
+        AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
+
+        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
+                    getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false, readPreference.toNew());
+        
+        org.mongodb.MongoCursor<Document> cursor = operation.execute();
+        org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
+        return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     *
+     * @param pipeline       operations to be performed in the aggregation pipeline
+     * @param options       options to apply to the aggregation
+     * @return the aggregation operation's result set
+     */
+    public MongoCursor aggregate(final List<DBObject> pipeline, com.mongodb.AggregationOptions options) {
+        return aggregate(pipeline, options, getReadPreference());
+    }
+
+    public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
+        final ReadPreference preference) {
+        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
+            getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false, preference.toNew()).execute();
+
+        return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
+            @Override
+            public DBObject apply(final Document document) {
+                return toDBObject(document);
+            }
+        }));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Document> preparePipeline(final List<DBObject> pipeline) {
+        if (pipeline.isEmpty()) {
+            throw new MongoException("Aggregation pipelines can not be empty");
+        }
+        List<Document> stages = new ArrayList<Document>();
+        for (final DBObject op : pipeline) {
+            stages.add(toDocument(op));
+        }
+        
+        return stages;
+    }
+    
     /**
      * Get the name of a collection.
      *

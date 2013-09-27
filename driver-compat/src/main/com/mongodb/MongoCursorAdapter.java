@@ -14,39 +14,40 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-public class MongoMappingCursor<T, U> implements MongoCursor<U> {
-    private final MongoCursor<T> proxied;
-    private final Function<T, U> mapper;
 
-    public MongoMappingCursor(final MongoCursor<T> proxied, final Function<T, U> mapper) {
-        this.proxied = proxied;
-        this.mapper = mapper;
+import org.mongodb.ServerCursor;
+
+
+class MongoCursorAdapter implements MongoCursor {
+    org.mongodb.MongoCursor<DBObject> cursor;
+
+    public MongoCursorAdapter(final org.mongodb.MongoCursor<DBObject> cursor) {
+        this.cursor = cursor;
+    }
+
+    public ServerCursor getServerCursor() {
+        return cursor.getServerCursor();
     }
 
     @Override
     public void close() {
-        proxied.close();
+        cursor.close();
     }
 
     @Override
     public boolean hasNext() {
-        return proxied.hasNext();
+        return cursor.hasNext();
     }
 
     @Override
-    public U next() {
-        return mapper.apply(proxied.next());
+    public DBObject next() {
+        return cursor.next();
     }
 
     @Override
     public void remove() {
-        proxied.remove();
-    }
-
-    @Override
-    public ServerCursor getServerCursor() {
-        return proxied.getServerCursor();
+        cursor.remove();
     }
 }
