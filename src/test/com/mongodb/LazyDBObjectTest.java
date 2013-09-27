@@ -353,7 +353,7 @@ public class LazyDBObjectTest extends TestCase {
         assertEquals( new String( ((Binary) origDoc.get( "binary")).getData()), new String((byte[]) doc.get( "binary" )));
         assertEquals( origDoc.get( "uuid"), doc.get( "uuid" ) );
         assertEquals( ( (Pattern) origDoc.get( "regex" ) ).pattern(), ((Pattern) doc.get( "regex" ) ).pattern() );
-        assertEquals( ( (Pattern) doc.get( "regex" ) ).flags(), ((Pattern) doc.get( "regex" ) ).flags() );
+        assertEquals( ( (Pattern) origDoc.get( "regex" ) ).flags(), ((Pattern) doc.get( "regex" ) ).flags() );
     }
     
     private static class TestMapEntry implements Map.Entry<String, Object> {

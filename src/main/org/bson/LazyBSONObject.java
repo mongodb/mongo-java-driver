@@ -615,7 +615,7 @@ public class LazyBSONObject implements BSONObject {
             case BSON.REGEX:
                 int patternCStringSize = sizeCString( record.valueOffset );
                 String pattern = _input.getCString( record.valueOffset );
-                String flags = _input.getCString( record.valueOffset + patternCStringSize + 1 );
+                String flags = _input.getCString( record.valueOffset + patternCStringSize );
                 return Pattern.compile( pattern, BSON.regexFlags( flags ) );
             default:
                 throw new BSONException(
