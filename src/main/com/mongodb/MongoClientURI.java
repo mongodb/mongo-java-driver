@@ -128,9 +128,9 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN}: The authentication mechanism to use if a credential was supplied.
- * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI mechanism, no password is accepted,
- * only the username.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
+ * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI and MONGODB-X509 mechanisms,
+ * no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -439,6 +439,9 @@ public class MongoClientURI {
         }
         else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
+        }
+        else if (mechanism.equals(MongoCredential.MONGODB_X509_MECHANISM)) {
+            return MongoCredential.createMongoX509Credential(userName);
         }
         else {
              throw new IllegalArgumentException("Unsupported authMechanism: " + mechanism);

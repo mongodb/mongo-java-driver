@@ -143,4 +143,18 @@ public class MongoCredentialTest extends TestCase {
         assertEquals("$external", credential.getSource());
         assertArrayEquals(password, credential.getPassword());
     }
+
+    @Test
+    public void testX509Mechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.MONGODB_X509_MECHANISM;
+        final String userName = "user";
+        credential = MongoCredential.createMongoX509Credential(userName);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals("$external", credential.getSource());
+        assertArrayEquals(null, credential.getPassword());
+    }
 }

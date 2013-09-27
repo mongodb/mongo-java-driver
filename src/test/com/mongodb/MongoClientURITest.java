@@ -107,6 +107,9 @@ public class MongoClientURITest extends TestCase {
         u = new MongoClientURI("mongodb://user:pass@host/?authMechanism=MONGODB-CR");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
 
+        u = new MongoClientURI("mongodb://user@host/?authMechanism=MONGODB-X509");
+        assertEquals(MongoCredential.createMongoX509Credential(userName), u.getCredentials());
+
         u = new MongoClientURI("mongodb://bob:pwd@localhost/?authMechanism=PLAIN&authSource=db1");
         assertEquals(MongoCredential.createPlainCredential("bob", "db1", "pwd".toCharArray()), u.getCredentials());
 

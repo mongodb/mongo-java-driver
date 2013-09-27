@@ -319,6 +319,8 @@ public class DBPort {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);
         } else if (credentials.getMechanism().equals(MongoCredential.PLAIN_MECHANISM)) {
             authenticator = new PlainAuthenticator(mongo, credentials);
+        } else if (credentials.getMechanism().equals(MongoCredential.MONGODB_X509_MECHANISM)) {
+            authenticator = new X509Authenticator(mongo, credentials);
         } else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getMechanism());
         }
@@ -517,6 +519,30 @@ public class DBPort {
         }
 
         public abstract String getMechanismName();
+    }
+
+    class X509Authenticator extends Authenticator {
+        X509Authenticator(final Mongo mongo, final MongoCredential credential) {
+            super(mongo, credential);
+        }
+
+        @Override
+        CommandResult authenticate() {
+            try {
+                DB db = mongo.getDB(credential.getSource());
+                CommandResult res = runCommand(db, getAuthCommand());
+                res.throwOnError();
+                return res;
+            } catch (IOException e) {
+                throw new MongoException.Network("IOException authenticating the connection", e);
+            }
+        }
+
+        private DBObject getAuthCommand() {
+            return new BasicDBObject("authenticate", 1)
+                   .append("user", credential.getUserName())
+                   .append("mechanism", MongoCredential.MONGODB_X509_MECHANISM);
+        }
     }
 
     class NativeAuthenticator extends Authenticator {

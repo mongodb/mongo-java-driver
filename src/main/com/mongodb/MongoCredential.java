@@ -48,6 +48,10 @@ public final class MongoCredential {
      */
     public static final String MONGODB_CR_MECHANISM = "MONGODB-CR";
 
+    /**
+     * The MongoDB X.509
+     */
+    public static final String MONGODB_X509_MECHANISM = "MONGODB-X509";
 
     private final String mechanism;
     private final String userName;
@@ -65,6 +69,16 @@ public final class MongoCredential {
      */
     public static MongoCredential createMongoCRCredential(String userName, String database, char[] password) {
         return new MongoCredential(MONGODB_CR_MECHANISM, userName, database, password);
+    }
+
+    /**
+     * Creates a MongoCredential instance for the MongoDB X.509 protocol.
+     *
+     * @param userName the user name
+     * @return the credential
+     */
+    public static MongoCredential createMongoX509Credential(String userName) {
+        return new MongoCredential(MONGODB_X509_MECHANISM, userName, "$external", null);
     }
 
     /**
