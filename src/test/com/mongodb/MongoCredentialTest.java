@@ -128,4 +128,19 @@ public class MongoCredentialTest extends TestCase {
         assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
         assertEquals(secondValue, credential.getMechanismProperty(secondKey, 1));
     }
+    @Test
+    public void testPlainMechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.PLAIN_MECHANISM;
+        final String userName = "user";
+        final char[] password = "pwd".toCharArray();
+        final String source = "$external";
+        credential = MongoCredential.createPlainCredential(userName, source, password);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals("$external", credential.getSource());
+        assertArrayEquals(password, credential.getPassword());
+    }
 }

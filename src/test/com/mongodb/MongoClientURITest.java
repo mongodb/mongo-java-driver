@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 public class MongoClientURITest extends TestCase {
 
@@ -105,6 +106,9 @@ public class MongoClientURITest extends TestCase {
 
         u = new MongoClientURI("mongodb://user:pass@host/?authMechanism=MONGODB-CR");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://bob:pwd@localhost/?authMechanism=PLAIN&authSource=db1");
+        assertEquals(MongoCredential.createPlainCredential("bob", "db1", "pwd".toCharArray()), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "test", password), u.getCredentials());

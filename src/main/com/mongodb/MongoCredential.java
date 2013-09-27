@@ -34,6 +34,11 @@ import java.util.Map;
 public final class MongoCredential {
 
     /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     */
+    public static final String PLAIN_MECHANISM = "PLAIN";
+
+    /**
      * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
      */
     public static final String GSSAPI_MECHANISM = "GSSAPI";
@@ -61,6 +66,19 @@ public final class MongoCredential {
     public static MongoCredential createMongoCRCredential(String userName, String database, char[] password) {
         return new MongoCredential(MONGODB_CR_MECHANISM, userName, database, password);
     }
+
+    /**
+     * Creates a MongoCredential instance for the PLAIN SASL mechanism.
+     *
+     * @param userName the non-null user name
+     * @param source the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
+     * @param password the non-null user password
+     * @return the credential
+     */
+    public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(PLAIN_MECHANISM, userName, source, password);
+    }
+
 
     /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"},

@@ -317,6 +317,8 @@ public class DBPort {
             authenticator = new NativeAuthenticator(mongo, credentials);
         } else if (credentials.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
             authenticator = new GSSAPIAuthenticator(mongo, credentials);
+        } else if (credentials.getMechanism().equals(MongoCredential.PLAIN_MECHANISM)) {
+            authenticator = new PlainAuthenticator(mongo, credentials);
         } else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getMechanism());
         }
@@ -377,53 +379,39 @@ public class DBPort {
        final String threadName;
     }
 
-    class GenericSaslAuthenticator extends SaslAuthenticator {
-        static final String CRAM_MD5 = "CRAM-MD5";
+    class PlainAuthenticator extends SaslAuthenticator {
+        private static final String MECHANISM = MongoCredential.PLAIN_MECHANISM;
+        private static final String DEFAULT_PROTOCOL = "mongodb";
 
-        private final String mechanism;
-
-        GenericSaslAuthenticator(final Mongo mongo, MongoCredential credentials, String mechanism) {
+        PlainAuthenticator(final Mongo mongo, final MongoCredential credentials) {
             super(mongo, credentials);
-            this.mechanism = mechanism;
         }
 
         @Override
         protected SaslClient createSaslClient() {
             try {
-                return Sasl.createSaslClient(new String[]{mechanism},
-                        credential.getUserName(), MONGODB_PROTOCOL,
-                        serverAddress().getHost(), null, new CredentialsHandlingCallbackHandler());
+                return Sasl.createSaslClient(new String[]{MongoCredential.PLAIN_MECHANISM}, credential.getUserName(),
+                                             DEFAULT_PROTOCOL, serverAddress().getHost(), null, new CallbackHandler() {
+                    @Override
+                    public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                        for (Callback callback : callbacks) {
+                            if (callback instanceof PasswordCallback) {
+                                ((PasswordCallback) callback).setPassword(credential.getPassword());
+                            }
+                            else if (callback instanceof NameCallback) {
+                                ((NameCallback) callback).setName(credential.getUserName());
+                            }
+                        }
+                    }
+                });
             } catch (SaslException e) {
                 throw new MongoException("Exception initializing SASL client", e);
             }
         }
 
         @Override
-        protected DB getDatabase() {
-            return mongo.getDB(credential.getSource());
-        }
-
-        @Override
         public String getMechanismName() {
-            return mechanism;
-        }
-
-        class CredentialsHandlingCallbackHandler implements CallbackHandler {
-
-            public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof NameCallback) {
-                        NameCallback nameCallback = (NameCallback) callback;
-                        nameCallback.setName(credential.getUserName());
-                    }
-                    if (callback instanceof PasswordCallback) {
-                        PasswordCallback passwordCallback = (PasswordCallback) callback;
-                        String hashedPassword = new String(NativeAuthenticationHelper.createHash(
-                                credential.getUserName(), credential.getPassword()));
-                        passwordCallback.setPassword(hashedPassword.toCharArray());
-                    }
-                }
-            }
+            return MECHANISM;
         }
     }
 
@@ -458,11 +446,6 @@ public class DBPort {
         }
 
         @Override
-        protected DB getDatabase() {
-            return mongo.getDB(credential.getSource());
-        }
-
-        @Override
         public String getMechanismName() {
             return "GSSAPI";
         }
@@ -477,7 +460,6 @@ public class DBPort {
     }
 
     abstract class SaslAuthenticator extends Authenticator {
-        public static final String MONGODB_PROTOCOL = "mongodb";
 
         SaslAuthenticator(final Mongo mongo, MongoCredential credentials) {
             super(mongo, credentials);
@@ -516,7 +498,9 @@ public class DBPort {
 
         protected abstract SaslClient createSaslClient();
 
-        protected abstract DB getDatabase();
+        protected DB getDatabase() {
+            return mongo.getDB(credential.getSource());
+        }
 
         private CommandResult sendSaslStart(final byte[] outToken) throws IOException {
             DBObject cmd = new BasicDBObject("saslStart", 1).

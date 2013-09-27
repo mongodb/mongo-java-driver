@@ -42,7 +42,8 @@ import java.util.logging.Logger;
  * <ul>
  * <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection format.</li>
  * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
- * connecting to a database server.</li>
+ * connecting to a database server. For some authentication mechanisms, only the username is specified and the password is not,
+ * in which case the ":" after the username is left off as well.</li>
  * <li>{@code host1} is the only required part of the URI.  It identifies a server address to connect to.</li>
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
@@ -53,7 +54,7 @@ import java.util.logging.Logger;
  * but should be considered as deprecated.</li>
  * </ul>
  * <p>
- * The Java driver supports the following options (case insensitive):
+ * The following options are supported (case insensitive):
  * <p>
  * Replica set configuration:
  * </p>
@@ -127,8 +128,9 @@ import java.util.logging.Logger;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI}: The authentication mechanism to use if a credential was supplied.
- * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN}: The authentication mechanism to use if a credential was supplied.
+ * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI mechanism, no password is accepted,
+ * only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -431,6 +433,9 @@ public class MongoClientURI {
                 gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
             }
             return gssapiCredential;
+        }
+        else if (mechanism.equals(MongoCredential.PLAIN_MECHANISM)) {
+            return MongoCredential.createPlainCredential(userName, authSource, password);
         }
         else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
