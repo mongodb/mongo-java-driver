@@ -96,4 +96,36 @@ public class MongoCredentialTest extends TestCase {
             // expected
         }
     }
+
+    @Test
+    public void testMechanismPropertyDefaulting() {
+        // given
+        String firstKey = "firstKey";
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user");
+
+        // then
+        assertEquals("mongodb", credential.getMechanismProperty(firstKey, "mongodb"));
+    }
+
+    @Test
+    public void testMechanismPropertyMapping() {
+        // given
+        String firstKey = "firstKey";
+        String firstValue = "firstValue";
+        String secondKey = "secondKey";
+        Integer secondValue = 2;
+
+        // when
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user").withMechanismProperty(firstKey, firstValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+
+        // when
+        credential = credential.withMechanismProperty(secondKey, secondValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+        assertEquals(secondValue, credential.getMechanismProperty(secondKey, 1));
+    }
 }

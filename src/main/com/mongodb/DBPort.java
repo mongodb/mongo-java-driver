@@ -430,6 +430,8 @@ public class DBPort {
     class GSSAPIAuthenticator extends SaslAuthenticator {
         public static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
         public static final String GSSAPI_MECHANISM = MongoCredential.GSSAPI_MECHANISM;
+        public static final String SERVICE_NAME_KEY = "SERVICE_NAME";
+        public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
 
         GSSAPIAuthenticator(final Mongo mongo, final MongoCredential credentials) {
             super(mongo, credentials);
@@ -445,8 +447,9 @@ public class DBPort {
                 Map<String, Object> props = new HashMap<String, Object>();
                 props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
-                return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(), MONGODB_PROTOCOL,
-                        serverAddress().getHost(), props, null);
+                return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(),
+                                             credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
+                                             serverAddress().getHost(), props, null);
             } catch (SaslException e) {
                 throw new MongoException("Exception initializing SASL client", e);
             } catch (GSSException e) {

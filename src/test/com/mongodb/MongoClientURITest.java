@@ -100,6 +100,9 @@ public class MongoClientURITest extends TestCase {
         u = new MongoClientURI("mongodb://user@host/?authMechanism=GSSAPI");
         assertEquals(MongoCredential.createGSSAPICredential(userName), u.getCredentials());
 
+        u = new MongoClientURI("mongodb://user@host/?authMechanism=GSSAPI&gssapiServiceName=foo");
+        assertEquals(MongoCredential.createGSSAPICredential(userName).withMechanismProperty("SERVICE_NAME", "foo"), u.getCredentials());
+
         u = new MongoClientURI("mongodb://user:pass@host/?authMechanism=MONGODB-CR");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
 

@@ -135,6 +135,8 @@ import java.util.logging.Logger;
  * If the database is specified in neither place, the default value is "admin".  For GSSAPI, it's not necessary to specify
  * a source.
  * </li>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
+ * </li>
  * <ul>
  * <p>
  * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference
@@ -280,6 +282,7 @@ public class MongoClientURI {
 
         authKeys.add("authmechanism");
         authKeys.add("authsource");
+        authKeys.add("gssapiservicename");
 
         allKeys.addAll(generalOptionsKeys);
         allKeys.addAll(authKeys);
@@ -404,6 +407,7 @@ public class MongoClientURI {
 
         String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
         String authSource = database;
+        String gssapiServiceName = null;
 
         for (String key : authKeys) {
             String value = getLastValue(optionsMap, key);
@@ -416,11 +420,17 @@ public class MongoClientURI {
                 mechanism = value;
             } else if (key.equals("authsource")) {
                 authSource = value;
+            } else if (key.equals("gssapiservicename")) {
+                gssapiServiceName = value;
             }
         }
 
         if (mechanism.equals(MongoCredential.GSSAPI_MECHANISM)) {
-            return MongoCredential.createGSSAPICredential(userName);
+            MongoCredential gssapiCredential = MongoCredential.createGSSAPICredential(userName);
+            if (gssapiServiceName != null) {
+                gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+            }
+            return gssapiCredential;
         }
         else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);

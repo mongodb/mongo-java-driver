@@ -20,6 +20,9 @@ package com.mongodb;
 import org.bson.util.annotations.Immutable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
@@ -45,6 +48,7 @@ public final class MongoCredential {
     private final String userName;
     private final String source;
     private final char[] password;
+    private final Map<String, Object> mechanismProperties;
 
     /**
      * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
@@ -59,13 +63,27 @@ public final class MongoCredential {
     }
 
     /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"},
+     * add a mechanism property with the name {@code "SERVICE_NAME"}.
      *
      * @param userName the user name
      * @return the credential
+     * @see #withMechanismProperty(String, Object)
      */
     public static MongoCredential createGSSAPICredential(String userName) {
         return new MongoCredential(GSSAPI_MECHANISM, userName, "$external", null);
+    }
+
+    /**
+     * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
+     *
+     * @param key the key to the property
+     * @param value the value of the property
+     * @param <T> the property type
+     * @return the credential
+     */
+    public <T> MongoCredential withMechanismProperty(String key, T value) {
+        return new MongoCredential(this, key, value);
     }
 
     /**
@@ -98,6 +116,24 @@ public final class MongoCredential {
         this.userName = userName;
         this.source = source;
         this.password = password != null ? password.clone() : null;
+        this.mechanismProperties = Collections.emptyMap();
+    }
+
+    /**
+     * Constructs a new instance using the given credential plus an additional mechanism property.
+     *
+     * @param from the credential to copy from
+     * @param mechanismPropertyKey the new mechanism property key
+     * @param mechanismPropertyValue the new mechanism property value
+     * @param <T> the mechanism property type
+     */
+    <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
+        this.mechanism = from.mechanism;
+        this.userName = from.userName;
+        this.source = from.source;
+        this.password = from.password;
+        this.mechanismProperties = new HashMap<String, Object>(from.mechanismProperties);
+        this.mechanismProperties.put(mechanismPropertyKey, mechanismPropertyValue);
     }
 
     /**
@@ -139,6 +175,21 @@ public final class MongoCredential {
         return password.clone();
     }
 
+
+    /**
+     * Get the value of the given key to a mechanism property, or defaultValue if there is no mapping.
+     *
+     * @param key the mechanism property key
+     * @param defaultValue the default value, if no mapping exists
+     * @param <T> the value type
+     * @return the mechanism property value
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getMechanismProperty(String key, T defaultValue) {
+        T value = (T) mechanismProperties.get(key);
+        return (value == null) ? defaultValue : value;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -150,6 +201,7 @@ public final class MongoCredential {
         if (!Arrays.equals(password, that.password)) return false;
         if (!source.equals(that.source)) return false;
         if (!userName.equals(that.userName)) return false;
+        if (!mechanismProperties.equals(that.mechanismProperties)) return false;
 
         return true;
     }
@@ -160,6 +212,7 @@ public final class MongoCredential {
         result = 31 * result + userName.hashCode();
         result = 31 * result + source.hashCode();
         result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
+        result = 31 * result + mechanismProperties.hashCode();
         return result;
     }
 
@@ -170,6 +223,7 @@ public final class MongoCredential {
                 ", userName='" + userName + '\'' +
                 ", source='" + source + '\'' +
                 ", password=<hidden>"  +
+                ", mechanismProperties=" + mechanismProperties +
                 '}';
     }
 }
