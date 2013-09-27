@@ -183,6 +183,16 @@ public class DBApiLayer extends DB {
         return _connector.authenticate(credentials);
     }
 
+    private static void throwOnQueryFailure(final Response res, final long cursor) {
+        if ((res._flags & Bytes.RESULTFLAG_ERRSET) > 0) {
+            BSONObject errorDocument = res.get(0);
+            throw new MongoException(ServerError.getCode(errorDocument), ServerError.getMsg(errorDocument, null));
+        }
+        else if ((res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND) > 0) {
+            throw new MongoException.CursorNotFound(cursor, res.serverUsed());
+        }
+    }
+
     class MyCollection extends DBCollection {
         MyCollection( String name ){
             super( DBApiLayer.this , name );
@@ -290,12 +300,7 @@ public class DBApiLayer extends DB {
 
             Response res = _connector.call( _db , this , query , null , 2, readPref, decoder );
 
-            if ( res.size() == 1 ){
-                BSONObject foo = res.get(0);
-                MongoException e = MongoException.parse( foo );
-                if ( e != null && ! _name.equals( "$cmd" ) )
-                    throw e;
-            }
+            throwOnQueryFailure(res, 0);
 
             return new Result( this , res , batchSize, limit , options, decoder );
         }
@@ -362,9 +367,7 @@ public class DBApiLayer extends DB {
         }
 
         private void init( Response res ){
-            if ( ( res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND ) > 0 ){
-                throw new MongoException.CursorNotFound(_curResult.cursor(), res.serverUsed());
-            }
+            throwOnQueryFailure(res, _curResult == null ? 0 : _curResult._cursor);
 
             _totalBytes += res._len;
             _curResult = res;

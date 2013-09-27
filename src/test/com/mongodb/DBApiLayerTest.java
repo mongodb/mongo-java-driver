@@ -54,4 +54,17 @@ public class DBApiLayerTest extends TestCase {
             assertEquals(cursor.getCursorId(), e.getCursorId());
         }
     }
+
+    @Test
+    public void testQueryFailureException() {
+        DBCollection collection = db.getCollection("testQueryFailureException");
+        collection.insert(new BasicDBObject("loc", new double[]{0, 0}));
+        try {
+            collection.findOne(new BasicDBObject("loc", new BasicDBObject("$near", new double[]{0, 0})));
+            fail("Should be a query failure since there is no 2d index");
+        } catch (MongoException e) {
+            assertEquals(13038, e.getCode());
+        }
+    }
+
 }
