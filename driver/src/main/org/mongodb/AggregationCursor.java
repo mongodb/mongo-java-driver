@@ -72,8 +72,8 @@ public class AggregationCursor<T> implements MongoCursor<T> {
         }
         closed = true;
         if (currentResult != null) {
-            new KillCursorProtocol(
-                new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(), getConnection(), false).execute();
+            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
+                getConnection(), false).execute();
         }
         if (closeSession) {
             session.close();

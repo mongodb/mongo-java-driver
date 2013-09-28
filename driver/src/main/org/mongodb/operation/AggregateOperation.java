@@ -53,7 +53,6 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final AggregationOptions options;
     private final ServerAddress serverAddress;
     private final Document command;
-    private ReadPreference readPreference;
     private final ServerConnectionProvider connectionProvider;
 
     public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
@@ -63,7 +62,6 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
 
         this.namespace = namespace;
         this.decoder = decoder;
-        this.readPreference = readPreference;
         this.pipeline = new Document("pipeline", pipeline);
         this.options = options;
         command = new Document("aggregate", namespace.getCollectionName());
@@ -78,16 +76,11 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     public MongoCursor<T> execute() {
         final CommandResult result = sendMessage();
         if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
-            return new InlineMongoCursor<T>(result, (List<T>) result.getResponse().get("result"));
+            return new InlineMongoCursor<T>(result, (List<T>) result.getResponse()
+                .get("result"));
         } else {
-            return new AggregationCursor<T>(options,
-                                            namespace,
-                                            decoder,
-                                            getBufferProvider(),
-                                            getSession(),
-                                            isCloseSession(),
-                                            connectionProvider,
-                                            receiveMessage(result));
+            return new AggregationCursor<T>(options, namespace, decoder, getBufferProvider(), getSession(), isCloseSession(),
+                connectionProvider, receiveMessage(result));
         }
     }
 

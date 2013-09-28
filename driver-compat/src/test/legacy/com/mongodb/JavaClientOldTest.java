@@ -17,18 +17,17 @@
 package com.mongodb;
 
 
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.serverVersionAtLeast;
 
 
 public class JavaClientOldTest extends DatabaseTestCase {
@@ -42,11 +41,12 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
         final DBObject projection = new BasicDBObject("name", 1).append("count", 1);
 
-        final DBObject group = new BasicDBObject().append("_id", "$name").append("docsPerName", new BasicDBObject("$sum", 1)).append(
-            "countPerName", new BasicDBObject("$sum", "$count"));
+        final DBObject group = new BasicDBObject().append("_id", "$name")
+            .append("docsPerName", new BasicDBObject("$sum", 1))
+            .append("countPerName", new BasicDBObject("$sum", "$count"));
 
-        final AggregationOutput out = collection.aggregate(Arrays.<DBObject>asList(new BasicDBObject("$project", projection), 
-            new BasicDBObject("$group", group)));
+        final AggregationOutput out = collection.aggregate(
+            Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group)));
 
         final Map<String, DBObject> results = new HashMap<String, DBObject>();
         for (DBObject result : out.results()) {
@@ -73,6 +73,43 @@ public class JavaClientOldTest extends DatabaseTestCase {
     public void testAggregationCursor() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
 
+        final List<DBObject> pipeline = prepareData();
+        
+        verify(pipeline, AggregationOptions.builder()
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .allowDiskUsage(true)
+            .build());
+
+        verify(pipeline, AggregationOptions.builder()
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.INLINE)
+            .allowDiskUsage(true)
+            .build());
+        
+        verify(pipeline, AggregationOptions.builder()
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build());
+    }
+
+    @Test()
+    public void dollarOut() {
+        String aggCollection = "aggCollection";
+        database.getCollection(aggCollection).drop();
+        Assert.assertEquals(0, database.getCollection(aggCollection).count()); 
+        
+        final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        pipeline.add(new BasicDBObject("$out", aggCollection));
+        verify(pipeline, AggregationOptions.builder()
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build());
+        Assert.assertEquals(2, database.getCollection(aggCollection).count()); 
+    }
+
+    public List<DBObject> prepareData() {
+        collection.remove(new BasicDBObject());
+        
         final DBObject foo = new BasicDBObject("name", "foo").append("count", 5);
         final DBObject bar = new BasicDBObject("name", "bar").append("count", 2);
         final DBObject baz = new BasicDBObject("name", "foo").append("count", 7);
@@ -80,24 +117,13 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
         final DBObject projection = new BasicDBObject("name", 1).append("count", 1);
 
-        final DBObject group = new BasicDBObject().append("_id", "$name").append("docsPerName", new BasicDBObject("$sum", 1)).append(
-            "countPerName", new BasicDBObject("$sum", "$count"));
-
-        verify(projection, group, AggregationOptions.builder()
-            .batchSize(1)
-            .outputMode(AggregationOptions.OutputMode.CURSOR)
-            .allowDiskUsage(true)
-            .build());
-        verify(projection, group, AggregationOptions.builder()
-            .batchSize(1)
-            .outputMode(AggregationOptions.OutputMode.INLINE)
-            .allowDiskUsage(true)
-            .build());
-        verify(projection, group, AggregationOptions.builder().batchSize(1).outputMode(AggregationOptions.OutputMode.CURSOR).build());
+        final DBObject group = new BasicDBObject().append("_id", "$name")
+            .append("docsPerName", new BasicDBObject("$sum", 1))
+            .append("countPerName", new BasicDBObject("$sum", "$count"));
+        return Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
     }
 
-    private void verify(final DBObject projection, final DBObject group, final AggregationOptions options) {
-        List<DBObject> pipeline = Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
+    private void verify(final List<DBObject> pipeline, final AggregationOptions options) {
         final MongoCursor out = collection.aggregate(pipeline, options, ReadPreference.primary());
 
         final Map<String, DBObject> results = new HashMap<String, DBObject>();

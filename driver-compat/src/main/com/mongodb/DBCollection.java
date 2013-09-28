@@ -1148,7 +1148,7 @@ public class DBCollection {
         pipeline.add(firstOp);
         Collections.addAll(pipeline, additionalOps);
         return aggregate(pipeline);
-        }
+    }
 
     /**
      * Method implements aggregation framework.
@@ -1169,7 +1169,9 @@ public class DBCollection {
     public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
         AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
 
-        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
+        List<Document> stages = preparePipeline(pipeline, options);
+
+        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline, options),  
                     getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false, readPreference.toNew());
         
         org.mongodb.MongoCursor<Document> cursor = operation.execute();
@@ -1191,25 +1193,38 @@ public class DBCollection {
 
     public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
         final ReadPreference preference) {
-        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
-            getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false, preference.toNew()).execute();
+        List<Document> stages = preparePipeline(pipeline, options);
+        Document last = stages.get(stages.size() - 1);
+        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
+            options.toNew(), getBufferPool(), getSession(), false, preference.toNew()).execute();
 
-        return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
-            @Override
-            public DBObject apply(final Document document) {
-                return toDBObject(document);
-            }
-        }));
+        String outCollection = last.getString("$out");
+        if (outCollection != null) {
+            DBCollection collection = database.getCollection(outCollection);
+            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, preference));
+        } else {
+            return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
+                @Override
+                public DBObject apply(final Document document) {
+                    return toDBObject(document);
+                }
+            }));
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private List<Document> preparePipeline(final List<DBObject> pipeline) {
+    private List<Document> preparePipeline(final List<DBObject> pipeline, final AggregationOptions options) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }
         List<Document> stages = new ArrayList<Document>();
         for (final DBObject op : pipeline) {
             stages.add(toDocument(op));
+        }
+        
+        if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE && stages.get(stages.size() - 1)
+            .getString("$out") != null) {
+            throw new MongoException("$out can not be used with inlined aggregations");
         }
         
         return stages;
