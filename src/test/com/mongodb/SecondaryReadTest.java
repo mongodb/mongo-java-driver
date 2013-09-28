@@ -248,6 +248,7 @@ public class SecondaryReadTest extends TestCase {
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
         for (final TestHost testHost : pHosts) {
             final Mongo mongoHost = new MongoClient(new MongoClientURI("mongodb://"+testHost.hostnameAndPort+"/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
+            mongoHost.setReadPreference(ReadPreference.nearest());
             try {
                 final CommandResult serverStatusResult
                 = mongoHost.getDB("com_mongodb_unittest_SecondaryReadTest").command(new BasicDBObject("serverStatus", 1));

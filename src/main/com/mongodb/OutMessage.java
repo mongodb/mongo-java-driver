@@ -71,16 +71,20 @@ class OutMessage extends BasicBSONEncoder {
         return om;
     }
 
-    static OutMessage query( DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields ){
-        return query( collection, options, numToSkip, batchSize, query, fields, ReadPreference.primary() );
+    static OutMessage query( DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields,
+                             int maxBSONObjectSize){
+        return query(collection, options, numToSkip, batchSize, query, fields, ReadPreference.primary(),
+                     DefaultDBEncoder.FACTORY.create(), maxBSONObjectSize);
     }
 
-    static OutMessage query( DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref ){
-        return query( collection, options, numToSkip, batchSize, query, fields, readPref, DefaultDBEncoder.FACTORY.create());
+    static OutMessage query(DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields,
+                             ReadPreference readPref, DBEncoder enc) {
+        return query(collection, options, numToSkip, batchSize, query, fields, readPref, enc, 0);
     }
 
-    static OutMessage query( DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields, ReadPreference readPref, DBEncoder enc ){
-        OutMessage om =  new OutMessage(collection, enc, query, options, readPref);
+    static OutMessage query( DBCollection collection , int options , int numToSkip , int batchSize , DBObject query , DBObject fields,
+                             ReadPreference readPref, DBEncoder enc, int maxBSONObjectSize ){
+        OutMessage om =  new OutMessage(collection, enc, query, options, readPref, maxBSONObjectSize);
         om.writeQuery(fields, numToSkip, batchSize);
 
         return om;
@@ -113,21 +117,24 @@ class OutMessage extends BasicBSONEncoder {
     }
 
     private OutMessage(final DBCollection collection, final Mongo m, final OpCode opCode, final DBEncoder enc) {
-        this(collection, m, opCode, enc, null, -1, null);
+        this(collection, m, opCode, enc, null, -1, null, 0);
     }
 
     private OutMessage(final DBCollection collection, final OpCode opCode, final DBEncoder enc, final DBObject query) {
-        this(collection, collection.getDB().getMongo(), opCode, enc, query, 0, null);
+        this(collection, collection.getDB().getMongo(), opCode, enc, query, 0, null, 0);
     }
 
-    private OutMessage(final DBCollection collection, final DBEncoder enc, final DBObject query, final int options, final ReadPreference readPref) {
-        this(collection, collection.getDB().getMongo(), OpCode.OP_QUERY, enc, query, options, readPref);
+    private OutMessage(final DBCollection collection, final DBEncoder enc, final DBObject query, final int options,
+                       final ReadPreference readPref, int maxBSONObjectSize ) {
+        this(collection, collection.getDB().getMongo(), OpCode.OP_QUERY, enc, query, options, readPref, maxBSONObjectSize);
     }
 
-    private OutMessage(final DBCollection collection, final Mongo m, OpCode opCode, final DBEncoder enc, final DBObject query, final int options, final ReadPreference readPref) {
+    private OutMessage(final DBCollection collection, final Mongo m, OpCode opCode, final DBEncoder enc, final DBObject query,
+                       final int options, final ReadPreference readPref, int maxBSONObjectSize ) {
         _collection = collection;
         _mongo = m;
         _encoder = enc;
+        _maxBSONObjectSize = maxBSONObjectSize;
 
         _buffer = _mongo._bufferPool.get();
         _buffer.reset();
@@ -287,7 +294,7 @@ class OutMessage extends BasicBSONEncoder {
 
         // check max size
         int objectSize = _encoder.writeObject(_buf, o);
-        if (objectSize > Math.max(_mongo.getConnector().getMaxBsonObjectSize(), Bytes.MAX_OBJECT_SIZE)) {
+        if (objectSize > Math.max(_maxBSONObjectSize != 0 ? _maxBSONObjectSize : _mongo.getMaxBsonObjectSize(), Bytes.MAX_OBJECT_SIZE)) {
             throw new MongoInternalException("DBObject of size " + objectSize + " is over Max BSON size " + _mongo.getMaxBsonObjectSize());
         }
         _numDocuments++;
@@ -302,5 +309,6 @@ class OutMessage extends BasicBSONEncoder {
     private final int _queryOptions;
     private final DBObject _query;
     private final DBEncoder _encoder;
+    private final int _maxBSONObjectSize;
     private volatile int _numDocuments; // only one thread will modify this field, so volatile is sufficient synchronization
 }

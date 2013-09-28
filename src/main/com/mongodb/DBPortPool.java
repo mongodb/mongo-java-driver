@@ -49,6 +49,10 @@ public class DBPortPool extends SimplePool<DBPort> {
         return _addr.getPort();
     }
 
+    ServerAddress getAddress() {
+        return _addr;
+    }
+
     public synchronized ConnectionPoolStatisticsBean getStatistics() {
         return new ConnectionPoolStatisticsBean(getTotal(), getInUse(), getInUseConnections());
     }

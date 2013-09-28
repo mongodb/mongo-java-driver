@@ -106,7 +106,7 @@ public class DBTCPConnectorTest extends TestCase {
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
             DBPort requestPort = myPort.getPinnedRequestPortForThread();
             _connector.call(_db, _collection,
-                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), Bytes.MAX_OBJECT_SIZE),
                     null, 0);
             assertEquals(requestPort, myPort.getPinnedRequestPortForThread());
         } finally {
@@ -127,7 +127,8 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.requestStart();
         try {
             _connector.call(_db, _collection,
-                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary()),
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.secondary(),
+                                     DefaultDBEncoder.FACTORY.create()),
                     null, 0, ReadPreference.secondary(), null);
             DBPort requestPort = myPort.getPinnedRequestPortForThread();
             _connector.say(_db, createOutMessageForInsert(), WriteConcern.SAFE);
@@ -148,7 +149,7 @@ public class DBTCPConnectorTest extends TestCase {
         _connector.requestStart();
         try {
             _connector.call(_db, _collection,
-                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()),
+                    OutMessage.query(_collection, 0, 0, -1, new BasicDBObject(), new BasicDBObject(), Bytes.MAX_OBJECT_SIZE),
                     null, 0);
             assertNotNull(myPort.getPinnedRequestPortForThread());
         } finally {

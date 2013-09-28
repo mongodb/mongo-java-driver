@@ -624,12 +624,7 @@ public class Mongo {
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        int maxsize = _connector.getMaxBsonObjectSize();
-        if (maxsize == 0) {
-            _connector.initDirectConnection();
-        }
-        maxsize = _connector.getMaxBsonObjectSize();
-        return maxsize > 0 ? maxsize : Bytes.MAX_OBJECT_SIZE;
+        return _connector.getMaxBsonObjectSize();
     }
 
     boolean isMongosConnection() {

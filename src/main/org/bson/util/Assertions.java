@@ -32,7 +32,13 @@ public class Assertions {
 
     public static void isTrue(final String name, final boolean check) throws IllegalArgumentException {
         if (!check) {
-            throw new IllegalArgumentException(name);
+            throw new IllegalStateException(name);
+        }
+    }
+
+    public static void isTrueArgument(final String name, final boolean check) {
+        if (!check) {
+            throw new IllegalArgumentException("state should be: " + name);
         }
     }
 

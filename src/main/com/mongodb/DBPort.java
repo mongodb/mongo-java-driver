@@ -158,7 +158,7 @@ public class DBPort {
     }
 
     synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
-        OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null );
+        OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null, Bytes.MAX_OBJECT_SIZE );
         try {
             Response res = go( msg , db.getCollection( coll ) , null );
             return res;

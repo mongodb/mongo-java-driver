@@ -87,42 +87,50 @@ public class DBTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
-    public void testReadPreferenceObedience() {
+    public void testReadPreferenceObedience() throws UnknownHostException {
+        Mongo mongo =  new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
+
+        if (isStandalone(mongo)) {
+            return;
+        }
+
+        DB db = mongo.getDB(cleanupDB);
+
         DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
-        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("replace", "myColl"));
-        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", 1));
-        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.secondary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", null));
-        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("getnonce", 1);
-        assertEquals(ReadPreference.primaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("authenticate", 1);
-        assertEquals(ReadPreference.primaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("count", 1);
-        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.secondary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("count", 1);
-        assertEquals(ReadPreference.secondary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.secondary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("serverStatus", 1);
-        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, ReadPreference.secondary()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
 
         obj = new BasicDBObject("count", 1);
-        assertEquals(ReadPreference.primary(), _db.getCommandReadPreference(obj, null));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, null));
 
         obj = new BasicDBObject("collStats", 1);
-        assertEquals(ReadPreference.secondaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
+        assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
 
         obj = new BasicDBObject("text", 1);
-        assertEquals(ReadPreference.secondaryPreferred(), _db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
+        assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
     }
 
     @Test(groups = {"basic"})

@@ -13,8 +13,6 @@
 
 package com.mongodb;
 
-import com.mongodb.ReplicaSetStatus.ReplicaSetNode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +45,7 @@ public abstract class ReadPreference {
      */
     public abstract String getName();
 
-    abstract ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set);
+    abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
 
     /**
      * Preference to read from primary only.
@@ -80,8 +78,8 @@ public abstract class ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
-            return set.getMaster();
+        List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            return clusterDescription.getPrimaries();
         }
 
         @Override
@@ -137,8 +135,8 @@ public abstract class ReadPreference {
         }
 
         @Override
-        ReplicaSetNode getNode(ReplicaSetStatus.ReplicaSet set) {
-            return _pref.getNode(set);
+        List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            return _pref.choose(clusterDescription);
         }
 
         @Override
