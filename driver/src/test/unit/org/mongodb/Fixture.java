@@ -70,7 +70,7 @@ public final class Fixture {
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getCluster().getDescription().getPrimaries().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        return getCluster().getDescription().getAny().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     static class ShutdownHook extends Thread {
