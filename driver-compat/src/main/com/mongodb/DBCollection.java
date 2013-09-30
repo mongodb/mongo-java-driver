@@ -1191,17 +1191,25 @@ public class DBCollection {
         return aggregate(pipeline, options, getReadPreference());
     }
 
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @param options options to apply to the aggregation
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the aggregation operation's result set
+     */
     public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
-        final ReadPreference preference) {
+        final ReadPreference readPreference) {
         List<Document> stages = preparePipeline(pipeline, options);
         Document last = stages.get(stages.size() - 1);
         org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
-            options.toNew(), getBufferPool(), getSession(), false, preference.toNew()).execute();
+            options.toNew(), getBufferPool(), getSession(), false, readPreference.toNew()).execute();
 
         String outCollection = last.getString("$out");
         if (outCollection != null) {
             DBCollection collection = database.getCollection(outCollection);
-            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, preference));
+            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, readPreference));
         } else {
             return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
                 @Override
@@ -1221,12 +1229,7 @@ public class DBCollection {
         for (final DBObject op : pipeline) {
             stages.add(toDocument(op));
         }
-        
-        if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE && stages.get(stages.size() - 1)
-            .getString("$out") != null) {
-            throw new MongoException("$out can not be used with inlined aggregations");
-        }
-        
+                
         return stages;
     }
     

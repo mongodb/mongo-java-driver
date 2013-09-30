@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package com.mongodb;
 
 
@@ -26,8 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 
 public class JavaClientOldTest extends DatabaseTestCase {
@@ -74,7 +79,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
 
         final List<DBObject> pipeline = prepareData();
-        
+
         verify(pipeline, AggregationOptions.builder()
             .batchSize(1)
             .outputMode(AggregationOptions.OutputMode.CURSOR)
@@ -86,30 +91,53 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .outputMode(AggregationOptions.OutputMode.INLINE)
             .allowDiskUsage(true)
             .build());
-        
+
         verify(pipeline, AggregationOptions.builder()
             .batchSize(1)
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build());
     }
 
-    @Test()
-    public void dollarOut() {
+    @Test
+    public void inlineAndDollarOut() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         String aggCollection = "aggCollection";
-        database.getCollection(aggCollection).drop();
-        Assert.assertEquals(0, database.getCollection(aggCollection).count()); 
-        
+        database.getCollection(aggCollection)
+            .drop();
+        assertEquals(0, database.getCollection(aggCollection)
+            .count());
+        final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        pipeline.add(new BasicDBObject("$out", aggCollection));
+
+        final AggregationOutput out = collection.aggregate(pipeline);
+        assertFalse(out.results()
+            .iterator()
+            .hasNext());
+        assertEquals(2, database.getCollection(aggCollection)
+            .count());
+    }
+
+    @Test
+    public void dollarOut() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        String aggCollection = "aggCollection";
+        database.getCollection(aggCollection)
+            .drop();
+        Assert.assertEquals(0, database.getCollection(aggCollection)
+            .count());
+
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build());
-        Assert.assertEquals(2, database.getCollection(aggCollection).count()); 
+        assertEquals(2, database.getCollection(aggCollection)
+            .count());
     }
 
     public List<DBObject> prepareData() {
         collection.remove(new BasicDBObject());
-        
+
         final DBObject foo = new BasicDBObject("name", "foo").append("count", 5);
         final DBObject bar = new BasicDBObject("name", "bar").append("count", 2);
         final DBObject baz = new BasicDBObject("name", "foo").append("count", 7);
