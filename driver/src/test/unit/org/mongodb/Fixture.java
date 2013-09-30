@@ -22,6 +22,7 @@ import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerVersion;
 import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
@@ -66,6 +67,10 @@ public final class Fixture {
             defaultDatabase = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
         }
         return defaultDatabase;
+    }
+
+    public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
+        return getCluster().getDescription().getPrimaries().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     static class ShutdownHook extends Thread {
