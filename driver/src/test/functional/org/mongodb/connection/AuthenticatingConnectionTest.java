@@ -91,7 +91,8 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
                 new InternalStreamConnectionFactory("1", new SocketStreamFactory(SocketSettings.builder().build(),
                 getSSLSettings()), getBufferProvider(), Arrays.asList(MongoCredential.createMongoX509Credential(
-                "emailAddress=root@lazarus,CN=client,OU=Kernel,O=10Gen,L=New York City,ST=New York,C=US")), new NoOpConnectionListener());
+                "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US")), new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
+
     }
 }
