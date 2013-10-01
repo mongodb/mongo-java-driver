@@ -35,12 +35,12 @@ import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.FindUserOperation;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.RemoveUserOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
+import org.mongodb.operation.UserExistsOperation;
 import org.mongodb.session.Session;
 
 import java.util.HashSet;
@@ -377,7 +377,7 @@ public class DB {
     public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
         User user = new User(createMongoCRCredential(username, getName(), passwd), readOnly);
         org.mongodb.WriteResult writeResult;
-        if (new FindUserOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
+        if (new UserExistsOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
             writeResult = new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         else {

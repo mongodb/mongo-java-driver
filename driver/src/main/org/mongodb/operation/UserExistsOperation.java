@@ -40,13 +40,13 @@ import static org.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class FindUserOperation extends BaseOperation<Boolean> {
+public class UserExistsOperation extends BaseOperation<Boolean> {
 
     private final String database;
     private final String userName;
 
-    public FindUserOperation(final String source, final String userName, final BufferProvider bufferProvider,
-                             final Session session, final boolean closeSession) {
+    public UserExistsOperation(final String source, final String userName, final BufferProvider bufferProvider,
+                               final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);

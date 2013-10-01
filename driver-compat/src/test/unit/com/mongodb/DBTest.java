@@ -20,7 +20,7 @@ import category.ReplicaSet;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.operation.FindUserOperation;
+import org.mongodb.operation.UserExistsOperation;
 
 import java.net.UnknownHostException;
 
@@ -176,7 +176,7 @@ public class DBTest extends DatabaseTestCase {
         char[] password = "123".toCharArray();
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
-        assertTrue(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test
@@ -191,7 +191,7 @@ public class DBTest extends DatabaseTestCase {
         boolean newReadOnly = false;
         database.addUser(userName, newPassword, newReadOnly);
 
-        assertTrue(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test
@@ -204,7 +204,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertFalse(new FindUserOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertFalse(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }
 
     @Test

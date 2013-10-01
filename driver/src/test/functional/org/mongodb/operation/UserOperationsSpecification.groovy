@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -65,7 +67,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
 
         when:
-        def found = new FindUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
+        def found = new UserExistsOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
                 .execute()
 
         then:
