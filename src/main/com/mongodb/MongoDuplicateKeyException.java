@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,5 +30,9 @@ public class MongoDuplicateKeyException extends WriteConcernException {
      */
     MongoDuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
+    }
+
+    MongoDuplicateKeyException(final int code, final CommandResult commandResult) {
+        super(code, commandResult);
     }
 }

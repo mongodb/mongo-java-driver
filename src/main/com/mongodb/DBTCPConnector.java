@@ -20,6 +20,7 @@ package com.mongodb;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.rmi.server.Operation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -112,7 +113,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern ){
-        return say( db , m , concern , null );
+        return say( db , m , concern , (ServerAddress) null);
     }
 
     /**
@@ -125,45 +126,63 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ){
+        DBPort port = _myPort.get(true, ReadPreference.primary(), hostNeeded);
+
+        try {
+            return say(db, m, concern, port);
+        }
+        finally {
+            _myPort.done(port);
+        }
+    }
+
+    WriteResult say(final DB db, final OutMessage m, final WriteConcern concern, final DBPort port){
         isTrue("open", !_closed.get());
 
         if (concern == null) {
             throw new IllegalArgumentException("Write concern is null");
         }
 
-        DBPort port = _myPort.get(true, ReadPreference.primary(), hostNeeded);
-
         try {
-            port.checkAuth( db.getMongo() );
-            port.say( m );
-            if ( concern.callGetLastError() ){
-                return _checkWriteError( db , port , concern );
-            }
-            else {
-                return new WriteResult( db , port , concern );
-            }
-        }
-        catch ( IOException ioe ){
-            _myPort.error(port, ioe);
-
+            return doOperation(db, port, new DBPort.Operation<WriteResult>() {
+                @Override
+                public WriteResult execute() throws IOException {
+                    port.say( m );
+                    if ( concern.callGetLastError() ){
+                        return _checkWriteError( db , port , concern );
+                    }
+                    else {
+                        return new WriteResult( db , port , concern );
+                    }
+                }
+            });
+        } catch (MongoException.Network e) {
             if ( concern.raiseNetworkErrors() )
-                throw new MongoException.Network("Write operation to server " + port.host() + " failed on database " + db , ioe );
+                throw e;
 
             CommandResult res = new CommandResult(port.serverAddress());
             res.put( "ok" , false );
             res.put( "$err" , "NETWORK ERROR" );
             return new WriteResult( res , concern );
+        } finally {
+            m.doneWithMessage();
         }
-        catch ( MongoException me ){
-            throw me;
+    }
+
+    <T> T doOperation(final DB db, final DBPort port, final DBPort.Operation<T> operation){
+        isTrue("open", !_closed.get());
+
+        try {
+            port.checkAuth( db.getMongo() );
+            return operation.execute();
+        }
+        catch ( IOException ioe ){
+            _myPort.error(port, ioe);
+            throw  new MongoException.Network("Operation on server " + port.getAddress() + " failed" , ioe );
         }
         catch ( RuntimeException re ){
             _myPort.error(port, re);
             throw re;
-        }
-        finally {
-            _myPort.done(port);
-            m.doneWithMessage();
         }
     }
 
@@ -327,6 +346,18 @@ public class DBTCPConnector implements DBConnector {
             return false;
         }
         return cluster.getDescription().getConnectionMode() == Multiple && cluster.getDescription().getType() == ReplicaSet;
+    }
+
+    DBPort getPrimaryPort() {
+        return _myPort.get(true, ReadPreference.primary(), null);
+    }
+
+    void releasePort(final DBPort port) {
+        _myPort.done(port);
+    }
+
+    public ServerDescription getServerDescription(final ServerAddress address) {
+        return cluster.getDescription().getByServerAddress(address);
     }
 
     class MyPort {

@@ -501,12 +501,12 @@ public class JavaClientTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
-        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
-                MongoClientOptions.builder().writeConcern(WriteConcern.UNACKNOWLEDGED).build());
-
-        if (isStandalone(mongo)) {
+        if (isStandalone(cleanupMongo)) {
             return;
         }
+
+        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
+                MongoClientOptions.builder().writeConcern(WriteConcern.UNACKNOWLEDGED).build());
 
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(_db.getName()).getCollection( "imr2" );

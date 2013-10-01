@@ -55,8 +55,8 @@ public class MongoClientTest {
         Assert.assertEquals(customClientOptions, mc.getMongoClientOptions());
         mc.close();
 
-        mc = new MongoClient("127.0.0.1", 27018);
-        Assert.assertEquals(new ServerAddress("127.0.0.1", 27018), mc.getAddress());
+        mc = new MongoClient("127.0.0.1", 27017);
+        Assert.assertEquals(new ServerAddress("127.0.0.1", 27017), mc.getAddress());
         Assert.assertEquals(defaultOptions, mc.getMongoOptions());
         Assert.assertEquals(emptyCredentials, mc.getCredentialsList());
         Assert.assertEquals(MongoClientOptions.builder().build(), mc.getMongoClientOptions());

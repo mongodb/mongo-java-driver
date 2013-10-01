@@ -162,9 +162,9 @@ public abstract class OutputBuffer extends OutputStream {
     @Deprecated
     public void writeIntBE( int x ){
         write( x >> 24 );
-        write( x >> 16 );
-        write( x >> 8 );
-        write( x );
+        write(x >> 16);
+        write(x >> 8);
+        write(x);
     }
 
     /**
@@ -173,9 +173,9 @@ public abstract class OutputBuffer extends OutputStream {
     @Deprecated
     public void writeInt( int pos , int x ){
         final int save = getPosition();
-        setPosition( pos );
-        writeInt( x );
-        setPosition( save );
+        setPosition(pos);
+        writeInt(x);
+        setPosition(save);
     }
 
     public void writeLong( long x ){
@@ -186,11 +186,17 @@ public abstract class OutputBuffer extends OutputStream {
         write( (byte)(0xFFL & ( x >> 32 ) ) );
         write( (byte)(0xFFL & ( x >> 40 ) ) );
         write( (byte)(0xFFL & ( x >> 48 ) ) );
-        write( (byte)(0xFFL & ( x >> 56 ) ) );
+        write((byte) (0xFFL & (x >> 56)));
     }
 
     public void writeDouble( double x ){
-        writeLong( Double.doubleToRawLongBits( x ) );
+        writeLong(Double.doubleToRawLongBits(x));
+    }
+
+    public void writeString(final String str) {
+        writeInt(0); // making space for size
+        final int strLen = writeCString(str);
+        backpatchSize(strLen, 4);
     }
 
     /**
@@ -241,5 +247,36 @@ public abstract class OutputBuffer extends OutputStream {
 
     public String toString(){
         return getClass().getName() + " size: " + size() + " pos: " + getPosition() ;
+    }
+
+    /**
+     * Backpatches the size of a document or string by writing the size into the four bytes starting at getPosition() -
+     * size.
+     *
+     * @param size the size of the document/string
+     */
+    public void backpatchSize(final int size) {
+        writeInt(getPosition() - size, size);
+    }
+
+    /**
+     * Backpatches the size of a document or string by writing the size into the four bytes starting at {@code getPosition() - size -
+     * additionalOffset}.
+     *
+     * @param size             the size of the document/string
+     * @param additionalOffset the offset from the current position to write the size
+     */
+    protected void backpatchSize(final int size, final int additionalOffset) {
+        writeInt(getPosition() - size - additionalOffset, size);
+    }
+
+    /**
+     * Truncates the buffer to the given new position, which must be greater than or equal to zero and less than or equal to the current
+     * size of this buffer.
+     *
+     * @param newPosition the position to truncate this buffer to
+     */
+    public void truncateToPosition(int newPosition) {
+        setPosition(newPosition);
     }
 }

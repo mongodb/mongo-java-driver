@@ -37,7 +37,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,61 +85,40 @@ public class DBPort {
     }
 
     Response call( OutMessage msg , DBCollection coll ) throws IOException{
-        return go( msg, coll );
+        return call(msg, coll, null);
     }
 
-    Response call(OutMessage msg, DBCollection coll, DBDecoder decoder) throws IOException{
-        return go( msg, coll, false, decoder);
+    Response call(final OutMessage msg, final DBCollection coll, final DBDecoder decoder) throws IOException{
+        return doOperation(new Operation<Response>() {
+            @Override
+            public Response execute() throws IOException {
+                setActiveState(new ActiveState(msg));
+                msg.prepare();
+                msg.pipe(_out);
+                return new Response(_sa, coll, _in, (decoder == null ? _decoder : decoder));
+            }
+        });
     }
     
-    void say( OutMessage msg )
-        throws IOException {
-        go( msg , null );
-    }
-    
-    private synchronized Response go( OutMessage msg , DBCollection coll )
-        throws IOException {
-        return go( msg , coll , false, null );
-    }
-
-    private synchronized Response go( OutMessage msg , DBCollection coll , DBDecoder decoder ) throws IOException{
-        return go( msg, coll, false, decoder );
-    }
-
-    private synchronized Response go(OutMessage msg, DBCollection coll, boolean forceResponse, DBDecoder decoder)
-        throws IOException {
-
-        if ( _processingResponse ){
-            if ( coll == null ){
-                // this could be a pipeline and should be safe
+    void say( final OutMessage msg ) throws IOException {
+        doOperation(new Operation<Void>() {
+            @Override
+            public Void execute() throws IOException {
+                setActiveState(new ActiveState(msg));
+                msg.prepare();
+                msg.pipe( _out );
+                return null;
             }
-            else {
-                // this could cause issues since we're reading data off the wire
-                throw new IllegalStateException( "DBPort.go called and expecting a response while processing another response" );
-            }
-        }
+        });
+    }
+
+    synchronized <T> T doOperation(Operation<T> operation) throws IOException {
+        ensureOpen();
 
         _calls.incrementAndGet();
 
-        if ( _socket == null )
-            _open();
-        
-        if ( _out == null )
-            throw new IllegalStateException( "_out shouldn't be null" );
-
         try {
-            msg.prepare();
-            _activeState = new ActiveState(msg);
-            msg.pipe( _out );
-
-            if ( _pool != null )
-                _pool._everWorked = true;
-            
-            if ( coll == null && ! forceResponse )
-                return null;
-            
-            _processingResponse = true;
-            return new Response( _sa , coll , _in , (decoder == null ? _decoder : decoder) );
+            return operation.execute();
         }
         catch ( IOException ioe ){
             close();
@@ -148,20 +126,21 @@ public class DBPort {
         }
         finally {
             _activeState = null;
-            _processingResponse = false;
         }
     }
 
+    void setActiveState(ActiveState activeState) {
+        _activeState = activeState;
+    }
+
     synchronized CommandResult getLastError( DB db , WriteConcern concern ) throws IOException{
-        DBApiLayer dbAL = (DBApiLayer) db;
-        return runCommand( dbAL, concern.getCommand() );
+        return runCommand(db, concern.getCommand() );
     }
 
     synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
         OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null, Bytes.MAX_OBJECT_SIZE );
         try {
-            Response res = go( msg , db.getCollection( coll ) , null );
-            return res;
+            return call(msg, db.getCollection(coll), null);
         } finally {
             msg.doneWithMessage();
         }
@@ -194,21 +173,25 @@ public class DBPort {
         return getLastError(db, concern);
     }
 
+    OutputStream getOutputStream() throws IOException {
+        ensureOpen();
+        return _out;
+    }
+
+    InputStream getInputStream() throws IOException {
+        ensureOpen();
+        return _in;
+    }
+
     /**
      * makes sure that a connection to the server has been opened
      * @throws IOException
      */
-    public synchronized void ensureOpen()
-        throws IOException {
-        
+    public synchronized void ensureOpen() throws IOException {
+
         if ( _socket != null )
             return;
-        
-        _open();
-    }
 
-    void _open() throws IOException {
-        
         long sleepTime = 100;
 
         long maxAutoConnectRetryTime = CONN_RETRY_TIME_MS;
@@ -229,6 +212,9 @@ public class DBPort {
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
                 successfullyConnected = true;
+                if (_pool != null) {
+                    _pool._everWorked = true;
+                }
             }
             catch ( IOException e ){
                 close();
@@ -289,6 +275,10 @@ public class DBPort {
 
     int getLocalPort() {
         return _socket != null ? _socket.getLocalPort() : -1;
+    }
+
+    ServerAddress getAddress() {
+        return _addr;
     }
 
     /**
@@ -360,8 +350,6 @@ public class DBPort {
     private volatile InputStream _in;
     private volatile OutputStream _out;
 
-    private volatile boolean _processingResponse;
-
     // needs synchronization to ensure that modifications are published.
     final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
@@ -371,14 +359,45 @@ public class DBPort {
     private volatile Boolean useCRAMAuthenticationProtocol;
 
     class ActiveState {
-       ActiveState(final OutMessage outMessage) {
-           this.outMessage = outMessage;
-           this.startTime = System.nanoTime();
-           this.threadName = Thread.currentThread().getName();
-       }
-       final OutMessage outMessage;
-       final long startTime;
-       final String threadName;
+        ActiveState(final OutMessage outMessage) {
+            namespace = outMessage.getNamespace();
+            opCode = outMessage.getOpCode();
+            query = outMessage.getQuery() != null ? outMessage.getQuery().toString() : null;
+            numDocuments = outMessage.getNumDocuments();
+            this.startTime = System.nanoTime();
+            this.threadName = Thread.currentThread().getName();
+        }
+
+        String getNamespace() {
+            return namespace;
+        }
+
+        OutMessage.OpCode getOpCode() {
+            return opCode;
+        }
+
+        String getQuery() {
+            return query;
+        }
+
+        int getNumDocuments() {
+            return numDocuments;
+        }
+
+        long getStartTime() {
+            return startTime;
+        }
+
+        String getThreadName() {
+            return threadName;
+        }
+
+        private final String namespace;
+        private final OutMessage.OpCode opCode;
+        private final String query;
+        private int numDocuments;
+        private final long startTime;
+        private final String threadName;
     }
 
     class PlainAuthenticator extends SaslAuthenticator {
@@ -577,5 +596,9 @@ public class DBPort {
         }
 
         abstract CommandResult authenticate();
+    }
+
+    interface Operation<T> {
+        T execute() throws IOException;
     }
 }

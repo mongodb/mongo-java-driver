@@ -38,14 +38,13 @@ public class SecondaryReadTest extends TestCase {
      */
     @Test(groups = {"basic"})
     public void testSecondaryReadBalance() throws Exception {
+        if (isStandalone(cleanupMongo)) {
+            return;
+        }
 
         final Mongo mongo = loadMongo();
 
         try {
-            if (isStandalone(mongo)) {
-                return;
-            }
-
             final List<TestHost> testHosts = extractHosts(mongo);
 
             final DBCollection col = loadCleanDbCollection(mongo);
@@ -73,11 +72,12 @@ public class SecondaryReadTest extends TestCase {
      */
     @Test(groups = {"basic"})
     public void testSecondaryReadCursor() throws Exception {
+        if (isStandalone(cleanupMongo)) {
+            return;
+        }
+
         final Mongo mongo = loadMongo();
         try {
-            if (isStandalone(mongo)) {
-                return;
-            }
 
             final List<TestHost> testHosts = extractHosts(mongo);
 

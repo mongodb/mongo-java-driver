@@ -130,13 +130,13 @@ public class DBTests extends TestCase {
 
     @Test
     public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
+        if (isStandalone(cleanupMongo)) {
+            return;
+        }
+
         Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
 
         try {
-            if (isStandalone(mongo)) {
-                return;
-            }
-
             String secondary = getASecondaryAsString(mongo);
             mongo.close();
             mongo = new MongoClient(secondary);

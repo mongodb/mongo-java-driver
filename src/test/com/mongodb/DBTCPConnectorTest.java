@@ -40,7 +40,12 @@ public class DBTCPConnectorTest extends TestCase {
 
     @BeforeClass
     public void beforeClass() throws UnknownHostException {
-        _mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost:27017"), new ServerAddress("localhost:27018")));
+        if (isStandalone(cleanupMongo)) {
+            _mongoClient = new MongoClient();
+        }
+        else {
+            _mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost:27017"), new ServerAddress("localhost:27018")));
+        }
         cleanupDB = "com_mongodb_DBTCPConnectorTest";
         _db = _mongoClient.getDB(cleanupDB);
         _collection = _db.getCollection("testCol");

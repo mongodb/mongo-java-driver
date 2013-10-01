@@ -101,6 +101,12 @@ public class PoolOutputBuffer extends OutputBuffer {
         _afterWrite();
     }
 
+    @Override
+    public void truncateToPosition(final int newPosition) {
+        setPosition(newPosition);
+        _end.reset(_cur);
+    }
+
     void _afterWrite(){
 
         if ( _cur.pos() < _end.pos() ){
@@ -142,6 +148,9 @@ public class PoolOutputBuffer extends OutputBuffer {
         for ( int i=-1; i<_fromPool.size(); i++ ){
             final byte[] b = _get( i );
             final int amt = _end.len( i );
+            if (amt == 0) {
+                break;
+            }
             out.write( b , 0 , amt );
             total += amt;
         }
@@ -193,7 +202,10 @@ public class PoolOutputBuffer extends OutputBuffer {
         int len( int which ){
             if ( which < x )
                 return BUF_SIZE;
-            return y;
+            else if (which == x)
+                return y;
+            else
+                return 0;
         }
 
         public String toString(){
@@ -238,7 +250,6 @@ public class PoolOutputBuffer extends OutputBuffer {
         }
         return new String( _mine , 0 , size() , encoding );
     }
-
 
     final byte[] _mine = new byte[BUF_SIZE];
     final char[] _chars = new char[BUF_SIZE];

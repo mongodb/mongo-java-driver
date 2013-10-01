@@ -81,7 +81,7 @@ public class DBPortTest extends TestCase {
 
         DBPort port = new DBPort(new ServerAddress("localhost", 50051), portPool, options);
         try {
-            port._open();
+            port.ensureOpen();
             fail("Open should fail");
         } catch (IOException e) {
             // should get exception

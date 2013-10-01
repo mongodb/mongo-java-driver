@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-// DBApiLayer.java
-
 package com.mongodb;
 
 import com.mongodb.util.JSON;
 import org.bson.BSONObject;
+import org.bson.io.PoolOutputBuffer;
 import org.bson.types.ObjectId;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 
 /** Database API
@@ -63,6 +66,11 @@ public class DBApiLayer extends DB {
         TRACE_LOGGER.log( TRACE_LEVEL , s );
     }
 
+    private Logger getLogger() {
+        return TRACE_LOGGER;
+    }
+
+
     static int chooseBatchSize(int batchSize, int limit, int fetched) {
         int bs = Math.abs(batchSize);
         int remaining = limit > 0 ? limit - fetched : 0;
@@ -89,7 +97,7 @@ public class DBApiLayer extends DB {
     /**
      * @param mongo the Mongo instance
      * @param name the database name
-     * @param connector the connector
+     * @param connector the connector.  This must be an instance of DBTCPConnector.
      */
     protected DBApiLayer( Mongo mongo, String name , DBConnector connector ){
         super( mongo, name );
@@ -100,7 +108,7 @@ public class DBApiLayer extends DB {
         _root = name;
         _rootPlusDot = _root + ".";
 
-        _connector = connector;
+        _connector = (DBTCPConnector) connector;
     }
 
     public void requestStart(){
@@ -231,13 +239,12 @@ public class DBApiLayer extends DB {
         }
 
         protected WriteResult insert(List<DBObject> list, boolean shouldApply , com.mongodb.WriteConcern concern, DBEncoder encoder ){
-
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
             if ( willTrace() ) {
                 for (DBObject o : list) {
-                    trace( "save:  " + _fullNameSpace + " " + JSON.serialize( o ) );
+                    trace( "save:  " + _fullNameSpace + " " + JSON.serialize(o) );
                 }
             }
 
@@ -252,32 +259,20 @@ public class DBApiLayer extends DB {
                 }
             }
 
-            WriteResult last = null;
-
-            int cur = 0;
-            int maxsize = _mongo.getMaxBsonObjectSize();
-            while ( cur < list.size() ) {
-
-               OutMessage om = OutMessage.insert( this , encoder, concern );
-
-               for ( ; cur < list.size(); cur++ ){
-                    DBObject o = list.get(cur);
-                    om.putObject( o );
-
-                    // limit for batch insert is 4 x maxbson on server, use 2 x to be safe
-                    if ( om.size() > 2 * maxsize ){
-                        cur++;
-                        break;
-                    }
+            DBPort port = _connector.getPrimaryPort();
+            try {
+                if (useWriteCommands(concern, port)) {
+                    return insertWithCommandProtocol(list, concern, encoder, port);
                 }
-
-                last = _connector.say( _db , om , concern );
+                else {
+                    return insertWithWriteProtocol(list, concern, encoder, port);
+                }
+            } finally {
+                _connector.releasePort(port);
             }
-
-            return last;
         }
 
-        public WriteResult remove( DBObject o , com.mongodb.WriteConcern concern, DBEncoder encoder ){
+        public WriteResult remove( DBObject query , com.mongodb.WriteConcern concern, DBEncoder encoder ){
 
             if (concern == null) {
                 throw new IllegalArgumentException("Write concern can not be null");
@@ -286,11 +281,19 @@ public class DBApiLayer extends DB {
             if (encoder == null)
                 encoder = DefaultDBEncoder.FACTORY.create();
 
-            if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( o ) );
+            if ( willTrace() ) trace( "remove: " + _fullNameSpace + " " + JSON.serialize( query ) );
 
-            OutMessage om = OutMessage.remove(this, encoder, o);
-
-            return _connector.say( _db , om , concern );
+            DBPort port = _connector.getPrimaryPort();
+            try {
+                if (useWriteCommands(concern, port)) {
+                    return removeWithCommandProtocol(Arrays.asList(new Remove(query)), concern, encoder, port);
+                }
+                else {
+                    return _connector.say(_db , OutMessage.remove(this, encoder, query), concern, port);
+                }
+            } finally {
+                _connector.releasePort(port);
+            }
         }
 
         @Override
@@ -343,9 +346,18 @@ public class DBApiLayer extends DB {
                 trace( "update: " + _fullNameSpace + " " + JSON.serialize( query ) + " " + JSON.serialize( o )  );
             }
 
-            OutMessage om = OutMessage.update(this, encoder, upsert, multi, query, o);
-
-            return _connector.say( _db , om , concern );
+            DBPort port = _connector.getPrimaryPort();
+            try {
+                if (useWriteCommands(concern, port)) {
+                    return updateWithCommandProtocol(Arrays.asList(new Update(query, o).multi(multi).upsert(upsert)), concern, encoder,
+                                                     port);
+                }
+                else {
+                    return _connector.say(_db, OutMessage.update(this, encoder, upsert, multi, query, o), concern, port);
+                }
+            } finally {
+                _connector.releasePort(port);
+            }
         }
 
         public void createIndex( final DBObject keys, final DBObject options, DBEncoder encoder ){
@@ -358,7 +370,162 @@ public class DBApiLayer extends DB {
                 full.put( k , options.get( k ) );
             full.put( "key" , keys );
 
-            DBApiLayer.this.doGetCollection( "system.indexes" ).insert(Arrays.asList(full), false, WriteConcern.SAFE, encoder);
+            DBApiLayer.this.doGetCollection( "system.indexes" ).insert(asList(full), false, WriteConcern.SAFE, encoder);
+        }
+
+        private WriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern, final DBEncoder encoder,
+                                                      final DBPort port) {
+            BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern, list,
+                                                                       DefaultDBEncoder.FACTORY.create(), encoder,
+                                                                       getMessageSettings(port.getAddress()));
+            return writeWithCommandProtocol(writeConcern, port, message);
+        }
+
+        private WriteResult removeWithCommandProtocol(final List<Remove> removeList, final WriteConcern writeConcern,
+                                                      final DBEncoder encoder,
+                                                      final DBPort port) {
+            BaseWriteCommandMessage message = new DeleteCommandMessage(getNamespace(), writeConcern, removeList,
+                                                                       DefaultDBEncoder.FACTORY.create(), encoder,
+                                                                       getMessageSettings(port.getAddress()));
+            return writeWithCommandProtocol(writeConcern, port, message);
+        }
+
+        private WriteResult updateWithCommandProtocol(final List<Update> updates, final WriteConcern writeConcern, final DBEncoder encoder,
+                                                      final DBPort port) {
+            BaseWriteCommandMessage message = new UpdateCommandMessage(getNamespace(), writeConcern, updates,
+                                                                       DefaultDBEncoder.FACTORY.create(), encoder,
+                                                                       getMessageSettings(port.getAddress()));
+            return writeWithCommandProtocol(writeConcern, port, message);
+        }
+
+        private WriteResult writeWithCommandProtocol(final WriteConcern writeConcern, final DBPort port,
+                                                     BaseWriteCommandMessage message) {
+            WriteResult writeResult = null;
+            MongoException lastException = null;
+            int batchNum = 0;
+            do {
+                batchNum++;
+                BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum, port);
+                try {
+                    writeResult = receiveMessage(writeConcern, port);
+                    if (willTrace() && nextMessage != null || batchNum > 1) {
+                        getLogger().fine(format("Received response for batch %d", batchNum));
+                    }
+                } catch (MongoException e) {
+                    lastException = e;
+                    if (!writeConcern.getContinueOnError()) {
+                        if (writeConcern.callGetLastError()) {
+                            throw e;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+                message = nextMessage;
+            } while (message != null);
+
+            if (writeConcern.callGetLastError() && lastException != null) {
+                throw lastException;
+            }
+
+            return writeConcern.callGetLastError() ? writeResult : null;
+        }
+
+        private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
+            return concern.callGetLastError() &&
+                   _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0;
+        }
+
+        private MessageSettings getMessageSettings(final ServerAddress address) {
+            ServerDescription serverDescription = _connector.getServerDescription(address);
+            return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
+                                                                                                                    .getMaxMessageSize())
+                                  .build();
+        }
+
+        private MongoNamespace getNamespace() {
+            return new MongoNamespace(getDB().getName(), getName());
+        }
+
+        private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum, final DBPort port) {
+            final PoolOutputBuffer buffer = new PoolOutputBuffer();
+            try {
+                final BaseWriteCommandMessage nextMessage = message.encode(buffer);
+                if (nextMessage != null || batchNum > 1) {
+                    getLogger().fine(format("Sending batch %d", batchNum));
+                }
+                _connector.doOperation(getDB(), port, new DBPort.Operation<Void>() {
+                    @Override
+                    public Void execute() throws IOException {
+                        buffer.pipe(port.getOutputStream());
+                        return null;
+                    }
+                });
+                return nextMessage;
+            } finally {
+                buffer.reset();
+            }
+        }
+
+        private WriteResult receiveMessage(final WriteConcern writeConcern, final DBPort port) {
+            return _connector.doOperation(getDB(), port, new DBPort.Operation<WriteResult>() {
+                @Override
+                public WriteResult execute() throws IOException {
+                    Response response = new Response(port.getAddress(), null, port.getInputStream(),
+                                                     DefaultDBDecoder.FACTORY.create());
+                    CommandResult writeCommandResult = new CommandResult(port.getAddress());
+                    writeCommandResult.putAll(response.get(0));
+                    throwOnWriteCommandFailure(writeCommandResult);
+                    return new WriteResult(writeCommandResult, writeConcern);
+                }
+            });
+        }
+
+        private void throwOnWriteCommandFailure(CommandResult writeCommandResult) {
+            if (!writeCommandResult.ok()) {
+                int code;
+                if (writeCommandResult.containsKey("errDetails")) {
+                    @SuppressWarnings("unchecked")
+                    List<DBObject> errDetails = (List<DBObject>) writeCommandResult.get("errDetails");
+                    code = (Integer) errDetails.get(errDetails.size() - 1).get("errCode");
+                } else {
+                    code = writeCommandResult.getInt("errCode");
+                }
+                if (code == 11000 || code == 11001 || code == 12582) {
+                    throw new MongoException.DuplicateKey(code, writeCommandResult);
+                } else {
+                    throw new WriteConcernException(code, writeCommandResult);
+                }
+            }
+        }
+
+
+        private WriteResult insertWithWriteProtocol(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder,
+                                                    final DBPort port) {
+            WriteResult last = null;
+
+            int cur = 0;
+            int maxsize = _mongo.getMaxBsonObjectSize();
+            while ( cur < list.size() ) {
+
+                OutMessage om = OutMessage.insert( this , encoder, concern );
+
+                for ( ; cur < list.size(); cur++ ){
+                    DBObject o = list.get(cur);
+                    om.putObject( o );
+
+                    // limit for batch insert is 4 x maxbson on server, use 2 x to be safe
+                    if ( om.size() > 2 * maxsize ){
+                        cur++;
+                        break;
+                    }
+                }
+
+                last = _connector.say( _db , om , concern, port);
+            }
+
+            return last;
         }
 
         final String _fullNameSpace;
@@ -564,7 +731,7 @@ public class DBApiLayer extends DB {
 
     final String _root;
     final String _rootPlusDot;
-    final DBConnector _connector;
+    final DBTCPConnector _connector;
     final ConcurrentHashMap<String,MyCollection> _collections = new ConcurrentHashMap<String,MyCollection>();
 
     ConcurrentLinkedQueue<DeadCursor> _deadCursorIds = new ConcurrentLinkedQueue<DeadCursor>();

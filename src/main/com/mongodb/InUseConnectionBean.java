@@ -37,12 +37,12 @@ public class InUseConnectionBean {
             numDocuments = 0;
         }
         else {
-            durationMS = TimeUnit.NANOSECONDS.toMillis(currentNanoTime - activeState.startTime);
-            namespace = activeState.outMessage.getNamespace();
-            opCode = activeState.outMessage.getOpCode();
-            query = activeState.outMessage.getQuery() != null ? activeState.outMessage.getQuery().toString() : null;
-            threadName = activeState.threadName;
-            numDocuments = activeState.outMessage.getNumDocuments();
+            durationMS = TimeUnit.NANOSECONDS.toMillis(currentNanoTime - activeState.getStartTime());
+            namespace = activeState.getNamespace();
+            opCode = activeState.getOpCode();
+            query = activeState.getQuery();
+            threadName = activeState.getThreadName();
+            numDocuments = activeState.getNumDocuments();
         }
         localPort = port.getLocalPort();
     }

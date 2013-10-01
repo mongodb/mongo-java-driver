@@ -88,11 +88,12 @@ public class DBTest extends TestCase {
 
     @Test(groups = {"basic"})
     public void testReadPreferenceObedience() throws UnknownHostException {
-        Mongo mongo =  new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
-
-        if (isStandalone(mongo)) {
+        if (isStandalone(cleanupMongo)) {
             return;
         }
+
+        Mongo mongo =  new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
+
 
         DB db = mongo.getDB(cleanupDB);
 
