@@ -1292,30 +1292,103 @@ public abstract class DBCollection {
     }
     
     /**
-     * performs an aggregation operation
+     * Method implements aggregation framework.
      *
-     * @param firstOp
-     *          requisite first operation to be performed in the aggregation pipeline
-     *            
-     * @param additionalOps
-     *          additional operations to be performed in the aggregation pipeline
-     * @return The aggregation operation's result set
-     * 
+     * @param firstOp       requisite first operation to be performed in the aggregation pipeline
+     * @param additionalOps additional operations to be performed in the aggregation pipeline
+     * @return the aggregation operation's result set
+     * @deprecated @see aggregate(List<DBObject>) instead
      */
-    public AggregationOutput aggregate( DBObject firstOp, DBObject ... additionalOps){
-        if (firstOp == null)
-            throw new IllegalArgumentException("aggregate can not accept null pipeline operation");
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
+        List<DBObject> pipeline = new ArrayList<DBObject>();
+        pipeline.add(firstOp);
+        Collections.addAll(pipeline, additionalOps);
+        return aggregate(pipeline);
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @return the aggregation's result set
+     */
+    public AggregationOutput aggregate(final List<DBObject> pipeline) {
+        return aggregate(pipeline, getReadPreference());
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @return the aggregation's result set
+     */
+    public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
+        AggregationOptions options = AggregationOptions.builder()
+                .outputMode(AggregationOptions.OutputMode.INLINE)
+                .build();
+
+        DBObject command = prepareCommand(pipeline, options);
+
+        CommandResult res = _db.command(command, getOptions(), readPreference);
         
-        DBObject command = new BasicDBObject("aggregate", _name );
+        return new AggregationOutput(command, res);
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     *
+     * @param pipeline       operations to be performed in the aggregation pipeline
+     * @param options       options to apply to the aggregation
+     * @return the aggregation operation's result set
+     */
+    public MongoCursor aggregate(final List<DBObject> pipeline, AggregationOptions options) {
+        return aggregate(pipeline, options, getReadPreference());
+    }
+
+    /**
+     * Method implements aggregation framework.
+     *
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @param options options to apply to the aggregation
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @return the aggregation operation's result set
+     */
+    public MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
+        final ReadPreference readPreference) {
         
-        List<DBObject> pipelineOps = new ArrayList<DBObject>();
-        pipelineOps.add(firstOp);
-        Collections.addAll(pipelineOps, additionalOps);
-        command.put( "pipeline", pipelineOps );
+        DBObject last = pipeline.get(pipeline.size() - 1);
         
-        CommandResult res = _db.command( command, getOptions(), getReadPreference() );
+        DBObject command = prepareCommand(pipeline, options);
+        
+        final CommandResult res = _db.command(command, getOptions(), readPreference);
         res.throwOnError();
-        return new AggregationOutput( command, res );
+
+        String outCollection = (String) last.get("$out");
+        if (outCollection != null) {
+            DBCollection collection = _db.getCollection(outCollection);
+            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary()));
+        } else {
+            return new ResultsCursor(res, this, options.getBatchSize());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
+        if (pipeline.isEmpty()) {
+            throw new MongoException("Aggregation pipelines can not be empty");
+        }
+              
+        DBObject command = new BasicDBObject("aggregate", _name );
+
+        command.put( "pipeline", pipeline);
+        if (options != null && options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
+            command.put("cursor", options.toDBObject());
+        }
+        
+        return command;
     }
 
     /**
@@ -1748,4 +1821,5 @@ public abstract class DBCollection {
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
     final private Set<String> _createdIndexes = new HashSet<String>();
+
 }

@@ -183,7 +183,7 @@ public class DBApiLayer extends DB {
         return _connector.authenticate(credentials);
     }
 
-    private static void throwOnQueryFailure(final Response res, final long cursor) {
+    static void throwOnQueryFailure(final Response res, final long cursor) {
         if ((res._flags & Bytes.RESULTFLAG_ERRSET) > 0) {
             BSONObject errorDocument = res.get(0);
             throw new MongoException(ServerError.getCode(errorDocument), ServerError.getMsg(errorDocument, null));
