@@ -113,7 +113,7 @@ public class TestCase extends MyAsserts {
         if (staticMongoClient == null) {
             try {
                 staticMongoClient = new MongoClient();
-                staticMongoClient.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+                staticMongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }

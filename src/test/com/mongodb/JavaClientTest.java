@@ -967,7 +967,8 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.insert( new BasicDBObject( "_id" , 1 ) );
-        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ),
+                                    false, false, WriteConcern.UNACKNOWLEDGED);
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
@@ -989,7 +990,8 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.insert( new BasicDBObject( "_id" , 1 ) );
-        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ),
+                                    false, false, WriteConcern.UNACKNOWLEDGED);
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
@@ -1005,7 +1007,8 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.insert( new BasicDBObject( "_id" , 1 ) );
-        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
+        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ),
+                                    false, false, WriteConcern.UNACKNOWLEDGED);
         assertEquals( 1 , res.getN() );
         assertTrue(res.isLazy());
 
@@ -1174,7 +1177,8 @@ public class JavaClientTest extends TestCase {
         } catch (IllegalArgumentException e) {}
 
         // this should work because it's a query
-        c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)));
+        c.update(new BasicDBObject("a", 1), new BasicDBObject("$set", new BasicDBObject("a.b", 1)), false, false,
+                 WriteConcern.UNACKNOWLEDGED);
     }
 
     @Test

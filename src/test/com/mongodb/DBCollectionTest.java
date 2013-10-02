@@ -45,7 +45,6 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start().add("x",3).add("y",3).get();
         c.insert(inserted1,inserted2);
-        c.insert(new DBObject[] {inserted1,inserted2});
     }
 
     @Test(groups = {"basic"})

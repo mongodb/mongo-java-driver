@@ -83,7 +83,7 @@ public class ErrorTest extends TestCase {
         assert(_db.getLastError().get("err") != null);
         assert(_db.getPreviousError().get("err") != null);
 
-        _db.getCollection("misc").insert(new BasicDBObject("foo", 1));
+        _db.getCollection("misc").insert(new BasicDBObject("foo", 1), WriteConcern.UNACKNOWLEDGED);
 
         assert(_db.getLastError().get("err") == null);
         assert(_db.getPreviousError().get("err") != null);
