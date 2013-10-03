@@ -45,19 +45,22 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testAggregation() {
-        final DBObject foo = new BasicDBObject("name", "foo").append("count", 5);
-        final DBObject bar = new BasicDBObject("name", "bar").append("count", 2);
-        final DBObject baz = new BasicDBObject("name", "foo").append("count", 7);
-        collection.insert(foo, bar, baz);
+        List<DBObject> pipeline = buildPipeline();
+        validate(pipeline);
+    }
 
-        final DBObject projection = new BasicDBObject("name", 1).append("count", 1);
+    @Test
+    public void testOldAggregationWithOut() {
+        List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
+        pipeline.add(new BasicDBObject("$out", "aggCollection"));
+        final AggregationOutput out = collection.aggregate(pipeline);
+        assertFalse(out.results().iterator().hasNext());
+        assertEquals(database.getCollection("aggCollection")
+                 .count(), 2);
+    }
 
-        final DBObject group = new BasicDBObject().append("_id", "$name")
-                .append("docsPerName", new BasicDBObject("$sum", 1))
-                .append("countPerName", new BasicDBObject("$sum", "$count"));
-
-        final AggregationOutput out = collection.aggregate(
-                Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group)));
+    private void validate(List<DBObject> pipeline) {
+        final AggregationOutput out = collection.aggregate(pipeline);
 
         final Map<String, DBObject> results = new HashMap<String, DBObject>();
         for (DBObject result : out.results()) {
@@ -78,6 +81,21 @@ public class AggregationTest extends TestCase {
         assertNotNull(aggregationCommand);
         assertEquals(aggregationCommand.get("aggregate"), collection.getName());
         assertNotNull(aggregationCommand.get("pipeline"));
+    }
+
+    private List<DBObject> buildPipeline() {
+        final DBObject foo = new BasicDBObject("name", "foo").append("count", 5);
+        final DBObject bar = new BasicDBObject("name", "bar").append("count", 2);
+        final DBObject baz = new BasicDBObject("name", "foo").append("count", 7);
+        collection.insert(foo, bar, baz);
+
+        final DBObject projection = new BasicDBObject("name", 1).append("count", 1);
+
+        final DBObject group = new BasicDBObject().append("_id", "$name")
+                .append("docsPerName", new BasicDBObject("$sum", 1))
+                .append("countPerName", new BasicDBObject("$sum", "$count"));
+
+        return Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
     }
 
     @Test
