@@ -21,6 +21,7 @@ import com.mongodb.util.TestCase;
 import com.mongodb.util.Util;
 import org.bson.BSON;
 import org.bson.Transformer;
+import org.bson.io.PoolOutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -40,6 +41,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 public class JavaClientTest extends TestCase {
 
@@ -898,10 +901,8 @@ public class JavaClientTest extends TestCase {
         assertEquals( x , o );
     }
 
-
     @Test
-    public void testLargeBulkInsert(){
-        // max size should be obtained from server
+    public void testBatchInsertSplitting(){
         int maxObjSize = _mongo.getMaxBsonObjectSize();
         DBCollection c = _db.getCollection( "largebulk" );
         c.drop();
@@ -917,10 +918,15 @@ public class JavaClientTest extends TestCase {
                    .add( "x" , s )
                    .get() );
         }
-        assertEquals( 0 , c.find().count() );
         c.insert( l );
         assertEquals(num, c.find().count());
+    }
 
+    @Test
+    public void testOversizedDocumentFailure() {
+        int maxObjSize = _mongo.getMaxBsonObjectSize();
+        DBCollection c = _db.getCollection( "OversizedDocument" );
+        c.drop();
         try {
             c.save( new BasicDBObject( "foo" , new Binary(new byte[maxObjSize]) ) );
             fail("Should not be able to save an object larger than maximum bson object size of " + maxObjSize);
@@ -928,7 +934,7 @@ public class JavaClientTest extends TestCase {
         catch ( MongoInternalException ie ) {
             assertEquals(-3, ie.getCode());
         }
-        assertEquals( num , c.find().count() );
+        assertEquals(0 , c.find().count() );
     }
 
     @Test
