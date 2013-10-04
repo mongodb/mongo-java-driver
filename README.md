@@ -41,3 +41,6 @@
 * Matthew Foemmel      git@foemmel.com
 * Jim Dickinson        jdickinson@shopwiki.com
 * Jorge Ortiz          jorge.ortiz@gmail.com
+* Brendan McAdams
+* Kristina Chodorow
+* Mike Dirolf
