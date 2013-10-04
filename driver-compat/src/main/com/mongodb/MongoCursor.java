@@ -18,25 +18,13 @@
 package com.mongodb;
 
 
-import org.mongodb.ServerCursor;
-
 import java.io.Closeable;
 import java.util.Iterator;
 
 
 public interface MongoCursor extends Iterator<DBObject>, Closeable {
 
-    ServerCursor getServerCursor();
+    long getCursorId();
 
-    @Override
-    void close();
-
-    @Override
-    boolean hasNext();
-
-    @Override
-    DBObject next();
-
-    @Override
-    void remove();
+    ServerAddress getServerAddress();
 }

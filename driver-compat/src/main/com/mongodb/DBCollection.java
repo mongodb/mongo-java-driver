@@ -1169,10 +1169,11 @@ public class DBCollection {
     public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
         AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
 
-        List<Document> stages = preparePipeline(pipeline, options);
+        List<Document> stages = preparePipeline(pipeline);
 
-        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline, options),  
-                    getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false, readPreference.toNew());
+        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
+                    getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false,
+            coerceReadPreference(readPreference, stages.get(stages.size() - 1).getString("$out") != null).toNew());
         
         org.mongodb.MongoCursor<Document> cursor = operation.execute();
         org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
@@ -1201,15 +1202,16 @@ public class DBCollection {
      */
     public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
         final ReadPreference readPreference) {
-        List<Document> stages = preparePipeline(pipeline, options);
-        Document last = stages.get(stages.size() - 1);
-        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
-            options.toNew(), getBufferPool(), getSession(), false, readPreference.toNew()).execute();
+        List<Document> stages = preparePipeline(pipeline);
 
-        String outCollection = last.getString("$out");
+        String outCollection = stages.get(stages.size() - 1).getString("$out");
+        ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
+        
+        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
+            options.toNew(), getBufferPool(), getSession(), false, activeReadPreference.toNew()).execute();
+
         if (outCollection != null) {
-            DBCollection collection = database.getCollection(outCollection);
-            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, readPreference));
+            return new DBCursorAdapter(new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, ReadPreference.primary()));
         } else {
             return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
                 @Override
@@ -1220,8 +1222,12 @@ public class DBCollection {
         }
     }
 
+    private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
+        return dollarOutPresent ? ReadPreference.primary() : readPreference;
+    }
+
     @SuppressWarnings("unchecked")
-    private List<Document> preparePipeline(final List<DBObject> pipeline, final AggregationOptions options) {
+    private List<Document> preparePipeline(final List<DBObject> pipeline) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }

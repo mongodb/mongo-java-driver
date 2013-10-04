@@ -27,6 +27,18 @@ class MongoCursorAdapter implements MongoCursor {
         this.cursor = cursor;
     }
 
+    @Override
+    public long getCursorId() {
+        return cursor.getServerCursor().getId();
+    }
+
+    @Override
+    public ServerAddress getServerAddress() {
+        org.mongodb.connection.ServerAddress address = cursor.getServerCursor()
+            .getAddress();
+        return new ServerAddress(address.getHost(), address.getPort());
+    }
+
     public ServerCursor getServerCursor() {
         return cursor.getServerCursor();
     }
