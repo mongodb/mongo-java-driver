@@ -160,7 +160,8 @@ public class AggregationTest extends TestCase {
         if (isStandalone(cleanupMongo)) {
             return;
         }
-        MongoClient rsClient = new MongoClient(asList(new ServerAddress("localhost"), new ServerAddress("localhost", 27018)));
+        ServerAddress primary = new ServerAddress("localhost");
+        MongoClient rsClient = new MongoClient(asList(primary, new ServerAddress("localhost", 27018)));
         DB rsDatabase = rsClient.getDB(database.getName());
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
         aggCollection.drop();
@@ -170,8 +171,30 @@ public class AggregationTest extends TestCase {
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.CURSOR)
                 .build();
-        verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertEquals(2, rsDatabase.getCollection("aggCollection").count());
+        assertEquals(primary, cursor.getServerAddress());
+    }
+    
+    @Test(enabled = false)
+    public void aggregateOnSecondary() throws UnknownHostException {
+        if (isStandalone(cleanupMongo)) {
+            return;
+        }
+        ServerAddress primary = new ServerAddress("localhost");
+        ServerAddress secondary = new ServerAddress("localhost", 27018);
+        MongoClient rsClient = new MongoClient(asList(primary, secondary));
+        DB rsDatabase = rsClient.getDB(database.getName());
+        rsDatabase.dropDatabase();
+        DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
+        aggCollection.drop();
+
+        final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        AggregationOptions options = AggregationOptions.builder()
+                .outputMode(OutputMode.INLINE)
+                .build();
+        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        assertNotEquals(primary, cursor.getServerAddress());
     }
 
     public List<DBObject> prepareData() {
@@ -198,16 +221,17 @@ public class AggregationTest extends TestCase {
         verify(pipeline, options, readPreference, collection);
     }
 
-    private void verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
-                        final DBCollection collection) {
-        final MongoCursor out = collection.aggregate(pipeline, options, readPreference);
+    private MongoCursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+                               final DBCollection collection) {
+        final MongoCursor cursor = collection.aggregate(pipeline, options, readPreference);
 
         final Map<String, DBObject> results = new HashMap<String, DBObject>();
-        while (out.hasNext()) {
-            DBObject next = out.next();
+        while (cursor.hasNext()) {
+            DBObject next = cursor.next();
             results.put((String) next.get("_id"), next);
         }
 
+        System.out.println("results = " + results);
 
         final DBObject fooResult = results.get("foo");
         assertNotNull(fooResult);
@@ -218,6 +242,8 @@ public class AggregationTest extends TestCase {
         assertNotNull(barResult);
         assertEquals(barResult.get("docsPerName"), 1);
         assertEquals(barResult.get("countPerName"), 2);
+        
+        return cursor;
     }
 
 }

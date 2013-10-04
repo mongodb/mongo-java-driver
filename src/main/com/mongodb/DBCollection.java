@@ -1371,7 +1371,8 @@ public abstract class DBCollection {
             DBCollection collection = _db.getCollection(outCollection);
             return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary()));
         } else {
-            return new ResultsCursor(res, this, options.getBatchSize());
+            Integer batchSize = options.getBatchSize();
+            return new ResultsCursor(res, this, batchSize == null ? 0 : batchSize);
         }
     }
 
