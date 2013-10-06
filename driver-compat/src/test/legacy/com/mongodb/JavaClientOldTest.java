@@ -140,6 +140,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
     public void dollarOutOnSecondary() throws UnknownHostException {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         ServerAddress primary = new ServerAddress("localhost");
         Mongo mongo = new MongoClient(
             Arrays.asList(primary, new ServerAddress("localhost", 27018), new ServerAddress("localhost", 27019)));
@@ -208,6 +209,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
     public void testOldAggregationWithOut() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -220,6 +222,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
     @Test
     public void testOldAggregationWithOutOnSecondary() throws UnknownHostException {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -228,7 +231,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .iterator()
             .hasNext());
         assertEquals(database.getCollection("aggCollection")
-            .count(), 2);
+                             .count(), 2);
         assertEquals(new ServerAddress("localhost"), out.getCommandResult()
             .getServerUsed());        
     }
