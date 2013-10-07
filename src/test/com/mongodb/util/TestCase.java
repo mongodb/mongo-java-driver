@@ -260,6 +260,7 @@ public class TestCase extends MyAsserts {
      */
     protected boolean serverIsAtLeastVersion(double version) {
         String serverVersion = (String) cleanupMongo.getDB("admin").command("serverStatus").get("version");
+        System.out.println("serverVersion = " + serverVersion);
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 
