@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -28,6 +29,7 @@ import static org.junit.Assert.fail;
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
  */
+@Ignore("Ignoring these until there's a way to remove race conditions")
 public class PooledConnectionProviderTest {
     private static final String CLUSTER_ID = "1";
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
