@@ -17,10 +17,10 @@
 package org.mongodb.connection;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +29,6 @@ import static org.junit.Assert.fail;
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
  */
-@Ignore("Ignoring these until there's a way to remove race conditions")
 public class PooledConnectionProviderTest {
     private static final String CLUSTER_ID = "1";
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
@@ -158,6 +157,7 @@ public class PooledConnectionProviderTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build(),
                 new NoOpConnectionPoolListener());
 
@@ -179,6 +179,7 @@ public class PooledConnectionProviderTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxWaitQueueSize(1)
+                        .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build(),
                 new NoOpConnectionPoolListener());
 
@@ -201,7 +202,7 @@ public class PooledConnectionProviderTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
-                        .maintenanceFrequency(5, MILLISECONDS)
+                        .maintenanceInitialDelay(5, MINUTES)
                         .maxWaitQueueSize(1)
                         .build(),
                 new NoOpConnectionPoolListener());

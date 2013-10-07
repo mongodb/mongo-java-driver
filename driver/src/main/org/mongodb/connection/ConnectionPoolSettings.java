@@ -32,6 +32,7 @@ public class ConnectionPoolSettings {
     private final long maxWaitTimeMS;
     private final long maxConnectionLifeTimeMS;
     private final long maxConnectionIdleTimeMS;
+    private final long maintenanceInitialDelayMS;
     private final long maintenanceFrequencyMS;
 
     public static Builder builder() {
@@ -45,6 +46,7 @@ public class ConnectionPoolSettings {
         private long maxWaitTimeMS;
         private long maxConnectionLifeTimeMS;
         private long maxConnectionIdleTimeMS;
+        private long maintenanceInitialDelayMS;
         private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
 
         // CHECKSTYLE:OFF
@@ -75,6 +77,11 @@ public class ConnectionPoolSettings {
 
         public Builder maxConnectionIdleTime(final long maxConnectionIdleTime, final TimeUnit timeUnit) {
             this.maxConnectionIdleTimeMS = MILLISECONDS.convert(maxConnectionIdleTime, timeUnit);
+            return this;
+        }
+
+        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay, final TimeUnit timeUnit) {
+            this.maintenanceInitialDelayMS = MILLISECONDS.convert(maintenanceInitialDelay, timeUnit);
             return this;
         }
 
@@ -113,6 +120,10 @@ public class ConnectionPoolSettings {
         return timeUnit.convert(maxConnectionIdleTimeMS, MILLISECONDS);
     }
 
+    public long getMaintenanceInitialDelay(final TimeUnit timeUnit) {
+        return timeUnit.convert(maintenanceInitialDelayMS, MILLISECONDS);
+    }
+
     public long getMaintenanceFrequency(final TimeUnit timeUnit) {
         return timeUnit.convert(maintenanceFrequencyMS, MILLISECONDS);
     }
@@ -140,6 +151,9 @@ public class ConnectionPoolSettings {
         if (minSize != that.minSize) {
             return false;
         }
+        if (maintenanceInitialDelayMS != that.maintenanceInitialDelayMS) {
+            return false;
+        }
         if (maintenanceFrequencyMS != that.maintenanceFrequencyMS) {
             return false;
         }
@@ -161,6 +175,7 @@ public class ConnectionPoolSettings {
         result = 31 * result + (int) (maxWaitTimeMS ^ (maxWaitTimeMS >>> 32));
         result = 31 * result + (int) (maxConnectionLifeTimeMS ^ (maxConnectionLifeTimeMS >>> 32));
         result = 31 * result + (int) (maxConnectionIdleTimeMS ^ (maxConnectionIdleTimeMS >>> 32));
+        result = 31 * result + (int) (maintenanceInitialDelayMS ^ (maintenanceInitialDelayMS >>> 32));
         result = 31 * result + (int) (maintenanceFrequencyMS ^ (maintenanceFrequencyMS >>> 32));
         return result;
     }
@@ -174,6 +189,7 @@ public class ConnectionPoolSettings {
                 + ", maxWaitTimeMS=" + maxWaitTimeMS
                 + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
                 + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
+                + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
                 + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
                 + '}';
     }
@@ -193,6 +209,7 @@ public class ConnectionPoolSettings {
         maxWaitTimeMS = builder.maxWaitTimeMS;
         maxConnectionLifeTimeMS = builder.maxConnectionLifeTimeMS;
         maxConnectionIdleTimeMS = builder.maxConnectionIdleTimeMS;
+        maintenanceInitialDelayMS = builder.maintenanceInitialDelayMS;
         maintenanceFrequencyMS = builder.maintenanceFrequencyMS;
     }
 }

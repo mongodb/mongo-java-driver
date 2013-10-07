@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -36,6 +38,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.MINUTES
 
 class PooledConnectionProviderSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
@@ -175,6 +178,7 @@ class PooledConnectionProviderSpecification extends Specification {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
+                        .maintenanceInitialDelay(5, MINUTES)
                         .build(),
                 new NoOpConnectionPoolListener())
 
@@ -192,6 +196,7 @@ class PooledConnectionProviderSpecification extends Specification {
                 ConnectionPoolSettings.builder()
                         .maxSize(10)
                         .minSize(5)
+                        .maintenanceInitialDelay(5, MINUTES)
                         .build(),
                 new NoOpConnectionPoolListener())
 

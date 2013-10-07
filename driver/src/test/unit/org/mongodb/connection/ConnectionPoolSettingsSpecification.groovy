@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import spock.lang.Specification
@@ -34,14 +36,15 @@ class ConnectionPoolSettingsSpecification extends Specification {
         settings.getMaxConnectionLifeTime(MILLISECONDS) == maxConnectionLifeTimeMS
         settings.getMaxConnectionIdleTime(MILLISECONDS) == maxConnectionIdleTimeMS
         settings.minSize == minSize
-        settings.getMaintenanceFrequency(MILLISECONDS) == maintancanceFrequencyMS
+        settings.getMaintenanceInitialDelay(MILLISECONDS) == maintenanceInitialDelayMS
+        settings.getMaintenanceFrequency(MILLISECONDS) == maintenanceFrequencyMS
 
         where:
         settings                              | maxWaitTime | maxSize | maxWaitQueueSize | maxConnectionLifeTimeMS |
-                maxConnectionIdleTimeMS | minSize | maintancanceFrequencyMS
+                maxConnectionIdleTimeMS | minSize | maintenanceInitialDelayMS | maintenanceFrequencyMS
         ConnectionPoolSettings
                 .builder()
-                .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 60000
+                .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 0 | 60000
         ConnectionPoolSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
@@ -52,9 +55,11 @@ class ConnectionPoolSettingsSpecification extends Specification {
                 .maxConnectionIdleTime(
                 51, SECONDS)
                 .minSize(1)
+                .maintenanceInitialDelay(
+                5, SECONDS)
                 .maintenanceFrequency(
                 1000, SECONDS)
-                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 1000000
+                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
     }
 
     def 'should throw exception on invalid argument'() {
@@ -84,6 +89,12 @@ class ConnectionPoolSettingsSpecification extends Specification {
 
         when:
         ConnectionPoolSettings.builder().maxSize(1).minSize(2).build()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        ConnectionPoolSettings.builder().maintenanceInitialDelay(-1, MILLISECONDS).build()
 
         then:
         thrown(IllegalStateException)
