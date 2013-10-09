@@ -30,11 +30,14 @@ public class AggregationTest extends TestCase {
         collection = database.getCollection(getClass().getSimpleName() + System.nanoTime());
     }
 
-    @BeforeMethod
     public void checkServerVersion() {
         if (!serverIsAtLeastVersion(2.5)) {
             throw new SkipException("Server is too old for this test.");
         }
+    }
+
+    @BeforeMethod
+    private void dropCollection() {
         collection.drop();
     }
 
@@ -45,18 +48,30 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testAggregation() {
-        List<DBObject> pipeline = buildPipeline();
-        validate(pipeline);
+        validate(buildPipeline());
     }
 
     @Test
     public void testOldAggregationWithOut() {
+        checkServerVersion();
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final AggregationOutput out = collection.aggregate(pipeline);
         assertFalse(out.results().iterator().hasNext());
         assertEquals(database.getCollection("aggCollection")
-                 .count(), 2);
+                .count(), 2);
+    }
+
+    @Test
+    public void testExplain() {
+        checkServerVersion();
+        List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
+        pipeline.add(new BasicDBObject("$out", "aggCollection"));
+        final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
+                .allowDiskUsage(true)
+                .outputMode(AggregationOptions.OutputMode.CURSOR)
+                .build());
+        assertTrue(out.keySet().iterator().hasNext());
     }
 
     private void validate(List<DBObject> pipeline) {
@@ -100,6 +115,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testAggregationCursor() {
+        checkServerVersion();
         final List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
@@ -121,7 +137,8 @@ public class AggregationTest extends TestCase {
     }
 
     @Test
-    public void inlineAndDollarOut() {
+    public void testInlineAndDollarOut() {
+        checkServerVersion();
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
@@ -139,7 +156,8 @@ public class AggregationTest extends TestCase {
     }
 
     @Test
-    public void dollarOut() {
+    public void testDollarOut() {
+        checkServerVersion();
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
@@ -156,9 +174,10 @@ public class AggregationTest extends TestCase {
     }
 
     @Test
-    public void dollarOutOnSecondary() throws UnknownHostException {
+    public void testDollarOutOnSecondary() throws UnknownHostException {
+        checkServerVersion();
         if (isStandalone(cleanupMongo)) {
-            return;
+            throw new SkipException("Test can only be run against replica sets.");
         }
         ServerAddress primary = new ServerAddress("localhost");
         MongoClient rsClient = new MongoClient(asList(primary, new ServerAddress("localhost", 27018)));
@@ -175,9 +194,10 @@ public class AggregationTest extends TestCase {
         assertEquals(2, rsDatabase.getCollection("aggCollection").count());
         assertEquals(primary, cursor.getServerAddress());
     }
-    
+
     @Test(enabled = false)
-    public void aggregateOnSecondary() throws UnknownHostException {
+    public void testAggregateOnSecondary() throws UnknownHostException {
+        checkServerVersion();
         if (isStandalone(cleanupMongo)) {
             return;
         }
@@ -231,8 +251,6 @@ public class AggregationTest extends TestCase {
             results.put((String) next.get("_id"), next);
         }
 
-        System.out.println("results = " + results);
-
         final DBObject fooResult = results.get("foo");
         assertNotNull(fooResult);
         assertEquals(fooResult.get("docsPerName"), 2);
@@ -242,7 +260,7 @@ public class AggregationTest extends TestCase {
         assertNotNull(barResult);
         assertEquals(barResult.get("docsPerName"), 1);
         assertEquals(barResult.get("countPerName"), 2);
-        
+
         return cursor;
     }
 

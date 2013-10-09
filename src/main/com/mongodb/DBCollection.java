@@ -1376,6 +1376,23 @@ public abstract class DBCollection {
         }
     }
 
+    /**
+     * Return the explain plan for the aggregation pipeline.
+     *
+     * @param pipeline the aggregation pipeline to explain
+     * @param options the options to apply to the aggregation
+     * @return the command result.  The explain output may change from release to
+     *         release, so best to simply log this.
+     */
+    public CommandResult explainAggregate(List<DBObject> pipeline, AggregationOptions options) {
+        DBObject command = prepareCommand(pipeline, options);
+        command.put("explain", true);
+        final CommandResult res = _db.command(command, getOptions(), getReadPreference());
+        res.throwOnError();
+        
+        return res;
+    }
+    
     @SuppressWarnings("unchecked")
     private DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
         if (pipeline.isEmpty()) {
