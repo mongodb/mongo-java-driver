@@ -39,7 +39,7 @@ public class ClassModel<T> {
         this.theClass = theClass;
 
         for (final Field field : theClass.getDeclaredFields()) {
-            final String fieldName = field.getName();
+            String fieldName = field.getName();
             if (isValidFieldName(fieldName) && !isTransient(field.getModifiers())) {
                 this.validatedFields.add(field);
                 this.validatedFieldsByName.put(fieldName, field);
@@ -61,7 +61,7 @@ public class ClassModel<T> {
     }
 
     public Field getDeclaredField(final String fieldName) throws NoSuchFieldException {
-        final Field field = validatedFieldsByName.get(fieldName);
+        Field field = validatedFieldsByName.get(fieldName);
         if (field == null) {
             throw new NoSuchFieldException(String.format("Field %s not found on class %s", fieldName, theClass));
         }

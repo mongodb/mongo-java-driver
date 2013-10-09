@@ -45,15 +45,13 @@ class QueryResultCallback<T> extends ResponseCallback {
         try {
             if (e != null) {
                 throw e;
-            }
-            else if (responseBuffers.getReplyHeader().isQueryFailure()) {
+            } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
-                        getRequestId()).getDocuments().get(0);
+                                                                    getRequestId()).getDocuments().get(0);
                 throw new MongoQueryFailureException(getConnection().getServerAddress(), errorDocument);
-            }
-            else {
+            } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
-                        getConnection().getServerAddress());
+                                            getConnection().getServerAddress());
             }
         } catch (MongoException me) {
             exceptionResult = me;

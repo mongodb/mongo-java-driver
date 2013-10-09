@@ -23,7 +23,9 @@ import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
 import java.io.Closeable;
-import java.util.Arrays;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 public abstract class BSONReader implements Closeable {
     private final BSONReaderSettings settings;
@@ -69,13 +71,6 @@ public abstract class BSONReader implements Closeable {
 
     protected void setState(final State newState) {
         state = newState;
-    }
-
-    /**
-     * @return The current name.
-     */
-    protected String getCurrentName() {
-        return currentName;
     }
 
     protected void setCurrentName(final String newName) {
@@ -473,15 +468,13 @@ public abstract class BSONReader implements Closeable {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     *
      * @throws BSONInvalidOperationException
      */
     protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
                                            final BSONContextType... validContextTypes) {
-        final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        final String message = String.format(
-                "%s can only be called when ContextType is %s, not when ContextType is %s.",
-                methodName, validContextTypesString, actualContextType);
+        String validContextTypesString = StringUtils.join(" or ", asList(validContextTypes));
+        String message = format("%s can only be called when ContextType is %s, not when ContextType is %s.",
+                                methodName, validContextTypesString, actualContextType);
         throw new BSONInvalidOperationException(message);
     }
 
@@ -490,14 +483,12 @@ public abstract class BSONReader implements Closeable {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     *
      * @throws BSONInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
-        final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
-        final String message = String.format(
-                "%s can only be called when State is %s, not when State is %s.",
-                methodName, validStatesString, state);
+        String validStatesString = StringUtils.join(" or ", asList(validStates));
+        String message = format("%s can only be called when State is %s, not when State is %s.",
+                                methodName, validStatesString, state);
         throw new BSONInvalidOperationException(message);
     }
 
@@ -519,9 +510,8 @@ public abstract class BSONReader implements Closeable {
             throwInvalidState(methodName, State.VALUE);
         }
         if (currentBSONType != requiredBSONType) {
-            final String message = String.format(
-                    "%s can only be called when CurrentBSONType is %s, not when CurrentBSONType is %s.",
-                    methodName, requiredBSONType, currentBSONType);
+            String message = format("%s can only be called when CurrentBSONType is %s, not when CurrentBSONType is %s.",
+                                    methodName, requiredBSONType, currentBSONType);
             throw new BSONInvalidOperationException(message);
         }
     }
@@ -530,16 +520,14 @@ public abstract class BSONReader implements Closeable {
      * Verifies the name of the current element.
      *
      * @param expectedName The expected name.
-     *
      * @throws BSONSerializationException
      */
     protected void verifyName(final String expectedName) {
         readBSONType();
-        final String actualName = readName();
+        String actualName = readName();
         if (!actualName.equals(expectedName)) {
-            final String message = String.format(
-                    "Expected element name to be '%s', not '%s'.",
-                    expectedName, actualName);
+            String message = format("Expected element name to be '%s', not '%s'.",
+                                    expectedName, actualName);
             throw new BSONSerializationException(message);
         }
     }

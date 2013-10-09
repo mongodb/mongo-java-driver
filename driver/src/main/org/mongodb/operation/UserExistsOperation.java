@@ -54,9 +54,9 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
 
     @Override
     public Boolean execute() {
-        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0){
+        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false, new PrimaryServerSelector());
+        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(options);
+        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
             return executeCommandBasedProtocol(serverConnectionProvider);
         } else {
             return executeCollectionBasedProtocol(serverConnectionProvider);
@@ -64,11 +64,11 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
     }
 
     private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        CommandProtocol commandProtocol = new CommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
+        CommandResult commandResult = new CommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
                                                               new DocumentCodec(), getBufferProvider(),
                                                               serverConnectionProvider.getServerDescription(),
-                                                              serverConnectionProvider.getConnection(), true);
-        CommandResult commandResult = commandProtocol.execute();
+                                                              serverConnectionProvider.getConnection(), true)
+                                          .execute();
         return !commandResult.getResponse().get("users", List.class).isEmpty();
     }
 
@@ -76,8 +76,14 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         QueryResult<Document> result = new QueryProtocol<Document>(namespace,
-                new Find(new Document("user", userName)), codec, codec, getBufferProvider(),
-                serverConnectionProvider.getServerDescription(), serverConnectionProvider.getConnection(), true).execute();
+                                                                   new Find(new Document("user", userName)),
+                                                                   codec,
+                                                                   codec,
+                                                                   getBufferProvider(),
+                                                                   serverConnectionProvider.getServerDescription(),
+                                                                   serverConnectionProvider.getConnection(),
+                                                                   true)
+                                           .execute();
         return !result.getResults().isEmpty();
     }
 }

@@ -26,10 +26,9 @@ public class BSONTimestampTest {
 
     @Test
     public void testComparable() {
+        int currTime = (int) (System.currentTimeMillis() / 1000);
 
-        final int currTime = (int) (System.currentTimeMillis() / 1000);
-
-        final BSONTimestamp t1 = new BSONTimestamp(currTime, 1);
+        BSONTimestamp t1 = new BSONTimestamp(currTime, 1);
         BSONTimestamp t2 = new BSONTimestamp(currTime, 1);
 
         assertEquals(0, t1.compareTo(t2));

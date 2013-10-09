@@ -46,38 +46,38 @@ public class ReadPreferenceTest {
 
     @Before
     public void setUp() throws IOException {
-        final Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
-        final Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");
-        final Tags tags3 = new Tags("foo", "1").append("bar", "2").append("baz", "3");
+        Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
+        Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");
+        Tags tags3 = new Tags("foo", "1").append("bar", "2").append("baz", "3");
 
-        final long acceptableLatencyMS = 15;
-        final long bestPingTime = 50;
-        final long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
-        final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
+        long acceptableLatencyMS = 15;
+        long bestPingTime = 50;
+        long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
+        long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
         primary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27017))
-                .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
-                .ok(true)
-                .type(ServerType.ReplicaSetPrimary)
-                .tags(tags1)
-                .maxDocumentSize(FOUR_MEG).build();
+                                   .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                   .ok(true)
+                                   .type(ServerType.ReplicaSetPrimary)
+                                   .tags(tags1)
+                                   .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27018))
-                .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
-                .ok(true)
-                .type(ServerType.ReplicaSetSecondary)
-                .tags(tags2)
-                .maxDocumentSize(FOUR_MEG).build();
+                                     .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                     .ok(true)
+                                     .type(ServerType.ReplicaSetSecondary)
+                                     .tags(tags2)
+                                     .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27019))
-                .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
-                .ok(true)
-                .type(ServerType.ReplicaSetSecondary)
-                .tags(tags3)
-                .maxDocumentSize(FOUR_MEG)
-                .build();
+                                          .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                          .ok(true)
+                                          .type(ServerType.ReplicaSetSecondary)
+                                          .tags(tags3)
+                                          .maxDocumentSize(FOUR_MEG)
+                                          .build();
 
-        final List<ServerDescription> nodeList = new ArrayList<ServerDescription>();
+        List<ServerDescription> nodeList = new ArrayList<ServerDescription>();
         nodeList.add(primary);
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
@@ -117,12 +117,12 @@ public class ReadPreferenceTest {
         assertTrue(candidates.isEmpty());
 
         // Test secondary mode, with tags
-//        List<String> stringList = Arrays.asList("foo", "bar");
-//        List<TagMap> tagsList2 = Arrays.asList(TagMap.singleton("foo", "bar"), TagMap.singleton("bar", "baz"));
-//        List<Map<String, String>> tagsList3 = Arrays.asList(Collections.singletonMap("foo", "1"));
-//        List<Map<String, String>> tagsList4 = Arrays.asList(Collections.<String, String>singletonMap("foo", "1"));
+        //        List<String> stringList = Arrays.asList("foo", "bar");
+        //        List<TagMap> tagsList2 = Arrays.asList(TagMap.singleton("foo", "bar"), TagMap.singleton("bar", "baz"));
+        //        List<Map<String, String>> tagsList3 = Arrays.asList(Collections.singletonMap("foo", "1"));
+        //        List<Map<String, String>> tagsList4 = Arrays.asList(Collections.<String, String>singletonMap("foo", "1"));
 
-        final List<Tags> tagsList = Arrays.asList(new Tags("foo", "1"),  new Tags("bar", "2"));
+        List<Tags> tagsList = Arrays.asList(new Tags("foo", "1"), new Tags("bar", "2"));
         ReadPreference pref = ReadPreference.secondary(tagsList);
         assertTrue(pref.toString().startsWith("secondary"));
 
@@ -136,9 +136,9 @@ public class ReadPreferenceTest {
         assertTrue(pref.choose(set).get(0).equals(secondary));
 
         pref = ReadPreference.secondary(new Tags("madeup", "1"));
-//        assertEquals(Collections.<String, String>singletonMap("mode", "secondary")
-//                .append("tags", Arrays.asList(Collections.<String, String>singletonMap("madeup", "1"))),
-//                pref.toDocument());
+        //        assertEquals(Collections.<String, String>singletonMap("mode", "secondary")
+        //                .append("tags", Arrays.asList(Collections.<String, String>singletonMap("madeup", "1"))),
+        //                pref.toDocument());
         assertTrue(pref.choose(set).isEmpty());
     }
 
@@ -171,7 +171,7 @@ public class ReadPreferenceTest {
         assertTrue(pref.choose(set).get(0).equals(primary));
 
         pref = ReadPreference.secondaryPreferred();
-        final List<ServerDescription> candidates = pref.choose(set);
+        List<ServerDescription> candidates = pref.choose(set);
         assertEquals(2, candidates.size());
         assertTrue(candidates.contains(secondary));
         assertTrue(candidates.contains(otherSecondary));
@@ -191,9 +191,9 @@ public class ReadPreferenceTest {
         assertTrue(pref.choose(set).get(0).equals(secondary));
 
         pref = ReadPreference.nearest(new Tags("madeup", "1"));
-//        assertEquals(new Tags("mode", "nearest")
-//         .append("tags", Arrays.asList(new Tags("madeup", "1"))),
-//                pref.toDocument());
+        //        assertEquals(new Tags("mode", "nearest")
+        //         .append("tags", Arrays.asList(new Tags("madeup", "1"))),
+        //                pref.toDocument());
         assertTrue(pref.choose(set).isEmpty());
     }
 
@@ -205,12 +205,12 @@ public class ReadPreferenceTest {
         assertEquals(ReadPreference.secondaryPreferred(), ReadPreference.valueOf("secondaryPreferred"));
         assertEquals(ReadPreference.nearest(), ReadPreference.valueOf("nearest"));
 
-        final Tags first = new Tags("dy", "ny");
+        Tags first = new Tags("dy", "ny");
         assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
         assertEquals(ReadPreference.primaryPreferred(first),
-                ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
+                     ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
         assertEquals(ReadPreference.secondaryPreferred(Arrays.asList(first)),
-                ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
+                     ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
         assertEquals(ReadPreference.nearest(first), ReadPreference.valueOf("nearest", Arrays.asList(first)));
     }
 
@@ -222,7 +222,7 @@ public class ReadPreferenceTest {
         assertEquals("secondaryPreferred", ReadPreference.secondaryPreferred().getName());
         assertEquals("nearest", ReadPreference.nearest().getName());
 
-        final Tags first = new Tags("dy", "ny");
+        Tags first = new Tags("dy", "ny");
         assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
         assertEquals(ReadPreference.primaryPreferred(first), ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
         assertEquals(ReadPreference.secondaryPreferred(first), ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));

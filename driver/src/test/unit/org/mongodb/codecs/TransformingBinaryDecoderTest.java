@@ -31,7 +31,7 @@ public class TransformingBinaryDecoderTest {
 
     @Test
     public void testDecode() {
-        final StringWriter stringWriter = new StringWriter();
+        StringWriter stringWriter = new StringWriter();
         JSONWriter writer = new JSONWriter(stringWriter);
         writer.writeStartDocument();
         writer.writeBinaryData("subtype0", new Binary(BSONBinarySubType.Binary, new byte[]{0}));

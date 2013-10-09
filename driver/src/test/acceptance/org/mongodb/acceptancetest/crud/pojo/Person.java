@@ -53,7 +53,7 @@ public class Person {
             return false;
         }
 
-        final Person person = (Person) o;
+        Person person = (Person) o;
 
         return !(_id != null ? !_id.equals(person._id) : person._id != null)
                && firstName.equals(person.firstName)

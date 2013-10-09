@@ -59,8 +59,8 @@ public final class CommandReadPreferenceHelper {
     /**
      * Returns the recommended read preference for the given command when run against a cluster with the given description.
      *
-     * @param commandDocument the Document describing the command to run
-     * @param readPreference the ReadPreference requested for the command
+     * @param commandDocument    the Document describing the command to run
+     * @param readPreference     the ReadPreference requested for the command
      * @param clusterDescription the cluster description
      * @return the recommended read preference for the given command when run against a cluster with the given description
      */
@@ -70,7 +70,7 @@ public final class CommandReadPreferenceHelper {
             return readPreference;
         }
 
-        final boolean primaryRequired = isPrimaryRequired(commandDocument);
+        boolean primaryRequired = isPrimaryRequired(commandDocument);
 
         if (primaryRequired) {
             return ReadPreference.primary();
@@ -80,9 +80,9 @@ public final class CommandReadPreferenceHelper {
     }
 
     private static boolean isPrimaryRequired(final Document commandDocument) {
-        final String commandName = commandDocument.keySet().iterator().next().toLowerCase();
+        String commandName = commandDocument.keySet().iterator().next().toLowerCase();
 
-        final boolean primaryRequired;
+        boolean primaryRequired;
 
         // explicitly check for inline mapreduce commands
         if (commandName.equals("mapreduce")) {

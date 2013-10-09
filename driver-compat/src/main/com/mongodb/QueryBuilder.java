@@ -70,8 +70,8 @@ public class QueryBuilder {
     }
 
     /**
-     * Equivalent to <code>QueryBuilder.put(key)</code>. Intended for compound query chains to be more readable, e.g.
-     * {@code QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
+     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g. {@code
+     * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
      * @return this
@@ -245,7 +245,7 @@ public class QueryBuilder {
      */
     public QueryBuilder withinCenter(final double x, final double y, final double radius) {
         addOperand(QueryOperators.WITHIN,
-                  new BasicDBObject(QueryOperators.CENTER, new Object[]{new Double[]{x, y}, radius}));
+                   new BasicDBObject(QueryOperators.CENTER, new Object[]{new Double[]{x, y}, radius}));
         return this;
     }
 
@@ -258,7 +258,7 @@ public class QueryBuilder {
      */
     public QueryBuilder near(final double x, final double y) {
         addOperand(QueryOperators.NEAR,
-                  new Double[]{x, y});
+                   new Double[]{x, y});
         return this;
     }
 
@@ -272,7 +272,7 @@ public class QueryBuilder {
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance) {
         addOperand(QueryOperators.NEAR,
-                  new Double[]{x, y, maxDistance});
+                   new Double[]{x, y, maxDistance});
         return this;
     }
 
@@ -285,7 +285,7 @@ public class QueryBuilder {
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude) {
         addOperand(QueryOperators.NEAR_SPHERE,
-                  new Double[]{longitude, latitude});
+                   new Double[]{longitude, latitude});
         return this;
     }
 
@@ -299,7 +299,7 @@ public class QueryBuilder {
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.NEAR_SPHERE,
-                  new Double[]{longitude, latitude, maxDistance});
+                   new Double[]{longitude, latitude, maxDistance});
         return this;
     }
 
@@ -313,8 +313,8 @@ public class QueryBuilder {
      */
     public QueryBuilder withinCenterSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.WITHIN,
-                  new BasicDBObject(QueryOperators.CENTER_SPHERE,
-                                   new Object[]{new Double[]{longitude, latitude}, maxDistance}));
+                   new BasicDBObject(QueryOperators.CENTER_SPHERE,
+                                     new Object[]{new Double[]{longitude, latitude}, maxDistance}));
         return this;
     }
 
@@ -329,7 +329,7 @@ public class QueryBuilder {
      */
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
-                  new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
+                   new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
         return this;
     }
 
@@ -344,7 +344,7 @@ public class QueryBuilder {
             throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
         }
         addOperand(QueryOperators.WITHIN,
-                  new BasicDBObject(QueryOperators.POLYGON, points));
+                   new BasicDBObject(QueryOperators.POLYGON, points));
         return this;
     }
 
@@ -394,7 +394,7 @@ public class QueryBuilder {
     }
 
     /**
-     * Creates a <code>DBObject</code> query to be used for the driver's find operations
+     * Creates a {@code DBObject} query to be used for the driver's find operations
      *
      * @return Returns a DBObject query instance
      * @throws RuntimeException if a key does not have a matching operand
@@ -408,36 +408,35 @@ public class QueryBuilder {
         return _query;
     }
 
-    private void addOperand(final String op, Object value) {
+    private void addOperand(final String op, final Object value) {
+        Object valueToPut = value;
         if (op == null) {
             if (_hasNot) {
-                value = new BasicDBObject(QueryOperators.NOT, value);
+                valueToPut = new BasicDBObject(QueryOperators.NOT, valueToPut);
                 _hasNot = false;
             }
-            _query.put(_currentKey, value);
+            _query.put(_currentKey, valueToPut);
             return;
         }
 
-        final Object storedValue = _query.get(_currentKey);
+        Object storedValue = _query.get(_currentKey);
         BasicDBObject operand;
         if (!(storedValue instanceof DBObject)) {
             operand = new BasicDBObject();
             if (_hasNot) {
-                final DBObject notOperand = new BasicDBObject(QueryOperators.NOT, operand);
+                DBObject notOperand = new BasicDBObject(QueryOperators.NOT, operand);
                 _query.put(_currentKey, notOperand);
                 _hasNot = false;
-            }
-            else {
+            } else {
                 _query.put(_currentKey, operand);
             }
-        }
-        else {
+        } else {
             operand = (BasicDBObject) _query.get(_currentKey);
             if (operand.get(QueryOperators.NOT) != null) {
                 operand = (BasicDBObject) operand.get(QueryOperators.NOT);
             }
         }
-        operand.put(op, value);
+        operand.put(op, valueToPut);
     }
 
     @SuppressWarnings("serial")

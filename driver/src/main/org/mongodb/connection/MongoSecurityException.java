@@ -29,8 +29,9 @@ public class MongoSecurityException extends MongoClientException {
 
     /**
      * The constructor
+     *
      * @param message the message
-     * @param cause the cause
+     * @param cause   the cause
      */
     public MongoSecurityException(final MongoCredential credential, final String message, final Throwable cause) {
         super(message, cause);

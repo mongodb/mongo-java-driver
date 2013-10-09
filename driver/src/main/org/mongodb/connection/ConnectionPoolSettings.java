@@ -137,7 +137,7 @@ public class ConnectionPoolSettings {
             return false;
         }
 
-        final ConnectionPoolSettings that = (ConnectionPoolSettings) o;
+        ConnectionPoolSettings that = (ConnectionPoolSettings) o;
 
         if (maxConnectionIdleTimeMS != that.maxConnectionIdleTimeMS) {
             return false;
@@ -183,15 +183,15 @@ public class ConnectionPoolSettings {
     @Override
     public String toString() {
         return "ConnectionPoolSettings{"
-                + "maxSize=" + maxSize
-                + ", minSize=" + minSize
-                + ", maxWaitQueueSize=" + maxWaitQueueSize
-                + ", maxWaitTimeMS=" + maxWaitTimeMS
-                + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
-                + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
-                + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
-                + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
-                + '}';
+               + "maxSize=" + maxSize
+               + ", minSize=" + minSize
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
+               + ", maxWaitTimeMS=" + maxWaitTimeMS
+               + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
+               + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
+               + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
+               + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
+               + '}';
     }
 
     ConnectionPoolSettings(final Builder builder) {

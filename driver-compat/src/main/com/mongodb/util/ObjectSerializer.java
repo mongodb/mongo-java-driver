@@ -21,7 +21,7 @@ package com.mongodb.util;
  */
 public interface ObjectSerializer {
     /**
-     * Serializes <code>obj</code> into <code>buf</code>.
+     * Serializes {@code obj} into {@code buf}.
      *
      * @param obj object to serialize
      * @param buf buffer to serialize into
@@ -29,7 +29,8 @@ public interface ObjectSerializer {
     void serialize(Object obj, StringBuilder buf);
 
     /**
-     * Serializes <code>obj</code>.
+     * Serializes {@code obj}.
+     *
      * @param obj object to serialize
      * @return the serialized object
      */

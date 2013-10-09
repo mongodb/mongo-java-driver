@@ -90,12 +90,11 @@ public class BSONBinaryReader extends BSONReader {
                     setState(State.END_OF_DOCUMENT);
                     return BSONType.END_OF_DOCUMENT;
                 default:
-                    final String message = format("BSONType EndOfDocument is not valid when ContextType is %s.",
-                            context.contextType);
+                    String message = format("BSONType EndOfDocument is not valid when ContextType is %s.",
+                                            context.contextType);
                     throw new BSONSerializationException(message);
             }
-        }
-        else {
+        } else {
             switch (context.contextType) {
                 case ARRAY:
                     buffer.skipCString(); // ignore array element names
@@ -120,14 +119,14 @@ public class BSONBinaryReader extends BSONReader {
         setState(getNextState());
 
         int numBytes = buffer.readInt32();
-        final byte type = buffer.readByte();
+        byte type = buffer.readByte();
 
         if (type == BSONBinarySubType.OldBinary.getValue()) {
             buffer.readInt32();
             numBytes -= 4;
         }
 
-        final byte[] data = buffer.readBytes(numBytes);
+        byte[] data = buffer.readBytes(numBytes);
         return new Binary(type, data);
     }
 
@@ -178,10 +177,10 @@ public class BSONBinaryReader extends BSONReader {
         checkPreconditions("readInt64", BSONType.JAVASCRIPT_WITH_SCOPE);
         setState(getNextState());
 
-        final int startPosition = buffer.getPosition(); // position of size field
-        final int size = readSize();
+        int startPosition = buffer.getPosition(); // position of size field
+        int size = readSize();
         context = new Context(context, BSONContextType.JAVASCRIPT_WITH_SCOPE, startPosition, size);
-        final String code = buffer.readString();
+        String code = buffer.readString();
 
         setState(State.SCOPE_DOCUMENT);
         return code;
@@ -245,8 +244,8 @@ public class BSONBinaryReader extends BSONReader {
     public BSONTimestamp readTimestamp() {
         checkPreconditions("readTimestamp", BSONType.TIMESTAMP);
         setState(getNextState());
-        final int increment = buffer.readInt32();
-        final int time = buffer.readInt32();
+        int increment = buffer.readInt32();
+        int time = buffer.readInt32();
         return new BSONTimestamp(time, increment);
     }
 
@@ -260,8 +259,8 @@ public class BSONBinaryReader extends BSONReader {
     public void readStartArray() {
         checkPreconditions("readStartArray", BSONType.ARRAY);
 
-        final int startPosition = buffer.getPosition(); // position of size field
-        final int size = readSize();
+        int startPosition = buffer.getPosition(); // position of size field
+        int size = readSize();
         context = new Context(context, BSONContextType.ARRAY, startPosition, size);
         setState(State.TYPE);
     }
@@ -270,10 +269,10 @@ public class BSONBinaryReader extends BSONReader {
     public void readStartDocument() {
         checkPreconditions("readStartDocument", BSONType.DOCUMENT);
 
-        final BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT)
-                                            ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
-        final int startPosition = buffer.getPosition(); // position of size field
-        final int size = readSize();
+        BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT)
+                                      ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
+        int startPosition = buffer.getPosition(); // position of size field
+        int size = readSize();
         context = new Context(context, contextType, startPosition, size);
         setState(State.TYPE);
     }
@@ -408,12 +407,16 @@ public class BSONBinaryReader extends BSONReader {
                 skip = readSize();
                 break;
             case SYMBOL:
-                skip = readSize(); break;
-            case TIMESTAMP: skip = 8;
+                skip = readSize();
                 break;
-            case UNDEFINED: skip = 0;
+            case TIMESTAMP:
+                skip = 8;
                 break;
-            default: throw new BSONException("Unexpected BSON type: " + getCurrentBSONType());
+            case UNDEFINED:
+                skip = 0;
+                break;
+            default:
+                throw new BSONException("Unexpected BSON type: " + getCurrentBSONType());
         }
         buffer.skip(skip);
 
@@ -442,9 +445,9 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     private int readSize() {
-        final int size = buffer.readInt32();
+        int size = buffer.readInt32();
         if (size < 0) {
-            final String message = format("Size %s is not valid because it is negative.", size);
+            String message = format("Size %s is not valid because it is negative.", size);
             throw new BSONSerializationException(message);
         }
         return size;
@@ -452,13 +455,11 @@ public class BSONBinaryReader extends BSONReader {
 
 
     private static class Context {
-        // private fields
         private final Context parentContext;
         private final BSONContextType contextType;
         private final int startPosition;
         private final int size;
 
-        // constructors
         Context(final Context parentContext, final BSONContextType contextType, final int startPosition, final int size) {
             this.parentContext = parentContext;
             this.contextType = contextType;
@@ -466,19 +467,19 @@ public class BSONBinaryReader extends BSONReader {
             this.size = size;
         }
 
-        // public methods
-        /// <summary>
-        /// Creates a clone of the context.
-        /// </summary>
-        /// <returns>A clone of the context.</returns>
+        /**
+         * Creates a clone of the context.
+         *
+         * @return A clone of the context.
+         */
         public Context copy() {
             return new Context(parentContext, contextType, startPosition, size);
         }
 
         Context popContext(final int position) {
-            final int actualSize = position - startPosition;
+            int actualSize = position - startPosition;
             if (actualSize != size) {
-                final String message = format("Expected size to be %d, not %d.", size, actualSize);
+                String message = format("Expected size to be %d, not %d.", size, actualSize);
                 throw new BSONSerializationException(message);
             }
             return parentContext;

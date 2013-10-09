@@ -29,10 +29,10 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldFindASingleDocumentById() {
-        final int numberOfDocuments = 10;
+        int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoView<Document> filteredCollection = collection.find(new Document("_id", 3));
+        MongoView<Document> filteredCollection = collection.find(new Document("_id", 3));
 
         assertThat(filteredCollection.count(), is(1L));
         for (final Document document : filteredCollection) {
@@ -42,11 +42,11 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSortDescending() {
-        final int numberOfDocuments = 10;
+        int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         //TODO: I think we can make this prettier
-        final MongoCursor<Document> filteredAndSortedCollection = collection.find().sort(new Document("_id", -1)).get();
+        MongoCursor<Document> filteredAndSortedCollection = collection.find().sort(new Document("_id", -1)).get();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(9));
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(8));
@@ -62,10 +62,10 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSupportSkipAndLimit() {
-        final int numberOfDocuments = 10;
+        int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoCursor<Document> filteredAndSortedCollection = collection.find().skip(3).limit(2).sort(new Document("_id", -1)).get();
+        MongoCursor<Document> filteredAndSortedCollection = collection.find().skip(3).limit(2).sort(new Document("_id", -1)).get();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(6));
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(5));
@@ -74,13 +74,13 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldFindIDsThatAreGreaterThanTwo() {
-        final int numberOfDocuments = 6;
+        int numberOfDocuments = 6;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoCursor<Document> filterResults = collection
-                                                    .find(new Document("_id", new Document("$gt", 2)))
-                                                    .sort(new Document("_id", 1))
-                                                    .get();
+        MongoCursor<Document> filterResults = collection
+                                                  .find(new Document("_id", new Document("$gt", 2)))
+                                                  .sort(new Document("_id", 1))
+                                                  .get();
 
         assertThat((Integer) filterResults.next().get("_id"), is(3));
         assertThat((Integer) filterResults.next().get("_id"), is(4));
@@ -89,45 +89,45 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnASingleDocumentFromTheCollection() {
-        final int numberOfDocuments = 6;
+        int numberOfDocuments = 6;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         assertThat((Integer) collection.find().getOne().get("_id"), is(0));
     }
 
-//    @Test
-//    public void shouldSelectDistinctDocuments() {
-//        collection.insert(new Document("name", "Bob"));
-//        collection.insert(new Document("name", "George"));
-//        collection.insert(new Document("name", "Fred"));
-//        collection.insert(new Document("name", "Fred").append("pet", "Cat"));
-//        collection.insert(new Document("name", "Bob"));
-//        collection.insert(new Document("name", "Eric"));
-//
-//        final List<String> filterResults = collection.distinct("name");
-//        assertThat(filterResults.get(0), is("Bob"));
-//        assertThat(filterResults.get(1), is("George"));
-//        assertThat(filterResults.get(2), is("Fred"));
-//        assertThat(filterResults.get(3), is("Eric"));
-//    }
+    //    @Test
+    //    public void shouldSelectDistinctDocuments() {
+    //        collection.insert(new Document("name", "Bob"));
+    //        collection.insert(new Document("name", "George"));
+    //        collection.insert(new Document("name", "Fred"));
+    //        collection.insert(new Document("name", "Fred").append("pet", "Cat"));
+    //        collection.insert(new Document("name", "Bob"));
+    //        collection.insert(new Document("name", "Eric"));
+    //
+    //        final List<String> filterResults = collection.distinct("name");
+    //        assertThat(filterResults.get(0), is("Bob"));
+    //        assertThat(filterResults.get(1), is("George"));
+    //        assertThat(filterResults.get(2), is("Fred"));
+    //        assertThat(filterResults.get(3), is("Eric"));
+    //    }
 
-//    @Test
-//    public void sortNotSupportedForDistinct() {
-//        //TODO: which is confusing....
-//        collection.insert(new Document("name", "Bob"));
-//        collection.insert(new Document("name", "George"));
-//        collection.insert(new Document("name", "Fred"));
-//        collection.insert(new Document("name", "Fred").append("pet", "Cat"));
-//        collection.insert(new Document("name", "Bob"));
-//        collection.insert(new Document("name", "Eric"));
-//
-//        final List<String> filterResults = collection.find().sort(new Document("name", 1)).distinct("name");
-//        assertThat(filterResults.get(0), is("Bob"));
-//        assertThat(filterResults.get(1), is("George"));
-//        assertThat(filterResults.get(2), is("Fred"));
-//        assertThat(filterResults.get(3), is("Eric"));
-//
-//    }
+    //    @Test
+    //    public void sortNotSupportedForDistinct() {
+    //        //TODO: which is confusing....
+    //        collection.insert(new Document("name", "Bob"));
+    //        collection.insert(new Document("name", "George"));
+    //        collection.insert(new Document("name", "Fred"));
+    //        collection.insert(new Document("name", "Fred").append("pet", "Cat"));
+    //        collection.insert(new Document("name", "Bob"));
+    //        collection.insert(new Document("name", "Eric"));
+    //
+    //        final List<String> filterResults = collection.find().sort(new Document("name", 1)).distinct("name");
+    //        assertThat(filterResults.get(0), is("Bob"));
+    //        assertThat(filterResults.get(1), is("George"));
+    //        assertThat(filterResults.get(2), is("Fred"));
+    //        assertThat(filterResults.get(3), is("Eric"));
+    //
+    //    }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         for (int i = 0; i < numberOfDocuments; i++) {

@@ -54,14 +54,14 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient() {
-        final MongoCredential credential = getCredential();
+        MongoCredential credential = getCredential();
         try {
             Map<String, Object> props = new HashMap<String, Object>();
             props.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
-                    credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
-                    getInternalConnection().getServerAddress().getHost(), props, null);
+                                                          credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
+                                                          getInternalConnection().getServerAddress().getHost(), props, null);
             if (saslClient == null) {
                 throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }
@@ -78,7 +78,6 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         Oid krb5Mechanism = new Oid(GSSAPI_OID);
         GSSManager manager = GSSManager.getInstance();
         GSSName name = manager.createName(userName, GSSName.NT_USER_NAME);
-        return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME,
-                krb5Mechanism, GSSCredential.INITIATE_ONLY);
+        return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME, krb5Mechanism, GSSCredential.INITIATE_ONLY);
     }
 }

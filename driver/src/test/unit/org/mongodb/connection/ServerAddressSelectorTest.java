@@ -43,19 +43,19 @@ public class ServerAddressSelectorTest {
 
         assertEquals(selector.getServerAddress().hashCode(), selector.hashCode());
 
-        final ServerDescription primary = ServerDescription.builder()
-                .state(Connected)
-                .address(new ServerAddress())
-                .ok(true)
-                .type(ServerType.ReplicaSetPrimary)
-                .build();
-        final ServerDescription secondary = ServerDescription.builder()
-                .state(Connected)
-                .address(new ServerAddress("localhost:27018"))
-                .ok(true)
-                .type(ServerType.ReplicaSetSecondary)
-                .build();
+        ServerDescription primary = ServerDescription.builder()
+                                                     .state(Connected)
+                                                     .address(new ServerAddress())
+                                                     .ok(true)
+                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .build();
+        ServerDescription secondary = ServerDescription.builder()
+                                                       .state(Connected)
+                                                       .address(new ServerAddress("localhost:27018"))
+                                                       .ok(true)
+                                                       .type(ServerType.ReplicaSetSecondary)
+                                                       .build();
         assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Multiple, ReplicaSet,
-                Arrays.asList(primary, secondary))));
-   }
+                                                                                      Arrays.asList(primary, secondary))));
+    }
 }

@@ -17,14 +17,14 @@ class BinaryToUUIDTransformerSpecification extends Specification {
     def 'should read little endian encoded longs'() {
         given:
         byte[] binaryTypeWithUUIDAsBytes = [
-            0, 0, 0, 0,            // document
-            5,                      // type (BINARY)
-            95, 105, 100, 0,        // "_id"
-            16, 0, 0, 0,            // int "16" (length)
-            4,                      // type (B_UUID_STANDARD)
-            2, 0, 0, 0, 0, 0, 0, 0, //
-            1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
-            0];                     // EOM
+                0, 0, 0, 0,            // document
+                5,                      // type (BINARY)
+                95, 105, 100, 0,        // "_id"
+                16, 0, 0, 0,            // int "16" (length)
+                4,                      // type (B_UUID_STANDARD)
+                2, 0, 0, 0, 0, 0, 0, 0, //
+                1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
+                0];                     // EOM
         BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(binaryTypeWithUUIDAsBytes))), true);
         Binary binary;
         try {

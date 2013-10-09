@@ -26,8 +26,7 @@ final class AsyncDetector {
     static {
         if (System.getProperty("org.mongodb.disableAsync", "false").equals("true")) {
             ASYNC_ENABLED = false;
-        }
-        else {
+        } else {
             String javaSpecificationVersion = System.getProperty("java.specification.version");
             String minorVersionString = javaSpecificationVersion.substring(javaSpecificationVersion.lastIndexOf(".") + 1);
             boolean javaSevenOrGreater = false;

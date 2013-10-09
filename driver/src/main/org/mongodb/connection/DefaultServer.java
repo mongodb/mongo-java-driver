@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
@@ -39,20 +39,17 @@ class DefaultServer implements ClusterableServer {
     private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
-            Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
-    private final String clusterId;
+        Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ServerSettings settings;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final String clusterId,
-                         final ServerAddress serverAddress,
+    public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
                          final ConnectionProvider connectionProvider,
                          final InternalConnectionFactory heartbeatStreamConnectionFactory,
                          final ScheduledExecutorService scheduledExecutorService,
                          final BufferProvider bufferProvider) {
-        this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         notNull("connectionProvider", connectionProvider);
         notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
@@ -63,12 +60,12 @@ class DefaultServer implements ClusterableServer {
         this.connectionProvider = connectionProvider;
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatStreamConnectionFactory,
-                bufferProvider);
-        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
-                settings.getHeartbeatFrequency(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+                                                     bufferProvider);
+        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier,
+                                                                            0,
+                                                                            settings.getHeartbeatFrequency(MILLISECONDS),
+                                                                            MILLISECONDS);
     }
-
-
 
     @Override
     public Connection getConnection() {
@@ -122,12 +119,11 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void stateChanged(final ChangeEvent<ServerDescription> event) {
             description = event.getNewValue();
-            for (ChangeListener<ServerDescription> listener : changeListeners) {
+            for (final ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
             }
             if (event.getNewValue().getState() == Unconnected) {
-                scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(TimeUnit.MILLISECONDS),
-                        TimeUnit.MILLISECONDS);
+                scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(MILLISECONDS), MILLISECONDS);
             }
         }
 

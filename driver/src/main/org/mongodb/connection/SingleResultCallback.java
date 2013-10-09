@@ -20,9 +20,8 @@ import org.mongodb.MongoException;
 
 public interface SingleResultCallback<T> {
     /**
-     *
      * @param result the result, or null if there was an exception
-     * @param e the exception, or null if there was none
+     * @param e      the exception, or null if there was none
      */
     void onResult(T result, MongoException e);
 }

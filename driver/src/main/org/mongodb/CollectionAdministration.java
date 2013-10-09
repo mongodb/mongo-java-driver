@@ -19,8 +19,8 @@ package org.mongodb;
 import java.util.List;
 
 /**
- * Provides the functionality for a collection that is useful for administration, but not necessarily in the course
- * of normal use of a collection.
+ * Provides the functionality for a collection that is useful for administration, but not necessarily in the course of normal use of a
+ * collection.
  */
 public interface CollectionAdministration {
     /**
@@ -43,6 +43,7 @@ public interface CollectionAdministration {
 
     /**
      * Return statistics document for this collection, from collstats command
+     *
      * @return statistics document
      */
     Document getStatistics();

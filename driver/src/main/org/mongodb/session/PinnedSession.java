@@ -43,7 +43,7 @@ public class PinnedSession implements Session {
     private Connection connectionForReads;
     private Connection connectionForWrites;
     private final Executor executor;
-    private Cluster cluster;
+    private final Cluster cluster;
     private boolean isClosed;
 
     /**
@@ -95,8 +95,8 @@ public class PinnedSession implements Session {
         isTrue("open", !isClosed());
 
         synchronized (this) {
-            final Server serverToUse;
-            final Connection connectionToUse;
+            Server serverToUse;
+            Connection connectionToUse;
             if (options.isQuery()) {
                 if (connectionForReads == null || !options.getServerSelector().equals(lastRequestedServerSelector)) {
                     lastRequestedServerSelector = options.getServerSelector();
@@ -108,14 +108,12 @@ public class PinnedSession implements Session {
                 }
                 serverToUse = serverForReads;
                 if (serverForWrites != null
-                        && serverToUse.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
+                    && serverToUse.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
                     connectionToUse = connectionForWrites;
-                }
-                else {
+                } else {
                     connectionToUse = connectionForReads;
                 }
-            }
-            else {
+            } else {
                 if (connectionForWrites == null) {
                     serverForWrites = cluster.getServer(new PrimaryServerSelector());
                     connectionForWrites = serverForWrites.getConnection();

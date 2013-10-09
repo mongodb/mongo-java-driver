@@ -44,7 +44,7 @@ public class MapReduceCommandResultCodec<T> extends DocumentCodec {
     }
 
     private List<T> readArray(final BSONReader reader) {
-        final List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<T>();
         reader.readStartArray();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             list.add(decoder.decode(reader));

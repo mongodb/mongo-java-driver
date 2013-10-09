@@ -29,11 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * An MBean implementation for connection pool statistics.
  */
 final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter implements ConnectionPoolStatisticsMBean {
-    private ServerAddress serverAddress;
-    private ConnectionPoolSettings settings;
-    private AtomicInteger size = new AtomicInteger();
-    private AtomicInteger checkedOutCount = new AtomicInteger();
-    private AtomicInteger waitQueueSize = new AtomicInteger();
+    private final ServerAddress serverAddress;
+    private final ConnectionPoolSettings settings;
+    private final AtomicInteger size = new AtomicInteger();
+    private final AtomicInteger checkedOutCount = new AtomicInteger();
+    private final AtomicInteger waitQueueSize = new AtomicInteger();
 
     public ConnectionPoolStatistics(final ConnectionPoolOpenedEvent event) {
         serverAddress = event.getServerAddress();

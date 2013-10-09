@@ -26,11 +26,11 @@ import static org.junit.Assert.assertNotNull;
 public class BSONDocumentBufferTest {
     @Test
     public void testRoundTrip() {
-        final Document document = new Document("a", 1).append("b", 2);
+        Document document = new Document("a", 1).append("b", 2);
 
-        final DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-        final BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
+        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
 
         assertNotNull(buffer.getByteBuffer());
         assertEquals(document, buffer.decode(documentCodec));

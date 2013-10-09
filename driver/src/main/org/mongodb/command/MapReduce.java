@@ -27,21 +27,21 @@ public class MapReduce extends Command {
 
     private static Document asDocument(final org.mongodb.operation.MapReduce mapReduce, final String collectionName) {
 
-        return new Document("mapReduce", collectionName)
-                .append("map", mapReduce.getMapFunction())
-                .append("reduce", mapReduce.getReduceFunction())
-                .append("out", mapReduce.isInline() ? new Document("inline", 1) : asDocument(mapReduce.getOutput()))
-                .append("query", mapReduce.getFilter())
-                .append("sort", mapReduce.getSortCriteria())
-                .append("limit", mapReduce.getLimit())
-                .append("finalize", mapReduce.getFinalizeFunction())
-                .append("scope", mapReduce.getScope())
-                .append("jsMode", mapReduce.isJsMode())
-                .append("verbose", mapReduce.isVerbose());
+        return new Document("mapReduce", collectionName).append("map", mapReduce.getMapFunction())
+                                                        .append("reduce", mapReduce.getReduceFunction())
+                                                        .append("out", mapReduce.isInline() ? new Document("inline", 1)
+                                                                                            : asDocument(mapReduce.getOutput()))
+                                                        .append("query", mapReduce.getFilter())
+                                                        .append("sort", mapReduce.getSortCriteria())
+                                                        .append("limit", mapReduce.getLimit())
+                                                        .append("finalize", mapReduce.getFinalizeFunction())
+                                                        .append("scope", mapReduce.getScope())
+                                                        .append("jsMode", mapReduce.isJsMode())
+                                                        .append("verbose", mapReduce.isVerbose());
     }
 
     private static Document asDocument(final MapReduceOutput output) {
-        final Document document = new Document(output.getAction().getValue(), output.getCollectionName());
+        Document document = new Document(output.getAction().getValue(), output.getCollectionName());
         if (output.getDatabaseName() != null) {
             document.append("db", output.getDatabaseName());
         }

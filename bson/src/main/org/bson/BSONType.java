@@ -20,7 +20,8 @@ public enum BSONType {
     /**
      * Not a real BSON type. Used to signal the end of a document.
      */
-    END_OF_DOCUMENT(0x00), // no values of this type exist it marks the end of a document
+    END_OF_DOCUMENT(0x00),
+    // no values of this type exist it marks the end of a document
     /**
      * A BSON double.
      */

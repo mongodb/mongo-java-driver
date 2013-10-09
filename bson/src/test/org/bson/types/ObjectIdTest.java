@@ -44,7 +44,7 @@ public class ObjectIdTest {
     @Test
     public void testBytes() {
         ObjectId expected = new ObjectId();
-        final ObjectId actual = new ObjectId(expected.toByteArray());
+        ObjectId actual = new ObjectId(expected.toByteArray());
         assertEquals(expected, actual);
 
         byte[] b = new byte[12];
@@ -125,7 +125,7 @@ public class ObjectIdTest {
     public void testToHexString() {
         assertEquals("000000000000000000000000", new ObjectId(0, 0, (short) 0, 0).toHexString());
         assertEquals("7fffffff007fff7fff007fff",
-                new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
+                     new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
     }
 
     @SuppressWarnings("deprecation")
@@ -137,14 +137,14 @@ public class ObjectIdTest {
         assertEquals(id.getDate().getTime(), id.getTime());
         assertEquals(id.toHexString(), id.toStringMongod());
         assertArrayEquals(new byte[]{0x12, 0x34, 0x56, 0x78, 0x43, 0x21, 0xffffff87, 0x65, 0x74, 0xffffff92, 0xffffff87, 0x56},
-                new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
+                          new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
     }
 
     // Got these values from 2.12.0 driver.  This test is ensuring that we properly round-trip old and new format ObjectIds.
     @Test
     public void testCreateFromLegacy() {
-        assertArrayEquals(new byte[] {82, 23, -82, -78, -80, -58, -95, -92, -75, -38, 118, -16},
-                ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
+        assertArrayEquals(new byte[]{82, 23, -82, -78, -80, -58, -95, -92, -75, -38, 118, -16},
+                          ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
     }
 }
 

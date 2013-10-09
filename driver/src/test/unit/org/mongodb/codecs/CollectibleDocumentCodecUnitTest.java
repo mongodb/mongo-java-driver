@@ -47,14 +47,14 @@ public class CollectibleDocumentCodecUnitTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectFieldNamesWithDotsInForDocumentsThatAreSaved() throws IOException {
-        final Document document = new Document("x.y", 1);
+        Document document = new Document("x.y", 1);
 
         codec.encode(writer, document);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectFieldNamesWithDotsInForNestedDocumentsThatAreSaved() throws IOException {
-        final Document document = new Document("x", new Document("a.b", 1));
+        Document document = new Document("x", new Document("a.b", 1));
 
         codec.encode(writer, document);
     }

@@ -141,8 +141,8 @@ public class MongoURI {
     @Deprecated
     public MongoURI(final String uri) {
         this.proxied = new MongoClientURI(uri, MongoClientOptions.builder()
-                .connectionsPerHost(10)
-                .writeConcern(WriteConcern.UNACKNOWLEDGED)
+                                                                 .connectionsPerHost(10)
+                                                                 .writeConcern(WriteConcern.UNACKNOWLEDGED)
         );
         options = new MongoOptions(proxied.getOptions());
     }
@@ -210,9 +210,8 @@ public class MongoURI {
     }
 
     /**
-     * Gets the options.
-     * This method will return the same instance of {@code MongoOptions} for every call, so it's
-     * possible to mutate the returned instance to change the defaults.
+     * Gets the options. This method will return the same instance of {@code MongoOptions} for every call, so it's possible to mutate the
+     * returned instance to change the defaults.
      *
      * @return the mongo options
      */
@@ -224,14 +223,13 @@ public class MongoURI {
     /**
      * Creates a Mongo instance based on the URI.
      *
-     * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which
-     *         must be closed manually.
+     * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */
     @SuppressWarnings("deprecation")
     public Mongo connect()
-            throws UnknownHostException {
+        throws UnknownHostException {
         // Note: we can't change this to new MongoClient(this) as that would silently change the default write concern.
         return new Mongo(this);
     }
@@ -239,8 +237,7 @@ public class MongoURI {
     /**
      * Returns the DB object from a newly created Mongo instance based on this URI.
      *
-     * @return the database specified in the URI.  This will implicitly create a new Mongo instance,
-     *         which must be closed manually.
+     * @return the database specified in the URI.  This will implicitly create a new Mongo instance, which must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */

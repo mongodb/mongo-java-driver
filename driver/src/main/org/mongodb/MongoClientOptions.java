@@ -166,9 +166,7 @@ public final class MongoClientOptions {
          * @throws IllegalArgumentException if {@code aThreadsAllowedToBlockForConnectionMultiplier < 1}
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
          */
-        public Builder threadsAllowedToBlockForConnectionMultiplier(
-                                                                   final int
-                                                                   aThreadsAllowedToBlockForConnectionMultiplier) {
+        public Builder threadsAllowedToBlockForConnectionMultiplier(final int aThreadsAllowedToBlockForConnectionMultiplier) {
             if (aThreadsAllowedToBlockForConnectionMultiplier < 1) {
                 throw new IllegalArgumentException("Minimum value is 1");
             }
@@ -735,8 +733,7 @@ public final class MongoClientOptions {
      * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
      * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
      *
-     * @return a ConnectionPoolSettings populated with the settings from this options instance that relate to the connection
-     *         provider.
+     * @return a ConnectionPoolSettings populated with the settings from this options instance that relate to the connection provider.
      * @see org.mongodb.connection.ConnectionPoolSettings
      */
     ConnectionPoolSettings getConnectionPoolSettings() {
@@ -765,11 +762,10 @@ public final class MongoClientOptions {
     }
 
     /**
-     * Gets the required replica set name.  With this option set, the MongoClient instance will
-     * <p/>
-     * <p> 1. Connect in replica set mode, and discover all members of the set based on the given servers </p> <p> 2. Make sure that the set
-     * name reported by all members matches the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list
-     * is not part of a replica set with the required name.j </p>
+     * Gets the required replica set name.  With this option set, the MongoClient instance will <p/> <p> 1. Connect in replica set mode, and
+     * discover all members of the set based on the given servers </p> <p> 2. Make sure that the set name reported by all members matches
+     * the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with
+     * the required name.j </p>
      *
      * @return the required replica set name since 3.0
      */
@@ -832,26 +828,26 @@ public final class MongoClientOptions {
         requiredReplicaSetName = builder.requiredReplicaSetName;
 
         socketSettings = SocketSettings.builder()
-                                               .connectTimeout(connectTimeout, MILLISECONDS)
-                                               .readTimeout(socketTimeout, MILLISECONDS)
-                                               .keepAlive(socketKeepAlive)
-                                               .build();
+                                       .connectTimeout(connectTimeout, MILLISECONDS)
+                                       .readTimeout(socketTimeout, MILLISECONDS)
+                                       .keepAlive(socketKeepAlive)
+                                       .build();
 
         heartbeatSocketSettings = SocketSettings.builder()
-                                                        .connectTimeout(heartbeatConnectTimeout, MILLISECONDS)
-                                                        .readTimeout(heartbeatSocketTimeout, MILLISECONDS)
-                                                        .keepAlive(socketKeepAlive)
-                                                        .build();
+                                                .connectTimeout(heartbeatConnectTimeout, MILLISECONDS)
+                                                .readTimeout(heartbeatSocketTimeout, MILLISECONDS)
+                                                .keepAlive(socketKeepAlive)
+                                                .build();
 
         connectionPoolSettings = ConnectionPoolSettings.builder()
-                                                               .minSize(minConnectionPoolSize)
-                                                               .maxSize(maxConnectionPoolSize)
-                                                               .maxWaitQueueSize(maxConnectionPoolSize
-                                                                                 * threadsAllowedToBlockForConnectionMultiplier)
-                                                               .maxWaitTime(maxWaitTime, MILLISECONDS)
-                                                               .maxConnectionIdleTime(maxConnectionIdleTime, MILLISECONDS)
-                                                               .maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS)
-                                                               .build();
+                                                       .minSize(minConnectionPoolSize)
+                                                       .maxSize(maxConnectionPoolSize)
+                                                       .maxWaitQueueSize(maxConnectionPoolSize
+                                                                         * threadsAllowedToBlockForConnectionMultiplier)
+                                                       .maxWaitTime(maxWaitTime, MILLISECONDS)
+                                                       .maxConnectionIdleTime(maxConnectionIdleTime, MILLISECONDS)
+                                                       .maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS)
+                                                       .build();
 
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(heartbeatFrequency, MILLISECONDS)

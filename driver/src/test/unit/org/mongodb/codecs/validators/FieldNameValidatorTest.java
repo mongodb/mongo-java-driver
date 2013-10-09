@@ -19,7 +19,7 @@ package org.mongodb.codecs.validators;
 import org.junit.Test;
 
 public class FieldNameValidatorTest {
-    private FieldNameValidator fieldNameValidator = new FieldNameValidator();
+    private final FieldNameValidator fieldNameValidator = new FieldNameValidator();
 
     @Test
     public void testFieldValidationSuccess() {

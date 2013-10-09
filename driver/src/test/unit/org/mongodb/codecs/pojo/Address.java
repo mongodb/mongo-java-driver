@@ -17,8 +17,8 @@
 package org.mongodb.codecs.pojo;
 
 public class Address {
-    private String address1 = "Flat 1";
-    private String address2 = "Town";
+    private final String address1 = "Flat 1";
+    private final String address2 = "Town";
 
     public String getAddress1() {
         return address1;
@@ -38,7 +38,7 @@ public class Address {
             return false;
         }
 
-        final Address address = (Address) o;
+        Address address = (Address) o;
 
         return address1.equals(address.address1) && address2.equals(address.address2);
     }

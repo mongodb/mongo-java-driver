@@ -150,7 +150,7 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  * </li>
  * <ul>
- * <p>
+ * <p/>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
@@ -180,8 +180,8 @@ public class MongoClientURI {
     }
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
-     * with default options, which may be overridden by options specified in the URI string.
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
+     * which may be overridden by options specified in the URI string.
      *
      * @param uri     the URI
      * @param builder a Builder
@@ -212,8 +212,7 @@ public class MongoClientURI {
                 serverPart = unprefixedURI;
                 nsPart = null;
                 optionsPart = "";
-            }
-            else {
+            } else {
                 serverPart = unprefixedURI.substring(0, idx);
                 nsPart = unprefixedURI.substring(idx + 1);
 
@@ -221,8 +220,7 @@ public class MongoClientURI {
                 if (idx >= 0) {
                     optionsPart = nsPart.substring(idx + 1);
                     nsPart = nsPart.substring(0, idx);
-                }
-                else {
+                } else {
                     optionsPart = "";
                 }
 
@@ -238,8 +236,7 @@ public class MongoClientURI {
                 idx = authPart.indexOf(":");
                 if (idx == -1) {
                     userName = URLDecoder.decode(authPart, UTF_8);
-                }
-                else {
+                } else {
                     userName = URLDecoder.decode(authPart.substring(0, idx), UTF_8);
                     password = URLDecoder.decode(authPart.substring(idx + 1), UTF_8).toCharArray();
                 }
@@ -254,13 +251,11 @@ public class MongoClientURI {
                 if (idx < 0) {
                     database = nsPart;
                     collection = null;
-                }
-                else {
+                } else {
                     database = nsPart.substring(0, idx);
                     collection = nsPart.substring(idx + 1);
                 }
-            }
-            else {
+            } else {
                 database = null;
                 collection = null;
             }
@@ -274,56 +269,56 @@ public class MongoClientURI {
         }
     }
 
-    private static Set<String> generalOptionsKeys = new HashSet<String>();
-    private static Set<String> authKeys = new HashSet<String>();
-    private static Set<String> readPreferenceKeys = new HashSet<String>();
-    private static Set<String> writeConcernKeys = new HashSet<String>();
-    private static Set<String> allKeys = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new HashSet<String>();
+    private static final Set<String> AUTH_KEYS = new HashSet<String>();
+    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
+    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
+    private static final Set<String> ALL_KEYS = new HashSet<String>();
 
     static {
-        generalOptionsKeys.add("minpoolsize");
-        generalOptionsKeys.add("maxpoolsize");
-        generalOptionsKeys.add("waitqueuemultiple");
-        generalOptionsKeys.add("waitqueuetimeoutms");
-        generalOptionsKeys.add("connecttimeoutms");
-        generalOptionsKeys.add("maxidletimems");
-        generalOptionsKeys.add("maxlifetimems");
-        generalOptionsKeys.add("sockettimeoutms");
-        generalOptionsKeys.add("sockettimeoutms");
-        generalOptionsKeys.add("autoconnectretry");
-        generalOptionsKeys.add("ssl");
-        generalOptionsKeys.add("replicaset");
+        GENERAL_OPTIONS_KEYS.add("minpoolsize");
+        GENERAL_OPTIONS_KEYS.add("maxpoolsize");
+        GENERAL_OPTIONS_KEYS.add("waitqueuemultiple");
+        GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
+        GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
+        GENERAL_OPTIONS_KEYS.add("maxidletimems");
+        GENERAL_OPTIONS_KEYS.add("maxlifetimems");
+        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+        GENERAL_OPTIONS_KEYS.add("autoconnectretry");
+        GENERAL_OPTIONS_KEYS.add("ssl");
+        GENERAL_OPTIONS_KEYS.add("replicaset");
 
-        readPreferenceKeys.add("slaveok");
-        readPreferenceKeys.add("readpreference");
-        readPreferenceKeys.add("readpreferencetags");
+        READ_PREFERENCE_KEYS.add("slaveok");
+        READ_PREFERENCE_KEYS.add("readpreference");
+        READ_PREFERENCE_KEYS.add("readpreferencetags");
 
-        writeConcernKeys.add("safe");
-        writeConcernKeys.add("w");
-        writeConcernKeys.add("wtimeout");
-        writeConcernKeys.add("fsync");
-        writeConcernKeys.add("j");
+        WRITE_CONCERN_KEYS.add("safe");
+        WRITE_CONCERN_KEYS.add("w");
+        WRITE_CONCERN_KEYS.add("wtimeout");
+        WRITE_CONCERN_KEYS.add("fsync");
+        WRITE_CONCERN_KEYS.add("j");
 
-        authKeys.add("authmechanism");
-        authKeys.add("authsource");
-        authKeys.add("gssapiservicename");
+        AUTH_KEYS.add("authmechanism");
+        AUTH_KEYS.add("authsource");
+        AUTH_KEYS.add("gssapiservicename");
 
-        allKeys.addAll(generalOptionsKeys);
-        allKeys.addAll(authKeys);
-        allKeys.addAll(readPreferenceKeys);
-        allKeys.addAll(writeConcernKeys);
+        ALL_KEYS.addAll(GENERAL_OPTIONS_KEYS);
+        ALL_KEYS.addAll(AUTH_KEYS);
+        ALL_KEYS.addAll(READ_PREFERENCE_KEYS);
+        ALL_KEYS.addAll(WRITE_CONCERN_KEYS);
     }
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
-        for (String key : optionsMap.keySet()) {
-            if (!allKeys.contains(key)) {
+        for (final String key : optionsMap.keySet()) {
+            if (!ALL_KEYS.contains(key)) {
                 LOGGER.warning(format("Unsupported option '%s' on URI '%s'.", key, uri));
             }
         }
     }
 
     private MongoClientOptions createOptions(final Map<String, List<String>> optionsMap, final MongoClientOptions.Builder builder) {
-        for (String key : generalOptionsKeys) {
+        for (final String key : GENERAL_OPTIONS_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
                 continue;
@@ -331,35 +326,25 @@ public class MongoClientURI {
 
             if (key.equals("maxpoolsize")) {
                 builder.maxConnectionPoolSize(Integer.parseInt(value));
-            }
-            else if (key.equals("minpoolsize")) {
+            } else if (key.equals("minpoolsize")) {
                 builder.minConnectionPoolSize(Integer.parseInt(value));
-            }
-            else if (key.equals("maxidletimems")) {
+            } else if (key.equals("maxidletimems")) {
                 builder.maxConnectionIdleTime(Integer.parseInt(value));
-            }
-            else if (key.equals("maxlifetimems")) {
+            } else if (key.equals("maxlifetimems")) {
                 builder.maxConnectionLifeTime(Integer.parseInt(value));
-            }
-            else if (key.equals("waitqueuemultiple")) {
+            } else if (key.equals("waitqueuemultiple")) {
                 builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
-            }
-            else if (key.equals("waitqueuetimeoutms")) {
+            } else if (key.equals("waitqueuetimeoutms")) {
                 builder.maxWaitTime(Integer.parseInt(value));
-            }
-            else if (key.equals("connecttimeoutms")) {
+            } else if (key.equals("connecttimeoutms")) {
                 builder.connectTimeout(Integer.parseInt(value));
-            }
-            else if (key.equals("sockettimeoutms")) {
+            } else if (key.equals("sockettimeoutms")) {
                 builder.socketTimeout(Integer.parseInt(value));
-            }
-            else if (key.equals("autoconnectretry")) {
+            } else if (key.equals("autoconnectretry")) {
                 builder.autoConnectRetry(parseBoolean(value));
-            }
-            else if (key.equals("ssl") && parseBoolean(value)) {
+            } else if (key.equals("ssl") && parseBoolean(value)) {
                 builder.SSLEnabled(true);
-            }
-            else if (key.equals("replicaset")) {
+            } else if (key.equals("replicaset")) {
                 builder.requiredReplicaSetName(value);
             }
         }
@@ -384,7 +369,7 @@ public class MongoClientURI {
         boolean fsync = false;
         boolean journal = false;
 
-        for (String key : writeConcernKeys) {
+        for (final String key : WRITE_CONCERN_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
                 continue;
@@ -392,17 +377,13 @@ public class MongoClientURI {
 
             if (key.equals("safe")) {
                 safe = parseBoolean(value);
-            }
-            else if (key.equals("w")) {
+            } else if (key.equals("w")) {
                 w = value;
-            }
-            else if (key.equals("wtimeout")) {
+            } else if (key.equals("wtimeout")) {
                 wTimeout = Integer.parseInt(value);
-            }
-            else if (key.equals("fsync")) {
+            } else if (key.equals("fsync")) {
                 fsync = parseBoolean(value);
-            }
-            else if (key.equals("j")) {
+            } else if (key.equals("j")) {
                 journal = parseBoolean(value);
             }
         }
@@ -414,7 +395,7 @@ public class MongoClientURI {
         String readPreferenceType = null;
         List<Tags> tagsList = new ArrayList<Tags>();
 
-        for (String key : readPreferenceKeys) {
+        for (final String key : READ_PREFERENCE_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
                 continue;
@@ -422,12 +403,10 @@ public class MongoClientURI {
 
             if (key.equals("slaveok")) {
                 slaveOk = parseBoolean(value);
-            }
-            else if (key.equals("readpreference")) {
+            } else if (key.equals("readpreference")) {
                 readPreferenceType = value;
-            }
-            else if (key.equals("readpreferencetags")) {
-                for (String cur : optionsMap.get(key)) {
+            } else if (key.equals("readpreferencetags")) {
+                for (final String cur : optionsMap.get(key)) {
                     Tags tags = getTags(cur.trim());
                     tagsList.add(tags);
                 }
@@ -446,7 +425,7 @@ public class MongoClientURI {
         String authSource = (database == null) ? "admin" : database;
         String gssapiServiceName = null;
 
-        for (String key : authKeys) {
+        for (final String key : AUTH_KEYS) {
             String value = getLastValue(optionsMap, key);
 
             if (value == null) {
@@ -455,11 +434,9 @@ public class MongoClientURI {
 
             if (key.equals("authmechanism")) {
                 mechanism = AuthenticationMechanism.fromMechanismName(value);
-            }
-            else if (key.equals("authsource")) {
+            } else if (key.equals("authsource")) {
                 authSource = value;
-            }
-            else if (key.equals("gssapiservicename")) {
+            } else if (key.equals("gssapiservicename")) {
                 gssapiServiceName = value;
             }
         }
@@ -467,20 +444,16 @@ public class MongoClientURI {
         if (mechanism == GSSAPI) {
             MongoCredential gssapiCredential = MongoCredential.createGSSAPICredential(userName);
             if (gssapiServiceName != null) {
-               gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+                gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
             }
             return gssapiCredential;
-        }
-        else if (mechanism == PLAIN) {
+        } else if (mechanism == PLAIN) {
             return MongoCredential.createPlainCredential(userName, authSource, password);
-        }
-        else if (mechanism == MONGODB_CR) {
+        } else if (mechanism == MONGODB_CR) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
-        }
-        else if (mechanism == MONGODB_X509) {
+        } else if (mechanism == MONGODB_X509) {
             return MongoCredential.createMongoX509Credential(userName);
-        }
-        else {
+        } else {
             throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);
         }
     }
@@ -496,7 +469,7 @@ public class MongoClientURI {
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
 
-        for (String part : optionsPart.split("&|;")) {
+        for (final String part : optionsPart.split("&|;")) {
             int idx = part.indexOf("=");
             if (idx >= 0) {
                 String key = part.substring(0, idx).toLowerCase();
@@ -517,8 +490,7 @@ public class MongoClientURI {
                                                final List<Tags> tagsList, final Boolean slaveOk) {
         if (readPreferenceType != null) {
             return ReadPreference.valueOf(readPreferenceType, tagsList);
-        }
-        else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
+        } else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
             return ReadPreference.secondaryPreferred();
         }
         return null;
@@ -529,20 +501,17 @@ public class MongoClientURI {
         if (w != null || wTimeout != 0 || fsync || journal) {
             if (w == null) {
                 return new WriteConcern(1, wTimeout, fsync, journal);
-            }
-            else {
+            } else {
                 try {
                     return new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal);
                 } catch (NumberFormatException e) {
                     return new WriteConcern(w, wTimeout, fsync, journal);
                 }
             }
-        }
-        else if (safe != null) {
+        } else if (safe != null) {
             if (safe) {
                 return WriteConcern.ACKNOWLEDGED;
-            }
-            else {
+            } else {
                 return WriteConcern.UNACKNOWLEDGED;
             }
         }
@@ -552,7 +521,7 @@ public class MongoClientURI {
     private Tags getTags(final String tagSetString) {
         Tags tags = new Tags();
         if (tagSetString.length() > 0) {
-            for (String tag : tagSetString.split(",")) {
+            for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
                     throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
@@ -564,9 +533,10 @@ public class MongoClientURI {
     }
 
     boolean parseBoolean(final String input) {
-        final String trimmedInput = input.trim();
+        String trimmedInput = input.trim();
         return trimmedInput != null && trimmedInput.length() > 0 && (trimmedInput.equals("1")
-                || trimmedInput.toLowerCase().equals("true") || trimmedInput.toLowerCase().equals("yes"));
+                                                                     || trimmedInput.toLowerCase().equals("true")
+                                                                     || trimmedInput.toLowerCase().equals("yes"));
     }
 
     // ---------------------------------

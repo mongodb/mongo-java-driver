@@ -39,7 +39,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCollection() {
         database.tools().createCollection(getCollectionName());
 
-        final Set<String> collections = database.tools().getCollectionNames();
+        Set<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
     }
 
@@ -47,10 +47,10 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCappedCollection() {
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024));
 
-        final Set<String> collections = database.tools().getCollectionNames();
+        Set<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
+        MongoCollection<Document> collection = database.getCollection(getCollectionName());
         assertThat(collection.tools().isCapped(), is(true));
 
         assertThat("Should have the default index on _id", collection.tools().getIndexes().size(), is(1));
@@ -60,10 +60,10 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false));
 
-        final Set<String> collections = database.tools().getCollectionNames();
+        Set<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
+        MongoCollection<Document> collection = database.getCollection(getCollectionName());
         assertThat(collection.tools().isCapped(), is(true));
 
         assertThat("Should NOT have the default index on _id", collection.tools().getIndexes().size(), is(0));
@@ -71,25 +71,27 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
-        final int maxDocuments = 5;
-        database.tools()
-                .createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false, maxDocuments));
+        int maxDocuments = 5;
+        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(),
+                                                                      true,
+                                                                      40 * 1024,
+                                                                      false,
+                                                                      maxDocuments));
 
-        final Set<String> collections = database.tools().getCollectionNames();
+        Set<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
-        final MongoCollection<Document> collection = database.getCollection(getCollectionName());
-        final Document collectionStatistics = collection.tools().getStatistics();
+        MongoCollection<Document> collection = database.getCollection(getCollectionName());
+        Document collectionStatistics = collection.tools().getStatistics();
 
-        assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"),
-                is(maxDocuments));
+        assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"), is(maxDocuments));
     }
 
     @Test
     public void shouldGetCollectionNamesFromDatabase() {
         database.tools().createCollection(getCollectionName());
 
-        final Set<String> collections = database.tools().getCollectionNames();
+        Set<String> collections = database.tools().getCollectionNames();
 
         assertThat(collections.contains("system.indexes"), is(true));
         assertThat(collections.contains(getCollectionName()), is(true));
@@ -98,23 +100,23 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldChangeACollectionNameWhenRenameIsCalled() {
         //given
-        final String originalCollectionName = "originalCollection";
-        final MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
+        String originalCollectionName = "originalCollection";
+        MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
         originalCollection.insert(new Document("someKey", "someValue"));
 
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
 
         //when
-        final String newCollectionName = "TheNewCollectionName";
+        String newCollectionName = "TheNewCollectionName";
         database.tools().renameCollection(originalCollectionName, newCollectionName);
 
         //then
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
         assertThat(database.tools().getCollectionNames().contains(newCollectionName), is(true));
 
-        final MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
+        MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
-                renamedCollection.find().count(), is(1L));
+                   renamedCollection.find().count(), is(1L));
     }
 
     @Test(expected = MongoServerException.class)
@@ -123,10 +125,10 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         // Otherwise we can have false positives
 
         //given
-        final String originalCollectionName = "originalCollectionToRename";
+        String originalCollectionName = "originalCollectionToRename";
         database.tools().createCollection(originalCollectionName);
 
-        final String anotherCollectionName = "anExistingCollection";
+        String anotherCollectionName = "anExistingCollection";
         database.tools().createCollection(anotherCollectionName);
 
         assertThat(database.tools().getCollectionNames().contains(anotherCollectionName), is(true));
@@ -139,31 +141,30 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToRenameCollectionToAnExistingCollectionNameAndReplaceItWhenDropIsTrue() {
         //given
-        final String existingCollectionName = "anExistingCollection";
-        final String originalCollectionName = "someOriginalCollection";
+        String existingCollectionName = "anExistingCollection";
+        String originalCollectionName = "someOriginalCollection";
 
-        final MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
-        final String keyInOriginalCollection = "someKey";
-        final String valueInOriginalCollection = "someValue";
+        MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
+        String keyInOriginalCollection = "someKey";
+        String valueInOriginalCollection = "someValue";
         originalCollection.insert(new Document(keyInOriginalCollection, valueInOriginalCollection));
 
-        final MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
-        final String keyInExistingCollection = "aDifferentDocument";
-        final String valueInExistingCollection = "withADifferentValue";
+        MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
+        String keyInExistingCollection = "aDifferentDocument";
+        String valueInExistingCollection = "withADifferentValue";
         existingCollection.insert(new Document(keyInExistingCollection, valueInExistingCollection));
 
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
         //when
-        database.tools().renameCollection(new RenameCollectionOptions(originalCollectionName,
-                existingCollectionName, true));
+        database.tools().renameCollection(new RenameCollectionOptions(originalCollectionName, existingCollectionName, true));
 
         //then
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
-        final MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
+        MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
         assertThat(replacedCollection.find().getOne().get(keyInExistingCollection), is(nullValue()));
         assertThat(replacedCollection.find().getOne().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
     }

@@ -40,7 +40,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     TaggableReadPreference(final List<Tags> tagsList) {
-        for (Tags tags : tagsList) {
+        for (final Tags tags : tagsList) {
             this.tagsList.add(Tags.freeze(tags));
         }
     }
@@ -52,7 +52,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     @Override
     public Document toDocument() {
-        final Document readPrefObject = new Document("mode", getName());
+        Document readPrefObject = new Document("mode", getName());
 
         if (!tagsList.isEmpty()) {
             readPrefObject.put("tags", tagsList);
@@ -79,7 +79,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return false;
         }
 
-        final TaggableReadPreference that = (TaggableReadPreference) o;
+        TaggableReadPreference that = (TaggableReadPreference) o;
 
         return tagsList.equals(that.tagsList);
     }
@@ -93,7 +93,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from secondary
-     *
      */
     static class SecondaryReadPreference extends TaggableReadPreference {
         SecondaryReadPreference() {
@@ -120,7 +119,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             }
 
             for (final Tags tags : getTagsList()) {
-                final List<ServerDescription> servers = clusterDescription.getSecondaries(tags);
+                List<ServerDescription> servers = clusterDescription.getSecondaries(tags);
                 if (!servers.isEmpty()) {
                     return servers;
                 }
@@ -154,14 +153,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         @Override
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-            final List<ServerDescription> servers = super.choose(clusterDescription);
+            List<ServerDescription> servers = super.choose(clusterDescription);
             return (!servers.isEmpty()) ? servers : clusterDescription.getPrimaries();
         }
     }
 
     /**
      * Read from nearest node respective of tags.
-     *
      */
     static class NearestReadPreference extends TaggableReadPreference {
         NearestReadPreference() {
@@ -190,7 +188,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             }
 
             for (final Tags tags : getTagsList()) {
-                final List<ServerDescription> servers = clusterDescription.getAny(tags);
+                List<ServerDescription> servers = clusterDescription.getAny(tags);
                 if (!servers.isEmpty()) {
                     return servers;
                 }
@@ -201,7 +199,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from primary if available, otherwise a secondary.
-     *
      */
     static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
         PrimaryPreferredReadPreference() {
@@ -222,7 +219,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         @Override
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-            final List<ServerDescription> servers = clusterDescription.getPrimaries();
+            List<ServerDescription> servers = clusterDescription.getPrimaries();
             return (!servers.isEmpty()) ? servers : super.choose(clusterDescription);
         }
     }

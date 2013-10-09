@@ -20,5 +20,5 @@ import org.bson.BSONObject;
 import org.bson.io.OutputBuffer;
 
 public interface DBEncoder {
-    int writeObject(final OutputBuffer outputBuffer, final BSONObject document);
+    int writeObject(OutputBuffer outputBuffer, BSONObject document);
 }

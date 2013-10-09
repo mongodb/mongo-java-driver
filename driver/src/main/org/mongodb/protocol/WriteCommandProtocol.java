@@ -98,8 +98,7 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
                 if (!writeConcern.getContinueOnError()) {
                     if (writeConcern.isAcknowledged()) {
                         throw e;
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
@@ -115,9 +114,9 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
     }
 
     private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final BaseWriteCommandMessage nextMessage = message.encode(buffer);
+            BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {
                 getLogger().fine(format("Sending batch %d", batchNum));
             }
@@ -129,11 +128,12 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
     }
 
     private WriteResult receiveMessage(final RequestMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
+        ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
             WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),
-                    replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), writeConcern);
+                                                                   replyMessage.getDocuments().get(0),
+                                                                   replyMessage.getElapsedNanoseconds()), writeConcern);
             throwIfWriteException(result);
             return result;
         } finally {

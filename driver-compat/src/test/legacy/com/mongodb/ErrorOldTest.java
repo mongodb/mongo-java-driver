@@ -44,7 +44,7 @@ public class ErrorOldTest extends DatabaseTestCase {
     @Test
     public void testLastErrorWithConcern() {
         database.resetError();
-        final CommandResult cr = database.getLastError(WriteConcern.FSYNC_SAFE);
+        CommandResult cr = database.getLastError(WriteConcern.FSYNC_SAFE);
         assertTrue(cr.get("err") == null);
         assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
@@ -57,7 +57,7 @@ public class ErrorOldTest extends DatabaseTestCase {
         }
 
         database.resetError();
-        final CommandResult cr = database.getLastError(WriteConcern.REPLICAS_SAFE);
+        CommandResult cr = database.getLastError(WriteConcern.REPLICAS_SAFE);
         assertTrue(cr.get("err") == null);
         assertTrue(cr.containsField("wtime"));
     }

@@ -29,7 +29,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
     @SuppressWarnings("deprecation")
     public void testCopy() throws Exception {
 
-        final MongoOptions options = new MongoOptions();
+        MongoOptions options = new MongoOptions();
 
         options.connectionsPerHost = 100;
         options.threadsAllowedToBlockForConnectionMultiplier = 101;
@@ -50,7 +50,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.readPreference = ReadPreference.secondary();
         options.cursorFinalizerEnabled = true;
 
-        final MongoOptions copy = options.copy();
+        MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
         assertEquals(options.threadsAllowedToBlockForConnectionMultiplier, copy.threadsAllowedToBlockForConnectionMultiplier);
         assertEquals(options.maxWaitTime, copy.maxWaitTime);
@@ -74,7 +74,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
     @SuppressWarnings("deprecation")
     public void testGetterSetters() throws Exception {
 
-        final MongoOptions options = new MongoOptions();
+        MongoOptions options = new MongoOptions();
 
         options.setConnectionsPerHost(100);
         options.setThreadsAllowedToBlockForConnectionMultiplier(101);

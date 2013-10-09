@@ -17,7 +17,8 @@
 package org.mongodb;
 
 public enum OrderBy {
-    ASC(1), DESC(-1);
+    ASC(1),
+    DESC(-1);
     private final int intRepresentation;
 
     OrderBy(final int intRepresentation) {

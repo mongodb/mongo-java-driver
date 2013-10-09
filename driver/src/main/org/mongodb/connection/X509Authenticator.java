@@ -30,7 +30,7 @@ class X509Authenticator extends Authenticator {
     @Override
     void authenticate() {
         try {
-            final Document authCommand = getAuthCommand(getCredential().getUserName());
+            Document authCommand = getAuthCommand(getCredential().getUserName());
             CommandHelper.executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection(),
                                          getBufferProvider());
         } catch (MongoCommandFailureException e) {

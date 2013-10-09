@@ -34,12 +34,11 @@ public class BSONDocumentBuffer {
     private final byte[] bytes;
 
     /**
-     * Constructs a new instance with the given byte array.  Note that it does not make a copy of the array, so do not
-     * modify it after passing it to this constructor.
+     * Constructs a new instance with the given byte array.  Note that it does not make a copy of the array, so do not modify it after
+     * passing it to this constructor.
      *
-     * @param bytes the bytes representing a BSON document.  Note that the byte array is NOT copied, so care
-     *              must be taken not to modify it after passing it to this construction, unless of course
-     *              that is your intention.
+     * @param bytes the bytes representing a BSON document.  Note that the byte array is NOT copied, so care must be taken not to modify it
+     *              after passing it to this construction, unless of course that is your intention.
      */
     public BSONDocumentBuffer(final byte[] bytes) {
         if (bytes == null) {
@@ -51,8 +50,8 @@ public class BSONDocumentBuffer {
     /**
      * Construct a new instance from the given document and codec for the document type.
      *
-     * @param document   the document to transform
-     * @param codec the codec to facilitate the transformation
+     * @param document the document to transform
+     * @param codec    the codec to facilitate the transformation
      */
     public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
@@ -65,8 +64,8 @@ public class BSONDocumentBuffer {
     }
 
     /**
-     * Returns a {@code ByteBuf} that wraps the byte array, with the proper byte order.  Any changes made to the returned
-     * will be reflected in the underlying byte array owned by this instance.
+     * Returns a {@code ByteBuf} that wraps the byte array, with the proper byte order.  Any changes made to the returned will be reflected
+     * in the underlying byte array owned by this instance.
      *
      * @return a byte buffer that wraps the byte array owned by this instance.
      */
@@ -83,7 +82,7 @@ public class BSONDocumentBuffer {
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
+        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
         try {
             return codec.decode(reader);
         } finally {

@@ -59,7 +59,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
     def 'should use provided hints for queries'() {
         given:
-        collection.ensureIndex(new BasicDBObject('a',1))
+        collection.ensureIndex(new BasicDBObject('a', 1))
 
         when:
         dbCursor = collection.find().hint(new BasicDBObject('a', 1))

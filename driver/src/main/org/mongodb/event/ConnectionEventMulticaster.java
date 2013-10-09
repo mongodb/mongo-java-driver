@@ -16,9 +16,10 @@
 
 package org.mongodb.event;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static java.util.Collections.newSetFromMap;
 
 /**
  * A multicaster for connection events.
@@ -26,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 3.0
  */
 public class ConnectionEventMulticaster implements ConnectionListener {
-    private Set<ConnectionListener> connectionListeners = Collections.newSetFromMap(new ConcurrentHashMap<ConnectionListener, Boolean>());
+    private final Set<ConnectionListener> connectionListeners = newSetFromMap(new ConcurrentHashMap<ConnectionListener, Boolean>());
 
     /**
      * Adds the given connection listener to the list of listeners to invoke on connection events.
@@ -48,28 +49,28 @@ public class ConnectionEventMulticaster implements ConnectionListener {
 
     @Override
     public void connectionOpened(final ConnectionEvent event) {
-        for (ConnectionListener cur : connectionListeners) {
+        for (final ConnectionListener cur : connectionListeners) {
             cur.connectionOpened(event);
         }
     }
 
     @Override
     public void connectionClosed(final ConnectionEvent event) {
-        for (ConnectionListener cur : connectionListeners) {
+        for (final ConnectionListener cur : connectionListeners) {
             cur.connectionClosed(event);
         }
     }
 
     @Override
     public void messagesSent(final ConnectionMessagesSentEvent event) {
-        for (ConnectionListener cur : connectionListeners) {
+        for (final ConnectionListener cur : connectionListeners) {
             cur.messagesSent(event);
         }
     }
 
     @Override
     public void messageReceived(final ConnectionMessageReceivedEvent event) {
-        for (ConnectionListener cur : connectionListeners) {
+        for (final ConnectionListener cur : connectionListeners) {
             cur.messageReceived(event);
         }
     }

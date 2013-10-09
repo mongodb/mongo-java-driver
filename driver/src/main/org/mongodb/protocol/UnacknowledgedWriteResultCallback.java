@@ -60,13 +60,17 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
         writtenBuffer.close();
         if (e != null) {
             future.init(null, e);
-        }
-        else if (nextMessage != null) {
-            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
-                    WriteConcern.UNACKNOWLEDGED, serverDescription, connection, closeConnection).executeAsync();
+        } else if (nextMessage != null) {
+            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
+                                                                          bufferProvider,
+                                                                          nextMessage,
+                                                                          WriteConcern.UNACKNOWLEDGED,
+                                                                          serverDescription,
+                                                                          connection,
+                                                                          closeConnection)
+                                                     .executeAsync();
             newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
-        }
-        else {
+        } else {
             future.init(null, null);
         }
     }

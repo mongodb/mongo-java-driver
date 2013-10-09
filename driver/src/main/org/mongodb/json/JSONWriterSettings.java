@@ -58,8 +58,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other
-     * properties.
+     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other properties.
      *
      * @param outputMode the output mode
      * @param indent     whether indent mode is enabled
@@ -69,8 +68,8 @@ public class JSONWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * Creates a new instance with the given values for all properties, indent mode enabled and the default value of
-     * {@code newLineCharacters}.
+     * Creates a new instance with the given values for all properties, indent mode enabled and the default value of {@code
+     * newLineCharacters}.
      *
      * @param outputMode       the output mode
      * @param indentCharacters the indent characters
@@ -97,8 +96,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
             if (indentCharacters == null) {
                 throw new IllegalArgumentException("indent characters can not be null if indent is enabled");
             }
-        }
-        else {
+        } else {
             if (newLineCharacters != null) {
                 throw new IllegalArgumentException("new line characters can not be null if indent is disabled.");
             }
@@ -117,8 +115,8 @@ public class JSONWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The default
-     * value is {@code false}.
+     * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The default value is {@code
+     * false}.
      * <p/>
      * * @return whether output should be indented.
      */
@@ -127,8 +125,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * The new line character(s) to use if indent mode is enabled.  The default value is {@code
-     * System.getProperty("line.separator")}.
+     * The new line character(s) to use if indent mode is enabled.  The default value is {@code System.getProperty("line.separator")}.
      *
      * @return the new line character(s) to use.
      */

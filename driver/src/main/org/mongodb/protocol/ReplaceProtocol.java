@@ -54,7 +54,7 @@ public class ReplaceProtocol<T> extends WriteProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                getConnection().getServerAddress()));
+                           getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Replace completed");
         return writeResult;

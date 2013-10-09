@@ -25,14 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't
- * even report network errors </li> <li> 0 = Don't wait for acknowledgement from the server </li> <li> 1 = Wait for
- * acknowledgement, but don't wait for secondaries to replicate</li> <li> 2+= Wait for one or more secondaries to also
- * acknowledge </li> </ul> <b>wtimeout</b> how long to wait for slaves before failing <ul> <li>0: indefinite </li>
- * <li>greater than 0: ms to wait </li> </ul> </p>
+ * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't even report network
+ * errors </li> <li> 0 = Don't wait for acknowledgement from the server </li> <li> 1 = Wait for acknowledgement, but don't wait for
+ * secondaries to replicate</li> <li> 2+= Wait for one or more secondaries to also acknowledge </li> </ul> <b>wtimeout</b> how long to wait
+ * for slaves before failing <ul> <li>0: indefinite </li> <li>greater than 0: ms to wait </li> </ul> </p>
  * <p/>
- * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li>
- * </ul>
+ * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li> </ul>
  *
  * @mongodb.driver.manual core/write-operations/#write-concern Write Concern
  */
@@ -60,48 +58,46 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern ERRORS_IGNORED = new WriteConcern(-1);
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before
-     * returning. Exceptions are raised for network issues, and server errors.
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
+     * raised for network issues, and server errors.
      */
     public static final WriteConcern ACKNOWLEDGED = new WriteConcern(1);
 
     /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket.
-     * Exceptions are raised for network issues, but not server errors.
+     * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
+     * network issues, but not server errors.
      */
     public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
-     * the data to disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
      */
     public static final WriteConcern FSYNCED = new WriteConcern(true);
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
-     * commit to the journal file on disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
+     * file on disk.
      */
     public static final WriteConcern JOURNALED = new WriteConcern(1, 0, false, true);
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
-     * operation.
+     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      */
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
      * Gets the WriteConcern constants by name (matching is done case insensitively).
      *
-     * @param name
-     * @return the WriteConcern
+     * @param name the name of the write concern
+     * @return the WriteConcern that matches the given name
      */
     public static WriteConcern valueOf(final String name) {
         return NAMED_CONCERNS.get(name.toLowerCase());
     }
 
     /**
-     * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
-     * {@code WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
+     * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to {@code
+     * WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
@@ -147,11 +143,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -162,11 +157,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -178,16 +172,15 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w                        number of writes
-     * @param wtimeout                 timeout for write operation
-     * @param fsync                    whether or not to fsync
-     * @param j                        whether writes should wait for a journaling group commit
+     * @param w               number of writes
+     * @param wtimeout        timeout for write operation
+     * @param fsync           whether or not to fsync
+     * @param j               whether writes should wait for a journaling group commit
      * @param continueOnError if batch inserts should continue after the first error
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j,
@@ -200,11 +193,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -216,16 +208,15 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w                        number of writes
-     * @param wtimeout                 timeout for write operation
-     * @param fsync                    whether or not to fsync
-     * @param j                        whether writes should wait for a journaling group commit
+     * @param w               number of writes
+     * @param wtimeout        timeout for write operation
+     * @param fsync           whether or not to fsync
+     * @param j               whether writes should wait for a journaling group commit
      * @param continueOnError if batch inserts should continue after the first error
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j,
@@ -245,10 +236,10 @@ public class WriteConcern implements Serializable {
      * Gets this write concern as a document
      *
      * @return The write concern as a Document, even if {@code w <= 0}
-     * // TODO: Don't include getlasterror, let the caller do that.
      */
+    // TODO: Don't include getlasterror, let the caller do that.
     public Document asDocument() {
-        final Document command = new Document("getlasterror", 1);
+        Document command = new Document("getlasterror", 1);
 
         if (w instanceof Integer && ((Integer) w > 1) || (w instanceof String)) {
             command.put("w", w);
@@ -335,15 +326,15 @@ public class WriteConcern implements Serializable {
     //CHECKSTYLE:OFF
 
     /**
-     * @param w
-     * @return the WriteConcern
+     * @param w an int representation of the write concern
+     * @return the WriteConcern matching the given w value
      */
     public WriteConcern withW(final int w) {
         return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnError());
     }
 
     /**
-     * @param w
+     * @param w a String representation of the write concern
      * @return the WriteConcern
      */
     public WriteConcern withW(final String w) {
@@ -351,40 +342,37 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * @param fsync
+     * @param fsync true if the write concern needs to include fsync
      * @return the WriteConcern
      */
     public WriteConcern withFsync(final boolean fsync) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnError());
-        }
-        else {
+        } else {
             return new WriteConcern(getWString(), getWtimeout(), fsync, getJ(), getContinueOnError());
         }
     }
 
     /**
-     * @param j
+     * @param j true if journalling is required
      * @return the WriteConcern
      */
     public WriteConcern withJ(final boolean j) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnError());
-        }
-        else {
+        } else {
             return new WriteConcern(getWString(), getWtimeout(), getFsync(), j, getContinueOnError());
         }
     }
 
     /**
-     * @param continueOnError
+     * @param continueOnError true if batch operations should continue after the first error
      * @return the WriteConcern
      */
     public WriteConcern withContinueOnError(final boolean continueOnError) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnError);
-        }
-        else {
+        } else {
             return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnError);
         }
     }
@@ -423,13 +411,12 @@ public class WriteConcern implements Serializable {
 
     public String getShortDescription() {
         return "{w=" + w
-                + (wtimeout != 0 ? (", wtimeout=" + wtimeout) : "")
-                + (fsync ? (", fsync=" + fsync) : "")
-                + (j ? (", j=" + j) : "")
-                + (continueOnError ? ", continueOnError=" + continueOnError : "")
-                + '}';
+               + (wtimeout != 0 ? (", wtimeout=" + wtimeout) : "")
+               + (fsync ? (", fsync=" + fsync) : "")
+               + (j ? (", j=" + j) : "")
+               + (continueOnError ? ", continueOnError=" + continueOnError : "")
+               + '}';
     }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -440,7 +427,7 @@ public class WriteConcern implements Serializable {
             return false;
         }
 
-        final WriteConcern that = (WriteConcern) o;
+        WriteConcern that = (WriteConcern) o;
 
         if (continueOnError != that.continueOnError) {
             return false;
@@ -471,7 +458,7 @@ public class WriteConcern implements Serializable {
         NAMED_CONCERNS = new HashMap<String, WriteConcern>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                final String key = f.getName().toLowerCase();
+                String key = f.getName().toLowerCase();
                 try {
                     NAMED_CONCERNS.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {

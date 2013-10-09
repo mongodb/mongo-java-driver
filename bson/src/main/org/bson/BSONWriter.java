@@ -338,7 +338,7 @@ public abstract class BSONWriter implements Closeable {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
-                    + "serialized have a circular reference?).");
+                                                 + "serialized have a circular reference?).");
         }
     }
 
@@ -361,7 +361,7 @@ public abstract class BSONWriter implements Closeable {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
-                    + "serialized have a circular reference?).");
+                                                 + "serialized have a circular reference?).");
         }
     }
 
@@ -488,10 +488,10 @@ public abstract class BSONWriter implements Closeable {
      */
     protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
                                            final BSONContextType... validContextTypes) {
-        final String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        final String message = format("%s can only be called when ContextType is %s, "
-                + "not when ContextType is %s.", methodName, validContextTypesString,
-                actualContextType);
+        String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
+        String message = format("%s can only be called when ContextType is %s, "
+                                + "not when ContextType is %s.", methodName, validContextTypesString,
+                                actualContextType);
         throw new BSONInvalidOperationException(message);
     }
 
@@ -503,7 +503,7 @@ public abstract class BSONWriter implements Closeable {
      * @throws BSONInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
-        final String message;
+        String message;
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.DONE) {
             if (!methodName.startsWith("end") && !methodName.equals("writeName")) { // NOPMD
                 //NOPMD collapsing these if statements will not aid readability
@@ -516,14 +516,14 @@ public abstract class BSONWriter implements Closeable {
                     article = "An";
                 }
                 message = format("%s %s value cannot be written to the root level of a BSON document.", article,
-                        typeName);
+                                 typeName);
                 throw new BSONInvalidOperationException(message);
             }
         }
 
-        final String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
+        String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         message = format("%s can only be called when State is %s, not when State is %s", methodName,
-                validStatesString, state);
+                         validStatesString, state);
         throw new BSONInvalidOperationException(message);
     }
 

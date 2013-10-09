@@ -29,17 +29,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A globally unique identifier for objects. <p>Consists of 12 bytes, divided as follows:
- * <table border="1">
- * <tr>
- * <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
- * <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td>
- * </tr>
- * <tr>
- * <td colspan="4">time</td><td colspan="3">machine</td>
- * <td colspan="2">pid</td><td colspan="3">inc</td>
- * </tr>
- * </table>
+ * A globally unique identifier for objects. <p>Consists of 12 bytes, divided as follows: <table border="1"> <tr>
+ * <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td> <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td> </tr> <tr>
+ * <td colspan="4">time</td><td colspan="3">machine</td> <td colspan="2">pid</td><td colspan="3">inc</td> </tr> </table>
  * <p/>
  * Instances of this class are immutable.
  *
@@ -82,13 +74,13 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             throw new IllegalArgumentException();
         }
 
-        final int len = hexString.length();
+        int len = hexString.length();
         if (len != 24) {
             return false;
         }
 
         for (int i = 0; i < len; i++) {
-            final char c = hexString.charAt(i);
+            char c = hexString.charAt(i);
             if (c >= '0' && c <= '9') {
                 continue;
             }
@@ -107,6 +99,8 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
 
     /**
      * Gets the generated machine identifier.
+     *
+     * @return an int representing the machine identifier
      */
     public static int getGeneratedMachineIdentifier() {
         return MACHINE_IDENTIFIER;
@@ -129,20 +123,19 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     /**
-     * Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it
-     * does not match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>,
-     * which requires four values, not three.  This major release of the Java driver conforms to the specification,
-     * but still supports clients that are relying on the behavior of the previous major release by providing this explicit factory
-     * method that takes three parameters instead of four.
-     * <p>
+     * Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it does not match
+     * the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>, which requires four values, not three.
+     * This major release of the Java driver conforms to the specification, but still supports clients that are relying on the behavior of
+     * the previous major release by providing this explicit factory method that takes three parameters instead of four.
+     * <p/>
      * Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.
-     * <p>
+     * <p/>
      * NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
      * driver releases.
      *
-     * @param time time in seconds
+     * @param time    time in seconds
      * @param machine machine ID
-     * @param inc incremental value
+     * @param inc     incremental value
      * @since 2.12.0
      */
     public static ObjectId createFromLegacyFormat(final int time, final int machine, final int inc) {
@@ -258,7 +251,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
     }
 
     private static byte[] legacyToBytes(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
-        final byte[] bytes = new byte[12];
+        byte[] bytes = new byte[12];
         bytes[0] = int3(timestamp);
         bytes[1] = int2(timestamp);
         bytes[2] = int1(timestamp);
@@ -281,7 +274,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @return the byte array
      */
     public byte[] toByteArray() {
-        final byte[] bytes = new byte[12];
+        byte[] bytes = new byte[12];
         bytes[0] = int3(timestamp);
         bytes[1] = int2(timestamp);
         bytes[2] = int1(timestamp);
@@ -348,7 +341,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
      * @return a string representation of the ObjectId in hexadecimal format
      */
     public String toHexString() {
-        final StringBuilder buf = new StringBuilder(24);
+        StringBuilder buf = new StringBuilder(24);
 
         for (final byte b : toByteArray()) {
             buf.append(String.format("%02x", b & 0xff));
@@ -366,7 +359,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             return false;
         }
 
-        final ObjectId objectId = (ObjectId) o;
+        ObjectId objectId = (ObjectId) o;
 
         if (counter != objectId.counter) {
             return false;
@@ -467,10 +460,10 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         // build a 2-byte machine piece based on NICs info
         int machinePiece;
         try {
-            final StringBuilder sb = new StringBuilder();
-            final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+            StringBuilder sb = new StringBuilder();
+            Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
             while (e.hasMoreElements()) {
-                final NetworkInterface ni = e.nextElement();
+                NetworkInterface ni = e.nextElement();
                 sb.append(ni.toString());
                 byte[] mac = ni.getHardwareAddress();
                 if (mac != null) {
@@ -502,8 +495,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
             if (processName.contains("@")) {
                 processId = (short) Integer.parseInt(processName.substring(0, processName.indexOf('@')));
-            }
-            else {
+            } else {
                 processId = (short) java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
             }
 
@@ -520,7 +512,7 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
             throw new IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [" + s + "]");
         }
 
-        final byte[] b = new byte[12];
+        byte[] b = new byte[12];
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
         }

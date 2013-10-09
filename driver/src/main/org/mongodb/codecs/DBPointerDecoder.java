@@ -12,7 +12,7 @@ public class DBPointerDecoder implements Decoder<DBRef> {
 
     @Override
     public DBRef decode(final BSONReader reader) {
-        final DBPointer dbPointer = reader.readDBPointer();
+        DBPointer dbPointer = reader.readDBPointer();
         return new DBRef(dbPointer.getId(), dbPointer.getNamespace());
     }
 

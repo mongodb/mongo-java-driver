@@ -42,7 +42,7 @@ public class Code implements Serializable {
             return false;
         }
 
-        final Code c = (Code) o;
+        Code c = (Code) o;
         return code.equals(c.code);
     }
 

@@ -148,25 +148,41 @@ public class Find extends Query {
         return this;
     }
 
-    // CHECKSTYLE:OFF
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
 
-        final Find find = (Find) o;
+        Find find = (Find) o;
 
-        if (explain != find.explain) return false;
-        if (snapshotMode != find.snapshotMode) return false;
-        if (fields != null ? !fields.equals(find.fields) : find.fields != null) return false;
-        if (filter != null ? !filter.equals(find.filter) : find.filter != null) return false;
-        if (hint != null ? !hint.equals(find.hint) : find.hint != null) return false;
-        if (sortCriteria != null ? !sortCriteria.equals(find.sortCriteria) : find.sortCriteria != null) return false;
+        if (explain != find.explain) {
+            return false;
+        }
+        if (snapshotMode != find.snapshotMode) {
+            return false;
+        }
+        if (fields != null ? !fields.equals(find.fields) : find.fields != null) {
+            return false;
+        }
+        if (filter != null ? !filter.equals(find.filter) : find.filter != null) {
+            return false;
+        }
+        if (hint != null ? !hint.equals(find.hint) : find.hint != null) {
+            return false;
+        }
+        if (sortCriteria != null ? !sortCriteria.equals(find.sortCriteria) : find.sortCriteria != null) {
+            return false;
+        }
 
         return true;
     }
-    // CHECKSTYLE:ON
 
     @Override
     public int hashCode() {
@@ -182,7 +198,7 @@ public class Find extends Query {
 
     public static class Hint<T> {
 
-        private T value;
+        private final T value;
 
         public Hint(final T value) {
             this.value = value;

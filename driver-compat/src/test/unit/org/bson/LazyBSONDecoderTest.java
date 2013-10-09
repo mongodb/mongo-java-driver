@@ -37,15 +37,10 @@ public class LazyBSONDecoderTest {
         bsonDecoder = new LazyBSONDecoder();
     }
 
-    private void testDecoder(final byte[] bytes, final BSONObject expectedObject) {
-        final BSONObject receivedObject = bsonDecoder.readObject(bytes);
-        assertEquals(expectedObject, receivedObject);
-    }
-
     @Test
     public void testDecodingFromInputStream() throws IOException {
-        final InputStream is = new ByteArrayInputStream(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0});
-        final BSONObject document = bsonDecoder.readObject(is);
+        InputStream is = new ByteArrayInputStream(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0});
+        BSONObject document = bsonDecoder.readObject(is);
         assertNotNull(document);
         assertThat(document, instanceOf(LazyBSONObject.class));
         assertEquals(1, document.keySet().size());
@@ -55,8 +50,8 @@ public class LazyBSONDecoderTest {
 
     @Test
     public void testDecodingFromByteArray() throws IOException {
-        final byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
-        final BSONObject document = bsonDecoder.readObject(bytes);
+        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        BSONObject document = bsonDecoder.readObject(bytes);
         assertNotNull(document);
         assertThat(document, instanceOf(LazyBSONObject.class));
         assertEquals(1, document.keySet().size());
@@ -66,7 +61,7 @@ public class LazyBSONDecoderTest {
 
     @Test(expected = BSONException.class)
     public void testDecodingFromInvalidInput() {
-        final byte[] bytes = new byte[]{16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = new byte[]{16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         bsonDecoder.readObject(bytes);
     }
 

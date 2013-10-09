@@ -29,8 +29,8 @@ public class DocumentCodec extends org.mongodb.codecs.DocumentCodec {
     }
 
     private static Codecs constructCustomCodecs(final PrimitiveCodecs primitiveCodecs) {
-        final EncoderRegistry encoderRegistry = new EncoderRegistry();
-        final Codecs codecs = new Codecs(primitiveCodecs, encoderRegistry);
+        EncoderRegistry encoderRegistry = new EncoderRegistry();
+        Codecs codecs = new Codecs(primitiveCodecs, encoderRegistry);
         encoderRegistry.register(DBRef.class, new DBRefEncoder(codecs));
         encoderRegistry.register(CodeWScope.class, new CodeWScopeCodec(codecs));
         return codecs;

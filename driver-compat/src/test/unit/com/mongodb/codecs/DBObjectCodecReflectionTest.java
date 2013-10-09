@@ -32,13 +32,13 @@ public class DBObjectCodecReflectionTest extends DatabaseTestCase {
         Outer outer = new Outer();
         outer.setName("eliot");
 
-        final Inner inner = new Inner();
+        Inner inner = new Inner();
         inner.setNumber(17);
         outer.setInner(inner);
 
         collection.insert(outer);
 
-        final DBObject obj = collection.findOne();
+        DBObject obj = collection.findOne();
         assertEquals("eliot", obj.get("Name"));
         assertEquals(Outer.class, obj.getClass());
         outer = (Outer) obj;

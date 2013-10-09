@@ -37,11 +37,9 @@ class CommandResultCallback extends CommandResultBaseCallback {
     protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
         if (e != null) {
             callback.onResult(null, e);
-        }
-        else if (!commandResult.isOk()) {
+        } else if (!commandResult.isOk()) {
             callback.onResult(null, new MongoCommandFailureException(commandResult));
-        }
-        else {
+        } else {
             callback.onResult(commandResult, null);
         }
         return true;

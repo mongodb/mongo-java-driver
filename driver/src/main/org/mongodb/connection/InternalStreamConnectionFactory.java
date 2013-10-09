@@ -25,10 +25,10 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final String clusterId;
-    private StreamFactory streamFactory;
-    private BufferProvider bufferProvider;
-    private List<MongoCredential> credentialList;
-    private ConnectionListener connectionListener;
+    private final StreamFactory streamFactory;
+    private final BufferProvider bufferProvider;
+    private final List<MongoCredential> credentialList;
+    private final ConnectionListener connectionListener;
 
     public InternalStreamConnectionFactory(final String clusterId, final StreamFactory streamFactory, final BufferProvider bufferProvider,
                                            final List<MongoCredential> credentialList, final ConnectionListener connectionListener) {
@@ -42,6 +42,6 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {
         return new InternalStreamConnection(clusterId, streamFactory.create(serverAddress), credentialList, bufferProvider,
-                connectionListener);
+                                            connectionListener);
     }
 }

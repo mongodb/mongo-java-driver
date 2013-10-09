@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class TestInternalConnectionFactory implements InternalConnectionFactory {
-    private List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
+    private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
 
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {

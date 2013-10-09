@@ -25,7 +25,7 @@ import org.mongodb.operation.Replace;
 import java.util.List;
 
 public class ReplaceMessage<T> extends BaseUpdateMessage {
-    private List<Replace<T>> replaces;
+    private final List<Replace<T>> replaces;
     private final Encoder<T> encoder;
 
     public ReplaceMessage(final String collectionName, final List<Replace<T>> replaces,
@@ -41,10 +41,9 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
         addDocument(replaces.get(0).getReplacement(), encoder, buffer);
         if (replaces.size() == 1) {
             return null;
-        }
-        else {
+        } else {
             return new ReplaceMessage<T>(getCollectionName(), replaces.subList(1, replaces.size()), getBaseEncoder(), encoder,
-                    getSettings());
+                                         getSettings());
         }
     }
 

@@ -38,7 +38,7 @@ public class ListWrapper {
             return false;
         }
 
-        final ListWrapper that = (ListWrapper) o;
+        ListWrapper that = (ListWrapper) o;
 
         if (!integerList.equals(that.integerList)) {
             return false;

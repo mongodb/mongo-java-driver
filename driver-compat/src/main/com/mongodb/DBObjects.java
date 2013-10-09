@@ -26,24 +26,23 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static java.nio.ByteBuffer.wrap;
 
 final class DBObjects {
     public static Document toDocument(final DBObject obj) {
-        final Document res = new Document();
+        Document res = new Document();
         fill(obj, res);
         return res;
     }
 
     public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Decoder<Document> documentDecoder) {
-        final BasicOutputBuffer buffer = new BasicOutputBuffer();
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
         encoder.writeObject(buffer, obj);
-        final BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))),
-                true);
+        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
         try {
             return documentDecoder.decode(bsonReader);
         } catch (final MongoException e) {
@@ -76,7 +75,7 @@ final class DBObjects {
     }
 
     public static BasicDBObject toDBObject(final Document document) {
-        final BasicDBObject res = new BasicDBObject();
+        BasicDBObject res = new BasicDBObject();
         fill(document, res);
         return res;
     }
@@ -84,11 +83,11 @@ final class DBObjects {
     private static void fill(final DBObject obj, final Document document) {
         if (obj != null) {
             for (final String key : obj.keySet()) {
-                final Object value = obj.get(key);
+                Object value = obj.get(key);
                 if (value instanceof List) {
                     document.put(key, value);
                 } else if (value instanceof BSONObject) {
-                    final Document nestedDocument = new Document();
+                    Document nestedDocument = new Document();
                     fill((DBObject) value, nestedDocument);
                     document.put(key, nestedDocument);
                 } else {
@@ -103,7 +102,7 @@ final class DBObjects {
             if (cur.getValue() instanceof List<?>) {
                 obj.put(cur.getKey(), toDBList((List) cur.getValue()));
             } else if (cur.getValue() instanceof Document) {
-                final DBObject nestedObj = new BasicDBObject();
+                DBObject nestedObj = new BasicDBObject();
                 fill((Document) cur.getValue(), nestedObj);
                 obj.put(cur.getKey(), nestedObj);
             } else {
@@ -113,7 +112,7 @@ final class DBObjects {
     }
 
     public static BasicDBList toDBList(final List<?> source) {
-        final BasicDBList dbList = new BasicDBList();
+        BasicDBList dbList = new BasicDBList();
         for (final Object o : source) {
             if (o instanceof Document) {
                 dbList.add(toDBObject((Document) o));
@@ -124,6 +123,5 @@ final class DBObjects {
         return dbList;
     }
 
-    private DBObjects() {
-    }
+    private DBObjects() { }
 }

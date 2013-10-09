@@ -29,7 +29,7 @@ public class ConnectionPoolEvent extends ClusterEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
      */
 
@@ -56,7 +56,7 @@ public class ConnectionPoolEvent extends ClusterEvent {
             return false;
         }
 
-        final ConnectionPoolEvent that = (ConnectionPoolEvent) o;
+        ConnectionPoolEvent that = (ConnectionPoolEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

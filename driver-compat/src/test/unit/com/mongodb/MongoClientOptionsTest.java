@@ -29,8 +29,8 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderDefaults() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        final MongoClientOptions options = builder.build();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions options = builder.build();
         assertNull(options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
         assertEquals(0, options.getMinConnectionsPerHost());
@@ -48,7 +48,7 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         try {
             builder.writeConcern(null);
             Assert.fail();
@@ -111,7 +111,7 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderBuild() {
-        final MongoClientOptions.Builder builder = MongoClientOptions.builder();
+        MongoClientOptions.Builder builder = MongoClientOptions.builder();
         builder.description("test");
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNAL_SAFE);
@@ -133,10 +133,10 @@ public class MongoClientOptionsTest {
         builder.heartbeatSocketTimeout(20);
         builder.requiredReplicaSetName("test");
 
-        final DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
+        DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
         builder.dbEncoderFactory(encoderFactory);
 
-        final MongoClientOptions options = builder.build();
+        MongoClientOptions options = builder.build();
 
         assertEquals("test", options.getDescription());
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
@@ -161,7 +161,7 @@ public class MongoClientOptionsTest {
         assertEquals("test", options.getRequiredReplicaSetName());
     }
 
-    private static class MyDBEncoderFactory implements DBEncoderFactory{
+    private static class MyDBEncoderFactory implements DBEncoderFactory {
         @Override
         public DBEncoder create() {
             return new DefaultDBEncoder();

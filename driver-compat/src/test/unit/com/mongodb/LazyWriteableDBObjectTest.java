@@ -38,7 +38,7 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        final byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         document = new LazyWriteableDBObject(bytes, new LazyDBCallback(collection));
     }
 
@@ -59,7 +59,7 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
 
     @Test
     public void testPutAll() {
-        final Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<String, Object>();
         map.put("w", 3);
         map.put("q", 4);
         document.putAll(map);
@@ -70,7 +70,7 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
     @Test
     public void testRemoveField() {
         document.put("w", "foo");
-        final Object removed = document.removeField("w");
+        Object removed = document.removeField("w");
         assertEquals("foo", removed);
     }
 
@@ -82,7 +82,7 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
 
     @Test
     public void testKeySet() {
-        final Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<String, Object>();
         map.put("w", 3);
         map.put("q", 4);
         document.putAll(map);
@@ -91,19 +91,18 @@ public class LazyWriteableDBObjectTest extends DatabaseTestCase {
 
     @Test
     public void testCallbackCreateObject() {
-        final LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
-        final Object document = callback.createObject(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0}, 0);
+        LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
+        Object document = callback.createObject(new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0}, 0);
 
         assertThat(document, instanceOf(LazyWriteableDBObject.class));
     }
 
     @Test
     public void testCallbackCreateDBRef() {
-        final LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
-        final Object document = callback.createObject(new byte[]{
-                28, 0, 0, 0, 16, 36, 105, 100, 0, 1, 0, 0, 0, 2,
-                36, 114, 101, 102, 0, 4, 0, 0, 0, 97, 46, 98, 0, 0
-        }, 0);
+        LazyBSONCallback callback = new LazyWriteableDBCallback(collection);
+        Object document = callback.createObject(new byte[]{28, 0, 0, 0, 16, 36, 105, 100, 0, 1, 0, 0, 0, 2,
+                                                           36, 114, 101, 102, 0, 4, 0, 0, 0, 97, 46, 98, 0, 0},
+                                                0);
 
         assertThat(document, instanceOf(DBRef.class));
     }

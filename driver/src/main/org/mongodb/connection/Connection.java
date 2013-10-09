@@ -22,11 +22,9 @@ import org.mongodb.annotations.ThreadSafe;
 import java.util.List;
 
 /**
- * A connection to a MongoDB server with blocking and non-blocking operations.
- * <p>
- * Implementations of this class are thread safe.  At a minimum, they must support concurrent calls to sendMessage and receiveMessage,
- * but at most one of each.  But multiple concurrent calls to either sendMessage or receiveMessage may block.
- * </p>
+ * A connection to a MongoDB server with blocking and non-blocking operations. <p> Implementations of this class are thread safe.  At a
+ * minimum, they must support concurrent calls to sendMessage and receiveMessage, but at most one of each.  But multiple concurrent calls to
+ * either sendMessage or receiveMessage may block. </p>
  *
  * @since 3.0
  */
@@ -34,23 +32,18 @@ import java.util.List;
 public interface Connection {
 
     /**
-     * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
-     * <p>
-     * This method blocks until all bytes have been written.  This method is not thread safe: only one thread at a time can have an active
-     * call to this method.
-     * </p>
+     * Send a message to the server. The connection may not make any attempt to validate the integrity of the message. <p> This method
+     * blocks until all bytes have been written.  This method is not thread safe: only one thread at a time can have an active call to this
+     * method. </p>
      *
-     * @param byteBuffers the list of byte buffers to send.
+     * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
      */
     void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId);
 
     /**
-     * Receive a response to a sent message from the server.
-     * <p>
-     * This method blocks until the entire message has been read. This method is not thread safe: only one thread at a time can have an
-     * active call to this method.
-     * </p>
+     * Receive a response to a sent message from the server. <p> This method blocks until the entire message has been read. This method is
+     * not thread safe: only one thread at a time can have an active call to this method. </p>
      *
      * @param responseTo the expected responseTo of the received message
      * @return the response
@@ -60,9 +53,9 @@ public interface Connection {
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
-     * @param byteBuffers the list of byte buffers to send
+     * @param byteBuffers   the list of byte buffers to send
      * @param lastRequestId the request id of the last message in byteBuffers
-     * @param callback the callback to invoke on completion
+     * @param callback      the callback to invoke on completion
      */
     void sendMessageAsync(List<ByteBuf> byteBuffers, final int lastRequestId, SingleResultCallback<Void> callback);
 
@@ -70,7 +63,7 @@ public interface Connection {
      * Asynchronously receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
-     * @param callback the callback to invoke on completion
+     * @param callback   the callback to invoke on completion
      */
     void receiveMessageAsync(final int responseTo, SingleResultCallback<ResponseBuffers> callback);
 
@@ -81,6 +74,7 @@ public interface Connection {
 
     /**
      * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
+     *
      * @return the id
      */
     String getId();

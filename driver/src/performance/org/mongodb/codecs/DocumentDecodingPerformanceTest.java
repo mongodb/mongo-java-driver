@@ -184,6 +184,7 @@ public class DocumentDecodingPerformanceTest {
             testCleanup();
         }
     }
+
     @Test
     public void outputPerformanceForCodeWithScope() throws Exception {
         //1,339,085 ops per second

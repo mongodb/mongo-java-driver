@@ -21,12 +21,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
-import org.mongodb.ReadPreference;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.ReadPreference.primary;
+import static org.mongodb.ReadPreference.secondary;
 
 @Category(ReplicaSet.class)
 public class PinnedSessionTest extends DatabaseTestCase {
@@ -40,29 +41,34 @@ public class PinnedSessionTest extends DatabaseTestCase {
 
     @Test
     public void shouldPinReadsToSameServer() throws InterruptedException {
-        final ServerAddress serverAddress = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
-                new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress();
+        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(secondary()));
+
+        ServerAddress serverAddress = session.createServerConnectionProvider(options)
+                                             .getServerDescription()
+                                             .getAddress();
         // there is randomization in the selection, so have to try a bunch of times.
         for (int i = 0; i < 100; i++) {
-            assertEquals(serverAddress, session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
-                    new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress());
+            assertEquals(serverAddress, session.createServerConnectionProvider(options)
+                                               .getServerDescription()
+                                               .getAddress());
         }
 
         session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
 
-        assertEquals(serverAddress, session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
-                new ReadPreferenceServerSelector(ReadPreference.secondary()))).getServerDescription().getAddress());
+        assertEquals(serverAddress, session.createServerConnectionProvider(options)
+                                           .getServerDescription()
+                                           .getAddress());
     }
 
     @Test
     public void shouldPinReadsToSameConnectionAsAPreviousWrite() throws InterruptedException {
-        ServerConnectionProvider writeProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false,
-                new PrimaryServerSelector()));
+        ServerConnectionProviderOptions writeOptions = new ServerConnectionProviderOptions(false, new PrimaryServerSelector());
+        ServerConnectionProvider writeProvider = session.createServerConnectionProvider(writeOptions);
         String connectionId = writeProvider.getConnection().getId();
 
-        ServerConnectionProvider readProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
-                new ReadPreferenceServerSelector(ReadPreference
-                        .primary())));
+        ServerConnectionProviderOptions readOptions = new ServerConnectionProviderOptions(true,
+                                                                                          new ReadPreferenceServerSelector(primary()));
+        ServerConnectionProvider readProvider = session.createServerConnectionProvider(readOptions);
         assertEquals(connectionId, readProvider.getConnection().getId());
     }
 }

@@ -21,11 +21,11 @@ import org.bson.types.ObjectId;
 import java.util.Date;
 
 public final class Worker {
-    private ObjectId id;
-    private String name;
-    private String jobTitle;
-    private Date dateStarted;
-    private int numberOfJobs;
+    private final ObjectId id;
+    private final String name;
+    private final String jobTitle;
+    private final Date dateStarted;
+    private final int numberOfJobs;
 
     public Worker(final String name, final String jobTitle, final Date dateStarted, final int numberOfJobs) {
         this(new ObjectId(), name, jobTitle, dateStarted, numberOfJobs);
@@ -68,7 +68,7 @@ public final class Worker {
             return false;
         }
 
-        final Worker worker = (Worker) o;
+        Worker worker = (Worker) o;
 
         if (numberOfJobs != worker.numberOfJobs) {
             return false;

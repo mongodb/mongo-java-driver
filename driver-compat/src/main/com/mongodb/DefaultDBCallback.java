@@ -59,11 +59,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public Object objectDone() {
-        final String name = curName();
+        String name = curName();
         BSONObject document = (BSONObject) super.objectDone();
-        final Iterator<String> iterator = document.keySet().iterator();
+        Iterator<String> iterator = document.keySet().iterator();
         if (iterator.hasNext() && iterator.next().equals("$ref")
-                && iterator.hasNext() && iterator.next().equals("$id")) {
+            && iterator.hasNext() && iterator.next().equals("$id")) {
             _put(name, new DBRef(db, document));
         }
 

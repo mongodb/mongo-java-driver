@@ -22,7 +22,7 @@ public class TestServer implements ClusterableServer {
     private ChangeListener<ServerDescription> changeListener;
     private ServerDescription description;
     private boolean isClosed;
-    private ServerAddress serverAddress;
+    private final ServerAddress serverAddress;
 
     public TestServer(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;

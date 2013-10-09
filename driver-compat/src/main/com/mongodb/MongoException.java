@@ -49,7 +49,7 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param code the error code
-     * @param msg the message
+     * @param msg  the message
      */
     public MongoException(final int code, final String msg) {
         super(msg);
@@ -58,7 +58,7 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param msg the message
-     * @param t the throwable cause
+     * @param t   the throwable cause
      */
     public MongoException(final String msg, final Throwable t) {
         super(msg, t);
@@ -67,8 +67,8 @@ public class MongoException extends RuntimeException {
 
     /**
      * @param code the error code
-     * @param msg the message
-     * @param t the throwable cause
+     * @param msg  the message
+     * @param t    the throwable cause
      */
     public MongoException(final int code, final String msg, final Throwable t) {
         super(msg, t);
@@ -96,8 +96,7 @@ public class MongoException extends RuntimeException {
     /**
      * Subclass of WriteConcernException representing a duplicate key error.
      *
-     * @deprecated This class will be dropped in 3.x versions.
-     *             Please catch {@link MongoDuplicateKeyException} instead.
+     * @deprecated This class will be dropped in 3.x versions. Please catch {@link MongoDuplicateKeyException} instead.
      */
     @Deprecated
     public static class DuplicateKey extends MongoDuplicateKeyException {

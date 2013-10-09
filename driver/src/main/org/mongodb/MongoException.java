@@ -17,9 +17,8 @@
 package org.mongodb;
 
 /**
- * A general exception raised in response to some sort of problem communicating with a MongoDB server.  This could
- * represent network errors, server errors, or application-level errors.
- *
+ * A general exception raised in response to some sort of problem communicating with a MongoDB server.  This could represent network errors,
+ * server errors, or application-level errors.
  */
 public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;

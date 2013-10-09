@@ -32,26 +32,26 @@ import static org.junit.Assert.fail;
 public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
     public void testMultiInsert() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
-        final DBObject obj = c.findOne();
+        DBObject obj = c.findOne();
         assertEquals(obj, null);
 
-        final DBObject inserted1 = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
-        final DBObject inserted2 = BasicDBObjectBuilder.start().add("x", 3).add("y", 3).get();
+        DBObject inserted1 = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start().add("x", 3).add("y", 3).get();
         c.insert(inserted1, inserted2);
         Assert.assertThat(collection.count(), is(2L));
     }
 
     @Test
     public void testCappedCollection() {
-        final String collectionName = "testCapped";
-        final int collectionSize = 1000;
+        String collectionName = "testCapped";
+        int collectionSize = 1000;
 
         DBCollection c = collection;
         c.drop();
 
-        final DBObject options = new BasicDBObject("capped", true);
+        DBObject options = new BasicDBObject("capped", true);
         options.put("size", collectionSize);
         c = database.createCollection(collectionName, options);
 
@@ -60,16 +60,16 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test(expected = MongoDuplicateKeyException.class)
     public void testDuplicateKeyException() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
-        final DBObject obj = new BasicDBObject();
+        DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
         c.insert(obj, WriteConcern.SAFE);
     }
 
     @Test
     public void testFindOne() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -86,7 +86,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
         assertEquals(obj, null);
 
-        final DBObject inserted = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
+        DBObject inserted = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
         c.insert(inserted);
         c.insert(BasicDBObjectBuilder.start().add("_id", 123).add("x", 2).add("z", 2).get());
 
@@ -111,7 +111,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testFindOneSort() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -140,7 +140,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(obj.get("_id"), 3);
 
         obj = c.findOne(QueryBuilder.start("x").lessThan(2).get(), null,
-                BasicDBObjectBuilder.start().add("y", -1).get());
+                        BasicDBObjectBuilder.start().add("y", -1).get());
         assertNotNull(obj);
         assertEquals(obj.get("_id"), 5);
 
@@ -148,7 +148,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testDropIndividualIndexes() {
-        final DBCollection c = database.getCollection("dropindex2");
+        DBCollection c = database.getCollection("dropindex2");
         c.drop();
 
         c.save(new BasicDBObject("x", 1));
@@ -175,15 +175,15 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropCompoundIndexes1() {
-        final DBCollection c = database.getCollection("dropindex3");
+        DBCollection c = database.getCollection("dropindex3");
         c.drop();
 
-        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+        BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
 
         c.save(newDoc);
         assertEquals(1, c.getIndexInfo().size());
 
-        final BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
+        BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
         c.ensureIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
@@ -193,15 +193,15 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropCompoundIndexes2() {
-        final DBCollection c = database.getCollection("dropindex4");
+        DBCollection c = database.getCollection("dropindex4");
         c.drop();
 
-        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+        BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
 
         c.save(newDoc);
         assertEquals(1, c.getIndexInfo().size());
 
-        final BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
+        BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
         c.ensureIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
@@ -211,15 +211,15 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropCompoundGeoIndexes() {
-        final DBCollection c = database.getCollection("dropindex5");
+        DBCollection c = database.getCollection("dropindex5");
         c.drop();
 
-        final BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
+        BasicDBObject newDoc = new BasicDBObject("x", "some value").append("y", "another value");
 
         c.save(newDoc);
         assertEquals(1, c.getIndexInfo().size());
 
-        final BasicDBObject indexFields = new BasicDBObject("x", "2d").append("y", 1);
+        BasicDBObject indexFields = new BasicDBObject("x", "2d").append("y", 1);
         c.ensureIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
@@ -229,13 +229,13 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropGeoIndexes() {
-        final DBCollection c = database.getCollection("dropindex6");
+        DBCollection c = database.getCollection("dropindex6");
         c.drop();
 
         c.save(new BasicDBObject("x", 1));
         assertEquals(1, c.getIndexInfo().size());
 
-        final BasicDBObject indexFields = new BasicDBObject("x", "2d");
+        BasicDBObject indexFields = new BasicDBObject("x", "2d");
         c.ensureIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
@@ -258,10 +258,10 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testDistinct() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
         for (int i = 0; i < 100; i++) {
-            final BasicDBObject o = new BasicDBObject();
+            BasicDBObject o = new BasicDBObject();
             o.put("_id", i);
             o.put("x", i % 10);
             c.save(o);
@@ -288,9 +288,9 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testEnsureNestedIndex() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
-        final BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
+        BasicDBObject newDoc = new BasicDBObject("x", new BasicDBObject("y", 1));
         c.save(newDoc);
 
         assertEquals(1, c.getIndexInfo().size());
@@ -305,7 +305,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, collection.getIndexInfo().size());
 
         // when
-        final String indexAlias = "indexAlias";
+        String indexAlias = "indexAlias";
         collection.ensureIndex(new BasicDBObject("x", 1), indexAlias);
 
         // then
@@ -315,7 +315,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testIndexExceptions() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
         c.insert(new BasicDBObject("x", 1));
         c.insert(new BasicDBObject("x", 1));
@@ -334,17 +334,17 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
         c.setWriteConcern(WriteConcern.NORMAL);
 
-        final DBObject obj = c.findOne();
+        DBObject obj = c.findOne();
         assertEquals(obj, null);
 
-        final ObjectId id = new ObjectId();
-        final DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
-        final DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
-        final DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
-        final WriteResult r = c.insert(inserted1, inserted2, inserted3);
+        ObjectId id = new ObjectId();
+        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
+        DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
+        c.insert(inserted1, inserted2, inserted3);
         assertEquals(1, c.count());
         assertFalse(c.getWriteConcern().getContinueOnError());
 
@@ -354,16 +354,16 @@ public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
     public void testMultiInsertWithContinue() {
 
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
-        final DBObject obj = c.findOne();
+        DBObject obj = c.findOne();
         assertEquals(obj, null);
 
-        final ObjectId id = new ObjectId();
-        final DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
-        final DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
-        final DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
-        final WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
+        ObjectId id = new ObjectId();
+        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
+        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
+        DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
+        WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
         try {
             c.insert(newWC, inserted1, inserted2, inserted3);
             fail("Insert should have failed");
@@ -375,33 +375,33 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotKeysFail() {
-        final DBCollection c = collection;
+        DBCollection c = collection;
 
-        final DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
+        DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
         c.insert(obj);
     }
 
-//    @Test
-//    public void testLazyDocKeysPass() {
-//        final DBCollection c = collection;
-//
-//        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
-//                                           .add("foo.bar", "baz").get();
-//
-//        //convert to a lazydbobject
-//        DefaultDBEncoder encoder = new DefaultDBEncoder();
-//        byte[] encodedBytes = encoder.encode(obj);
-//
-//        LazyDBDecoder lazyDecoder = new LazyDBDecoder();
-//        DBObject lazyObj = lazyDecoder.decode(encodedBytes, c);
-//
-//        c.insert(lazyObj);
-//
-//        DBObject insertedObj = c.findOne();
-//        assertEquals("lazydottest1", insertedObj.get("_id"));
-//        assertEquals(1, insertedObj.get("x"));
-//        assertEquals(2, insertedObj.get("y"));
-//        assertEquals("baz", insertedObj.get("foo.bar"));
-//    }
+    //    @Test
+    //    public void testLazyDocKeysPass() {
+    //        final DBCollection c = collection;
+    //
+    //        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
+    //                                           .add("foo.bar", "baz").get();
+    //
+    //        //convert to a lazydbobject
+    //        DefaultDBEncoder encoder = new DefaultDBEncoder();
+    //        byte[] encodedBytes = encoder.encode(obj);
+    //
+    //        LazyDBDecoder lazyDecoder = new LazyDBDecoder();
+    //        DBObject lazyObj = lazyDecoder.decode(encodedBytes, c);
+    //
+    //        c.insert(lazyObj);
+    //
+    //        DBObject insertedObj = c.findOne();
+    //        assertEquals("lazydottest1", insertedObj.get("_id"));
+    //        assertEquals(1, insertedObj.get("x"));
+    //        assertEquals(2, insertedObj.get("y"));
+    //        assertEquals("baz", insertedObj.get("foo.bar"));
+    //    }
 
 }

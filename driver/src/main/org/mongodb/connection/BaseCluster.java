@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -70,8 +72,8 @@ public abstract class BaseCluster implements Cluster {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
-            final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
-            final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable
+            TimeUnit timeUnit = NANOSECONDS;
+            long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
             while (true) {
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
@@ -81,18 +83,18 @@ public abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(
-                            format("Unable to connect to any server that satisfies the selector %s", serverSelector));
+                    throw new MongoServerSelectionFailureException(format("Unable to connect to any server that satisfies the selector %s",
+                                                                          serverSelector));
                 }
 
-                final long timeout = endTime - System.nanoTime();
+                long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                        serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                                   serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that satisfies the selector: %s "
-                            + "after  %d %s", serverSelector, timeout, timeUnit));
+                                                           + "after  %d %s", serverSelector, timeout, timeUnit));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -100,7 +102,7 @@ public abstract class BaseCluster implements Cluster {
             }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(format("Interrupted while waiting for a server that satisfies server selector %s ",
-                    serverSelector), e);
+                                                       serverSelector), e);
         }
     }
 
@@ -111,22 +113,22 @@ public abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
-            final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable
+            TimeUnit timeUnit = NANOSECONDS;
+            long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
             while (curDescription.getType() == ClusterType.Unknown) {
 
                 if (!curDescription.isConnecting()) {
                     throw new MongoServerSelectionFailureException(format("Unable to connect to any servers"));
                 }
 
-                final long timeout = endTime - System.nanoTime();
+                long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                        TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                                   TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
 
                 if (!currentPhase.await(timeout, timeUnit)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for the cluster description after waiting %d %s",
-                            timeout, timeUnit));
+                                                           timeout, timeUnit));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -168,13 +170,8 @@ public abstract class BaseCluster implements Cluster {
         LOGGER.fine(format("Updating cluster description to  %s", newDescription.getShortDescription()));
 
         description = newDescription;
-        final CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
+        CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
         current.countDown();
-    }
-
-    // this method is necessary so that subclasses can call fireChangeEvent with the old value of description.
-    protected ClusterDescription getDescriptionNoWaiting() {
-        return description;
     }
 
     protected void fireChangeEvent() {
@@ -188,8 +185,7 @@ public abstract class BaseCluster implements Cluster {
             ClusterableServer server = getServer(serverDescriptions.get(serverPos).getAddress());
             if (server != null) {
                 return server;
-            }
-            else {
+            } else {
                 serverDescriptions.remove(serverPos);
             }
         }
@@ -200,9 +196,9 @@ public abstract class BaseCluster implements Cluster {
         return random.get();
     }
 
-    protected ClusterableServer createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription>
-            serverStateListener) {
-        final ClusterableServer server = serverFactory.create(serverAddress);
+    protected ClusterableServer createServer(final ServerAddress serverAddress,
+                                             final ChangeListener<ServerDescription> serverStateListener) {
+        ClusterableServer server = serverFactory.create(serverAddress);
         server.addChangeListener(serverStateListener);
         return server;
     }

@@ -24,8 +24,8 @@ import static org.junit.Assert.assertEquals;
 public class BSONTest {
     @Test
     public void testEncodingDecode() {
-        final BasicDBObject inputDoc = new BasicDBObject("_id", 1);
-        final byte[] encoded = BSON.encode(inputDoc);
+        BasicDBObject inputDoc = new BasicDBObject("_id", 1);
+        byte[] encoded = BSON.encode(inputDoc);
         assertEquals(inputDoc, BSON.decode(encoded));
     }
 

@@ -36,7 +36,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testInitFailureWhenMongoExceptionThrown() {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
 
         try {
             future.init(1, new MongoException("bad"));
@@ -48,14 +48,14 @@ public class SingleResultFutureTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testInitFailure() {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);
         future.init(2, null);
     }
 
     @Test
     public void testInitSuccessWithResult() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);
         assertTrue(future.isDone());
         assertEquals(1, (int) future.get());
@@ -63,15 +63,15 @@ public class SingleResultFutureTest {
 
     @Test
     public void testConstructorSuccessWithResult() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>(1, null);
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>(1, null);
         assertTrue(future.isDone());
         assertEquals(1, (int) future.get());
     }
 
     @Test
     public void testInitSuccessWithException() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
-        final MongoException mongoException = new MongoException("bad");
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        MongoException mongoException = new MongoException("bad");
         future.init(null, mongoException);
         try {
             future.get();
@@ -84,10 +84,10 @@ public class SingleResultFutureTest {
 
     @Test
     public void testSuccessfulCancel() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         assertFalse(future.isDone());
         assertFalse(future.isCancelled());
-        final boolean wasCancelled = future.cancel(true);
+        boolean wasCancelled = future.cancel(true);
         assertTrue(wasCancelled);
         assertTrue(future.isCancelled());
         assertTrue(future.isDone());
@@ -99,9 +99,9 @@ public class SingleResultFutureTest {
 
     @Test
     public void testUnsuccessfulCancel() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);
-        final boolean wasCancelled = future.cancel(true);
+        boolean wasCancelled = future.cancel(true);
         assertFalse(wasCancelled);
         assertFalse(future.isCancelled());
         assertEquals(1, (int) future.get());
@@ -128,7 +128,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testInitAfterCancel() throws ExecutionException, InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.cancel(true);
         future.init(1, null);
         try {
@@ -140,25 +140,25 @@ public class SingleResultFutureTest {
 
     @Test(expected = TimeoutException.class)
     public void testGetTimeout() throws InterruptedException, ExecutionException, TimeoutException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.get(1, TimeUnit.MILLISECONDS);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullTimeUnit() throws InterruptedException, ExecutionException, TimeoutException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.get(1, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullCallback() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.register(null);
     }
 
     @Test
     public void testCallbackRegisteredAfterInit() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final CountDownLatch latch = new CountDownLatch(1);
 
         future.init(1, null);
@@ -175,7 +175,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testCallbackRegisteredBeforeInit() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final CountDownLatch latch = new CountDownLatch(1);
 
         future.register(new SingleResultCallback<Integer>() {
@@ -192,7 +192,7 @@ public class SingleResultFutureTest {
 
     @Test
     public void testMultipleCallbacksRegisteredBeforeInit() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final CountDownLatch latch = new CountDownLatch(2);
 
         future.register(new SingleResultCallback<Integer>() {
@@ -215,7 +215,7 @@ public class SingleResultFutureTest {
 
     @Test(expected = CancellationException.class)
     public void testCallbackRegisteredAfterCancel() throws InterruptedException {
-        final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
+        SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.cancel(true);
 
         future.register(new SingleResultCallback<Integer>() {

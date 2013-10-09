@@ -35,12 +35,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 class PooledConnectionProvider implements ConnectionProvider {
-
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
@@ -60,8 +60,9 @@ class PooledConnectionProvider implements ConnectionProvider {
         this.clusterId = notNull("clusterId", clusterId);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.settings = notNull("settings", settings);
-        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(),
-                new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory));
+        UsageTrackingInternalConnectionItemFactory connectionItemFactory
+            = new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
+        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
         this.connectionPoolListener = notNull("connectionPoolListener", connectionPoolListener);
@@ -78,11 +79,10 @@ class PooledConnectionProvider implements ConnectionProvider {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException(format("Too many threads are already waiting for a connection. "
-                        + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
-                        settings.getMaxWaitQueueSize()));
+                                                             + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
+                                                             settings.getMaxWaitQueueSize()));
             }
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress,
-                    Thread.currentThread().getId()));
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, currentThread().getId()));
             UsageTrackingInternalConnection internalConnection = pool.get(timeout, timeUnit);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
@@ -92,8 +92,7 @@ class PooledConnectionProvider implements ConnectionProvider {
             return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
-            connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress,
-                    Thread.currentThread().getId()));
+            connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, currentThread().getId()));
         }
     }
 
@@ -141,8 +140,7 @@ class PooledConnectionProvider implements ConnectionProvider {
     private ExecutorService createTimer() {
         if (maintenanceTask == null) {
             return null;
-        }
-        else {
+        } else {
             ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
             newTimer.scheduleAtFixedRate(maintenanceTask, 0, settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
             return newTimer;
@@ -178,8 +176,8 @@ class PooledConnectionProvider implements ConnectionProvider {
     }
 
     /**
-     * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that
-     * any connections created prior will be discarded.
+     * If there was a socket exception that wasn't some form of interrupted read, increment the generation count so that any connections
+     * created prior will be discarded.
      *
      * @param connection the connection that generated the exception
      * @param e          the exception
@@ -187,7 +185,7 @@ class PooledConnectionProvider implements ConnectionProvider {
     private void incrementGenerationOnSocketException(final Connection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
             LOGGER.warning(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                    connection.getId(), serverAddress, serverAddress));
+                                  connection.getId(), serverAddress, serverAddress));
             generation.incrementAndGet();
         }
     }
@@ -238,10 +236,9 @@ class PooledConnectionProvider implements ConnectionProvider {
             try {
                 ResponseBuffers responseBuffers = wrapped.receiveMessage();
                 if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
-                    throw new MongoInternalException(
-                            String.format(
-                                    "The responseTo (%d) in the reply message does not match the requestId (%d) in the request message",
-                                    responseBuffers.getReplyHeader().getResponseTo(), responseTo));
+                    throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
+                                                            + "requestId (%d) in the request message",
+                                                            responseBuffers.getReplyHeader().getResponseTo(), responseTo));
                 }
                 return responseBuffers;
             } catch (MongoException e) {
@@ -270,7 +267,7 @@ class PooledConnectionProvider implements ConnectionProvider {
     }
 
     private class UsageTrackingInternalConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingInternalConnection> {
-        private InternalConnectionFactory internalConnectionFactory;
+        private final InternalConnectionFactory internalConnectionFactory;
 
         public UsageTrackingInternalConnectionItemFactory(final InternalConnectionFactory internalConnectionFactory) {
             this.internalConnectionFactory = internalConnectionFactory;
@@ -279,7 +276,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         @Override
         public UsageTrackingInternalConnection create() {
             UsageTrackingInternalConnection internalConnection =
-                    new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
+                new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
             LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
             connectionPoolListener.connectionAdded(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             return internalConnection;
@@ -290,14 +287,11 @@ class PooledConnectionProvider implements ConnectionProvider {
             String reason;
             if (fromPreviousGeneration(connection)) {
                 reason = "there was a socket exception raised on another connection from this pool";
-            }
-            else if (pastMaxLifeTime(connection)) {
+            } else if (pastMaxLifeTime(connection)) {
                 reason = "it is past its maximum allowed life time";
-            }
-            else if (pastMaxIdleTime(connection)) {
+            } else if (pastMaxIdleTime(connection)) {
                 reason = "it is past its maximum allowed idle time";
-            }
-            else {
+            } else {
                 reason = "the pool has been closed";
             }
             if (!closed) {

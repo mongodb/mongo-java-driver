@@ -29,7 +29,7 @@ public class ClusterDescriptionChangedEvent extends ClusterEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId          the cluster id
      * @param clusterDescription the cluster description
      */
     public ClusterDescriptionChangedEvent(final String clusterId, final ClusterDescription clusterDescription) {
@@ -55,7 +55,7 @@ public class ClusterDescriptionChangedEvent extends ClusterEvent {
             return false;
         }
 
-        final ClusterDescriptionChangedEvent that = (ClusterDescriptionChangedEvent) o;
+        ClusterDescriptionChangedEvent that = (ClusterDescriptionChangedEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

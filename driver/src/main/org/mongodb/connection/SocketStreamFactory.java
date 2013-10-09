@@ -43,14 +43,11 @@ public class SocketStreamFactory implements StreamFactory {
         Stream stream;
         if (socketFactory != null) {
             stream = new SocketStream(serverAddress, settings, socketFactory);
-        }
-        else if (sslSettings.isEnabled()) {
+        } else if (sslSettings.isEnabled()) {
             stream = new SocketStream(serverAddress, settings, SSLSocketFactory.getDefault());
-        }
-        else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
+        } else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             stream = new SocketStream(serverAddress, settings, SocketFactory.getDefault());
-        }
-        else {
+        } else {
             stream = new SocketChannelStream(serverAddress, settings);
         }
 

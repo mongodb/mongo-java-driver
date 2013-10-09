@@ -34,7 +34,7 @@ public class MapWrapper {
             return false;
         }
 
-        final MapWrapper that = (MapWrapper) o;
+        MapWrapper that = (MapWrapper) o;
 
         if (!theMap.equals(that.theMap)) {
             return false;

@@ -26,14 +26,10 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * A simple implementation of <code>DBObject</code>. A <code>DBObject</code> can be created as follows, using this
- * class:
- * <blockquote><pre>
- * DBObject obj = new BasicBSONObject();
- * obj.put( "foo", "bar" );
- * </pre></blockquote>
+ * A simple implementation of {@code DBObject}. A {@code DBObject} can be created as follows, using this class: {@code DBObject obj = new
+ * BasicBSONObject(); obj.put( "foo", "bar" ); }
  */
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings({"rawtypes"})
 public class BasicBSONObject extends LinkedHashMap<String, Object> implements BSONObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
@@ -116,13 +112,13 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Returns the value of a field as an <code>int</code>.
+     * Returns the value of a field as an {@code int}.
      *
      * @param key the field to look for
      * @return the field value (or default)
      */
     public int getInt(final String key) {
-        final Object o = get(key);
+        Object o = get(key);
         if (o == null) {
             throw new NullPointerException("no value for: " + key);
         }
@@ -131,14 +127,14 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Returns the value of a field as an <code>int</code>.
+     * Returns the value of a field as an {@code int}.
      *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
      */
     public int getInt(final String key, final int def) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -147,25 +143,25 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Returns the value of a field as a <code>long</code>.
+     * Returns the value of a field as a {@code long}.
      *
      * @param key the field to return
      * @return the field value
      */
     public long getLong(final String key) {
-        final Object foo = get(key);
+        Object foo = get(key);
         return ((Number) foo).longValue();
     }
 
     /**
-     * Returns the value of a field as an <code>long</code>.
+     * Returns the value of a field as an {@code long}.
      *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
      */
     public long getLong(final String key, final long def) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -174,25 +170,25 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Returns the value of a field as a <code>double</code>.
+     * Returns the value of a field as a {@code double}.
      *
      * @param key the field to return
      * @return the field value
      */
     public double getDouble(final String key) {
-        final Object foo = get(key);
+        Object foo = get(key);
         return ((Number) foo).doubleValue();
     }
 
     /**
-     * Returns the value of a field as an <code>double</code>.
+     * Returns the value of a field as an {@code double}.
      *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
      */
     public double getDouble(final String key, final double def) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -207,7 +203,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return the value of the field, converted to a string
      */
     public String getString(final String key) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return null;
         }
@@ -222,7 +218,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return the value of the field, converted to a string
      */
     public String getString(final String key, final String def) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -248,7 +244,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return the value of the field, converted to a string
      */
     public boolean getBoolean(final String key, final boolean def) {
-        final Object foo = get(key);
+        Object foo = get(key);
         if (foo == null) {
             return def;
         }
@@ -279,7 +275,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return The field object value or def if not set.
      */
     public ObjectId getObjectId(final String field, final ObjectId def) {
-        final Object foo = get(field);
+        Object foo = get(field);
         return (foo != null) ? (ObjectId) foo : def;
     }
 
@@ -301,7 +297,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return The field object value or def if not set.
      */
     public Date getDate(final String field, final Date def) {
-        final Object foo = get(field);
+        Object foo = get(field);
         return (foo != null) ? (Date) foo : def;
     }
 
@@ -310,7 +306,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      *
      * @param key the field name
      * @param val the field value
-     * @return the <code>val</code> parameter
+     * @return the {@code val} parameter
      */
     public Object put(final String key, final Object val) {
         return super.put(key, val);
@@ -334,7 +330,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      *
      * @param key the field name
      * @param val the field value
-     * @return <code>this</code>
+     * @return {@code this}
      */
     public BasicBSONObject append(final String key, final Object val) {
         put(key, val);
@@ -358,14 +354,14 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
             return false;
         }
 
-        final BSONObject other = (BSONObject) o;
+        BSONObject other = (BSONObject) o;
         if (!keySet().equals(other.keySet())) {
             return false;
         }
 
         for (final String key : keySet()) {
-            final Object a = get(key);
-            final Object b = other.get(key);
+            Object a = get(key);
+            Object b = other.get(key);
 
             if (a == null) {
                 if (b != null) {
@@ -376,27 +372,24 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
                 if (a != null) {
                     return false;
                 }
-            }
-            else if (a instanceof Number && b instanceof Number) {
-                final Number aNumber = (Number) a;
-                final Number bNumber = (Number) b;
+            } else if (a instanceof Number && b instanceof Number) {
+                Number aNumber = (Number) a;
+                Number bNumber = (Number) b;
                 if (aNumber instanceof Double || bNumber instanceof Double
-                        || aNumber instanceof Float || bNumber instanceof Float) {
+                    || aNumber instanceof Float || bNumber instanceof Float) {
                     if (aNumber.doubleValue() != bNumber.doubleValue()) {
                         return false;
                     }
                 } else if (aNumber.longValue() != bNumber.longValue()) {
                     return false;
                 }
-            }
-            else if (a instanceof Pattern && b instanceof Pattern) {
-                final Pattern p1 = (Pattern) a;
-                final Pattern p2 = (Pattern) b;
+            } else if (a instanceof Pattern && b instanceof Pattern) {
+                Pattern p1 = (Pattern) a;
+                Pattern p2 = (Pattern) b;
                 if (!p1.pattern().equals(p2.pattern()) || p1.flags() != p2.flags()) {
                     return false;
                 }
-            }
-            else {
+            } else {
                 if (!a.equals(b)) {
                     return false;
                 }

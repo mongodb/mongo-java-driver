@@ -33,19 +33,20 @@ abstract class SaslAuthenticator extends Authenticator {
     }
 
     public void authenticate() {
-        final SaslClient saslClient = createSaslClient();
+        SaslClient saslClient = createSaslClient();
         try {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
             CommandResult res = sendSaslStart(response);
 
-            final int conversationId = (Integer) res.getResponse().get("conversationId");
+            int conversationId = (Integer) res.getResponse().get("conversationId");
 
             while (!(Boolean) res.getResponse().get("done")) {
                 response = saslClient.evaluateChallenge(((byte[]) res.getResponse().get("payload")));
 
                 if (response == null) {
                     throw new MongoSecurityException(getCredential(),
-                            "SASL protocol error: no client response to challenge for credential " + getCredential());
+                                                     "SASL protocol error: no client response to challenge for credential "
+                                                     + getCredential());
                 }
 
                 res = sendSaslContinue(conversationId, response);
@@ -77,8 +78,8 @@ abstract class SaslAuthenticator extends Authenticator {
     }
 
     private Document createSaslContinueDocument(final int conversationId, final byte[] outToken) {
-        return new Document("saslContinue", 1).append("conversationId", conversationId).
-                append("payload", outToken);
+        return new Document("saslContinue", 1).append("conversationId", conversationId)
+                                              .append("payload", outToken);
     }
 
     private void disposeOfSaslClient(final SaslClient saslClient) {

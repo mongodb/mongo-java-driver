@@ -47,7 +47,7 @@ public class JSONParseException extends RuntimeException {
      * Constructs a new runtime exception with string formatted using specified pattern and arguments.
      *
      * @param pattern A {@link  java.util.Formatter format string}.
-     * @param args the arguments to insert into the pattern String
+     * @param args    the arguments to insert into the pattern String
      */
     public JSONParseException(final String pattern, final Object... args) {
         super(format(pattern, args));
@@ -55,6 +55,7 @@ public class JSONParseException extends RuntimeException {
 
     /**
      * Create a JSONParseException with the given {@link Throwable} cause.
+     *
      * @param t the throwable root case
      */
     public JSONParseException(final Throwable t) {

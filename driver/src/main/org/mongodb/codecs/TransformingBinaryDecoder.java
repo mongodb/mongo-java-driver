@@ -42,8 +42,7 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
         BinaryTransformer transformer = subTypeTransformerMap.get(binary.getType());
         if (transformer == null) {
             return binary;
-        }
-        else {
+        } else {
             return transformer.transform(binary);
         }
     }

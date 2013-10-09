@@ -47,11 +47,16 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements 
 
     @Override
     public MongoCursor<T> execute() {
-         return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getBufferProvider(), getSession(), isCloseSession());
+        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getBufferProvider(), getSession(), isCloseSession());
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync() {
-        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace, find, queryEncoder, resultDecoder,
-                getBufferProvider(), getSession(), isCloseSession()), null);
+        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace,
+                                                                                        find,
+                                                                                        queryEncoder,
+                                                                                        resultDecoder,
+                                                                                        getBufferProvider(),
+                                                                                        getSession(),
+                                                                                        isCloseSession()), null);
     }
 }

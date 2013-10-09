@@ -27,16 +27,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't
- * even report network errors </li> <li> 0 = Don't wait for acknowledgement from the server </li> <li> 1 = Wait for
- * acknowledgement, but don't wait for secondaries to replicate</li> <li> 2+= Wait for one or more secondaries to also
- * acknowledge </li> </ul> <b>wtimeout</b> how long to wait for slaves before failing <ul> <li>0: indefinite </li>
- * <li>greater than 0: ms to wait </li> </ul> </p>
+ * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't even report network
+ * errors </li> <li> 0 = Don't wait for acknowledgement from the server </li> <li> 1 = Wait for acknowledgement, but don't wait for
+ * secondaries to replicate</li> <li> 2+= Wait for one or more secondaries to also acknowledge </li> </ul> <b>wtimeout</b> how long to wait
+ * for slaves before failing <ul> <li>0: indefinite </li> <li>greater than 0: ms to wait </li> </ul> </p>
  * <p/>
- * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li>
- * </ul>
+ * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li> </ul>
  *
- *  @mongodb.driver.manual core/write-concern/ Write Concern
+ * @mongodb.driver.manual core/write-concern/ Write Concern
  */
 @Immutable
 public class WriteConcern implements Serializable {
@@ -54,64 +52,60 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern ERRORS_IGNORED = new WriteConcern(org.mongodb.WriteConcern.ERRORS_IGNORED);
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before
-     * returning. Exceptions are raised for network issues, and server errors.
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
+     * raised for network issues, and server errors.
      *
      * @since 2.10.0
      */
     public static final WriteConcern ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
     /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket.
-     * Exceptions are raised for network issues, but not server errors.
+     * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
+     * network issues, but not server errors.
      *
      * @since 2.10.0
      */
     public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
-     * the data to disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
      */
     public static final WriteConcern FSYNCED = new WriteConcern(org.mongodb.WriteConcern.FSYNCED);
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
-     * commit to the journal file on disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
+     * file on disk.
      */
     public static final WriteConcern JOURNALED = new WriteConcern(org.mongodb.WriteConcern.JOURNALED);
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
-     * operation.
+     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      */
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(
-                                                                            org.mongodb.WriteConcern
-                                                                            .REPLICA_ACKNOWLEDGED);
+                                                                                org.mongodb.WriteConcern
+                                                                                    .REPLICA_ACKNOWLEDGED);
 
     /**
      * No exceptions are raised, even for network issues.
      * <p/>
-     * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future
-     * release.
+     * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future release.
      *
      * @see WriteConcern#ERRORS_IGNORED
      */
     public static final WriteConcern NONE = ERRORS_IGNORED;
 
     /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket.
-     * Exceptions are raised for network issues, but not server errors.
+     * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
+     * network issues, but not server errors.
      * <p/>
-     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future
-     * release.
+     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before
-     * returning. Exceptions are raised for network issues, and server errors.
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
+     * raised for network issues, and server errors.
      * <p/>
      * This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.
      *
@@ -120,14 +114,12 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern SAFE = ACKNOWLEDGED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write
-     * operation.
+     * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation.
      */
     public static final WriteConcern MAJORITY = new WriteConcern("majority");
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush
-     * the data to disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
      * <p/>
      * This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.
      *
@@ -136,8 +128,8 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group
-     * commit to the journal file on disk.
+     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
+     * file on disk.
      * <p/>
      * This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.
      *
@@ -146,11 +138,9 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write
-     * operation.
+     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      * <p/>
-     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future
-     * release.
+     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.
      *
      * @see WriteConcern#REPLICA_ACKNOWLEDGED
      */
@@ -162,13 +152,13 @@ public class WriteConcern implements Serializable {
      * @param writeConcern the write concern to convert
      * @return the converted write concern
      */
-    public static WriteConcern fromNew(org.mongodb.WriteConcern writeConcern) {
+    public static WriteConcern fromNew(final org.mongodb.WriteConcern writeConcern) {
         return new WriteConcern(writeConcern);
     }
 
     /**
-     * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to
-     * {@code WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
+     * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to {@code
+     * WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
@@ -214,11 +204,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -229,11 +218,10 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -245,28 +233,26 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w                     number of writes
-     * @param wtimeout              timeout for write operation
-     * @param fsync                 whether or not to fsync
-     * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnError       if batch writes should continue after the first error
+     * @param w               number of writes
+     * @param wtimeout        timeout for write operation
+     * @param fsync           whether or not to fsync
+     * @param j               whether writes should wait for a journaling group commit
+     * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
         proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -278,17 +264,16 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and
-     * exception raising behavior </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking
-     * is done</li> <li>{@code w=0} None, network socket errors raised</li> <li>{@code w=1} Checks server for errors as
-     * well as network socket errors raised</li> <li>{@code w>1} Checks servers (w) for errors as well as network socket
-     * errors raised</li> </ul> </p>
+     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
+     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
+     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
+     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w                     number of writes
-     * @param wtimeout              timeout for write operation
-     * @param fsync                 whether or not to fsync
-     * @param j                     whether writes should wait for a journaling group commit
-     * @param continueOnError      if batch writes should continue after the first error
+     * @param w               number of writes
+     * @param wtimeout        timeout for write operation
+     * @param fsync           whether or not to fsync
+     * @param j               whether writes should wait for a journaling group commit
+     * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
         proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
@@ -306,7 +291,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the getlasterror command for this write concern.
      *
-     * @return getlasterror command, even if <code>w <= 0</code>
+     * @return getlasterror command, even if {@code w <= 0}
      */
     public BasicDBObject getCommand() {
         return DBObjects.toDBObject(proxied.asDocument());
@@ -389,7 +374,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the WriteConcern constants by name (matching is done case insensitively).
      *
-     * @param name the name of the {@link WriteConcern}
+     * @param name the name of the WriteConcern
      * @return the {@code WriteConcern instance}
      */
     public static WriteConcern valueOf(final String name) {
@@ -405,7 +390,7 @@ public class WriteConcern implements Serializable {
             return false;
         }
 
-        final WriteConcern that = (WriteConcern) o;
+        WriteConcern that = (WriteConcern) o;
 
         if (!proxied.equals(that.proxied)) {
             return false;
@@ -447,11 +432,11 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Toggles the "continue inserts on error" mode. This only applies to server side errors. If there is a document
-     * which does not validate in the client, an exception will still be thrown in the client. This will return a new
-     * WriteConcern instance with the specified continueOnInsert value.
+     * Toggles the "continue inserts on error" mode. This only applies to server side errors. If there is a document which does not validate
+     * in the client, an exception will still be thrown in the client. This will return a new WriteConcern instance with the specified
+     * continueOnInsert value.
      *
-     * @param continueOnError
+     * @param continueOnError true if the operation should continue when the server continues an error
      */
     public WriteConcern continueOnError(final boolean continueOnError) {
         return new WriteConcern(proxied.withContinueOnError(continueOnError));
@@ -483,8 +468,8 @@ public class WriteConcern implements Serializable {
         @Override
         public String toString() {
             return "WriteConcern.Majority{" +
-                    "command=" + getCommand() +
-                    "}";
+                   "command=" + getCommand() +
+                   "}";
         }
     }
 
@@ -492,7 +477,7 @@ public class WriteConcern implements Serializable {
         _namedConcerns = new HashMap<String, WriteConcern>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                final String key = f.getName().toLowerCase();
+                String key = f.getName().toLowerCase();
                 try {
                     _namedConcerns.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {

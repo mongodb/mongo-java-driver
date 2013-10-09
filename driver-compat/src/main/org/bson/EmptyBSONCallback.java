@@ -141,7 +141,7 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void gotDBRef(String name, String ns, ObjectId id) {
+    public void gotDBRef(final String name, final String ns, final ObjectId id) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 

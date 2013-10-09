@@ -29,9 +29,9 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param threadId the identifier of the waiting thread
+     * @param threadId      the identifier of the waiting thread
      */
     public ConnectionPoolWaitQueueEvent(final String clusterId, final ServerAddress serverAddress, final long threadId) {
         super(clusterId, serverAddress);
@@ -56,7 +56,7 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
             return false;
         }
 
-        final ConnectionPoolWaitQueueEvent that = (ConnectionPoolWaitQueueEvent) o;
+        ConnectionPoolWaitQueueEvent that = (ConnectionPoolWaitQueueEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

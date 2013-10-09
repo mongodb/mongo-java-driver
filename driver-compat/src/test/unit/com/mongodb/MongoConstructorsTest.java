@@ -32,7 +32,7 @@ public class MongoConstructorsTest {
     @Test
     @Ignore
     public void shouldDefaultToLocalhost() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         try {
             assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
         } finally {
@@ -43,7 +43,7 @@ public class MongoConstructorsTest {
     @Test
     @Ignore
     public void shouldUseGivenHost() throws UnknownHostException {
-        final Mongo mongo = new MongoClient("localhost");
+        Mongo mongo = new MongoClient("localhost");
         try {
             assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
         } finally {
@@ -54,7 +54,7 @@ public class MongoConstructorsTest {
     @Test
     @Ignore
     public void shouldUseGivenServerAddress() throws UnknownHostException {
-        final Mongo mongo = new MongoClient(new ServerAddress("localhost"));
+        Mongo mongo = new MongoClient(new ServerAddress("localhost"));
         try {
             assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
         } finally {
@@ -64,14 +64,14 @@ public class MongoConstructorsTest {
 
     @Test
     public void shouldUseGivenCredentials() throws UnknownHostException {
-        final Mongo mongo = new MongoClient(new ServerAddress(),
-                Arrays.asList(MongoCredential.createMongoCRCredential("user", "admin", "pwd".toCharArray())));
+        Mongo mongo = new MongoClient(new ServerAddress(),
+                                      Arrays.asList(MongoCredential.createMongoCRCredential("user", "admin", "pwd".toCharArray())));
         mongo.close();
     }
 
     @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         try {
             assertEquals(ReadPreference.primary(), mongo.getReadPreference());
         } finally {
@@ -85,7 +85,7 @@ public class MongoConstructorsTest {
         mongo.close();
 
         mongo = new MongoClient(new ServerAddress(), Collections.<MongoCredential>emptyList(),
-                MongoClientOptions.builder().requiredReplicaSetName("test").build());
+                                MongoClientOptions.builder().requiredReplicaSetName("test").build());
         mongo.close();
 
         mongo = new MongoClient(new MongoClientURI("mongodb://localhost/?setName=test"));
@@ -94,14 +94,14 @@ public class MongoConstructorsTest {
 
     @Test
     public void shouldSaveDefaultReadPreference() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         mongo.setReadPreference(ReadPreference.nearest());
         assertEquals(ReadPreference.nearest(), mongo.getReadPreference());
     }
 
     @Test
     public void shouldSaveDefaultWriteConcern() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         try {
             mongo.setWriteConcern(WriteConcern.ACKNOWLEDGED);
             assertEquals(WriteConcern.ACKNOWLEDGED, mongo.getWriteConcern());
@@ -112,9 +112,9 @@ public class MongoConstructorsTest {
 
     @Test
     public void shouldGetDB() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         try {
-            final DB db = mongo.getDB("test");
+            DB db = mongo.getDB("test");
             assertNotNull(db);
             assertEquals("test", db.getName());
         } finally {
@@ -124,7 +124,7 @@ public class MongoConstructorsTest {
 
     @Test
     public void shouldGetSameDB() throws UnknownHostException {
-        final Mongo mongo = new MongoClient();
+        Mongo mongo = new MongoClient();
         try {
             assertSame(mongo.getDB("test"), mongo.getDB("test"));
         } finally {

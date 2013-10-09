@@ -104,7 +104,7 @@ public class DBObjectFactoryTest {
             return next;
         }
 
-        public void setNext(Tweet next) {
+        public void setNext(final Tweet next) {
             this.next = next;
         }
 
@@ -112,7 +112,7 @@ public class DBObjectFactoryTest {
             return message;
         }
 
-        public void setMessage(String message) {
+        public void setMessage(final String message) {
             this.message = message;
         }
     }

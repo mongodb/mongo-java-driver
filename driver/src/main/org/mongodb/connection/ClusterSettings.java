@@ -155,7 +155,7 @@ public final class ClusterSettings {
             return false;
         }
 
-        final ClusterSettings that = (ClusterSettings) o;
+        ClusterSettings that = (ClusterSettings) o;
 
         if (!hosts.equals(that.hosts)) {
             return false;
@@ -167,7 +167,7 @@ public final class ClusterSettings {
             return false;
         }
         if (requiredReplicaSetName != null
-                ? !requiredReplicaSetName.equals(that.requiredReplicaSetName) : that.requiredReplicaSetName != null) {
+            ? !requiredReplicaSetName.equals(that.requiredReplicaSetName) : that.requiredReplicaSetName != null) {
             return false;
         }
         return true;
@@ -185,20 +185,20 @@ public final class ClusterSettings {
     @Override
     public String toString() {
         return "{"
-                + "hosts=" + hosts
-                + ", mode=" + mode
-                + ", requiredClusterType=" + requiredClusterType
-                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
-                + '}';
+               + "hosts=" + hosts
+               + ", mode=" + mode
+               + ", requiredClusterType=" + requiredClusterType
+               + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
+               + '}';
     }
 
     public String getShortDescription() {
         return "{"
-                + "hosts=" + hosts
-                + ", mode=" + mode
-                + ", requiredClusterType=" + requiredClusterType
-                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
-                + '}';
+               + "hosts=" + hosts
+               + ", mode=" + mode
+               + ", requiredClusterType=" + requiredClusterType
+               + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
+               + '}';
     }
 
     private ClusterSettings(final Builder builder) {
@@ -216,10 +216,9 @@ public final class ClusterSettings {
         if (builder.requiredReplicaSetName != null) {
             if (builder.requiredClusterType == ClusterType.Unknown) {
                 builder.requiredClusterType = ClusterType.ReplicaSet;
-            }
-            else if (builder.requiredClusterType != ClusterType.ReplicaSet) {
-                throw new IllegalArgumentException(
-                        "When specifying a replica set name, only ClusterType.Unknown and ClusterType.ReplicaSet are valid.");
+            } else if (builder.requiredClusterType != ClusterType.ReplicaSet) {
+                throw new IllegalArgumentException("When specifying a replica set name, only ClusterType.Unknown and ClusterType"
+                                                   + ".ReplicaSet are valid.");
             }
         }
 

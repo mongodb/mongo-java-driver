@@ -87,13 +87,13 @@ public class BasicBSONCallback implements BSONCallback {
 
     public void objectStart(final boolean array, final String name) {
         nameStack.addLast(name);
-        final BSONObject o = create(array, nameStack);
+        BSONObject o = create(array, nameStack);
         stack.getLast().put(name, o);
         stack.addLast(o);
     }
 
     public Object objectDone() {
-        final BSONObject o = stack.removeLast();
+        BSONObject o = stack.removeLast();
         if (nameStack.size() > 0) {
             nameStack.removeLast();
         } else if (stack.size() > 0) {

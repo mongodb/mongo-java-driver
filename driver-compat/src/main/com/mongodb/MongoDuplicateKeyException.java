@@ -19,14 +19,14 @@ package com.mongodb;
 /**
  * Subclass of {@link WriteConcernException} representing a duplicate key exception
  */
-public class MongoDuplicateKeyException extends WriteConcernException{
+public class MongoDuplicateKeyException extends WriteConcernException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
     /**
-     * Chaining the exception - this constructor will take all relevant values from the original MongoDuplicateKeyException and put
-     * them into this DuplicateKey, but all reference to the MongoDuplicateKeyException will be removed from the stack trace.  This
-     * is so that we don't leak the exceptions from the org.mongodb layer.
+     * Chaining the exception - this constructor will take all relevant values from the original MongoDuplicateKeyException and put them
+     * into this DuplicateKey, but all reference to the MongoDuplicateKeyException will be removed from the stack trace.  This is so that we
+     * don't leak the exceptions from the org.mongodb layer.
      *
      * @param e the exception from the new Java layer
      */
@@ -42,6 +42,5 @@ public class MongoDuplicateKeyException extends WriteConcernException{
     MongoDuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
     }
-
 
 }

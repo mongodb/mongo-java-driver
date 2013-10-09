@@ -18,11 +18,10 @@ package com.mongodb.util;
 
 /**
  * Exception that is thrown when invalid JSON is encountered by the parser.
- * <p>
- * The error message is formatted so that it points to the first 
  * <p/>
- * This exception creates a message that points to the first
- * offending character in the JSON string:
+ * The error message is formatted so that it points to the first
+ * <p/>
+ * This exception creates a message that points to the first offending character in the JSON string:
  * <pre>
  * { "x" : 3, "y" : 4, some invalid json.... }
  *                     ^
@@ -32,8 +31,8 @@ public class JSONParseException extends RuntimeException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
-    String s;
-    int pos;
+    final String s;
+    final int pos;
 
     public String getMessage() {
         StringBuilder sb = new StringBuilder();
@@ -47,12 +46,12 @@ public class JSONParseException extends RuntimeException {
         return sb.toString();
     }
 
-    public JSONParseException(String s, int pos) {
+    public JSONParseException(final String s, final int pos) {
         this.s = s;
         this.pos = pos;
     }
 
-    public JSONParseException(String s, int pos, Throwable cause) {
+    public JSONParseException(final String s, final int pos, final Throwable cause) {
         super(cause);
         this.s = s;
         this.pos = pos;

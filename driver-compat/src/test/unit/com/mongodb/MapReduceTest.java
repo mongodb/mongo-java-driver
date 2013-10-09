@@ -42,7 +42,8 @@ public class MapReduceTest extends DatabaseTestCase {
     private static final String MR_DATABASE = "output-" + System.nanoTime();
     private static final String DEFAULT_COLLECTION = "jmr1_out";
     private static final String DEFAULT_MAP = "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }";
-    private static final String DEFAULT_REDUCE = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
+    private static final String DEFAULT_REDUCE
+        = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
 
     @Override
     public void setUp() {
@@ -61,34 +62,28 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceInline() {
-        final MapReduceOutput output = collection.mapReduce(
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                null,
-                MapReduceCommand.OutputType.INLINE,
-                null,
-                ReadPreference.primaryPreferred()
-        );
+        MapReduceOutput output = collection.mapReduce(DEFAULT_MAP,
+                                                      DEFAULT_REDUCE,
+                                                      null,
+                                                      MapReduceCommand.OutputType.INLINE,
+                                                      null,
+                                                      ReadPreference.primaryPreferred());
 
         assertNotNull(output.results());
-        assertThat(output.results(), everyItem(
-                allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))
-        ));
+        assertThat(output.results(), everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
     }
 
     @Test
     public void testMapReduce() {
-        final MapReduceOutput output = collection.mapReduce(
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                null
-        );
+        MapReduceOutput output = collection.mapReduce(DEFAULT_MAP,
+                                                      DEFAULT_REDUCE,
+                                                      DEFAULT_COLLECTION,
+                                                      null);
 
         assertNotNull(output.results());
 
-        final Map<String, Integer> map = new HashMap<String, Integer>();
-        for (DBObject r : output.results()) {
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        for (final DBObject r : output.results()) {
             map.put(r.get("_id").toString(), ((Number) (r.get("value"))).intValue());
         }
 
@@ -101,18 +96,16 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceWithOutputToAnotherDatabase() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject());
         command.setOutputDB(MR_DATABASE);
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        final DB db = database.getMongo().getDB(MR_DATABASE);
+        DB db = database.getMongo().getDB(MR_DATABASE);
         assertTrue(db.collectionExists(DEFAULT_COLLECTION));
         assertEquals(toList(output.results()), toList(db.getCollection(DEFAULT_COLLECTION).find()));
     }
@@ -120,16 +113,15 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceInlineWScope() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                "function(){ for (var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) emit( this.x[i] , 1 ); } }",
-                DEFAULT_REDUCE,
-                null,
-                MapReduceCommand.OutputType.INLINE,
-                null
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        "function(){ for (var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) " +
+                                                        "emit( this.x[i] , 1 ); } }",
+                                                        DEFAULT_REDUCE,
+                                                        null,
+                                                        MapReduceCommand.OutputType.INLINE,
+                                                        null);
 
-        final Map<String, Object> scope = new HashMap<String, Object>();
+        Map<String, Object> scope = new HashMap<String, Object>();
         scope.put("exclude", "a");
         command.setScope(scope);
 
@@ -141,12 +133,10 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testDropOutputCollection() {
-        final String anotherCollectionName = "anotherCollection" + System.nanoTime();
-        final MapReduceOutput output = collection.mapReduce(
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                anotherCollectionName, null
-        );
+        String anotherCollectionName = "anotherCollection" + System.nanoTime();
+        MapReduceOutput output = collection.mapReduce(DEFAULT_MAP,
+                                                      DEFAULT_REDUCE,
+                                                      anotherCollectionName, null);
 
         assertTrue(database.collectionExists(anotherCollectionName));
 
@@ -161,13 +151,11 @@ public class MapReduceTest extends DatabaseTestCase {
 
         database.getCollection(DEFAULT_COLLECTION).insert(new BasicDBObject("z", 10));
 
-        final MapReduceOutput output = collection.mapReduce(
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.MERGE,
-                null
-        );
+        MapReduceOutput output = collection.mapReduce(DEFAULT_MAP,
+                                                      DEFAULT_REDUCE,
+                                                      DEFAULT_COLLECTION,
+                                                      MapReduceCommand.OutputType.MERGE,
+                                                      null);
 
         List<DBObject> documents = toList(output.results());
 
@@ -177,50 +165,43 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testOutputTypeReduce() {
-        final MapReduceOutput output = collection.mapReduce(
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REDUCE,
-                null
-        );
+        //TODO: what exactly is this testing?
+        collection.mapReduce(DEFAULT_MAP,
+                             DEFAULT_REDUCE,
+                             DEFAULT_COLLECTION,
+                             MapReduceCommand.OutputType.REDUCE,
+                             null);
     }
 
     @Test
     public void testMapReduceWithFinalize() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE, new BasicDBObject()
         );
         command.setFinalize("function(key,reducedValue){ return reducedValue*5; }");
 
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        assertThat(
-                output.results(),
-                hasItem(hasSubdocument(new BasicDBObject("_id", "b").append("value", 10.0)))
-        );
+        assertThat(output.results(),
+                   hasItem(hasSubdocument(new BasicDBObject("_id", "b").append("value", 10.0))));
 
     }
 
     @Test
     public void testMapReduceWithQuery() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject("x", "a")
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject("x", "a"));
 
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        final Map<String, Object> map = toMap(output.results());
+        Map<String, Object> map = toMap(output.results());
         assertEquals(2, map.size());
         assertEquals(1.0, map.get("a"));
         assertEquals(1.0, map.get("b"));
@@ -231,21 +212,19 @@ public class MapReduceTest extends DatabaseTestCase {
     public void testMapReduceWithSort() {
         collection.ensureIndex(new BasicDBObject("s", 1));
 
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject("x", "a")
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject("x", "a"));
 
         command.setSort(new BasicDBObject("s", -1));
         command.setLimit(1);
 
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        final Map<String, Object> map = toMap(output.results());
+        Map<String, Object> map = toMap(output.results());
         assertEquals(2, map.size());
         assertEquals(1.0, map.get("c"));
         assertEquals(1.0, map.get("d"));
@@ -253,20 +232,18 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceWithLimit() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.INLINE,
-                new BasicDBObject()
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.INLINE,
+                                                        new BasicDBObject());
 
         command.setLimit(1);
 
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        final Map<String, Object> map = toMap(output.results());
+        Map<String, Object> map = toMap(output.results());
         assertEquals(2, map.size());
         assertEquals(1.0, map.get("a"));
         assertEquals(1.0, map.get("b"));
@@ -274,15 +251,13 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testServerUsed() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
-        );
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject());
+        MapReduceOutput output = collection.mapReduce(command);
 
         assertNotNull(output.getServerUsed());
     }
@@ -290,57 +265,43 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testWithDefaultVerboseValue() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
-        );
-        final MapReduceOutput output = collection.mapReduce(command);
-        assertThat(
-                output.getCommandResult(),
-                hasFields(new String[]{"timing"})
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject());
+        MapReduceOutput output = collection.mapReduce(command);
+        assertThat(output.getCommandResult(), hasFields(new String[]{"timing"}));
     }
 
     @Test
     public void testWithVerboseFalse() {
-        final MapReduceCommand command = new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
-        );
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject());
         command.setVerbose(false);
 
-        final MapReduceOutput output = collection.mapReduce(command);
+        MapReduceOutput output = collection.mapReduce(command);
 
-        assertThat(
-                output.getCommandResult(),
-                not(hasFields(new String[]{"timing"}))
-        );
+        assertThat(output.getCommandResult(), not(hasFields(new String[]{"timing"})));
     }
 
     @Test
     public void testMapReduceOutputLegacyConstructor() {
-        final MapReduceOutput realOutput = collection.mapReduce(new MapReduceCommand(
-                collection,
-                DEFAULT_MAP,
-                DEFAULT_REDUCE,
-                DEFAULT_COLLECTION,
-                MapReduceCommand.OutputType.REPLACE,
-                new BasicDBObject()
-        ));
+        MapReduceOutput realOutput = collection.mapReduce(new MapReduceCommand(collection,
+                                                                               DEFAULT_MAP,
+                                                                               DEFAULT_REDUCE,
+                                                                               DEFAULT_COLLECTION,
+                                                                               MapReduceCommand.OutputType.REPLACE,
+                                                                               new BasicDBObject()));
 
-        final MapReduceOutput output = new MapReduceOutput(
-                collection,
-                realOutput.getCommand(),
-                realOutput.getCommandResult()
-        );
+        MapReduceOutput output = new MapReduceOutput(collection,
+                                                     realOutput.getCommand(),
+                                                     realOutput.getCommandResult());
 
         assertEquals(realOutput.getCommand(), output.getCommand());
         assertEquals(realOutput.getCommandResult(), output.getCommandResult());
@@ -350,17 +311,14 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testMapReduceInDocumentForm() {
-        final DBObject mapReduce = new BasicDBObject("mapReduce", collection.getName())
-                .append("map", DEFAULT_MAP)
-                .append("reduce", DEFAULT_REDUCE)
-                .append("out", new BasicDBObject("inline", 1));
+        DBObject mapReduce = new BasicDBObject("mapReduce", collection.getName()).append("map", DEFAULT_MAP)
+                                                                                 .append("reduce", DEFAULT_REDUCE)
+                                                                                 .append("out", new BasicDBObject("inline", 1));
 
-        final MapReduceOutput output = collection.mapReduce(mapReduce);
+        MapReduceOutput output = collection.mapReduce(mapReduce);
 
         assertNotNull(output.results());
-        assertThat(output.results(), everyItem(
-                allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))
-        ));
+        assertThat(output.results(), everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
     }
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
@@ -368,8 +326,8 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     private Map<String, Object> toMap(final Iterable<DBObject> result) {
-        final Map<String, Object> map = new HashMap<String, Object>();
-        for (DBObject document : result) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        for (final DBObject document : result) {
             map.put((String) document.get("_id"), document.get("value"));
         }
         return map;

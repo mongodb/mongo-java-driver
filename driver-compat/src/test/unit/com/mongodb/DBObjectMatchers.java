@@ -35,15 +35,15 @@ public class DBObjectMatchers {
 
     public static class HasFieldsMatcher extends TypeSafeMatcher<DBObject> {
 
-        private String[] fieldNames;
+        private final String[] fieldNames;
 
         public HasFieldsMatcher(final String[] fieldNames) {
             this.fieldNames = fieldNames;
         }
 
         @Override
-        protected boolean matchesSafely(DBObject item) {
-            for (String fieldName : fieldNames) {
+        protected boolean matchesSafely(final DBObject item) {
+            for (final String fieldName : fieldNames) {
                 if (!item.containsField(fieldName)) {
                     return false;
                 }
@@ -52,23 +52,22 @@ public class DBObjectMatchers {
         }
 
         @Override
-        public void describeTo(Description description) {
-            description
-                    .appendText(" has fields ")
-                    .appendValue(fieldNames);
+        public void describeTo(final Description description) {
+            description.appendText(" has fields ")
+                       .appendValue(fieldNames);
         }
     }
 
     public static class HasSubdocumentMatcher extends TypeSafeMatcher<DBObject> {
         private final DBObject document;
 
-        public HasSubdocumentMatcher(DBObject document) {
+        public HasSubdocumentMatcher(final DBObject document) {
             this.document = document;
         }
 
         @Override
-        protected boolean matchesSafely(DBObject item) {
-            for (String key : document.keySet()) {
+        protected boolean matchesSafely(final DBObject item) {
+            for (final String key : document.keySet()) {
                 if (document.get(key) != null && item.get(key) == null) {
                     return false;
                 }
@@ -80,10 +79,9 @@ public class DBObjectMatchers {
         }
 
         @Override
-        public void describeTo(Description description) {
-            description
-                    .appendText(" has subdocument ")
-                    .appendValue(document);
+        public void describeTo(final Description description) {
+            description.appendText(" has subdocument ")
+                       .appendValue(document);
         }
     }
 }

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings("rawtypes")
 public class BSON {
 
     public static final byte EOO = 0;
@@ -111,31 +111,33 @@ public class BSON {
         l.add(t);
     }
 
-    public static Object applyEncodingHooks(Object o) {
+    public static Object applyEncodingHooks(final Object o) {
+        Object transfomedObject = o;
         if (!hasEncodeHooks() || o == null || encodingHooks.size() == 0) {
-            return o;
+            return transfomedObject;
         }
-        final List<Transformer> l = encodingHooks.get(o.getClass());
+        List<Transformer> l = encodingHooks.get(o.getClass());
         if (l != null) {
             for (final Transformer t : l) {
-                o = t.transform(o);
+                transfomedObject = t.transform(o);
             }
         }
-        return o;
+        return transfomedObject;
     }
 
-    public static Object applyDecodingHooks(Object o) {
+    public static Object applyDecodingHooks(final Object o) {
+        Object transfomedObject = o;
         if (!hasDecodeHooks() || o == null || decodingHooks.size() == 0) {
-            return o;
+            return transfomedObject;
         }
 
-        final List<Transformer> l = decodingHooks.get(o.getClass());
+        List<Transformer> l = decodingHooks.get(o.getClass());
         if (l != null) {
             for (final Transformer t : l) {
-                o = t.transform(o);
+                transfomedObject = t.transform(o);
             }
         }
-        return o;
+        return transfomedObject;
     }
 
     /**
@@ -225,8 +227,7 @@ public class BSON {
     }
 
     /**
-     * Converts a sequence of regular expression modifiers from the database into Java regular
-     * expression flags.
+     * Converts a sequence of regular expression modifiers from the database into Java regular expression flags.
      *
      * @param s regular expression modifiers
      * @return the Java flags
@@ -239,7 +240,7 @@ public class BSON {
             return flags;
         }
 
-        for (char f : s.toLowerCase().toCharArray()) {
+        for (final char f : s.toLowerCase().toCharArray()) {
             flags |= regexFlag(f);
         }
 
@@ -255,7 +256,7 @@ public class BSON {
      */
     public static int regexFlag(final char c) {
 
-        final int flag = FLAG_LOOKUP[c];
+        int flag = FLAG_LOOKUP[c];
 
         if (flag == 0) {
             throw new IllegalArgumentException(String.format("Unrecognized flag [%c]", c));
@@ -271,17 +272,18 @@ public class BSON {
      * @return the Java flags
      * @throws IllegalArgumentException if some flags couldn't be recognized.
      */
-    public static String regexFlags(int flags) {
+    public static String regexFlags(final int flags) {
+        int processedFlags = flags;
         StringBuilder buf = new StringBuilder();
 
         for (int i = 0; i < FLAG_LOOKUP.length; i++) {
-            if ((flags & FLAG_LOOKUP[i]) > 0) {
+            if ((processedFlags & FLAG_LOOKUP[i]) > 0) {
                 buf.append((char) i);
-                flags -= FLAG_LOOKUP[i];
+                processedFlags -= FLAG_LOOKUP[i];
             }
         }
 
-        if (flags > 0) {
+        if (processedFlags > 0) {
             throw new IllegalArgumentException("Some flags could not be recognized.");
         }
 
@@ -289,11 +291,10 @@ public class BSON {
     }
 
     /**
-     * Provides an integer representation of Boolean or Number.
-     * If argument is {@link Boolean}, then {@code 1} for {@code true} will be returned or @{code 0} otherwise.
-     * If argument is {@code Number}, then {@link Number#intValue()} will be called.
+     * Provides an integer representation of Boolean or Number. If argument is {@link Boolean}, then {@code 1} for {@code true} will be
+     * returned or @{code 0} otherwise. If argument is {@code Number}, then {@link Number#intValue()} will be called.
      *
-     * @param number
+     * @param number the number to convert to an int
      * @return integer value
      * @throws IllegalArgumentException if the argument is {@code null} or not {@link Boolean} or {@link Number}
      */

@@ -26,7 +26,6 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.session.ServerConnectionProvider;
@@ -42,6 +41,7 @@ import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.QueryFlag.Exhaust;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
@@ -59,8 +59,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustReadAllDocuments() {
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), getSession(), false);
+                                                                           new Find().addFlags(EnumSet.of(Exhaust)),
+                                                                           collection.getOptions().getDocumentCodec(),
+                                                                           collection.getCodec(),
+                                                                           getBufferProvider(),
+                                                                           getSession(),
+                                                                           false);
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -78,15 +82,23 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);
 
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                    new Find().addFlags(EnumSet.of(QueryFlag.Exhaust)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
+                                                                               new Find().addFlags(EnumSet.of(Exhaust)),
+                                                                               collection.getOptions().getDocumentCodec(),
+                                                                               collection.getCodec(),
+                                                                               getBufferProvider(),
+                                                                               singleConnectionSession,
+                                                                               false);
 
             cursor.next();
             cursor.close();
 
             cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                    new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), singleConnectionSession, false);
+                                                    new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
+                                                    collection.getOptions().getDocumentCodec(),
+                                                    collection.getCodec(),
+                                                    getBufferProvider(),
+                                                    singleConnectionSession,
+                                                    false);
             assertEquals(new Document("_id", 999), cursor.next());
 
             singleConnectionSession.connection.close();
@@ -96,8 +108,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     }
 
     private static class SingleConnectionSession implements Session {
-        private ServerDescription description;
-        private Connection connection;
+        private final ServerDescription description;
+        private final Connection connection;
         private boolean isClosed;
 
         public SingleConnectionSession(final ServerDescription description, final Connection connection) {
@@ -144,7 +156,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     }
 
     private static class DelayedCloseConnection implements Connection {
-        private Connection wrapped;
+        private final Connection wrapped;
         private boolean isClosed;
 
 

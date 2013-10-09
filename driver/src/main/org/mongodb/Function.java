@@ -17,14 +17,11 @@
 package org.mongodb;
 
 /**
- * Apply a function to the input object yielding an appropriate result object. A
- * function may variously provide a mapping between types, object instances or
- * keys and values or any other form of transformation upon the input.
+ * Apply a function to the input object yielding an appropriate result object. A function may variously provide a mapping between types,
+ * object instances or keys and values or any other form of transformation upon the input.
  *
  * @param <T> the type of input objects to the {@code apply} operation
- * @param <R> the type of result objects from the {@code apply} operation. May
- * be the same type as {@code <T>}.
- *
+ * @param <R> the type of result objects from the {@code apply} operation. May be the same type as {@code <T>}.
  */
 public interface Function<T, R> {
 

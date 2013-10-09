@@ -71,7 +71,7 @@ public class CLI {
         }
 
         for (int i = 0; i < args.length; i++) {
-            final String s = args[i];
+            String s = args[i];
 
             if (s.equals("--db")) {
                 db = args[i + 1];
@@ -91,14 +91,14 @@ public class CLI {
             }
 
             if (s.equals("list")) {
-                final GridFS fs = getGridFS();
+                GridFS fs = getGridFS();
 
                 System.out.printf("%-60s %-10s%n", "Filename", "Length");
 
-                final DBCursor fileListCursor = fs.getFileList();
+                DBCursor fileListCursor = fs.getFileList();
                 try {
                     while (fileListCursor.hasNext()) {
-                        final DBObject o = fileListCursor.next();
+                        DBObject o = fileListCursor.next();
                         System.out.printf("%-60s %-10d%n", o.get("filename"), ((Number) o.get("length")).longValue());
                     }
                 } finally {
@@ -108,9 +108,9 @@ public class CLI {
             }
 
             if (s.equals("get")) {
-                final GridFS fs = getGridFS();
-                final String fn = args[i + 1];
-                final GridFSDBFile f = fs.findOne(fn);
+                GridFS fs = getGridFS();
+                String fn = args[i + 1];
+                GridFSDBFile f = fs.findOne(fn);
                 if (f == null) {
                     System.err.println("can't find file: " + fn);
                     return;
@@ -121,9 +121,9 @@ public class CLI {
             }
 
             if (s.equals("put")) {
-                final GridFS fs = getGridFS();
-                final String fn = args[i + 1];
-                final GridFSInputFile f = fs.createFile(new File(fn));
+                GridFS fs = getGridFS();
+                String fn = args[i + 1];
+                GridFSInputFile f = fs.createFile(new File(fn));
                 f.save();
                 f.validate();
                 return;
@@ -131,22 +131,22 @@ public class CLI {
 
 
             if (s.equals("md5")) {
-                final GridFS fs = getGridFS();
-                final String fn = args[i + 1];
-                final GridFSDBFile f = fs.findOne(fn);
+                GridFS fs = getGridFS();
+                String fn = args[i + 1];
+                GridFSDBFile f = fs.findOne(fn);
                 if (f == null) {
                     System.err.println("can't find file: " + fn);
                     return;
                 }
 
-                final MessageDigest md5 = MessageDigest.getInstance("MD5");
+                MessageDigest md5 = MessageDigest.getInstance("MD5");
                 md5.reset();
                 int read = 0;
-                final DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
+                DigestInputStream is = new DigestInputStream(f.getInputStream(), md5);
                 try {
                     while (is.read() >= 0) {
                         read++;
-                        final int r = is.read(new byte[17]);
+                        int r = is.read(new byte[17]);
                         if (r < 0) {
                             break;
                         }
@@ -155,7 +155,7 @@ public class CLI {
                 } finally {
                     is.close();
                 }
-                final byte[] digest = md5.digest();
+                byte[] digest = md5.digest();
                 System.out.println("length: " + read + " md5: " + Util.toHex(digest));
                 return;
             }

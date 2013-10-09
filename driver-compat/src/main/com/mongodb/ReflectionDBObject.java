@@ -31,7 +31,7 @@ import java.util.TreeMap;
 /**
  * This class enables to map simple Class fields to a BSON object fields
  */
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class ReflectionDBObject implements DBObject {
 
     public Object get(final String key) {
@@ -46,8 +46,8 @@ public abstract class ReflectionDBObject implements DBObject {
      * @deprecated
      */
     @Deprecated
-    public boolean containsKey(final String s) {
-        return containsField(s);
+    public boolean containsKey(final String key) {
+        return containsField(key);
     }
 
     public boolean containsField(final String s) {
@@ -83,7 +83,7 @@ public abstract class ReflectionDBObject implements DBObject {
     /**
      * Sets the _id
      *
-     * @param id
+     * @param id the unique identifier for this DBObject
      */
     public void set_id(final Object id) {
         _id = id;
@@ -95,18 +95,17 @@ public abstract class ReflectionDBObject implements DBObject {
 
     @SuppressWarnings("unchecked")
     public Map toMap() {
-        final Map m = new HashMap();
-        final Iterator i = this.keySet().iterator();
+        Map m = new HashMap();
+        Iterator i = this.keySet().iterator();
         while (i.hasNext()) {
-            final Object s = i.next();
+            Object s = i.next();
             m.put(s, this.get(s + ""));
         }
         return m;
     }
 
     /**
-     * ReflectionDBObjects can't be partial.
-     * This operation is not supported.
+     * ReflectionDBObjects can't be partial. This operation is not supported.
      */
     public void markAsPartialObject() {
         throw new RuntimeException("ReflectionDBObjects can't be partial");
@@ -145,12 +144,12 @@ public abstract class ReflectionDBObject implements DBObject {
                     continue;
                 }
 
-                final String name = m.getName().substring(3);
+                String name = m.getName().substring(3);
                 if (name.length() == 0 || IGNORE_FIELDS.contains(name)) {
                     continue;
                 }
 
-                final Class type = m.getName().startsWith("get") ? m.getReturnType() : m.getParameterTypes()[0];
+                Class type = m.getName().startsWith("get") ? m.getReturnType() : m.getParameterTypes()[0];
 
                 FieldInfo fi = fields.get(name);
                 if (fi == null) {
@@ -160,13 +159,12 @@ public abstract class ReflectionDBObject implements DBObject {
 
                 if (m.getName().startsWith("get")) {
                     fi.getter = m;
-                }
-                else {
+                } else {
                     fi.setter = m;
                 }
             }
 
-            final Set<String> names = new HashSet<String>(fields.keySet());
+            Set<String> names = new HashSet<String>(fields.keySet());
             for (final String name : names) {
                 if (!fields.get(name).ok()) {
                     fields.remove(name);
@@ -189,7 +187,7 @@ public abstract class ReflectionDBObject implements DBObject {
         }
 
         public Object get(final ReflectionDBObject t, final String name) {
-            final FieldInfo i = fields.get(name);
+            FieldInfo i = fields.get(name);
             if (i == null) {
                 return null;
             }
@@ -201,7 +199,7 @@ public abstract class ReflectionDBObject implements DBObject {
         }
 
         public Object set(final ReflectionDBObject t, final String name, final Object val) {
-            final FieldInfo i = fields.get(name);
+            FieldInfo i = fields.get(name);
             if (i == null) {
                 throw new IllegalArgumentException("no field [" + name + "] on [" + this.name + "]");
             }
@@ -213,9 +211,9 @@ public abstract class ReflectionDBObject implements DBObject {
         }
 
         Class<? extends DBObject> getInternalClass(final List<String> path) {
-            final String cur = path.get(0);
+            String cur = path.get(0);
 
-            final FieldInfo fi = fields.get(cur);
+            FieldInfo fi = fields.get(cur);
             if (fi == null) {
                 return null;
             }
@@ -224,7 +222,7 @@ public abstract class ReflectionDBObject implements DBObject {
                 return fi.clazz;
             }
 
-            final JavaWrapper w = getWrapperIfReflectionObject(fi.clazz);
+            JavaWrapper w = getWrapperIfReflectionObject(fi.clazz);
             if (w == null) {
                 return null;
             }
@@ -282,8 +280,8 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     private static final Map<Class, JavaWrapper> _wrappers = Collections.synchronizedMap(
-                                                                                        new HashMap<Class,
-                                                                                                   JavaWrapper>());
+                                                                                            new HashMap<Class,
+                                                                                                           JavaWrapper>());
     private static final Set<String> IGNORE_FIELDS = new HashSet<String>();
 
     static {

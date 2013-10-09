@@ -28,7 +28,7 @@ public enum ServerConnectionState {
     Unconnected,
 
     /**
-     *  The application is connected to the remote server.
+     * The application is connected to the remote server.
      */
     Connected
 }

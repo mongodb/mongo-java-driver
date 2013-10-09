@@ -34,7 +34,7 @@ public class ReplicaSetStatus {
     }
 
     public String getName() {
-        final List<ServerDescription> any = getClusterDescription().getAny();
+        List<ServerDescription> any = getClusterDescription().getAny();
         return any.isEmpty() ? null : any.get(0).getSetName();
     }
 
@@ -43,7 +43,7 @@ public class ReplicaSetStatus {
      * @throws MongoException
      */
     public ServerAddress getMaster() {
-        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
+        List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? null : new ServerAddress(primaries.get(0).getAddress());
     }
 
@@ -57,14 +57,14 @@ public class ReplicaSetStatus {
     }
 
     /**
-     * Gets the maximum size for a BSON object supported by the current master server.
-     * Note that this value may change over time depending on which server is master.
+     * Gets the maximum size for a BSON object supported by the current master server. Note that this value may change over time depending
+     * on which server is master.
      *
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
+        List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
     }
 
@@ -80,8 +80,8 @@ public class ReplicaSetStatus {
     @Override
     public String toString() {
         return "ReplicaSetStatus{" +
-                "name=" + getName() +
-                ", cluster=" + getClusterDescription() +
-                '}';
+               "name=" + getName() +
+               ", cluster=" + getClusterDescription() +
+               '}';
     }
 }

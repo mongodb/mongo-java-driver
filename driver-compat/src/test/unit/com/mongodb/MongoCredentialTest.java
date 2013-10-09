@@ -27,10 +27,10 @@ public class MongoCredentialTest {
     public void testMongoChallengeResponseMechanism() {
         MongoCredential credential;
 
-        final String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
-        final String userName = "user";
-        final String database = "test";
-        final char[] password = "pwd".toCharArray();
+        String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
+        String userName = "user";
+        String database = "test";
+        char[] password = "pwd".toCharArray();
         credential = MongoCredential.createMongoCRCredential(userName, database, password);
 
         assertEquals(mechanism, credential.getMechanism());
@@ -43,8 +43,8 @@ public class MongoCredentialTest {
     public void testGSSAPIMechanism() {
         MongoCredential credential;
 
-        final String mechanism = MongoCredential.GSSAPI_MECHANISM;
-        final String userName = "user";
+        String mechanism = MongoCredential.GSSAPI_MECHANISM;
+        String userName = "user";
         credential = MongoCredential.createGSSAPICredential(userName);
 
         assertEquals(mechanism, credential.getMechanism());
@@ -57,10 +57,10 @@ public class MongoCredentialTest {
     public void testPlainMechanism() {
         MongoCredential credential;
 
-        final String mechanism = MongoCredential.PLAIN_MECHANISM;
-        final String userName = "user";
-        final String source = "$external";
-        final char[] password = "pwd".toCharArray();
+        String mechanism = MongoCredential.PLAIN_MECHANISM;
+        String userName = "user";
+        String source = "$external";
+        char[] password = "pwd".toCharArray();
         credential = MongoCredential.createPlainCredential(userName, source, password);
 
         assertEquals(mechanism, credential.getMechanism());
@@ -105,8 +105,8 @@ public class MongoCredentialTest {
     public void testX509Mechanism() {
         MongoCredential credential;
 
-        final String mechanism = MongoCredential.MONGODB_X509_MECHANISM;
-        final String userName = "user";
+        String mechanism = MongoCredential.MONGODB_X509_MECHANISM;
+        String userName = "user";
         credential = MongoCredential.createMongoX509Credential(userName);
 
         assertEquals(mechanism, credential.getMechanism());
@@ -117,9 +117,9 @@ public class MongoCredentialTest {
 
     @Test
     public void testObjectOverrides() {
-        final String userName = "user";
-        final String database = "test";
-        final String password = "pwd";
+        String userName = "user";
+        String database = "test";
+        String password = "pwd";
         MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password.toCharArray());
         assertEquals(MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()), credential);
         assertEquals(MongoCredential.createMongoCRCredential(userName, database, password.toCharArray()).hashCode(), credential.hashCode());

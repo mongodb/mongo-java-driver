@@ -30,7 +30,7 @@ public class WriteResultTest {
     @Test
     public void testWithCommandResult() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new BasicDBObject("ok", 1).append("n", 0).append("connectionId", 431),
-                new ServerAddress("localhost", 27017));
+                                                        new ServerAddress("localhost", 27017));
         WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         WriteResult writeResult = new WriteResult(commandResult, writeConcern);
         assertEquals(commandResult, writeResult.getCachedLastError());

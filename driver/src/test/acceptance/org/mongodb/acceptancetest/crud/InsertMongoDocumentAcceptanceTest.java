@@ -27,13 +27,13 @@ import static org.junit.Assert.assertThat;
 public class InsertMongoDocumentAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldInsertSimpleUntypedDocument() {
-        final Document simpleDocument = new Document("name", "Billy");
+        Document simpleDocument = new Document("name", "Billy");
         collection.insert(simpleDocument);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document queryFilter = new Document("name", "Billy");
-        final MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(queryFilter).get();
+        Document queryFilter = new Document("name", "Billy");
+        MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(queryFilter).get();
 
         assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
     }

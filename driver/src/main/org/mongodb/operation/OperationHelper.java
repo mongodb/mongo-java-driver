@@ -28,30 +28,28 @@ final class OperationHelper {
 
     static MongoFuture<ServerDescriptionConnectionPair> getConnectionAsync(final Session session,
                                                                            final ServerConnectionProviderOptions
-                                                                                   serverConnectionProviderOptions) {
+                                                                               serverConnectionProviderOptions) {
         final SingleResultFuture<ServerDescriptionConnectionPair> retVal = new SingleResultFuture<ServerDescriptionConnectionPair>();
         session.createServerConnectionProviderAsync(serverConnectionProviderOptions)
-                .register(new SingleResultCallback<ServerConnectionProvider>() {
-                    @Override
-                    public void onResult(final ServerConnectionProvider provider, final MongoException e) {
-                        if (e != null) {
-                            retVal.init(null, e);
-                        }
-                        else {
-                            provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                                @Override
-                                public void onResult(final Connection connection, final MongoException e) {
-                                    if (e != null) {
-                                        retVal.init(null, e);
-                                    }
-                                    else {
-                                        retVal.init(new ServerDescriptionConnectionPair(provider.getServerDescription(), connection), null);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                });
+               .register(new SingleResultCallback<ServerConnectionProvider>() {
+                   @Override
+                   public void onResult(final ServerConnectionProvider provider, final MongoException e) {
+                       if (e != null) {
+                           retVal.init(null, e);
+                       } else {
+                           provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                               @Override
+                               public void onResult(final Connection connection, final MongoException e) {
+                                   if (e != null) {
+                                       retVal.init(null, e);
+                                   } else {
+                                       retVal.init(new ServerDescriptionConnectionPair(provider.getServerDescription(), connection), null);
+                                   }
+                               }
+                           });
+                       }
+                   }
+               });
         return retVal;
     }
 

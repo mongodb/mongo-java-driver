@@ -86,12 +86,12 @@ import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 import static com.mongodb.MongoExceptions.mapException;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * Implementation of a database collection.
  * <p/>
- * A typical invocation sequence is thus
- * <blockquote>
+ * A typical invocation sequence is thus <blockquote>
  * <pre>
  *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
  *     DB db = mongo.getDB("mydb");
@@ -99,15 +99,13 @@ import static com.mongodb.MongoExceptions.mapException;
  * </pre>
  * </blockquote>
  * <p/>
- * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
- * <blockquote>
+ * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method: <blockquote>
  * <pre>
  *     DBCollection coll = db.getCollection("testCollection");
  * </pre>
  * </blockquote>
  * <p/>
- * Once you have the collection object, you can insert documents into the collection:
- * <blockquote>
+ * Once you have the collection object, you can insert documents into the collection: <blockquote>
  * <pre>
  *     BasicDBObject doc = new BasicDBObject("name", "MongoDB")
  *     .append("type", "database")
@@ -117,9 +115,8 @@ import static com.mongodb.MongoExceptions.mapException;
  * </pre>
  * </blockquote>
  * <p/>
- * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document
- * in the collection:
- * <blockquote>
+ * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document in
+ * the collection: <blockquote>
  * <pre>
  *     DBObject myDoc = coll.findOne();
  *     System.out.println(myDoc);
@@ -150,8 +147,8 @@ public class DBCollection {
     /**
      * Constructs new {@code DBCollection} instance. This operation not reflected on the server.
      *
-     * @param name the name of the collection
-     * @param database the database to which this collections belongs to
+     * @param name          the name of the collection
+     * @param database      the database to which this collections belongs to
      * @param documentCodec codec to be used for messages to server
      */
     DBCollection(final String name, final DB database, final Codec<Document> documentCodec) {
@@ -165,17 +162,17 @@ public class DBCollection {
 
     /**
      * Initializes a new collection. No operation is actually performed on the database.
+     *
      * @param database database in which to create the collection
-     * @param name the name of the collection
+     * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
         this(name, database, new DocumentCodec(PrimitiveCodecs.createDefault()));
     }
 
     /**
-     * Insert a document into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert a document into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param document     {@code DBObject} to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
@@ -187,10 +184,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
-     * Collection wide {@code WriteConcern} will be used.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added. Collection wide {@code WriteConcern} will be used.
      *
      * @param documents {@code DBObject}'s to be inserted
      * @return the result of the operation
@@ -201,9 +196,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
@@ -215,9 +209,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
@@ -229,9 +222,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents list of {@code DBObject} to be inserted
      * @return the result of the operation
@@ -242,9 +234,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents     list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
@@ -252,14 +243,13 @@ public class DBCollection {
      * @throws MongoException if the operation fails
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
-        final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
+        Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
         return insert(insert, objectCodec, aWriteConcern);
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents     {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
@@ -272,9 +262,8 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection.
-     * If the collection does not exists on the server, then it will be created.
-     * If the new document does not contain an '_id' field, it will be added.
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
      *
      * @param documents     a list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
@@ -283,9 +272,9 @@ public class DBCollection {
      * @throws MongoException if the operation fails
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
-        final Encoder<DBObject> encoder = toEncoder(dbEncoder);
+        Encoder<DBObject> encoder = toEncoder(dbEncoder);
 
-        final Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
+        Insert<DBObject> insert = new Insert<DBObject>(aWriteConcern.toNew(), documents);
         return insert(insert, encoder, aWriteConcern);
     }
 
@@ -296,13 +285,13 @@ public class DBCollection {
     private WriteResult insert(final Insert<DBObject> insert, final Encoder<DBObject> encoder, final WriteConcern writeConcern) {
         try {
             return translateWriteResult(new InsertOperation<DBObject>(getNamespace(), insert, encoder, getBufferPool(), getSession(),
-                    false).execute(), writeConcern);
+                                                                      false).execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
 
-    private WriteResult translateWriteResult(final org.mongodb.WriteResult commandResult, WriteConcern writeConcern) {
+    private WriteResult translateWriteResult(final org.mongodb.WriteResult commandResult, final WriteConcern writeConcern) {
         if (commandResult == null) {
             return null;
         }
@@ -311,16 +300,12 @@ public class DBCollection {
     }
 
     /**
-     * Update an existing document or insert a document depending on the parameter.
-     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as
-     * well as an '_id' field with a unique objectid value.
-     * If the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
-     * <ul>
-     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the
-     * document.</li>
+     * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
+     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value. If
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
+     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
      * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
-     * with the fields from the document.</li>
-     * </ul>
+     * with the fields from the document.</li> </ul>
      *
      * @param document {@link DBObject} to save to the collection.
      * @return the result of the operation
@@ -331,13 +316,12 @@ public class DBCollection {
     }
 
     /**
-     * Update an existing document or insert a document depending on the parameter.
-     * If the document does not contain an '_id' field, then the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value.
-     * If the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
-     * <ul>
-     * <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record with the fields from the document.</li>
-     * </ul>
+     * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
+     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value. If
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
+     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
+     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
+     * with the fields from the document.</li> </ul>
      *
      * @param document     {@link DBObject} to save to the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
@@ -346,11 +330,10 @@ public class DBCollection {
      */
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
         try {
-            final Object id = getObjectCodec().getId(document);
+            Object id = getObjectCodec().getId(document);
             if (id == null) {
                 return insert(document, writeConcern);
-            }
-            else {
+            } else {
                 return replaceOrInsert(document, writeConcern);
             }
         } catch (org.mongodb.MongoException e) {
@@ -360,20 +343,21 @@ public class DBCollection {
 
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern wc) {
         try {
-            final Document filter = new Document("_id", getObjectCodec().getId(obj));
+            Document filter = new Document("_id", getObjectCodec().getId(obj));
 
-            final Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
+            Replace<DBObject> replace = new Replace<DBObject>(wc.toNew(), filter, obj).upsert(true);
 
             return translateWriteResult(new ReplaceOperation<DBObject>(getNamespace(), replace, getDocumentCodec(),
-                    getObjectCodec(), getBufferPool(), getSession(), false).execute(), wc);
+                                                                       getObjectCodec(), getBufferPool(), getSession(), false).execute(),
+                                        wc);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
 
     /**
-     * Modify an existing document or documents in collection.
-     * The query parameter employs the same query selectors, as used in {@code find()}.
+     * Modify an existing document or documents in collection. The query parameter employs the same query selectors, as used in {@code
+     * find()}.
      *
      * @param query         the selection criteria for the update
      * @param update        the modifications to apply
@@ -392,17 +376,16 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final Update mongoUpdate = new Update(aWriteConcern.toNew(), toDocument(query), toDocument(update))
-                .upsert(upsert)
-                .multi(multi);
+        Update mongoUpdate = new Update(aWriteConcern.toNew(), toDocument(query), toDocument(update))
+                                 .upsert(upsert)
+                                 .multi(multi);
 
         return updateInternal(mongoUpdate, aWriteConcern);
     }
 
     /**
-     * Modify an existing document or documents in collection.
-     * By default the method updates a single document.
-     * The query parameter employs the same query selectors, as used in {@code find()}.
+     * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
+     * the same query selectors, as used in {@code find()}.
      *
      * @param query         the selection criteria for the update
      * @param update        the modifications to apply
@@ -422,27 +405,27 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final Document updateOperations = toDocument(update, encoder, getDocumentCodec());
-        final Update mongoUpdate = new Update(aWriteConcern.toNew(), filter, updateOperations)
-                .upsert(upsert)
-                .multi(multi);
+        Document filter = toDocument(query, encoder, getDocumentCodec());
+        Document updateOperations = toDocument(update, encoder, getDocumentCodec());
+        Update mongoUpdate = new Update(aWriteConcern.toNew(), filter, updateOperations).upsert(upsert)
+                                                                                        .multi(multi);
 
         return updateInternal(mongoUpdate, aWriteConcern);
     }
 
-    private WriteResult updateInternal(final Update update, WriteConcern writeConcern) {
+    private WriteResult updateInternal(final Update update, final WriteConcern writeConcern) {
         try {
             return translateWriteResult(new UpdateOperation(getNamespace(), update, documentCodec, getBufferPool(), getSession(),
-                    false).execute(), writeConcern);
+                                                            false)
+                                            .execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
     }
 
     /**
-     * Modify an existing document or documents in collection.
-     * The query parameter employs the same query selectors, as used in {@code find()}.
+     * Modify an existing document or documents in collection. The query parameter employs the same query selectors, as used in {@code
+     * find()}.
      *
      * @param query  the selection criteria for the update
      * @param update the modifications to apply
@@ -455,8 +438,7 @@ public class DBCollection {
     }
 
     /**
-     * Modify an existing document.
-     * The query parameter employs the same query selectors, as used in {@code find()}.
+     * Modify an existing document. The query parameter employs the same query selectors, as used in {@code find()}.
      *
      * @param query  the selection criteria for the update
      * @param update the modifications to apply
@@ -467,8 +449,7 @@ public class DBCollection {
     }
 
     /**
-     * Modify documents in collection.
-     * The query parameter employs the same query selectors, as used in {@code find()}.
+     * Modify documents in collection. The query parameter employs the same query selectors, as used in {@code find()}.
      *
      * @param query  the selection criteria for the update
      * @param update the modifications to apply
@@ -481,7 +462,8 @@ public class DBCollection {
     /**
      * Remove documents from a collection.
      *
-     * @param query he deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents in the collection.
+     * @param query the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents
+     *              in the collection.
      * @return the result of the operation
      */
     public WriteResult remove(final DBObject query) {
@@ -497,10 +479,11 @@ public class DBCollection {
      * @return the result of the operation
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
-        final Remove remove = new Remove(writeConcern.toNew(), toDocument(query));
+        Remove remove = new Remove(writeConcern.toNew(), toDocument(query));
         try {
             return translateWriteResult(new RemoveOperation(getNamespace(), remove, documentCodec,
-                    getBufferPool(), getSession(), false).execute(), writeConcern);
+                                                            getBufferPool(), getSession(), false)
+                                            .execute(), writeConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -509,20 +492,24 @@ public class DBCollection {
     /**
      * Remove documents from a collection.
      *
-     * @param query        the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all
-     *                     documents in the collection.
+     * @param query         the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all
+     *                      documents in the collection.
      * @param aWriteConcern {@code WriteConcern} to be used during operation
-     * @param encoder      {@code DBEncoder} to be used
+     * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
      */
     public WriteResult remove(final DBObject query, final WriteConcern aWriteConcern, final DBEncoder encoder) {
-        final Document filter = toDocument(query, encoder, getDocumentCodec());
-        final Remove remove = new Remove(aWriteConcern.toNew(), filter);
+        Document filter = toDocument(query, encoder, getDocumentCodec());
+        Remove remove = new Remove(aWriteConcern.toNew(), filter);
 
         try {
-            return translateWriteResult(
-                    new RemoveOperation(getNamespace(), remove, getDocumentCodec(), getBufferPool(), getSession(), false).execute(),
-                    aWriteConcern);
+            return translateWriteResult(new RemoveOperation(getNamespace(),
+                                                            remove,
+                                                            getDocumentCodec(),
+                                                            getBufferPool(),
+                                                            getSession(),
+                                                            false).execute(),
+                                        aWriteConcern);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
@@ -538,8 +525,8 @@ public class DBCollection {
      * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
      * @param options    query options to be used
      * @return A cursor to the documents that match the query criteria
-     * @deprecated Please use subsequent calls {@link #find(DBObject, DBObject)}, {@link DBCursor#batchSize(int)},
-     *             {@link DBCursor#skip(int)}, {@link DBCursor#setOptions(int)}  instead.
+     * @deprecated Please use subsequent calls {@link #find(DBObject, DBObject)}, {@link DBCursor#batchSize(int)}, {@link
+     *             DBCursor#skip(int)}, {@link DBCursor#setOptions(int)}  instead.
      */
     @Deprecated
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize,
@@ -556,8 +543,8 @@ public class DBCollection {
      * @param numToSkip  number of documents to skip
      * @param batchSize  see {@link DBCursor#batchSize(int)} for more information
      * @return A cursor to the documents that match the query criteria
-     * @deprecated Please use subsequent calls {@link #find(DBObject, DBObject)},
-     *             {@link DBCursor#batchSize(int)}, {@link DBCursor#skip(int)} instead.
+     * @deprecated Please use subsequent calls {@link #find(DBObject, DBObject)}, {@link DBCursor#batchSize(int)}, {@link
+     *             DBCursor#skip(int)} instead.
      */
     @Deprecated
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize) {
@@ -567,8 +554,8 @@ public class DBCollection {
     /**
      * Select documents in collection and get a cursor to the selected documents.
      *
-     * @param query the selection criteria using query operators. Omit the query parameter or pass an empty document to return all
-     *              documents in the collection.
+     * @param query the selection criteria using query operators. Omit the query parameter or pass an empty document to return all documents
+     *              in the collection.
      * @return A cursor to the documents that match the query criteria
      */
     public DBCursor find(final DBObject query) {
@@ -662,16 +649,15 @@ public class DBCollection {
     public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                             final ReadPreference readPreference) {
 
-        final Find find = new Find()
-                .select(toFieldSelectorDocument(projection))
-                .where(toDocument(query))
-                .order(toDocument(sort))
-                .readPreference(readPreference.toNew())
-                .batchSize(-1);
+        Find find = new Find().select(toFieldSelectorDocument(projection))
+                              .where(toDocument(query))
+                              .order(toDocument(sort))
+                              .readPreference(readPreference.toNew())
+                              .batchSize(-1);
 
         try {
-            final org.mongodb.MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
-                getBufferPool(), getSession(), false).execute();
+            org.mongodb.MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
+                                                                                    getBufferPool(), getSession(), false).execute();
 
             return cursor.hasNext() ? cursor.next() : null;
         } catch (org.mongodb.MongoException e) {
@@ -701,9 +687,8 @@ public class DBCollection {
     }
 
     /**
-     * Template method pattern.
-     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to
-     * collection.
+     * Template method pattern. Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields
+     * before saving object to collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @return '_id' of the document
@@ -713,9 +698,8 @@ public class DBCollection {
     }
 
     /**
-     * Template method pattern.
-     * Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields before saving object to
-     * collection.
+     * Template method pattern. Please extend DBCollection and ovverride {@link #doapply(DBObject)} if you need to add specific fields
+     * before saving object to collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
@@ -868,7 +852,7 @@ public class DBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        final Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
+        Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
 
         return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getBufferPool(), getSession(), false));
     }
@@ -894,8 +878,8 @@ public class DBCollection {
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
 
-        final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
-        final RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
+        RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
+        RenameCollection renameCommand = new RenameCollection(renameCollectionOptions, getDB().getName());
         try {
             new CommandOperation("admin", renameCommand.toDocument(), renameCommand.getReadPreference(), commandCodec, commandCodec,
                                  getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
@@ -984,13 +968,13 @@ public class DBCollection {
      */
     @Deprecated
     public DBObject group(final DBObject args) {
-        final Document commandDocument = new Document("group", toDocument(args).append("ns", getName()));
+        Document commandDocument = new Document("group", toDocument(args).append("ns", getName()));
         return group(new Command(commandDocument));
     }
 
 
     private DBObject group(final Command command) {
-        final GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
+        GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
         return toDBList(commandResult.getValue());
     }
 
@@ -1035,10 +1019,9 @@ public class DBCollection {
      * @return an array of the distinct values
      */
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        final Find find = new Find()
-                .filter(toDocument(query))
-                .readPreference(readPreference.toNew());
-        final Distinct distinctOperation = new Distinct(getName(), fieldName, find);
+        Find find = new Find().filter(toDocument(query))
+                              .readPreference(readPreference.toNew());
+        Distinct distinctOperation = new Distinct(getName(), fieldName, find);
         return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
     }
 
@@ -1053,7 +1036,7 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final DBObject query) {
-        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, MapReduceCommand.OutputType.REDUCE, query);
+        MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, MapReduceCommand.OutputType.REDUCE, query);
         return mapReduce(command);
     }
 
@@ -1069,7 +1052,7 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final MapReduceCommand.OutputType outputType, final DBObject query) {
-        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
+        MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
         return mapReduce(command);
     }
 
@@ -1086,7 +1069,7 @@ public class DBCollection {
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final MapReduceCommand.OutputType outputType, final DBObject query,
                                      final ReadPreference readPreference) {
-        final MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
+        MapReduceCommand command = new MapReduceCommand(this, map, reduce, outputTarget, outputType, query);
         command.setReadPreference(readPreference);
         return mapReduce(command);
     }
@@ -1099,10 +1082,10 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        final MapReduceCommandResultCodec<DBObject> mapReduceCodec =
-                new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
+        MapReduceCommandResultCodec<DBObject> mapReduceCodec =
+            new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
-        final org.mongodb.CommandResult executionResult;
+        org.mongodb.CommandResult executionResult;
 
         Command newStyleCommand = command.toNew();
         try {
@@ -1115,8 +1098,8 @@ public class DBCollection {
 
         BasicDBObject commandDocument = toDBObject(newStyleCommand.toDocument());
         return command.getOutputType() == MapReduceCommand.OutputType.INLINE
-                ? new MapReduceOutput(commandDocument, new MapReduceInlineCommandResult<DBObject>(executionResult))
-                : new MapReduceOutput(this, commandDocument, new MapReduceCommandResult(executionResult));
+               ? new MapReduceOutput(commandDocument, new MapReduceInlineCommandResult<DBObject>(executionResult))
+               : new MapReduceOutput(this, commandDocument, new MapReduceCommandResult(executionResult));
     }
 
     /**
@@ -1129,7 +1112,7 @@ public class DBCollection {
         if (!command.containsField("mapreduce") && !command.containsField("mapReduce")) {
             throw new IllegalArgumentException("Operation requires mapReduce command");
         }
-        final CommandResult res = database.command(command, getOptions(), getReadPreference());
+        CommandResult res = database.command(command, getOptions(), getReadPreference());
         return new MapReduceOutput(this, command, res);
     }
 
@@ -1166,15 +1149,23 @@ public class DBCollection {
      * @param pipeline operations to be performed in the aggregation pipeline
      * @return the aggregation's result set
      */
-    public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
+    public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
         AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
 
         List<Document> stages = preparePipeline(pipeline);
 
-        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(), preparePipeline(pipeline),  
-                    getDocumentCodec(), options.toNew(), getBufferPool(), getSession(), false,
-            coerceReadPreference(readPreference, stages.get(stages.size() - 1).getString("$out") != null).toNew());
-        
+        AggregateOperation<Document> operation = new AggregateOperation<Document>(getNamespace(),
+                                                                                  preparePipeline(pipeline),
+                                                                                  getDocumentCodec(),
+                                                                                  options.toNew(),
+                                                                                  getBufferPool(),
+                                                                                  getSession(),
+                                                                                  false,
+                                                                                  coerceReadPreference(readPreference,
+                                                                                                       stages.get(stages.size() - 1)
+                                                                                                             .getString("$out")
+                                                                                                       != null).toNew());
+
         org.mongodb.MongoCursor<Document> cursor = operation.execute();
         org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
         return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
@@ -1183,35 +1174,40 @@ public class DBCollection {
     /**
      * Method implements aggregation framework.
      *
-     *
-     * @param pipeline       operations to be performed in the aggregation pipeline
-     * @param options       options to apply to the aggregation
+     * @param pipeline operations to be performed in the aggregation pipeline
+     * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
      */
-    public MongoCursor aggregate(final List<DBObject> pipeline, com.mongodb.AggregationOptions options) {
+    public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
     }
 
     /**
      * Method implements aggregation framework.
      *
-     * @param pipeline operations to be performed in the aggregation pipeline
-     * @param options options to apply to the aggregation
+     * @param pipeline       operations to be performed in the aggregation pipeline
+     * @param options        options to apply to the aggregation
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
      */
     public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
-        final ReadPreference readPreference) {
+                                 final ReadPreference readPreference) {
         List<Document> stages = preparePipeline(pipeline);
 
         String outCollection = stages.get(stages.size() - 1).getString("$out");
         ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
-        
-        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
-            options.toNew(), getBufferPool(), getSession(), false, activeReadPreference.toNew()).execute();
+
+        org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(),
+                                                                                    stages,
+                                                                                    getDocumentCodec(),
+                                                                                    options.toNew(),
+                                                                                    getBufferPool(),
+                                                                                    getSession(),
+                                                                                    false,
+                                                                                    activeReadPreference.toNew()).execute();
 
         if (outCollection != null) {
-            return new DBCursorAdapter(new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, ReadPreference.primary()));
+            return new DBCursorAdapter(new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary()));
         } else {
             return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
                 @Override
@@ -1223,7 +1219,7 @@ public class DBCollection {
     }
 
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
-        return dollarOutPresent ? ReadPreference.primary() : readPreference;
+        return dollarOutPresent ? primary() : readPreference;
     }
 
     @SuppressWarnings("unchecked")
@@ -1235,10 +1231,10 @@ public class DBCollection {
         for (final DBObject op : pipeline) {
             stages.add(toDocument(op));
         }
-                
+
         return stages;
     }
-    
+
     /**
      * Get the name of a collection.
      *
@@ -1290,7 +1286,7 @@ public class DBCollection {
      * @param name specifies the name of the index
      */
     public void ensureIndex(final DBObject keys, final String name) {
-        final BasicDBObject options = new BasicDBObject("name", name);
+        BasicDBObject options = new BasicDBObject("name", name);
         ensureIndex(keys, options);
     }
 
@@ -1299,11 +1295,11 @@ public class DBCollection {
      *
      * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
      * @param name   specifies the name of the index
-     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index
-     *               key or keys matches an existing value in the index
+     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index key
+     *               or keys matches an existing value in the index
      */
     public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
-        final BasicDBObject options = new BasicDBObject("name", name);
+        BasicDBObject options = new BasicDBObject("name", name);
         options.append("unique", unique);
         ensureIndex(keys, options);
     }
@@ -1315,8 +1311,8 @@ public class DBCollection {
      * @param options a document that controls the creation of the index.
      */
     public void ensureIndex(final DBObject keys, final DBObject options) {
-        final Insert<Document> insertIndexOperation
-                = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, toIndexDetailsDocument(keys, options));
+        Insert<Document> insertIndexOperation
+            = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, toIndexDetailsDocument(keys, options));
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1326,10 +1322,10 @@ public class DBCollection {
      * @param name specifies name of field to index on
      */
     public void ensureIndex(final String name) {
-        final Index index = Index.builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
-        final Document indexDetails = index.toDocument();
+        Index index = Index.builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
+        Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
-        final Insert<Document> insertIndexOperation = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, indexDetails);
+        Insert<Document> insertIndexOperation = new Insert<Document>(org.mongodb.WriteConcern.ACKNOWLEDGED, indexDetails);
         insertIndex(insertIndexOperation, documentCodec);
     }
 
@@ -1361,17 +1357,17 @@ public class DBCollection {
      */
     public void createIndex(final DBObject keys, final DBObject options, final DBEncoder dbEncoder) {
 
-        final Encoder<DBObject> encoder = toEncoder(dbEncoder);
-        final Document indexDetails = toIndexDetailsDocument(keys, options);
+        Encoder<DBObject> encoder = toEncoder(dbEncoder);
+        Document indexDetails = toIndexDetailsDocument(keys, options);
 
-        final Insert<DBObject> insertIndexOperation = new Insert<DBObject>(org.mongodb.WriteConcern.ACKNOWLEDGED, toDBObject(indexDetails));
+        Insert<DBObject> insertIndexOperation = new Insert<DBObject>(org.mongodb.WriteConcern.ACKNOWLEDGED, toDBObject(indexDetails));
         insertIndex(insertIndexOperation, encoder);
     }
 
     private <T> void insertIndex(final Insert<T> insertIndexOperation, final Encoder<T> encoder) {
         try {
             new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
-                    getBufferPool(), getSession(), false).execute();
+                                   getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException exception) {
             throw mapException(exception);
         }
@@ -1394,6 +1390,7 @@ public class DBCollection {
 
     /**
      * Get hint fields for this collection (used to optimize queries).
+     *
      * @return a list of {@code DBObject} to be used as hints.
      */
     public List<DBObject> getHintFields() {
@@ -1401,8 +1398,8 @@ public class DBCollection {
     }
 
     /**
-     * Atomically modify and return a single document.
-     * By default, the returned document does not include the modifications made on the update.
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
      *
      * @param query  specifies the selection criteria for the modification
      * @param sort   determines which document the operation will modify if the query selects multiple documents
@@ -1415,8 +1412,8 @@ public class DBCollection {
 
 
     /**
-     * Atomically modify and return a single document.
-     * By default, the returned document does not include the modifications made on the update.
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
      *
      * @param query  specifies the selection criteria for the modification
      * @param update performs an update of the selected document
@@ -1428,8 +1425,8 @@ public class DBCollection {
 
 
     /**
-     * Atomically modify and return a single document.
-     * By default, the returned document does not include the modifications made on the update.
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
      *
      * @param query specifies the selection criteria for the modification
      * @return pre-modification document
@@ -1439,8 +1436,8 @@ public class DBCollection {
     }
 
     /**
-     * Atomically modify and return a single document.
-     * By default, the returned document does not include the modifications made on the update.
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
      *
      * @param query     specifies the selection criteria for the modification
      * @param fields    a subset of fields to return
@@ -1454,15 +1451,15 @@ public class DBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                                                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                                                : getObjectCodec();
+        Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                                          ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                                          : getObjectCodec();
 
-        final Operation<DBObject> operation;
+        Operation<DBObject> operation;
         if (remove) {
-            final FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
-                                                                                       .sortBy(toNullableDocument(sort))
-                                                                                       .returnNew(returnNew);
+            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
+                                                                                 .sortBy(toNullableDocument(sort))
+                                                                                 .returnNew(returnNew);
             operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder, getBufferPool(),
                                                              getSession(), false);
         } else {
@@ -1471,22 +1468,20 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                final FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
-                                                              .where(toNullableDocument(query))
-                                                              .sortBy(toNullableDocument(sort))
-                                                              .returnNew(returnNew)
-                                                              .select(toFieldSelectorDocument(fields))
-                                                              .updateWith(toUpdateOperationsDocument(update))
-                                                              .upsert(upsert);
+                FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>().where(toNullableDocument(query))
+                                                                                     .sortBy(toNullableDocument(sort))
+                                                                                     .returnNew(returnNew)
+                                                                                     .select(toFieldSelectorDocument(fields))
+                                                                                     .updateWith(toUpdateOperationsDocument(update))
+                                                                                     .upsert(upsert);
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder, getBufferPool(),
                                                                  getSession(), false);
             } else {
-                final FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
-                                                                .where(toNullableDocument(query))
-                                                                .sortBy(toNullableDocument(sort))
-                                                                .select(toFieldSelectorDocument(fields))
-                                                                .returnNew(returnNew)
-                                                                .upsert(upsert);
+                FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update).where(toNullableDocument(query))
+                                                                                              .sortBy(toNullableDocument(sort))
+                                                                                              .select(toFieldSelectorDocument(fields))
+                                                                                              .returnNew(returnNew)
+                                                                                              .upsert(upsert);
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
                                                                   getBufferPool(), getSession(), false);
             }
@@ -1517,8 +1512,8 @@ public class DBCollection {
     }
 
     /**
-     * Set the {@link WriteConcern} for this collection. Will be used for writes to this collection. Overrides any setting of
-     * write concern at the DB level.
+     * Set the {@link WriteConcern} for this collection. Will be used for writes to this collection. Overrides any setting of write concern
+     * at the DB level.
      *
      * @param writeConcern WriteConcern to use
      */
@@ -1539,8 +1534,8 @@ public class DBCollection {
     }
 
     /**
-     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides
-     * DB & Connection level settings. See the * documentation for {@link ReadPreference} for more information.
+     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides DB &
+     * Connection level settings. See the * documentation for {@link ReadPreference} for more information.
      *
      * @param preference ReadPreference to use
      */
@@ -1588,9 +1583,9 @@ public class DBCollection {
 
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
-        final Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
-                ? createCollectibleDBObjectCodec()
-                : new DBDecoderAdapter(factory.create(), this, getBufferPool());
+        Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
+                                    ? createCollectibleDBObjectCodec()
+                                    : new DBDecoderAdapter(factory.create(), this, getBufferPool());
         this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
     }
 
@@ -1603,9 +1598,9 @@ public class DBCollection {
 
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
-        final Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
-                ? createCollectibleDBObjectCodec()
-                : new DBEncoderFactoryAdapter(encoderFactory);
+        Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
+                                    ? createCollectibleDBObjectCodec()
+                                    : new DBEncoderFactoryAdapter(encoderFactory);
         this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
     }
 
@@ -1622,17 +1617,19 @@ public class DBCollection {
     /**
      * Drops an index from this collection.  The DBObject index parameter must match the specification of the index to drop, i.e. correct
      * key name and type must be specified.
+     *
      * @param index the specification of the index to drop
      * @throws MongoException if the index does not exist
      */
     public void dropIndex(final DBObject index) {
-        final List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(index);
-        final Index indexToDrop = Index.builder().addKeys(keysFromDBObject).build();
+        List<Index.Key<?>> keysFromDBObject = getKeysFromDBObject(index);
+        Index indexToDrop = Index.builder().addKeys(keysFromDBObject).build();
         dropIndex(indexToDrop.getName());
     }
 
     /**
      * Drops the index with the given name from this collection.
+     *
      * @param indexName name of index to drop
      * @throws MongoException if the index does not exist
      */
@@ -1649,6 +1646,7 @@ public class DBCollection {
 
     /**
      * Drops the index with the given name from this collection.  This method is exactly the same as {@code dropIndex(indexName)}.
+     *
      * @param indexName name of index to drop
      * @throws MongoException if the index does not exist
      */
@@ -1657,13 +1655,13 @@ public class DBCollection {
     }
 
     public CommandResult getStats() {
-        final org.mongodb.CommandResult commandResult = getDB().executeCommand(new Command(new Document("collStats", getName())));
+        org.mongodb.CommandResult commandResult = getDB().executeCommand(new Command(new Document("collStats", getName())));
         return new CommandResult(commandResult);
     }
 
     public boolean isCapped() {
-        final CommandResult commandResult = getStats();
-        final Object cappedField = commandResult.get("capped");
+        CommandResult commandResult = getStats();
+        Object cappedField = commandResult.get("capped");
         return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
     }
 
@@ -1702,10 +1700,7 @@ public class DBCollection {
 
     @Override
     public String toString() {
-        return "DBCollection{" +
-                "database=" + database +
-                ", name='" + name + '\'' +
-                '}';
+        return "DBCollection{database=" + database + ", name='" + name + '\'' + '}';
     }
 
     synchronized DBObjectFactory getObjectFactory() {
@@ -1718,12 +1713,10 @@ public class DBCollection {
     }
 
     private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
-        return new CollectibleDBObjectCodec(
-                getDB(),
-                getPrimitiveCodecs(),
-                new ObjectIdGenerator(),
-                getObjectFactory()
-        );
+        return new CollectibleDBObjectCodec(getDB(),
+                                            getPrimitiveCodecs(),
+                                            new ObjectIdGenerator(),
+                                            getObjectFactory());
     }
 
     private PrimitiveCodecs getPrimitiveCodecs() {
@@ -1738,9 +1731,9 @@ public class DBCollection {
         boolean background = false;
         int expireAfterSeconds = -1;
 
-        final Index.Builder builder = Index.builder();
+        Index.Builder builder = Index.builder();
         if (options != null) {
-            final DBObject optionsCopy = new BasicDBObject(options.toMap());
+            DBObject optionsCopy = new BasicDBObject(options.toMap());
             indexName = (String) optionsCopy.get("name");
             unique = FieldHelpers.asBoolean(optionsCopy.removeField("unique"));
             dropDups = FieldHelpers.asBoolean(optionsCopy.removeField("dropDups"));
@@ -1754,24 +1747,23 @@ public class DBCollection {
             }
         }
 
-        builder
-            .name(indexName)
-            .unique(unique)
-            .dropDups(dropDups)
-            .sparse(sparse)
-            .background(background)
-            .expireAfterSeconds(expireAfterSeconds)
-            .addKeys(getKeysFromDBObject(keys));
+        builder.name(indexName)
+               .unique(unique)
+               .dropDups(dropDups)
+               .sparse(sparse)
+               .background(background)
+               .expireAfterSeconds(expireAfterSeconds)
+               .addKeys(getKeysFromDBObject(keys));
 
-        final Document indexDetails = builder.build().toDocument();
+        Document indexDetails = builder.build().toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
         return indexDetails;
     }
 
     private List<Index.Key<?>> getKeysFromDBObject(final DBObject fields) {
-        final List<Index.Key<?>> keys = new ArrayList<Index.Key<?>>();
+        List<Index.Key<?>> keys = new ArrayList<Index.Key<?>>();
         for (final String key : fields.keySet()) {
-            final Object keyType = fields.get(key);
+            Object keyType = fields.get(key);
             if (keyType instanceof Integer) {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
             } else if (keyType.equals("2d")) {

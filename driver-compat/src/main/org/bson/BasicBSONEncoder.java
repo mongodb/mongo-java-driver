@@ -40,8 +40,7 @@ import java.util.regex.Pattern;
 import static org.bson.BSON.regexFlags;
 
 /**
- * This is meant to be pooled or cached
- * There is some per instance memory for string conversion, etc...
+ * This is meant to be pooled or cached There is some per instance memory for string conversion, etc...
  */
 public class BasicBSONEncoder implements BSONEncoder {
 
@@ -49,7 +48,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     @Override
     public byte[] encode(final BSONObject document) {
-        final OutputBuffer outputBuffer = new BasicOutputBuffer();
+        OutputBuffer outputBuffer = new BasicOutputBuffer();
         set(outputBuffer);
         putObject(document);
         done();
@@ -79,15 +78,14 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     /**
-     * Encodes a {@code BSONObject}.
-     * This is for the higher level api calls.
+     * Encodes a {@code BSONObject}. This is for the higher level api calls.
      *
      * @param document the document to encode
      * @return the number of characters in the encoding
      */
     @Override
     public int putObject(final BSONObject document) {
-        final int startPosition = getOutputBuffer().getPosition();
+        int startPosition = getOutputBuffer().getPosition();
         bsonWriter.writeStartDocument();
 
         if (isTopLevelDocument() && document.containsField("_id")) {
@@ -95,7 +93,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         }
 
         for (final String key : document.keySet()) {
-            if (isTopLevelDocument() && key.equals("_id")){
+            if (isTopLevelDocument() && key.equals("_id")) {
                 continue;
             }
             _putObjectField(key, document.get(key));
@@ -126,7 +124,7 @@ public class BasicBSONEncoder implements BSONEncoder {
             putCode(name, new Code((String) initialValue));
         }
 
-        final Object value = BSON.applyEncodingHooks(initialValue);
+        Object value = BSON.applyEncodingHooks(initialValue);
 
         if (value == null) {
             putNull(name);
@@ -239,7 +237,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putUUID(final String name, final UUID uuid) {
         putName(name);
-        final byte[] bytes = new byte[16];
+        byte[] bytes = new byte[16];
         writeLongToArrayLittleEndian(bytes, 0, uuid.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, uuid.getLeastSignificantBits());
         bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UuidLegacy, bytes));
@@ -269,39 +267,39 @@ public class BasicBSONEncoder implements BSONEncoder {
         putName(name);
         bsonWriter.writeStartArray();
         if (object instanceof int[]) {
-            for (int i : (int[]) object) {
+            for (final int i : (int[]) object) {
                 bsonWriter.writeInt32(i);
             }
         } else if (object instanceof long[]) {
-            for (long i : (long[]) object) {
+            for (final long i : (long[]) object) {
                 bsonWriter.writeInt64(i);
             }
         } else if (object instanceof float[]) {
-            for (float i : (float[]) object) {
+            for (final float i : (float[]) object) {
                 bsonWriter.writeDouble(i);
             }
         } else if (object instanceof short[]) {
-            for (short i : (short[]) object) {
+            for (final short i : (short[]) object) {
                 bsonWriter.writeInt32(i);
             }
         } else if (object instanceof byte[]) {
-            for (byte i : (byte[]) object) {
+            for (final byte i : (byte[]) object) {
                 bsonWriter.writeInt32(i);
             }
         } else if (object instanceof double[]) {
-            for (double i : (double[]) object) {
+            for (final double i : (double[]) object) {
                 bsonWriter.writeDouble(i);
             }
         } else if (object instanceof boolean[]) {
-            for (boolean i : (boolean[]) object) {
+            for (final boolean i : (boolean[]) object) {
                 bsonWriter.writeBoolean(i);
             }
         } else if (object instanceof String[]) {
-            for (String i : (String[]) object) {
+            for (final String i : (String[]) object) {
                 bsonWriter.writeString(i);
             }
         } else {
-            final int length = Array.getLength(object);
+            int length = Array.getLength(object);
             for (int i = 0; i < length; i++) {
                 _putObjectField(String.valueOf(i), Array.get(object, i));
             }
@@ -313,8 +311,8 @@ public class BasicBSONEncoder implements BSONEncoder {
     protected void putIterable(final String name, final Iterable iterable) {
         putName(name);
         bsonWriter.writeStartArray();
-        final int i = 0;
-        for (Object o : iterable) {
+        int i = 0;
+        for (final Object o : iterable) {
             _putObjectField(String.valueOf(i), o);
         }
         bsonWriter.writeEndArray();
@@ -324,7 +322,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     protected void putMap(final String name, final Map map) {
         putName(name);
         bsonWriter.writeStartDocument();
-        for (Map.Entry entry : (Set<Map.Entry>) map.entrySet()) {
+        for (final Map.Entry entry : (Set<Map.Entry>) map.entrySet()) {
             _putObjectField((String) entry.getKey(), entry.getValue());
         }
         bsonWriter.writeEndDocument();

@@ -40,8 +40,12 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnection(
-                "1", new SocketChannelStream(new ServerAddress(host), SocketSettings.builder().build()),
-                Collections.<MongoCredential>emptyList(), new PowerOfTwoBufferPool(), new NoOpConnectionListener());
+                                                             "1",
+                                                             new SocketChannelStream(new ServerAddress(host),
+                                                                                     SocketSettings.builder().build()),
+                                                             Collections.<MongoCredential>emptyList(),
+                                                             new PowerOfTwoBufferPool(),
+                                                             new NoOpConnectionListener());
     }
 
     @After
@@ -52,14 +56,22 @@ public class PlainAuthenticatorTest {
     @Test
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, source, password.toCharArray()), internalConnection, getBufferProvider());
+                                                                     MongoCredential.createPlainCredential(userName,
+                                                                                                           source,
+                                                                                                           password.toCharArray()),
+                                                                     internalConnection,
+                                                                     getBufferProvider());
         authenticator.authenticate();
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(
-                MongoCredential.createPlainCredential(userName, source, "wrong".toCharArray()), internalConnection, getBufferProvider());
+                                                                     MongoCredential.createPlainCredential(userName,
+                                                                                                           source,
+                                                                                                           "wrong".toCharArray()),
+                                                                     internalConnection,
+                                                                     getBufferProvider());
         authenticator.authenticate();
     }
 }

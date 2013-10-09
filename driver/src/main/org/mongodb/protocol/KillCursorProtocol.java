@@ -32,7 +32,7 @@ public class KillCursorProtocol implements Protocol<Void> {
     private final KillCursor killCursor;
     private final ServerDescription serverDescription;
     private final Connection connection;
-    private boolean closeConnection;
+    private final boolean closeConnection;
     private final BufferProvider bufferProvider;
 
     public KillCursorProtocol(final KillCursor killCursor, final BufferProvider bufferProvider,
@@ -47,9 +47,9 @@ public class KillCursorProtocol implements Protocol<Void> {
 
     @Override
     public Void execute() {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
+            KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return null;
@@ -65,18 +65,18 @@ public class KillCursorProtocol implements Protocol<Void> {
     public MongoFuture<Void> executeAsync() {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-            final KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
-            message.encode(buffer);
-            connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final MongoException e) {
-                    buffer.close();
-                    if (closeConnection) {
-                        connection.close();
-                    }
-                    retVal.init(result, e);
+        KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
+        message.encode(buffer);
+        connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                buffer.close();
+                if (closeConnection) {
+                    connection.close();
                 }
-            });
-            return retVal;
+                retVal.init(result, e);
+            }
+        });
+        return retVal;
     }
 }

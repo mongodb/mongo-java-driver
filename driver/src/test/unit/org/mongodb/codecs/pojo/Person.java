@@ -39,7 +39,7 @@ public class Person {
             return false;
         }
 
-        final Person person = (Person) o;
+        Person person = (Person) o;
 
         return address.equals(person.address) && name.equals(person.name);
     }

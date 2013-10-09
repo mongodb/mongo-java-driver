@@ -30,9 +30,9 @@ public class ConnectionEvent extends ClusterEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param connectionId the connection id
+     * @param connectionId  the connection id
      */
     public ConnectionEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId) {
         super(clusterId);
@@ -70,7 +70,7 @@ public class ConnectionEvent extends ClusterEvent {
             return false;
         }
 
-        final ConnectionEvent that = (ConnectionEvent) o;
+        ConnectionEvent that = (ConnectionEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

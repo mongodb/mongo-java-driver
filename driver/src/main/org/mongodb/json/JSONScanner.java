@@ -46,8 +46,8 @@ class JSONScanner {
     }
 
     /**
-     * Finds and returns the next complete token from this scanner.
-     * If scanner reached the end of the source, it will return a token with {@code JSONTokenType.END_OF_FILE} type.
+     * Finds and returns the next complete token from this scanner. If scanner reached the end of the source, it will return a token with
+     * {@code JSONTokenType.END_OF_FILE} type.
      *
      * @return The next token.
      * @throws JSONParseException if source is invalid.
@@ -90,7 +90,7 @@ class JSONScanner {
                 } else if (c == '$' || c == '_' || Character.isLetter(c)) {
                     return scanUnquotedString();
                 } else {
-                    final int position = buffer.getPosition();
+                    int position = buffer.getPosition();
                     buffer.unread(c);
                     throw new JSONParseException("Invalid JSON input. Position: %d. Character: '%c'.", position, c);
                 }
@@ -113,7 +113,7 @@ class JSONScanner {
      */
     private JSONToken scanRegularExpression() {
 
-        final int start = buffer.getPosition() - 1;
+        int start = buffer.getPosition() - 1;
         int options = -1;
 
         RegularExpressionState state = RegularExpressionState.IN_PATTERN;
@@ -167,9 +167,9 @@ class JSONScanner {
             switch (state) {
                 case DONE:
                     buffer.unread(c);
-                    final int end = buffer.getPosition();
-                    final RegularExpression regex
-                            = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
+                    int end = buffer.getPosition();
+                    RegularExpression regex
+                        = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
                     return new JSONToken(JSONTokenType.REGULAR_EXPRESSION, regex);
                 case INVALID:
                     throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
@@ -184,7 +184,7 @@ class JSONScanner {
      * @return The string token.
      */
     private JSONToken scanUnquotedString() {
-        final int start = buffer.getPosition() - 1;
+        int start = buffer.getPosition() - 1;
         int c = buffer.read();
         while (c == '$' || c == '_' || Character.isLetterOrDigit(c)) {
             c = buffer.read();
@@ -274,9 +274,9 @@ class JSONScanner {
                             state = NumberState.DONE;
                             break;
                         default:
-                            if (Character.isDigit(c)){
+                            if (Character.isDigit(c)) {
                                 state = NumberState.SAW_INTEGER_DIGITS;
-                            }else if (Character.isWhitespace(c)) {
+                            } else if (Character.isWhitespace(c)) {
                                 state = NumberState.DONE;
                             } else {
                                 state = NumberState.INVALID;
@@ -387,7 +387,7 @@ class JSONScanner {
                     break;
                 case SAW_MINUS_I:
                     boolean sawMinusInfinity = true;
-                    final char[] nfinity = new char[]{'n', 'f', 'i', 'n', 'i', 't', 'y'};
+                    char[] nfinity = new char[]{'n', 'f', 'i', 'n', 'i', 't', 'y'};
                     for (int i = 0; i < nfinity.length; i++) {
                         if (c != nfinity[i]) {
                             sawMinusInfinity = false;
@@ -425,11 +425,11 @@ class JSONScanner {
                     throw new JSONParseException("Invalid JSON number");
                 case DONE:
                     buffer.unread(c);
-                    final String lexeme = buffer.substring(start, buffer.getPosition());
+                    String lexeme = buffer.substring(start, buffer.getPosition());
                     if (type == JSONTokenType.DOUBLE) {
                         return new JSONToken(JSONTokenType.DOUBLE, Double.parseDouble(lexeme));
                     } else {
-                        final long value = Long.parseLong(lexeme);
+                        long value = Long.parseLong(lexeme);
                         if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
                             return new JSONToken(JSONTokenType.INT64, value);
                         } else {
@@ -451,7 +451,7 @@ class JSONScanner {
     //CHECKSTYLE:OFF
     private JSONToken scanString(final char quoteCharacter) {
 
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
         while (true) {
             int c = buffer.read();

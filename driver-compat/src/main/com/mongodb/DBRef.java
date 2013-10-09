@@ -56,8 +56,8 @@ public class DBRef extends DBRefBase {
      * @throws MongoException
      */
     public static DBObject fetch(final DB db, final DBObject ref) {
-        final String ns;
-        final Object id;
+        String ns;
+        Object id;
 
         if ((ns = (String) ref.get("$ref")) != null && (id = ref.get("$id")) != null) {
             return db.getCollection(ns).findOne(new BasicDBObject("_id", id));

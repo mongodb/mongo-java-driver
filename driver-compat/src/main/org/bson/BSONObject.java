@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * A key-value map that can be saved to the database.
  */
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings("rawtypes")
 public interface BSONObject {
 
     /**
@@ -74,12 +74,12 @@ public interface BSONObject {
     /**
      * Deprecated
      *
-     * @param s
+     * @param key the key to check
      * @return True if the key is present
      * @deprecated Please use {@link #containsField(String)} instead
      */
     @Deprecated
-    boolean containsKey(String s);
+    boolean containsKey(String key);
 
     /**
      * Checks if this object contains a field with the given name.

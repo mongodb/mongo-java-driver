@@ -115,23 +115,25 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
 
     @Test
     public void testIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.find().sort(new Document("_id", 1))
-                .asyncInto(new ArrayList<Document>())
-                .get(),
-                is(documentList));
+        assertThat(collection.find()
+                             .sort(new Document("_id", 1))
+                             .asyncInto(new ArrayList<Document>())
+                             .get(),
+                   is(documentList));
     }
 
     @Test
     public void testMapIntoFuture() throws ExecutionException, InterruptedException {
-        assertThat(collection.find().sort(new Document("_id", 1))
-                .map(new Function<Document, Integer>() {
-                    @Override
-                    public Integer apply(final Document document) {
-                        return (Integer) document.get("_id");
-                    }
-                })
-                .asyncInto(new ArrayList<Integer>()).get(),
-                is(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)));
+        assertThat(collection.find()
+                             .sort(new Document("_id", 1))
+                             .map(new Function<Document, Integer>() {
+                                 @Override
+                                 public Integer apply(final Document document) {
+                                     return (Integer) document.get("_id");
+                                 }
+                             })
+                             .asyncInto(new ArrayList<Integer>()).get(),
+                   is(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)));
     }
 
     @Test

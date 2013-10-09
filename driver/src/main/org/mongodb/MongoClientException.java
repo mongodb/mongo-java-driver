@@ -35,7 +35,7 @@ public abstract class MongoClientException extends MongoException {
      * Constructs a new instance with the given message and chained exception.
      *
      * @param msg the message
-     * @param t the chained exception
+     * @param t   the chained exception
      */
     public MongoClientException(final String msg, final Throwable t) {
         super(msg, t);

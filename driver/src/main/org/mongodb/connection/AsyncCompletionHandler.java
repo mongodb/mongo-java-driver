@@ -18,12 +18,12 @@ package org.mongodb.connection;
 
 /**
  * Completion handler for asynchronous I/O
+ *
  * @since 3.0
  */
 public interface AsyncCompletionHandler {
     /**
      * Invoked when an operation has completed.
-     *
      */
     void completed();
 

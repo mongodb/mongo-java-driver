@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-
 package org.mongodb.operation;
-
 
 import org.mongodb.AggregationCursor;
 import org.mongodb.AggregationOptions;
@@ -42,7 +40,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     private static final Logger LOGGER = Loggers.getLogger("operation");
 
@@ -56,8 +53,9 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final ServerConnectionProvider connectionProvider;
 
     public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
-        final AggregationOptions options, final BufferProvider bufferProvider, final Session session, final boolean closeSession,
-        final ReadPreference readPreference) {
+                              final AggregationOptions options, final BufferProvider bufferProvider, final Session session,
+                              final boolean closeSession,
+                              final ReadPreference readPreference) {
         super(bufferProvider, session, closeSession);
 
         this.namespace = namespace;
@@ -66,21 +64,21 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
         this.options = options;
         command = new Document("aggregate", namespace.getCollectionName());
         command.put("pipeline", pipeline);
-        connectionProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false,
-            new ReadPreferenceServerSelector(readPreference)));
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
+        connectionProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
         serverAddress = connectionProvider.getServerDescription().getAddress();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public MongoCursor<T> execute() {
-        final CommandResult result = sendMessage();
+        CommandResult result = sendMessage();
         if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
             return new InlineMongoCursor<T>(result, (List<T>) result.getResponse()
-                .get("result"));
+                                                                    .get("result"));
         } else {
             return new AggregationCursor<T>(options, namespace, decoder, getBufferProvider(), getSession(), isCloseSession(),
-                connectionProvider, receiveMessage(result));
+                                            connectionProvider, receiveMessage(result));
         }
     }
 

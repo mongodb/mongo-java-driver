@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- *
  * A full duplex stream of bytes.
  *
  * @since 3.0
@@ -46,8 +45,8 @@ public interface Stream {
     void read(final ByteBuf buffer) throws IOException;
 
     /**
-     * Write each buffer in the list to the stream in order, asynchronously.  This method should return immediately,
-     * and invoke the given callback on completion.
+     * Write each buffer in the list to the stream in order, asynchronously.  This method should return immediately, and invoke the given
+     * callback on completion.
      *
      * @param buffers the buffers to write
      * @param handler invoked when the read operation has completed
@@ -55,10 +54,10 @@ public interface Stream {
     void writeAsync(final List<ByteBuf> buffers, AsyncCompletionHandler handler);
 
     /**
-     * Read from the stream into the given buffer, asynchronously.  This method should return immediately,
-     * and invoke the given callback on completion
+     * Read from the stream into the given buffer, asynchronously.  This method should return immediately, and invoke the given callback on
+     * completion
      *
-     * @param buffer the buffer to read into
+     * @param buffer  the buffer to read into
      * @param handler invoked when the read operation has completed
      */
     void readAsync(final ByteBuf buffer, AsyncCompletionHandler handler);

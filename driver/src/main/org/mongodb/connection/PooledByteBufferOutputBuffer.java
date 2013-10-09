@@ -47,8 +47,8 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
         int currentOffset = offset;
         int remainingLen = len;
         while (remainingLen > 0) {
-            final ByteBuf buf = getCurrentByteBuffer();
-            final int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
+            ByteBuf buf = getCurrentByteBuffer();
+            int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
             buf.put(b, currentOffset, bytesToPutInCurrentBuffer);
             remainingLen -= bytesToPutInCurrentBuffer;
             currentOffset += bytesToPutInCurrentBuffer;
@@ -63,7 +63,7 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
     }
 
     private ByteBuf getCurrentByteBuffer() {
-        final ByteBuf curByteBuffer = getByteBufferAtIndex(curBufferIndex);
+        ByteBuf curByteBuffer = getByteBufferAtIndex(curBufferIndex);
         if (curByteBuffer.hasRemaining()) {
             return curByteBuffer;
         }
@@ -85,8 +85,7 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
     }
 
     /**
-     * Backpatches the size of a document or message by writing the size into the four bytes starting at getPosition() -
-     * size.
+     * Backpatches the size of a document or message by writing the size into the four bytes starting at getPosition() - size.
      *
      * @param size the size of the document or message
      */
@@ -190,7 +189,7 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
         }
 
         void put(final byte b) {
-            final ByteBuf byteBuffer = getByteBufferAtIndex(bufferIndex);
+            ByteBuf byteBuffer = getByteBufferAtIndex(bufferIndex);
             byteBuffer.put(position++, b);
 
             if (position >= byteBuffer.capacity()) {

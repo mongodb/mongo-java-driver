@@ -56,7 +56,7 @@ public class PrimitiveCodecs implements Codec<Object> {
     @Override
     @SuppressWarnings("unchecked")
     public void encode(final BSONWriter writer, final Object value) {
-        final Encoder codec;
+        Encoder codec;
         if (value == null) {
             codec = classEncoderMap.get(null);
         } else {
@@ -70,8 +70,8 @@ public class PrimitiveCodecs implements Codec<Object> {
 
     @Override
     public Object decode(final BSONReader reader) {
-        final BSONType bsonType = reader.getCurrentBSONType();
-        final Decoder codec = bsonTypeDecoderMap.get(bsonType);
+        BSONType bsonType = reader.getCurrentBSONType();
+        Decoder codec = bsonTypeDecoderMap.get(bsonType);
         if (codec == null) {
             throw new MongoException("Unable to find decoder for BSON type " + bsonType);
         }
@@ -94,28 +94,28 @@ public class PrimitiveCodecs implements Codec<Object> {
     // TODO: find a proper way to do this...
     public static PrimitiveCodecs createDefault() {
         return builder()
-               .objectIdCodec(new ObjectIdCodec())
-               .integerCodec(new IntegerCodec())
-               .longCodec(new LongCodec())
-               .stringCodec(new StringCodec())
-               .doubleCodec(new DoubleCodec())
-               .dateCodec(new DateCodec())
-               .timestampCodec(new TimestampCodec())
-               .booleanCodec(new BooleanCodec())
-               .patternCodec(new PatternCodec())
-               .minKeyCodec(new MinKeyCodec())
-               .maxKeyCodec(new MaxKeyCodec())
-               .javascriptCodec(new CodeCodec())
-               .nullCodec(new NullCodec())
-               .otherEncoder(new FloatCodec())
-               .otherEncoder(new ShortCodec())
-               .otherEncoder(new ByteCodec())
-               .otherEncoder(new ByteArrayCodec())
-               .otherEncoder(new BinaryEncoder())
-               .otherEncoder(new UUIDEncoder())
-               .otherDecoder(BSONType.DB_POINTER, new DBPointerDecoder())
-               .binaryDecoder(new TransformingBinaryDecoder())
-               .build();
+                   .objectIdCodec(new ObjectIdCodec())
+                   .integerCodec(new IntegerCodec())
+                   .longCodec(new LongCodec())
+                   .stringCodec(new StringCodec())
+                   .doubleCodec(new DoubleCodec())
+                   .dateCodec(new DateCodec())
+                   .timestampCodec(new TimestampCodec())
+                   .booleanCodec(new BooleanCodec())
+                   .patternCodec(new PatternCodec())
+                   .minKeyCodec(new MinKeyCodec())
+                   .maxKeyCodec(new MaxKeyCodec())
+                   .javascriptCodec(new CodeCodec())
+                   .nullCodec(new NullCodec())
+                   .otherEncoder(new FloatCodec())
+                   .otherEncoder(new ShortCodec())
+                   .otherEncoder(new ByteCodec())
+                   .otherEncoder(new ByteArrayCodec())
+                   .otherEncoder(new BinaryEncoder())
+                   .otherEncoder(new UUIDEncoder())
+                   .otherDecoder(BSONType.DB_POINTER, new DBPointerDecoder())
+                   .binaryDecoder(new TransformingBinaryDecoder())
+                   .build();
     }
 
     boolean canEncode(final Class<?> aClass) {

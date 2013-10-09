@@ -45,7 +45,7 @@ class SocketClient {
     private ServerAddress address = null;
     private final BlockingQueue<AsyncCompletionHandler> waitingReads = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
     private final BlockingQueue<AsyncCompletionHandler> waitingWrites = new ArrayBlockingQueue<AsyncCompletionHandler>(1);
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
 
     private SSLHandler sslHandler = null;
 
@@ -76,14 +76,14 @@ class SocketClient {
     }
 
     protected void readChannel() {
-        final AsyncCompletionHandler handler = waitingReads.poll();
+        AsyncCompletionHandler handler = waitingReads.poll();
         if (handler != null) {
             handler.completed();
         }
     }
 
     protected void writeChannel() {
-        final AsyncCompletionHandler handler = waitingWrites.poll();
+        AsyncCompletionHandler handler = waitingWrites.poll();
         if (handler != null) {
             handler.completed();
         }
@@ -121,7 +121,7 @@ class SocketClient {
 
 
     protected int readToBuffer(final ByteBuffer buffer) throws IOException {
-        final int out;
+        int out;
         if (sslHandler != null) {
             out = sslHandler.doRead(buffer);
         } else {
@@ -140,9 +140,9 @@ class SocketClient {
         if (sslHandler != null) {
             return sslHandler.doWrite(byteBuffer);
         } else {
-            final int out = byteBuffer.remaining();
+            int out = byteBuffer.remaining();
             while (byteBuffer.hasRemaining()) {
-                final int x = client.write(byteBuffer);
+                int x = client.write(byteBuffer);
                 if (x < 0) {
                     return x;
                 }
@@ -232,9 +232,9 @@ class SocketClient {
                             writeChannel();
                             continue;
                         }
-                        final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+                        Iterator<SelectionKey> it = selector.selectedKeys().iterator();
                         while (it.hasNext()) {
-                            final SelectionKey key = it.next();
+                            SelectionKey key = it.next();
                             it.remove();
                             if (!key.isValid()) {
                                 continue;

@@ -18,8 +18,8 @@ package org.mongodb.event;
 
 
 /**
- * An adapter for connection listener implementations, for clients that want to listen for a subset of connection events.
- * Extend this class to listen for connection events and override the methods of interest.
+ * An adapter for connection listener implementations, for clients that want to listen for a subset of connection events. Extend this class
+ * to listen for connection events and override the methods of interest.
  *
  * @since 3.0
  */

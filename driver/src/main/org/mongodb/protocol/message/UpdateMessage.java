@@ -25,7 +25,7 @@ import org.mongodb.operation.Update;
 import java.util.List;
 
 public class UpdateMessage extends BaseUpdateMessage {
-    private List<Update> updates;
+    private final List<Update> updates;
 
     public UpdateMessage(final String collectionName, final List<Update> updates, final Encoder<Document> encoder,
                          final MessageSettings settings) {
@@ -39,8 +39,7 @@ public class UpdateMessage extends BaseUpdateMessage {
         addDocument(updates.get(0).getUpdateOperations(), getBaseEncoder(), buffer);
         if (updates.size() == 1) {
             return null;
-        }
-        else {
+        } else {
             return new UpdateMessage(getCollectionName(), updates.subList(1, updates.size()), getBaseEncoder(), getSettings());
         }
     }

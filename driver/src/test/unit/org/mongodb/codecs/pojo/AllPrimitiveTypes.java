@@ -47,7 +47,7 @@ public class AllPrimitiveTypes {
             return false;
         }
 
-        final AllPrimitiveTypes that = (AllPrimitiveTypes) o;
+        AllPrimitiveTypes that = (AllPrimitiveTypes) o;
 
         if (booleanVal != that.booleanVal) {
             return false;

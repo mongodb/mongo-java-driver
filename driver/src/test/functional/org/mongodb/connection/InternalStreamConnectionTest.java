@@ -63,10 +63,10 @@ public class InternalStreamConnectionTest {
         TestConnectionListener listener = new TestConnectionListener();
         stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                getBufferProvider(), listener);
+                                                                           getBufferProvider(), listener);
         OutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())),
-                MessageSettings.builder().build());
+                                                        MessageSettings.builder().build());
         message.encode(buffer);
 
         // when
@@ -90,10 +90,10 @@ public class InternalStreamConnectionTest {
         TestConnectionListener listener = new TestConnectionListener();
         stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                getBufferProvider(), listener);
+                                                                           getBufferProvider(), listener);
         OutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
-                new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
+                                                    new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);
 
         // when

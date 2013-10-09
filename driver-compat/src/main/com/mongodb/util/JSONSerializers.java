@@ -40,8 +40,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Defines static methods for getting <code>ObjectSerializer</code> instances that produce various flavors of
- * JSON.
+ * Defines static methods for getting {@code ObjectSerializer} instances that produce various flavors of JSON.
  */
 public class JSONSerializers {
 
@@ -49,10 +48,9 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an <code>ObjectSerializer</code> that mostly conforms to the strict JSON format defined in
-     * <a href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON", but with a few differences to keep
-     * compatibility with previous versions of the driver.  Clients should generally prefer
-     * <code>getStrict</code> in preference to this method.
+     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in <a
+     * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON", but with a few differences to keep compatibility with previous
+     * versions of the driver.  Clients should generally prefer {@code getStrict} in preference to this method.
      *
      * @return object serializer
      * @see #getStrict()
@@ -69,8 +67,8 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an <code>ObjectSerializer</code> that conforms to the strict JSON format defined in
-     * <a href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON".
+     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in <a
+     * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON".
      *
      * @return object serializer
      */
@@ -110,7 +108,7 @@ public class JSONSerializers {
     private abstract static class CompoundObjectSerializer extends AbstractObjectSerializer {
         protected final ObjectSerializer serializer;
 
-        CompoundObjectSerializer(ObjectSerializer serializer) {
+        CompoundObjectSerializer(final ObjectSerializer serializer) {
             this.serializer = serializer;
         }
     }
@@ -118,7 +116,7 @@ public class JSONSerializers {
     private static class LegacyBinarySerializer extends AbstractObjectSerializer {
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             buf.append("<Binary Data>");
         }
 
@@ -126,12 +124,12 @@ public class JSONSerializers {
 
     private static class ObjectArraySerializer extends CompoundObjectSerializer {
 
-        ObjectArraySerializer(ObjectSerializer serializer) {
+        ObjectArraySerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             buf.append("[ ");
             for (int i = 0; i < Array.getLength(obj); i++) {
                 if (i > 0) {
@@ -148,7 +146,7 @@ public class JSONSerializers {
     private static class ToStringSerializer extends AbstractObjectSerializer {
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             buf.append(obj.toString());
         }
 
@@ -156,12 +154,12 @@ public class JSONSerializers {
 
     private static class LegacyBSONTimestampSerializer extends CompoundObjectSerializer {
 
-        LegacyBSONTimestampSerializer(ObjectSerializer serializer) {
+        LegacyBSONTimestampSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             BSONTimestamp t = (BSONTimestamp) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$ts", Integer.valueOf(t.getTime()));
@@ -173,12 +171,12 @@ public class JSONSerializers {
 
     private static class CodeSerializer extends CompoundObjectSerializer {
 
-        CodeSerializer(ObjectSerializer serializer) {
+        CodeSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             Code c = (Code) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$code", c.getCode());
@@ -189,12 +187,12 @@ public class JSONSerializers {
 
     private static class CodeWScopeSerializer extends CompoundObjectSerializer {
 
-        CodeWScopeSerializer(ObjectSerializer serializer) {
+        CodeWScopeSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             CodeWScope c = (CodeWScope) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$code", c.getCode());
@@ -206,32 +204,28 @@ public class JSONSerializers {
 
     private static class LegacyDateSerializer extends CompoundObjectSerializer {
 
-        LegacyDateSerializer(ObjectSerializer serializer) {
+        LegacyDateSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             Date d = (Date) obj;
-            SimpleDateFormat format = new SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            format.setCalendar(new GregorianCalendar(
-                    new SimpleTimeZone(0, "GMT")));
-            serializer.serialize(
-                    new BasicDBObject("$date", format.format(d)),
-                    buf);
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+            serializer.serialize(new BasicDBObject("$date", format.format(d)), buf);
         }
 
     }
 
     private static class DBObjectSerializer extends CompoundObjectSerializer {
 
-        DBObjectSerializer(ObjectSerializer serializer) {
+        DBObjectSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             boolean first = true;
             buf.append("{ ");
             DBObject dbo = (DBObject) obj;
@@ -258,12 +252,12 @@ public class JSONSerializers {
 
     private static class DBRefBaseSerializer extends CompoundObjectSerializer {
 
-        DBRefBaseSerializer(ObjectSerializer serializer) {
+        DBRefBaseSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             DBRefBase ref = (DBRefBase) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$ref", ref.getRef());
@@ -275,12 +269,12 @@ public class JSONSerializers {
 
     private static class IterableSerializer extends CompoundObjectSerializer {
 
-        IterableSerializer(ObjectSerializer serializer) {
+        IterableSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             boolean first = true;
             buf.append("[ ");
 
@@ -299,13 +293,13 @@ public class JSONSerializers {
 
     private static class MapSerializer extends CompoundObjectSerializer {
 
-        MapSerializer(ObjectSerializer serializer) {
+        MapSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
         @SuppressWarnings("rawtypes")
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             boolean first = true;
             buf.append("{ ");
             Map m = (Map) obj;
@@ -330,58 +324,54 @@ public class JSONSerializers {
 
     private static class MaxKeySerializer extends CompoundObjectSerializer {
 
-        MaxKeySerializer(ObjectSerializer serializer) {
+        MaxKeySerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
-            serializer.serialize(new BasicDBObject("$maxKey",
-                    1), buf);
+        public void serialize(final Object obj, final StringBuilder buf) {
+            serializer.serialize(new BasicDBObject("$maxKey", 1), buf);
         }
 
     }
 
     private static class MinKeySerializer extends CompoundObjectSerializer {
 
-        MinKeySerializer(ObjectSerializer serializer) {
+        MinKeySerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
-            serializer.serialize(new BasicDBObject("$minKey",
-                    1), buf);
+        public void serialize(final Object obj, final StringBuilder buf) {
+            serializer.serialize(new BasicDBObject("$minKey", 1), buf);
         }
 
     }
 
     private static class ObjectIdSerializer extends CompoundObjectSerializer {
 
-        ObjectIdSerializer(ObjectSerializer serializer) {
+        ObjectIdSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
-            serializer.serialize(
-                    new BasicDBObject("$oid", obj.toString()), buf);
+        public void serialize(final Object obj, final StringBuilder buf) {
+            serializer.serialize(new BasicDBObject("$oid", obj.toString()), buf);
         }
     }
 
     private static class PatternSerializer extends CompoundObjectSerializer {
 
-        PatternSerializer(ObjectSerializer serializer) {
+        PatternSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             DBObject externalForm = new BasicDBObject();
             externalForm.put("$regex", obj.toString());
             if (((Pattern) obj).flags() != 0) {
-                externalForm.put("$options",
-                        Bytes.regexFlags(((Pattern) obj).flags()));
+                externalForm.put("$options", Bytes.regexFlags(((Pattern) obj).flags()));
             }
             serializer.serialize(externalForm, buf);
         }
@@ -390,19 +380,19 @@ public class JSONSerializers {
     private static class StringSerializer extends AbstractObjectSerializer {
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             JSON.string(buf, (String) obj);
         }
     }
 
     private static class UUIDSerializer extends CompoundObjectSerializer {
 
-        UUIDSerializer(ObjectSerializer serializer) {
+        UUIDSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             UUID uuid = (UUID) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("$uuid", uuid.toString());
@@ -412,12 +402,12 @@ public class JSONSerializers {
 
     private static class BSONTimestampSerializer extends CompoundObjectSerializer {
 
-        BSONTimestampSerializer(ObjectSerializer serializer) {
+        BSONTimestampSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             BSONTimestamp t = (BSONTimestamp) obj;
             BasicDBObject temp = new BasicDBObject();
             temp.put("t", Integer.valueOf(t.getTime()));
@@ -431,25 +421,24 @@ public class JSONSerializers {
 
     private static class DateSerializer extends CompoundObjectSerializer {
 
-        DateSerializer(ObjectSerializer serializer) {
+        DateSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             Date d = (Date) obj;
-            serializer.serialize(
-                    new BasicDBObject("$date", d.getTime()), buf);
+            serializer.serialize(new BasicDBObject("$date", d.getTime()), buf);
         }
 
     }
 
     private abstract static class BinarySerializerBase extends CompoundObjectSerializer {
-        BinarySerializerBase(ObjectSerializer serializer) {
+        BinarySerializerBase(final ObjectSerializer serializer) {
             super(serializer);
         }
 
-        protected void serialize(byte[] bytes, byte type, StringBuilder buf) {
+        protected void serialize(final byte[] bytes, final byte type, final StringBuilder buf) {
             DBObject temp = new BasicDBObject();
             temp.put("$binary", DatatypeConverter.printBase64Binary(bytes));
             temp.put("$type", type);
@@ -458,12 +447,12 @@ public class JSONSerializers {
     }
 
     private static class BinarySerializer extends BinarySerializerBase {
-        BinarySerializer(ObjectSerializer serializer) {
+        BinarySerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             Binary bin = (Binary) obj;
             serialize(bin.getData(), bin.getType(), buf);
         }
@@ -471,12 +460,12 @@ public class JSONSerializers {
     }
 
     private static class ByteArraySerializer extends BinarySerializerBase {
-        ByteArraySerializer(ObjectSerializer serializer) {
+        ByteArraySerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 
         @Override
-        public void serialize(Object obj, StringBuilder buf) {
+        public void serialize(final Object obj, final StringBuilder buf) {
             serialize((byte[]) obj, (byte) 0, buf);
         }
 

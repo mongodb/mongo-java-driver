@@ -51,8 +51,7 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
         boolean done;
         if (responseBuffers != null) {
             done = callCallback(responseBuffers, e);
-        }
-        else {
+        } else {
             done = callCallback(null, e);
         }
         if (done && closeConnection) {

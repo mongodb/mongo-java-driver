@@ -30,11 +30,11 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param connectionId the connection id
-     * @param responseTo the request id that this message is in response to
-     * @param size the size of the received message
+     * @param connectionId  the connection id
+     * @param responseTo    the request id that this message is in response to
+     * @param size          the size of the received message
      */
     public ConnectionMessageReceivedEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
                                           final int responseTo, final int size) {
@@ -73,7 +73,7 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
             return false;
         }
 
-        final ConnectionMessageReceivedEvent that = (ConnectionMessageReceivedEvent) o;
+        ConnectionMessageReceivedEvent that = (ConnectionMessageReceivedEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

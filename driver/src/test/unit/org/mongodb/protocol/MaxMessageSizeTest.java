@@ -57,7 +57,7 @@ public class MaxMessageSizeTest {
 
     @Test
     public void testMaxDocumentSize() {
-        final RequestMessage next = message.encode(buffer);
+        RequestMessage next = message.encode(buffer);
         assertNotNull(next);
         assertNull(next.encode(buffer));
     }

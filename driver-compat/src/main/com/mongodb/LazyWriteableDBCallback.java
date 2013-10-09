@@ -26,7 +26,7 @@ public class LazyWriteableDBCallback extends LazyDBCallback {
 
     @Override
     public Object createObject(final byte[] bytes, final int offset) {
-        final LazyDBObject document = new LazyWriteableDBObject(bytes, offset, this);
+        LazyDBObject document = new LazyWriteableDBObject(bytes, offset, this);
         if (document.keySet().containsAll(Arrays.asList("$id", "$ref"))) {
             return new DBRef(db, document);
         }

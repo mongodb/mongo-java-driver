@@ -37,8 +37,8 @@ public abstract class ChainingServerSelector implements ServerSelector {
         }
 
         return chainedSelector.choose(new ClusterDescription(clusterDescription.getConnectionMode(), clusterDescription.getType(),
-                serverDescriptions));
+                                                             serverDescriptions));
     }
 
-    protected abstract List<ServerDescription> chooseStep(final ClusterDescription clusterDescription);
+    protected abstract List<ServerDescription> chooseStep(ClusterDescription clusterDescription);
 }

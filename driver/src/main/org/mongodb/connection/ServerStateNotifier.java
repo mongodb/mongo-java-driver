@@ -27,15 +27,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.connection.CommandHelper.executeCommand;
 import static org.mongodb.connection.ServerConnectionState.Connected;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 import static org.mongodb.connection.ServerConnectionState.Unconnected;
+import static org.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
+import static org.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
 import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
 import static org.mongodb.connection.ServerType.ReplicaSetOther;
 import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
@@ -49,7 +51,7 @@ class ServerStateNotifier implements Runnable {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
-    private ServerAddress serverAddress;
+    private final ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final BufferProvider bufferProvider;
@@ -75,7 +77,7 @@ class ServerStateNotifier implements Runnable {
             return;
         }
 
-        final ServerDescription currentServerDescription = serverDescription;
+        ServerDescription currentServerDescription = serverDescription;
         Throwable throwable = null;
         try {
             if (internalConnection == null) {
@@ -83,13 +85,13 @@ class ServerStateNotifier implements Runnable {
             }
             try {
                 LOGGER.fine(format("Checking status of %s", serverAddress));
-                final CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                        internalConnection, bufferProvider);
+                CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
+                                                              internalConnection, bufferProvider);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
-                final CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
-                        internalConnection, bufferProvider);
+                CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
+                                                               internalConnection, bufferProvider);
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {
@@ -112,9 +114,8 @@ class ServerStateNotifier implements Runnable {
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
                         LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
-                                throwable);
-                    }
-                    else {
+                                   throwable);
+                    } else {
                         LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
                     }
                 }
@@ -137,23 +138,23 @@ class ServerStateNotifier implements Runnable {
     private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
                                                 final long averagePingTimeNanos) {
         return ServerDescription.builder()
-                .state(Connected)
-                .version(getVersion(buildInfoResult))
-                .address(commandResult.getAddress())
-                .type(getServerType(commandResult.getResponse()))
-                .hosts(listToSet((List<String>) commandResult.getResponse().get("hosts")))
-                .passives(listToSet((List<String>) commandResult.getResponse().get("passives")))
-                .arbiters(listToSet((List<String>) commandResult.getResponse().get("arbiters")))
-                .primary(commandResult.getResponse().getString("primary"))
-                .maxDocumentSize(getInteger(commandResult.getResponse().getInteger("maxBsonObjectSize"),
-                        ServerDescription.getDefaultMaxDocumentSize()))
-                .maxMessageSize(getInteger(commandResult.getResponse().getInteger("maxMessageSizeBytes"),
-                        ServerDescription.getDefaultMaxMessageSize()))
-                .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
-                .setName(commandResult.getResponse().getString("setName"))
-                .setVersion(commandResult.getResponse().getInteger("setVersion"))
-                .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
-                .ok(commandResult.isOk()).build();
+                                .state(Connected)
+                                .version(getVersion(buildInfoResult))
+                                .address(commandResult.getAddress())
+                                .type(getServerType(commandResult.getResponse()))
+                                .hosts(listToSet((List<String>) commandResult.getResponse().get("hosts")))
+                                .passives(listToSet((List<String>) commandResult.getResponse().get("passives")))
+                                .arbiters(listToSet((List<String>) commandResult.getResponse().get("arbiters")))
+                                .primary(commandResult.getResponse().getString("primary"))
+                                .maxDocumentSize(getInteger(commandResult.getResponse().getInteger("maxBsonObjectSize"),
+                                                            getDefaultMaxDocumentSize()))
+                                .maxMessageSize(getInteger(commandResult.getResponse().getInteger("maxMessageSizeBytes"),
+                                                           getDefaultMaxMessageSize()))
+                                .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
+                                .setName(commandResult.getResponse().getString("setName"))
+                                .setVersion(commandResult.getResponse().getInteger("setVersion"))
+                                .averagePingTime(averagePingTimeNanos, NANOSECONDS)
+                                .ok(commandResult.isOk()).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -164,8 +165,7 @@ class ServerStateNotifier implements Runnable {
     private Set<String> listToSet(final List<String> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptySet();
-        }
-        else {
+        } else {
             return new HashSet<String>(list);
         }
     }
@@ -211,7 +211,7 @@ class ServerStateNotifier implements Runnable {
         if (tagsDocuments == null) {
             return new Tags();
         }
-        final Tags tags = new Tags();
+        Tags tags = new Tags();
         for (final Map.Entry<String, Object> curEntry : tagsDocuments.entrySet()) {
             tags.put(curEntry.getKey(), curEntry.getValue().toString());
         }

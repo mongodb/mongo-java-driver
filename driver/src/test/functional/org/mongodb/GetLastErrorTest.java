@@ -25,7 +25,7 @@ import static org.junit.Assert.fail;
 public class GetLastErrorTest extends DatabaseTestCase {
     @Test
     public void testDuplicateKeyException() {
-        final Document doc = new Document("_id", 1);
+        Document doc = new Document("_id", 1);
         collection.insert(doc);
         try {
             collection.insert(doc);

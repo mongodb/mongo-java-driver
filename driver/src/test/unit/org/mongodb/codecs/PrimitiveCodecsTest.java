@@ -231,21 +231,18 @@ public class PrimitiveCodecsTest {
 
     @Test
     public void shouldBeAbleToDecodeDBPointer() {
-        final byte[] bytes = {
-                26, 0, 0, 0, 12, 97, 0, 2, 0, 0, 0, 98, 0, 82, 9, 41, 108,
-                -42, -60, -29, -116, -7, 111, -1, -36, 0
+        byte[] bytes = {26, 0, 0, 0, 12, 97, 0, 2, 0, 0, 0, 98, 0, 82, 9, 41, 108,
+                        -42, -60, -29, -116, -7, 111, -1, -36, 0
         };
-        final BSONReader reader = new BSONBinaryReader(
-                new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true
-        );
+        BSONReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
 
         reader.readStartDocument();
         reader.readName();
 
-        final Object object = primitiveCodecs.decode(reader);
+        Object object = primitiveCodecs.decode(reader);
 
         assertThat(object, instanceOf(DBRef.class));
-        final DBRef reference = (DBRef) object;
+        DBRef reference = (DBRef) object;
         assertThat(reference.getRef(), is("b"));
         assertThat(reference.getId(), instanceOf(ObjectId.class));
         assertThat((ObjectId) reference.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
@@ -260,9 +257,9 @@ public class PrimitiveCodecsTest {
                 return reader.readBinaryData().getData();
             }
         }).build();
-        final StringWriter stringWriter = new StringWriter();
+        StringWriter stringWriter = new StringWriter();
         BSONWriter bsonWriter = new JSONWriter(stringWriter);
-        final Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+        Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
         bsonWriter.writeStartDocument();
         bsonWriter.writeBinaryData("binary", binaryValue);
         bsonWriter.writeEndDocument();

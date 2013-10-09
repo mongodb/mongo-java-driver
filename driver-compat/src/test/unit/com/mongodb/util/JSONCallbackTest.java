@@ -119,11 +119,4 @@ public class JSONCallbackTest {
         assertEquals(new ObjectId("01234567890123456789abcd"), ref.getId());
     }
 
-// No such concept in Java
-//    @Test
-//    public void undefinedParsing() {
-//        BasicDBObject undef = (BasicDBObject) JSON.parse(("{ \"$undefined\" : true }"));
-//        assertEquals( 123, undef);
-//    }
-
 }

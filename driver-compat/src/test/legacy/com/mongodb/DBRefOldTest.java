@@ -35,8 +35,8 @@ public class DBRefOldTest extends DatabaseTestCase {
 
     @Test
     public void testEqualsAndHashCode() {
-        final DBRef referenceA = new DBRef(database, "foo.bar", 4);
-        final DBRef referenceB = new DBRef(database, "foo.bar", 4);
+        DBRef referenceA = new DBRef(database, "foo.bar", 4);
+        DBRef referenceB = new DBRef(database, "foo.bar", 4);
         assertEquals(referenceA, referenceA);
         assertEquals(referenceA, referenceB);
         assertEquals(referenceA.hashCode(), referenceB.hashCode());
@@ -44,26 +44,26 @@ public class DBRefOldTest extends DatabaseTestCase {
 
     @Test
     public void testToString() {
-        final ObjectId id = new ObjectId("123456789012345678901234");
-        final DBRef ref = new DBRef(database, "foo.bar", id);
+        ObjectId id = new ObjectId("123456789012345678901234");
+        DBRef ref = new DBRef(database, "foo.bar", id);
 
         assertEquals("{\"$ref\":\"foo.bar\",\"$id\":\"123456789012345678901234\"}", ref.toString());
     }
 
     @Test
     public void testDBRef() {
-        final DBRef reference = new DBRef(database, "hello", "world");
-        final DBObject document = new BasicDBObject("!", reference);
+        DBRef reference = new DBRef(database, "hello", "world");
+        DBObject document = new BasicDBObject("!", reference);
 
-        final DBEncoder encoder = DefaultDBEncoder.FACTORY.create();
-        final OutputBuffer buffer = new BasicOutputBuffer();
+        DBEncoder encoder = DefaultDBEncoder.FACTORY.create();
+        OutputBuffer buffer = new BasicOutputBuffer();
 
         encoder.writeObject(buffer, document);
 
-        final DefaultDBCallback cb = new DefaultDBCallback(null);
-        final BSONDecoder decoder = new BasicBSONDecoder();
+        DefaultDBCallback cb = new DefaultDBCallback(null);
+        BSONDecoder decoder = new BasicBSONDecoder();
         decoder.decode(buffer.toByteArray(), cb);
-        final DBObject read = (DBObject) cb.get();
+        DBObject read = (DBObject) cb.get();
 
         assertEquals("{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}", read.toString().replaceAll(" +", ""));
     }
@@ -187,9 +187,8 @@ public class DBRefOldTest extends DatabaseTestCase {
 
         BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
         BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
-        BasicDBObject mapOfRefs = new BasicDBObject()
-                .append("someName", new DBRef(database, "compoundkeys", compoundId1))
-                .append("someName2", new DBRef(database, "compoundkeys", compoundId2));
+        BasicDBObject mapOfRefs = new BasicDBObject().append("someName", new DBRef(database, "compoundkeys", compoundId1))
+                                                     .append("someName2", new DBRef(database, "compoundkeys", compoundId2));
         BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", mapOfRefs);
         base.save(entity);
 

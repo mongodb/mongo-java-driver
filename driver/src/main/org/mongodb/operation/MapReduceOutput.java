@@ -17,10 +17,9 @@
 package org.mongodb.operation;
 
 /**
- * Specifies the location of the result of the map-reduce operation.
- * You can output to a collection, output to a collection with an action, or output inline.
- * You may output to a collection when performing map reduce operations on the primary members of the set;
- * on secondary members you may only use the <b>inline</b> output.
+ * Specifies the location of the result of the map-reduce operation. You can output to a collection, output to a collection with an action,
+ * or output inline. You may output to a collection when performing map reduce operations on the primary members of the set; on secondary
+ * members you may only use the <b>inline</b> output.
  * <p/>
  * This class follows a builder pattern.
  *
@@ -28,7 +27,7 @@ package org.mongodb.operation;
  */
 public class MapReduceOutput {
 
-    private String collectionName;
+    private final String collectionName;
     private Action action;
     private String databaseName;
     private boolean sharded;
@@ -73,8 +72,8 @@ public class MapReduceOutput {
     /**
      * Add a 'sharded' flag.
      * <p/>
-     * If specified and you have enabled sharding on output database, the map-reduce operation will
-     * shard the output collection using the _id field as the shard key.
+     * If specified and you have enabled sharding on output database, the map-reduce operation will shard the output collection using the
+     * _id field as the shard key.
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
@@ -87,9 +86,8 @@ public class MapReduceOutput {
     /**
      * Add a 'nonAtomic' flag. Valid only together with {@code Action.MERGE} and {@code Action.REDUCE}
      * <p/>
-     * If specified the post-processing step will prevent MongoDB from locking the database;
-     * however, other clients will be able to read intermediate states of the output collection.
-     * Otherwise the map reduce operation must lock the database during post-processing.
+     * If specified the post-processing step will prevent MongoDB from locking the database; however, other clients will be able to read
+     * intermediate states of the output collection. Otherwise the map reduce operation must lock the database during post-processing.
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
@@ -125,19 +123,19 @@ public class MapReduceOutput {
         REPLACE("replace"),
 
         /**
-         * Merge the new result with the existing result if the output collection already exists.
-         * If an existing document has the same key as the new result, overwrite that existing document.
+         * Merge the new result with the existing result if the output collection already exists. If an existing document has the same key
+         * as the new result, overwrite that existing document.
          */
         MERGE("merge"),
 
         /**
-         * Merge the new result with the existing result if the output collection already exists.
-         * If an existing document has the same key as the new result, apply the reduce function
-         * to both the new and the existing documents and overwrite the existing document with the result.
+         * Merge the new result with the existing result if the output collection already exists. If an existing document has the same key
+         * as the new result, apply the reduce function to both the new and the existing documents and overwrite the existing document with
+         * the result.
          */
         REDUCE("reduce");
 
-        private String value;
+        private final String value;
 
         private Action(final String value) {
             this.value = value;

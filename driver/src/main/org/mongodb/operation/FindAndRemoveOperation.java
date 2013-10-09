@@ -48,15 +48,16 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T execute() {
-        final ServerConnectionProvider provider = getServerConnectionProvider();
-        final CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                                                commandEncoder, resultDecoder, getBufferProvider(),
-                                                                provider.getServerDescription(), provider.getConnection(), true).execute();
+        ServerConnectionProvider provider = getServerConnectionProvider();
+        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
+                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          provider.getServerDescription(), provider.getConnection(), true)
+                                          .execute();
         return (T) commandResult.getResponse().get("value");
     }
 
     private Document getFindAndRemoveDocument() {
-        final Document command = new Document("findandmodify", namespace.getCollectionName());
+        Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndRemove.getFilter());
         putIfNotNull(command, "fields", findAndRemove.getSelector());
         putIfNotNull(command, "sort", findAndRemove.getSortCriteria());

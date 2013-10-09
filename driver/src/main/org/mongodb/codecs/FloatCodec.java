@@ -21,7 +21,7 @@ import org.bson.BSONWriter;
 import org.mongodb.Codec;
 
 /**
- *  Float codec
+ * Float codec
  */
 public class FloatCodec implements Codec<Float> {
     @Override

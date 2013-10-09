@@ -80,7 +80,7 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public Object get(final String key) {
-        final BSONBinaryReader reader = getBSONReader();
+        BSONBinaryReader reader = getBSONReader();
         Object value;
         try {
             reader.readStartDocument();
@@ -101,13 +101,13 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     @Deprecated
-    public boolean containsKey(final String s) {
-        return containsField(s);
+    public boolean containsKey(final String key) {
+        return containsField(key);
     }
 
     @Override
     public boolean containsField(final String s) {
-        final BSONReader reader = getBSONReader();
+        BSONReader reader = getBSONReader();
         try {
             reader.readStartDocument();
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -125,8 +125,8 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public Set<String> keySet() {
-        final Set<String> keys = new LinkedHashSet<String>();
-        final BSONReader reader = getBSONReader();
+        Set<String> keys = new LinkedHashSet<String>();
+        BSONReader reader = getBSONReader();
         try {
             reader.readStartDocument();
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -151,10 +151,10 @@ public class LazyBSONObject implements BSONObject {
             case STRING:
                 return reader.readString();
             case BINARY:
-                final Binary binary = reader.readBinaryData();
-                final byte binaryType = binary.getType();
-                if (binaryType == BSONBinarySubType.Binary.getValue() ||
-                        binaryType == BSONBinarySubType.Binary.getValue()) {
+                Binary binary = reader.readBinaryData();
+                byte binaryType = binary.getType();
+                if (binaryType == BSONBinarySubType.Binary.getValue()
+                    || binaryType == BSONBinarySubType.Binary.getValue()) {
                     return binary.getData();
                 } else if (binaryType == BSONBinarySubType.UuidLegacy.getValue()) {
                     return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
@@ -171,13 +171,13 @@ public class LazyBSONObject implements BSONObject {
             case DATE_TIME:
                 return new Date(reader.readDateTime());
             case REGULAR_EXPRESSION:
-                final RegularExpression regularExpression = reader.readRegularExpression();
+                RegularExpression regularExpression = reader.readRegularExpression();
                 return Pattern.compile(
-                        regularExpression.getPattern(),
-                        BSON.regexFlags(regularExpression.getOptions())
-                );
+                                          regularExpression.getPattern(),
+                                          BSON.regexFlags(regularExpression.getOptions())
+                                      );
             case DB_POINTER:
-                final DBPointer dbPointer = reader.readDBPointer();
+                DBPointer dbPointer = reader.readDBPointer();
                 return callback.createDBRef(dbPointer.getNamespace(), dbPointer.getId());
             case JAVASCRIPT:
                 return new Code(reader.readJavaScript());
@@ -203,13 +203,13 @@ public class LazyBSONObject implements BSONObject {
     }
 
     private Object readArray(final BSONBinaryReader reader) {
-        final int position = reader.getBuffer().getPosition();
+        int position = reader.getBuffer().getPosition();
         reader.skipValue();
         return callback.createArray(bytes, offset + position);
     }
 
     private Object readDocument(final BSONBinaryReader reader) {
-        final int position = reader.getBuffer().getPosition();
+        int position = reader.getBuffer().getPosition();
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             reader.skipName();
@@ -220,12 +220,12 @@ public class LazyBSONObject implements BSONObject {
     }
 
     BSONBinaryReader getBSONReader() {
-        final ByteBuffer buffer = getBufferForInternalBytes();
+        ByteBuffer buffer = getBufferForInternalBytes();
         return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(buffer)), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {
-        final ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset).slice();
+        ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset).slice();
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.limit(buffer.getInt());
         buffer.rewind();
@@ -241,13 +241,13 @@ public class LazyBSONObject implements BSONObject {
     }
 
     public int pipe(final OutputStream os) throws IOException {
-        final WritableByteChannel channel = Channels.newChannel(os);
+        WritableByteChannel channel = Channels.newChannel(os);
         return channel.write(getBufferForInternalBytes());
     }
 
     public Set<Map.Entry<String, Object>> entrySet() {
-        final Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
-        final BSONBinaryReader reader = getBSONReader();
+        Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
+        BSONBinaryReader reader = getBSONReader();
         try {
             reader.readStartDocument();
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
@@ -273,7 +273,7 @@ public class LazyBSONObject implements BSONObject {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final LazyBSONObject other = (LazyBSONObject) o;
+        LazyBSONObject other = (LazyBSONObject) o;
 
         if (this.bytes == other.bytes && this.offset == other.offset) {
             return true;
@@ -287,7 +287,7 @@ public class LazyBSONObject implements BSONObject {
         }
 
         //comparing document length
-        final int length = this.bytes[this.offset];
+        int length = this.bytes[this.offset];
         if (other.bytes[other.offset] != length) {
             return false;
         }
@@ -338,8 +338,8 @@ public class LazyBSONObject implements BSONObject {
     @Override
     @SuppressWarnings("rawtypes")
     public Map toMap() {
-        final Map<String, Object> map = new LinkedHashMap<String, Object>();
-        for (Map.Entry<String, Object> entry : entrySet()) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        for (final Map.Entry<String, Object> entry : entrySet()) {
             map.put(entry.getKey(), entry.getValue());
         }
         return Collections.unmodifiableMap(map);

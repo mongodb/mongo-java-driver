@@ -119,8 +119,10 @@ public class Mongo {
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
     @Deprecated
-    public Mongo(final String host, @SuppressWarnings("deprecation") final MongoOptions options)
-    throws UnknownHostException {
+    public Mongo(final String host,
+                 @SuppressWarnings("deprecation")
+                 final MongoOptions options)
+        throws UnknownHostException {
         this(new ServerAddress(host), options.toClientOptions());
     }
 
@@ -161,13 +163,14 @@ public class Mongo {
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
      */
     @Deprecated
-    public Mongo(final ServerAddress address, @SuppressWarnings("deprecation") final MongoOptions options) {
+    public Mongo(final ServerAddress address,
+                 @SuppressWarnings("deprecation")
+                 final MongoOptions options) {
         this(address, options.toClientOptions());
     }
 
     /**
-     * <p>Creates a Mongo in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
+     * <p>Creates a Mongo in paired mode. <br/> This will also work for a replica set and will find all members (the master will be used by
      * default).</p>
      *
      * @param left  left side of the pair
@@ -182,35 +185,33 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
-     * default).</p>
+     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for a replica set and will find all members (the master will
+     * be used by default).</p>
      *
      * @param left    left side of the pair
      * @param right   right side of the pair
-     * @param options
+     * @param options the settings for the Mongo client
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
     @Deprecated
     public Mongo(final ServerAddress left, final ServerAddress right,
-                 @SuppressWarnings("deprecation") final MongoOptions options) {
+                 @SuppressWarnings("deprecation")
+                 final MongoOptions options) {
         this(Arrays.asList(left, right), options.toClientOptions());
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
+     * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
+     * standalone server, use the Mongo(ServerAddress) constructor.
      * <p/>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically fail
+     * over to the next server if the closest is down.
      *
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
@@ -221,42 +222,36 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
+     * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
+     * standalone server, use the Mongo(ServerAddress) constructor.
      * <p/>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically fail
+     * over to the next server if the closest is down.
      *
-     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *                either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *                sharded cluster.
+     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
+     *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options for configuring this Mongo instance
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
     @Deprecated
-    public Mongo(final List<ServerAddress> seeds, @SuppressWarnings("deprecation") final MongoOptions options) {
+    public Mongo(final List<ServerAddress> seeds,
+                 @SuppressWarnings("deprecation")
+                 final MongoOptions options) {
         this(seeds, options.toClientOptions());
     }
 
     /**
-     * Creates a Mongo described by a URI.
-     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
-     * If the URI contains database credentials, the database will be authenticated lazily on first use
-     * with those credentials.
+     * Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it will discover all
+     * nodes. If the URI contains database credentials, the database will be authenticated lazily on first use with those credentials.
      *
-     * @param uri
+     * @param uri URI to connect to, optionally containing additional information like credentials
      * @throws MongoException
      * @throws UnknownHostException
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
-     * @see MongoURI
-     *      <p>examples:
-     *      <li>mongodb://localhost</li>
-     *      <li>mongodb://fred:foobar@localhost/</li>
-     *      </p>
+     * @see MongoURI <p>examples: <li>mongodb://localhost</li> <li>mongodb://fred:foobar@localhost/</li> </p>
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated
@@ -273,15 +268,11 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(serverAddress, credentialsList, options),
-             options,
-             credentialsList);
+        this(createCluster(serverAddress, credentialsList, options), options, credentialsList);
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(seedList, credentialsList, options),
-             options,
-             credentialsList);
+        this(createCluster(seedList, credentialsList, options), options, credentialsList);
     }
 
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -302,15 +293,14 @@ public class Mongo {
     }
 
     /**
-     * Sets the write concern for this database. Will be used as default for writes to any collection in any database.
-     * See the documentation for {@link WriteConcern} for more information.
+     * Sets the write concern for this database. Will be used as default for writes to any collection in any database. See the documentation
+     * for {@link WriteConcern} for more information.
      *
      * @param writeConcern write concern to use
      */
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
-
 
     /**
      * Gets the default write concern
@@ -322,8 +312,8 @@ public class Mongo {
     }
 
     /**
-     * Sets the read preference for this database. Will be used as default for reads from any collection in any
-     * database. See the documentation for {@link ReadPreference} for more information.
+     * Sets the read preference for this database. Will be used as default for reads from any collection in any database. See the
+     * documentation for {@link ReadPreference} for more information.
      *
      * @param readPreference Read Preference to use
      */
@@ -361,14 +351,13 @@ public class Mongo {
     }
 
     /**
-     * Gets the list of server addresses currently seen by this client. This includes addresses auto-discovered from a
-     * replica set.
+     * Gets the list of server addresses currently seen by this client. This includes addresses auto-discovered from a replica set.
      *
      * @return list of server addresses
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
-        final List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
+        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
         for (final ServerDescription cur : getClusterDescription().getAll()) {
             serverAddresses.add(new ServerAddress(cur.getAddress()));
         }
@@ -390,7 +379,7 @@ public class Mongo {
      * @return the address
      */
     public ServerAddress getAddress() {
-        final ClusterDescription description = getClusterDescription();
+        ClusterDescription description = getClusterDescription();
         if (description.getPrimaries().isEmpty()) {
             return null;
         }
@@ -400,12 +389,11 @@ public class Mongo {
     /**
      * Returns the mongo options.
      * <p/>
-     * Please be aware that since 3.0 changes to {@code MongoOptions}
-     * that are done after connection are not reflected.
+     * Please be aware that since 3.0 changes to {@code MongoOptions} that are done after connection are not reflected.
      *
      * @return the mongo options
-     * @deprecated Please use {@link MongoClient} class to connect
-     *             to server and corresponging {@link com.mongodb.MongoClient#getMongoClientOptions()}
+     * @deprecated Please use {@link MongoClient} class to connect to server and corresponging {@link
+     *             com.mongodb.MongoClient#getMongoClientOptions()}
      */
     @Deprecated
     public MongoOptions getMongoOptions() {
@@ -431,13 +419,13 @@ public class Mongo {
      */
     public List<String> getDatabaseNames() {
         //TODO: how do I make sure the exception is wrapped correctly?
-        final org.mongodb.CommandResult listDatabasesResult;
+        org.mongodb.CommandResult listDatabasesResult;
         listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
 
         @SuppressWarnings("unchecked")
-        final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
+        List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
 
-        final List<String> databaseNames = new ArrayList<String>();
+        List<String> databaseNames = new ArrayList<String>();
         for (final Document d : databases) {
             databaseNames.add(d.get("name", String.class));
         }
@@ -457,7 +445,7 @@ public class Mongo {
         }
 
         db = new DB(this, dbName, documentCodec);
-        final DB temp = dbCache.putIfAbsent(dbName, db);
+        DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;
         }
@@ -465,8 +453,8 @@ public class Mongo {
     }
 
     /**
-     * Returns the list of databases used by the driver since this Mongo instance was created.
-     * This may include DBs that exist in the client but not yet on the server.
+     * Returns the list of databases used by the driver since this Mongo instance was created. This may include DBs that exist in the client
+     * but not yet on the server.
      *
      * @return a collection of database objects
      */
@@ -486,8 +474,8 @@ public class Mongo {
     }
 
     /**
-     * Closes all resources associated with this instance, in particular any open network connections. Once called, this
-     * instance and any databases obtained from it can no longer be used.
+     * Closes all resources associated with this instance, in particular any open network connections. Once called, this instance and any
+     * databases obtained from it can no longer be used.
      */
     public void close() {
         cluster.close();
@@ -535,15 +523,15 @@ public class Mongo {
     }
 
     /**
-     * Forces the master server to fsync the RAM data to disk
-     * This is done automatically by the server at intervals, but can be forced for better reliability.
+     * Forces the master server to fsync the RAM data to disk This is done automatically by the server at intervals, but can be forced for
+     * better reliability.
      *
      * @param async if true, the fsync will be done asynchronously on the server.
      * @return result of the command execution
      * @throws MongoException
      */
-    public CommandResult fsync(boolean async) {
-        final DBObject command = new BasicDBObject("fsync", 1);
+    public CommandResult fsync(final boolean async) {
+        DBObject command = new BasicDBObject("fsync", 1);
         if (async) {
             command.put("async", 1);
         }
@@ -551,22 +539,21 @@ public class Mongo {
     }
 
     /**
-     * Forces the master server to fsync the RAM data to disk, then lock all writes.
-     * The database will be read-only after this command returns.
+     * Forces the master server to fsync the RAM data to disk, then lock all writes. The database will be read-only after this command
+     * returns.
      *
      * @return result of the command execution
      * @throws MongoException
      */
     public CommandResult fsyncAndLock() {
-        final DBObject command = new BasicDBObject("fsync", 1);
+        DBObject command = new BasicDBObject("fsync", 1);
         command.put("lock", 1);
         return getDB(ADMIN_DATABASE_NAME).command(command);
     }
 
-
     /**
-     * Unlocks the database, allowing the write operations to go through.
-     * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
+     * Unlocks the database, allowing the write operations to go through. This command may be asynchronous on the server, which means there
+     * may be a small delay before the database becomes writable.
      *
      * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
      * @throws MongoException
@@ -582,28 +569,28 @@ public class Mongo {
      * @throws MongoException
      */
     public boolean isLocked() {
-        final DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");
-        final BasicDBObject result = (BasicDBObject) inprogCollection.findOne();
+        DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");
+        BasicDBObject result = (BasicDBObject) inprogCollection.findOne();
         return result.containsField("fsyncLock") && result.getInt("fsyncLock") == 1;
     }
 
     @Override
     public String toString() {
-        return "Mongo{" +
-               "VERSION='" + VERSION + '\'' +
-               ", options=" + getOptions() +
-               '}';
+        return "Mongo{"
+               + "VERSION='" + VERSION + '\''
+               + ", options=" + getOptions()
+               + '}';
     }
 
     /**
-     * Gets the maximum size for a BSON object supported by the current master server.
-     * Note that this value may change over time depending on which server is master.
+     * Gets the maximum size for a BSON object supported by the current master server. Note that this value may change over time depending
+     * on which server is master.
      *
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
-        final List<ServerDescription> primaries = getClusterDescription().getPrimaries();
+        List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
     }
 
@@ -613,7 +600,7 @@ public class Mongo {
      * @return server address in a host:port form
      */
     public String getConnectPoint() {
-        final ServerAddress master = getAddress();
+        ServerAddress master = getAddress();
         return master != null ? String.format("%s:%d", master.getHost(), master.getPort()) : null;
     }
 
@@ -627,7 +614,7 @@ public class Mongo {
         if (credentialsList == null) {
             return Collections.emptyList();
         }
-        final List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
+        List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
         for (final MongoCredential cur : credentialsList) {
             retVal.add(cur.toNew());
         }
@@ -636,16 +623,16 @@ public class Mongo {
 
     private static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
 
-        final List<MongoCredential> credentialList = mongoURI.getCredentials() != null
-                                                     ? Arrays.asList(mongoURI.getCredentials())
-                                                     : null;
+        List<MongoCredential> credentialList = mongoURI.getCredentials() != null
+                                               ? Arrays.asList(mongoURI.getCredentials())
+                                               : null;
 
         if (mongoURI.getHosts().size() == 1) {
             return createCluster(new ServerAddress(mongoURI.getHosts().get(0)),
-                                credentialList,
-                                mongoURI.getOptions());
+                                 credentialList,
+                                 mongoURI.getOptions());
         } else {
-            final List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
+            List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
             for (final String host : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(host));
             }
@@ -656,39 +643,40 @@ public class Mongo {
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return createCluster(
-                ClusterSettings.builder().hosts(createNewSeedList(seedList))
-                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                        .build(),
-                credentialsList, options);
+                                ClusterSettings.builder().hosts(createNewSeedList(seedList))
+                                               .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                               .build(),
+                                credentialsList, options);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
         return createCluster(
-                ClusterSettings.builder()
-                        .mode(getSingleServerClusterMode(options.toNew()))
-                        .hosts(Arrays.asList(serverAddress.toNew()))
-                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                        .build(),
-                credentialsList, options);
+                                ClusterSettings.builder()
+                                               .mode(getSingleServerClusterMode(options.toNew()))
+                                               .hosts(Arrays.asList(serverAddress.toNew()))
+                                               .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                               .build(),
+                                credentialsList, options);
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
         return new DefaultClusterFactory().create(
-                settings,
-                options.getServerSettings(),
-                options.getConnectionPoolSettings(),
-                new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
-                new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSocketFactory()),
-                Executors.newScheduledThreadPool(3),  // TODO: allow configuration
-                createNewCredentialList(credentialsList),
-                new PowerOfTwoBufferPool(),
-                null, new JMXConnectionPoolListener(), null);
+                                                     settings,
+                                                     options.getServerSettings(),
+                                                     options.getConnectionPoolSettings(),
+                                                     new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
+                                                     new SocketStreamFactory(options.getHeartbeatSocketSettings(),
+                                                                             options.getSocketFactory()),
+                                                     Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                                                     createNewCredentialList(credentialsList),
+                                                     new PowerOfTwoBufferPool(),
+                                                     null, new JMXConnectionPoolListener(), null);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        final List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
+        List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
         for (final ServerAddress cur : seedList) {
             retVal.add(cur.toNew());
         }
@@ -726,8 +714,7 @@ public class Mongo {
         SessionHolder currentlyBound = pinnedSession.get();
         if (currentlyBound == null) {
             pinnedSession.set(new SessionHolder(new PinnedSession(cluster)));
-        }
-        else {
+        } else {
             currentlyBound.nestedBindings++;
         }
     }
@@ -737,8 +724,7 @@ public class Mongo {
         if (currentlyBound != null) {
             if (currentlyBound.nestedBindings > 0) {
                 currentlyBound.nestedBindings--;
-            }
-            else {
+            } else {
                 pinnedSession.remove();
                 currentlyBound.session.close();
             }
@@ -766,9 +752,11 @@ public class Mongo {
         try {
             while ((cur = orphanedCursors.poll()) != null) {
                 ServerConnectionProvider provider = session.createServerConnectionProvider(
-                        new ServerConnectionProviderOptions(false, new ServerAddressSelector(cur.getAddress())));
+                                                                                              new ServerConnectionProviderOptions(false,
+                                                                                                                                  new
+                                                                                                                                      ServerAddressSelector(cur.getAddress())));
                 new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
-                        true).execute();
+                                       true).execute();
 
             }
         } finally {
@@ -779,15 +767,14 @@ public class Mongo {
     private static ClusterConnectionMode getSingleServerClusterMode(final org.mongodb.MongoClientOptions options) {
         if (options.getRequiredReplicaSetName() == null) {
             return ClusterConnectionMode.Single;
-        }
-        else {
+        } else {
             return ClusterConnectionMode.Multiple;
         }
     }
 
     /**
-     * Mongo.Holder can be used as a static place to hold several instances of Mongo.
-     * Security is not enforced at this level, and needs to be done on the application side.
+     * Mongo.Holder can be used as a static place to hold several instances of Mongo. Security is not enforced at this level, and needs to
+     * be done on the application side.
      */
     public static class Holder {
 
@@ -799,8 +786,8 @@ public class Mongo {
         }
 
         /**
-         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
-         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists. Otherwise creates a
+         * new Mongo instance based on this URI and adds it to the holder.
          *
          * @param uri the Mongo URI
          * @return the client
@@ -814,8 +801,8 @@ public class Mongo {
         }
 
         /**
-         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists.
-         * Otherwise creates a new Mongo instance based on this URI and adds it to the holder.
+         * Attempts to find an existing MongoClient instance matching that URI in the holder, and returns it if exists. Otherwise creates a
+         * new Mongo instance based on this URI and adds it to the holder.
          *
          * @param uri the Mongo URI
          * @return the client
@@ -824,17 +811,16 @@ public class Mongo {
          */
         public Mongo connect(final MongoClientURI uri) throws UnknownHostException {
 
-            final String key = toKey(uri);
+            String key = toKey(uri);
 
             Mongo client = clients.get(key);
 
             if (client == null) {
-                final Mongo newbie = new MongoClient(uri);
+                Mongo newbie = new MongoClient(uri);
                 client = clients.putIfAbsent(key, newbie);
                 if (client == null) {
                     client = newbie;
-                }
-                else {
+                } else {
                     newbie.close();
                 }
             }

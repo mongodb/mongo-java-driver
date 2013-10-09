@@ -49,10 +49,10 @@ public class AggregationOptions {
 
     public org.mongodb.AggregationOptions toNew() {
         return org.mongodb.AggregationOptions.builder()
-            .batchSize(getBatchSize())
-            .allowDiskUsage(getAllowDiskUsage())
-            .outputMode(getOutputMode().toNew())
-            .build();
+                          .batchSize(getBatchSize())
+                          .allowDiskUsage(getAllowDiskUsage())
+                          .outputMode(getOutputMode().toNew())
+                          .build();
     }
 
     public static Builder builder() {

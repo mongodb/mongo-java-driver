@@ -86,7 +86,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], getBufferProvider(), listener)
         def buffer = new PooledByteBufferOutputBuffer(bufferProvider)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
-                new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build()); message.encode(buffer);
+                                         new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build());
+        message.encode(buffer);
 
         when:
         connection.sendMessage(buffer.getByteBuffers(), message.getId())

@@ -21,10 +21,9 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * utility for building complex objects example: BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17
- * ).get()
+ * utility for building complex objects example: BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
  */
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings("rawtypes")
 public class BasicDBObjectBuilder {
 
     /**
@@ -62,20 +61,20 @@ public class BasicDBObjectBuilder {
      */
     @SuppressWarnings("unchecked")
     public static BasicDBObjectBuilder start(final Map m) {
-        final BasicDBObjectBuilder b = new BasicDBObjectBuilder();
-        final Iterator<Map.Entry> i = m.entrySet().iterator();
+        BasicDBObjectBuilder b = new BasicDBObjectBuilder();
+        Iterator<Map.Entry> i = m.entrySet().iterator();
         while (i.hasNext()) {
-            final Map.Entry entry = i.next();
+            Map.Entry entry = i.next();
             b.add(entry.getKey().toString(), entry.getValue());
         }
         return b;
     }
 
     /**
-     * appends the key/value to the active object
+     * Appends the key/value to the active object
      *
-     * @param key
-     * @param val
+     * @param key the field name
+     * @param val the value of the field
      * @return returns itself so you can chain
      */
     public BasicDBObjectBuilder append(final String key, final Object val) {
@@ -85,10 +84,10 @@ public class BasicDBObjectBuilder {
 
 
     /**
-     * same as appends
+     * Same as append
      *
-     * @param key
-     * @param val
+     * @param key the field name
+     * @param val the value of the field
      * @return returns itself so you can chain
      * @see #append(String, Object)
      */
@@ -97,14 +96,13 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * creates an new empty object and inserts it into the current object with the given key. The new child object
-     * becomes the active one.
+     * Creates an new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
      *
-     * @param key
+     * @param key the field name
      * @return returns itself so you can chain
      */
     public BasicDBObjectBuilder push(final String key) {
-        final BasicDBObject o = new BasicDBObject();
+        BasicDBObject o = new BasicDBObject();
         _cur().put(key, o);
         _stack.addLast(o);
         return this;

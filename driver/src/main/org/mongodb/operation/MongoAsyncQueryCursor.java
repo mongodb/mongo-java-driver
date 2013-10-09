@@ -41,7 +41,7 @@ import org.mongodb.session.Session;
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final MongoNamespace namespace;
     private final Find find;
-    private Encoder<Document> queryEncoder;
+    private final Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
     private final BufferProvider bufferProvider;
     private final Session session;
@@ -67,42 +67,42 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     @Override
     public void start(final AsyncBlock<? super T> aBlock) {
         this.block = aBlock;
-        session.createServerConnectionProviderAsync(new ServerConnectionProviderOptions(true,
-                new ReadPreferenceServerSelector(find.getReadPreference()))).register(new SingleResultCallback<ServerConnectionProvider>() {
-            @Override
-            public void onResult(final ServerConnectionProvider provider, final MongoException e) {
-                if (e != null) {
-                    close(0);
-                }
-                else {
-                    serverConnectionProvider = provider;
-                    provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                        @Override
-                        public void onResult(final Connection connection, final MongoException e) {
-                            if (e != null) {
-                                close(0);
-                            }
-                            else {
-                                if (isExhaust()) {
-                                    exhaustConnection = connection;
-                                }
-                                new QueryProtocol<T>(namespace, find, queryEncoder, decoder, bufferProvider,
-                                        provider.getServerDescription(), connection, !isExhaust()).executeAsync()
-                                        .register(new QueryResultSingleResultCallback());
-                            }
-                        }
-                    });
-                }
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
+        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(true, serverSelector);
+        session.createServerConnectionProviderAsync(options)
+               .register(new SingleResultCallback<ServerConnectionProvider>() {
+                   @Override
+                   public void onResult(final ServerConnectionProvider provider, final MongoException e) {
+                       if (e != null) {
+                           close(0);
+                       } else {
+                           serverConnectionProvider = provider;
+                           provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                               @Override
+                               public void onResult(final Connection connection, final MongoException e) {
+                                   if (e != null) {
+                                       close(0);
+                                   } else {
+                                       if (isExhaust()) {
+                                           exhaustConnection = connection;
+                                       }
+                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder, bufferProvider,
+                                                            provider.getServerDescription(), connection, !isExhaust())
+                                           .executeAsync()
+                                           .register(new QueryResultSingleResultCallback());
+                                   }
+                               }
+                           });
+                       }
 
-            }
-        });
+                   }
+               });
     }
 
     private void close(final int responseTo) {
         if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
             handleExhaustCleanup(responseTo);
-        }
-        else {
+        } else {
             if (closeSession) {
                 session.close();
             }
@@ -115,16 +115,17 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private void handleExhaustCleanup(final int responseTo) {
-        new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo, exhaustConnection).executeAsync()
-                .register(new SingleResultCallback<Void>() {
-                    @Override
-                    public void onResult(final Void result, final MongoException e) {
-                        if (closeSession) {
-                            session.close();
-                        }
-                        block.done();
+        new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo, exhaustConnection)
+            .executeAsync()
+            .register(new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final MongoException e) {
+                    if (closeSession) {
+                        session.close();
                     }
-                });
+                    block.done();
+                }
+            });
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
@@ -132,8 +133,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (e != null) {
                 close(0);
-            }
-            else {
+            } else {
                 cursor = result.getCursor();
             }
 
@@ -154,23 +154,27 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
             if (result.getCursor() == null || breakEarly) {
                 close(result.getRequestId());
-            }
-            else {
+            } else {
                 // get more results
                 if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
                     new GetMoreReceiveProtocol<T>(decoder, result.getRequestId(), exhaustConnection).executeAsync().register(this);
-                }
-                else {
+                } else {
                     serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                         @Override
                         public void onResult(final Connection connection, final MongoException e) {
                             if (e != null) {
                                 close(0);
-                            }
-                            else {
-                                new GetMoreProtocol<T>(namespace, new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
-                                        numFetchedSoFar), decoder, bufferProvider, serverConnectionProvider.getServerDescription(),
-                                        connection, true).executeAsync().register(QueryResultSingleResultCallback.this);
+                            } else {
+                                new GetMoreProtocol<T>(namespace,
+                                                       new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
+                                                                   numFetchedSoFar),
+                                                       decoder,
+                                                       bufferProvider,
+                                                       serverConnectionProvider.getServerDescription(),
+                                                       connection,
+                                                       true)
+                                    .executeAsync()
+                                    .register(QueryResultSingleResultCallback.this);
                             }
                         }
                     });

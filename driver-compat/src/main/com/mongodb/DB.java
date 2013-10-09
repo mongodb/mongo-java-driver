@@ -51,7 +51,6 @@ import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
-
 @ThreadSafe
 public class DB {
     private final Mongo mongo;
@@ -101,9 +100,8 @@ public class DB {
     }
 
     /**
-     * Starts a new "consistent request". Following this call and until requestDone() is called, all db operations
-     * should use the same underlying connection. This is useful to ensure that operations happen in a certain order
-     * with predictable results.
+     * Starts a new "consistent request". Following this call and until requestDone() is called, all db operations should use the same
+     * underlying connection. This is useful to ensure that operations happen in a certain order with predictable results.
      */
     public void requestStart() {
         getMongo().pinSession();
@@ -117,8 +115,7 @@ public class DB {
     }
 
     /**
-     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a
-     * replica set)
+     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
      */
     public void requestEnsureConnection() {
         // do nothing for now
@@ -135,13 +132,13 @@ public class DB {
         }
 
         collection = new DBCollection(name, this, documentCodec);
-        if (mongo.getMongoClientOptions().getDbDecoderFactory() != DefaultDBDecoder.FACTORY){
+        if (mongo.getMongoClientOptions().getDbDecoderFactory() != DefaultDBDecoder.FACTORY) {
             collection.setDBDecoderFactory(mongo.getMongoClientOptions().getDbDecoderFactory());
         }
-        if (mongo.getMongoClientOptions().getDbEncoderFactory() != DefaultDBEncoder.FACTORY){
+        if (mongo.getMongoClientOptions().getDbEncoderFactory() != DefaultDBEncoder.FACTORY) {
             collection.setDBEncoderFactory(mongo.getMongoClientOptions().getDbEncoderFactory());
         }
-        final DBCollection old = collectionCache.putIfAbsent(name, collection);
+        DBCollection old = collectionCache.putIfAbsent(name, collection);
         return old != null ? old : collection;
     }
 
@@ -175,18 +172,18 @@ public class DB {
      * @throws MongoException
      */
     public Set<String> getCollectionNames() {
-        final MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
-        final Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
+        MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
+        Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         try {
             MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec,
-                    getBufferPool(), getSession(), false).execute();
+                                                                        getBufferPool(), getSession(), false).execute();
 
-            final HashSet<String> collections = new HashSet<String>();
-            final int lengthOfDatabaseName = getName().length();
+            HashSet<String> collections = new HashSet<String>();
+            int lengthOfDatabaseName = getName().length();
             while (cursor.hasNext()) {
-                final String collectionName = cursor.next().getString("name");
+                String collectionName = cursor.next().getString("name");
                 if (!collectionName.contains("$")) {
-                    final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                    String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
                     collections.add(collectionNameWithoutDatabasePrefix);
                 }
             }
@@ -197,7 +194,7 @@ public class DB {
     }
 
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        final CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
+        CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
         executeCommand(new Create(createCollectionOptions));
         return getCollection(collectionName);
     }
@@ -236,8 +233,8 @@ public class DB {
     }
 
     /**
-     * Executes a database command. This method constructs a simple DBObject using cmd as the field name and {@code
-     * true} as its valu, and calls {@link DB#command(com.mongodb.DBObject) }
+     * Executes a database command. This method constructs a simple DBObject using cmd as the field name and {@code true} as its value, and
+     * calls {@link DB#command(com.mongodb.DBObject) }
      *
      * @param cmd command to execute
      * @return result of command from the database
@@ -279,9 +276,9 @@ public class DB {
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
-        final Command mongoCommand = new Command(toDocument(cmd))
-                .readPreference(readPrefs.toNew())
-                .addFlags(QueryFlag.toSet(options));
+        Command mongoCommand = new Command(toDocument(cmd))
+                                   .readPreference(readPrefs.toNew())
+                                   .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
@@ -295,10 +292,10 @@ public class DB {
 
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
                                  final DBEncoder encoder) {
-        final Document document = toDocument(cmd, encoder, commandCodec);
-        final Command mongoCommand = new Command(document)
-                .readPreference(readPrefs.toNew())
-                .addFlags(QueryFlag.toSet(options));
+        Document document = toDocument(cmd, encoder, commandCodec);
+        Command mongoCommand = new Command(document)
+                                   .readPreference(readPrefs.toNew())
+                                   .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
@@ -313,7 +310,7 @@ public class DB {
     }
 
     public boolean collectionExists(final String collectionName) {
-        final Set<String> collectionNames = getCollectionNames();
+        Set<String> collectionNames = getCollectionNames();
         for (final String name : collectionNames) {
             if (name.equalsIgnoreCase(collectionName)) {
                 return true;
@@ -323,8 +320,8 @@ public class DB {
     }
 
     public CommandResult getLastError(final WriteConcern concern) {
-        final GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
-        final org.mongodb.CommandResult commandResult = executeCommand(getLastErrorCommand);
+        GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
+        org.mongodb.CommandResult commandResult = executeCommand(getLastErrorCommand);
         return new CommandResult(commandResult);
     }
 
@@ -337,33 +334,33 @@ public class DB {
     }
 
     public CommandResult doEval(final String code, final Object... args) {
-        final Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
+        Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
     public Object eval(final String code, final Object... args) {
-        final CommandResult result = doEval(code, args);
+        CommandResult result = doEval(code, args);
         result.throwOnError();
         return result.get("retval");
     }
 
     public CommandResult getStats() {
-        final Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
+        Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
     public CommandResult getPreviousError() {
-        final Command mongoCommand = new Command(new Document("getPrevError", 1));
+        Command mongoCommand = new Command(new Document("getPrevError", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
     public void resetError() {
-        final Command mongoCommand = new Command(new Document("resetError", 1));
+        Command mongoCommand = new Command(new Document("resetError", 1));
         executeCommand(mongoCommand);
     }
 
     public void forceError() {
-        final Command mongoCommand = new Command(new Document("forceerror", 1));
+        Command mongoCommand = new Command(new Document("forceerror", 1));
         executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand);
     }
 
@@ -379,8 +376,7 @@ public class DB {
         org.mongodb.WriteResult writeResult;
         if (new UserExistsOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
             writeResult = new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
-        }
-        else {
+        } else {
             writeResult = new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
         }
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
@@ -413,9 +409,7 @@ public class DB {
     }
 
     public String toString() {
-        return "DB{" +
-                "name='" + name + '\'' +
-                '}';
+        return "DB{name='" + name + '\'' + '}';
     }
 
     Cluster getCluster() {

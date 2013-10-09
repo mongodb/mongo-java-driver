@@ -51,7 +51,7 @@ public class ClusterEvent {
             return false;
         }
 
-        final ClusterEvent that = (ClusterEvent) o;
+        ClusterEvent that = (ClusterEvent) o;
 
         if (!clusterId.equals(that.clusterId)) {
             return false;

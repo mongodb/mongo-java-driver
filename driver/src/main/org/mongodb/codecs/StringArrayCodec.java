@@ -20,12 +20,12 @@ import org.bson.BSONWriter;
 import org.mongodb.Encoder;
 
 public class StringArrayCodec implements Encoder<String[]> {
-    private StringCodec stringCodec = new StringCodec();
+    private final StringCodec stringCodec = new StringCodec();
 
     @Override
     public void encode(final BSONWriter bsonWriter, final String[] value) {
         bsonWriter.writeStartArray();
-        for (String string : value) {
+        for (final String string : value) {
             stringCodec.encode(bsonWriter, string);
         }
         bsonWriter.writeEndArray();

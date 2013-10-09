@@ -31,7 +31,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
     private final TimeUnit timeUnit;
 
     public LatencyMinimizingServerSelector() {
-       this(15, TimeUnit.MILLISECONDS);
+        this(15, TimeUnit.MILLISECONDS);
     }
 
     public LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
@@ -60,7 +60,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
 
     private List<ServerDescription> getServersWithAcceptableLatencyDifference(final Set<ServerDescription> servers,
                                                                               final long bestPingTime) {
-        final List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
         for (final ServerDescription cur : servers) {
             if (!cur.isOk()) {
                 continue;

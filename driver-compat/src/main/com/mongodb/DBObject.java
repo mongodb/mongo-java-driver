@@ -20,14 +20,12 @@ import org.bson.BSONObject;
 
 public interface DBObject extends BSONObject {
     /**
-     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it
-     * as such.
+     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it as such.
      */
     void markAsPartialObject();
 
     /**
-     * Whether markAsPartialObject was ever called only matters if you are going to upsert and do not want to risk
-     * losing fields
+     * Whether markAsPartialObject was ever called only matters if you are going to upsert and do not want to risk losing fields
      */
     boolean isPartialObject();
 }

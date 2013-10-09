@@ -215,27 +215,25 @@ public class JSONSerializersTest {
         ClassMapBasedObjectSerializer serializer = new ClassMapBasedObjectSerializer();
 
         // by superclass
-        serializer.addObjectSerializer(
-                Object.class,
-                new AbstractObjectSerializer() {
+        serializer.addObjectSerializer(Object.class,
+                                       new AbstractObjectSerializer() {
 
-                    @Override
-                    public void serialize(Object obj, StringBuilder buf) {
-                        buf.append("serialized as Object class");
-                    }
-                }
-        );
+                                           @Override
+                                           public void serialize(final Object obj, final StringBuilder buf) {
+                                               buf.append("serialized as Object class");
+                                           }
+                                       });
 
         // interface
         serializer.addObjectSerializer(java.util.List.class,
-                new AbstractObjectSerializer() {
+                                       new AbstractObjectSerializer() {
 
-                    @Override
-                    public void serialize(Object obj, StringBuilder buf) {
-                        buf.append(obj.toString());
-                    }
+                                           @Override
+                                           public void serialize(final Object obj, final StringBuilder buf) {
+                                               buf.append(obj.toString());
+                                           }
 
-                });
+                                       });
 
         ArrayList<String> list = new ArrayList<String>();
         list.add("val1");

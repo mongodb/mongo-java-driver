@@ -33,7 +33,8 @@ public final class DBObjectFactory {
         this(Collections.<List<String>, Class<? extends DBObject>>emptyMap(), null);
     }
 
-    private DBObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap, final ReflectionDBObject.JavaWrapper wrapper) {
+    private DBObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap,
+                            final ReflectionDBObject.JavaWrapper wrapper) {
         this.pathToClassMap = pathToClassMap;
         this.wrapper = wrapper;
     }
@@ -43,7 +44,7 @@ public final class DBObjectFactory {
     }
 
     public DBObject getInstance(final List<String> path) {
-        final Class<? extends DBObject> aClass = getClassForPath(path);
+        Class<? extends DBObject> aClass = getClassForPath(path);
         try {
             return aClass.newInstance();
         } catch (InstantiationException e) {
@@ -54,22 +55,18 @@ public final class DBObjectFactory {
     }
 
     public DBObjectFactory update(final Class<? extends DBObject> aClass) {
-        return new DBObjectFactory(
-                updatePathToClassMap(aClass, Collections.<String>emptyList()),
-                isReflectionDBObject(aClass) ? ReflectionDBObject.getWrapper(aClass) : wrapper
-        );
+        return new DBObjectFactory(updatePathToClassMap(aClass, Collections.<String>emptyList()),
+                                   isReflectionDBObject(aClass) ? ReflectionDBObject.getWrapper(aClass) : wrapper);
     }
 
     public DBObjectFactory update(final Class<? extends DBObject> aClass, final List<String> path) {
-        return new DBObjectFactory(
-                updatePathToClassMap(aClass, path),
-                wrapper
-        );
+        return new DBObjectFactory(updatePathToClassMap(aClass, path), wrapper);
     }
 
-    private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(Class<? extends DBObject> aClass, List<String> path) {
-        final Map<List<String>, Class<? extends DBObject>> map
-                = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
+    private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(final Class<? extends DBObject> aClass,
+                                                                              final List<String> path) {
+        Map<List<String>, Class<? extends DBObject>> map
+            = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
         map.put(path, aClass);
         return map;
     }
@@ -78,14 +75,12 @@ public final class DBObjectFactory {
         if (pathToClassMap.containsKey(path)) {
             return pathToClassMap.get(path);
         } else {
-            final Class<? extends DBObject> aClass = (wrapper != null)
-                    ? wrapper.getInternalClass(path)
-                    : null;
+            Class<? extends DBObject> aClass = (wrapper != null) ? wrapper.getInternalClass(path) : null;
             return aClass != null ? aClass : BasicDBObject.class;
         }
     }
 
-    private boolean isReflectionDBObject(Class<? extends DBObject> aClass) {
+    private boolean isReflectionDBObject(final Class<? extends DBObject> aClass) {
         return ReflectionDBObject.class.isAssignableFrom(aClass);
     }
 

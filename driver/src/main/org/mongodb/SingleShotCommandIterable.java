@@ -21,7 +21,7 @@ import org.mongodb.operation.SingleResultFuture;
 import java.util.Collection;
 
 class SingleShotCommandIterable<T> implements MongoIterable<T> {
-    private CommandResult commandResult;
+    private final CommandResult commandResult;
 
     public SingleShotCommandIterable(final CommandResult commandResult) {
         this.commandResult = commandResult;
@@ -34,7 +34,7 @@ class SingleShotCommandIterable<T> implements MongoIterable<T> {
 
     @Override
     public void forEach(final Block<? super T> block) {
-        for (T document : getResults()) {
+        for (final T document : getResults()) {
             if (!block.run(document)) {
                 break;
             }
@@ -60,7 +60,7 @@ class SingleShotCommandIterable<T> implements MongoIterable<T> {
 
     @Override
     public void asyncForEach(final AsyncBlock<? super T> block) {
-        for (T document : getResults()) {
+        for (final T document : getResults()) {
             if (!block.run(document)) {
                 break;
             }

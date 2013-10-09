@@ -43,7 +43,7 @@ public class DropIndexOperation extends BaseOperation<CommandResult> {
 
     @Override
     public CommandResult execute() {
-        final ServerConnectionProvider provider = getServerConnectionProvider();
+        ServerConnectionProvider provider = getServerConnectionProvider();
         try {
             return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, getBufferProvider(),
                                        provider.getServerDescription(), provider.getConnection(), true).execute();

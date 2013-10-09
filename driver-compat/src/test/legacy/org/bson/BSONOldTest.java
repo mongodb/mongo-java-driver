@@ -36,7 +36,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class BSONOldTest {
 
     private void test(final BSONObject o, final int size, final String hash) throws IOException {
@@ -67,14 +67,17 @@ public class BSONOldTest {
         test(new BasicBSONObject("x", null), 8, "12d43430ff6729af501faf0638e68888");
         test(new BasicBSONObject("x", 5.2), 16, "aaeeac4a58e9c30eec6b0b0319d0dff2");
         test(new BasicBSONObject("x", "eliot"), 18, "331a3b8b7cbbe0706c80acdb45d4ebbe");
-        test(new BasicBSONObject("x", 5.2)
-                .append("y", "truth")
-                .append("z", 1.1),
-                40, "7c77b3a6e63e2f988ede92624409da58");
+        test(new BasicBSONObject("x", 5.2).append("y", "truth")
+                                          .append("z", 1.1),
+             40, "7c77b3a6e63e2f988ede92624409da58");
 
         test(new BasicBSONObject("a", new BasicBSONObject("b", 1.1)), 24, "31887a4b9d55cd9f17752d6a8a45d51f");
-        test(new BasicBSONObject("x", 5.2).append("y", new BasicBSONObject("a", "eliot").append("b", true)).append("z", null), 44, "b3de8a0739ab329e7aea138d87235205");
-        test(new BasicBSONObject("x", 5.2).append("y", new Object[]{"a", "eliot", "b", true}).append("z", null), 62, "cb7bad5697714ba0cbf51d113b6a0ee8");
+        test(new BasicBSONObject("x", 5.2).append("y", new BasicBSONObject("a", "eliot").append("b", true))
+                                          .append("z", null),
+             44, "b3de8a0739ab329e7aea138d87235205");
+        test(new BasicBSONObject("x", 5.2).append("y", new Object[]{"a", "eliot", "b", true})
+                                          .append("z", null),
+             62, "cb7bad5697714ba0cbf51d113b6a0ee8");
         test(new BasicBSONObject("x", 4), 12, "d1ed8dbf79b78fa215e2ded74548d89d");
     }
 
@@ -105,7 +108,7 @@ public class BSONOldTest {
     public void testOBBig1() {
         BasicOutputBuffer a = new BasicOutputBuffer();
         StringBuilder b = new StringBuilder();
-        for (String x : prepareData()) {
+        for (final String x : prepareData()) {
             a.write(x.getBytes());
             b.append(x);
         }
@@ -113,10 +116,10 @@ public class BSONOldTest {
     }
 
     private List<String> prepareData() {
-        final List<String> data = new ArrayList<String>();
+        List<String> data = new ArrayList<String>();
 
         for (int x = 8; x < 2048; x *= 2) {
-            final StringBuilder buf = new StringBuilder();
+            StringBuilder buf = new StringBuilder();
             while (buf.length() < x) {
                 buf.append(x);
             }
@@ -140,7 +143,7 @@ public class BSONOldTest {
 
     @Test
     public void testCustomEncoders()
-            throws IOException {
+        throws IOException {
         // If clearEncodingHooks isn't working the first test will fail.
         Transformer transformer = new TestDateTransformer();
         BSON.addEncodingHook(TestDate.class, transformer);
@@ -188,7 +191,7 @@ public class BSONOldTest {
 
     @Test
     public void testCustomDecoders()
-            throws IOException {
+        throws IOException {
         // If clearDecodingHooks isn't working this whole test will fail.
         Transformer tf = new TestDateTransformer();
         BSON.addDecodingHook(Date.class, tf);
@@ -232,14 +235,14 @@ public class BSONOldTest {
     }
 
     private class TestDate {
-        final int year;
-        final int month;
-        final int date;
-        final int hour;
-        final int minute;
-        final int second;
+        private final int year;
+        private final int month;
+        private final int date;
+        private final int hour;
+        private final int minute;
+        private final int second;
 
-        public TestDate(int year, int month, int date, int hour, int minute, int second) {
+        public TestDate(final int year, final int month, final int date, final int hour, final int minute, final int second) {
             this.year = year;
             this.month = month;
             this.date = date;
@@ -286,34 +289,17 @@ public class BSONOldTest {
 
     @Test
     public void testEquals() {
-        assertNotEquals("longs should not be equal",
-                new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L)
-                );
-
-        assertNotEquals("doubles should not be equal",
-                new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D)
-                );
-
-        assertNotEquals("floats should not be equal",
-                new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F)
-                );
-
-        assertEquals("doubles should be equal",
-                new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D)
-                );
-
-        assertEquals("floats should be equal",
-                new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F)
-                );
-
-        assertEquals("int and long should be equal",
-                new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L)
-                );
+        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L));
+        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D));
+        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
+        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
+        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
+        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L));
     }
 
     private class TestDateTransformer implements Transformer {
         @SuppressWarnings("deprecation")
-        public Object transform(Object o) {
+        public Object transform(final Object o) {
             if (o instanceof TestDate) {
                 TestDate td = (TestDate) o;
                 return new java.util.Date(td.year, td.month, td.date, td.hour, td.minute, td.second);
@@ -326,7 +312,7 @@ public class BSONOldTest {
         }
     }
 
-    private void roundTrip(BSONObject o) {
+    private void roundTrip(final BSONObject o) {
         assertEquals(o, BSON.decode(BSON.encode(o)));
     }
 

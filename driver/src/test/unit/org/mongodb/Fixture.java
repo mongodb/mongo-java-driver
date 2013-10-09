@@ -42,7 +42,7 @@ public final class Fixture {
 
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
-    private static BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+    private static final BufferProvider POWER_OF_TWO_BUFFER_POOL = new PowerOfTwoBufferPool();
     private static MongoDatabase defaultDatabase;
 
     private Fixture() {
@@ -50,7 +50,7 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            final MongoClientURI mongoURI = getMongoClientURI();
+            MongoClientURI mongoURI = getMongoClientURI();
             try {
                 mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
             } catch (UnknownHostException e) {
@@ -88,9 +88,9 @@ public final class Fixture {
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
-            final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                    ? DEFAULT_URI : mongoURIProperty;
+            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                                    ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;
@@ -105,7 +105,7 @@ public final class Fixture {
      * @return the MongoCollection for collectionName
      */
     public static MongoCollection<Document> initialiseCollection(final MongoDatabase database, final String collectionName) {
-        final MongoCollection<Document> collection = database.getCollection(collectionName);
+        MongoCollection<Document> collection = database.getCollection(collectionName);
         collection.tools().drop();
         return collection;
     }
@@ -126,7 +126,7 @@ public final class Fixture {
     }
 
     public static BufferProvider getBufferProvider() {
-        return bufferProvider;
+        return POWER_OF_TWO_BUFFER_POOL;
     }
 
     public static SSLSettings getSSLSettings() {
@@ -154,6 +154,6 @@ public final class Fixture {
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
         return mongoClient.getCluster().getDescription().getType() == ReplicaSet
-                && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
+               && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
     }
 }

@@ -33,9 +33,9 @@ public class GetIndexesOperation<T> extends BaseOperation<List<T>> {
 
     @Override
     public List<T> execute() {
-        final List<T> retVal = new ArrayList<T>();
-        final MongoCursor<T> cursor = new MongoQueryCursor<T>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
-                                                              resultDecoder, getBufferProvider(), getSession(), isCloseSession());
+        List<T> retVal = new ArrayList<T>();
+        MongoCursor<T> cursor = new MongoQueryCursor<T>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
+                                                        resultDecoder, getBufferProvider(), getSession(), isCloseSession());
         while (cursor.hasNext()) {
             retVal.add(cursor.next());
         }

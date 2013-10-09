@@ -47,11 +47,10 @@ public class GroupCommand {
     }
 
     public DBObject toDBObject() {
-        final DBObject args = new BasicDBObject("ns", input)
-                .append("key", keys)
-                .append("cond", condition)
-                .append("$reduce", reduce)
-                .append("initial", initial);
+        DBObject args = new BasicDBObject("ns", input).append("key", keys)
+                                                      .append("cond", condition)
+                                                      .append("$reduce", reduce)
+                                                      .append("initial", initial);
         if (finalize != null) {
             args.put("finalize", finalize);
         }
@@ -59,11 +58,9 @@ public class GroupCommand {
     }
 
     public Command toNew() {
-        final Group group = new Group(
-                toNullableDocument(keys),
-                reduce != null ? new Code(reduce) : null,
-                toNullableDocument(initial)
-        );
+        Group group = new Group(toNullableDocument(keys),
+                                reduce != null ? new Code(reduce) : null,
+                                toNullableDocument(initial));
 
         if (finalize != null) {
             group.finalizeFunction(new Code(finalize));

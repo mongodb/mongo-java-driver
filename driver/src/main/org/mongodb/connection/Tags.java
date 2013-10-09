@@ -142,7 +142,7 @@ public class Tags implements Map<String, String> {
             return false;
         }
 
-        final Tags tags = (Tags) o;
+        Tags tags = (Tags) o;
 
         if (!wrapped.equals(tags.wrapped)) {
             return false;

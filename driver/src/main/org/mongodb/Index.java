@@ -58,7 +58,7 @@ public final class Index implements ConvertibleToDocument {
     private final Document extra;
 
     private Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
-        final int expireAfterSeconds, final Document keys, final Document extra) {
+                  final int expireAfterSeconds, final Document keys, final Document extra) {
         this.name = name;
         this.unique = unique;
         this.dropDups = dropDups;
@@ -80,7 +80,7 @@ public final class Index implements ConvertibleToDocument {
 
     @Override
     public Document toDocument() {
-        final Document indexDetails = new Document();
+        Document indexDetails = new Document();
         indexDetails.append("name", name);
         indexDetails.append("key", keys);
         if (unique) {
@@ -277,14 +277,14 @@ public final class Index implements ConvertibleToDocument {
          * @return a string representation of this index's fields
          */
         private String generateIndexName() {
-            final StringBuilder indexName = new StringBuilder();
+            StringBuilder indexName = new StringBuilder();
             for (final String keyNames : this.keys.keySet()) {
                 if (indexName.length() != 0) {
                     indexName.append('_');
                 }
                 indexName.append(keyNames).append('_');
                 //is this ever anything other than an int?
-                final Object ascOrDescValue = this.keys.get(keyNames);
+                Object ascOrDescValue = this.keys.get(keyNames);
                 if (ascOrDescValue instanceof Number || ascOrDescValue instanceof String) {
                     indexName.append(ascOrDescValue.toString().replace(' ', '_'));
                 }

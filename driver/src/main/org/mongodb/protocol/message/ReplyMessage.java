@@ -29,6 +29,8 @@ import org.mongodb.connection.ResponseBuffers;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
+
 public class ReplyMessage<T> {
 
     private final ReplyHeader replyHeader;
@@ -37,9 +39,8 @@ public class ReplyMessage<T> {
 
     public ReplyMessage(final ReplyHeader replyHeader, final long requestId, final long elapsedNanoseconds) {
         if (requestId != replyHeader.getResponseTo()) {
-            throw new MongoInternalException(
-                    String.format("The responseTo (%d) in the response does not match the requestId (%d) in the request",
-                            replyHeader.getResponseTo(), requestId));
+            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
+                                                    + "request", replyHeader.getResponseTo(), requestId));
         }
 
         this.replyHeader = replyHeader;
@@ -55,7 +56,7 @@ public class ReplyMessage<T> {
             InputBuffer inputBuffer = new BasicInputBuffer(responseBuffers.getBodyByteBuffer());
             try {
                 while (documents.size() < replyHeader.getNumberReturned()) {
-                    final BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
+                    BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
                     try {
                         documents.add(decoder.decode(reader));
                     } finally {

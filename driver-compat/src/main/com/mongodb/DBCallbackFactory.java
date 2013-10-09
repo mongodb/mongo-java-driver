@@ -18,6 +18,6 @@ package com.mongodb;
 
 public interface DBCallbackFactory {
 
-    DBCallback create(final DBCollection collection);
+    DBCallback create(DBCollection collection);
 
 }

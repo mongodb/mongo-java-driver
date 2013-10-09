@@ -27,9 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are
- * not implemented in MongoDatabase in order to keep the API very simple, these should be the methods that are not
- * commonly used by clients of the driver.
+ * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
+ * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
     private static final Document DROP_DATABASE = new Document("dropDatabase", 1);
@@ -53,16 +52,16 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public Set<String> getCollectionNames() {
-        final MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        final MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec, commandCodec,
-                                                                          client.getBufferProvider(), client.getSession(), false).execute();
+        MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
+        MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec, commandCodec,
+                                                                    client.getBufferProvider(), client.getSession(), false).execute();
 
-        final HashSet<String> collections = new HashSet<String>();
-        final int lengthOfDatabaseName = databaseName.length();
+        HashSet<String> collections = new HashSet<String>();
+        int lengthOfDatabaseName = databaseName.length();
         while (cursor.hasNext()) {
-            final String collectionName = (String) cursor.next().get("name");
+            String collectionName = (String) cursor.next().get("name");
             if (!collectionName.contains("$")) {
-                final String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
                 collections.add(collectionNameWithoutDatabasePrefix);
             }
         }
@@ -76,9 +75,9 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        final CommandResult commandResult = new CommandOperation(databaseName, createCollectionOptions.asDocument(), null, commandCodec,
-                                                                 commandCodec, client.getCluster().getDescription(),
-                                                                 client.getBufferProvider(), client.getSession(), false).execute();
+        CommandResult commandResult = new CommandOperation(databaseName, createCollectionOptions.asDocument(), null, commandCodec,
+                                                           commandCodec, client.getCluster().getDescription(),
+                                                           client.getBufferProvider(), client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }
 
@@ -89,10 +88,10 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
-        final CommandResult commandResult = new CommandOperation("admin", renameCollectionOptions.toDocument(databaseName), null,
-                                                                 commandCodec, new DocumentCodec(PrimitiveCodecs.createDefault()),
-                                                                 client.getCluster().getDescription(), client.getBufferProvider(),
-                                                                 client.getSession(), false).execute();
+        CommandResult commandResult = new CommandOperation("admin", renameCollectionOptions.toDocument(databaseName), null,
+                                                           commandCodec, new DocumentCodec(PrimitiveCodecs.createDefault()),
+                                                           client.getCluster().getDescription(), client.getBufferProvider(),
+                                                           client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }
 

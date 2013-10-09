@@ -154,16 +154,14 @@ public abstract class ReadPreference implements ConvertibleToDocument {
     }
 
     /**
-     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
-     *         of tags.
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
      */
     public static TaggableReadPreference secondaryPreferred(final Tags tags) {
         return new TaggableReadPreference.SecondaryPreferredReadPreference(tags);
     }
 
     /**
-     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
-     *         of tags.
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
      */
     public static TaggableReadPreference secondaryPreferred(final List<Tags> tagsList) {
         return new TaggableReadPreference.SecondaryPreferredReadPreference(tagsList);
@@ -195,7 +193,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
             throw new IllegalArgumentException();
         }
 
-        final String nameToCheck = name.toLowerCase();
+        String nameToCheck = name.toLowerCase();
 
         if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
             return PRIMARY;
@@ -221,7 +219,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
             throw new IllegalArgumentException("Name cannot be null");
         }
 
-        final String nameToCheck = name.toLowerCase();
+        String nameToCheck = name.toLowerCase();
 
         if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
             return new TaggableReadPreference.SecondaryReadPreference(tagsList);

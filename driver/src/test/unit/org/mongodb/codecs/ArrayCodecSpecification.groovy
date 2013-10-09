@@ -25,7 +25,7 @@ class ArrayCodecSpecification extends Specification {
     private final BSONWriter bsonWriter = Mock();
 
     @Subject
-    private final ArrayCodec arrayCodec  = new ArrayCodec(null);
+    private final ArrayCodec arrayCodec = new ArrayCodec(null);
 
     def 'should encode array of ints'() {
         given:
@@ -153,7 +153,7 @@ class ArrayCodecSpecification extends Specification {
         byte[] byteArray = [1, 2];
 
         when:
-        arrayCodec.encode(bsonWriter, (Object)byteArray);
+        arrayCodec.encode(bsonWriter, (Object) byteArray);
 
         then:
         1 * bsonWriter.writeBinaryData(new Binary(byteArray));

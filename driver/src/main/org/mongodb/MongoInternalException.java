@@ -25,8 +25,9 @@ public class MongoInternalException extends MongoException {
 
     /**
      * Construct a new instance with the given message and chained exception
+     *
      * @param msg the message
-     * @param t  the chained exception
+     * @param t   the chained exception
      */
     public MongoInternalException(final String msg, final Throwable t) {
         super(msg, t);
@@ -34,6 +35,7 @@ public class MongoInternalException extends MongoException {
 
     /**
      * Construct a new instance with the given message
+     *
      * @param msg the message
      */
     public MongoInternalException(final String msg) {

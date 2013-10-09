@@ -22,10 +22,10 @@ import java.util.List;
 
 /**
  * An interface for selecting a server from a cluster according some preference.
- *
- * Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal,
- * as users of this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that
- * can satisfy the preference.
+ * <p/>
+ * Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal, as users of
+ * this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that can satisfy
+ * the preference.
  *
  * @since 3.0.0
  */

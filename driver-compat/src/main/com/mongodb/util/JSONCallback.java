@@ -54,7 +54,7 @@ public class JSONCallback extends BasicBSONCallback {
         return new BasicDBList();
     }
 
-    public void objectStart(boolean array, String name) {
+    public void objectStart(final boolean array, final String name) {
         _lastArray = array;
         super.objectStart(array, name);
     }
@@ -87,7 +87,7 @@ public class JSONCallback extends BasicBSONCallback {
             }
         } else if (b.containsField("$regex")) {
             o = Pattern.compile((String) b.get("$regex"),
-                    BSON.regexFlags((String) b.get("$options")));
+                                BSON.regexFlags((String) b.get("$options")));
         } else if (b.containsField("$ts")) { //Legacy timestamp format
             Integer ts = ((Number) b.get("$ts")).intValue();
             Integer inc = ((Number) b.get("$inc")).intValue();

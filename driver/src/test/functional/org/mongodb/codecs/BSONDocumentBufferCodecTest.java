@@ -34,19 +34,19 @@ import static org.junit.Assert.assertNull;
 public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     private final BSONDocumentBufferCodec codec =
-            new BSONDocumentBufferCodec(new PowerOfTwoBufferPool(24), PrimitiveCodecs.createDefault());
+        new BSONDocumentBufferCodec(new PowerOfTwoBufferPool(24), PrimitiveCodecs.createDefault());
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {
-        final List<Document> originalDocuments = new ArrayList<Document>();
+        List<Document> originalDocuments = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
             originalDocuments.add(new Document("_id", i).append("b", 2));
         }
 
         collection.insert(originalDocuments);
 
-        final MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(getCollectionName(), codec);
-        final List<BSONDocumentBuffer> docs = lazyCollection.find().into(new ArrayList<BSONDocumentBuffer>());
+        MongoCollection<BSONDocumentBuffer> lazyCollection = database.getCollection(getCollectionName(), codec);
+        List<BSONDocumentBuffer> docs = lazyCollection.find().into(new ArrayList<BSONDocumentBuffer>());
         lazyCollection.tools().drop();
         lazyCollection.insert(docs);
 
@@ -55,9 +55,9 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     @Test
     public void getIdShouldReturnNullForDocumentWithNoId() {
-        final Document doc = new Document("a", 1).append("b", new Document("c", 1));
-        final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
-        final BSONDocumentBuffer documentBuffer;
+        Document doc = new Document("a", 1).append("b", new Document("c", 1));
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONDocumentBuffer documentBuffer;
         try {
             new DocumentCodec(PrimitiveCodecs.createDefault()).encode(writer, doc);
             documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
@@ -70,10 +70,10 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     @Test
     public void getIdShouldReturnId() {
-        final Integer id = 42;
-        final Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
-        final BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
-        final BSONDocumentBuffer documentBuffer;
+        Integer id = 42;
+        Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONDocumentBuffer documentBuffer;
         try {
             new DocumentCodec(PrimitiveCodecs.createDefault()).encode(writer, doc);
             documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());

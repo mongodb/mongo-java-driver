@@ -35,12 +35,12 @@ public final class CodecTestUtil {
 
     static BSONBinaryReader prepareReaderWithObjectToBeDecoded(final Object objectToDecode, final Codecs codecs) {
         //Need to encode it wrapped in a document to conform to the validation
-        final Document document = new Document("wrapperDocument", objectToDecode);
+        Document document = new Document("wrapperDocument", objectToDecode);
 
-        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        final BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
-        final byte[] documentAsByteArrayForReader;
+        BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        byte[] documentAsByteArrayForReader;
         try {
             codecs.encode(writer, document);
             documentAsByteArrayForReader = outputBuffer.toByteArray();
@@ -48,8 +48,8 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(
-                new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
+        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))),
+                                                       false);
 
         //have to read off the wrapper document so the reader is in the correct position for the test
         reader.readStartDocument();
@@ -58,10 +58,10 @@ public final class CodecTestUtil {
     }
 
     static <T> BSONBinaryReader prepareReaderWithObjectToBeDecoded(final T objectToDecode, final Codec<T> codec) {
-        final BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        final BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
-        final byte[] documentAsByteArrayForReader;
+        BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        byte[] documentAsByteArrayForReader;
         try {
             codec.encode(writer, objectToDecode);
             documentAsByteArrayForReader = outputBuffer.toByteArray();

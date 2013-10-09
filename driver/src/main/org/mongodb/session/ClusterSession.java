@@ -61,7 +61,7 @@ public class ClusterSession implements Session {
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
-        final Server server = cluster.getServer(options.getServerSelector());
+        Server server = cluster.getServer(options.getServerSelector());
         return new SimpleServerConnectionProvider(server, executor);
     }
 
@@ -108,7 +108,7 @@ public class ClusterSession implements Session {
 
     private static class SimpleServerConnectionProvider implements ServerConnectionProvider {
         private final Server server;
-        private Executor executor;
+        private final Executor executor;
 
         public SimpleServerConnectionProvider(final Server server, final Executor executor) {
             this.server = server;
@@ -145,7 +145,6 @@ public class ClusterSession implements Session {
 
             return retVal;
         }
-
     }
 }
 

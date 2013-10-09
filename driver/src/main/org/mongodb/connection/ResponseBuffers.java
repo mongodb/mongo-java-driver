@@ -37,8 +37,8 @@ public class ResponseBuffers implements Closeable {
     }
 
     /**
-     * Returns a read-only buffer containing the response body.  Care should be taken to not use the returned buffer after this instance
-     * has been closed.
+     * Returns a read-only buffer containing the response body.  Care should be taken to not use the returned buffer after this instance has
+     * been closed.
      *
      * @return a read-only buffer containing the response body
      */

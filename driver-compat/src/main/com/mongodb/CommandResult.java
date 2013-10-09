@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-// CommandResult.java
-
-
-
 package com.mongodb;
-
 
 import static com.mongodb.DBObjects.toDBObject;
 
@@ -52,7 +47,7 @@ public class CommandResult extends BasicDBObject {
      * @return True if ok
      */
     public boolean ok() {
-        final Object o = get("ok");
+        Object o = get("ok");
         if (o == null) {
             throw new IllegalArgumentException("'ok' should never be null...");
         }
@@ -74,7 +69,7 @@ public class CommandResult extends BasicDBObject {
      * @return The error message or null
      */
     public String getErrorMessage() {
-        final Object foo = get("errmsg");
+        Object foo = get("errmsg");
         if (foo == null) {
             return null;
         }
@@ -88,15 +83,14 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            final StringBuilder buf = new StringBuilder();
+            StringBuilder buf = new StringBuilder();
 
-            final String cmdName;
+            String cmdName;
             if (cmd != null) {
                 //TODO this is not correct to get first element from set
                 cmdName = cmd.keySet().iterator().next();
                 buf.append("command failed [").append(cmdName).append("]: ");
-            }
-            else {
+            } else {
                 buf.append("operation failed: ");
             }
 
@@ -141,7 +135,7 @@ public class CommandResult extends BasicDBObject {
      * @return if it has it, and isn't null
      */
     boolean hasErr() {
-        final Object o = get("err");
+        Object o = get("err");
         return (o != null && ((String) o).length() > 0);
     }
 

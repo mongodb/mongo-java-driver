@@ -59,10 +59,10 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void ensureIndex(final Index index) {
-        final Document indexDetails = index.toDocument();
+        Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
-        final Insert<Document> insertIndexOperation = new Insert<Document>(ACKNOWLEDGED, indexDetails);
+        Insert<Document> insertIndexOperation = new Insert<Document>(ACKNOWLEDGED, indexDetails);
 
         new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferProvider(),
                                       client.getSession(), false).execute();
@@ -71,12 +71,12 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     @Override
     public List<Document> getIndexes() {
         return new GetIndexesOperation<Document>(collectionNamespace, documentCodec, client.getBufferProvider(), client.getSession())
-               .execute();
+                   .execute();
     }
 
     @Override
     public boolean isCapped() {
-        final CommandResult commandResult = database.executeCommand(collStatsCommand, null);
+        CommandResult commandResult = database.executeCommand(collStatsCommand, null);
         ErrorHandling.handleErrors(commandResult);
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
@@ -84,7 +84,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public Document getStatistics() {
-        final CommandResult commandResult = database.executeCommand(collStatsCommand, null);
+        CommandResult commandResult = database.executeCommand(collStatsCommand, null);
         ErrorHandling.handleErrors(commandResult);
 
         return commandResult.getResponse();

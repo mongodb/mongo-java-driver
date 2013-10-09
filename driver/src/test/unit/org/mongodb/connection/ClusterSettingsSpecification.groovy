@@ -23,10 +23,10 @@ class ClusterSettingsSpecification extends Specification {
         def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
         when:
         def settings = ClusterSettings.builder()
-                .hosts(hosts)
-                .mode(ClusterConnectionMode.Multiple)
-                .requiredClusterType(ClusterType.ReplicaSet)
-                .requiredReplicaSetName('foo').build();
+                                      .hosts(hosts)
+                                      .mode(ClusterConnectionMode.Multiple)
+                                      .requiredClusterType(ClusterType.ReplicaSet)
+                                      .requiredReplicaSetName('foo').build();
 
         then:
         settings.hosts == hosts
@@ -62,7 +62,7 @@ class ClusterSettingsSpecification extends Specification {
     def 'when cluster type is Standalone and multiple hosts are specified, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredClusterType(ClusterType.StandAlone)
-                .build();
+                       .build();
         then:
         thrown(IllegalArgumentException)
     }
@@ -70,7 +70,7 @@ class ClusterSettingsSpecification extends Specification {
     def 'when a replica set name is specified and type is Standalone, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredReplicaSetName('foo')
-                .requiredClusterType(ClusterType.StandAlone).build();
+                       .requiredClusterType(ClusterType.StandAlone).build();
         then:
         thrown(IllegalArgumentException)
     }
@@ -78,7 +78,7 @@ class ClusterSettingsSpecification extends Specification {
     def 'when a replica set name is specified and type is Sharded, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredReplicaSetName('foo')
-                .requiredClusterType(ClusterType.Sharded).build();
+                       .requiredClusterType(ClusterType.Sharded).build();
         then:
         thrown(IllegalArgumentException)
     }

@@ -25,7 +25,6 @@ import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
- *
  * Holds an array of three integers representing the server version, e.g. [2, 4, 1].
  *
  * @since 3.0
@@ -82,7 +81,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
             return false;
         }
 
-        final ServerVersion that = (ServerVersion) o;
+        ServerVersion that = (ServerVersion) o;
 
         if (!versionList.equals(that.versionList)) {
             return false;
@@ -99,7 +98,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
     @Override
     public String toString() {
         return "ServerVersion{"
-                + "versionList=" + versionList
-                + '}';
+               + "versionList=" + versionList
+               + '}';
     }
 }

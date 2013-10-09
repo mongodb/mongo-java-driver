@@ -39,8 +39,7 @@ public class DeleteMessage extends RequestMessage {
         writeDelete(removes.get(0), buffer);
         if (removes.size() == 1) {
             return null;
-        }
-        else {
+        } else {
             return new DeleteMessage(getCollectionName(), removes.subList(1, removes.size()), encoder, getSettings());
         }
     }
@@ -51,8 +50,7 @@ public class DeleteMessage extends RequestMessage {
 
         if (remove.isMulti()) {
             buffer.writeInt(0);
-        }
-        else {
+        } else {
             buffer.writeInt(1);
         }
 

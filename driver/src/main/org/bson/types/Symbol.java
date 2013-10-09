@@ -52,7 +52,7 @@ public class Symbol implements Serializable {
             return false;
         }
 
-        final Symbol symbol1 = (Symbol) o;
+        Symbol symbol1 = (Symbol) o;
 
         if (!symbol.equals(symbol1.symbol)) {
             return false;

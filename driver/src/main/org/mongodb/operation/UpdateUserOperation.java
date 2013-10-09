@@ -55,7 +55,7 @@ public class UpdateUserOperation extends BaseOperation<WriteResult> {
     @SuppressWarnings("unchecked")
     public WriteResult execute() {
         ServerConnectionProvider serverConnectionProvider =
-        getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+            getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
             return executeCommandBasedProtocol(serverConnectionProvider);
         } else {

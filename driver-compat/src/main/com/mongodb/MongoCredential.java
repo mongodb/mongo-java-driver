@@ -19,8 +19,8 @@ package com.mongodb;
 import org.mongodb.annotations.Immutable;
 
 /**
- * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and
- * the authentication mechanism to use.
+ * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to
+ * use.
  *
  * @since 2.11.0
  */
@@ -44,7 +44,7 @@ public final class MongoCredential {
 
     /**
      * The MongoDB X.509
-    */
+     */
     public static final String MONGODB_X509_MECHANISM = "MONGODB-X509";
 
     private final org.mongodb.MongoCredential proxied;
@@ -57,7 +57,7 @@ public final class MongoCredential {
      * @param password the user's password
      * @return the credential
      */
-    public static MongoCredential createMongoCRCredential(String userName, String database, char[] password) {
+    public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
         return new MongoCredential(org.mongodb.MongoCredential.createMongoCRCredential(userName, database, password));
     }
 
@@ -67,7 +67,7 @@ public final class MongoCredential {
      * @param userName the user name
      * @return the credential
      */
-    public static MongoCredential createMongoX509Credential(String userName) {
+    public static MongoCredential createMongoX509Credential(final String userName) {
         return new MongoCredential(org.mongodb.MongoCredential.createMongoX509Credential(userName));
     }
 
@@ -75,7 +75,7 @@ public final class MongoCredential {
      * Creates a MongoCredential instance for the PLAIN SASL mechanism.
      *
      * @param userName the non-null user name
-     * @param source the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
+     * @param source   the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
      * @param password the non-null user password
      * @return the credential
      */
@@ -85,27 +85,27 @@ public final class MongoCredential {
 
 
     /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default
-     * of {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default of
+     * {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
      *
      * @param userName the user name
      * @return the credential
      * @see #withMechanismProperty(String, Object)
      */
-    public static MongoCredential createGSSAPICredential(String userName) {
+    public static MongoCredential createGSSAPICredential(final String userName) {
         return new MongoCredential(org.mongodb.MongoCredential.createGSSAPICredential(userName));
     }
 
     /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
      *
-     * @param key the key to the property
+     * @param key   the key to the property
      * @param value the value of the property
-     * @param <T> the property type
+     * @param <T>   the property type
      * @return the credential
      */
-    public <T> MongoCredential withMechanismProperty(String key, T value) {
-         return new MongoCredential(proxied.withMechanismProperty(key, value));
+    public <T> MongoCredential withMechanismProperty(final String key, final T value) {
+        return new MongoCredential(proxied.withMechanismProperty(key, value));
     }
 
     /**
@@ -156,12 +156,12 @@ public final class MongoCredential {
     /**
      * Get the value of the given key to a mechanism property, or defaultValue if there is no mapping.
      *
-     * @param key the mechanism property key
+     * @param key          the mechanism property key
      * @param defaultValue the default value, if no mapping exists
-     * @param <T> the value type
+     * @param <T>          the value type
      * @return the mechanism property value
      */
-    public <T> T getMechanismProperty(String key, T defaultValue) {
+    public <T> T getMechanismProperty(final String key, final T defaultValue) {
         return proxied.getMechanismProperty(key, defaultValue);
     }
 
@@ -175,7 +175,7 @@ public final class MongoCredential {
             return false;
         }
 
-        final MongoCredential that = (MongoCredential) o;
+        MongoCredential that = (MongoCredential) o;
 
         if (!proxied.equals(that.proxied)) {
             return false;

@@ -52,7 +52,7 @@ public class DeleteProtocol extends WriteProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                getConnection().getId(), getConnection().getServerAddress()));
+                           getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Delete completed");
         return writeResult;

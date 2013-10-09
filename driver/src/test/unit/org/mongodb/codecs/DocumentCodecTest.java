@@ -68,7 +68,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testPrimitiveBSONTypeCodecs() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         doc.put("oid", new ObjectId());
         doc.put("integer", 1);
         doc.put("long", 2L);
@@ -85,170 +85,159 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testIterableEncoding() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         doc.put("array", asList(1, 2, 3, 4, 5));
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testCodeWithScopeEncoding() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         doc.put("theCode", new CodeWithScope("javaScript code", new Document("fieldNameOfScope", "valueOfScope")));
 
         documentCodec.encode(writer, doc);
 
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   createInputBuffer(), false));
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), createInputBuffer(), false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testIterableContainingOtherIterableEncoding() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         @SuppressWarnings("unchecked")
-        final List<List<Integer>> listOfLists = asList(asList(1), asList(2));
+        List<List<Integer>> listOfLists = asList(asList(1), asList(2));
         doc.put("array", listOfLists);
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testIterableContainingDocumentsEncoding() throws IOException {
-        final Document doc = new Document();
-        final List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
+        Document doc = new Document();
+        List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
         doc.put("array", listOfDocuments);
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void shouldEncodeArrayContainingDocumentsAndDecodeAsList() throws IOException {
-        final Document doc = new Document();
-        final Document[] arrayOfDocuments = {new Document("intVal", 1), new Document("anotherInt", 2)};
+        Document doc = new Document();
+        Document[] arrayOfDocuments = {new Document("intVal", 1), new Document("anotherInt", 2)};
         doc.put("array", arrayOfDocuments);
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final List<Document> expectedListOfDocuments = asList(new Document("intVal", 1),
-                                                              new Document("anotherInt", 2));
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        List<Document> expectedListOfDocuments = asList(new Document("intVal", 1),
+                                                        new Document("anotherInt", 2));
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertThat((List<Document>) decodedDocument.get("array"), is(expectedListOfDocuments));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void shouldEncodeArrayOfIntsAndDecodeAsArrayListOfIntegers() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         doc.put("array", new int[]{1, 2, 3, 4, 5});
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
 
-        final List<Integer> value = asList(1, 2, 3, 4, 5);
+        List<Integer> value = asList(1, 2, 3, 4, 5);
         assertThat((List<Integer>) decodedDocument.get("array"), is(value));
     }
 
     @Test
     public void testMapContainingDocumentsEncoding() throws IOException {
-        final Document doc = new Document();
-        final Map<String, Document> mapOfDocuments = new HashMap<String, Document>();
+        Document doc = new Document();
+        Map<String, Document> mapOfDocuments = new HashMap<String, Document>();
         mapOfDocuments.put("firstDoc", new Document("intVal", 1));
         mapOfDocuments.put("secondDoc", new Document("anotherInt", 2));
         doc.put("theMap", mapOfDocuments);
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testMapContainingStringsEncoding() throws IOException {
-        final Document doc = new Document();
-        final Map<String, String> mapOfStrings = new HashMap<String, String>();
+        Document doc = new Document();
+        Map<String, String> mapOfStrings = new HashMap<String, String>();
         mapOfStrings.put("firstString", "the first string");
         mapOfStrings.put("secondString", "the second string");
         doc.put("theMap", mapOfStrings);
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void testNestedDocumentEncoding() throws IOException {
-        final Document doc = new Document();
+        Document doc = new Document();
         doc.put("nested", new Document("x", 1));
 
         documentCodec.encode(writer, doc);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
     @Test
     public void shouldNotThrowAnExceptionForValidQueryDocumentFieldNames() throws IOException {
-        final Document document = new Document("x.y", 1);
+        Document document = new Document("x.y", 1);
 
         documentCodec.encode(writer, document);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(document, decodedDocument);
     }
 
     @Test
     public void shouldNotThrowAnExceptionForValidNestedQueryDocumentFieldNames() throws IOException {
-        final Document document = new Document("x", new Document("a.b", 1));
+        Document document = new Document("x", new Document("a.b", 1));
 
         documentCodec.encode(writer, document);
 
-        final InputBuffer inputBuffer = createInputBuffer();
-        final Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(),
-                                                                                   inputBuffer, false));
+        InputBuffer inputBuffer = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(document, decodedDocument);
     }
 
     // TODO: factor into common base class;
     private InputBuffer createInputBuffer() throws IOException {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
         return new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
     }

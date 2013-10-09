@@ -37,12 +37,12 @@ class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
 
     @Override
     public Document decode(final BSONReader reader) {
-        final Document document = new Document();
+        Document document = new Document();
 
         reader.readStartDocument();
         while (reader.readBSONType() != END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            final BSONType bsonType = reader.getCurrentBSONType();
+            String fieldName = reader.readName();
+            BSONType bsonType = reader.getCurrentBSONType();
             if (bsonType.equals(DOCUMENT) && fieldName.equals(FIELD_CONTAINING_PAYLOAD)) {
                 document.put(fieldName, payloadDecoder.decode(reader));
             } else {

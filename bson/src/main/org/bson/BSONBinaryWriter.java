@@ -333,8 +333,7 @@ public class BSONBinaryWriter extends BSONWriter {
         setContext(getContext().getParentContext());
         if (getContext() == null) {
             setState(State.DONE);
-        }
-        else {
+        } else {
             if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
                 backpatchSize(); // size of the JavaScript with scope value
                 setContext(getContext().getParentContext());
@@ -355,8 +354,7 @@ public class BSONBinaryWriter extends BSONWriter {
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
             reader.setState(BSONReader.State.TYPE);
-        }
-        else {
+        } else {
             super.pipe(reader);
         }
     }
@@ -385,18 +383,17 @@ public class BSONBinaryWriter extends BSONWriter {
     private void writeCurrentName() {
         if (getContext().getContextType() == BSONContextType.ARRAY) {
             buffer.writeCString(Integer.toString(getContext().index++));
-        }
-        else {
+        } else {
             buffer.writeCString(getName());
         }
     }
 
 
     private void backpatchSize() {
-        final int size = buffer.getPosition() - getContext().startPosition;
+        int size = buffer.getPosition() - getContext().startPosition;
         if (size > maxDocumentSizeStack.peek()) {
-            final String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
-                    binaryWriterSettings.getMaxDocumentSize());
+            String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
+                                           binaryWriterSettings.getMaxDocumentSize());
             throw new BSONSerializationException(message);
         }
         buffer.backpatchSize(size);

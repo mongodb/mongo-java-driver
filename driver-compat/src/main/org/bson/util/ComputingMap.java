@@ -39,14 +39,13 @@ final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
 
     public V get(final Object key) {
         while (true) {
-            final V v = map.get(key);
+            V v = map.get(key);
             if (v != null) {
                 return v;
             }
             @SuppressWarnings("unchecked")
-            final
             K k = (K) key;
-            final V value = function.apply(k);
+            V value = function.apply(k);
             if (value == null) {
                 return null;
             }

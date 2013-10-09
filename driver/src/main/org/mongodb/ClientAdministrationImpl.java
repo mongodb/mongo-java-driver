@@ -27,8 +27,8 @@ import java.util.Set;
 import static java.util.Collections.unmodifiableSet;
 
 /**
- * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands
- * can be accessed via MongoClient.
+ * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
+ * MongoClient.
  */
 class ClientAdministrationImpl implements ClientAdministration {
     private static final String ADMIN_DATABASE = "admin";
@@ -46,24 +46,25 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        final CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
-                                                              client.getCluster().getDescription(), getBufferPool(), client.getSession(),
-                                                              false).execute();
+        CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
+                                                        client.getCluster().getDescription(), getBufferPool(), client.getSession(),
+                                                        false)
+                                       .execute();
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public Set<String> getDatabaseNames() {
-        final CommandOperation operation = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, null, commandCodec, commandCodec,
-                                                                client.getCluster().getDescription(), getBufferPool(), client.getSession(),
-                                                                false);
-        final CommandResult listDatabasesResult = operation.execute();
+        CommandResult listDatabasesResult = new CommandOperation(ADMIN_DATABASE, LIST_DATABASES, null, commandCodec, commandCodec,
+                                                                 client.getCluster().getDescription(), getBufferPool(), client.getSession(),
+                                                                 false)
+                                                .execute();
 
         @SuppressWarnings("unchecked")
-        final List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
+        List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
 
-        final Set<String> databaseNames = new HashSet<String>();
+        Set<String> databaseNames = new HashSet<String>();
         for (final Document database : databases) {
             databaseNames.add(database.get("name", String.class));
         }

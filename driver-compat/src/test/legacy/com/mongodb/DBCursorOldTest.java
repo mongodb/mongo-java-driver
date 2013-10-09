@@ -39,7 +39,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     public void testGetServerAddressLoop() {
         insertTestData(collection, 10);
 
-        final DBCursor cur = collection.find();
+        DBCursor cur = collection.find();
 
         while (cur.hasNext()) {
             cur.next();
@@ -51,7 +51,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     public void testGetServerAddressQuery() {
         insertTestData(collection, 10);
 
-        final DBCursor cur = collection.find();
+        DBCursor cur = collection.find();
         cur.hasNext();
         assertNotNull(cur.getServerAddress());
     }
@@ -60,7 +60,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     public void testGetServerAddressQuery1() {
         insertTestData(collection, 10);
 
-        final DBCursor cur = collection.find(new BasicDBObject("x", 9));
+        DBCursor cur = collection.find(new BasicDBObject("x", 9));
         cur.hasNext();
         assertNotNull(cur.getServerAddress());
     }
@@ -103,10 +103,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     @Test
     public void testTailable() {
         database.getCollection("tail1").drop();
-        final DBCollection c = database.createCollection(
-                "tail1",
-                new BasicDBObject("capped", true).append("size", 10000)
-        );
+        DBCollection c = database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         insertTestData(c, 10);
 
         DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE);
@@ -127,12 +124,14 @@ public class DBCursorOldTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
         database.getCollection("tail1").drop();
-        final DBCollection c = database.createCollection("tail1",
-                new BasicDBObject("capped", true).append("size", 10000)
-        );
+        DBCollection c = database.createCollection("tail1",
+                                                   new BasicDBObject("capped", true).append("size", 10000)
+                                                  );
         insertTestData(c, 10);
 
-        final DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
+        final DBCursor cur = c.find()
+                              .sort(new BasicDBObject("$natural", 1))
+                              .addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
 
         final CountDownLatch latch = new CountDownLatch(1);
         new Thread(new Runnable() {
@@ -235,11 +234,11 @@ public class DBCursorOldTest extends DatabaseTestCase {
         insertTestData(collection, 3);
         collection.ensureIndex("x");
 
-        for (DBObject o : collection.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
+        for (final DBObject o : collection.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
             assertTrue(o.get("_id") == null);
         }
 
-        for (DBObject o : collection.find().sort(new BasicDBObject("x", 1))) {
+        for (final DBObject o : collection.find().sort(new BasicDBObject("x", 1))) {
             assertTrue(o.get("_id") != null);
         }
 
@@ -341,47 +340,48 @@ public class DBCursorOldTest extends DatabaseTestCase {
         dbCollection.insert(new BasicDBObject("x", numberOfDocuments - 1), WriteConcern.ACKNOWLEDGED);
     }
 
-//    @Test
-//    public void testHasFinalizer() throws UnknownHostException, UnknownHostException {
-//        DBCollection c = database.getCollection("HasFinalizerTest");
-//        c.drop();
-//
-//        for (int i = 0; i < 1000; i++) {
-//            c.save(new BasicDBObject("_id", i), WriteConcern.SAFE);
-//        }
-//
-//        // finalizer is on by default so after calling hasNext should report that it has one
-//        DBCursor cursor = c.find();
-//        assertFalse(cursor.hasFinalizer());
-//        cursor.hasNext();
-//        assertTrue(cursor.hasFinalizer());
-//        cursor.close();
-//
-//        // no finalizer if there is no cursor, as there should not be for a query with only one result
-//        cursor = c.find(new BasicDBObject("_id", 1));
-//        cursor.hasNext();
-//        assertFalse(cursor.hasFinalizer());
-//        cursor.close();
-//
-//        // no finalizer if there is no cursor, as there should not be for a query with negative batch size
-//        cursor = c.find();
-//        cursor.batchSize(-1);
-//        cursor.hasNext();
-//        assertFalse(cursor.hasFinalizer());
-//        cursor.close();
-//
-//        // finally, no finalizer if disabled in mongo options
-//        MongoClientOptions mongoOptions = MongoClientOptions.builder().build();
-//        mongoOptions.cursorFinalizerEnabled = false;
-//        Mongo m = new MongoClient("127.0.0.1", mongoOptions);
-//        try {
-//            c = m.getDB(cleanupDB).getCollection("HasFinalizerTest");
-//            cursor = c.find();
-//            cursor.hasNext();
-//            assertFalse(cursor.hasFinalizer());
-//            cursor.close();
-//        } finally {
-//            m.close();
-//        }
-//    }
+    //TODO: why is this commented out?
+    //    @Test
+    //    public void testHasFinalizer() throws UnknownHostException, UnknownHostException {
+    //        DBCollection c = database.getCollection("HasFinalizerTest");
+    //        c.drop();
+    //
+    //        for (int i = 0; i < 1000; i++) {
+    //            c.save(new BasicDBObject("_id", i), WriteConcern.SAFE);
+    //        }
+    //
+    //        // finalizer is on by default so after calling hasNext should report that it has one
+    //        DBCursor cursor = c.find();
+    //        assertFalse(cursor.hasFinalizer());
+    //        cursor.hasNext();
+    //        assertTrue(cursor.hasFinalizer());
+    //        cursor.close();
+    //
+    //        // no finalizer if there is no cursor, as there should not be for a query with only one result
+    //        cursor = c.find(new BasicDBObject("_id", 1));
+    //        cursor.hasNext();
+    //        assertFalse(cursor.hasFinalizer());
+    //        cursor.close();
+    //
+    //        // no finalizer if there is no cursor, as there should not be for a query with negative batch size
+    //        cursor = c.find();
+    //        cursor.batchSize(-1);
+    //        cursor.hasNext();
+    //        assertFalse(cursor.hasFinalizer());
+    //        cursor.close();
+    //
+    //        // finally, no finalizer if disabled in mongo options
+    //        MongoClientOptions mongoOptions = MongoClientOptions.builder().build();
+    //        mongoOptions.cursorFinalizerEnabled = false;
+    //        Mongo m = new MongoClient("127.0.0.1", mongoOptions);
+    //        try {
+    //            c = m.getDB(cleanupDB).getCollection("HasFinalizerTest");
+    //            cursor = c.find();
+    //            cursor.hasNext();
+    //            assertFalse(cursor.hasFinalizer());
+    //            cursor.close();
+    //        } finally {
+    //            m.close();
+    //        }
+    //    }
 }

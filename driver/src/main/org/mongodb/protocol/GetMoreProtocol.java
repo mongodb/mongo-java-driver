@@ -48,7 +48,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
-    private ServerDescription serverDescription;
+    private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
     private final MongoNamespace namespace;
@@ -70,7 +70,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     public QueryResult<T> execute() {
         try {
             LOGGER.fine(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
-                    getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
+                               getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
             QueryResult<T> queryResult = receiveMessage(sendMessage());
             LOGGER.fine("Get-more completed");
             return queryResult;
@@ -82,25 +82,29 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public MongoFuture<QueryResult<T>> executeAsync() {
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
-                getMessageSettings(serverDescription));
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
+        GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
+                                                                                resultDecoder,
+                                                                                getMore.getServerCursor()
+                                                                                       .getId(),
+                                                                                message.getId(),
+                                                                                connection,
+                                                                                closeConnection);
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                message.getId(), new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
-                        new GetMoreResultCallback<T>(
-                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder,
-                                getMore.getServerCursor().getId(), message.getId(), connection, closeConnection)));
+                                    message.getId(),
+                                    new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal, receiveCallback));
         return retVal;
     }
 
 
     private GetMoreMessage sendMessage() {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
+            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
@@ -110,20 +114,20 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final GetMoreMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
+        ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                 throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
             }
 
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                final Document errorDocument =
-                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
+                                                                    message.getId()).getDocuments().get(0);
                 throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
             }
 
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
-                    connection.getServerAddress());
+                                      connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

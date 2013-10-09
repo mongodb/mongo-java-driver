@@ -27,33 +27,31 @@ import static org.junit.Assert.assertEquals;
 
 public class BitsTest {
 
-    private final byte[] BYTES = {
-            41, 0, 0, 0, 16, 105, 49, 0, -12,
-            -1, -1, -1, 16, 105, 50, 0, 0, 0,
-            0, -128, 18, 105, 51, 0, -1, -1, -1,
-            -1, -1, -1, -1, 127, 16, 105, 52, 0,
-            0, 0, 0, 0, 0
-    };
+    private final byte[] BYTES = {41, 0, 0, 0, 16, 105, 49, 0, -12,
+                                  -1, -1, -1, 16, 105, 50, 0, 0, 0,
+                                  0, -128, 18, 105, 51, 0, -1, -1, -1,
+                                  -1, -1, -1, -1, 127, 16, 105, 52, 0,
+                                  0, 0, 0, 0, 0};
 
     @Test
     public void testReadFullyWithBufferLargerThanExpected() throws IOException {
-        final byte[] buffer = new byte[8192];
+        byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, BYTES.length);
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, 0, BYTES.length));
     }
 
     @Test
     public void testReadFullyWithOffset() throws IOException {
-        final int offset = 10;
-        final byte[] buffer = new byte[8192];
+        int offset = 10;
+        byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
     @Test
     public void testReadFullyWithBufferEqualsToExpected() throws IOException {
-        final int offset = 10;
-        final byte[] buffer = new byte[offset + BYTES.length];
+        int offset = 10;
+        byte[] buffer = new byte[offset + BYTES.length];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, offset, BYTES.length + offset));
     }
@@ -65,8 +63,8 @@ public class BitsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testReadFullyUsingNotEnoughBigBufferWithOffset() throws IOException {
-        final int offset = 10;
-        final byte[] buffer = new byte[BYTES.length];
+        int offset = 10;
+        byte[] buffer = new byte[BYTES.length];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
     }
 

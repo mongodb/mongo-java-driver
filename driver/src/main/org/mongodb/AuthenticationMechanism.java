@@ -67,7 +67,7 @@ public enum AuthenticationMechanism {
     }
 
     static {
-        for (AuthenticationMechanism value : values()) {
+        for (final AuthenticationMechanism value : values()) {
             AUTH_MAP.put(value.getMechanismName(), value);
         }
     }

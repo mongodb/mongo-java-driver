@@ -42,8 +42,8 @@ public class UUIDEncoderTest {
     @Test
     public void shouldEncodeLongAsLittleEndian() throws IOException {
         // Given
-        final UUID uuid = new UUID(2L, 1L);
-        final BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+        UUID uuid = new UUID(2L, 1L);
+        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
         try {
             bsonWriter.writeStartDocument();
             bsonWriter.writeName("_id");
@@ -55,13 +55,13 @@ public class UUIDEncoderTest {
         }
 
         // Then
-        final byte[] expectedList = {0, 0, 0, 0,       //Start of document
-                                     5,                // type (BINARY)
-                                     95, 105, 100, 0,  // "_id"
-                                     16, 0, 0, 0,      // int "16" (length)
-                                     3,                // type (B_UUID_LEGACY)
-                                     2, 0, 0, 0, 0, 0, 0, 0,
-                                     1, 0, 0, 0, 0, 0, 0, 0}; //8 bytes for long, 2 longs for UUID, Little Endian
+        byte[] expectedList = {0, 0, 0, 0,       //Start of document
+                               5,                // type (BINARY)
+                               95, 105, 100, 0,  // "_id"
+                               16, 0, 0, 0,      // int "16" (length)
+                               3,                // type (B_UUID_LEGACY)
+                               2, 0, 0, 0, 0, 0, 0, 0,
+                               1, 0, 0, 0, 0, 0, 0, 0}; //8 bytes for long, 2 longs for UUID, Little Endian
 
         assertThat(outputBuffer.toByteArray(), is(expectedList));
     }

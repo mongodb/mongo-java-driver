@@ -94,7 +94,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
             if (!delegate.containsKey(key)) {
                 return null;
             }
-            final M map = copy();
+            M map = copy();
             try {
                 return map.remove(key);
             } finally {
@@ -109,12 +109,11 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         lock.lock();
         try {
             if (delegate.containsKey(key) && equals(value, delegate.get(key))) {
-                final M map = copy();
+                M map = copy();
                 map.remove(key);
                 set(map);
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         } finally {
@@ -128,7 +127,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
             if (!delegate.containsKey(key) || !equals(oldValue, delegate.get(key))) {
                 return false;
             }
-            final M map = copy();
+            M map = copy();
             map.put(key, newValue);
             set(map);
             return true;
@@ -143,7 +142,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
             if (!delegate.containsKey(key)) {
                 return null;
             }
-            final M map = copy();
+            M map = copy();
             try {
                 return map.put(key, value);
             } finally {
@@ -157,7 +156,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     public final V put(final K key, final V value) {
         lock.lock();
         try {
-            final M map = copy();
+            M map = copy();
             try {
                 return map.put(key, value);
             } finally {
@@ -172,7 +171,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         lock.lock();
         try {
             if (!delegate.containsKey(key)) {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.put(key, value);
                 } finally {
@@ -188,7 +187,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     public final void putAll(final Map<? extends K, ? extends V> t) {
         lock.lock();
         try {
-            final M map = copy();
+            M map = copy();
             map.putAll(t);
             set(map);
         } finally {
@@ -287,7 +286,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public void clear() {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 map.keySet().clear();
                 set(map);
             } finally {
@@ -302,7 +301,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean removeAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.keySet().removeAll(c);
                 } finally {
@@ -316,7 +315,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean retainAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.keySet().retainAll(c);
                 } finally {
@@ -338,7 +337,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public void clear() {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 map.values().clear();
                 set(map);
             } finally {
@@ -352,7 +351,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
                 if (!contains(o)) {
                     return false;
                 }
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.values().remove(o);
                 } finally {
@@ -366,7 +365,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean removeAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.values().removeAll(c);
                 } finally {
@@ -380,7 +379,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean retainAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.values().retainAll(c);
                 } finally {
@@ -402,7 +401,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public void clear() {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 map.entrySet().clear();
                 set(map);
             } finally {
@@ -416,7 +415,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
                 if (!contains(o)) {
                     return false;
                 }
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.entrySet().remove(o);
                 } finally {
@@ -430,7 +429,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean removeAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.entrySet().removeAll(c);
                 } finally {
@@ -444,7 +443,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
         public boolean retainAll(final Collection<?> c) {
             lock.lock();
             try {
-                final M map = copy();
+                M map = copy();
                 try {
                     return map.entrySet().retainAll(c);
                 } finally {

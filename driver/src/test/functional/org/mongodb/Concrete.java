@@ -42,13 +42,13 @@ class Concrete {
     @Override
     public String toString() {
         return "Concrete{"
-                + "id=" + id
-                + ", str='" + str + '\''
-                + ", i=" + i
-                + ", l=" + l
-                + ", d=" + d
-                + ", date=" + date
-                + '}';
+               + "id=" + id
+               + ", str='" + str + '\''
+               + ", i=" + i
+               + ", l=" + l
+               + ", d=" + d
+               + ", date=" + date
+               + '}';
     }
 
     ObjectId getId() {
@@ -88,7 +88,7 @@ class Concrete {
             return false;
         }
 
-        final Concrete concrete = (Concrete) o;
+        Concrete concrete = (Concrete) o;
 
         if (Double.compare(concrete.d, d) != 0) {
             return false;

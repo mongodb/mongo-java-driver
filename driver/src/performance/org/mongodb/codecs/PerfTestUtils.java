@@ -31,5 +31,4 @@ public final class PerfTestUtils {
         return (NUMBER_OF_NANO_SECONDS_IN_A_SECOND / timeTakenInNanos) * numberOfTimesRun;
     }
 
-
 }

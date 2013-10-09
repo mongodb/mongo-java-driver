@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// MapReduceOutput.java
-
 package com.mongodb;
 
 import org.mongodb.command.MapReduceCommandResult;
@@ -37,11 +35,9 @@ public class MapReduceOutput {
     MapReduceOutput(final DBCollection collection, final DBObject command, final MapReduceCommandResult commandResult) {
         this.command = command;
         this.commandResult = commandResult;
-        this.collection = getTargetCollection(
-                collection,
-                commandResult.getDatabaseName(),
-                commandResult.getCollectionName()
-        );
+        this.collection = getTargetCollection(collection,
+                                              commandResult.getDatabaseName(),
+                                              commandResult.getCollectionName());
     }
 
     MapReduceOutput(final DBObject command, final MapReduceInlineCommandResult<DBObject> commandResult) {
@@ -52,22 +48,18 @@ public class MapReduceOutput {
 
     public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
         this.command = command;
-        final org.mongodb.CommandResult result = new org.mongodb.CommandResult(
-                commandResult.getServerUsed().toNew(),
-                toDocument(commandResult),
-                0
-        );
+        org.mongodb.CommandResult result = new org.mongodb.CommandResult(commandResult.getServerUsed().toNew(),
+                                                                         toDocument(commandResult),
+                                                                         0);
 
         if (commandResult.containsField("results")) {
             this.collection = null;
             this.commandResult = new MapReduceInlineCommandResult<DBObject>(result);
         } else {
-            final MapReduceCommandResult mapReduceCommandResult = new MapReduceCommandResult(result);
-            this.collection = getTargetCollection(
-                    collection,
-                    mapReduceCommandResult.getDatabaseName(),
-                    mapReduceCommandResult.getCollectionName()
-            );
+            MapReduceCommandResult mapReduceCommandResult = new MapReduceCommandResult(result);
+            this.collection = getTargetCollection(collection,
+                                                  mapReduceCommandResult.getDatabaseName(),
+                                                  mapReduceCommandResult.getCollectionName());
             this.commandResult = mapReduceCommandResult;
         }
     }
@@ -80,8 +72,8 @@ public class MapReduceOutput {
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
         return commandResult instanceof MapReduceInlineCommandResult
-                ? ((MapReduceInlineCommandResult) commandResult).getResults()
-                : getOutputCollection().find();
+               ? ((MapReduceInlineCommandResult) commandResult).getResults()
+               : getOutputCollection().find();
     }
 
     /**
@@ -127,7 +119,7 @@ public class MapReduceOutput {
 
     private static DBCollection getTargetCollection(final DBCollection collection,
                                                     final String databaseName, final String collectionName) {
-        final DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
+        DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
         return database.getCollection(collectionName);
     }
 

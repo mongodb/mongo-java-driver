@@ -84,12 +84,13 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
         when:
         new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                false).execute();
+                                      false)
+                .execute();
 
         then:
         documents.size() ==
-                new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
-                        .execute()
+        new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
+                .execute()
     }
 
 

@@ -26,34 +26,34 @@ import static org.junit.Assert.assertThat;
 public class DBObjectsTest {
     @Test
     public void shouldCreateADocumentWithTheSameSimpleValuesFromADBObject() {
-        final DBObject dbObject = createBasicDBObject();
+        DBObject dbObject = createBasicDBObject();
 
-        final Document actualDocument = DBObjects.toDocument(dbObject);
+        Document actualDocument = DBObjects.toDocument(dbObject);
 
-        final Document expectedDocument = createDocument();
+        Document expectedDocument = createDocument();
 
         assertThat(actualDocument, is(expectedDocument));
     }
 
     @Test
     public void shouldCreateADBObjectWithTheSameSimpleValuesFromADocument() {
-        final Document document = createDocument();
+        Document document = createDocument();
 
-        final DBObject actualDBObject = DBObjects.toDBObject(document);
+        DBObject actualDBObject = DBObjects.toDBObject(document);
 
-        final DBObject expectedDBObject = createBasicDBObject();
+        DBObject expectedDBObject = createBasicDBObject();
 
         assertThat(actualDBObject, is(expectedDBObject));
     }
 
     @Test
     public void shouldHandleNestedDocumentsWhenConvertingDocumentToDBObject() {
-        final BasicDBObject dbObject = createBasicDBObject();
+        BasicDBObject dbObject = createBasicDBObject();
         dbObject.append("subDocument", createBasicDBObject());
 
-        final Document actualDocument = DBObjects.toDocument(dbObject);
+        Document actualDocument = DBObjects.toDocument(dbObject);
 
-        final Document expectedDocument = createDocument();
+        Document expectedDocument = createDocument();
         expectedDocument.append("subDocument", createDocument());
 
         assertThat(actualDocument, is(expectedDocument));
@@ -61,12 +61,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleNestedDocumentsWhenConvertingDBObjectToDocument() {
-        final Document document = createDocument();
+        Document document = createDocument();
         document.append("subDocument", createDocument());
 
-        final BasicDBObject actualDBObject = DBObjects.toDBObject(document);
+        BasicDBObject actualDBObject = DBObjects.toDBObject(document);
 
-        final BasicDBObject expectedDBObject = createBasicDBObject();
+        BasicDBObject expectedDBObject = createBasicDBObject();
         expectedDBObject.append("subDocument", createBasicDBObject());
 
         assertThat(actualDBObject, is(expectedDBObject));
@@ -74,12 +74,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleComplexTypesWhenConvertingDBObjectToDocument() {
-        final BasicDBObject dbObject = createBasicDBObject();
+        BasicDBObject dbObject = createBasicDBObject();
         dbObject.append("complexType", createNewTestObject());
 
-        final Document actualDocument = DBObjects.toDocument(dbObject);
+        Document actualDocument = DBObjects.toDocument(dbObject);
 
-        final Document expectedDocument = createDocument();
+        Document expectedDocument = createDocument();
         expectedDocument.append("complexType", createNewTestObject());
 
         assertThat(actualDocument, is(expectedDocument));
@@ -87,14 +87,14 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleComplexTypesWhenConvertingDocumentToDBObject() {
-        final MyTestObject testObject = createNewTestObject();
+        MyTestObject testObject = createNewTestObject();
 
-        final Document document = createDocument();
+        Document document = createDocument();
         document.append("complexType", testObject);
 
-        final BasicDBObject actualDBObject = DBObjects.toDBObject(document);
+        BasicDBObject actualDBObject = DBObjects.toDBObject(document);
 
-        final BasicDBObject expectedDBObject = createBasicDBObject();
+        BasicDBObject expectedDBObject = createBasicDBObject();
         expectedDBObject.append("complexType", createNewTestObject());
 
         assertThat(actualDBObject, is(expectedDBObject));
@@ -102,12 +102,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleNullsWhenConvertingDBObjectToDocument() {
-        final BasicDBObject dbObject = createBasicDBObject();
+        BasicDBObject dbObject = createBasicDBObject();
         dbObject.append("myNullValue", null);
 
-        final Document actualDocument = DBObjects.toDocument(dbObject);
+        Document actualDocument = DBObjects.toDocument(dbObject);
 
-        final Document expectedDocument = createDocument();
+        Document expectedDocument = createDocument();
         expectedDocument.append("myNullValue", null);
 
         assertThat(actualDocument, is(expectedDocument));
@@ -115,12 +115,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleNullsWhenConvertingDocumentToDBObject() {
-        final Document document = createDocument();
+        Document document = createDocument();
         document.append("myNullValue", null);
 
-        final BasicDBObject actualDBObject = DBObjects.toDBObject(document);
+        BasicDBObject actualDBObject = DBObjects.toDBObject(document);
 
-        final BasicDBObject expectedDBObject = createBasicDBObject();
+        BasicDBObject expectedDBObject = createBasicDBObject();
         expectedDBObject.append("myNullValue", null);
 
         assertThat(actualDBObject, is(expectedDBObject));
@@ -128,12 +128,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleListsWhenConvertingDBObjectToDocument() {
-        final BasicDBObject dbObject = createBasicDBObject();
+        BasicDBObject dbObject = createBasicDBObject();
         dbObject.append("listOfInts", asList(7843, 75439, 57489, 547));
 
-        final Document actualDocument = DBObjects.toDocument(dbObject);
+        Document actualDocument = DBObjects.toDocument(dbObject);
 
-        final Document expectedDocument = createDocument();
+        Document expectedDocument = createDocument();
         expectedDocument.append("listOfInts", asList(7843, 75439, 57489, 547));
 
         assertThat(actualDocument, is(expectedDocument));
@@ -141,12 +141,12 @@ public class DBObjectsTest {
 
     @Test
     public void shouldHandleListsWhenConvertingDocumentToDBObject() {
-        final Document document = createDocument();
+        Document document = createDocument();
         document.append("listOfInts", asList(7843, 75439, 57489, 547));
 
-        final BasicDBObject actualDBObject = DBObjects.toDBObject(document);
+        BasicDBObject actualDBObject = DBObjects.toDBObject(document);
 
-        final BasicDBObject expectedDBObject = createBasicDBObject();
+        BasicDBObject expectedDBObject = createBasicDBObject();
         expectedDBObject.append("listOfInts", asList(7843, 75439, 57489, 547));
 
         assertThat(actualDBObject, is(expectedDBObject));
@@ -173,7 +173,7 @@ public class DBObjectsTest {
     }
 
     private MyTestObject createNewTestObject() {
-        final MyTestObject testObject = new MyTestObject();
+        MyTestObject testObject = new MyTestObject();
         testObject.myStringField = "I'm a String";
         testObject.myIntField = 45;
         testObject.myDoubleField = 837.8675;
@@ -194,7 +194,7 @@ public class DBObjectsTest {
                 return false;
             }
 
-            final MyTestObject that = (MyTestObject) o;
+            MyTestObject that = (MyTestObject) o;
 
             if (Double.compare(that.myDoubleField, myDoubleField) != 0) {
                 return false;

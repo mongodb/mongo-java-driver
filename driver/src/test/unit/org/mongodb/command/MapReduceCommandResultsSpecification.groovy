@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.command
 
 import org.mongodb.CommandResult

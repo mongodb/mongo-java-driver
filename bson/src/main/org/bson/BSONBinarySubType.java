@@ -38,7 +38,7 @@ public enum BSONBinarySubType {
     UuidLegacy((byte) 0x03),
 
     /**
-     *  A UUID in standard network byte order.
+     * A UUID in standard network byte order.
      */
     UuidStandard((byte) 0x04),
 
@@ -48,7 +48,7 @@ public enum BSONBinarySubType {
     MD5((byte) 0x05),
 
     /**
-     *  User defined binary data.
+     * User defined binary data.
      */
     UserDefined((byte) 0x80);
 

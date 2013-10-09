@@ -70,7 +70,7 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
 
         notifyAll();
 
-        for (SingleResultCallback<T> callback : callbacks) {
+        for (final SingleResultCallback<T> callback : callbacks) {
             callback.onResult(result, exception);
         }
     }
@@ -144,8 +144,7 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
 
         if (isDone()) {
             callback.onResult(result, exception);
-        }
-        else {
+        } else {
             callbacks.add(callback);
         }
     }

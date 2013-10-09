@@ -105,7 +105,7 @@ public class WriteConcernTest {
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.FSYNCED), WriteConcern.FSYNCED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.JOURNALED), WriteConcern.JOURNALED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED),
-                    WriteConcern.REPLICA_ACKNOWLEDGED);
+                     WriteConcern.REPLICA_ACKNOWLEDGED);
         assertEquals(new WriteConcern("majority"), WriteConcern.MAJORITY);
 
         assertEquals(WriteConcern.ERRORS_IGNORED, WriteConcern.NONE);
@@ -123,8 +123,9 @@ public class WriteConcernTest {
         assertEquals(true, wc.callGetLastError());
         assertEquals(true, wc.raiseNetworkErrors());
         assertEquals("dc1", wc.getWObject());
-        assertEquals(new BasicDBObject("getlasterror", 1).append("w", "dc1").
-                                                                            append("wtimeout", 10).append("fsync", true)
+        assertEquals(new BasicDBObject("getlasterror", 1).append("w", "dc1")
+                                                         .append("wtimeout", 10)
+                                                         .append("fsync", true)
                                                          .append("j", true), wc.getCommand());
 
         wc = new WriteConcern(-1, 10, false, true, true);
@@ -168,8 +169,7 @@ public class WriteConcernTest {
     @Test
     public void testContinueOnErrorForInsert() {
         assertTrue(WriteConcern.ACKNOWLEDGED.continueOnError(true).getContinueOnError());
-        assertFalse(new WriteConcern(1, 0, false, false, true).continueOnError(
-                false)
+        assertFalse(new WriteConcern(1, 0, false, false, true).continueOnError(false)
                                                               .getContinueOnError());
     }
 

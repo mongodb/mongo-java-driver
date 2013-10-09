@@ -81,7 +81,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public <A extends Collection<? super V>> MongoFuture<A> asyncInto(final A target) {
-        final SingleResultFuture<A> future = new SingleResultFuture<A>();
+        SingleResultFuture<A> future = new SingleResultFuture<A>();
         asyncInto(target, new SingleResultFutureCallback<A>(future));
         return future;
     }

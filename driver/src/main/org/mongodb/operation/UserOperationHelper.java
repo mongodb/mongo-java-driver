@@ -25,8 +25,8 @@ final class UserOperationHelper {
 
     static Document asCommandDocument(final User user, final String commandName) {
         return new Document(commandName, user.getCredential().getUserName())
-               .append("pwd", new String(user.getCredential().getPassword()))
-               .append("roles", Arrays.asList(getRoleName(user)));
+                   .append("pwd", new String(user.getCredential().getPassword()))
+                   .append("roles", Arrays.asList(getRoleName(user)));
     }
 
     // TODO: use different roles when source is "admin"
@@ -40,9 +40,9 @@ final class UserOperationHelper {
 
     static Document asCollectionDocument(final User user) {
         return asCollectionQueryDocument(user)
-               .append("pwd", NativeAuthenticationHelper.createAuthenticationHash(user.getCredential().getUserName(),
-                                                                                  user.getCredential().getPassword()))
-               .append("readOnly", user.isReadOnly());
+                   .append("pwd", NativeAuthenticationHelper.createAuthenticationHash(user.getCredential().getUserName(),
+                                                                                      user.getCredential().getPassword()))
+                   .append("readOnly", user.isReadOnly());
 
     }
 

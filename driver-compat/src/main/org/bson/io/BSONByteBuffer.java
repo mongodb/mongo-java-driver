@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
  */
 public class BSONByteBuffer {
 
-    protected ByteBuffer buf;
+    protected final ByteBuffer buf;
 
     private BSONByteBuffer(final ByteBuffer buf) {
         this.buf = buf;

@@ -75,7 +75,7 @@ class MongoSpecification extends Specification {
     def 'should send fsync commands in expected form'() {
         given:
         DB db = Mock()
-        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(),[]]) {
+        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
             getDB('admin') >> db
         }
 
@@ -100,7 +100,7 @@ class MongoSpecification extends Specification {
             getCollection('$cmd.sys.unlock') >> unlockCollection
             getCollection('$cmd.sys.inprog') >> inprogCollection
         }
-        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(),[]]) {
+        mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
             getDB('admin') >> db
         }
 

@@ -22,8 +22,7 @@ import org.bson.BasicBSONObject;
 import java.util.Map;
 
 /**
- * A basic implementation of BSON object that is mongo specific. A <code>DBObject</code> can be created as follows,
- * using this class:
+ * A basic implementation of BSON object that is mongo specific. A {@code DBObject} can be created as follows, using this class:
  * <blockquote><pre>
  * DBObject obj = new BasicDBObject();
  * obj.put( "foo", "bar" );
@@ -84,8 +83,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want
-     * to risk losing fields.
+     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want to risk losing fields.
      *
      * @return true if this has been marked as a partial object
      */
@@ -97,10 +95,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     /**
      * Returns a JSON serialization of this object
      * <p/>
-     * The output will look like:
-     * <code>
-     * {"a":1, "b":["x","y","z"]}
-     * </code>
+     * The output will look like: {@code  {"a":1, "b":["x","y","z"]} }
      *
      * @return JSON serialization
      */
@@ -109,8 +104,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark
-     * it as such.
+     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it as such.
      */
     @Override
     public void markAsPartialObject() {
@@ -122,10 +116,10 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
      */
     public Object copy() {
         // copy field values into new object
-        final BasicDBObject newCopy = new BasicDBObject(this.toMap());
+        BasicDBObject newCopy = new BasicDBObject(this.toMap());
         // need to clone the sub obj
         for (final String field : keySet()) {
-            final Object val = get(field);
+            Object val = get(field);
             if (val instanceof BasicDBObject) {
                 newCopy.put(field, ((BasicDBObject) val).copy());
             } else if (val instanceof BasicDBList) {

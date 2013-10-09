@@ -26,9 +26,9 @@ import java.io.InputStream;
  */
 public interface DBDecoder extends BSONDecoder {
 
-    DBCallback getDBCallback(final DBCollection collection);
+    DBCallback getDBCallback(DBCollection collection);
 
-    DBObject decode(final InputStream in, final DBCollection collection) throws IOException;
+    DBObject decode(InputStream in, DBCollection collection) throws IOException;
 
-    DBObject decode(final byte[] bytes, final DBCollection collection);
+    DBObject decode(byte[] bytes, DBCollection collection);
 }

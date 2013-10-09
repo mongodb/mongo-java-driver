@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Binary.java
-
 package org.bson.types;
 
 import org.bson.BSONBinarySubType;
@@ -24,10 +22,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * generic binary holder
+ * Generic binary holder.
  */
 public class Binary implements Serializable {
-
     private static final long serialVersionUID = 7902997490338209467L;
 
     private final byte type;
@@ -85,7 +82,7 @@ public class Binary implements Serializable {
             return false;
         }
 
-        final Binary binary = (Binary) o;
+        Binary binary = (Binary) o;
 
         if (type != binary.type) {
             return false;

@@ -48,14 +48,13 @@ public class MongoDatabaseOptions {
     }
 
     public MongoDatabaseOptions withDefaults(final MongoClientOptions options) {
-        final Builder builder = new Builder();
+        Builder builder = new Builder();
         builder.primitiveCodecs = getPrimitiveCodecs() != null ? getPrimitiveCodecs()
-                                                                    : options.getPrimitiveCodecs();
+                                                               : options.getPrimitiveCodecs();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
         builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec()
-                                                                : new DocumentCodec(builder
-                                                                                         .primitiveCodecs);
+                                                           : new DocumentCodec(builder.primitiveCodecs);
         return builder.build();
     }
 

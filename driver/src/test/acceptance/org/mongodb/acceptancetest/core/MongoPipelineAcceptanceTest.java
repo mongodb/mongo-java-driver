@@ -25,37 +25,43 @@ import org.mongodb.Function;
 import org.mongodb.Sort;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
-    private List<Document> documents = new ArrayList<Document>();
+    private final List<Document> documents = new ArrayList<Document>();
 
     @Before
     public void setUp() {
         super.setUp();
         documents.add(new Document("_id", "01778").append("city", "WAYLAND").append("state", "MA").append("population", 13100)
-                .append("loc", Arrays.asList(42.3635, 71.3619)).append("tags", Arrays.asList("driver")));
-        documents.add(new Document("_id", "10012").append("city", "NEW YORK CITY").append("state", "NY").append("population", 8245000)
-                .append("loc", Arrays.asList(40.7260, 71.3619)).append("tags", Arrays.asList("driver", "SA", "CE", "kernel")));
-        documents.add(new Document("_id", "94301").append("city", "PALO ALTO").append("state", "CA").append("population", 65412)
-                .append("loc", Arrays.asList(37.4419, 122.1419)).append("tags", Arrays.asList("driver", "SA", "CE")));
+                                                  .append("loc", asList(42.3635, 71.3619)).append("tags", asList("driver")));
+        documents.add(new Document("_id", "10012").append("city", "NEW YORK CITY")
+                                                  .append("state", "NY")
+                                                  .append("population", 8245000)
+                                                  .append("loc", asList(40.7260, 71.3619))
+                                                  .append("tags", asList("driver", "SA", "CE", "kernel")));
+        documents.add(new Document("_id", "94301").append("city", "PALO ALTO")
+                                                  .append("state", "CA")
+                                                  .append("population", 65412)
+                                                  .append("loc", asList(37.4419, 122.1419))
+                                                  .append("tags", asList("driver", "SA", "CE")));
 
         List<Document> shuffledDocuments = new ArrayList<Document>(documents);
 
         Collections.shuffle(shuffledDocuments);
-        for (Document doc : shuffledDocuments) {
+        for (final Document doc : shuffledDocuments) {
             collection.insert(doc);
         }
     }
 
     @Test
     public void shouldIterateOverAllDocumentsInCollection() {
-        final List<Document> iteratedDocuments = new ArrayList<Document>();
-        for (Document cur : collection.pipe()) {
+        List<Document> iteratedDocuments = new ArrayList<Document>();
+        for (final Document cur : collection.pipe()) {
             iteratedDocuments.add(cur);
         }
         assertEquals(3, iteratedDocuments.size());
@@ -90,7 +96,7 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
             }
         }).into(new ArrayList<String>());
         Collections.sort(iteratedDocuments);
-        assertEquals(Arrays.asList("01778", "10012", "94301"), iteratedDocuments);
+        assertEquals(asList("01778", "10012", "94301"), iteratedDocuments);
     }
 
     @Test
@@ -120,40 +126,40 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldProjectDocuments() {
         List<Document> sorted = collection.pipe().sort(Sort.ascending("_id")).project(new Document("_id", 0).append("zip", "$_id"))
-                .into(new ArrayList<Document>());
-        assertEquals(Arrays.asList(new Document("zip", "01778"), new Document("zip", "10012"), new Document("zip", "94301")), sorted);
+                                          .into(new ArrayList<Document>());
+        assertEquals(asList(new Document("zip", "01778"), new Document("zip", "10012"), new Document("zip", "94301")), sorted);
     }
 
     @Test
     public void shouldUnwindDocuments() {
         List<Document> unwound = collection.pipe().sort(Sort.ascending("_id"))
-                .project(new Document("_id", 0).append("tags", 1))
-                .unwind("$tags")
-                .into(new ArrayList<Document>());
-        assertEquals(Arrays.asList(
-                new Document("tags", "driver"),
-                new Document("tags", "driver"),
-                new Document("tags", "SA"),
-                new Document("tags", "CE"),
-                new Document("tags", "kernel"),
-                new Document("tags", "driver"),
-                new Document("tags", "SA"),
-                new Document("tags", "CE")),
-                unwound);
+                                           .project(new Document("_id", 0).append("tags", 1))
+                                           .unwind("$tags")
+                                           .into(new ArrayList<Document>());
+        assertEquals(asList(
+                               new Document("tags", "driver"),
+                               new Document("tags", "driver"),
+                               new Document("tags", "SA"),
+                               new Document("tags", "CE"),
+                               new Document("tags", "kernel"),
+                               new Document("tags", "driver"),
+                               new Document("tags", "SA"),
+                               new Document("tags", "CE")),
+                     unwound);
     }
 
     @Test
     public void shouldGroupDocuments() {
         List<Document> grouped = collection.pipe().sort(Sort.ascending("_id"))
-                .project(new Document("_id", 0).append("tags", 1))
-                .unwind("$tags")
-                .group(new Document("_id", "$tags"))
-                .sort(Sort.ascending("_id"))
-                .into(new ArrayList<Document>());
-        assertEquals(Arrays.asList(new Document("_id", "CE"),
-                new Document("_id", "SA"),
-                new Document("_id", "driver"),
-                new Document("_id", "kernel")),
-                grouped);
+                                           .project(new Document("_id", 0).append("tags", 1))
+                                           .unwind("$tags")
+                                           .group(new Document("_id", "$tags"))
+                                           .sort(Sort.ascending("_id"))
+                                           .into(new ArrayList<Document>());
+        assertEquals(asList(new Document("_id", "CE"),
+                            new Document("_id", "SA"),
+                            new Document("_id", "driver"),
+                            new Document("_id", "kernel")),
+                     grouped);
     }
 }

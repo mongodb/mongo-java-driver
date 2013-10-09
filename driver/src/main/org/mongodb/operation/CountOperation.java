@@ -52,10 +52,13 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
 
     public Long execute() {
         try {
-            final ServerConnectionProvider serverConnectionProvider = session.createServerConnectionProvider(
-                    new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(find.getReadPreference())));
+            ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
+
+            ServerConnectionProvider serverConnectionProvider =
+                session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
+
             return getCount(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder,
-                    codec, bufferProvider, serverConnectionProvider.getServerDescription(),
+                                                codec, bufferProvider, serverConnectionProvider.getServerDescription(),
                                                 serverConnectionProvider.getConnection(), true).execute());
         } finally {
             if (closeSession) {
@@ -68,22 +71,21 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     public MongoFuture<Long> executeAsync() {
         final SingleResultFuture<Long> retVal = new SingleResultFuture<Long>();
         new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder, bufferProvider,
-                session, closeSession).executeAsync().register(new SingleResultCallback<CommandResult>() {
+                             session, closeSession).executeAsync().register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult commandResult, final MongoException e) {
-                 if (e != null) {
-                     retVal.init(null, e);
-                 }
-                 else {
-                     retVal.init(getCount(commandResult), null);
-                 }
+                if (e != null) {
+                    retVal.init(null, e);
+                } else {
+                    retVal.init(getCount(commandResult), null);
+                }
             }
         });
         return retVal;
     }
 
     private Document asDocument() {
-        final Document document = new Document("count", namespace.getCollectionName());
+        Document document = new Document("count", namespace.getCollectionName());
 
         if (find.getFilter() != null) {
             document.put("query", find.getFilter());
@@ -97,6 +99,7 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
 
         return document;
     }
+
     private long getCount(final CommandResult commandResult) {
         return ((Number) commandResult.getResponse().get("n")).longValue();
     }

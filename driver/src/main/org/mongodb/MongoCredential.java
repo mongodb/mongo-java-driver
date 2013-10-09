@@ -31,8 +31,8 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
- * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
- * the authentication mechanism to use.
+ * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and the authentication mechanism to
+ * use.
  *
  * @since 3.0
  */
@@ -68,8 +68,8 @@ public final class MongoCredential {
     }
 
     /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default
-     * of {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default of
+     * {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
      *
      * @param userName the non-null user name
      * @return the credential
@@ -130,10 +130,10 @@ public final class MongoCredential {
     /**
      * Constructs a new instance using the given credential plus an additional mechanism property.
      *
-     * @param from the credential to copy from
-     * @param mechanismPropertyKey the new mechanism property key
+     * @param from                   the credential to copy from
+     * @param mechanismPropertyKey   the new mechanism property key
      * @param mechanismPropertyValue the new mechanism property value
-     * @param <T> the mechanism property type
+     * @param <T>                    the mechanism property type
      */
     <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
         notNull("mechanismPropertyKey", mechanismPropertyKey);
@@ -212,7 +212,7 @@ public final class MongoCredential {
             return false;
         }
 
-        final MongoCredential that = (MongoCredential) o;
+        MongoCredential that = (MongoCredential) o;
 
         if (!mechanism.equals(that.mechanism)) {
             return false;
@@ -246,11 +246,11 @@ public final class MongoCredential {
     @Override
     public String toString() {
         return "MongoCredential{"
-                + "mechanism=" + mechanism
-                + ", userName='" + userName + '\''
-                + ", source='" + source + '\''
-                + ", password=<hidden>"
-                + ", mechanismProperties=" + mechanismProperties
-                + '}';
+               + "mechanism=" + mechanism
+               + ", userName='" + userName + '\''
+               + ", source='" + source + '\''
+               + ", password=<hidden>"
+               + ", mechanismProperties=" + mechanismProperties
+               + '}';
     }
 }

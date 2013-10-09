@@ -26,7 +26,7 @@ public class Group extends Command {
 
     private static Document asDocument(final org.mongodb.operation.Group group, final String collectionName) {
 
-        final Document document = new Document("ns", collectionName);
+        Document document = new Document("ns", collectionName);
 
         if (group.getKey() != null) {
             document.put("key", group.getKey());

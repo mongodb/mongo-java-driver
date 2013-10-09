@@ -36,8 +36,8 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     @Test
     public void testGetCollectionNames() {
-        final String name = "testGetCollectionNames";
-        final DBCollection c = database.getCollection(name);
+        String name = "testGetCollectionNames";
+        DBCollection c = database.getCollection(name);
         c.drop();
         assertFalse(database.getCollectionNames().contains(name));
         c.save(new BasicDBObject("x", 1));
@@ -47,10 +47,10 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     @Test
     public void testRename() {
-        final String namea = "testRenameA";
-        final String nameb = "testRenameB";
-        final DBCollection firstCollection = database.getCollection(namea);
-        final DBCollection secondCollection = database.getCollection(nameb);
+        String namea = "testRenameA";
+        String nameb = "testRenameB";
+        DBCollection firstCollection = database.getCollection(namea);
+        DBCollection secondCollection = database.getCollection(nameb);
 
         firstCollection.drop();
         secondCollection.drop();
@@ -62,7 +62,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
         assertEquals(1, firstCollection.find().count());
         assertEquals(0, secondCollection.find().count());
 
-        final DBCollection renamedFirstCollection = firstCollection.rename(nameb);
+        DBCollection renamedFirstCollection = firstCollection.rename(nameb);
         assertEquals(0, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
         assertEquals(1, renamedFirstCollection.find().count());
@@ -72,10 +72,10 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     @Test
     public void shouldFailToRenameCollectionToAnExistingCollectionName() {
-        final String firstCollectionName = "firstCollection";
-        final String secondCollectionName = "secondCollection";
-        final DBCollection firstCollection = database.getCollection(firstCollectionName);
-        final DBCollection secondCollection = database.getCollection(secondCollectionName);
+        String firstCollectionName = "firstCollection";
+        String secondCollectionName = "secondCollection";
+        DBCollection firstCollection = database.getCollection(firstCollectionName);
+        DBCollection secondCollection = database.getCollection(secondCollectionName);
 
         firstCollection.drop();
         secondCollection.drop();
@@ -99,10 +99,10 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     @Test
     public void testRenameAndDrop() {
-        final String firstCollectionName = "anotherCollection";
-        final String secondCollectionName = "yetOneMoreCollection";
-        final DBCollection firstCollection = database.getCollection(firstCollectionName);
-        final DBCollection secondCollection = database.getCollection(secondCollectionName);
+        String firstCollectionName = "anotherCollection";
+        String secondCollectionName = "yetOneMoreCollection";
+        DBCollection firstCollection = database.getCollection(firstCollectionName);
+        DBCollection secondCollection = database.getCollection(secondCollectionName);
 
         firstCollection.drop();
         secondCollection.drop();
@@ -112,7 +112,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
         assertEquals(1, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
 
-        final DBCollection renamedFirstCollection = firstCollection.rename(secondCollectionName, true);
+        DBCollection renamedFirstCollection = firstCollection.rename(secondCollectionName, true);
         assertEquals(0, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
         assertEquals(1, renamedFirstCollection.find().count());
@@ -127,17 +127,17 @@ public class DBGeneralOldTests extends DatabaseTestCase {
     @Ignore("Not sure exactly what behaviour this test is asserting.  Needs re-writing")
     public void testGetCollectionNamesToSecondary() throws UnknownHostException {
         Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"),
-                                             new ServerAddress("127.0.0.1", 27018)));
+                                                    new ServerAddress("127.0.0.1", 27018)));
 
         try {
             if (isStandalone(mongo)) {
                 return;
             }
 
-            final String secondary = getMemberNameByState(mongo, "secondary");
+            String secondary = getMemberNameByState(mongo, "secondary");
             mongo.close();
             mongo = new MongoClient(secondary);
-            final DB db = mongo.getDB("secondaryTest");
+            DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();
         } finally {
@@ -175,9 +175,9 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     protected CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
         // Check to see if this is a replica set... if not, get out of here.
-        final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
+        CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
 
-        final String errorMsg = result.getErrorMessage();
+        String errorMsg = result.getErrorMessage();
 
         if (errorMsg != null && errorMsg.contains("--replSet")) {
             System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
@@ -189,7 +189,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
 
     @SuppressWarnings("unchecked")
     protected String getMemberNameByState(final Mongo mongo, final String stateStrToMatch) {
-        final CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
 
         for (final Document member : (List<Document>) replicaSetStatus.get("members")) {
             String hostnameAndPort = (String) member.get("name");
@@ -197,7 +197,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
                 hostnameAndPort = hostnameAndPort + ":27017";
             }
 
-            final String stateStr = (String) member.get("stateStr");
+            String stateStr = (String) member.get("stateStr");
 
             if (stateStr.equalsIgnoreCase(stateStrToMatch)) {
                 return hostnameAndPort;

@@ -23,17 +23,17 @@ import java.io.InputStream;
 public class Bits {
 
     public static void readFully(final InputStream in, final byte[] buffer)
-            throws IOException {
+        throws IOException {
         readFully(in, buffer, buffer.length);
     }
 
     public static void readFully(final InputStream in, final byte[] buffer, final int length)
-            throws IOException {
+        throws IOException {
         readFully(in, buffer, 0, length);
     }
 
     public static void readFully(final InputStream in, final byte[] buffer, final int offset, final int length)
-            throws IOException {
+        throws IOException {
         if (buffer.length < length + offset) {
             throw new IllegalArgumentException("Buffer is too small");
         }
@@ -54,7 +54,7 @@ public class Bits {
         return readInt(in, new byte[4]);
     }
 
-    public static int readInt(final InputStream in, byte[] buffer)  throws IOException {
+    public static int readInt(final InputStream in, final byte[] buffer) throws IOException {
         readFully(in, buffer, 4);
         return readInt(buffer);
     }

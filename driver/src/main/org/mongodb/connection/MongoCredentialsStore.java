@@ -28,13 +28,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * An effectively immutable store of credentials to mongo servers.  It enforces the invariant that there can be at most
- * one credentials for each database.  It allows at most one credentials with a null database.
- * <p>
- * There is still a package-protected method to add a new credentials to the store, but it's only there
- * to support DB.authenticate, which allows you to add new credentials at any point during the life of a MongoClient.
- * <p>
+ * An effectively immutable store of credentials to mongo servers.  It enforces the invariant that there can be at most one credentials for
+ * each database.  It allows at most one credentials with a null database.
+ * <p/>
+ * There is still a package-protected method to add a new credentials to the store, but it's only there to support DB.authenticate, which
+ * allows you to add new credentials at any point during the life of a MongoClient.
+ * <p/>
  * Note: This class is not part of the public API and may break binary compatibility in minor releases.
+ *
  * @since 3.0.0
  */
 @ThreadSafe
@@ -69,7 +70,7 @@ class MongoCredentialsStore {
         if (credentialsList == null) {
             return;
         }
-        for (MongoCredential cur : credentialsList) {
+        for (final MongoCredential cur : credentialsList) {
             add(cur);
         }
     }
@@ -116,6 +117,7 @@ class MongoCredentialsStore {
 
     /**
      * Gets the MongoCredentials in this map as a List
+     *
      * @return the list of credentials
      */
     public synchronized List<MongoCredential> asList() {
@@ -131,7 +133,7 @@ class MongoCredentialsStore {
             return false;
         }
 
-        final MongoCredentialsStore that = (MongoCredentialsStore) o;
+        MongoCredentialsStore that = (MongoCredentialsStore) o;
 
         if (!credentialsMap.equals(that.credentialsMap)) {
             return false;

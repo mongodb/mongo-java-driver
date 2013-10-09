@@ -28,14 +28,14 @@ import java.util.logging.Logger;
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
 public class JMXMBeanServer implements MBeanServer {
-    private static Logger logger = Loggers.getLogger("management");
+    private static final Logger LOGGER = Loggers.getLogger("management");
 
     @Override
     public void registerMBean(final Object mBean, final String mBeanName) {
         try {
             server.registerMBean(mBean, new ObjectName(mBeanName));
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
+            LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
         }
     }
 
@@ -47,7 +47,7 @@ public class JMXMBeanServer implements MBeanServer {
                 server.unregisterMBean(objectName);
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Unable to unregister MBean " + mBeanName, e);
+            LOGGER.log(Level.WARNING, "Unable to unregister MBean " + mBeanName, e);
         }
     }
 

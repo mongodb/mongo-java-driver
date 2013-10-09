@@ -29,7 +29,7 @@ public class DoubleArrayCodec implements Encoder<double[]> {
     @Override
     public void encode(final BSONWriter bsonWriter, final double[] value) {
         bsonWriter.writeStartArray();
-        for (double doubleValue : value) {
+        for (final double doubleValue : value) {
             doubleCodec.encode(bsonWriter, doubleValue);
         }
         bsonWriter.writeEndArray();

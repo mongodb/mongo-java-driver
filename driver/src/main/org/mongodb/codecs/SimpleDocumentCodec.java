@@ -59,12 +59,12 @@ public class SimpleDocumentCodec implements Codec<Document> {
 
     @Override
     public Document decode(final BSONReader reader) {
-        final Document document = new Document();
+        Document document = new Document();
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            final Object value = codecs.decode(reader);
+            String fieldName = reader.readName();
+            Object value = codecs.decode(reader);
             document.put(fieldName, value);
         }
 

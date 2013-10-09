@@ -30,8 +30,8 @@ public class QueryTest extends DatabaseTestCase {
         collection.insert(new BasicDBObject("name", "Bob"));
 
         //when
-        final DBObject filter = QueryBuilder.start("name").is("Bob").get();
-        final DBCursor dbCursor = collection.find(filter);
+        DBObject filter = QueryBuilder.start("name").is("Bob").get();
+        DBCursor dbCursor = collection.find(filter);
 
         //then
         assertThat(dbCursor.next().get("name").toString(), is("Bob"));
@@ -40,8 +40,8 @@ public class QueryTest extends DatabaseTestCase {
     @Test
     @Ignore
     public void shouldBeAbleToQueryWithJSONString() {
-//        JSON.parse(jsonString);
-//        collection.find(JSON.parse(jsonString))
+        //        JSON.parse(jsonString);
+        //        collection.find(JSON.parse(jsonString))
     }
 
 }

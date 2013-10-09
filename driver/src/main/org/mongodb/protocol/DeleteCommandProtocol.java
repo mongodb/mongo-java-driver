@@ -45,7 +45,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     public DeleteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> removes,
                                  final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
                                  final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, writeConcern,  bufferProvider, serverDescription, connection, closeConnection);
+        super(namespace, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
         this.removes = notNull("removes", removes);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
@@ -53,7 +53,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                getConnection().getId(), getConnection().getServerAddress()));
+                           getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Delete completed");
         return writeResult;
@@ -62,7 +62,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     @Override
     protected DeleteCommandMessage createRequestMessage() {
         return new DeleteCommandMessage(getNamespace(), getWriteConcern(), removes, queryEncoder,
-                getMessageSettings(getServerDescription()));
+                                        getMessageSettings(getServerDescription()));
     }
 
     @Override

@@ -33,8 +33,8 @@ public class CodeWithScopeCodec implements Codec<CodeWithScope> {
 
     @Override
     public CodeWithScope decode(final BSONReader bsonReader) {
-        final String code = bsonReader.readJavaScriptWithScope();
-        final Document scope = simpleDocumentCodec.decode(bsonReader);
+        String code = bsonReader.readJavaScriptWithScope();
+        Document scope = simpleDocumentCodec.decode(bsonReader);
         return new CodeWithScope(code, scope);
     }
 

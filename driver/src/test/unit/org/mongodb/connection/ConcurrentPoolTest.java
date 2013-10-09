@@ -36,7 +36,7 @@ public class ConcurrentPoolTest {
         private boolean shouldPrune;
 
         @Override
-        public void close()  {
+        public void close() {
             closed = true;
         }
 
@@ -48,7 +48,7 @@ public class ConcurrentPoolTest {
             return shouldPrune;
         }
     }
-    
+
     @Before
     public void setUp() {
         pool = new ConcurrentPool<TestCloseable>(3, new ConcurrentPool.ItemFactory<TestCloseable>() {

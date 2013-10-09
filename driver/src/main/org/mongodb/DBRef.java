@@ -54,7 +54,7 @@ public class DBRef {
             return false;
         }
 
-        final DBRef dbRef = (DBRef) o;
+        DBRef dbRef = (DBRef) o;
 
         if (!id.equals(dbRef.id)) {
             return false;

@@ -446,12 +446,12 @@ public class QueryBuilder implements ConvertibleToDocument {
             return;
         }
 
-        final Object storedValue = query.get(currentKey);
+        Object storedValue = query.get(currentKey);
         Document operand;
         if (!(storedValue instanceof Document)) {
             operand = new Document();
             if (hasNot) {
-                final Document notOperand = new Document(QueryOperators.NOT, operand);
+                Document notOperand = new Document(QueryOperators.NOT, operand);
                 query.put(currentKey, notOperand);
                 hasNot = false;
             } else {

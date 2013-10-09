@@ -21,9 +21,9 @@ import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 
 public class PojoCodec<T> implements CollectibleCodec<T> {
-    private Class<T> theClass;
-    private PojoDecoder pojoDecoder;
-    private PojoEncoder<T> pojoEncoder;
+    private final Class<T> theClass;
+    private final PojoDecoder pojoDecoder;
+    private final PojoEncoder<T> pojoEncoder;
 
     public PojoCodec(final Codecs codecs, final Class<T> theClass) {
         this.theClass = theClass;

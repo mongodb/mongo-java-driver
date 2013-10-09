@@ -21,8 +21,8 @@ import java.util.Iterator;
 
 final class StringUtils {
     public static String join(final String delimiter, final Collection<?> s) {
-        final StringBuilder builder = new StringBuilder();
-        final Iterator<?> iter = s.iterator();
+        StringBuilder builder = new StringBuilder();
+        Iterator<?> iter = s.iterator();
         while (iter.hasNext()) {
             builder.append(iter.next());
             if (!iter.hasNext()) {
@@ -33,6 +33,5 @@ final class StringUtils {
         return builder.toString();
     }
 
-    private StringUtils() {
-    }
+    private StringUtils() { }
 }

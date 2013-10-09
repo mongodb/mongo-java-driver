@@ -35,23 +35,22 @@ final class ProtocolHelper {
     static MongoException getWriteException(final WriteResult writeResult) {
         if (!writeResult.getCommandResult().isOk()) {
             return new MongoCommandFailureException(writeResult.getCommandResult());
-        }
-        else if (writeResult.getErrorMessage() != null) {
+        } else if (writeResult.getErrorMessage() != null) {
             if (DUPLICATE_KEY_ERROR_CODES.contains(writeResult.getCommandResult().getErrorCode())) {
                 return new MongoDuplicateKeyException(writeResult);
-            }
-            else {
+            } else {
                 return new MongoWriteException(writeResult);
             }
-        }
-        else {
+        } else {
             return null;
         }
     }
 
     public static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
-        return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
-                .getMaxMessageSize()).build();
+        return MessageSettings.builder()
+                              .maxDocumentSize(serverDescription.getMaxDocumentSize())
+                              .maxMessageSize(serverDescription.getMaxMessageSize())
+                              .build();
     }
 
     public static RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {

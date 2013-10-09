@@ -22,14 +22,11 @@ public final class FieldHelpers {
     public static boolean asBoolean(final Object fieldValue) {
         if (fieldValue == null) {
             return false;
-        }
-        else if (fieldValue instanceof Boolean) {
+        } else if (fieldValue instanceof Boolean) {
             return (Boolean) fieldValue;
-        }
-        else if (fieldValue instanceof Number) {
+        } else if (fieldValue instanceof Number) {
             return ((Number) fieldValue).doubleValue() != 0;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("value is of type " + fieldValue.getClass()
                                                + " and can not be converted to a boolean.");
         }

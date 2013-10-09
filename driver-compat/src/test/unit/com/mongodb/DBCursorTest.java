@@ -53,7 +53,7 @@ public class DBCursorTest extends DatabaseTestCase {
         cursor.sort(new BasicDBObject("_id", 1));
         int i = 0;
         while (cursor.hasNext()) {
-            final DBObject cur = cursor.next();
+            DBObject cur = cursor.next();
             assertEquals(i, cur.get("_id"));
             i++;
         }
@@ -77,14 +77,14 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMarkPartial() {
-        final DBCursor markPartialCursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
+        DBCursor markPartialCursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 1));
         assertTrue(markPartialCursor.next().isPartialObject());
     }
 
     @Test
     public void testMarkPartialForEmptyObjects() {
-        final DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 0));
-        for (DBObject document : cursor) {
+        DBCursor cursor = collection.find(new BasicDBObject(), new BasicDBObject("_id", 0));
+        for (final DBObject document : cursor) {
             assertTrue(document.isPartialObject());
         }
     }
@@ -92,10 +92,10 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testIterator() {
         cursor.sort(new BasicDBObject("_id", 1));
-        final Iterator<DBObject> iter = cursor.iterator();
+        Iterator<DBObject> iter = cursor.iterator();
         int i = 0;
         while (iter.hasNext()) {
-            final DBObject cur = iter.next();
+            DBObject cur = iter.next();
             assertEquals(i, cur.get("_id"));
             i++;
         }
@@ -104,7 +104,7 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     @Ignore
     public void testCopy() {
-        final DBCursor cursorCopy = cursor.copy();
+        DBCursor cursorCopy = cursor.copy();
         assertEquals(cursor.getCollection(), cursorCopy.getCollection());
         assertEquals(cursor.getQuery(), cursorCopy.getQuery());
     }
@@ -122,7 +122,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testLimit() {
-        final DBCursor cursor = collection.find().limit(4);
+        DBCursor cursor = collection.find().limit(4);
         try {
             assertEquals(4, cursor.toArray().size());
         } finally {
@@ -132,7 +132,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSkip() {
-        final DBCursor cursor = collection.find().skip(2);
+        DBCursor cursor = collection.find().skip(2);
         try {
             assertEquals(8, cursor.toArray().size());
         } finally {
@@ -142,7 +142,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testGetCursorId() {
-        final DBCursor cursor = collection.find().limit(2);
+        DBCursor cursor = collection.find().limit(2);
         assertEquals(0, cursor.getCursorId());
         cursor.hasNext();
         assertNotEquals(0, cursor.getCursorId());
@@ -150,7 +150,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testGetServerAddress() {
-        final DBCursor cursor = collection.find().limit(2);
+        DBCursor cursor = collection.find().limit(2);
         assertEquals(null, cursor.getServerAddress());
         cursor.hasNext();
         assertTrue(getClient().getServerAddressList().contains(cursor.getServerAddress()));
@@ -158,7 +158,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void getNumSeen() {
-        final DBCursor cursor = collection.find();
+        DBCursor cursor = collection.find();
         assertEquals(0, cursor.numSeen());
         cursor.hasNext();
         assertEquals(0, cursor.numSeen());
@@ -199,16 +199,16 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testGetKeysWanted() {
         assertNull(cursor.getKeysWanted());
-        final DBObject keys = new BasicDBObject("x", 1);
-        final DBCursor cursorWithKeys = collection.find(new BasicDBObject(), keys);
+        DBObject keys = new BasicDBObject("x", 1);
+        DBCursor cursorWithKeys = collection.find(new BasicDBObject(), keys);
         assertEquals(keys, cursorWithKeys.getKeysWanted());
     }
 
     @Test
     public void testGetQuery() {
         assertEquals(new BasicDBObject(), cursor.getQuery());
-        final DBObject query = new BasicDBObject("x", 1);
-        final DBCursor cursorWithQuery = collection.find(query);
+        DBObject query = new BasicDBObject("x", 1);
+        DBCursor cursorWithQuery = collection.find(query);
         assertEquals(query, cursorWithQuery.getQuery());
     }
 
@@ -221,9 +221,9 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testConstructor() {
-        final DBObject query = new BasicDBObject("x", 1);
-        final DBObject keys = new BasicDBObject("x", 1).append("y", 1);
-        final DBCursor local = new DBCursor(collection, query, keys, ReadPreference.secondary());
+        DBObject query = new BasicDBObject("x", 1);
+        DBObject keys = new BasicDBObject("x", 1).append("y", 1);
+        DBCursor local = new DBCursor(collection, query, keys, ReadPreference.secondary());
         assertEquals(ReadPreference.secondary(), local.getReadPreference());
         assertEquals(query, local.getQuery());
         assertEquals(keys, local.getKeysWanted());

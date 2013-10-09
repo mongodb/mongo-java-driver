@@ -23,8 +23,8 @@ import org.mongodb.MongoCredential;
 import org.mongodb.codecs.DocumentCodec;
 
 import java.util.Collections;
-import java.util.concurrent.Executors;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.junit.Assert.assertNotNull;
 import static org.mongodb.Fixture.getBufferProvider;
 
@@ -33,9 +33,13 @@ public class SSLNIOStreamTest {
     @Ignore
     @Test
     public void testIt() {
-        InternalConnection internalConnection = new InternalStreamConnection(
-                "1", new SSLNIOStream(new ServerAddress(), getBufferProvider(), Executors.newFixedThreadPool(1)),
-                Collections.<MongoCredential>emptyList(), getBufferProvider(), new NoOpConnectionListener());
+        InternalConnection internalConnection = new InternalStreamConnection("1",
+                                                                             new SSLNIOStream(new ServerAddress(),
+                                                                                              getBufferProvider(),
+                                                                                              newFixedThreadPool(1)),
+                                                                             Collections.<MongoCredential>emptyList(),
+                                                                             getBufferProvider(),
+                                                                             new NoOpConnectionListener());
         assertNotNull(internalConnection);
         CommandHelper.executeCommand("test", new Document("getlasterror", 1), new DocumentCodec(), internalConnection, getBufferProvider());
     }

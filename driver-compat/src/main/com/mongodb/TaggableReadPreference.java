@@ -33,8 +33,8 @@ public class TaggableReadPreference extends ReadPreference {
     }
 
     public List<DBObject> getTagSets() {
-        final List<DBObject> documents = new ArrayList<DBObject>(proxiedTaggable.getTagsList().size());
-        for (Tags tag : proxiedTaggable.getTagsList()) {
+        List<DBObject> documents = new ArrayList<DBObject>(proxiedTaggable.getTagsList().size());
+        for (final Tags tag : proxiedTaggable.getTagsList()) {
             documents.add(new BasicDBObject(tag));
         }
         return Collections.unmodifiableList(documents);
@@ -42,7 +42,7 @@ public class TaggableReadPreference extends ReadPreference {
 
     @Override
     public DBObject toDBObject() {
-        final DBObject document = new BasicDBObject("mode", getName());
+        DBObject document = new BasicDBObject("mode", getName());
 
         if (!proxiedTaggable.getTagsList().isEmpty()) {
             document.put("tags", getTagSets());
@@ -65,7 +65,7 @@ public class TaggableReadPreference extends ReadPreference {
             return false;
         }
 
-        final TaggableReadPreference that = (TaggableReadPreference) o;
+        TaggableReadPreference that = (TaggableReadPreference) o;
 
         if (!proxiedTaggable.equals(that.proxiedTaggable)) {
             return false;

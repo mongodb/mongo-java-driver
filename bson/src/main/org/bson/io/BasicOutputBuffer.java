@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BasicOutputBuffer.java
-
 package org.bson.io;
 
 import org.bson.ByteBuf;
@@ -28,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BasicOutputBuffer extends OutputBuffer {
-
     private int position;
     private byte[] buffer = new byte[1024];
 
@@ -93,7 +90,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     private void ensure(final int more) {
-        final int need = position + more;
+        int need = position + more;
         if (need < buffer.length) {
             return;
         }
@@ -103,7 +100,7 @@ public class BasicOutputBuffer extends OutputBuffer {
             newSize = need + 128;
         }
 
-        final byte[] n = new byte[newSize];
+        byte[] n = new byte[newSize];
         System.arraycopy(buffer, 0, n, 0, position);
         buffer = n;
     }
@@ -113,7 +110,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     private void writeInt(final int pos, final int x) {
-        final int save = getPosition();
+        int save = getPosition();
         setPosition(pos);
         writeInt(x);
         setPosition(save);

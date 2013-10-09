@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 3.0
  */
 public class ClusterEventMulticaster implements ClusterListener {
-    private Set<ClusterListener> clusterListeners = Collections.newSetFromMap(new ConcurrentHashMap<ClusterListener, Boolean>());
+    private final Set<ClusterListener> clusterListeners = Collections.newSetFromMap(new ConcurrentHashMap<ClusterListener, Boolean>());
 
     /**
      * Adds the given cluster listener to the list of listeners to invoke on cluster events.
@@ -48,21 +48,21 @@ public class ClusterEventMulticaster implements ClusterListener {
 
     @Override
     public void clusterOpened(final ClusterEvent event) {
-        for (ClusterListener cur : clusterListeners) {
+        for (final ClusterListener cur : clusterListeners) {
             cur.clusterOpened(event);
         }
     }
 
     @Override
     public void clusterClosed(final ClusterEvent event) {
-        for (ClusterListener cur : clusterListeners) {
+        for (final ClusterListener cur : clusterListeners) {
             cur.clusterClosed(event);
         }
     }
 
     @Override
     public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-        for (ClusterListener cur : clusterListeners) {
+        for (final ClusterListener cur : clusterListeners) {
             cur.clusterDescriptionChanged(event);
         }
     }

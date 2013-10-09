@@ -48,7 +48,7 @@ public class CodeWithScope extends Code {
             return false;
         }
 
-        final CodeWithScope that = (CodeWithScope) o;
+        CodeWithScope that = (CodeWithScope) o;
 
         if (scope != null ? !scope.equals(that.scope) : that.scope != null) {
             return false;

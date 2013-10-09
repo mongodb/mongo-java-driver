@@ -19,7 +19,6 @@ package org.mongodb;
 import org.mongodb.annotations.Immutable;
 
 /**
- *
  * @since 3.0
  */
 @Immutable
@@ -63,7 +62,7 @@ public final class MongoNamespace {
             return false;
         }
 
-        final MongoNamespace that = (MongoNamespace) o;
+        MongoNamespace that = (MongoNamespace) o;
 
         if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null) {
             return false;

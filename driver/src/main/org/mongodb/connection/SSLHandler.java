@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-
 package org.mongodb.connection;
-
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -38,11 +36,9 @@ import java.security.cert.CertificateException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-
 public class SSLHandler {
-
-    private SSLEngine sslEngine;
-    private SocketChannel channel;
+    private final SSLEngine sslEngine;
+    private final SocketChannel channel;
 
     private ByteBuffer sendBuffer = null;
     private ByteBuffer receiveBuffer = null;
@@ -58,19 +54,19 @@ public class SSLHandler {
     static {
         try {
             SSL_CONTEXT = SSLContext.getInstance("TLS");
-            final KeyStore ks = KeyStore.getInstance(System.getProperty("javax.net.ssl.keyStoreType", "JKS"));
-            final KeyStore ts = KeyStore.getInstance(System.getProperty("javax.net.ssl.trustStoreType", "JKS"));
+            KeyStore ks = KeyStore.getInstance(System.getProperty("javax.net.ssl.keyStoreType", "JKS"));
+            KeyStore ts = KeyStore.getInstance(System.getProperty("javax.net.ssl.trustStoreType", "JKS"));
 
-            final char[] ksPassPhrase = System.getProperty("javax.net.ssl.keyStorePassword").toCharArray();
-            final char[] tsPassPhrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
+            char[] ksPassPhrase = System.getProperty("javax.net.ssl.keyStorePassword").toCharArray();
+            char[] tsPassPhrase = System.getProperty("javax.net.ssl.trustStorePassword").toCharArray();
 
             load(ks, ksPassPhrase, System.getProperty("javax.net.ssl.keyStore"));
             load(ts, tsPassPhrase, System.getProperty("javax.net.ssl.trustStore"));
 
-            final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(ks, ksPassPhrase);
 
-            final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
             tmf.init(ts);
 
             SSL_CONTEXT.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
@@ -115,7 +111,7 @@ public class SSLHandler {
 
     protected int doWrite(final ByteBuffer buff) throws IOException {
         doHandshake();
-        final int out = buff.remaining();
+        int out = buff.remaining();
         while (buff.remaining() > 0) {
             if (wrapAndWrite(buff) < 0) {
                 return -1;
@@ -143,7 +139,7 @@ public class SSLHandler {
         }
         int read = 0;
         try {
-            final byte[] array = new byte[buffer.limit()];
+            byte[] array = new byte[buffer.limit()];
             unwrappedBuffer.get(array);
             buffer.put(array);
             read = array.length;
@@ -177,7 +173,7 @@ public class SSLHandler {
         sendBuffer.flip();
         int count = 0;
         while (sendBuffer.hasRemaining()) {
-            final int x = channel.write(sendBuffer);
+            int x = channel.write(sendBuffer);
             if (x >= 0) {
                 count += x;
             } else {
@@ -246,13 +242,13 @@ public class SSLHandler {
     private void doHandshake() {
 
         handShakeDone = false;
-        final ByteBuffer tmpBuff = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
+        ByteBuffer tmpBuff = ByteBuffer.allocate(sslEngine.getSession().getApplicationBufferSize());
         HandshakeStatus status = sslEngine.getHandshakeStatus();
         while (status != HandshakeStatus.FINISHED && status != HandshakeStatus.NOT_HANDSHAKING) {
             switch (status) {
                 case NEED_TASK:
 
-                    final Executor exec = Executors.newSingleThreadExecutor();
+                    Executor exec = Executors.newSingleThreadExecutor();
                     Runnable task;
 
                     while ((task = sslEngine.getDelegatedTask()) != null) {

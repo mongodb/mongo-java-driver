@@ -72,34 +72,47 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     }
 
     public MongoFuture<WriteResult> executeAsync() {
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+        SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         RequestMessage requestMessage = createRequestMessage(getMessageSettings(serverDescription));
-        final RequestMessage nextMessage = encodeMessageToBuffer(requestMessage, buffer);
+        RequestMessage nextMessage = encodeMessageToBuffer(requestMessage, buffer);
         if (writeConcern.isAcknowledged()) {
-            final CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
-                    COMMAND_COLLECTION_NAME).getFullName(),
-                    writeConcern.asDocument(),
-                    new DocumentCodec(),
-                    getMessageSettings(serverDescription));
+            CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                                                                                       COMMAND_COLLECTION_NAME).getFullName(),
+                                                                    writeConcern.asDocument(),
+                                                                    new DocumentCodec(),
+                                                                    getMessageSettings(serverDescription));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendMessageAsync(buffer.getByteBuffers(), getLastErrorMessage.getId(),
-                    new SendMessageCallback<WriteResult>(connection, buffer, getLastErrorMessage.getId(), retVal,
-                            new WriteResultCallback(retVal, new DocumentCodec(),
-                                    getNamespace(), nextMessage, writeConcern, getLastErrorMessage.getId(), bufferProvider,
-                                    serverDescription, connection, closeConnection)));
-        }
-        else {
-            connection.sendMessageAsync(buffer.getByteBuffers(), requestMessage.getId(), new UnacknowledgedWriteResultCallback(retVal,
-                    getNamespace(), nextMessage, buffer, bufferProvider, serverDescription, connection, closeConnection));
+                                        new SendMessageCallback<WriteResult>(connection, buffer, getLastErrorMessage.getId(), retVal,
+                                                                             new WriteResultCallback(retVal,
+                                                                                                     new DocumentCodec(),
+                                                                                                     getNamespace(),
+                                                                                                     nextMessage,
+                                                                                                     writeConcern,
+                                                                                                     getLastErrorMessage.getId(),
+                                                                                                     bufferProvider,
+                                                                                                     serverDescription,
+                                                                                                     connection,
+                                                                                                     closeConnection)));
+        } else {
+            connection.sendMessageAsync(buffer.getByteBuffers(), requestMessage.getId(),
+                                        new UnacknowledgedWriteResultCallback(retVal,
+                                                                              getNamespace(),
+                                                                              nextMessage,
+                                                                              buffer,
+                                                                              bufferProvider,
+                                                                              serverDescription,
+                                                                              connection,
+                                                                              closeConnection));
         }
         return retVal;
     }
 
 
     private CommandMessage sendMessage() {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
             RequestMessage lastMessage = createRequestMessage(getMessageSettings(serverDescription));
             RequestMessage nextMessage = lastMessage.encode(buffer);
@@ -117,9 +130,9 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             CommandMessage getLastErrorMessage = null;
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
-                        COMMAND_COLLECTION_NAME).getFullName(),
-                        writeConcern.asDocument(), new DocumentCodec(),
-                        getMessageSettings(serverDescription)
+                                                                            COMMAND_COLLECTION_NAME).getFullName(),
+                                                         writeConcern.asDocument(), new DocumentCodec(),
+                                                         getMessageSettings(serverDescription)
                 );
                 getLastErrorMessage.encode(buffer);
                 lastMessage = getLastErrorMessage;
@@ -135,11 +148,12 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         if (requestMessage == null) {
             return null;
         }
-        final ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
+        ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), requestMessage.getId());
             WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),
-                    replyMessage.getDocuments().get(0), replyMessage.getElapsedNanoseconds()), writeConcern);
+                                                                   replyMessage.getDocuments().get(0),
+                                                                   replyMessage.getElapsedNanoseconds()), writeConcern);
             throwIfWriteException(result);
             return result;
         } finally {

@@ -37,11 +37,10 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
         try {
             if (e != null || responseBuffers == null) {
                 return callCallback((CommandResult) null, e);
-            }
-            else {
+            } else {
                 ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, getRequestId());
                 return callCallback(new CommandResult(getConnection().getServerAddress(), replyMessage.getDocuments().get(0),
-                        replyMessage.getElapsedNanoseconds()), null);
+                                                      replyMessage.getElapsedNanoseconds()), null);
             }
         } finally {
             if (responseBuffers != null) {
@@ -50,5 +49,5 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
         }
     }
 
-    protected abstract boolean callCallback(final CommandResult commandResult, final MongoException e);
+    protected abstract boolean callCallback(CommandResult commandResult, MongoException e);
 }

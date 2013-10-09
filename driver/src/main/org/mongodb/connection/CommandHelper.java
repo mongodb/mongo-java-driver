@@ -36,10 +36,10 @@ final class CommandHelper {
 
     private static CommandMessage sendMessage(final String database, final Document command, final Codec<Document> codec,
                                               final InternalConnection internalConnection, final BufferProvider bufferProvider) {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                              command, codec, MessageSettings.builder().build());
+            CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
+                                                        command, codec, MessageSettings.builder().build());
             message.encode(buffer);
             internalConnection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
@@ -50,9 +50,9 @@ final class CommandHelper {
 
     private static CommandResult receiveMessage(final Codec<Document> codec, final InternalConnection internalConnection,
                                                 final CommandMessage message) {
-        final ResponseBuffers responseBuffers = internalConnection.receiveMessage();
+        ResponseBuffers responseBuffers = internalConnection.receiveMessage();
         try {
-            final ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
+            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
             return createCommandResult(replyMessage, internalConnection.getServerAddress());
         } finally {
             responseBuffers.close();
@@ -61,7 +61,7 @@ final class CommandHelper {
 
     private static CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final ServerAddress serverAddress) {
         CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
-                replyMessage.getElapsedNanoseconds());
+                                                        replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);
         }

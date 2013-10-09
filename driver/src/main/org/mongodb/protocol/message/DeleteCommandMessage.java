@@ -58,7 +58,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(), getWriteConcern(), deletes.subList(i, deletes.size()),
-                        getCommandEncoder(), getSettings());
+                                                       getCommandEncoder(), getSettings());
                 break;
             }
         }

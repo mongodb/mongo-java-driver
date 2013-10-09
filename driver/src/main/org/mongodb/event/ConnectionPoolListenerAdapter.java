@@ -17,8 +17,8 @@
 package org.mongodb.event;
 
 /**
- * An adapter for connection pool listener implementations, for clients that want to listen for a subset of connection pool events. 
- * Extend this class to listen for connection pool events and override the methods of interest. 
+ * An adapter for connection pool listener implementations, for clients that want to listen for a subset of connection pool events. Extend
+ * this class to listen for connection pool events and override the methods of interest.
  *
  * @since 3.0
  */

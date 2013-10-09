@@ -45,7 +45,7 @@ public class CodeWScope extends Code {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final CodeWScope c = (CodeWScope) o;
+        CodeWScope c = (CodeWScope) o;
         return getCode().equals(c.getCode()) && scope.equals(c.scope);
     }
 

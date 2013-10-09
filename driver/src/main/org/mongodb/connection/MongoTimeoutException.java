@@ -26,6 +26,7 @@ public class MongoTimeoutException extends MongoClientException {
 
     /**
      * Constructs a new instance with the given message.
+     *
      * @param message the message
      */
     public MongoTimeoutException(final String message) {

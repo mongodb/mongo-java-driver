@@ -50,7 +50,7 @@ public class EncoderRegistry {
 
     @SuppressWarnings({"unchecked", "rawtypes"}) //not cool
     public <T> Encoder<T> get(final Class<T> aClass) {
-        for (Map.Entry<Class, Encoder> cur : classToEncoderMap.entrySet()) {
+        for (final Map.Entry<Class, Encoder> cur : classToEncoderMap.entrySet()) {
             if (cur.getKey().isAssignableFrom(aClass)) {
                 return cur.getValue();
             }

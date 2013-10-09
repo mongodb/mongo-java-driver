@@ -21,7 +21,6 @@ import org.mongodb.CommandResult;
 
 /**
  * A class that represents a result of map/reduce operation.
- *
  */
 public class MapReduceInlineCommandResult<T> extends CommandResult {
 
@@ -44,6 +43,5 @@ public class MapReduceInlineCommandResult<T> extends CommandResult {
     public Iterable<T> getResults() {
         return (Iterable<T>) getResponse().get("results");
     }
-
 
 }

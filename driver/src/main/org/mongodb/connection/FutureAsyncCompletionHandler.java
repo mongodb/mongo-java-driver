@@ -36,8 +36,7 @@ class FutureAsyncCompletionHandler implements AsyncCompletionHandler {
     public void failed(final Throwable t) {
         if (t instanceof MongoException) {
             future.init(null, (MongoException) t);
-        }
-        else {
+        } else {
             future.init(null, new MongoInternalException("Unexpected exception", t));
         }
     }

@@ -21,7 +21,7 @@ import java.util.Map;
 public class ManualTaglet extends DocTaglet {
 
     public static void register(final Map<String, Taglet> tagletMap) {
-        final ManualTaglet t = new ManualTaglet();
+        ManualTaglet t = new ManualTaglet();
         tagletMap.put(t.getName(), t);
     }
 

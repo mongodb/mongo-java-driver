@@ -43,11 +43,11 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     @Override
     public Worker decode(final BSONReader reader) {
         reader.readStartDocument();
-        final ObjectId id = reader.readObjectId("_id");
-        final String name = reader.readString("name");
-        final String jobTitle = reader.readString("jobTitle");
-        final Date dateStarted = new Date(reader.readDateTime("dateStarted"));
-        final int numberOfJobs = reader.readInt32("numberOfJobs");
+        ObjectId id = reader.readObjectId("_id");
+        String name = reader.readString("name");
+        String jobTitle = reader.readString("jobTitle");
+        Date dateStarted = new Date(reader.readDateTime("dateStarted"));
+        int numberOfJobs = reader.readInt32("numberOfJobs");
         reader.readEndDocument();
         return new Worker(id, name, jobTitle, dateStarted, numberOfJobs);
     }

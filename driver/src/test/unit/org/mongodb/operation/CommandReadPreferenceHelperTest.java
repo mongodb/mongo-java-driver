@@ -68,7 +68,7 @@ public class CommandReadPreferenceHelperTest {
         assertEquals(secondary(), getCommandReadPreference(new Document("text", "test.test"), secondary(),
                                                            clusterDescription));
         assertEquals(secondary(), getCommandReadPreference(new Document("mapReduce", "test.test")
-                                                           .append("out", new Document("inline", true)),
+                                                               .append("out", new Document("inline", true)),
                                                            secondary(),
                                                            clusterDescription));
 

@@ -42,13 +42,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldReplaceDocumentAndReturnOriginal() {
-        final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someOtherField", "withSomeOtherValue");
+        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someOtherField", "withSomeOtherValue");
         collection.insert(documentInserted);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                            .getOneAndReplace(new Document("foo", "bar").append("_id", documentInserted.get("_id")));
+        Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
+                                      .getOneAndReplace(new Document("foo", "bar").append("_id", documentInserted.get("_id")));
 
         assertThat("Document, retrieved from replaceAndGet should match the document inserted before",
                    document, equalTo(documentInserted));
@@ -57,14 +57,14 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnOriginalItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 0);
-        final MongoCollection<Worker> collection = database.getCollection(getCollectionName(), new WorkerCodec());
+        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), new WorkerCodec());
         collection.insert(pat);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 1);
-        final Worker returnedDocument = collection.find(new Document("name", "Pat"))
-                                                  .getOneAndReplace(jordan);
+        Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 1);
+        Worker returnedDocument = collection.find(new Document("name", "Pat"))
+                                            .getOneAndReplace(jordan);
 
         assertThat("Document, retrieved from getOneAndReplace, should match the document inserted before",
                    returnedDocument, equalTo(pat));
@@ -73,14 +73,14 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnNewItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 3);
-        final MongoCollection<Worker> collection = database.getCollection(getCollectionName(), new WorkerCodec());
+        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), new WorkerCodec());
         collection.insert(pat);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
-        final Worker returnedDocument = collection.find(new Document("name", "Pat"))
-                                                  .replaceOneAndGet(jordan);
+        Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
+        Worker returnedDocument = collection.find(new Document("name", "Pat"))
+                                            .replaceOneAndGet(jordan);
 
         assertThat("Worker retrieved from replaceOneAndGet should match the updated Worker",
                    returnedDocument, equalTo(jordan));
@@ -88,15 +88,15 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnNewDocumentAfterReplaceWhenUsingReplaceOneAndGet() {
-        final ObjectId id = new ObjectId();
-        final Document documentInserted = new Document("_id", id).append(KEY, VALUE_TO_CARE_ABOUT);
-        final Document documentReplacement = new Document("_id", id).append("foo", "bar");
+        ObjectId id = new ObjectId();
+        Document documentInserted = new Document("_id", id).append(KEY, VALUE_TO_CARE_ABOUT);
+        Document documentReplacement = new Document("_id", id).append("foo", "bar");
         collection.insert(documentInserted);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                            .replaceOneAndGet(documentReplacement);
+        Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
+                                      .replaceOneAndGet(documentReplacement);
 
         assertThat("Document, retrieved from replaceAndGet after change applied should match the document used as replacement",
                    document, equalTo(documentReplacement));
@@ -104,42 +104,42 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnNullWhenNothingToReplaceForGetOneAndReplace() {
-        final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
+        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.find(new Document(KEY, "bar"))
-                                            .getOneAndReplace(new Document("foo", "bar"));
+        Document document = collection.find(new Document(KEY, "bar"))
+                                      .getOneAndReplace(new Document("foo", "bar"));
 
         assertNull("Document retrieved from getOneAndReplace should be null when no matching document found", document);
     }
 
     @Test
     public void shouldReturnNullWhenNothingToReplaceForReplaceOneAndGet() {
-        final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
+        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document document = collection.find(new Document(KEY, "bar"))
-                                            .replaceOneAndGet(new Document("foo", "bar"));
+        Document document = collection.find(new Document(KEY, "bar"))
+                                      .replaceOneAndGet(new Document("foo", "bar"));
 
         assertNull("Document retrieved from replaceOneAndGet should be null when no matching document found", document);
     }
 
     @Test
     public void shouldInsertDocumentWhenFilterDoesNotMatchAnyDocumentsAndUpsertFlagIsSet() {
-        final Document originalDocument = new Document(KEY, VALUE_TO_CARE_ABOUT);
+        Document originalDocument = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(originalDocument);
 
         assertThat(collection.find().count(), is(1L));
 
-        final Document replacementDocument = new Document("_id", new ObjectId()).append("foo", "bar");
+        Document replacementDocument = new Document("_id", new ObjectId()).append("foo", "bar");
 
-        final Document document = collection.find(new Document(KEY, "valueThatDoesNotMatch"))
-                                            .upsert()
-                                            .replaceOneAndGet(replacementDocument);
+        Document document = collection.find(new Document(KEY, "valueThatDoesNotMatch"))
+                                      .upsert()
+                                      .replaceOneAndGet(replacementDocument);
 
         assertThat(collection.find().count(), is(2L));
         assertThat("Document retrieved from replaceOneAndGet with filter that doesn't match should match the replacement document",
@@ -148,7 +148,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowAnExceptionIfReplacementContainsUpdateOperators() {
-        final Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
+        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
         collection.insert(documentInserted);
 
         collection.find()

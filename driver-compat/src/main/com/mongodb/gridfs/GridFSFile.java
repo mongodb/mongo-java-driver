@@ -22,13 +22,14 @@ import com.mongodb.MongoException;
 import com.mongodb.util.JSON;
 import org.bson.BSONObject;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 /**
  * The abstract class representing a GridFS file.
@@ -37,9 +38,14 @@ import java.util.Set;
  */
 public abstract class GridFSFile implements DBObject {
 
-    private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(
-            Arrays.asList("_id", "filename", "contentType", "length", "chunkSize", "uploadDate", "aliases", "md5"))
-    );
+    private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(asList("_id",
+                                                                                                           "filename",
+                                                                                                           "contentType",
+                                                                                                           "length",
+                                                                                                           "chunkSize",
+                                                                                                           "uploadDate",
+                                                                                                           "aliases",
+                                                                                                           "md5")));
 
     final DBObject extra = new BasicDBObject();
 
@@ -65,8 +71,7 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
-     * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a
-     * file.
+     * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
      *
      * @throws MongoException
      */
@@ -78,11 +83,11 @@ public abstract class GridFSFile implements DBObject {
             throw new MongoException("no md5 stored");
         }
 
-        final DBObject cmd = new BasicDBObject("filemd5", id);
+        DBObject cmd = new BasicDBObject("filemd5", id);
         cmd.put("root", fs.getBucketName());
-        final DBObject res = fs.getDB().command(cmd);
+        DBObject res = fs.getDB().command(cmd);
         if (res != null && res.containsField("md5")) {
-            final String m = res.get("md5").toString();
+            String m = res.get("md5").toString();
             if (m.equals(md5)) {
                 return;
             }
@@ -246,8 +251,8 @@ public abstract class GridFSFile implements DBObject {
      */
     @Override
     @Deprecated
-    public boolean containsKey(final String s) {
-        return containsField(s);
+    public boolean containsKey(final String key) {
+        return containsField(key);
     }
 
     @Override
@@ -257,7 +262,7 @@ public abstract class GridFSFile implements DBObject {
 
     @Override
     public Set<String> keySet() {
-        final Set<String> keys = new HashSet<String>();
+        Set<String> keys = new HashSet<String>();
         keys.addAll(VALID_FIELDS);
         keys.addAll(extra.keySet());
         return keys;

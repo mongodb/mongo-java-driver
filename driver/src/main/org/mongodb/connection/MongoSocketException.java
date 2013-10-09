@@ -19,8 +19,7 @@ package org.mongodb.connection;
 import org.mongodb.MongoException;
 
 /**
- * Unchecked exception thrown when the driver gets an IOException from the underlying Socket, or reaches end of stream
- * prematurely.
+ * Unchecked exception thrown when the driver gets an IOException from the underlying Socket, or reaches end of stream prematurely.
  */
 public abstract class MongoSocketException extends MongoException {
     private static final long serialVersionUID = -82458642694036972L;

@@ -31,7 +31,7 @@ public class KillCursorsMessage extends RequestMessage {
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeKillCursorsPrologue(killCursor.getServerCursors().size(), buffer);
-        for (ServerCursor cur : killCursor.getServerCursors()) {
+        for (final ServerCursor cur : killCursor.getServerCursors()) {
             buffer.writeLong(cur.getId());
         }
         return null;

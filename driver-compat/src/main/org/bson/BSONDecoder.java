@@ -24,11 +24,11 @@ import java.io.InputStream;
  */
 public interface BSONDecoder {
 
-    BSONObject readObject(final byte[] bytes);
+    BSONObject readObject(byte[] bytes);
 
-    BSONObject readObject(final InputStream in) throws IOException;
+    BSONObject readObject(InputStream in) throws IOException;
 
-    int decode(final byte[] bytes, final BSONCallback callback);
+    int decode(byte[] bytes, BSONCallback callback);
 
-    int decode(final InputStream in, final BSONCallback callback) throws IOException;
+    int decode(InputStream in, BSONCallback callback) throws IOException;
 }

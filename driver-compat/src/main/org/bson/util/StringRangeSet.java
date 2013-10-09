@@ -80,7 +80,7 @@ public class StringRangeSet implements Set<String> {
 
     @Override
     public boolean contains(final Object o) {
-        final int t = Integer.parseInt(String.valueOf(o));
+        int t = Integer.parseInt(String.valueOf(o));
         return t >= 0 && t < size;
     }
 
@@ -116,12 +116,11 @@ public class StringRangeSet implements Set<String> {
 
     @Override
     public Object[] toArray() {
-        final String[] array = new String[size()];
+        String[] array = new String[size()];
         for (int i = 0; i < size; ++i) {
             if (i < NUMSTR_LEN) {
                 array[i] = NUMSTRS[i];
-            }
-            else {
+            } else {
                 array[i] = String.valueOf(i);
             }
         }

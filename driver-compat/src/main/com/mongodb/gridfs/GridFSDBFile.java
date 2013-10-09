@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This class enables to retrieve a GridFS file metadata and content. Operations include: - writing data to a file on
- * disk or an OutputStream - getting each chunk as a byte array - getting an InputStream to stream the data into
+ * This class enables to retrieve a GridFS file metadata and content. Operations include: - writing data to a file on disk or an
+ * OutputStream - getting each chunk as a byte array - getting an InputStream to stream the data into
  *
  * @author antoine
  */
@@ -86,7 +86,7 @@ public class GridFSDBFile extends GridFSFile {
      * @throws MongoException
      */
     public long writeTo(final OutputStream out) throws IOException {
-        final int nc = numChunks();
+        int nc = numChunks();
         for (int i = 0; i < nc; i++) {
             out.write(getChunk(i));
         }
@@ -98,7 +98,7 @@ public class GridFSDBFile extends GridFSFile {
             throw new IllegalStateException("No GridFS instance defined!");
         }
 
-        final DBObject chunk = fs.getChunksCollection().findOne(new BasicDBObject("files_id", id).append("n", i));
+        DBObject chunk = fs.getChunksCollection().findOne(new BasicDBObject("files_id", id).append("n", i));
         if (chunk == null) {
             throw new MongoException("Can't find a chunk!  file id: " + id + " chunk: " + i);
         }
@@ -116,7 +116,7 @@ public class GridFSDBFile extends GridFSFile {
 
     private class GridFSInputStream extends InputStream {
 
-        final int numberOfChunks;
+        private final int numberOfChunks;
         private int currentChunkId = -1;
         private int offset = 0;
         private byte[] buffer = null;
@@ -135,8 +135,8 @@ public class GridFSDBFile extends GridFSFile {
 
         @Override
         public int read() {
-            final byte[] b = new byte[1];
-            final int res = read(b);
+            byte[] b = new byte[1];
+            int res = read(b);
             if (res < 0) {
                 return -1;
             }
@@ -160,7 +160,7 @@ public class GridFSDBFile extends GridFSFile {
                 offset = 0;
             }
 
-            final int r = Math.min(len, buffer.length - offset);
+            int r = Math.min(len, buffer.length - offset);
             System.arraycopy(buffer, offset, b, off, r);
             offset += r;
             return r;
@@ -192,7 +192,7 @@ public class GridFSDBFile extends GridFSFile {
                 return length - offsetInFile;
             }
 
-            final int temp = currentChunkId;
+            int temp = currentChunkId;
             currentChunkId = (int) ((bytesToSkip + offsetInFile) / chunkSize);
             if (temp != currentChunkId) {
                 buffer = getChunk(currentChunkId);

@@ -30,7 +30,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 @NotThreadSafe
 class DelayedCloseConnection implements Connection {
-    private Connection wrapped;
+    private final Connection wrapped;
     private boolean isClosed;
 
     public DelayedCloseConnection(final Connection wrapped) {

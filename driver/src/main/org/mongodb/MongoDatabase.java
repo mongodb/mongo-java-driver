@@ -27,8 +27,6 @@ public interface MongoDatabase {
 
     CommandResult executeCommand(final Document command, final ReadPreference readPreference);
 
-//    MongoClient getClient();
-
     MongoDatabaseOptions getOptions();
 
     MongoCollection<Document> getCollection(String name);

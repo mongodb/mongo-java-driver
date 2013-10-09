@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import org.mongodb.connection.BufferProvider;
@@ -53,13 +52,12 @@ public final class MongoClients {
 
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                      final MongoClientOptions options) {
-        return new MongoClientImpl(options, createCluster(
-                ClusterSettings.builder()
-                        .mode(ClusterConnectionMode.Single)
-                        .hosts(Arrays.asList(serverAddress))
-                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                        .build(),
-                credentialList, options));
+        return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
+                                                                         .mode(ClusterConnectionMode.Single)
+                                                                         .hosts(Arrays.asList(serverAddress))
+                                                                         .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                         .build(),
+                                                          credentialList, options));
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -67,12 +65,11 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        return new MongoClientImpl(options, createCluster(
-                ClusterSettings.builder()
-                        .hosts(seedList)
-                        .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                        .build(),
-                Collections.<MongoCredential>emptyList(), options));
+        return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
+                                                                         .hosts(seedList)
+                                                                         .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                         .build(),
+                                                          Collections.<MongoCredential>emptyList(), options));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -81,25 +78,23 @@ public final class MongoClients {
 
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, createCluster(
-                    ClusterSettings.builder()
-                            .mode(ClusterConnectionMode.Single)
-                            .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts().get(0))))
-                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                            .build(),
-                    mongoURI.getCredentialList(), options));
-        }
-        else {
+            return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
+                                                                             .mode(ClusterConnectionMode.Single)
+                                                                             .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
+                                                                                                                            .get(0))))
+                                                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                             .build(),
+                                                              mongoURI.getCredentialList(), options));
+        } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
-            for (String cur : mongoURI.getHosts()) {
+            for (final String cur : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(cur));
             }
-            return new MongoClientImpl(options, createCluster(
-                    ClusterSettings.builder()
-                            .hosts(seedList)
-                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                            .build(),
-                    mongoURI.getCredentialList(), options));
+            return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
+                                                                             .hosts(seedList)
+                                                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                             .build(),
+                                                              mongoURI.getCredentialList(), options));
         }
     }
 
@@ -108,31 +103,29 @@ public final class MongoClients {
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
                                          final MongoClientOptions options) {
-        final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+        BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-        final StreamFactory streamFactory;
-        final StreamFactory heartbeatStreamFactory;
+        StreamFactory streamFactory;
+        StreamFactory heartbeatStreamFactory;
 
         if (!options.isAsyncEnabled()) {
             streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
             heartbeatStreamFactory = streamFactory;
-        }
-        else {
+        } else {
             if (options.getSslSettings().isEnabled()) {
                 streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
                 heartbeatStreamFactory = streamFactory;
-            }
-            else {
+            } else {
                 streamFactory = new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(),
-                        options.getSslSettings());
+                                                                           options.getSslSettings());
                 heartbeatStreamFactory = new AsynchronousSocketChannelStreamFactory(options.getHeartbeatSocketSettings(),
-                        options.getSslSettings());
+                                                                                    options.getSslSettings());
             }
         }
         return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
-                options.getConnectionPoolSettings(), streamFactory,
-                heartbeatStreamFactory,
-                Executors.newScheduledThreadPool(3),
-                credentialList, bufferProvider, null, new JMXConnectionPoolListener(), null);
+                                                  options.getConnectionPoolSettings(), streamFactory,
+                                                  heartbeatStreamFactory,
+                                                  Executors.newScheduledThreadPool(3),
+                                                  credentialList, bufferProvider, null, new JMXConnectionPoolListener(), null);
     }
 }

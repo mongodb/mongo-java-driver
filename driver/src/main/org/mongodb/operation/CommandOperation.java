@@ -67,10 +67,11 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
     @Override
     public CommandResult execute() {
         try {
-            final ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
-            final ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
+            ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
+            ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
             return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
-                    provider.getServerDescription(), provider.getConnection(), true).execute();
+                                       provider.getServerDescription(), provider.getConnection(), true)
+                       .execute();
         } finally {
             if (isCloseSession()) {
                 getSession().close();
@@ -82,14 +83,15 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
     public MongoFuture<CommandResult> executeAsync() {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
         getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
-                .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
-                    @Override
-                    public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                        new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
-                                pair.getServerDescription(), pair.getConnection(), true).executeAsync()
-                                .register(new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
-                    }
-                });
+            .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
+                @Override
+                public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
+                    new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
+                                        pair.getServerDescription(), pair.getConnection(), true)
+                        .executeAsync()
+                        .register(new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
+                }
+            });
         return retVal;
     }
 
@@ -99,6 +101,7 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
 
     private ServerSelector getServerSelector() {
         return new ReadPreferenceServerSelector(clusterDescription == null
-                ? readPreference : getCommandReadPreference(commandDocument, readPreference, clusterDescription));
+                                                ? readPreference
+                                                : getCommandReadPreference(commandDocument, readPreference, clusterDescription));
     }
 }

@@ -47,7 +47,7 @@ public class PojoDecoder implements Decoder<Object> {
     }
 
     public <T> T decode(final BSONReader reader, final Class<T> theClass) {
-        final T pojo;
+        T pojo;
         try {
             reader.readStartDocument();
             pojo = decodePojo(reader, theClass);
@@ -65,10 +65,10 @@ public class PojoDecoder implements Decoder<Object> {
             classModel = new ClassModel<T>(theClass);
             fieldsForClass.put(theClass, classModel);
         }
-        final T pojo = classModel.createInstanceOfClass();
+        T pojo = classModel.createInstanceOfClass();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final Field fieldOnPojo = getPojoFieldForNextValue(reader.readName(), classModel);
-            final Object decodedValue;
+            Field fieldOnPojo = getPojoFieldForNextValue(reader.readName(), classModel);
+            Object decodedValue;
             if (reader.getCurrentBSONType() == BSONType.DOCUMENT && !codecs.canDecode(fieldOnPojo.getType())) {
                 decodedValue = decode(reader, fieldOnPojo.getType());
             } else if (reader.getCurrentBSONType() == BSONType.DOCUMENT) {
@@ -86,14 +86,14 @@ public class PojoDecoder implements Decoder<Object> {
     }
 
     private <E> Map<String, E> decodeMap(final BSONReader reader, final Field fieldOnPojo) {
-        final Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
-        final Type typeOfItemsInMap = actualTypeArguments[1];
-        final Map<String, E> map = new HashMap<String, E>();
+        Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
+        Type typeOfItemsInMap = actualTypeArguments[1];
+        Map<String, E> map = new HashMap<String, E>();
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
-            final E value = getValue(reader, (Class) typeOfItemsInMap);
+            String fieldName = reader.readName();
+            E value = getValue(reader, (Class) typeOfItemsInMap);
             map.put(fieldName, value);
         }
 
@@ -102,25 +102,25 @@ public class PojoDecoder implements Decoder<Object> {
     }
 
     private <E> Iterable<E> decodeIterable(final BSONReader reader, final Field fieldOnPojo) {
-        final Class<?> classOfIterable = fieldOnPojo.getType();
+        Class<?> classOfIterable = fieldOnPojo.getType();
         if (classOfIterable.isArray()) {
             throw new DecodingException("Decoding into arrays is not supported.  Either provide a custom decoder, or use a List.");
         }
 
-        final Collection<E> collection;
+        Collection<E> collection;
         if (Set.class.isAssignableFrom(classOfIterable)) {
             collection = new HashSet<E>();
         } else {
             collection = new ArrayList<E>();
         }
 
-        final Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
-        final Type typeOfItemsInList = actualTypeArguments[0];
+        Type[] actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
+        Type typeOfItemsInList = actualTypeArguments[0];
 
         reader.readStartArray();
         //TODO: this is still related to the problem that we can't reuse the IterableCodec, or tell it to call back to here
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final E value = getValue(reader, (Class) typeOfItemsInList);
+            E value = getValue(reader, (Class) typeOfItemsInList);
             collection.add(value);
         }
 
@@ -131,7 +131,7 @@ public class PojoDecoder implements Decoder<Object> {
     // Need to cast into type E when decoding into a collection
     @SuppressWarnings("unchecked")
     private <E> E getValue(final BSONReader reader, final Class<?> typeOfItemsInList) {
-        final E value;
+        E value;
         if (codecs.canDecode(typeOfItemsInList)) {
             value = (E) codecs.decode(reader);
         } else {

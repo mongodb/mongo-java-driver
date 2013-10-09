@@ -30,11 +30,11 @@ public class ConnectionMessagesSentEvent extends ConnectionEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param connectionId the connection id
-     * @param requestId the request id
-     * @param size the size of the sent message
+     * @param connectionId  the connection id
+     * @param requestId     the request id
+     * @param size          the size of the sent message
      */
     public ConnectionMessagesSentEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
                                        final int requestId, final int size) {
@@ -73,7 +73,7 @@ public class ConnectionMessagesSentEvent extends ConnectionEvent {
             return false;
         }
 
-        final ConnectionMessagesSentEvent that = (ConnectionMessagesSentEvent) o;
+        ConnectionMessagesSentEvent that = (ConnectionMessagesSentEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;

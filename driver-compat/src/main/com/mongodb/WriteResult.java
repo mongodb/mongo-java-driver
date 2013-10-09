@@ -18,8 +18,8 @@ package com.mongodb;
 
 
 /**
- * This class lets you access the results of the previous write. If the write was performed with an acknowledged write concern,
- * this just stores the result of the write.
+ * This class lets you access the results of the previous write. If the write was performed with an acknowledged write concern, this just
+ * stores the result of the write.
  *
  * @see WriteConcern#UNACKNOWLEDGED
  */
@@ -117,8 +117,8 @@ public class WriteResult {
     @Override
     public String toString() {
         return "WriteResult{"
-                + "writeConcern=" + writeConcern
-                + ", commandResult=" + commandResult
-                + '}';
+               + "writeConcern=" + writeConcern
+               + ", commandResult=" + commandResult
+               + '}';
     }
 }

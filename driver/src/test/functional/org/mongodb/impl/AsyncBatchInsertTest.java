@@ -48,7 +48,7 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
-        final byte[] hugeByteArray = new byte[1024 * 1024 * 15];
+        byte[] hugeByteArray = new byte[1024 * 1024 * 15];
 
         documents = new ArrayList<Document>();
         documents.add(new Document("bytes", hugeByteArray));
@@ -65,9 +65,14 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
 
     @Test
     public void testBatchInsert() throws ExecutionException, InterruptedException {
-        final Insert<Document> insert = new Insert<Document>(ACKNOWLEDGED, documents);
-        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(),
-                getSession(), true).executeAsync().get();
+        Insert<Document> insert = new Insert<Document>(ACKNOWLEDGED, documents);
+        new InsertOperation<Document>(collection.getNamespace(),
+                                      insert,
+                                      new DocumentCodec(),
+                                      getBufferProvider(),
+                                      getSession(),
+                                      true)
+            .executeAsync().get();
         assertEquals(documents.size(), collection.find().count());
     }
 
@@ -76,12 +81,16 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
     public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
         PinnedSession session = new PinnedSession(getCluster(), getExecutor());
         try {
-            final Insert<Document> insert = new Insert<Document>(UNACKNOWLEDGED, documents);
-            final InsertOperation<Document> insertOperation = new InsertOperation<Document>(collection.getNamespace(), insert,
-                    new DocumentCodec(), getBufferProvider(), session, false);
+            Insert<Document> insert = new Insert<Document>(UNACKNOWLEDGED, documents);
+            InsertOperation<Document> insertOperation = new InsertOperation<Document>(collection.getNamespace(),
+                                                                                      insert,
+                                                                                      new DocumentCodec(),
+                                                                                      getBufferProvider(),
+                                                                                      session,
+                                                                                      false);
             insertOperation.executeAsync().get();
-            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), session,
-                    false).execute();
+            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), session, false)
+                             .execute();
             assertEquals(documents.size(), count);
         } finally {
             session.close();

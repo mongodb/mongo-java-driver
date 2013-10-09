@@ -26,7 +26,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Encoder;
 import org.mongodb.IdGenerator;
 
-import java.nio.ByteBuffer;
+import static java.nio.ByteBuffer.wrap;
 
 public class DBEncoderAdapter implements Encoder<DBObject> {
 
@@ -51,8 +51,7 @@ public class DBEncoderAdapter implements Encoder<DBObject> {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);
-            final BSONBinaryReader reader = new BSONBinaryReader(
-                    new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))), true);
+            BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
             try {
                 bsonWriter.pipe(reader);
             } finally {

@@ -22,8 +22,8 @@ import org.mongodb.codecs.validators.Validator;
 import java.util.Map;
 
 public class MapCodec implements ComplexTypeEncoder<Map<String, ?>> {
-    private Codecs codecs;
-    private Validator<String> validator;
+    private final Codecs codecs;
+    private final Validator<String> validator;
 
     public MapCodec(final Codecs codecs, final Validator<String> validator) {
         this.codecs = codecs;
@@ -34,8 +34,8 @@ public class MapCodec implements ComplexTypeEncoder<Map<String, ?>> {
     public void encode(final BSONWriter bsonWriter, final Map<String, ?> value) {
         bsonWriter.writeStartDocument();
 
-        for (Map.Entry<String, ?> entry : value.entrySet()) {
-            final String fieldName = entry.getKey();
+        for (final Map.Entry<String, ?> entry : value.entrySet()) {
+            String fieldName = entry.getKey();
             validateFieldName(fieldName);
 
             bsonWriter.writeName(fieldName);

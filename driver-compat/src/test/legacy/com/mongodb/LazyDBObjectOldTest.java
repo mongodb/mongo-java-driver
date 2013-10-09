@@ -165,10 +165,10 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         buf.pipe(bios);
 
         LazyDBObject lazyOne = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
-                (DBCollection) null);
+                                                                   (DBCollection) null);
 
         LazyDBObject lazyTwo = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
-                (DBCollection) null);
+                                                                   (DBCollection) null);
 
         assertTrue(lazyOne.equals(lazyTwo));
         assertEquals(lazyOne.hashCode(), lazyTwo.hashCode());
@@ -181,13 +181,13 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         buf.pipe(bios);
 
         LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
-                (DBCollection) null);
+                                                                     (DBCollection) null);
         bios.reset();
         int byteCount = lazyDBObj.pipe(bios);
         assertEquals(lazyDBObj.getBSONSize(), byteCount);
 
         LazyDBObject lazyDBObjectFromPipe = (LazyDBObject) lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()),
-                (DBCollection) null);
+                                                                                (DBCollection) null);
 
         assertEquals(lazyDBObj, lazyDBObjectFromPipe);
     }
@@ -199,7 +199,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         e.putObject(obj);
         buf.pipe(bios);
         LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(
-                new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+                                                                        new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
 
         // now to the actual test
         LazyDBEncoder encoder = new LazyDBEncoder();
@@ -270,7 +270,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         return b.get();
     }
 
-    private void compareDocs(DBObject origDoc, DBObject doc) {
+    private void compareDocs(final DBObject origDoc, final DBObject doc) {
         assertEquals(origDoc.get("str"), doc.get("str"));
         assertEquals(origDoc.get("_id"), doc.get("_id"));
         assertNull(doc.get("null"));
@@ -289,7 +289,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         assertEquals(doc.get("float324_582"), 324.5820007324219);
         assertEquals(doc.get("double245_6289"), 245.6289);
         assertEquals(origDoc.get("oid"), doc.get("oid"));
-//        assertEquals(origDoc.get("symbol"), doc.get("symbol"));
+        //        assertEquals(origDoc.get("symbol"), doc.get("symbol"));
         assertEquals(doc.get("str"), "foobarbaz");
         assertEquals(origDoc.get("ref"), doc.get("ref"));
         assertEquals(((DBObject) origDoc.get("object")).get("abc"), ((DBObject) doc.get("object")).get("abc"));
@@ -305,28 +305,4 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         assertEquals(((Pattern) doc.get("regex")).flags(), ((Pattern) doc.get("regex")).flags());
     }
 
-    private static class TestMapEntry implements Map.Entry<String, Object> {
-        private String key;
-        private Object value;
-
-        private TestMapEntry(String key, Object value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-
-        @Override
-        public Object setValue(Object value) {
-            throw new UnsupportedOperationException();
-        }
-    }
 }

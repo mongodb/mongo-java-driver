@@ -29,7 +29,7 @@ class SocketStream implements Stream {
     private final SocketSettings settings;
     private volatile boolean isClosed;
 
-    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory)  {
+    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory) {
         this.address = address;
         this.settings = settings;
         try {
@@ -43,7 +43,7 @@ class SocketStream implements Stream {
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        for (ByteBuf cur : buffers) {
+        for (final ByteBuf cur : buffers) {
             socket.getOutputStream().write(cur.array(), 0, cur.limit());
         }
     }
@@ -52,7 +52,7 @@ class SocketStream implements Stream {
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {
-            final int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+            int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
             if (bytesRead == -1) {
                 throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }

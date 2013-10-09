@@ -30,8 +30,8 @@ public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderDefaults() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        final MongoClientOptions options = builder.build();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions options = builder.build();
         assertEquals(null, options.getDescription());
         assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
         assertEquals(100, options.getMaxConnectionPoolSize());
@@ -52,86 +52,86 @@ public class MongoClientOptionsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testPrimitiveCodecsIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.primitiveCodecs(null);
         fail();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testWriteConcernIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.writeConcern(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testReaPreferenceIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.readPreference(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMinConnectionPoolSizeIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.minConnectionPoolSize(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMaxConnectionPoolSizeIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.maxConnectionPoolSize(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testConnectionTimeoutIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.connectTimeout(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMaxAutoConnectRetryIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.maxAutoConnectRetryTime(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testThreadsAllowsToBlockIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.threadsAllowedToBlockForConnectionMultiplier(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMaxConnectionIdleTimeIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.maxConnectionIdleTime(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMaxConnectionLifeTimeIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.maxConnectionLifeTime(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testHeartbeatFrequencyIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.heartbeatFrequency(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testHeartbeatConnectRetryFrequencyIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.heartbeatConnectRetryFrequency(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testHeartbeatConnectionTimeoutIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.heartbeatConnectTimeout(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testHeartbeatSocketTimeoutIllegalArguments() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.heartbeatSocketTimeout(-1);
     }
 
@@ -139,18 +139,18 @@ public class MongoClientOptionsTest {
     public void testAsyncEnabledIllegalArguments() {
         if (!AsyncDetector.isAsyncEnabled()) {
             try {
-                final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+                MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
                 builder.asyncEnabled(true);
                 fail();
             } catch (IllegalArgumentException e) { // NOPMD
-               // all good
+                // all good
             }
         }
     }
 
     @Test
     public void testBuilderBuild() {
-        final MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.description("test");
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNALED);
@@ -171,10 +171,10 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
         builder.requiredReplicaSetName("test");
-        final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
+        PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
         builder.primitiveCodecs(primitiveCodecs);
 
-        final MongoClientOptions options = builder.build();
+        MongoClientOptions options = builder.build();
 
         assertEquals("test", options.getDescription());
         assertEquals(ReadPreference.secondary(), options.getReadPreference());

@@ -25,8 +25,8 @@ public class DBRefTest {
 
     @Test
     public void shouldBeEqualIfBothDBRefObjectsHaveTheSameValues() {
-        final DBRef dbRef = new DBRef("theId", "theNamespace");
-        final DBRef dbRefToCompare = new DBRef("theId", "theNamespace");
+        DBRef dbRef = new DBRef("theId", "theNamespace");
+        DBRef dbRefToCompare = new DBRef("theId", "theNamespace");
 
         assertThat(dbRef.equals(dbRefToCompare), is(true));
         assertThat(dbRef, is(dbRefToCompare));

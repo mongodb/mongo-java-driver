@@ -19,6 +19,8 @@ package org.mongodb.connection;
 import org.bson.io.InputBuffer;
 import org.mongodb.MongoInternalException;
 
+import static java.lang.String.format;
+
 public class ReplyHeader {
     /**
      * The length of the reply header in the MongoDB wire protocol.
@@ -43,10 +45,8 @@ public class ReplyHeader {
         responseTo = headerInputBuffer.readInt32();
         int opCode = headerInputBuffer.readInt32();
         if (opCode != OP_REPLY_OP_CODE) {
-            throw new MongoInternalException(
-                    String.format("The opCode (%d) in the response does not match the expected opCode (%d)",
-                            opCode, OP_REPLY_OP_CODE));
-        }
+            throw new MongoInternalException(format("The opCode (%d) in the response does not match the expected opCode (%d)",
+                                                    opCode, OP_REPLY_OP_CODE)); }
         responseFlags = headerInputBuffer.readInt32();
         cursorId = headerInputBuffer.readInt64();
         startingFrom = headerInputBuffer.readInt32();

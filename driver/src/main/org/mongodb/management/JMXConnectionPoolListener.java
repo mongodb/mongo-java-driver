@@ -35,11 +35,11 @@ import static java.lang.String.format;
  */
 public class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ClusterIdServerAddressPair, ConnectionPoolStatistics> map =
-            new ConcurrentHashMap<ClusterIdServerAddressPair, ConnectionPoolStatistics>();
+        new ConcurrentHashMap<ClusterIdServerAddressPair, ConnectionPoolStatistics>();
 
     public String getMBeanObjectName(final String clusterId, final ServerAddress serverAddress) {
         return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", clusterId, serverAddress.getHost(),
-                serverAddress.getPort());
+                      serverAddress.getPort());
     }
 
     public ConnectionPoolStatisticsMBean getMBean(final String clusterId, final ServerAddress serverAddress) {
@@ -119,7 +119,7 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
                 return false;
             }
 
-            final ClusterIdServerAddressPair that = (ClusterIdServerAddressPair) o;
+            ClusterIdServerAddressPair that = (ClusterIdServerAddressPair) o;
 
             if (!clusterId.equals(that.clusterId)) {
                 return false;

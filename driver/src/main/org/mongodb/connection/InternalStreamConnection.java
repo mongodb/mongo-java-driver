@@ -50,7 +50,7 @@ class InternalStreamConnection implements InternalConnection {
     private final String clusterId;
     private final Stream stream;
     private final ConnectionListener eventPublisher;
-    private List<MongoCredential> credentialList;
+    private final List<MongoCredential> credentialList;
     private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
     private String id;
@@ -93,7 +93,7 @@ class InternalStreamConnection implements InternalConnection {
         try {
             stream.write(byteBuffers);
             eventPublisher.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(), getId(), lastRequestId,
-                    getTotalRemaining(byteBuffers)));
+                                                                        getTotalRemaining(byteBuffers)));
         } catch (IOException e) {
             close();
             throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
@@ -105,8 +105,11 @@ class InternalStreamConnection implements InternalConnection {
         isTrue("open", !isClosed());
         try {
             ResponseBuffers responseBuffers = receiveMessage(System.nanoTime());
-            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId, stream.getAddress(), getId(),
-                    responseBuffers.getReplyHeader().getResponseTo(), responseBuffers.getReplyHeader().getMessageLength()));
+            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
+                                                                              stream.getAddress(),
+                                                                              getId(),
+                                                                              responseBuffers.getReplyHeader().getResponseTo(),
+                                                                              responseBuffers.getReplyHeader().getMessageLength()));
             return responseBuffers;
         } catch (IOException e) {
             close();
@@ -127,7 +130,7 @@ class InternalStreamConnection implements InternalConnection {
             @Override
             public void completed() {
                 eventPublisher.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(), getId(), lastRequestId,
-                        getTotalRemaining(byteBuffers)));
+                                                                            getTotalRemaining(byteBuffers)));
                 callback.onResult(null, null);
             }
 
@@ -135,12 +138,10 @@ class InternalStreamConnection implements InternalConnection {
             public void failed(final Throwable t) {
                 if (t instanceof MongoException) {
                     callback.onResult(null, (MongoException) t);
-                }
-                else if (t instanceof IOException) {
+                } else if (t instanceof IOException) {
                     callback.onResult(null, new MongoSocketWriteException("Exception writing to stream", getServerAddress(),
-                            (IOException) t));
-                }
-                else {
+                                                                          (IOException) t));
+                } else {
                     callback.onResult(null, new MongoInternalException("Unexpected exception", t));
                 }
             }
@@ -163,11 +164,9 @@ class InternalStreamConnection implements InternalConnection {
             public void failed(final Throwable t) {
                 if (t instanceof MongoException) {
                     callback.onResult(null, (MongoException) t);
-                }
-                else if (t instanceof IOException) {
+                } else if (t instanceof IOException) {
                     callback.onResult(null, new MongoSocketReadException("Exception writing to stream", getServerAddress(), t));
-                }
-                else {
+                } else {
                     callback.onResult(null, new MongoInternalException("Unexpected exception", t));
                 }
             }
@@ -178,11 +177,9 @@ class InternalStreamConnection implements InternalConnection {
         close();
         if (e instanceof SocketTimeoutException) {
             throw new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), (SocketTimeoutException) e);
-        }
-        else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
+        } else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
             throw new MongoInterruptedException("Interrupted while receiving message", e);
-        }
-        else {
+        } else {
             throw new MongoSocketReadException("Exception receiving message", getServerAddress(), e);
         }
     }
@@ -190,7 +187,7 @@ class InternalStreamConnection implements InternalConnection {
     private ResponseBuffers receiveMessage(final long start) throws IOException {
         ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
 
-        final ReplyHeader replyHeader;
+        ReplyHeader replyHeader;
         stream.read(headerByteBuffer);
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         try {
@@ -231,7 +228,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void authenticateAll() {
-        for (MongoCredential cur : credentialList) {
+        for (final MongoCredential cur : credentialList) {
             createAuthenticator(cur).authenticate();
         }
     }
@@ -264,10 +261,9 @@ class InternalStreamConnection implements InternalConnection {
         public void onResult(final ByteBuf result, final MongoException e) {
             if (e != null) {
                 callback.onResult(null, e);
-            }
-            else {
+            } else {
                 ReplyHeader replyHeader;
-                final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
+                BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
                 try {
                     replyHeader = new ReplyHeader(headerInputBuffer);
                 } finally {
@@ -276,17 +272,19 @@ class InternalStreamConnection implements InternalConnection {
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     onSuccess(new ResponseBuffers(replyHeader, null, System.nanoTime() - start));
-                }
-                else {
+                } else {
                     fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
-                            new ResponseBodyCallback(replyHeader));
+                                      new ResponseBodyCallback(replyHeader));
                 }
             }
         }
 
         private void onSuccess(final ResponseBuffers responseBuffers) {
-            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId, stream.getAddress(), getId(),
-                    responseBuffers.getReplyHeader().getResponseTo(), responseBuffers.getReplyHeader().getMessageLength()));
+            eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
+                                                                              stream.getAddress(),
+                                                                              getId(),
+                                                                              responseBuffers.getReplyHeader().getResponseTo(),
+                                                                              responseBuffers.getReplyHeader().getMessageLength()));
             callback.onResult(responseBuffers, null);
         }
 
@@ -301,8 +299,7 @@ class InternalStreamConnection implements InternalConnection {
             public void onResult(final ByteBuf result, final MongoException e) {
                 if (e != null) {
                     callback.onResult(null, e);
-                }
-                else {
+                } else {
                     onSuccess(new ResponseBuffers(replyHeader, result, System.nanoTime() - start));
                 }
             }
@@ -311,7 +308,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private int getTotalRemaining(final List<ByteBuf> byteBuffers) {
         int messageSize = 0;
-        for (ByteBuf cur : byteBuffers) {
+        for (final ByteBuf cur : byteBuffers) {
             messageSize += cur.remaining();
         }
         return messageSize;

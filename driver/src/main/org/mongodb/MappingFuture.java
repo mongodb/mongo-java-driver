@@ -30,7 +30,7 @@ import java.util.concurrent.TimeoutException;
 // TODO: take this private?
 public class MappingFuture<U, V> implements MongoFuture<V> {
     private final MongoFuture<U> mappedFuture;
-    private Function<U, V> function;
+    private final Function<U, V> function;
 
     public MappingFuture(final MongoFuture<U> mappedFuture, final Function<U, V> function) {
         this.mappedFuture = mappedFuture;
@@ -54,8 +54,7 @@ public class MappingFuture<U, V> implements MongoFuture<V> {
             public void onResult(final U result, final MongoException e) {
                 if (e != null) {
                     newCallback.onResult(null, e);
-                }
-                else {
+                } else {
                     newCallback.onResult(function.apply(result), null);
                 }
             }

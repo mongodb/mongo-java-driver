@@ -43,9 +43,8 @@ public class DatabaseAdminAcceptanceTest extends DatabaseTestCase {
             firstDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
             secondDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
 
-
             //when
-            final Set<String> databaseNames = mongoClient.tools().getDatabaseNames();
+            Set<String> databaseNames = mongoClient.tools().getDatabaseNames();
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));

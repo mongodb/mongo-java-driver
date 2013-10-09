@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// OutputBuffer.java
-
 package org.bson.io;
 
 import org.bson.BSONSerializationException;
@@ -25,6 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+
+import static java.lang.String.format;
 
 public abstract class OutputBuffer extends OutputStream {
 
@@ -56,10 +56,7 @@ public abstract class OutputBuffer extends OutputStream {
 
     /**
      * Get a list of byte buffers that are prepared to be read from; in other words, whose position is 0 and whose limit is the number of
-     * bytes that should read.
-     * <p>
-     * Note that the byte buffers may be read-only.
-     * </p>
+     * bytes that should read. <p> Note that the byte buffers may be read-only. </p>
      *
      * @return the non-null list of byte buffers.
      */
@@ -78,7 +75,7 @@ public abstract class OutputBuffer extends OutputStream {
      */
     public byte[] toByteArray() {
         try {
-            final ByteArrayOutputStream bout = new ByteArrayOutputStream(size());
+            ByteArrayOutputStream bout = new ByteArrayOutputStream(size());
             pipe(bout);
             return bout.toByteArray();
         } catch (IOException ioe) {
@@ -95,8 +92,7 @@ public abstract class OutputBuffer extends OutputStream {
     }
 
     /**
-     * Backpatches the size of a document or string by writing the size into the four bytes starting at getPosition() -
-     * size.
+     * Backpatches the size of a document or string by writing the size into the four bytes starting at getPosition() - size.
      *
      * @param size the size of the document/string
      */
@@ -121,38 +117,34 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeString(final String str) {
         writeInt(0); // making space for size
-        final int strLen = writeCString(str);
+        int strLen = writeCString(str);
         backpatchSize(strLen, 4);
     }
 
     public int writeCString(final String str) {
-
-        final int len = str.length();
+        int len = str.length();
         int total = 0;
 
         for (int i = 0; i < len;/*i gets incremented*/) {
-            final int c = Character.codePointAt(str, i);
+            int c = Character.codePointAt(str, i);
 
             if (c == 0x0) {
-                throw new BSONSerializationException(
-                        String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
+                throw new BSONSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
+                                                            + "at index %d", str, i));
             }
             if (c < 0x80) {
                 write((byte) c);
                 total += 1;
-            }
-            else if (c < 0x800) {
+            } else if (c < 0x800) {
                 write((byte) (0xc0 + (c >> 6)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 2;
-            }
-            else if (c < 0x10000) {
+            } else if (c < 0x10000) {
                 write((byte) (0xe0 + (c >> 12)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));
                 write((byte) (0x80 + (c & 0x3f)));
                 total += 3;
-            }
-            else {
+            } else {
                 write((byte) (0xf0 + (c >> 18)));
                 write((byte) (0x80 + ((c >> 12) & 0x3f)));
                 write((byte) (0x80 + ((c >> 6) & 0x3f)));

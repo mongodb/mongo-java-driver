@@ -42,7 +42,7 @@ class CommandWithPayloadEncoder<T> implements Encoder<Document> {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : value.entrySet()) {
-            final String fieldName = entry.getKey();
+            String fieldName = entry.getKey();
 
             bsonWriter.writeName(fieldName);
             if (fieldContainingPayload.equals(fieldName)) {

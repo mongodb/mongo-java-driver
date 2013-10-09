@@ -21,7 +21,7 @@ import org.mongodb.ServerCursor;
 
 
 class MongoCursorAdapter implements MongoCursor {
-    org.mongodb.MongoCursor<DBObject> cursor;
+    final org.mongodb.MongoCursor<DBObject> cursor;
 
     public MongoCursorAdapter(final org.mongodb.MongoCursor<DBObject> cursor) {
         this.cursor = cursor;
@@ -35,7 +35,7 @@ class MongoCursorAdapter implements MongoCursor {
     @Override
     public ServerAddress getServerAddress() {
         org.mongodb.connection.ServerAddress address = cursor.getServerCursor()
-            .getAddress();
+                                                             .getAddress();
         return new ServerAddress(address.getHost(), address.getPort());
     }
 

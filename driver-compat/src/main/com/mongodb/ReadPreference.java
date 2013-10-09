@@ -39,10 +39,10 @@ public class ReadPreference {
     public static final ReadPreference PRIMARY;
 
     /**
-     * A secondary-preferred read preference.  Equivalent to calling {@code ReadPreference.secondaryPreferred}.  This
-     * reference should really have been called {@code ReadPreference.SECONDARY_PREFERRED}, but the naming of it
-     * preceded the idea of distinguishing between secondary and secondary-preferred, so for backwards compatibility,
-     * leaving the name as is with the behavior as it was when it was created.
+     * A secondary-preferred read preference.  Equivalent to calling {@code ReadPreference.secondaryPreferred}.  This reference should
+     * really have been called {@code ReadPreference.SECONDARY_PREFERRED}, but the naming of it preceded the idea of distinguishing between
+     * secondary and secondary-preferred, so for backwards compatibility, leaving the name as is with the behavior as it was when it was
+     * created.
      *
      * @see ReadPreference#secondary()
      * @see ReadPreference#secondaryPreferred()
@@ -110,7 +110,7 @@ public class ReadPreference {
     private static List<Tags> toTagsList(final DBObject firstTagSet, final DBObject[] remainingTagSets) {
         List<Tags> tagsList = new ArrayList<Tags>();
         tagsList.add(toTagMap(firstTagSet));
-        for (DBObject cur : remainingTagSets) {
+        for (final DBObject cur : remainingTagSets) {
             tagsList.add(toTagMap(cur));
         }
         return tagsList;
@@ -118,7 +118,7 @@ public class ReadPreference {
 
     private static Tags toTagMap(final DBObject tagSet) {
         Tags tags = new Tags();
-        for (String key : tagSet.keySet()) {
+        for (final String key : tagSet.keySet()) {
             tags.put(key, tagSet.get(key).toString());
         }
         return tags;
@@ -146,8 +146,7 @@ public class ReadPreference {
     }
 
     /**
-     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective
-     *         of tags.
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
      */
     public static TaggableReadPreference secondaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
         return new TaggableReadPreference(org.mongodb.ReadPreference.secondaryPreferred(toTagsList(firstTagSet, remainingTagSets)));
@@ -179,8 +178,7 @@ public class ReadPreference {
     public static ReadPreference fromNew(final org.mongodb.ReadPreference readPreference) {
         if (readPreference instanceof org.mongodb.TaggableReadPreference) {
             return new TaggableReadPreference((org.mongodb.TaggableReadPreference) readPreference);
-        }
-        else {
+        } else {
             return new ReadPreference(readPreference);
         }
     }
@@ -194,7 +192,7 @@ public class ReadPreference {
             return false;
         }
 
-        final ReadPreference that = (ReadPreference) o;
+        ReadPreference that = (ReadPreference) o;
 
         if (!proxied.equals(that.proxied)) {
             return false;

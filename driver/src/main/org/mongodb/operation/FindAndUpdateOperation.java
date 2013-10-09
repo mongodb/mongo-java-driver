@@ -51,15 +51,15 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
     @Override
     public T execute() {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        final ServerConnectionProvider provider = createServerConnectionProvider();
-        final CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
-                                                                commandEncoder, resultDecoder, getBufferProvider(),
-                                                                provider.getServerDescription(), provider.getConnection(), true).execute();
+        ServerConnectionProvider provider = createServerConnectionProvider();
+        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
+                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          provider.getServerDescription(), provider.getConnection(), true).execute();
         return (T) commandResult.getResponse().get("value");
     }
 
     private void validateUpdateDocumentToEnsureItHasUpdateOperators(final Document value) {
-        for (String field : value.keySet()) {
+        for (final String field : value.keySet()) {
             if (field.startsWith("$")) {
                 return;
             }
@@ -69,7 +69,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
     }
 
     private Document createFindAndUpdateDocument() {
-        final Document command = new Document("findandmodify", namespace.getCollectionName());
+        Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndUpdate.getFilter());
         putIfNotNull(command, "fields", findAndUpdate.getSelector());
         putIfNotNull(command, "sort", findAndUpdate.getSortCriteria());

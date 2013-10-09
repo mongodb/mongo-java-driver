@@ -59,8 +59,7 @@ final class AsynchronousSocketChannelStream implements Stream {
             public void completed() {
                 if (iter.hasNext()) {
                     pipeOneBuffer(byteChannel, iter.next(), this);
-                }
-                else {
+                } else {
                     handler.completed();
                 }
             }
@@ -108,8 +107,7 @@ final class AsynchronousSocketChannelStream implements Stream {
         try {
             if (channel != null) {
                 handler.completed();
-            }
-            else {
+            } else {
                 channel = AsynchronousSocketChannel.open();
                 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
@@ -136,8 +134,7 @@ final class AsynchronousSocketChannelStream implements Stream {
             public void completed() {
                 if (byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), this);
-                }
-                else {
+                } else {
                     outerHandler.completed();
                 }
             }
@@ -190,8 +187,7 @@ final class AsynchronousSocketChannelStream implements Stream {
             if (!dst.hasRemaining()) {
                 dst.flip();
                 handler.completed();
-            }
-            else {
+            } else {
                 channel.read(dst.asNIO(), null, new BasicCompletionHandler(dst, handler));
             }
         }

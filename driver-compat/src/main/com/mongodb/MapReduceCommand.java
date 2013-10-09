@@ -56,7 +56,8 @@ public class MapReduceCommand {
      * @param reduce           a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      * @param outputCollection optional - leave null if want to get the result inline
      * @param type             the type of output
-     * @param query            specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @param query            specifies the selection criteria using query operators for determining the documents input to the map
+     *                         function.
      */
     public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce, final String outputCollection,
                             final OutputType type, final DBObject query) {
@@ -117,8 +118,7 @@ public class MapReduceCommand {
     }
 
     /**
-     * Gets the output target (name of collection to save to) This value is nullable only if OutputType is set to
-     * INLINE
+     * Gets the output target (name of collection to save to) This value is nullable only if OutputType is set to INLINE
      *
      * @return The outputCollection
      */
@@ -221,21 +221,21 @@ public class MapReduceCommand {
     /**
      * Sets the (optional) database name where the output collection should reside
      *
-     * @param outputDB
+     * @param outputDB the name of the database to send the Map Reduce output to
      */
     public void setOutputDB(final String outputDB) {
         this.outputDB = outputDB;
     }
 
     public DBObject toDBObject() {
-        final BasicDBObject cmd = new BasicDBObject();
+        BasicDBObject cmd = new BasicDBObject();
 
         cmd.put("mapreduce", mapReduce);
         cmd.put("map", map);
         cmd.put("reduce", reduce);
         cmd.put("verbose", verbose);
 
-        final BasicDBObject out = new BasicDBObject();
+        BasicDBObject out = new BasicDBObject();
         switch (outputType) {
             case INLINE:
                 out.put("inline", 1);
@@ -296,8 +296,7 @@ public class MapReduceCommand {
     }
 
     /**
-     * Sets the read preference for this command. See the * documentation for {@link ReadPreference} for more
-     * information.
+     * Sets the read preference for this command. See the * documentation for {@link ReadPreference} for more information.
      *
      * @param preference Read Preference to use
      */
@@ -336,12 +335,11 @@ public class MapReduceCommand {
     }
 
     Command toNew() {
-        final MapReduce mapReduce;
+        MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {
             mapReduce = new MapReduce(new Code(map), new Code(reduce));
         } else {
-            final MapReduceOutput output = new MapReduceOutput(outputCollection)
-                    .database(outputDB);
+            MapReduceOutput output = new MapReduceOutput(outputCollection).database(outputDB);
             switch (outputType) {
                 case MERGE:
                     output.action(MapReduceOutput.Action.MERGE);

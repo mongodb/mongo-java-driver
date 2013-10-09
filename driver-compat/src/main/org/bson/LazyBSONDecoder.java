@@ -28,14 +28,14 @@ public class LazyBSONDecoder implements BSONDecoder {
 
     @Override
     public BSONObject readObject(final byte[] bytes) {
-        final BSONCallback bsonCallback = new LazyBSONCallback();
+        BSONCallback bsonCallback = new LazyBSONCallback();
         decode(bytes, bsonCallback);
         return (BSONObject) bsonCallback.get();
     }
 
     @Override
     public BSONObject readObject(final InputStream in) throws IOException {
-        final BSONCallback bsonCallback = new LazyBSONCallback();
+        BSONCallback bsonCallback = new LazyBSONCallback();
         decode(in, bsonCallback);
         return (BSONObject) bsonCallback.get();
     }

@@ -58,11 +58,12 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new ReplaceProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
-                serverDescription, connection, true); }
+                                      serverDescription, connection, true);
+    }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new ReplaceCommandProtocol<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder, getBufferProvider(),
-                serverDescription, connection, true);
+                                             serverDescription, connection, true);
     }
 }

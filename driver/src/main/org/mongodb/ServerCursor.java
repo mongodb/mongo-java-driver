@@ -20,9 +20,9 @@ import org.mongodb.connection.ServerAddress;
 
 import java.io.Serializable;
 
-/** A class representing a cursor id associated with a server address (host/port)
- *  Since cursor ids are only useful in the context of a single MongoDB server process, you
- *  need both values to do a getMore on the cursor.
+/**
+ * A class representing a cursor id associated with a server address (host/port) Since cursor ids are only useful in the context of a single
+ * MongoDB server process, you need both values to do a getMore on the cursor.
  */
 public final class ServerCursor implements Serializable {
 
@@ -60,7 +60,7 @@ public final class ServerCursor implements Serializable {
             return false;
         }
 
-        final ServerCursor that = (ServerCursor) o;
+        ServerCursor that = (ServerCursor) o;
 
         if (id != that.id) {
             return false;

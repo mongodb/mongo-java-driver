@@ -29,10 +29,13 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))
         new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                true).execute()
+                                      true).execute()
         def op = new RemoveOperation(getNamespace(), WriteConcern.ACKNOWLEDGED,
-                [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))], new DocumentCodec(), getBufferProvider(), getSession(),
-                true)
+                                     [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))],
+                                     new DocumentCodec(),
+                                     getBufferProvider(),
+                                     getSession(),
+                                     true)
 
         when:
         op.execute()
@@ -44,12 +47,16 @@ class RemoveOperationSpecification extends FunctionalSpecification {
     def 'should split removes into batches'() {
         given:
         def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED,
-                [new Document('_id', 1)])
-        new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                true).execute()
+                                          [new Document('_id', 1)])
+        new InsertOperation<Document>(getNamespace(), insert,
+                                      new DocumentCodec(),
+                                      getBufferProvider(),
+                                      getSession(),
+                                      true).execute()
         def op = new RemoveOperation(getNamespace(), WriteConcern.ACKNOWLEDGED,
-                [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))], new DocumentCodec(), getBufferProvider(), getSession(),
-                true)
+                                     [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))], new DocumentCodec(),
+                                     getBufferProvider(), getSession(),
+                                     true)
 
         when:
         op.execute()

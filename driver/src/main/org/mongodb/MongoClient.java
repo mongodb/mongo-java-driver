@@ -63,6 +63,7 @@ public interface MongoClient extends Closeable {
 
     /**
      * Get the options for this client.
+     *
      * @return the options
      */
     MongoClientOptions getOptions();

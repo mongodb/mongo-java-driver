@@ -46,27 +46,27 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ConnectionListener connectionListener) {
         String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
 
-        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(
-                clusterId,
-                serverSettings,
-                connectionPoolSettings,
-                streamFactory,
-                heartbeatStreamFactory,
-                scheduledExecutorService,
-                credentialList,
-                bufferProvider,
-                connectionListener != null ? connectionListener : new NoOpConnectionListener(),
-                connectionPoolListener != null ? connectionPoolListener : new NoOpConnectionPoolListener());
+        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
+                                                                                     serverSettings,
+                                                                                     connectionPoolSettings,
+                                                                                     streamFactory,
+                                                                                     heartbeatStreamFactory,
+                                                                                     scheduledExecutorService,
+                                                                                     credentialList,
+                                                                                     bufferProvider,
+                                                                                     connectionListener != null ? connectionListener
+                                                                                                             : new NoOpConnectionListener(),
+                                                                                     connectionPoolListener != null
+                                                                                     ? connectionPoolListener
+                                                                                     : new NoOpConnectionPoolListener());
 
         if (settings.getMode() == ClusterConnectionMode.Single) {
             return new SingleServerCluster(clusterId, settings, serverFactory,
-                    clusterListener != null ? clusterListener : new NoOpClusterListener());
-        }
-        else if (settings.getMode() == ClusterConnectionMode.Multiple) {
+                                           clusterListener != null ? clusterListener : new NoOpClusterListener());
+        } else if (settings.getMode() == ClusterConnectionMode.Multiple) {
             return new MultiServerCluster(clusterId, settings, serverFactory,
-                    clusterListener != null ? clusterListener : new NoOpClusterListener());
-        }
-        else {
+                                          clusterListener != null ? clusterListener : new NoOpClusterListener());
+        } else {
             throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
         }
     }

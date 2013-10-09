@@ -99,7 +99,7 @@ public class DBObjectCodec implements Codec<DBObject> {
 
     @SuppressWarnings("unchecked")
     protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
-        final Object value = BSON.applyEncodingHooks(initialValue);
+        Object value = BSON.applyEncodingHooks(initialValue);
         try {
             if (value instanceof DBRefBase) {
                 encodeDBRef(bsonWriter, (DBRefBase) value);
@@ -141,7 +141,7 @@ public class DBObjectCodec implements Codec<DBObject> {
     private void encodeArray(final BSONWriter bsonWriter, final Object value) {
         bsonWriter.writeStartArray();
 
-        final int size = Array.getLength(value);
+        int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
             writeValue(bsonWriter, Array.get(value, i));
         }
@@ -175,7 +175,7 @@ public class DBObjectCodec implements Codec<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        final List<String> path = new ArrayList<String>(10);
+        List<String> path = new ArrayList<String>(10);
         return readDocument(reader, path);
     }
 
@@ -185,9 +185,9 @@ public class DBObjectCodec implements Codec<DBObject> {
     }
 
     private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {
-        final Object initialRetVal;
+        Object initialRetVal;
         try {
-            final BSONType bsonType = reader.getCurrentBSONType();
+            BSONType bsonType = reader.getCurrentBSONType();
 
             if (bsonType.isContainer() && fieldName != null) {
                 //if we got into some new context like nested document or array
@@ -205,7 +205,7 @@ public class DBObjectCodec implements Codec<DBObject> {
                     initialRetVal = readCodeWScope(reader, path);
                     break;
                 case DB_POINTER: //custom for driver-compat types
-                    final DBPointer dbPointer = reader.readDBPointer();
+                    DBPointer dbPointer = reader.readDBPointer();
                     initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
                     break;
                 default:
@@ -225,7 +225,7 @@ public class DBObjectCodec implements Codec<DBObject> {
 
     private List readArray(final BSONReader reader, final List<String> path) {
         reader.readStartArray();
-        final BasicDBList list = new BasicDBList();
+        BasicDBList list = new BasicDBList();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
@@ -234,11 +234,11 @@ public class DBObjectCodec implements Codec<DBObject> {
     }
 
     private DBObject readDocument(final BSONReader reader, final List<String> path) {
-        final DBObject document = objectFactory.getInstance(path);
+        DBObject document = objectFactory.getInstance(path);
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
+            String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
 

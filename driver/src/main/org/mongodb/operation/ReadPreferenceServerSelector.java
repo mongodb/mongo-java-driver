@@ -57,7 +57,7 @@ public class ReadPreferenceServerSelector extends ChainingServerSelector {
             return false;
         }
 
-        final ReadPreferenceServerSelector that = (ReadPreferenceServerSelector) o;
+        ReadPreferenceServerSelector that = (ReadPreferenceServerSelector) o;
 
         if (!readPreference.equals(that.readPreference)) {
             return false;
@@ -74,7 +74,7 @@ public class ReadPreferenceServerSelector extends ChainingServerSelector {
     @Override
     public String toString() {
         return "ReadPreferenceServerSelector{"
-                + "readPreference=" + readPreference
-                + '}';
+               + "readPreference=" + readPreference
+               + '}';
     }
 }

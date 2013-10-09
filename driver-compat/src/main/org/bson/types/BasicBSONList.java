@@ -28,17 +28,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Utility class to allow array <code>DBObject</code>s to be created. <p> Note: MongoDB will also create arrays from
- * <code>java.util.List</code>s. </p> <p>
+ * Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from {@code java.util.List}s.
+ * </p> <p>
  * <blockquote><pre>
  * DBObject obj = new BasicBSONList();
  * obj.put( "0", value1 );
  * obj.put( "4", value2 );
  * obj.put( 2, value3 );
  * </pre></blockquote>
- * This simulates the array [ value1, null, value3, null, value2 ] by creating the <code>DBObject</code> <code>{ "0" :
- * value1, "1" : null, "2" : value3, "3" : null, "4" : value2 }</code>. </p> <p> BasicBSONList only supports numeric
- * keys.  Passing strings that cannot be converted to ints will cause an IllegalArgumentException.
+ * This simulates the array [ value1, null, value3, null, value2 ] by creating the {@code DBObject} {@code { "0" : value1, "1" : null, "2" :
+ * value3, "3" : null, "4" : value2 }}. </p> <p> BasicBSONList only supports numeric keys.  Passing strings that cannot be converted to ints
+ * will cause an IllegalArgumentException.
  * <blockquote><pre>
  * BasicBSONList list = new BasicBSONList();
  * list.put("1", "bar"); // ok
@@ -46,7 +46,7 @@ import java.util.Set;
  * </pre></blockquote>
  * </p>
  */
-@SuppressWarnings({ "rawtypes" })
+@SuppressWarnings("rawtypes")
 public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
@@ -60,14 +60,14 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
      * @param key the index at which to insert the value
      * @param v   the value to insert
      * @return the value
-     * @throws IllegalArgumentException if <code>key</code> cannot be parsed into an <code>int</code>
+     * @throws IllegalArgumentException if {@code key} cannot be parsed into an {@code int}
      */
     public Object put(final String key, final Object v) {
         return put(_getInt(key), v);
     }
 
     /**
-     * Puts a value at an index. This will fill any unset indexes less than <code>index</code> with <code>null</code>.
+     * Puts a value at an index. This will fill any unset indexes less than {@code index} with {@code null}.
      *
      * @param key the index at which to insert the value
      * @param v   the value to insert
@@ -99,10 +99,10 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
      *
      * @param key the index
      * @return the value, if found, or null
-     * @throws IllegalArgumentException if <code>key</code> cannot be parsed into an <code>int</code>
+     * @throws IllegalArgumentException if {@code key} cannot be parsed into an {@code int}
      */
     public Object get(final String key) {
-        final int i = _getInt(key);
+        int i = _getInt(key);
         if (i < 0) {
             return null;
         }
@@ -113,7 +113,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     }
 
     public Object removeField(final String key) {
-        final int i = _getInt(key);
+        int i = _getInt(key);
         if (i < 0) {
             return null;
         }
@@ -132,7 +132,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     }
 
     public boolean containsField(final String key) {
-        final int i = _getInt(key, false);
+        int i = _getInt(key, false);
         if (i < 0) {
             return false;
         }
@@ -145,10 +145,10 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 
     @SuppressWarnings("unchecked")
     public Map toMap() {
-        final Map m = new HashMap();
-        final Iterator i = this.keySet().iterator();
+        Map m = new HashMap();
+        Iterator i = this.keySet().iterator();
         while (i.hasNext()) {
-            final Object s = i.next();
+            Object s = i.next();
             m.put(s, this.get(String.valueOf(s)));
         }
         return m;

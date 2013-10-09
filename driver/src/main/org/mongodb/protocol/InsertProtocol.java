@@ -50,7 +50,7 @@ public class InsertProtocol<T> extends WriteProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insert.getDocuments().size(),
-                getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
+                           getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Insert completed");
         return writeResult;

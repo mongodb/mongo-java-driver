@@ -19,8 +19,8 @@
 package com.mongodb;
 
 /**
- * Various settings for a Mongo instance. Not thread safe, and superseded by MongoClientOptions.  This class may
- * be deprecated in a future release.
+ * Various settings for a Mongo instance. Not thread safe, and superseded by MongoClientOptions.  This class may be deprecated in a future
+ * release.
  *
  * @see MongoClientOptions
  * @see MongoClient
@@ -30,73 +30,66 @@ package com.mongodb;
 public class MongoOptions {
 
     /**
-     * <p>The description for <code>Mongo</code> instances created with these options. This is used in various places like logging.</p>
+     * <p>The description for {@code Mongo} instances created with these options. This is used in various places like logging.</p>
      */
     public String description;
 
     /**
-     * The maximum number of connections allowed per host for this Mongo instance.
-     * Those connections will be kept in a pool when idle.
-     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * Default is 10.
+     * The maximum number of connections allowed per host for this Mongo instance. Those connections will be kept in a pool when idle. Once
+     * the pool is exhausted, any operation requiring a connection will block waiting for an available connection. Default is 10.
      *
      * @see MongoOptions#threadsAllowedToBlockForConnectionMultiplier
      */
     public int connectionsPerHost;
 
     /**
-     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that
-     * may be waiting for a connection to become available from the pool.
-     * All further threads will get an exception right away.
-     * For example if connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.
-     * Default is 5.
+     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
+     * connection to become available from the pool. All further threads will get an exception right away. For example if connectionsPerHost
+     * is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection. Default is 5.
      */
     public int threadsAllowedToBlockForConnectionMultiplier;
 
     /**
-     * The maximum wait time in milliseconds that a thread may wait for a connection to become available.
-     * Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.
+     * The maximum wait time in milliseconds that a thread may wait for a connection to become available. Default is 120,000. A value of 0
+     * means that it will not wait.  A negative value means to wait indefinitely.
      */
     public int maxWaitTime;
 
     /**
-     * The connection timeout in milliseconds.  A value of 0 means no timeout.
-     * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
-     * Default is 10,000.
+     * The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection {@link
+     * java.net.Socket#connect(java.net.SocketAddress, int) } Default is 10,000.
      */
     public int connectTimeout;
 
     /**
-     * The socket timeout in milliseconds
-     * It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
+     * The socket timeout in milliseconds It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
      * Default is 0 and means no timeout.
      */
     public int socketTimeout;
 
     //CHECKSTYLE:ON
     /**
-     * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
-     * Default is false.
+     * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
+     * java.net.Socket#setKeepAlive(boolean)} Default is false.
      */
     public boolean socketKeepAlive;
 
     /**
-     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established.
-     * There is maximum amount of time to keep retrying, which is 15s by default.
-     * This can be useful to avoid some exceptions being thrown when a server is down temporarily by blocking the operations.
-     * It also can be useful to smooth the transition to a new master (so that a new master is elected within the retry time).
-     * Note that when using this flag:
-     * - for a replica set, the driver will trying to connect to the old master for that time, instead of failing over to the new one right away
-     * - this does not prevent exception from being thrown in read/write operations on the socket, which must be handled by application
+     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established. There is maximum
+     * amount of time to keep retrying, which is 15s by default. This can be useful to avoid some exceptions being thrown when a server is
+     * down temporarily by blocking the operations. It also can be useful to smooth the transition to a new master (so that a new master is
+     * elected within the retry time). Note that when using this flag: - for a replica set, the driver will trying to connect to the old
+     * master for that time, instead of failing over to the new one right away - this does not prevent exception from being thrown in
+     * read/write operations on the socket, which must be handled by application
      * <p/>
-     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read operations.
-     * Default is false.
+     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read
+     * operations. Default is false.
      */
     public boolean autoConnectRetry;
 
     /**
-     * The maximum amount of time in MS to spend retrying to open connection to the same server.
-     * Default is 0, which means to use the default 15s if autoConnectRetry is on.
+     * The maximum amount of time in MS to spend retrying to open connection to the same server. Default is 0, which means to use the
+     * default 15s if autoConnectRetry is on.
      */
     public long maxAutoConnectRetryTime;
 
@@ -116,51 +109,43 @@ public class MongoOptions {
     public DBEncoderFactory dbEncoderFactory;
 
     /**
-     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations.
-     * If w, wtimeout, fsync or j are specified, this setting is ignored.
-     * Default is false.
+     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
+     * this setting is ignored. Default is false.
      */
     public boolean safe;
 
     /**
-     * The "w" value, (number of writes), of the global WriteConcern.
-     * Default is 0.
+     * The "w" value, (number of writes), of the global WriteConcern. Default is 0.
      */
     public int w;
 
     /**
-     * The "wtimeout" value of the global WriteConcern.
-     * Default is 0.
+     * The "wtimeout" value of the global WriteConcern. Default is 0.
      */
     public int wtimeout;
 
     /**
-     * The "fsync" value of the global WriteConcern.
-     * true indicates writes should wait for data to be written to server data file
-     * Default is false.
+     * The "fsync" value of the global WriteConcern. true indicates writes should wait for data to be written to server data file Default is
+     * false.
      */
     public boolean fsync;
 
     /**
-     * The "j" value of the global WriteConcern.
-     * true indicates writes should wait for a journaling group commit
-     * Default is false.
+     * The "j" value of the global WriteConcern. true indicates writes should wait for a journaling group commit Default is false.
      */
     public boolean j;
 
     /**
-     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client
-     * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
+     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
+     * careful to always call the close method of DBCursor, then this can safely be set to false.
      *
-     * @see com.mongodb.DBCursor#close().
-     *      Default is true.
+     * @see com.mongodb.DBCursor#close(). Default is true.
      */
     public boolean cursorFinalizerEnabled;
 
     /**
-     * Sets the write concern.  If this is not set, the write concern defaults to the combination of settings of
-     * the other write concern-related fields.  If set, this will override all of the other write concern-related
-     * fields.
+     * Sets the write concern.  If this is not set, the write concern defaults to the combination of settings of the other write
+     * concern-related fields.  If set, this will override all of the other write concern-related fields.
      *
      * @see #w
      * @see #safe
@@ -236,22 +221,22 @@ public class MongoOptions {
         return m;
     }
 
-    MongoClientOptions toClientOptions(){
+    MongoClientOptions toClientOptions() {
         return MongoClientOptions.builder()
-                .autoConnectRetry(this.autoConnectRetry)
-                .connectionsPerHost(this.connectionsPerHost)
-                .connectTimeout(this.connectTimeout)
-                .dbDecoderFactory(this.dbDecoderFactory)
-                .dbEncoderFactory(this.dbEncoderFactory)
-                .description(this.description)
-                .maxAutoConnectRetryTime(this.maxAutoConnectRetryTime)
-                .maxWaitTime(this.maxWaitTime)
-                .readPreference(this.readPreference)
-                .socketKeepAlive(this.socketKeepAlive)
-                .socketTimeout(this.socketTimeout)
-                .threadsAllowedToBlockForConnectionMultiplier(this.threadsAllowedToBlockForConnectionMultiplier)
-                .writeConcern(this.writeConcern)
-                .build();
+                                 .autoConnectRetry(this.autoConnectRetry)
+                                 .connectionsPerHost(this.connectionsPerHost)
+                                 .connectTimeout(this.connectTimeout)
+                                 .dbDecoderFactory(this.dbDecoderFactory)
+                                 .dbEncoderFactory(this.dbEncoderFactory)
+                                 .description(this.description)
+                                 .maxAutoConnectRetryTime(this.maxAutoConnectRetryTime)
+                                 .maxWaitTime(this.maxWaitTime)
+                                 .readPreference(this.readPreference)
+                                 .socketKeepAlive(this.socketKeepAlive)
+                                 .socketTimeout(this.socketTimeout)
+                                 .threadsAllowedToBlockForConnectionMultiplier(this.threadsAllowedToBlockForConnectionMultiplier)
+                                 .writeConcern(this.writeConcern)
+                                 .build();
     }
 
     /**
@@ -277,16 +262,16 @@ public class MongoOptions {
     }
 
     /**
-     * @return The description for <code>MongoClient</code> instances created with these options
+     * @return The description for {@code MongoClient} instances created with these options
      */
     public synchronized String getDescription() {
         return description;
     }
 
     /**
-     * @param desc The description for <code>Mongo</code> instances created with these options
+     * @param desc The description for {@code Mongo} instances created with these options
      */
-    public synchronized void setDescription(String desc) {
+    public synchronized void setDescription(final String desc) {
         description = desc;
     }
 
@@ -300,23 +285,21 @@ public class MongoOptions {
     /**
      * @param connections sets the maximum number of connections allowed per host for this Mongo instance
      */
-    public synchronized void setConnectionsPerHost(int connections) {
+    public synchronized void setConnectionsPerHost(final int connections) {
         connectionsPerHost = connections;
     }
 
     /**
-     * @return the maximum number of threads that
-     *         may be waiting for a connection
+     * @return the maximum number of threads that may be waiting for a connection
      */
     public synchronized int getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
     }
 
     /**
-     * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that
-     *                may be waiting for a connection
+     * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that may be waiting for a connection
      */
-    public synchronized void setThreadsAllowedToBlockForConnectionMultiplier(int threads) {
+    public synchronized void setThreadsAllowedToBlockForConnectionMultiplier(final int threads) {
         threadsAllowedToBlockForConnectionMultiplier = threads;
     }
 
@@ -330,7 +313,7 @@ public class MongoOptions {
     /**
      * @param timeMS set the maximum time in milliseconds that threads wait for a connection
      */
-    public synchronized void setMaxWaitTime(int timeMS) {
+    public synchronized void setMaxWaitTime(final int timeMS) {
         maxWaitTime = timeMS;
     }
 
@@ -344,7 +327,7 @@ public class MongoOptions {
     /**
      * @param timeoutMS set the connection timeout in milliseconds.
      */
-    public synchronized void setConnectTimeout(int timeoutMS) {
+    public synchronized void setConnectTimeout(final int timeoutMS) {
         connectTimeout = timeoutMS;
     }
 
@@ -358,7 +341,7 @@ public class MongoOptions {
     /**
      * @param timeoutMS set the socket timeout in milliseconds
      */
-    public synchronized void setSocketTimeout(int timeoutMS) {
+    public synchronized void setSocketTimeout(final int timeoutMS) {
         socketTimeout = timeoutMS;
     }
 
@@ -372,7 +355,7 @@ public class MongoOptions {
     /**
      * @param keepAlive set connection keep-alive flag
      */
-    public synchronized void setSocketKeepAlive(boolean keepAlive) {
+    public synchronized void setSocketKeepAlive(final boolean keepAlive) {
         socketKeepAlive = keepAlive;
     }
 
@@ -386,7 +369,7 @@ public class MongoOptions {
     /**
      * @param retry sets keep trying connection flag
      */
-    public synchronized void setAutoConnectRetry(boolean retry) {
+    public synchronized void setAutoConnectRetry(final boolean retry) {
         autoConnectRetry = retry;
     }
 
@@ -400,7 +383,7 @@ public class MongoOptions {
     /**
      * @param retryTimeMS set max time in MS to retrying open connection
      */
-    public synchronized void setMaxAutoConnectRetryTime(long retryTimeMS) {
+    public synchronized void setMaxAutoConnectRetryTime(final long retryTimeMS) {
         maxAutoConnectRetryTime = retryTimeMS;
     }
 
@@ -414,7 +397,7 @@ public class MongoOptions {
     /**
      * @param factory sets the DBCallback decoding factory
      */
-    public synchronized void setDbDecoderFactory(DBDecoderFactory factory) {
+    public synchronized void setDbDecoderFactory(final DBDecoderFactory factory) {
         dbDecoderFactory = factory;
     }
 
@@ -428,7 +411,7 @@ public class MongoOptions {
     /**
      * @param factory sets the encoding factory
      */
-    public synchronized void setDbEncoderFactory(DBEncoderFactory factory) {
+    public synchronized void setDbEncoderFactory(final DBEncoderFactory factory) {
         dbEncoderFactory = factory;
     }
 
@@ -442,7 +425,7 @@ public class MongoOptions {
     /**
      * @param isSafe true if driver uses WriteConcern.SAFE for all operations.
      */
-    public synchronized void setSafe(boolean isSafe) {
+    public synchronized void setSafe(final boolean isSafe) {
         safe = isSafe;
     }
 
@@ -456,7 +439,7 @@ public class MongoOptions {
     /**
      * @param val set the number of writes of the global WriteConcern.
      */
-    public synchronized void setW(int val) {
+    public synchronized void setW(final int val) {
         w = val;
     }
 
@@ -470,7 +453,7 @@ public class MongoOptions {
     /**
      * @param timeoutMS sets timeout for write operation
      */
-    public synchronized void setWtimeout(int timeoutMS) {
+    public synchronized void setWtimeout(final int timeoutMS) {
         wtimeout = timeoutMS;
     }
 
@@ -484,7 +467,7 @@ public class MongoOptions {
     /**
      * @param sync sets global write concern's fsync safe value
      */
-    public synchronized void setFsync(boolean sync) {
+    public synchronized void setFsync(final boolean sync) {
         fsync = sync;
     }
 
@@ -498,7 +481,7 @@ public class MongoOptions {
     /**
      * @param safe sets global write concern's journal safe value
      */
-    public synchronized void setJ(boolean safe) {
+    public synchronized void setJ(final boolean safe) {
         j = safe;
     }
 
@@ -512,42 +495,79 @@ public class MongoOptions {
     /**
      * @param readPreference the read preference
      */
-    public void setReadPreference(ReadPreference readPreference) {
+    public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
 
     //CHECKSTYLE:OFF
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        final MongoOptions options = (MongoOptions) o;
+        MongoOptions options = (MongoOptions) o;
 
-        if (autoConnectRetry != options.autoConnectRetry) return false;
-        if (connectTimeout != options.connectTimeout) return false;
-        if (connectionsPerHost != options.connectionsPerHost) return false;
-        if (cursorFinalizerEnabled != options.cursorFinalizerEnabled) return false;
-        if (fsync != options.fsync) return false;
-        if (j != options.j) return false;
-        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) return false;
-        if (maxWaitTime != options.maxWaitTime) return false;
-        if (safe != options.safe) return false;
-        if (socketKeepAlive != options.socketKeepAlive) return false;
-        if (socketTimeout != options.socketTimeout) return false;
-        if (threadsAllowedToBlockForConnectionMultiplier != options.threadsAllowedToBlockForConnectionMultiplier)
+        if (autoConnectRetry != options.autoConnectRetry) {
             return false;
-        if (w != options.w) return false;
-        if (wtimeout != options.wtimeout) return false;
-        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(options.dbDecoderFactory) : options.dbDecoderFactory != null)
+        }
+        if (connectTimeout != options.connectTimeout) {
             return false;
-        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(options.dbEncoderFactory) : options.dbEncoderFactory != null)
+        }
+        if (connectionsPerHost != options.connectionsPerHost) {
             return false;
-        if (description != null ? !description.equals(options.description) : options.description != null) return false;
-        if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null)
+        }
+        if (cursorFinalizerEnabled != options.cursorFinalizerEnabled) {
             return false;
-        if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null)
+        }
+        if (fsync != options.fsync) {
             return false;
+        }
+        if (j != options.j) {
+            return false;
+        }
+        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) {
+            return false;
+        }
+        if (maxWaitTime != options.maxWaitTime) {
+            return false;
+        }
+        if (safe != options.safe) {
+            return false;
+        }
+        if (socketKeepAlive != options.socketKeepAlive) {
+            return false;
+        }
+        if (socketTimeout != options.socketTimeout) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != options.threadsAllowedToBlockForConnectionMultiplier) {
+            return false;
+        }
+        if (w != options.w) {
+            return false;
+        }
+        if (wtimeout != options.wtimeout) {
+            return false;
+        }
+        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(options.dbDecoderFactory) : options.dbDecoderFactory != null) {
+            return false;
+        }
+        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(options.dbEncoderFactory) : options.dbEncoderFactory != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(options.description) : options.description != null) {
+            return false;
+        }
+        if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null) {
+            return false;
+        }
+        if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null) {
+            return false;
+        }
 
         return true;
     }
@@ -580,25 +600,25 @@ public class MongoOptions {
     @Override
     public String toString() {
         return "MongoOptions{" +
-                "description='" + description + '\'' +
-                ", connectionsPerHost=" + connectionsPerHost +
-                ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier +
-                ", maxWaitTime=" + maxWaitTime +
-                ", connectTimeout=" + connectTimeout +
-                ", socketTimeout=" + socketTimeout +
-                ", socketKeepAlive=" + socketKeepAlive +
-                ", autoConnectRetry=" + autoConnectRetry +
-                ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime +
-                ", readPreference=" + readPreference +
-                ", dbDecoderFactory=" + dbDecoderFactory +
-                ", dbEncoderFactory=" + dbEncoderFactory +
-                ", safe=" + safe +
-                ", w=" + w +
-                ", wtimeout=" + wtimeout +
-                ", fsync=" + fsync +
-                ", j=" + j +
-                ", cursorFinalizerEnabled=" + cursorFinalizerEnabled +
-                ", writeConcern=" + writeConcern +
-                '}';
+               "description='" + description + '\'' +
+               ", connectionsPerHost=" + connectionsPerHost +
+               ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier +
+               ", maxWaitTime=" + maxWaitTime +
+               ", connectTimeout=" + connectTimeout +
+               ", socketTimeout=" + socketTimeout +
+               ", socketKeepAlive=" + socketKeepAlive +
+               ", autoConnectRetry=" + autoConnectRetry +
+               ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime +
+               ", readPreference=" + readPreference +
+               ", dbDecoderFactory=" + dbDecoderFactory +
+               ", dbEncoderFactory=" + dbEncoderFactory +
+               ", safe=" + safe +
+               ", w=" + w +
+               ", wtimeout=" + wtimeout +
+               ", fsync=" + fsync +
+               ", j=" + j +
+               ", cursorFinalizerEnabled=" + cursorFinalizerEnabled +
+               ", writeConcern=" + writeConcern +
+               '}';
     }
 }

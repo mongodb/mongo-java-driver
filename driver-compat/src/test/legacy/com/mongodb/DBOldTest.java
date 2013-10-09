@@ -78,7 +78,7 @@ public class DBOldTest extends DatabaseTestCase {
         database.createCollection("foo1", o1);
 
         assertTrue("Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.",
-                  database.collectionExists("foo1"));
+                   database.collectionExists("foo1"));
         assertTrue(database.collectionExists("FOO1"));
         assertTrue(database.collectionExists("fOo1"));
 
@@ -89,47 +89,47 @@ public class DBOldTest extends DatabaseTestCase {
 
     //This protected method was not ported to the new DB.  If the functionality is still required, we need a better
     //way of testing it
-//        @Test
-//        public void testReadPreferenceObedience() {
-//            DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
-//            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("replace", "myColl"));
-//            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", 1));
-//            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", null));
-//            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("getnonce", 1);
-//            assertEquals(ReadPreference.primaryPreferred(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("authenticate", 1);
-//            assertEquals(ReadPreference.primaryPreferred(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("count", 1);
-//            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("count", 1);
-//            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("serverStatus", 1);
-//            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
-//    ReadPreference.secondary()));
-//
-//            obj = new BasicDBObject("count", 1);
-//            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj, null));
-//        }
+    //        @Test
+    //        public void testReadPreferenceObedience() {
+    //            DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
+    //            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("replace", "myColl"));
+    //            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", 1));
+    //            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("mapreduce", 1).append("out", new BasicDBObject("inline", null));
+    //            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("getnonce", 1);
+    //            assertEquals(ReadPreference.primaryPreferred(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("authenticate", 1);
+    //            assertEquals(ReadPreference.primaryPreferred(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("count", 1);
+    //            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("count", 1);
+    //            assertEquals(ReadPreference.secondary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("serverStatus", 1);
+    //            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj,
+    //    ReadPreference.secondary()));
+    //
+    //            obj = new BasicDBObject("count", 1);
+    //            assertEquals(ReadPreference.primary(), database.getCommandReadPreference(obj, null));
+    //        }
 
     @Test
     public void testEnsureConnection() throws UnknownHostException {

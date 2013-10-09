@@ -19,8 +19,7 @@ package org.mongodb;
 import static java.lang.String.format;
 
 /**
- * Exception indicating a failure to successfully complete a write operation according to the WriteConcern
- * used for the operation.
+ * Exception indicating a failure to successfully complete a write operation according to the WriteConcern used for the operation.
  */
 public class MongoWriteException extends MongoServerException {
     private static final long serialVersionUID = -1139302724723542251L;
@@ -34,7 +33,7 @@ public class MongoWriteException extends MongoServerException {
      */
     public MongoWriteException(final WriteResult writeResult) {
         super(format("Write failed with error code %d and error message '%s'", writeResult.getErrorCode(),
-                writeResult.getErrorMessage()), writeResult.getCommandResult().getAddress());
+                     writeResult.getErrorMessage()), writeResult.getCommandResult().getAddress());
         this.writeResult = writeResult;
     }
 

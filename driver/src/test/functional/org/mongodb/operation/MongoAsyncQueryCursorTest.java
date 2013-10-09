@@ -75,8 +75,12 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testBlockRun() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2), collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(),
-                session, true).start(new TestBlock());
+                                            new Find().batchSize(2),
+                                            collection.getOptions().getDocumentCodec(),
+                                            collection.getCodec(),
+                                            getBufferProvider(),
+                                            session,
+                                            true).start(new TestBlock());
         latch.await();
         assertEquals(documentList, documentResultList);
     }
@@ -84,9 +88,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).limit(100).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, true)
-                .start(new TestBlock());
+                                            new Find().batchSize(2).limit(100).order(new Document("_id", 1)),
+                                            collection.getOptions().getDocumentCodec(),
+                                            collection.getCodec(),
+                                            getBufferProvider(),
+                                            session,
+                                            true)
+            .start(new TestBlock());
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 100)));
@@ -95,9 +103,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaust() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, true)
-                .start(new TestBlock());
+                                            new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                                            collection.getOptions().getDocumentCodec(),
+                                            collection.getCodec(),
+                                            getBufferProvider(),
+                                            session,
+                                            true)
+            .start(new TestBlock());
 
         latch.await();
         assertThat(documentResultList, is(documentList));
@@ -106,9 +118,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), session, true)
-                .start(new TestBlock());
+                                            new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
+                                            collection.getOptions().getDocumentCodec(),
+                                            collection.getCodec(),
+                                            getBufferProvider(),
+                                            session,
+                                            true)
+            .start(new TestBlock());
 
         latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 5)));
@@ -120,9 +136,16 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
         try {
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                    new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), pinnedSession, false)
-                    .start(new TestBlock(1));
+                                                new Find().batchSize(2)
+                                                          .limit(5)
+                                                          .addFlags(EnumSet.of(Exhaust))
+                                                          .order(new Document("_id", 1)),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(),
+                                                getBufferProvider(),
+                                                pinnedSession,
+                                                false)
+                .start(new TestBlock(1));
 
             latch.await();
             assertThat(documentResultList, is(documentList.subList(0, 1)));
@@ -131,9 +154,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             CountDownLatch nextLatch = new CountDownLatch(1);
 
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                    new Find().limit(1).order(new Document("_id", -1)),
-                    collection.getOptions().getDocumentCodec(), collection.getCodec(), getBufferProvider(), pinnedSession, false)
-                    .start(new TestBlock(1, nextLatch));
+                                                new Find().limit(1).order(new Document("_id", -1)),
+                                                collection.getOptions().getDocumentCodec(),
+                                                collection.getCodec(),
+                                                getBufferProvider(),
+                                                pinnedSession,
+                                                false)
+                .start(new TestBlock(1, nextLatch));
             nextLatch.await();
             assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
         } finally {
@@ -143,9 +170,9 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
 
     private final class TestBlock implements AsyncBlock<Document> {
-        private int count;
+        private final int count;
         private int iterations;
-        private CountDownLatch latch;
+        private final CountDownLatch latch;
 
         private TestBlock() {
             this(Integer.MAX_VALUE);

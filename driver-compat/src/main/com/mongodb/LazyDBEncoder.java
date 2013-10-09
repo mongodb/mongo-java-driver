@@ -32,7 +32,7 @@ public class LazyDBEncoder implements DBEncoder {
             throw new IllegalArgumentException("LazyDBEncoder can only encode BSONObject instances of type LazyDBObject");
         }
 
-        final LazyDBObject lazyDBObject = (LazyDBObject) document;
+        LazyDBObject lazyDBObject = (LazyDBObject) document;
 
         try {
             return lazyDBObject.pipe(outputBuffer);

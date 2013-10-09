@@ -37,7 +37,7 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            final MongoClientURI mongoURI = getMongoClientURI();
+            MongoClientURI mongoURI = getMongoClientURI();
             try {
                 mongoClient = new MongoClient(mongoURI);
             } catch (UnknownHostException e) {
@@ -72,9 +72,9 @@ public final class Fixture {
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
-            final String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            final String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                    ? DEFAULT_URI : mongoURIProperty;
+            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                                    ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;

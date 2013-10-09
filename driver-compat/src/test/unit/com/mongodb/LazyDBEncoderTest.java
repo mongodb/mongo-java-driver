@@ -26,16 +26,16 @@ public class LazyDBEncoderTest extends DatabaseTestCase {
 
     @Test
     public void testEncodingObject() {
-        final byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
-        final DBObject document = new LazyDBObject(bytes, new LazyDBCallback(collection));
-        final OutputBuffer buffer = new BasicOutputBuffer();
+        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        DBObject document = new LazyDBObject(bytes, new LazyDBCallback(collection));
+        OutputBuffer buffer = new BasicOutputBuffer();
         new LazyDBEncoder().writeObject(buffer, document);
         assertArrayEquals(bytes, buffer.toByteArray());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEncodingRegularDBObjectWithLazyDBEncoder() {
-        final DBObject document = new BasicDBObject();
+        DBObject document = new BasicDBObject();
         new LazyDBEncoder().writeObject(new BasicOutputBuffer(), document);
     }
 }

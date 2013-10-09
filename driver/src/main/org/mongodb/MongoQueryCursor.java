@@ -71,12 +71,12 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         this.bufferProvider = bufferProvider;
         this.session = session;
         this.closeSession = closeSession;
-        provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true,
-                new ReadPreferenceServerSelector(find.getReadPreference())));
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
+        provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
         Connection connection = provider.getConnection();
         exhaustConnection = isExhaust() ? connection : null;
         QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder, this.bufferProvider,
-                provider.getServerDescription(), connection, !isExhaust());
+                                                          provider.getServerDescription(), connection, !isExhaust());
         currentResult = operation.execute();
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -91,10 +91,9 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
         closed = true;
         if (isExhaust()) {
             discardRemainingGetMoreResponses();
-        }
-        else if (currentResult.getCursor() != null && !limitReached()) {
+        } else if (currentResult.getCursor() != null && !limitReached()) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider,
-                    provider.getServerDescription(), getConnection(), !isExhaust()).execute();
+                                   provider.getServerDescription(), getConnection(), !isExhaust()).execute();
         }
         if (exhaustConnection != null) {
             exhaustConnection.close();
@@ -195,12 +194,17 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private void getMore() {
         if (isExhaust()) {
             currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId(),
-                    getConnection()).execute();
-        }
-        else {
+                                                          getConnection())
+                                .execute();
+        } else {
             currentResult = new GetMoreProtocol<T>(namespace,
-                    new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount), decoder, bufferProvider,
-                    provider.getServerDescription(), getConnection(), true).execute();
+                                                   new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
+                                                   decoder,
+                                                   bufferProvider,
+                                                   provider.getServerDescription(),
+                                                   getConnection(),
+                                                   true)
+                                .execute();
         }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -224,13 +228,13 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private void killCursorIfLimitReached() {
         if (limitReached()) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
-                    provider.getConnection(), !isExhaust()).execute();
+                                   provider.getConnection(), !isExhaust()).execute();
         }
     }
 
     private boolean limitReached() {
         return currentResult.getCursor() != null && find.getLimit() > 0
-                && find.getLimit() - (nextCount + currentResult.getResults().size()) <= 0;
+               && find.getLimit() - (nextCount + currentResult.getResults().size()) <= 0;
     }
 
     private boolean isTailableAwait() {
@@ -239,7 +243,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void discardRemainingGetMoreResponses() {
         new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(),
-                getConnection()).execute();
+                                   getConnection()).execute();
     }
 
     private boolean isExhaust() {
@@ -249,8 +253,7 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
     private Connection getConnection() {
         if (isExhaust()) {
             return exhaustConnection;
-        }
-        else {
+        } else {
             return provider.getConnection();
         }
     }

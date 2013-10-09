@@ -55,7 +55,7 @@ public class IterableCodec implements Codec<Iterable> {
     @Override
     public <E> Iterable<E> decode(final BSONReader reader) {
         reader.readStartArray();
-        final Collection<E> collection = collectionFactory.createCollection();
+        Collection<E> collection = collectionFactory.createCollection();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             // Need to test under which circumstances a ClassCastException might be thrown
             collection.add((E) decoder.decode(reader));

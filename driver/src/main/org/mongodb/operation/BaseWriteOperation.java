@@ -56,15 +56,14 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
 
     @Override
     public WriteResult execute() {
-        ServerConnectionProvider provider = getSession().createServerConnectionProvider(
-                new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        ServerConnectionProvider provider = getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false,
+                                                                                                            new PrimaryServerSelector()));
         Connection connection = provider.getConnection();
         try {
             if (writeConcern.isAcknowledged()
-                    && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
+                && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
                 return getCommandProtocol(provider.getServerDescription(), connection).execute();
-            }
-            else {
+            } else {
                 return getWriteProtocol(provider.getServerDescription(), connection).execute();
             }
         } finally {
@@ -79,21 +78,20 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
     public MongoFuture<WriteResult> executeAsync() {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
         getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
-                .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
-                    @Override
-                    public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                        MongoFuture<WriteResult> protocolFuture;
-                        if (writeConcern.isAcknowledged()
-                                && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
-                            protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
-                        }
-                        else {
-                            protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
-                        }
-                        protocolFuture.register(
-                                new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
+            .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
+                @Override
+                public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
+                    MongoFuture<WriteResult> protocolFuture;
+                    if (writeConcern.isAcknowledged()
+                        && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
+                        protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
+                    } else {
+                        protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                     }
-                });
+                    protocolFuture.register(
+                                               new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
+                }
+            });
         return retVal;
     }
 
@@ -101,7 +99,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
         return namespace;
     }
 
-    protected abstract WriteProtocol getWriteProtocol(final ServerDescription serverDescription, Connection connection);
+    protected abstract WriteProtocol getWriteProtocol(ServerDescription serverDescription, Connection connection);
 
-    protected abstract WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection);
+    protected abstract WriteCommandProtocol getCommandProtocol(ServerDescription serverDescription, Connection connection);
 }

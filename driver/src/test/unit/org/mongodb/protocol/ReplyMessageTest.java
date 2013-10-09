@@ -45,8 +45,8 @@ public class ReplyMessageTest {
         headerByteBuffer.putInt(0);
         headerByteBuffer.flip();
 
-        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
-        final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
+        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
     }
 
@@ -66,8 +66,8 @@ public class ReplyMessageTest {
         headerByteBuffer.putInt(0);
         headerByteBuffer.flip();
 
-        final BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
-        final ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
+        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
         new ReplyMessage<Document>(replyHeader, 5, 100);
     }
 }

@@ -30,7 +30,7 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     @Override
     public BSONObject readObject(final byte[] bytes) {
-        final BSONCallback bsonCallback = new BasicBSONCallback();
+        BSONCallback bsonCallback = new BasicBSONCallback();
         decode(bytes, bsonCallback);
         return (BSONObject) bsonCallback.get();
     }
@@ -42,10 +42,10 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     @Override
     public int decode(final byte[] bytes, final BSONCallback callback) {
-        final BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(),
-                new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(),
+                                                       new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
         try {
-            final BSONWriter writer = new BSONCallbackAdapter(new BSONWriterSettings(), callback);
+            BSONWriter writer = new BSONCallbackAdapter(new BSONWriterSettings(), callback);
             writer.pipe(reader);
             return reader.getBuffer().getPosition(); //TODO check this.
         } finally {

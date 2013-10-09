@@ -31,13 +31,13 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testInsertMultiple() {
 
-        final List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             documents.add(doc);
         }
 
-        final WriteResult res = collection.insert(documents);
+        WriteResult res = collection.insert(documents);
         assertEquals(10, collection.find().count());
         assertNotNull(res);
     }
@@ -45,7 +45,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testIdGeneration() {
 
-        final Document doc = new Document();
+        Document doc = new Document();
         collection.insert(doc);
         assertNotNull(doc.get("_id"));
         assertEquals(ObjectId.class, doc.get("_id").getClass());
@@ -59,16 +59,16 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insert(new Document("_id", 1));
 
         collection.find(new Document("_id", 1))
-                .update(new Document("$set", new Document("x", 1)));
+                  .update(new Document("$set", new Document("x", 1)));
 
         assertEquals(1, collection.find(new Document("_id", 1).append("x", 1)).count());
     }
 
     @Test
     public void testUpdateMulti() {
-        final List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             documents.add(doc);
         }
         collection.insert(documents);
@@ -82,9 +82,9 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testUpdateOne() {
-        final List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             documents.add(doc);
         }
         collection.insert(documents);
@@ -107,9 +107,9 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testRemove() {
 
-        final List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             documents.add(doc);
         }
 
@@ -125,9 +125,9 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Ignore("Re-enable when the 2.6 write commands support removing a single document")
     public void testRemoveOne() {
 
-        final List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 10; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             documents.add(doc);
         }
 
@@ -140,11 +140,11 @@ public class MongoCollectionTest extends DatabaseTestCase {
     public void testFind() {
 
         for (int i = 0; i < 101; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             collection.insert(doc);
         }
 
-        final MongoCursor<Document> cursor = collection.find().get();
+        MongoCursor<Document> cursor = collection.find().get();
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -169,7 +169,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     public void testCount() {
 
         for (int i = 0; i < 11; i++) {
-            final Document doc = new Document("_id", i);
+            Document doc = new Document("_id", i);
             collection.insert(doc);
         }
 
@@ -185,8 +185,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         collection.insert(new Document("_id", 1).append("x", true));
 
-        final Document newDoc = collection.find(new Document("x", true))
-                .getOneAndUpdate(new Document("$set", new Document("x", false)));
+        Document newDoc = collection.find(new Document("x", true))
+                                    .getOneAndUpdate(new Document("$set", new Document("x", false)));
 
         assertNotNull(newDoc);
         assertEquals(new Document("_id", 1).append("x", true), newDoc);
@@ -194,13 +194,13 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        final MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), new ConcreteCodec());
+        MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), new ConcreteCodec());
 
-        final Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
+        Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insert(doc);
 
-        final Concrete newDoc = collection.find(new Document("i", 5))
-                .getOneAndUpdate(new Document("$set", new Document("i", 6)));
+        Concrete newDoc = collection.find(new Document("i", 5))
+                                    .getOneAndUpdate(new Document("$set", new Document("i", 6)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

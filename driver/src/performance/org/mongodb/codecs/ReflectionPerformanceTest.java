@@ -294,7 +294,6 @@ public class ReflectionPerformanceTest {
         //and we probably need to be able to either disable this validation or make it pluggable
         final Matcher matcher = pattern.matcher(fieldName);
         return matcher.matches();
-//        return fieldName.matches();
     }
 
 

@@ -32,8 +32,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer.
- * It assumes that it contains a single encoded BSON document.
+ * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer. It assumes that it
+ * contains a single encoded BSON document.
  * <p/>
  * This should even be usable as a nested document codec by adding an instance of it to a PrimitiveCodecs instance.
  */
@@ -49,7 +49,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public void encode(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
-        final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
+        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
             bsonWriter.pipe(reader);
         } finally {
@@ -62,8 +62,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
         BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);
-            final BufferExposingByteArrayOutputStream byteArrayOutputStream =
-                    new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
+            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
             writer.getBuffer().pipe(byteArrayOutputStream);
             return new BSONDocumentBuffer(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
@@ -88,8 +87,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
                 String name = reader.readName();
                 if (name.equals("_id")) {
                     return primitiveCodecs.decode(reader);
-                }
-                else {
+                } else {
                     reader.skipValue();
                 }
             }

@@ -46,7 +46,7 @@ final class MultiServerCluster extends BaseCluster {
     private String replicaSetName;
     private int latestSetVersion = Integer.MIN_VALUE;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
-            new ConcurrentHashMap<ServerAddress, ServerTuple>();
+        new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -70,7 +70,7 @@ final class MultiServerCluster extends BaseCluster {
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            for (ServerAddress serverAddress : settings.getHosts()) {
+            for (final ServerAddress serverAddress : settings.getHosts()) {
                 addServer(serverAddress);
             }
             updateDescription();
@@ -82,7 +82,7 @@ final class MultiServerCluster extends BaseCluster {
     public void close() {
         if (!isClosed()) {
             synchronized (this) {
-                for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
+                for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
                     serverTuple.server.close();
                 }
             }
@@ -151,7 +151,7 @@ final class MultiServerCluster extends BaseCluster {
     private void handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
             LOGGER.severe(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
-                    newDescription.getType(), newDescription.getAddress()));
+                                 newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return;
         }
@@ -162,8 +162,8 @@ final class MultiServerCluster extends BaseCluster {
 
         if (replicaSetName != null && !replicaSetName.equals(newDescription.getSetName())) {
             LOGGER.severe(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
-                    + "Removing %s from client view of cluster.",
-                    replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
+                                 + "Removing %s from client view of cluster.",
+                                 replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return;
         }
@@ -184,7 +184,7 @@ final class MultiServerCluster extends BaseCluster {
     private void handleShardRouterChanged(final ServerDescription newDescription) {
         if (newDescription.getClusterType() != Sharded) {
             LOGGER.severe(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
-                    ShardRouter, newDescription.getType(), newDescription.getAddress()));
+                                 ShardRouter, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
     }
@@ -192,7 +192,7 @@ final class MultiServerCluster extends BaseCluster {
     private void handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
             LOGGER.severe(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
-                    StandAlone, newDescription.getAddress()));
+                                 StandAlone, newDescription.getAddress()));
             clusterType = Unknown;
             removeServer(newDescription.getAddress());
         }
@@ -202,8 +202,7 @@ final class MultiServerCluster extends BaseCluster {
         if (!addressToServerTupleMap.containsKey(serverAddress)) {
             LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
             ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
-            addressToServerTupleMap.put(serverAddress, new ServerTuple(server,
-                    getConnectingServerDescription(serverAddress)));
+            addressToServerTupleMap.put(serverAddress, new ServerTuple(server, getConnectingServerDescription(serverAddress)));
         }
     }
 
@@ -213,7 +212,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {
         LOGGER.info(format("Replica set primary has changed to %s", newPrimary));
-        for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
+        for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
                 LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 serverTuple.server.invalidate();
@@ -227,13 +226,13 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void updateDescription() {
-        final List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
+        List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
         updateDescription(new ClusterDescription(Multiple, clusterType, newServerDescriptionList));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {
         List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
-        for (ServerTuple cur : addressToServerTupleMap.values()) {
+        for (final ServerTuple cur : addressToServerTupleMap.values()) {
             serverDescriptions.add(cur.description);
         }
         return serverDescriptions;
@@ -246,17 +245,17 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void addNewHosts(final Set<String> hosts) {
-        for (String cur : hosts) {
+        for (final String cur : hosts) {
             addServer(new ServerAddress(cur));
         }
     }
 
     private void removeExtras(final ServerDescription serverDescription) {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-        for (ServerTuple cur : addressToServerTupleMap.values()) {
+        for (final ServerTuple cur : addressToServerTupleMap.values()) {
             if (!allServerAddresses.contains(cur.description.getAddress())) {
                 LOGGER.info(format("Server %s is no longer a member of the replica set.  Removing from client view of cluster.",
-                        cur.description.getAddress()));
+                                   cur.description.getAddress()));
                 removeServer(cur.description.getAddress());
             }
         }
@@ -271,7 +270,7 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void addHostsToSet(final Set<String> hosts, final Set<ServerAddress> retVal) {
-        for (String host : hosts) {
+        for (final String host : hosts) {
             retVal.add(new ServerAddress(host));
         }
     }

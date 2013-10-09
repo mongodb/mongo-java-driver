@@ -26,8 +26,7 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.FieldNameValidator;
 
 /**
- * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written
- * first.
+ * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written first.
  */
 public class CollectibleDBObjectCodec extends DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final String ID_FIELD_NAME = "_id";

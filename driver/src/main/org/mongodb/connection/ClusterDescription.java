@@ -29,7 +29,6 @@ import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.Connecting;
 
-
 /**
  * Immutable snapshot state of a cluster.
  *
@@ -37,7 +36,6 @@ import static org.mongodb.connection.ServerConnectionState.Connecting;
  */
 @Immutable
 public class ClusterDescription {
-
     private final ClusterConnectionMode connectionMode;
     private final ClusterType type;
     private final Set<ServerDescription> all;
@@ -81,6 +79,7 @@ public class ClusterDescription {
 
     /**
      * Returns the Set of all server descriptions in this cluster, sorted by the String value of the ServerAddress of each one.
+     *
      * @return the set of server descriptions
      */
     public Set<ServerDescription> getAll() {
@@ -89,7 +88,7 @@ public class ClusterDescription {
 
 
     public ServerDescription getByServerAddress(final ServerAddress serverAddress) {
-        for (ServerDescription cur : getAll()) {
+        for (final ServerDescription cur : getAll()) {
             if (cur.getAddress().equals(serverAddress)) {
                 return cur;
             }
@@ -98,8 +97,8 @@ public class ClusterDescription {
     }
 
     /**
-     * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary,
-     * it can in the case where the client's view of the cluster is a set of mongos servers, any of which can serve as the primary.
+     * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary, it can in the case where the client's view
+     * of the cluster is a set of mongos servers, any of which can serve as the primary.
      *
      * @return a list of servers that can act as primaries\
      */
@@ -152,7 +151,7 @@ public class ClusterDescription {
             return false;
         }
 
-        final ClusterDescription that = (ClusterDescription) o;
+        ClusterDescription that = (ClusterDescription) o;
 
         if (!all.equals(that.all)) {
             return false;
@@ -174,16 +173,16 @@ public class ClusterDescription {
     @Override
     public String toString() {
         return "ClusterDescription{"
-                + "type=" + getType()
-                + ", connectionMode=" + connectionMode
-                + ", all=" + all
-                + '}';
+               + "type=" + getType()
+               + ", connectionMode=" + connectionMode
+               + ", all=" + all
+               + '}';
     }
 
     public String getShortDescription() {
         StringBuilder serverDescriptions = new StringBuilder();
         String delimiter = "";
-        for (ServerDescription cur : all) {
+        for (final ServerDescription cur : all) {
             serverDescriptions.append(delimiter).append(cur.getShortDescription());
             delimiter = ", ";
         }
@@ -195,8 +194,7 @@ public class ClusterDescription {
     }
 
     private List<ServerDescription> getServersByPredicate(final Predicate predicate) {
-
-        final List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
+        List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
 
         for (final ServerDescription cur : all) {
             if (predicate.apply(cur)) {
@@ -207,4 +205,3 @@ public class ClusterDescription {
         return membersByTag;
     }
 }
-

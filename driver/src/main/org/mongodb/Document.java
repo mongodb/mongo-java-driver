@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A representation of a document as a {@code Map}.  All iterators will traverse the elements in
- * insertion order, as with {@code LinkedHashMap}.
+ * A representation of a document as a {@code Map}.  All iterators will traverse the elements in insertion order, as with {@code
+ * LinkedHashMap}.
  *
  * @mongodb.driver.manual core/document document
  * @since 3.0.0
@@ -96,13 +96,13 @@ public class Document implements Map<String, Object>, Serializable {
      *          if the input is invalid
      */
     public static Document valueOf(final String s, final JSONMode mode) {
-        final BSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
+        BSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
         return new DocumentCodec(PrimitiveCodecs.createDefault()).decode(bsonReader);
     }
 
     /**
-     * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression,
-     * e.g.  {@code doc.append("a", 1).append("b", 2)}
+     * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression, e.g.  {@code
+     * doc.append("a", 1).append("b", 2)}
      *
      * @param key   key
      * @param value value
@@ -114,9 +114,9 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key, casting it to the given {@code Class<T>}.  This is useful to avoid having casts
-     * in client code, though the effect is the same.  So to get the value of a key that is of type String, you would write
-     * {@code String name = doc.get("name", String.class)} instead of {@code String name = (String) doc.get("x") }.
+     * Gets the value of the given key, casting it to the given {@code Class<T>}.  This is useful to avoid having casts in client code,
+     * though the effect is the same.  So to get the value of a key that is of type String, you would write {@code String name =
+     * doc.get("name", String.class)} instead of {@code String name = (String) doc.get("x") }.
      *
      * @param key   the key
      * @param clazz the class to cast the value to
@@ -228,7 +228,7 @@ public class Document implements Map<String, Object>, Serializable {
             return false;
         }
 
-        final Document document = (Document) o;
+        Document document = (Document) o;
 
         if (!documentAsMap.equals(document.documentAsMap)) {
             return false;
@@ -244,15 +244,16 @@ public class Document implements Map<String, Object>, Serializable {
 
     /**
      * Returns a String object representing this Document's in a <a href="http://www.json.org/">JSON RFC</a> format.
+     *
      * @return a json representation of the document.
      */
     @Override
     public String toString() {
         //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
         // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
-        final StringWriter writer = new StringWriter();
-        final BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
-        final Codec<Document> codec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        StringWriter writer = new StringWriter();
+        BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
+        Codec<Document> codec = new DocumentCodec(PrimitiveCodecs.createDefault());
         codec.encode(bsonWriter, this);
 
         return writer.toString();

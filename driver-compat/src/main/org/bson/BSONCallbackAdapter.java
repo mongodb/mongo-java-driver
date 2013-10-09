@@ -31,7 +31,7 @@ class BSONCallbackAdapter extends BSONWriter {
      * Initializes a new instance of the BSONWriter class.
      *
      * @param settings     The writer settings.
-     * @param bsonCallback
+     * @param bsonCallback The callback to inform of operations on this writer
      */
     protected BSONCallbackAdapter(final BSONWriterSettings settings, final BSONCallback bsonCallback) {
         super(settings);
@@ -54,9 +54,9 @@ class BSONCallbackAdapter extends BSONWriter {
     @Override
     public void writeStartDocument() {
         super.writeStartDocument();
-        final BSONContextType contextType = getState() == State.SCOPE_DOCUMENT
-                ? BSONContextType.SCOPE_DOCUMENT
-                : BSONContextType.DOCUMENT;
+        BSONContextType contextType = getState() == State.SCOPE_DOCUMENT
+                                      ? BSONContextType.SCOPE_DOCUMENT
+                                      : BSONContextType.DOCUMENT;
 
         if (getContext() == null || contextType == BSONContextType.SCOPE_DOCUMENT) {
             bsonCallback.objectStart();
@@ -81,7 +81,7 @@ class BSONCallbackAdapter extends BSONWriter {
     @Override
     public void writeEndDocument() {
         super.writeEndDocument();
-        final BSONContextType contextType = getContext().getContextType();
+        BSONContextType contextType = getContext().getContextType();
 
         if (contextType != BSONContextType.DOCUMENT && contextType != BSONContextType.SCOPE_DOCUMENT) {
             throwInvalidContextType("WriteEndDocument", contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
@@ -91,7 +91,7 @@ class BSONCallbackAdapter extends BSONWriter {
         bsonCallback.objectDone();
 
         if (contextType == BSONContextType.SCOPE_DOCUMENT) {
-            final Object scope = bsonCallback.get();
+            Object scope = bsonCallback.get();
             bsonCallback = getContext().callback;
             bsonCallback.gotCodeWScope(getContext().name, getContext().code, scope);
         }
@@ -100,11 +100,9 @@ class BSONCallbackAdapter extends BSONWriter {
     @Override
     public void writeBinaryData(final Binary binary) {
         if (binary.getType() == BSONBinarySubType.UuidLegacy.getValue()) {
-            bsonCallback.gotUUID(
-                    getName(),
-                    readLong(binary.getData(), 0),
-                    readLong(binary.getData(), 8)
-            );
+            bsonCallback.gotUUID(getName(),
+                                 readLong(binary.getData(), 0),
+                                 readLong(binary.getData(), 8));
         } else {
             bsonCallback.gotBinary(getName(), binary.getType(), binary.getData());
         }

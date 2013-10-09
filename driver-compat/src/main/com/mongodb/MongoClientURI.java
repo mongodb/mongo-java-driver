@@ -20,7 +20,6 @@ import java.util.List;
 
 import static com.mongodb.MongoExceptions.mapException;
 
-
 /**
  * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
  * which can be used to create a MongoClient instance. The URI describes the hosts to
@@ -118,9 +117,9 @@ import static com.mongodb.MongoExceptions.mapException;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
- * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI and MONGODB-X509 mechanisms,
- * no password is accepted, only the username.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN}: The authentication mechanism to use if a credential was supplied.
+ * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI mechanism, no password is accepted,
+ * only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -134,9 +133,9 @@ import static com.mongodb.MongoExceptions.mapException;
  * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
  *
+ * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
- * @mongodb.driver.manual reference/connection-string Connection String URI Format
  */
 public class MongoClientURI {
     private final org.mongodb.MongoClientURI proxied;
@@ -151,8 +150,8 @@ public class MongoClientURI {
     }
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
-     * with default options, which may be overridden by options specified in the URI string.
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
+     * which may be overridden by options specified in the URI string.
      *
      * @param uri     the URI
      * @param builder a Builder
@@ -234,8 +233,7 @@ public class MongoClientURI {
     public MongoCredential getCredentials() {
         if (proxied.getCredentialList().isEmpty()) {
             return null;
-        }
-        else {
+        } else {
             return new MongoCredential(proxied.getCredentialList().get(0));
         }
     }
@@ -267,7 +265,7 @@ public class MongoClientURI {
             return false;
         }
 
-        final MongoClientURI that = (MongoClientURI) o;
+        MongoClientURI that = (MongoClientURI) o;
 
         if (!proxied.equals(that.proxied)) {
             return false;

@@ -20,7 +20,6 @@ package org.mongodb;
  * Asynchronous write operations.
  *
  * @param <T>
- *
  * @since 3.0
  */
 public interface MongoAsyncWritableView<T> {

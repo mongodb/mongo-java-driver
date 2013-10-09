@@ -31,7 +31,7 @@ public class Address {
             return false;
         }
 
-        final Address address = (Address) o;
+        Address address = (Address) o;
 
         return !(_id != null ? !_id.equals(address._id) : address._id != null)
                && addressLineOne.equals(address.addressLineOne)

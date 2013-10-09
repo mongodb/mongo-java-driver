@@ -175,7 +175,7 @@ public class JSONWriterTest {
     public void testEmptyDocument() {
         writer.writeStartDocument();
         writer.writeEndDocument();
-        final String expected = "{ }";
+        String expected = "{ }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -184,7 +184,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeString("abc", "xyz");
         writer.writeEndDocument();
-        final String expected = "{ \"abc\" : \"xyz\" }";
+        String expected = "{ \"abc\" : \"xyz\" }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -193,7 +193,7 @@ public class JSONWriterTest {
         writer = new JSONWriter(stringWriter, new JSONWriterSettings(true));
         writer.writeStartDocument();
         writer.writeEndDocument();
-        final String expected = "{ }";
+        String expected = "{ }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -203,7 +203,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeString("name", "value");
         writer.writeEndDocument();
-        final String expected = String.format("{%n  \"name\" : \"value\"%n}");
+        String expected = String.format("{%n  \"name\" : \"value\"%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -214,80 +214,72 @@ public class JSONWriterTest {
         writer.writeString("a", "x");
         writer.writeString("b", "y");
         writer.writeEndDocument();
-        final String expected = String.format("{%n  \"a\" : \"x\",%n  \"b\" : \"y\"%n}");
+        String expected = String.format("{%n  \"a\" : \"x\",%n  \"b\" : \"y\"%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
     @Test
     public void testDouble() {
-        final List<TestData<Double>> tests = asList(new TestData<Double>(0.0, "0.0"), new TestData<Double>(0.0005,
-                                                                                                           "5.0E-4"),
-                                                    new TestData<Double>(0.5, "0.5"), new TestData<Double>(1.0,
-                                                                                                           "1.0"),
-                                                    new TestData<Double>(1.5, "1.5"), new TestData<Double>(1.5E+40,
-                                                                                                           "1.5E40"),
-                                                    new TestData<Double>(1.5E-40, "1.5E-40"),
-                                                    new TestData<Double>(1234567890.1234568E+123,
-                                                                         "1.2345678901234568E132"),
-                                                    new TestData<Double>(Double.MAX_VALUE, "1.7976931348623157E308"),
-                                                    new TestData<Double>(Double.MIN_VALUE, "4.9E-324"),
+        List<TestData<Double>> tests = asList(new TestData<Double>(0.0, "0.0"), new TestData<Double>(0.0005, "5.0E-4"),
+                                              new TestData<Double>(0.5, "0.5"), new TestData<Double>(1.0, "1.0"),
+                                              new TestData<Double>(1.5, "1.5"), new TestData<Double>(1.5E+40, "1.5E40"),
+                                              new TestData<Double>(1.5E-40, "1.5E-40"),
+                                              new TestData<Double>(1234567890.1234568E+123, "1.2345678901234568E132"),
+                                              new TestData<Double>(Double.MAX_VALUE, "1.7976931348623157E308"),
+                                              new TestData<Double>(Double.MIN_VALUE, "4.9E-324"),
 
-                                                    new TestData<Double>(-0.0005, "-5.0E-4"),
-                                                    new TestData<Double>(-0.5, "-0.5"), new TestData<Double>(-1.0,
-                                                                                                             "-1.0"),
-                                                    new TestData<Double>(-1.5, "-1.5"),
-                                                    new TestData<Double>(-1.5E+40, "-1.5E40"),
-                                                    new TestData<Double>(-1.5E-40, "-1.5E-40"),
-                                                    new TestData<Double>(-1234567890.1234568E+123,
-                                                                         "-1.2345678901234568E132"),
+                                              new TestData<Double>(-0.0005, "-5.0E-4"),
+                                              new TestData<Double>(-0.5, "-0.5"),
+                                              new TestData<Double>(-1.0, "-1.0"),
+                                              new TestData<Double>(-1.5, "-1.5"),
+                                              new TestData<Double>(-1.5E+40, "-1.5E40"),
+                                              new TestData<Double>(-1.5E-40, "-1.5E-40"),
+                                              new TestData<Double>(-1234567890.1234568E+123, "-1.2345678901234568E132"),
 
-                                                    new TestData<Double>(Double.NaN, "NaN"),
-                                                    new TestData<Double>(Double.NEGATIVE_INFINITY, "-Infinity"),
-                                                    new TestData<Double>(Double.POSITIVE_INFINITY, "Infinity"));
+                                              new TestData<Double>(Double.NaN, "NaN"),
+                                              new TestData<Double>(Double.NEGATIVE_INFINITY, "-Infinity"),
+                                              new TestData<Double>(Double.POSITIVE_INFINITY, "Infinity"));
         for (final TestData<Double> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings());
             writer.writeStartDocument();
             writer.writeDouble("d", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"d\" : " + cur.expected + " }";
+            String expected = "{ \"d\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testInt64Shell() {
-        final List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE,
-                                                                     "NumberLong(\"-9223372036854775808\")"),
-                                                  new TestData<Long>(
-                Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"), new TestData<Long>(Integer.MIN_VALUE
-                                                                                                   + 0L,
-                                                                                           "NumberLong(-2147483648)")
-                , new TestData<Long>(0L, "NumberLong(0)"), new TestData<Long>(
-                Integer.MAX_VALUE + 0L, "NumberLong(2147483647)"), new TestData<Long>(Integer.MAX_VALUE
-                                                                                              + 1L,
-                                                                                      "NumberLong(\"2147483648\")"),
-                                                  new TestData<Long>(Long.MAX_VALUE,
-                                                                     "NumberLong(\"9223372036854775807\")"));
+        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "NumberLong(\"-9223372036854775808\")"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"),
+                                            new TestData<Long>(Integer.MIN_VALUE + 0L, "NumberLong(-2147483648)")
+                                               ,
+                                            new TestData<Long>(0L, "NumberLong(0)"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "NumberLong(2147483647)"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "NumberLong(\"2147483648\")"),
+                                            new TestData<Long>(Long.MAX_VALUE, "NumberLong(\"9223372036854775807\")"));
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"l\" : " + cur.expected + " }";
+            String expected = "{ \"l\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testInt64Strict() {
-        final List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
-                                                  new TestData<Long>(
-                Integer.MIN_VALUE - 1L, "-2147483649"), new TestData<Long>(
-                Integer.MIN_VALUE - 0L, "-2147483648"), new TestData<Long>(0L, "0"), new TestData<Long>(
-                Integer.MAX_VALUE + 0L, "2147483647"), new TestData<Long>(
-                Integer.MAX_VALUE + 1L, "2147483648"), new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
+        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
+                                            new TestData<Long>(0L, "0"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "2147483647"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
+                                            new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
 
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
@@ -295,7 +287,7 @@ public class JSONWriterTest {
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"l\" : " + cur.expected + " }";
+            String expected = "{ \"l\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
@@ -308,7 +300,7 @@ public class JSONWriterTest {
         writer.writeInt32("b", 2);
         writer.writeEndDocument();
         writer.writeEndDocument();
-        final String expected = "{ \"doc\" : { \"a\" : 1, \"b\" : 2 } }";
+        String expected = "{ \"doc\" : { \"a\" : 1, \"b\" : 2 } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -322,7 +314,7 @@ public class JSONWriterTest {
         writer.writeInt32("b", 2);
         writer.writeEndDocument();
         writer.writeEndDocument();
-        final String expected = String.format("{%n  \"doc\" : {%n    \"a\" : 1,%n    \"b\" : 2%n  }%n}");
+        String expected = String.format("{%n  \"doc\" : {%n    \"a\" : 1,%n    \"b\" : 2%n  }%n}");
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -335,98 +327,87 @@ public class JSONWriterTest {
         writer.writeInt32(3);
         writer.writeEndArray();
         writer.writeEndDocument();
-        final String expected = "{ \"array\" : [1, 2, 3] }";
+        String expected = "{ \"array\" : [1, 2, 3] }";
         assertEquals(expected, stringWriter.toString());
     }
 
     @Test
     public void testBinaryStrict() {
-        final List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]),
-                                                                         "{ \"$binary\" : \"\", "
-                                                                         + "\"$type\" : \"0\" }"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1}),
-                                                                         "{ \"$binary\" : \"AQ==\", "
-                                                                         + "\"$type\" : \"0\" }"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1, 2}),
-                                                                         "{ \"$binary\" : \"AQI=\", "
-                                                                         + "\"$type\" : \"0\" }"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
-                                                                         "{ \"$binary\" : \"AQID\", "
-                                                                         + "\"$type\" : \"0\" }"),
-                                                    new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
-                                                                         "{ \"$binary\" : \"AQID\", "
-                                                                         + "\"$type\" : \"80\" }"));
+        List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]),
+                                                                   "{ \"$binary\" : \"\", "
+                                                                   + "\"$type\" : \"0\" }"),
+                                              new TestData<Binary>(new Binary(new byte[]{1}),
+                                                                   "{ \"$binary\" : \"AQ==\", "
+                                                                   + "\"$type\" : \"0\" }"),
+                                              new TestData<Binary>(new Binary(new byte[]{1, 2}),
+                                                                   "{ \"$binary\" : \"AQI=\", "
+                                                                   + "\"$type\" : \"0\" }"),
+                                              new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
+                                                                   "{ \"$binary\" : \"AQID\", "
+                                                                   + "\"$type\" : \"0\" }"),
+                                              new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
+                                                                   "{ \"$binary\" : \"AQID\", "
+                                                                   + "\"$type\" : \"80\" }"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Strict));
             writer.writeStartDocument();
             writer.writeBinaryData("binary", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"binary\" : " + cur.expected + " }";
+            String expected = "{ \"binary\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testBinaryShell() {
-        final List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]),
-                                                                         "new BinData(0, \"\")"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1}),
-                                                                         "new BinData(0, \"AQ==\")"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1, 2}),
-                                                                         "new BinData(0, \"AQI=\")"),
-                                                    new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
-                                                                         "new BinData(0, \"AQID\")"),
-                                                    new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
-                                                                         "new BinData(128, \"AQID\")"));
+        List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]), "new BinData(0, \"\")"),
+                                              new TestData<Binary>(new Binary(new byte[]{1}), "new BinData(0, \"AQ==\")"),
+                                              new TestData<Binary>(new Binary(new byte[]{1, 2}), "new BinData(0, \"AQI=\")"),
+                                              new TestData<Binary>(new Binary(new byte[]{1, 2, 3}), "new BinData(0, \"AQID\")"),
+                                              new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
+                                                                   "new BinData(128, \"AQID\")"));
         for (final TestData<Binary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
             writer.writeStartDocument();
             writer.writeBinaryData("binary", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"binary\" : " + cur.expected + " }";
+            String expected = "{ \"binary\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testDateTimeStrict() {
-        final List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{ \"$date\" : 0 }"),
-                                                  new TestData<Date>(new Date(Long.MAX_VALUE),
-                                                                     "{ \"$date\" : 9223372036854775807 }"),
-                                                  new TestData<Date>(new Date(Long.MIN_VALUE),
-                                                                     "{ \"$date\" : -9223372036854775808 }"));
+        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{ \"$date\" : 0 }"),
+                                            new TestData<Date>(new Date(Long.MAX_VALUE), "{ \"$date\" : 9223372036854775807 }"),
+                                            new TestData<Date>(new Date(Long.MIN_VALUE), "{ \"$date\" : -9223372036854775808 }"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Strict));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
-            final String expected = "{ \"date\" : " + cur.expected + " }";
+            String expected = "{ \"date\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testDateTimeShell() {
-        final List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0),
-                                                                     "ISODate(\"1970-01-01T00:00:00.000Z\")"),
-                                                  new TestData<Date>(new Date(1),
-                                                                     "ISODate(\"1970-01-01T00:00:00.001Z\")"),
-                                                  new TestData<Date>(new Date(-1),
-                                                                     "ISODate(\"1969-12-31T23:59:59.999Z\")"),
-                                                  new TestData<Date>(new Date(Long.MAX_VALUE),
-                                                                     "new Date(9223372036854775807)"),
-                                                  new TestData<Date>(new Date(Long.MIN_VALUE),
-                                                                     "new Date(-9223372036854775808)"));
+        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "ISODate(\"1970-01-01T00:00:00.000Z\")"),
+                                            new TestData<Date>(new Date(1), "ISODate(\"1970-01-01T00:00:00.001Z\")"),
+                                            new TestData<Date>(new Date(-1), "ISODate(\"1969-12-31T23:59:59.999Z\")"),
+                                            new TestData<Date>(new Date(Long.MAX_VALUE), "new Date(9223372036854775807)"),
+                                            new TestData<Date>(new Date(Long.MIN_VALUE), "new Date(-9223372036854775808)"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
-            final String expected = "{ \"date\" : " + cur.expected + " }";
+            String expected = "{ \"date\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
@@ -434,18 +415,16 @@ public class JSONWriterTest {
 
     @Test
     public void testDateTimeTenGen() {
-        final List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "new Date(0)"),
-                                                  new TestData<Date>(new Date(Long.MAX_VALUE),
-                                                                     "new Date(9223372036854775807)"),
-                                                  new TestData<Date>(new Date(Long.MIN_VALUE),
-                                                                     "new Date(-9223372036854775808)"));
+        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "new Date(0)"),
+                                            new TestData<Date>(new Date(Long.MAX_VALUE), "new Date(9223372036854775807)"),
+                                            new TestData<Date>(new Date(Long.MIN_VALUE), "new Date(-9223372036854775808)"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.TenGen));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
-            final String expected = "{ \"date\" : " + cur.expected + " }";
+            String expected = "{ \"date\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
@@ -455,7 +434,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeJavaScript("f", "function f() { return 1; }");
         writer.writeEndDocument();
-        final String expected = "{ \"f\" : { \"$code\" : \"function f() { return 1; }\" } }";
+        String expected = "{ \"f\" : { \"$code\" : \"function f() { return 1; }\" } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -467,8 +446,8 @@ public class JSONWriterTest {
         writer.writeInt32("n", 1);
         writer.writeEndDocument();
         writer.writeEndDocument();
-        final String expected =
-                "{ \"f\" : { \"$code\" : \"function f() { return n; }\", " + "\"$scope\" : { \"n\" : 1 } } }";
+        String expected =
+            "{ \"f\" : { \"$code\" : \"function f() { return n; }\", " + "\"$scope\" : { \"n\" : 1 } } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -477,7 +456,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeMaxKey("maxkey");
         writer.writeEndDocument();
-        final String expected = "{ \"maxkey\" : { \"$maxKey\" : 1 } }";
+        String expected = "{ \"maxkey\" : { \"$maxKey\" : 1 } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -486,7 +465,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeMinKey("minkey");
         writer.writeEndDocument();
-        final String expected = "{ \"minkey\" : { \"$minKey\" : 1 } }";
+        String expected = "{ \"minkey\" : { \"$minKey\" : 1 } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -495,121 +474,121 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeNull("null");
         writer.writeEndDocument();
-        final String expected = "{ \"null\" : null }";
+        String expected = "{ \"null\" : null }";
         assertEquals(expected, stringWriter.toString());
     }
 
     @Test
     public void testObjectIdShell() {
         writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
-        final ObjectId objectId = new ObjectId("4d0ce088e447ad08b4721a37");
+        ObjectId objectId = new ObjectId("4d0ce088e447ad08b4721a37");
 
         writer.writeStartDocument();
         writer.writeObjectId("_id", objectId);
         writer.writeEndDocument();
 
-        final String expected = "{ \"_id\" : ObjectId(\"4d0ce088e447ad08b4721a37\") }";
+        String expected = "{ \"_id\" : ObjectId(\"4d0ce088e447ad08b4721a37\") }";
         assertEquals(expected, stringWriter.toString());
     }
 
     @Test
     public void testObjectIdStrict() {
-        final ObjectId objectId = new ObjectId("4d0ce088e447ad08b4721a37");
+        ObjectId objectId = new ObjectId("4d0ce088e447ad08b4721a37");
 
         writer.writeStartDocument();
         writer.writeObjectId("_id", objectId);
         writer.writeEndDocument();
 
-        final String expected = "{ \"_id\" : { \"$oid\" : \"4d0ce088e447ad08b4721a37\" } }";
+        String expected = "{ \"_id\" : { \"$oid\" : \"4d0ce088e447ad08b4721a37\" } }";
         assertEquals(expected, stringWriter.toString());
     }
 
     @Test
     public void testRegularExpressionShell() {
-        final List<TestData<RegularExpression>> tests;
+        List<TestData<RegularExpression>> tests;
         tests = asList(new TestData<RegularExpression>(new RegularExpression(""), "/(?:)/"),
-                      new TestData<RegularExpression>(new RegularExpression("a"), "/a/"),
-                      new TestData<RegularExpression>(new RegularExpression("a/b"), "/a\\/b/"),
-                      new TestData<RegularExpression>(new RegularExpression("a\\b"), "/a\\b/"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "i"), "/a/i"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "m"), "/a/m"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "x"), "/a/x"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "s"), "/a/s"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "imxs"), "/a/imxs"));
+                       new TestData<RegularExpression>(new RegularExpression("a"), "/a/"),
+                       new TestData<RegularExpression>(new RegularExpression("a/b"), "/a\\/b/"),
+                       new TestData<RegularExpression>(new RegularExpression("a\\b"), "/a\\b/"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "i"), "/a/i"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "m"), "/a/m"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "x"), "/a/x"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "s"), "/a/s"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "imxs"), "/a/imxs"));
         for (final TestData<RegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Shell));
             writer.writeStartDocument();
             writer.writeRegularExpression("regex", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"regex\" : " + cur.expected + " }";
+            String expected = "{ \"regex\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testRegularExpressionStrict() {
-        final List<TestData<RegularExpression>> tests;
+        List<TestData<RegularExpression>> tests;
         tests = asList(new TestData<RegularExpression>(new RegularExpression(""), "{ \"$regex\" : \"\", "
                                                                                   + "\"$options\" : \"\" "
                                                                                   + "}"),
-                      new TestData<RegularExpression>(new RegularExpression("a"), "{ \"$regex\" : \"a\","
-                                                                                  + " \"$options\" : \"\" "
-                                                                                  + "}"),
-                      new TestData<RegularExpression>(new RegularExpression("a/b"), "{ \"$regex\" : "
-                                                                                    + "\"a/b\", "
-                                                                                    + "\"$options\" : \"\" "
-                                                                                    + "}"),
-                      new TestData<RegularExpression>(new RegularExpression("a\\b"), "{ \"$regex\" : "
-                                                                                     + "\"a\\\\b\", "
+                       new TestData<RegularExpression>(new RegularExpression("a"), "{ \"$regex\" : \"a\","
+                                                                                   + " \"$options\" : \"\" "
+                                                                                   + "}"),
+                       new TestData<RegularExpression>(new RegularExpression("a/b"), "{ \"$regex\" : "
+                                                                                     + "\"a/b\", "
                                                                                      + "\"$options\" : \"\" "
                                                                                      + "}"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "i"), "{ \"$regex\" : \"a\","
-                                                                                       + " \"$options\" : \"i\""
-                                                                                       + " }"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "m"), "{ \"$regex\" : \"a\","
-                                                                                       + " \"$options\" : \"m\""
-                                                                                       + " }"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "x"), "{ \"$regex\" : \"a\","
-                                                                                       + " \"$options\" : \"x\""
-                                                                                       + " }"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "s"), "{ \"$regex\" : \"a\","
-                                                                                       + " \"$options\" : \"s\""
-                                                                                       + " }"),
-                      new TestData<RegularExpression>(new RegularExpression("a", "imxs"),
-                                                     "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
+                       new TestData<RegularExpression>(new RegularExpression("a\\b"), "{ \"$regex\" : "
+                                                                                      + "\"a\\\\b\", "
+                                                                                      + "\"$options\" : \"\" "
+                                                                                      + "}"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "i"), "{ \"$regex\" : \"a\","
+                                                                                        + " \"$options\" : \"i\""
+                                                                                        + " }"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "m"), "{ \"$regex\" : \"a\","
+                                                                                        + " \"$options\" : \"m\""
+                                                                                        + " }"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "x"), "{ \"$regex\" : \"a\","
+                                                                                        + " \"$options\" : \"x\""
+                                                                                        + " }"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "s"), "{ \"$regex\" : \"a\","
+                                                                                        + " \"$options\" : \"s\""
+                                                                                        + " }"),
+                       new TestData<RegularExpression>(new RegularExpression("a", "imxs"),
+                                                       "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
         for (final TestData<RegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Strict));
             writer.writeStartDocument();
             writer.writeRegularExpression("regex", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"regex\" : " + cur.expected + " }";
+            String expected = "{ \"regex\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
 
     @Test
     public void testString() {
-        final List<TestData<String>> tests;
+        List<TestData<String>> tests;
         tests = asList(new TestData<String>("", "\"\""), new TestData<String>(" ", "\" \""),
-                      new TestData<String>("a", "\"a\""), new TestData<String>("ab", "\"ab\""),
-                      new TestData<String>("abc", "\"abc\""),
-                      new TestData<String>("abc\u0000def", "\"abc\\u0000def\""),
-                      new TestData<String>("\\", "\"\\\\\""), new TestData<String>("\'", "\"'\""),
-                      new TestData<String>("\"", "\"\\\"\""), new TestData<String>("\0", "\"\\u0000\""),
-                      new TestData<String>("\b", "\"\\b\""), new TestData<String>("\f", "\"\\f\""),
-                      new TestData<String>("\n", "\"\\n\""), new TestData<String>("\r", "\"\\r\""),
-                      new TestData<String>("\t", "\"\\t\""), new TestData<String>("\u0080", "\"\\u0080\""),
-                      new TestData<String>("\u0080\u0081", "\"\\u0080\\u0081\""),
-                      new TestData<String>("\u0080\u0081\u0082", "\"\\u0080\\u0081\\u0082\""));
+                       new TestData<String>("a", "\"a\""), new TestData<String>("ab", "\"ab\""),
+                       new TestData<String>("abc", "\"abc\""),
+                       new TestData<String>("abc\u0000def", "\"abc\\u0000def\""),
+                       new TestData<String>("\\", "\"\\\\\""), new TestData<String>("\'", "\"'\""),
+                       new TestData<String>("\"", "\"\\\"\""), new TestData<String>("\0", "\"\\u0000\""),
+                       new TestData<String>("\b", "\"\\b\""), new TestData<String>("\f", "\"\\f\""),
+                       new TestData<String>("\n", "\"\\n\""), new TestData<String>("\r", "\"\\r\""),
+                       new TestData<String>("\t", "\"\\t\""), new TestData<String>("\u0080", "\"\\u0080\""),
+                       new TestData<String>("\u0080\u0081", "\"\\u0080\\u0081\""),
+                       new TestData<String>("\u0080\u0081\u0082", "\"\\u0080\\u0081\\u0082\""));
         for (final TestData<String> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.Strict));
             writer.writeStartDocument();
             writer.writeString("str", cur.value);
             writer.writeEndDocument();
-            final String expected = "{ \"str\" : " + cur.expected + " }";
+            String expected = "{ \"str\" : " + cur.expected + " }";
             assertEquals(expected, stringWriter.toString());
         }
     }
@@ -619,7 +598,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeSymbol("symbol", "name");
         writer.writeEndDocument();
-        final String expected = "{ \"symbol\" : { \"$symbol\" : \"name\" } }";
+        String expected = "{ \"symbol\" : { \"$symbol\" : \"name\" } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -629,7 +608,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
         writer.writeEndDocument();
-        final String expected = "{ \"timestamp\" : { \"$timestamp\" : { \"t\" : 1000, \"i\" : 1 } } }";
+        String expected = "{ \"timestamp\" : { \"$timestamp\" : { \"t\" : 1000, \"i\" : 1 } } }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -639,7 +618,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
         writer.writeEndDocument();
-        final String expected = "{ \"timestamp\" : Timestamp(1000, 1) }";
+        String expected = "{ \"timestamp\" : Timestamp(1000, 1) }";
         assertEquals(expected, stringWriter.toString());
     }
 
@@ -648,7 +627,7 @@ public class JSONWriterTest {
         writer.writeStartDocument();
         writer.writeUndefined("undefined");
         writer.writeEndDocument();
-        final String expected = "{ \"undefined\" : undefined }";
+        String expected = "{ \"undefined\" : undefined }";
         assertEquals(expected, stringWriter.toString());
     }
 }

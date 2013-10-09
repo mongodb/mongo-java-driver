@@ -88,11 +88,11 @@ public class DocumentCodec implements Codec<Document> {
 
     @Override
     public Document decode(final BSONReader reader) {
-        final Document document = new Document();
+        Document document = new Document();
 
         reader.readStartDocument();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            final String fieldName = reader.readName();
+            String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName));
         }
 
@@ -102,7 +102,7 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     protected Object readValue(final BSONReader reader, final String fieldName) {
-        final BSONType bsonType = reader.getCurrentBSONType();
+        BSONType bsonType = reader.getCurrentBSONType();
         if (bsonType.equals(BSONType.DOCUMENT)) {
             return this.decode(reader);
         } else {

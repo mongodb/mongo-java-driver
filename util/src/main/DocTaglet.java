@@ -52,7 +52,7 @@ public abstract class DocTaglet implements Taglet {
             return null;
         }
 
-        final StringBuilder buf = new StringBuilder("\n<br><DT><B>MongoDB Doc Links</B><DD>");
+        StringBuilder buf = new StringBuilder("\n<br><DT><B>MongoDB Doc Links</B><DD>");
         buf.append("<ul>");
         for (final Tag t : tags) {
             buf.append("<li>").append(genLink(t.text())).append("</li>");
@@ -70,7 +70,7 @@ public abstract class DocTaglet implements Taglet {
         String relativePath = text;
         String display = text;
 
-        final int firstSpace = text.indexOf(' ');
+        int firstSpace = text.indexOf(' ');
         if (firstSpace != -1) {
             relativePath = text.substring(0, firstSpace);
             display = text.substring(firstSpace, text.length()).trim();

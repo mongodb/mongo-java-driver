@@ -36,19 +36,17 @@ public interface ClusterFactory {
     /**
      * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
      *
-     *
-     * @param settings the cluster settings
-     * @param serverSettings the server settings
-     * @param connectionPoolSettings the connection pool settings
-     * @param streamFactory the stream factory
-     * @param heartbeatStreamFactory the heartbeat stream factory
+     * @param settings                 the cluster settings
+     * @param serverSettings           the server settings
+     * @param connectionPoolSettings   the connection pool settings
+     * @param streamFactory            the stream factory
+     * @param heartbeatStreamFactory   the heartbeat stream factory
      * @param scheduledExecutorService the executor service used to monitor servers
-     * @param credentialList the credential list
-     * @param bufferProvider the buffer provider
-     * @param clusterListener an optional listener for cluster-related events
-     * @param connectionPoolListener an optional listener for connection pool-related events
-     * @param connectionListener an optional listener for connection-related events
-     *
+     * @param credentialList           the credential list
+     * @param bufferProvider           the buffer provider
+     * @param clusterListener          an optional listener for cluster-related events
+     * @param connectionPoolListener   an optional listener for connection pool-related events
+     * @param connectionListener       an optional listener for connection-related events
      * @return the cluster
      */
     Cluster create(ClusterSettings settings,

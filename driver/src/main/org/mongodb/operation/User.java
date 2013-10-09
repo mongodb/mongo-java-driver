@@ -31,7 +31,7 @@ public class User {
      * Constructs a new user with the given credential and read-only state.
      *
      * @param credential the credential for this user
-     * @param readOnly true if this is a read-only user
+     * @param readOnly   true if this is a read-only user
      */
     public User(final MongoCredential credential, final boolean readOnly) {
         this.credential = credential;

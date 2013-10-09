@@ -34,15 +34,14 @@ public class QueryResult<T> {
     public QueryResult(final ReplyMessage<T> replyMessage, final ServerAddress address) {
         if (replyMessage.getReplyHeader().getCursorId() != 0) {
             serverCursor = new ServerCursor(replyMessage.getReplyHeader().getCursorId(), address);
-        }
-        else {
+        } else {
             serverCursor = null;
         }
         serverAddress = address;
         results = replyMessage.getDocuments();
         requestId = replyMessage.getReplyHeader().getRequestId();
     }
-  
+
     @SuppressWarnings("unchecked")
     public QueryResult(final CommandResult result, final ServerAddress address) {
         Document cursor = (Document) result.getResponse().get("cursor");
@@ -55,7 +54,7 @@ public class QueryResult<T> {
             results = (List<T>) cursor.get("firstBatch");
         } else {
             serverCursor = null;
-            results = (List<T>) result.getResponse().get("result");                         
+            results = (List<T>) result.getResponse().get("result");
         }
         serverAddress = address;
         requestId = 0;

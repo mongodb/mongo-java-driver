@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// JSONTest.java
-
 package com.mongodb.util;
 
 import com.mongodb.BasicDBObject;
@@ -48,7 +46,6 @@ public class JSONTest {
 
         // basic test of each of JSON class' serialization methods
         String json = "{ \"x\" : \"basic test\"}";
-        StringBuilder buf = new StringBuilder();
         Object obj = JSON.parse(json);
 
         assertEquals(json, JSON.serialize(obj));
@@ -91,7 +88,8 @@ public class JSONTest {
         assertEquals("{ \"csdf\" : true}", JSON.serialize(JSON.parse("{'csdf' : true}")));
         assertEquals("{ \"csdf\" : false}", JSON.serialize(JSON.parse("{'csdf' : false}")));
         assertEquals("{ \"csdf\" :  null }", JSON.serialize(JSON.parse("{'csdf' : null}")));
-        assertEquals("{ \"id\" : \"1689c12eb234c54a84ebd100\"}", JSON.serialize(JSON.parse("{\n\t\"id\":\"1689c12eb234c54a84ebd100\",\n}")));
+        assertEquals("{ \"id\" : \"1689c12eb234c54a84ebd100\"}",
+                     JSON.serialize(JSON.parse("{\n\t\"id\":\"1689c12eb234c54a84ebd100\",\n}")));
     }
 
     @Test
@@ -231,7 +229,7 @@ public class JSONTest {
         assertEquals(JSON.parse(x.toString()), x);
     }
 
-    void _escapeChar(String s) {
+    void _escapeChar(final String s) {
         String thingy = "va" + s + "lue";
         DBObject x = new BasicDBObject("name", thingy);
         x = (DBObject) JSON.parse(x.toString());
@@ -284,7 +282,7 @@ public class JSONTest {
     public void testPattern() {
         String x = "^Hello$";
         String serializedPattern =
-                "{ \"$regex\" : \"" + x + "\" , \"$options\" : \"" + "i\"}";
+            "{ \"$regex\" : \"" + x + "\" , \"$options\" : \"" + "i\"}";
 
         Pattern pattern = Pattern.compile(x, Pattern.CASE_INSENSITIVE);
         assertEquals(serializedPattern, JSON.serialize(pattern));
@@ -301,7 +299,7 @@ public class JSONTest {
     public void testRegexNoOptions() {
         String x = "^Hello$";
         String serializedPattern =
-                "{ \"$regex\" : \"" + x + "\"}";
+            "{ \"$regex\" : \"" + x + "\"}";
 
         Pattern pattern = Pattern.compile(x);
         assertEquals(JSON.serialize(pattern), serializedPattern);
@@ -342,15 +340,20 @@ public class JSONTest {
 
     @Test
     public void testJSONEncoding() throws ParseException {
-        String json = "{ 'str' : 'asdfasd' , 'long' : 123123123123 , 'int' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
+        String json = "{ 'str' : 'asdfasd' , 'long' : 123123123123 , 'int' : 5 , 'float' : 0.4 , 'bool' : false , "
+                      + "'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , "
+                      + "'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , "
+                      + "'$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , "
+                      + "'codews' : { '$code' : 'ggggg' , "
+                      + "'$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, "
+                      + "'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
         BasicDBObject a = (BasicDBObject) JSON.parse(json);
         assertEquals("asdfasd", a.get("str"));
         assertEquals(5, a.get("int"));
         assertEquals(123123123123L, a.get("long"));
         assertEquals(0.4d, a.get("float"));
         assertEquals(false, a.get("bool"));
-        SimpleDateFormat format =
-                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
         assertEquals(format.parse("2011-05-18T18:56:00Z"), a.get("date"));
         Pattern pat = (Pattern) a.get("pat");
@@ -359,8 +362,8 @@ public class JSONTest {
         assertEquals(pat.flags(), pat2.flags());
         ObjectId oid = (ObjectId) a.get("oid");
         assertEquals(new ObjectId("4d83ab3ea39562db9c1ae2ae"), oid);
-//        DBRef ref = (DBRef) a.get("ref");
-//        assertEquals(new DBRef(null, "test.test", new ObjectId("4d83ab59a39562db9c1ae2af")), ref);
+        //        DBRef ref = (DBRef) a.get("ref");
+        //        assertEquals(new DBRef(null, "test.test", new ObjectId("4d83ab59a39562db9c1ae2af")), ref);
         assertEquals(new Code("asdfdsa"), a.get("code"));
         assertEquals(new CodeWScope("ggggg", new BasicBSONObject()), a.get("codews"));
         assertEquals(new BSONTimestamp(1300474885, 10), a.get("ts"));

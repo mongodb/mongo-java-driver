@@ -32,21 +32,21 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
 
     @Override
     public DBObject readObject(final InputStream in) throws IOException {
-        final DBCallback dbCallback = getDBCallback(null);
+        DBCallback dbCallback = getDBCallback(null);
         decode(in, dbCallback);
         return (DBObject) dbCallback.get();
     }
 
     @Override
     public DBObject decode(final InputStream in, final DBCollection collection) throws IOException {
-        final DBCallback callback = getDBCallback(collection);
+        DBCallback callback = getDBCallback(collection);
         decode(in, callback);
         return (DBObject) callback.get();
     }
 
     @Override
     public DBObject decode(final byte[] bytes, final DBCollection collection) {
-        final DBCallback callback = getDBCallback(collection);
+        DBCallback callback = getDBCallback(collection);
         decode(bytes, callback);
         return (DBObject) callback.get();
     }

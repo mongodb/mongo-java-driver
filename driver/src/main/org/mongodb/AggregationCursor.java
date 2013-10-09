@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
 public class AggregationCursor<T> implements MongoCursor<T> {
     private final Session session;
     private final boolean closeSession;
-    private AggregationOptions aggregationOptions;
+    private final AggregationOptions aggregationOptions;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BufferProvider bufferProvider;
@@ -51,9 +51,9 @@ public class AggregationCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public AggregationCursor(final AggregationOptions aggregationOptions, final MongoNamespace namespace, final Decoder<T> decoder,
-        final BufferProvider bufferProvider, final Session session, final boolean closeSession, final ServerConnectionProvider provider,
-        final QueryResult<T> batch) {
-        
+                             final BufferProvider bufferProvider, final Session session, final boolean closeSession,
+                             final ServerConnectionProvider provider,
+                             final QueryResult<T> batch) {
         this.aggregationOptions = aggregationOptions;
         this.namespace = namespace;
         this.decoder = decoder;
@@ -73,7 +73,7 @@ public class AggregationCursor<T> implements MongoCursor<T> {
         closed = true;
         if (currentResult != null) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
-                getConnection(), false).execute();
+                                   getConnection(), false).execute();
         }
         if (closeSession) {
             session.close();
@@ -130,7 +130,7 @@ public class AggregationCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         currentResult = new GetMoreProtocol<T>(namespace, new AggregationGetMore(), decoder, bufferProvider,
-            provider.getServerDescription(), getConnection(), true).execute();
+                                               provider.getServerDescription(), getConnection(), true).execute();
         currentIterator = currentResult.getResults().iterator();
     }
 
@@ -151,7 +151,7 @@ public class AggregationCursor<T> implements MongoCursor<T> {
     private class AggregationGetMore extends GetMore {
         public AggregationGetMore() {
             super(currentResult.getCursor(), aggregationOptions.getBatchSize(),
-                aggregationOptions.getBatchSize(), nextCount);
+                  aggregationOptions.getBatchSize(), nextCount);
         }
 
         @Override

@@ -17,8 +17,8 @@
 package org.mongodb.json;
 
 /**
- * An enumeration of the supported output modes of {@code JSONWriter}.  The first three correspond to the syntax documented
- * <a href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON">here</a>.
+ * An enumeration of the supported output modes of {@code JSONWriter}.  The first three correspond to the syntax documented <a
+ * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON">here</a>.
  *
  * @see JSONWriter
  * @since 3.0.0
@@ -41,8 +41,8 @@ public enum JSONMode {
     TenGen,
 
     /**
-     * While not formally documented, this output mode will attempt to produce output that corresponds to what
-     * the MongoDB shell actually produces when showing query results.
+     * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually
+     * produces when showing query results.
      */
     Shell
 }

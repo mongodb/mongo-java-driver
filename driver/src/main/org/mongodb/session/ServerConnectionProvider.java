@@ -25,8 +25,7 @@ import org.mongodb.connection.ServerDescription;
  */
 public interface ServerConnectionProvider {
     /**
-     *
-     * @return  the description of the server that this provider is providing connections to.
+     * @return the description of the server that this provider is providing connections to.
      */
     ServerDescription getServerDescription();
 

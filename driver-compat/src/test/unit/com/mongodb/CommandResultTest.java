@@ -40,7 +40,7 @@ public class CommandResultTest {
 
     @Test
     public void testCommandFailure() throws UnknownHostException {
-        final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
+        DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
         CommandResult commandResult = new CommandResult(result, new ServerAddress("localhost"));
         commandResult.putAll(result);
         try {

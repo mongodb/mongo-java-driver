@@ -44,16 +44,17 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test
     public void testInlineMapReduce() {
-        MongoIterable<Document> results = collection
-                .find(new Document("_id", new Document("$gt", 0)))
-                .sort(Sort.ascending("_id"))
-                .skip(1)
-                .limit(6)
-                .mapReduce("function(){ for ( var i=0; i < this.x.length; i++ ){ emit( this.x[i] , 1 ); } }",
-                        "function(key,values){ var sum=0; for( var i=0; i < values.length; i++ ) sum += values[i]; return sum;}");
+        MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0)))
+                                                    .sort(Sort.ascending("_id"))
+                                                    .skip(1)
+                                                    .limit(6)
+                                                    .mapReduce("function(){ for ( var i=0; i < this.x.length; i++ ){ emit( this.x[i] , "
+                                                               + "1 ); } }",
+                                                               "function(key,values){ var sum=0; for( var i=0; i < values.length; i++ ) "
+                                                               + "sum += values[i]; return sum;}");
 
         int count = 0;
-        for (Document cur : results) {
+        for (final Document cur : results) {
             System.out.println(cur);
             count++;
         }
@@ -91,7 +92,7 @@ public class MapReduceTest extends DatabaseTestCase {
                 return false;
             }
 
-            final TagCount tagCount = (TagCount) o;
+            TagCount tagCount = (TagCount) o;
 
             if (Double.compare(tagCount.count, count) != 0) {
                 return false;
@@ -125,9 +126,9 @@ public class MapReduceTest extends DatabaseTestCase {
         @Override
         public String toString() {
             return "TagCount{"
-                    + "tag='" + tag + '\''
-                    + ", count=" + count
-                    + '}';
+                   + "tag='" + tag + '\''
+                   + ", count=" + count
+                   + '}';
         }
     }
 }

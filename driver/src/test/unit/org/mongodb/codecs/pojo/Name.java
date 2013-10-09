@@ -17,8 +17,8 @@
 package org.mongodb.codecs.pojo;
 
 public class Name {
-    private String firstName = "Eric";
-    private String surname = "Smith";
+    private final String firstName = "Eric";
+    private final String surname = "Smith";
 
     //**** Really simple POJO needs all this boilerplate just to make testing easy/correct
     @Override
@@ -30,7 +30,7 @@ public class Name {
             return false;
         }
 
-        final Name name = (Name) o;
+        Name name = (Name) o;
 
         return firstName.equals(name.firstName) && surname.equals(name.surname);
     }

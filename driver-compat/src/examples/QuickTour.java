@@ -54,8 +54,7 @@ public class QuickTour {
 
         // make a document and insert it
         final BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database").append("count", 1)
-                                                                .append("info",
-                                                                       new BasicDBObject("x", 203).append("y", 102));
+                                                                      .append("info", new BasicDBObject("x", 203).append("y", 102));
 
         testCollection.insert(doc);
 
@@ -67,8 +66,7 @@ public class QuickTour {
         for (int i = 0; i < 100; i++) {
             testCollection.insert(new BasicDBObject().append("i", i));
         }
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection
-                                                                                                    .getCount());
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection.getCount());
 
         //  lets get all the documents in the collection and print them out
         DBCursor cursor = testCollection.find();

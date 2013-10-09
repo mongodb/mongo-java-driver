@@ -42,6 +42,6 @@ public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<Replace<T
     @Override
     protected ReplaceCommandMessage<T> createNextMessage(final List<Replace<T>> remainingUpdates) {
         return new ReplaceCommandMessage<T>(getWriteNamespace(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
-                encoder, getSettings());
+                                            encoder, getSettings());
     }
 }

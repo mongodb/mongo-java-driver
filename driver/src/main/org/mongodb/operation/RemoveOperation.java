@@ -54,12 +54,12 @@ public class RemoveOperation extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new DeleteProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                connection, true);
+                                  connection, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new DeleteCommandProtocol(getNamespace(), getWriteConcern(), removes, queryEncoder, getBufferProvider(), serverDescription,
-                connection, true);
+                                         connection, true);
     }
 }

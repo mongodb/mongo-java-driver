@@ -55,12 +55,12 @@ public class UpdateOperation extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new UpdateProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                connection, true);
+                                  connection, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new UpdateCommandProtocol(getNamespace(), getWriteConcern(), updates, queryEncoder, getBufferProvider(), serverDescription,
-                connection, true);
+                                         connection, true);
     }
 }

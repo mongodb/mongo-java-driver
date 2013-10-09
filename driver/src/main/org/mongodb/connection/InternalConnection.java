@@ -22,11 +22,8 @@ import org.mongodb.annotations.NotThreadSafe;
 import java.util.List;
 
 /**
- * A connection to a MongoDB server with blocking operations.
- * <p>
- * This class is not completely thread safe.  At most one thread can have an active call to sendMessage, and one thread an active call
- * to receiveMessage.
- * </p>
+ * A connection to a MongoDB server with blocking operations. <p> This class is not completely thread safe.  At most one thread can have an
+ * active call to sendMessage, and one thread an active call to receiveMessage. </p>
  *
  * @since 3.0
  */
@@ -40,6 +37,7 @@ interface InternalConnection {
 
     /**
      * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
+     *
      * @return the id
      */
     String getId();
@@ -47,14 +45,14 @@ interface InternalConnection {
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
-     * @param byteBuffers the list of byte buffers to send.
+     * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
      */
     void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId);
 
     /**
      * Receive a response to a sent message from the server.
-
+     *
      * @return the response
      */
     ResponseBuffers receiveMessage();
@@ -62,9 +60,9 @@ interface InternalConnection {
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
-     * @param byteBuffers the list of byte buffers to send
+     * @param byteBuffers   the list of byte buffers to send
      * @param lastRequestId the request id of the last message in byteBuffers
-     * @param callback the callback to invoke on completion
+     * @param callback      the callback to invoke on completion
      */
     void sendMessageAsync(List<ByteBuf> byteBuffers, final int lastRequestId, SingleResultCallback<Void> callback);
 

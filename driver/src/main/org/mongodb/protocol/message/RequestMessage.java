@@ -31,7 +31,7 @@ public abstract class RequestMessage {
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     private final String collectionName;
-    private MessageSettings settings;
+    private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
 
@@ -81,7 +81,7 @@ public abstract class RequestMessage {
     protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer) {
-        final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
+        BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
         try {
             int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);
@@ -89,7 +89,7 @@ public abstract class RequestMessage {
             if (documentSize > getSettings().getMaxDocumentSize()) {
                 buffer.truncateToPosition(startPosition);
                 throw new MongoInvalidDocumentException(String.format("Document size of %d exceeds maximum of %d", documentSize,
-                        getSettings().getMaxDocumentSize()));
+                                                                      getSettings().getMaxDocumentSize()));
             }
         } finally {
             writer.close();
@@ -97,7 +97,7 @@ public abstract class RequestMessage {
     }
 
     protected void backpatchMessageLength(final int startPosition, final OutputBuffer buffer) {
-        final int messageLength = buffer.getPosition() - startPosition;
+        int messageLength = buffer.getPosition() - startPosition;
         buffer.backpatchSize(messageLength);
     }
 

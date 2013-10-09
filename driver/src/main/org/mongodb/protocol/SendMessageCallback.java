@@ -25,10 +25,10 @@ import org.mongodb.operation.SingleResultFuture;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
     private final OutputBuffer buffer;
-    private Connection connection;
-    private SingleResultCallback<ResponseBuffers> receiveMessageCallback;
-    private int requestId;
-    private SingleResultFuture<T> future;
+    private final Connection connection;
+    private final SingleResultCallback<ResponseBuffers> receiveMessageCallback;
+    private final int requestId;
+    private final SingleResultFuture<T> future;
 
     SendMessageCallback(final Connection connection, final OutputBuffer buffer,
                         final int requestId, final SingleResultFuture<T> future,
@@ -45,8 +45,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
         buffer.close();
         if (e != null) {
             future.init(null, e);
-        }
-        else {
+        } else {
             connection.receiveMessageAsync(requestId, receiveMessageCallback);
         }
     }

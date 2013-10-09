@@ -55,7 +55,6 @@ public class ServerAddress implements Serializable {
 
     /**
      * Creates a ServerAddress with default host and port
-     *
      */
     public ServerAddress() {
         this(getDefaultHost(), getDefaultPort());
@@ -87,7 +86,7 @@ public class ServerAddress implements Serializable {
         }
 
         int portToUse = port;
-        final int idx = hostToUse.indexOf(":");
+        int idx = hostToUse.indexOf(":");
         if (idx > 0) {
             if (port != getDefaultPort()) {
                 throw new IllegalArgumentException("can't specify port in construct and via host");
@@ -109,7 +108,7 @@ public class ServerAddress implements Serializable {
             return false;
         }
 
-        final ServerAddress that = (ServerAddress) o;
+        ServerAddress that = (ServerAddress) o;
 
         if (port != that.port) {
             return false;

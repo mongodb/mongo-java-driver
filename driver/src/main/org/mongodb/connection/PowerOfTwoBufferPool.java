@@ -38,29 +38,29 @@ public class PowerOfTwoBufferPool implements BufferProvider {
             final int size = x;
             // TODO: Determine max size of each pool.
             powerOfTwoToPoolMap.put(size, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
-                    new ConcurrentPool.ItemFactory<ByteBuffer>() {
-                        @Override
-                        public ByteBuffer create() {
-                            return createNew(size);
-                        }
+                                                                         new ConcurrentPool.ItemFactory<ByteBuffer>() {
+                                                                             @Override
+                                                                             public ByteBuffer create() {
+                                                                                 return createNew(size);
+                                                                             }
 
-                        @Override
-                        public void close(final ByteBuffer byteBuffer) {
-                        }
+                                                                             @Override
+                                                                             public void close(final ByteBuffer byteBuffer) {
+                                                                             }
 
-                        @Override
-                        public boolean shouldPrune(final ByteBuffer byteBuffer) {
-                            return false;
-                        }
-                    }));
+                                                                             @Override
+                                                                             public boolean shouldPrune(final ByteBuffer byteBuffer) {
+                                                                                 return false;
+                                                                             }
+                                                                         }));
             x = x << 1;
         }
     }
 
     @Override
     public ByteBuf get(final int size) {
-        final Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
-        final ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
+        Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
+        ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
         byteBuffer.clear();
         byteBuffer.limit(size);
@@ -68,13 +68,13 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private ByteBuffer createNew(final int size) {
-        final ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
+        ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
         buf.order(ByteOrder.LITTLE_ENDIAN);
         return buf;
     }
 
     private void release(final ByteBuffer buffer) {
-        final ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
+        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
         if (pool != null) {
             pool.release(buffer);
         }

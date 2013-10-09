@@ -39,7 +39,6 @@ public class Codecs implements Codec<Object> {
     private final DBRefEncoder dbRefEncoder;
     private final CodeWithScopeCodec codeWithScopeCodec;
     private final SimpleDocumentCodec simpleDocumentCodec;
-    private final Codec<Object> defaultObjectCodec = new NoCodec();
 
     public Codecs(final PrimitiveCodecs primitiveCodecs, final EncoderRegistry encoderRegistry) {
         this(primitiveCodecs, new QueryFieldNameValidator(), encoderRegistry);
@@ -67,18 +66,14 @@ public class Codecs implements Codec<Object> {
     public void encode(final BSONWriter bsonWriter, final Object object) {
         if (object == null || primitiveCodecs.canEncode(object.getClass())) {
             primitiveCodecs.encode(bsonWriter, object);
-        }
-        else if (encoderRegistry.get(object.getClass()) != null) {
-            final Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
+        } else if (encoderRegistry.get(object.getClass()) != null) {
+            Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
             codec.encode(bsonWriter, object);
-        }
-        else if (object.getClass().isArray()) {
+        } else if (object.getClass().isArray()) {
             arrayCodec.encode(bsonWriter, object);
-        }
-        else if (object instanceof Map) {
+        } else if (object instanceof Map) {
             encode(bsonWriter, (Map) object);
-        }
-        else {
+        } else {
             encoderRegistry.getDefaultEncoder().encode(bsonWriter, object);
         }
     }
@@ -106,12 +101,6 @@ public class Codecs implements Codec<Object> {
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    // needs to be a raw codec to support Pojo codec, but feels a bit wrong to do this
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public void setDefaultObjectCodec(final Codec codec) {
-        encoderRegistry.register(Object.class, codec);
     }
 
     //TODO: don't like this at all.  Feels like if it has a BSON type, it's a primitive

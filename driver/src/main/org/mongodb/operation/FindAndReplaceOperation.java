@@ -50,15 +50,16 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T execute() {
-        final ServerConnectionProvider provider = getServerConnectionProvider();
-        final CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndReplaceDocument(),
-                                                                commandEncoder, resultDecoder, getBufferProvider(),
-                                                                provider.getServerDescription(), provider.getConnection(), true).execute();
+        ServerConnectionProvider provider = getServerConnectionProvider();
+        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndReplaceDocument(),
+                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          provider.getServerDescription(), provider.getConnection(), true)
+                                          .execute();
         return (T) commandResult.getResponse().get("value");
     }
 
     private Document createFindAndReplaceDocument() {
-        final Document command = new Document("findandmodify", namespace.getCollectionName());
+        Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndReplace.getFilter());
         putIfNotNull(command, "fields", findAndReplace.getSelector());
         putIfNotNull(command, "sort", findAndReplace.getSortCriteria());

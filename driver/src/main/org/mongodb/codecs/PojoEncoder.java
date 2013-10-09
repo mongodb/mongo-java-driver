@@ -58,7 +58,7 @@ public class PojoEncoder<T> implements Encoder<T> {
     private void encodeField(final BSONWriter bsonWriter, final T value, final Field field, final String fieldName) {
         try {
             field.setAccessible(true);
-            final T fieldValue = (T) field.get(value);
+            T fieldValue = (T) field.get(value);
             bsonWriter.writeName(fieldName);
             encodeValue(bsonWriter, fieldValue);
             field.setAccessible(false);

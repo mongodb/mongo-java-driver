@@ -87,8 +87,7 @@ class ConcurrentPool<T> implements Pool<T> {
 
         if (prune) {
             close(t);
-        }
-        else {
+        } else {
             available.add(t);
         }
 
@@ -132,7 +131,7 @@ class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
-        final int currentAvailableCount = getAvailableCount();
+        int currentAvailableCount = getAvailableCount();
         for (int numAttempts = 0; numAttempts < currentAvailableCount; numAttempts++) {
             if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
                 break;
@@ -157,7 +156,7 @@ class ConcurrentPool<T> implements Pool<T> {
 
     private T createNewAndReleasePermitIfFailure() {
         try {
-            final T newMember = itemFactory.create();
+            T newMember = itemFactory.create();
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
@@ -172,11 +171,9 @@ class ConcurrentPool<T> implements Pool<T> {
         try {
             if (closed) {
                 return false;
-            }
-            else if (timeout >= 0) {
+            } else if (timeout >= 0) {
                 return permits.tryAcquire(timeout, timeUnit);
-            }
-            else {
+            } else {
                 permits.acquire();
                 return true;
             }
@@ -220,11 +217,11 @@ class ConcurrentPool<T> implements Pool<T> {
     }
 
     public String toString() {
-        final StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder();
         buf.append("pool: ")
-                .append(" maxSize: ").append(maxSize)
-                .append(" availableCount ").append(getAvailableCount())
-                .append(" inUseCount ").append(getInUseCount());
+           .append(" maxSize: ").append(maxSize)
+           .append(" availableCount ").append(getAvailableCount())
+           .append(" inUseCount ").append(getInUseCount());
         return buf.toString();
     }
 

@@ -20,24 +20,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Maps Class objects to values. A ClassMap is different from a regular Map in that get(c) does not only look to see if
- * 'c' is a key in the Map, but also walks the up superclass and interface graph of 'c' to find matches. Derived matches
- * of this sort are then "cached" in the registry so that matches are faster on future gets.
+ * Maps Class objects to values. A ClassMap is different from a regular Map in that get(c) does not only look to see if 'c' is a key in the
+ * Map, but also walks the up superclass and interface graph of 'c' to find matches. Derived matches of this sort are then "cached" in the
+ * registry so that matches are faster on future gets.
  * <p/>
  * This is a very useful class for Class based registries.
  * <p/>
  * Example:
  * <p/>
- * ClassMap<String> m = new ClassMap<String>(); m.put(Animal.class, "Animal"); m.put(Fox.class, "Fox"); m.Fox.class) -->
- * "Fox" m.get(Dog.class) --> "Animal"
+ * ClassMap<String> m = new ClassMap<String>(); m.put(Animal.class, "Animal"); m.put(Fox.class, "Fox"); m.Fox.class) --> "Fox"
+ * m.get(Dog.class) --> "Animal"
  * <p/>
  * (assuming Dog.class &lt; Animal.class)
  */
 public class ClassMap<T> {
     /**
-     * Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list.
-     * Supertypes are visited left to right. Duplicates are removed such that no Class will appear in the list before
-     * one of its subtypes.
+     * Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list. Supertypes are visited left
+     * to right. Duplicates are removed such that no Class will appear in the list before one of its subtypes.
      */
     public static <T> List<Class<?>> getAncestry(final Class<T> c) {
         return ClassAncestry.getAncestry(c);
@@ -47,7 +46,7 @@ public class ClassMap<T> {
         @Override
         public T apply(final Class<?> a) {
             for (final Class<?> cls : getAncestry(a)) {
-                final T result = map.get(cls);
+                T result = map.get(cls);
                 if (result != null) {
                     return result;
                 }

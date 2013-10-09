@@ -24,12 +24,13 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 
 /**
  * A {@code BSONWriter} implementation that outputs a JSON representation of BSON.
@@ -76,8 +77,7 @@ public class JSONWriter extends BSONWriter {
             }
             writer.write("{");
 
-            final BSONContextType contextType = (getState()
-                    == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
+            BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
             setContext(new Context(getContext(), contextType, settings.getIndentCharacters()));
             setState(State.NAME);
         } catch (IOException e) {
@@ -159,12 +159,12 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
-                            DatatypeConverter.printBase64Binary(binary.getData())));
+                                               printBase64Binary(binary.getData())));
 
                     break;
                 default:
                     writeStartDocument();
-                    writeString("$binary", DatatypeConverter.printBase64Binary(binary.getData()));
+                    writeString("$binary", printBase64Binary(binary.getData()));
                     writeString("$type", Integer.toHexString(binary.getType() & 0xFF));
                     writeEndDocument();
             }
@@ -206,7 +206,7 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
 
-                    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'");
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'");
                     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                     if (value >= -59014396800000L && value <= 253399536000000L) {
                         writer.write(String.format("ISODate(\"%s\")", dateFormat.format(new Date(value))));
@@ -381,8 +381,8 @@ public class JSONWriter extends BSONWriter {
                 case Shell:
                     writeNameHelper(getName());
                     writer.write("/");
-                    final String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression
-                            .getPattern().replace("/", "\\/");
+                    String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression.getPattern()
+                                                                                                             .replace("/", "\\/");
                     writer.write(escaped);
                     writer.write("/");
                     writer.write(regularExpression.getOptions());

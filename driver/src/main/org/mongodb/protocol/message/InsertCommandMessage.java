@@ -50,7 +50,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), getWriteConcern(), new Insert<T>(insert, i),
-                        getCommandEncoder(), encoder, getSettings());
+                                                          getCommandEncoder(), encoder, getSettings());
                 break;
             }
         }

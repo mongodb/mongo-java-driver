@@ -50,18 +50,17 @@ public class DBTest extends DatabaseTestCase {
         assertEquals(ReadPreference.primary(), database.getReadPreference());
     }
 
-
     @Test
     public void shouldReturnCachedCollectionObjectIfExists() {
-        final DBCollection collection1 = database.getCollection("test");
-        final DBCollection collection2 = database.getCollection("test");
+        DBCollection collection1 = database.getCollection("test");
+        DBCollection collection2 = database.getCollection("test");
         assertThat("Checking that references are equal", collection1, sameInstance(collection2));
     }
 
     @Test
     public void shouldDropItself() {
-        final String databaseName = "drop-test-" + System.nanoTime();
-        final DB db = getMongoClient().getDB(databaseName);
+        String databaseName = "drop-test-" + System.nanoTime();
+        DB db = getMongoClient().getDB(databaseName);
         db.createCollection("tmp", new BasicDBObject());
         assertThat(getClient().getDatabaseNames(), hasItem(databaseName));
         db.dropDatabase();
@@ -72,7 +71,7 @@ public class DBTest extends DatabaseTestCase {
     public void shouldGetCollectionNames() {
         database.dropDatabase();
 
-        final String[] collectionNames = {"c1", "c2", "c3"};
+        String[] collectionNames = {"c1", "c2", "c3"};
 
         for (final String name : collectionNames) {
             database.createCollection(name, new BasicDBObject());
@@ -95,47 +94,45 @@ public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldCreateCollectionWithMax() {
         collection.drop();
-        final DBCollection c1 = database.createCollection(collectionName, new BasicDBObject("capped", true)
-                .append("size", 242880)
-                .append("max", 10)
-        );
+        DBCollection c1 = database.createCollection(collectionName, new BasicDBObject("capped", true)
+                                                                        .append("size", 242880)
+                                                                        .append("max", 10));
 
         assertThat(c1.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
     }
 
     @Test(expected = MongoDuplicateKeyException.class)
     public void shouldGetDuplicateKeyException() {
-        final DBObject doc = new BasicDBObject("_id", 1);
+        DBObject doc = new BasicDBObject("_id", 1);
         collection.insert(doc);
         collection.insert(doc, WriteConcern.ACKNOWLEDGED);
     }
 
     @Test
     public void shouldDoEval() {
-        final String code = "function(name, incAmount) {\n" +
-                "var doc = db.myCollection.findOne( { name : name } );\n" +
-                "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n" +
-                "doc.num++;\n" +
-                "doc.total += incAmount;\n" +
-                "doc.avg = doc.total / doc.num;\n" +
-                "db.myCollection.save( doc );\n" +
-                "return doc;\n" +
-                "}";
+        String code = "function(name, incAmount) {\n" +
+                      "var doc = db.myCollection.findOne( { name : name } );\n" +
+                      "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n" +
+                      "doc.num++;\n" +
+                      "doc.total += incAmount;\n" +
+                      "doc.avg = doc.total / doc.num;\n" +
+                      "db.myCollection.save( doc );\n" +
+                      "return doc;\n" +
+                      "}";
         database.doEval(code, "eliot", 5);
         assertEquals(database.getCollection("myCollection").findOne(), new BasicDBObject("_id", 1.0)
-                .append("avg", 5.0)
-                .append("num", 1.0)
-                .append("name", "eliot")
-                .append("total", 5.0)
-        );
+                                                                           .append("avg", 5.0)
+                                                                           .append("num", 1.0)
+                                                                           .append("name", "eliot")
+                                                                           .append("total", 5.0));
     }
 
     @Test(expected = MongoException.class)
     @Ignore("Will be added as soon as error-handling mechanism settle down")
     public void shouldThrowErrorwhileDoingEval() {
-        final String code = "function(a, b) {\n" +
-                "var doc = db.myCollection.findOne( { name : b } );\n" +
-                "}";
+        String code = "function(a, b) {\n" +
+                      "var doc = db.myCollection.findOne( { name : b } );\n" +
+                      "}";
         database.eval(code, 1);
     }
 
@@ -146,7 +143,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldExecuteCommand() {
-        final CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
+        CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
         assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok", "serverUsed"}));
     }
 
@@ -160,13 +157,13 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
-        final CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, ReadPreference.secondary());
+        CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, ReadPreference.secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
 
     @Test
     public void shouldNotThrowAnExceptionOnCommandFailure() {
-        final CommandResult commandResult = database.command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
+        CommandResult commandResult = database.command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
         assertThat(commandResult, hasFields(new String[]{"serverUsed", "ok", "errmsg"}));
     }
 
@@ -208,13 +205,14 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException, InterruptedException {
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd()
+        throws UnknownHostException, InterruptedException {
         Mongo m = new MongoClient(getPrimary(),
-                MongoClientOptions.builder()
-                        .connectionsPerHost(1)
-                        .maxWaitTime(10)
-                        .socketFactory(getOptions().getSocketFactory())
-                        .build()
+                                  MongoClientOptions.builder()
+                                                    .connectionsPerHost(1)
+                                                    .maxWaitTime(10)
+                                                    .socketFactory(getOptions().getSocketFactory())
+                                                    .build()
         );
         DB db = m.getDB("com_mongodb_unittest_DBTest");
 

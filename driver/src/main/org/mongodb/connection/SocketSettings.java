@@ -38,7 +38,6 @@ public class SocketSettings {
         private int receiveBufferSize;
         private int sendBufferSize;
 
-        // CHECKSTYLE:OFF
         public Builder connectTimeout(final int connectTimeout, final TimeUnit timeUnit) {
             this.connectTimeoutMS = MILLISECONDS.convert(connectTimeout, timeUnit);
             return this;
@@ -49,7 +48,7 @@ public class SocketSettings {
             return this;
         }
 
-        public Builder keepAlive(boolean keepAlive) {
+        public Builder keepAlive(final boolean keepAlive) {
             this.keepAlive = keepAlive;
             return this;
         }
@@ -67,7 +66,6 @@ public class SocketSettings {
         public SocketSettings build() {
             return new SocketSettings(this);
         }
-        // CHECKSTYLE:ON
     }
 
     public int getConnectTimeout(final TimeUnit timeUnit) {

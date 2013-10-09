@@ -58,13 +58,13 @@ public class LazyWriteableDBObject extends LazyDBObject {
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void putAll(final Map m) {
         writable.putAll(m);
     }
 
     @Override
-    public boolean containsField(String s) {
+    public boolean containsField(final String s) {
         return writable.containsKey(s) || super.containsField(s);
     }
 
@@ -75,7 +75,7 @@ public class LazyWriteableDBObject extends LazyDBObject {
 
     @Override
     public Set<String> keySet() {
-        final Set<String> union = new HashSet<String>(super.keySet());
+        Set<String> union = new HashSet<String>(super.keySet());
         union.addAll(writable.keySet());
         return Collections.unmodifiableSet(union);
     }

@@ -52,7 +52,7 @@ public class MongoViewTest extends DatabaseTestCase {
         }
 
         for (final Document cur : collection.find(new Document("_id", 1))
-                .sort(new Document("_id", 1))) {
+                                            .sort(new Document("_id", 1))) {
             System.out.println(cur);
         }
 
@@ -134,7 +134,7 @@ public class MongoViewTest extends DatabaseTestCase {
             }
         });
 
-        final List<Integer> idList = collection.find().map(new Function<Document, Integer>() {
+        List<Integer> idList = collection.find().map(new Function<Document, Integer>() {
             @Override
             public Integer apply(final Document document) {
                 return (Integer) document.get("_id");
@@ -143,8 +143,10 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find().sort(Sort.ascending("x")).skip(4).limit(5).getOne();
         cursor = collection.find().sort(new Document("price", 1)).skip(5).limit(1000)
-                .withQueryOptions(new QueryOptions().min(new Document("price", 0.99)).max(new Document("price", 9.99)).hint("price"))
-                .get();
+                           .withQueryOptions(new QueryOptions().min(new Document("price", 0.99))
+                                                               .max(new Document("price", 9.99))
+                                                               .hint("price"))
+                           .get();
 
         try {
             while (cursor.hasNext()) {
@@ -171,14 +173,14 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
         collection.find(new Document("_id", 2)).upsert().update(new Document("$set", new Document("x", 1)));
-        final Document doc = collection.find(new Document("_id", 1)).getOneAndUpdate(new Document("$set", new Document("x", 1)));
+        Document doc = collection.find(new Document("_id", 1)).getOneAndUpdate(new Document("$set", new Document("x", 1)));
 
         System.out.println(doc);
     }
 
     @Test
     public void testInsertOrReplace() {
-        final Document replacement = new Document("_id", 3).append("x", 2);
+        Document replacement = new Document("_id", 3).append("x", 2);
         collection.find().upsert().replace(replacement);
         assertEquals(replacement, collection.find(new Document("_id", 3)).getOne());
 
@@ -189,31 +191,33 @@ public class MongoViewTest extends DatabaseTestCase {
 
     @Test
     public void testTypeCollection() {
-        final MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(),
-                new ConcreteCodec());
+        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(),
+                                                                              new ConcreteCodec());
         concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
         concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
 
         System.out.println(concreteCollection.find(new Document("i", 1))
-                .map(new Function<Concrete, ObjectId>() {
-                    @Override
-                    public ObjectId apply(final Concrete concrete) {
-                        return concrete.getId();
-                    }
-                }).map(new Function<ObjectId, String>() {
-                    @Override
-                    public String apply(final ObjectId o) {
-                        return o.toString();
-                    }
-                }).into(new ArrayList<String>()));
+                                             .map(new Function<Concrete, ObjectId>() {
+                                                 @Override
+                                                 public ObjectId apply(final Concrete concrete) {
+                                                     return concrete.getId();
+                                                 }
+                                             })
+                                             .map(new Function<ObjectId, String>() {
+                                                 @Override
+                                                 public String apply(final ObjectId o) {
+                                                     return o.toString();
+                                                 }
+                                             }).into(new ArrayList<String>()));
 
         System.out.println(concreteCollection.find(new Document("i", 1))
-                .map(new Function<Concrete, ObjectId>() {
-                    @Override
-                    public ObjectId apply(final Concrete concrete) {
-                        return concrete.getId();
-                    }
-                }).into(new ArrayList<ObjectId>()));
+                                             .map(new Function<Concrete, ObjectId>() {
+                                                 @Override
+                                                 public ObjectId apply(final Concrete concrete) {
+                                                     return concrete.getId();
+                                                 }
+                                             })
+                                             .into(new ArrayList<ObjectId>()));
     }
 }
 

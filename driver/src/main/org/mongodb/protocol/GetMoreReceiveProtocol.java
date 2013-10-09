@@ -37,7 +37,7 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public QueryResult<T> execute() {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
+        ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
         try {
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
         } finally {
@@ -46,9 +46,13 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public MongoFuture<QueryResult<T>> executeAsync() {
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-        connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(
-                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, 0, responseTo, connection, false));
+        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
+                                                                                resultDecoder,
+                                                                                0,
+                                                                                responseTo,
+                                                                                connection,
+                                                                                false));
 
         return retVal;
     }

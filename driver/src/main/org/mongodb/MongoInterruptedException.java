@@ -17,8 +17,8 @@
 package org.mongodb;
 
 /**
- * A non-checked exception indicating that the driver has been interrupted by a call to Thread.interrupt.
- * It wraps the InterruptedException.
+ * A non-checked exception indicating that the driver has been interrupted by a call to Thread.interrupt. It wraps the
+ * InterruptedException.
  *
  * @see Thread#interrupt()
  * @see InterruptedException
@@ -27,7 +27,8 @@ public class MongoInterruptedException extends MongoException {
     private static final long serialVersionUID = -4110417867718417860L;
 
     public MongoInterruptedException(final String message, final Exception e) {
-        super(message, e);     }
+        super(message, e);
+    }
 }
 
 

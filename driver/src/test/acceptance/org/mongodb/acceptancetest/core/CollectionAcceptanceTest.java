@@ -51,7 +51,7 @@ import static org.junit.Assert.assertTrue;
 public class CollectionAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToIterateOverACollection() {
-        final int numberOfDocuments = 10;
+        int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         int countOfDocumentsInIterator = 0;
@@ -64,10 +64,10 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToIterateOverACursor() {
-        final int numberOfDocuments = 10;
+        int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        final MongoCursor<Document> cursor = collection.find().get();
+        MongoCursor<Document> cursor = collection.find().get();
         int countOfDocumentsInIterator = 0;
         try {
             while (cursor.hasNext()) {
@@ -91,11 +91,11 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetStatistics() {
-        final String newCollectionName = "shouldGetStatistics";
+        String newCollectionName = "shouldGetStatistics";
         database.tools().createCollection(newCollectionName);
-        final MongoCollection<Document> newCollection = database.getCollection(newCollectionName);
+        MongoCollection<Document> newCollection = database.getCollection(newCollectionName);
 
-        final Document collectionStatistics = newCollection.tools().getStatistics();
+        Document collectionStatistics = newCollection.tools().getStatistics();
         assertThat(collectionStatistics, is(notNullValue()));
 
         assertThat((String) collectionStatistics.get("ns"), is(getDatabaseName() + "." + newCollectionName));
@@ -103,9 +103,9 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropExistingCollection() {
-        final String collectionName = "shouldDropExistingCollection";
+        String collectionName = "shouldDropExistingCollection";
         database.tools().createCollection(collectionName);
-        final MongoCollection<Document> newCollection = database.getCollection(collectionName);
+        MongoCollection<Document> newCollection = database.getCollection(collectionName);
 
         assertThat(database.tools().getCollectionNames().contains(collectionName), is(true));
 
@@ -135,9 +135,9 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         doc.append("null", null);
         doc.append("uuid", UUID.randomUUID());
         doc.append("db ref", new DBRef(new ObjectId(), "test.test"));
-        doc.append("binary", new Binary((byte) 42, new byte[] {10, 11, 12}));
-        doc.append("byte array", new byte[] {1, 2, 3});
-        doc.append("int array", new int[] {4, 5, 6});
+        doc.append("binary", new Binary((byte) 42, new byte[]{10, 11, 12}));
+        doc.append("byte array", new byte[]{1, 2, 3});
+        doc.append("int array", new int[]{4, 5, 6});
         doc.append("list", Arrays.asList(7, 8, 9));
         doc.append("doc list", Arrays.asList(new Document("x", 1), new Document("x", 2)));
 

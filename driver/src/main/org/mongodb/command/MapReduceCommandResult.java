@@ -39,10 +39,10 @@ public class MapReduceCommandResult extends CommandResult {
      * @return a collection name
      */
     public String getCollectionName() {
-        final Object result = getResponse().get("result");
+        Object result = getResponse().get("result");
         return (result instanceof Document)
-                ? ((Document) result).getString("collection")
-                : (String) result;
+               ? ((Document) result).getString("collection")
+               : (String) result;
     }
 
     /**
@@ -51,9 +51,9 @@ public class MapReduceCommandResult extends CommandResult {
      * @return a database name
      */
     public String getDatabaseName() {
-        final Object result = getResponse().get("result");
+        Object result = getResponse().get("result");
         return (result instanceof Document)
-                ? ((Document) result).getString("db")
-                : null;
+               ? ((Document) result).getString("db")
+               : null;
     }
 }

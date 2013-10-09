@@ -48,7 +48,7 @@ public class ServerAddressSelector implements ServerSelector {
             return false;
         }
 
-        final ServerAddressSelector that = (ServerAddressSelector) o;
+        ServerAddressSelector that = (ServerAddressSelector) o;
 
         if (!serverAddress.equals(that.serverAddress)) {
             return false;
@@ -65,7 +65,7 @@ public class ServerAddressSelector implements ServerSelector {
     @Override
     public String toString() {
         return "ServerAddressSelector{"
-                + "serverAddress=" + serverAddress
-                + '}';
+               + "serverAddress=" + serverAddress
+               + '}';
     }
 }

@@ -61,16 +61,16 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return (BaseWriteCommandMessage) super.encode(buffer);
     }
 
-        @Override
+    @Override
     protected BaseWriteCommandMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         BaseWriteCommandMessage nextMessage = null;
 
         writeCommandHeader(buffer);
 
         int commandStartPosition = buffer.getPosition();
-        final BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(),
-                                                             new BSONBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
-                                                             buffer, false);
+        BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(),
+                                                       new BSONBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
+                                                       buffer, false);
         try {
             writer.writeStartDocument();
             writeCommandPrologue(writer);

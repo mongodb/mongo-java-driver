@@ -41,7 +41,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
     private final Connection connection;
-    private boolean closeConnection;
+    private final boolean closeConnection;
 
     public WriteResultCallback(final SingleResultFuture<WriteResult> future,
                                final Decoder<Document> decoder, final MongoNamespace namespace,
@@ -64,21 +64,23 @@ class WriteResultCallback extends CommandResultBaseCallback {
         boolean done = true;
         if (e != null) {
             future.init(null, e);
-        }
-        else {
+        } else {
             WriteResult writeResult = new WriteResult(commandResult, writeConcern);
             MongoException exception = getWriteException(writeResult);
 
             if (exception != null) {
                 future.init(null, exception);
-            }
-            else if (nextMessage != null) {
-                MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, bufferProvider, nextMessage,
-                        writeConcern, serverDescription, connection, closeConnection).executeAsync();
+            } else if (nextMessage != null) {
+                MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
+                                                                              bufferProvider,
+                                                                              nextMessage,
+                                                                              writeConcern,
+                                                                              serverDescription,
+                                                                              connection,
+                                                                              closeConnection).executeAsync();
                 newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
                 done = false;
-            }
-            else {
+            } else {
                 future.init(writeResult, null);
             }
         }

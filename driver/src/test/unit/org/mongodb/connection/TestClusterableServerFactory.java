@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TestClusterableServerFactory implements ClusterableServerFactory {
-    private Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
+    private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
@@ -32,6 +32,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     public void close() {
 
     }
+
     public TestServer getServer(final ServerAddress serverAddress) {
         return addressToServerMap.get(serverAddress);
     }

@@ -42,11 +42,11 @@ public class DBDecoderAdapter implements Decoder<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        final BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
+        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
         try {
             binaryWriter.pipe(reader);
-            final BufferExposingByteArrayOutputStream byteArrayOutputStream =
-                    new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
+            BufferExposingByteArrayOutputStream byteArrayOutputStream =
+                new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().size());
             binaryWriter.getBuffer().pipe(byteArrayOutputStream);
             return decoder.decode(byteArrayOutputStream.getInternalBytes(), collection);
         } catch (IOException e) {

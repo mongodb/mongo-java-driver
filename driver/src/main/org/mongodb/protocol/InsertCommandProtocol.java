@@ -50,7 +50,7 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insert.getDocuments().size(),
-                getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
+                           getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Insert completed");
         return writeResult;
@@ -59,7 +59,7 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     @Override
     protected InsertCommandMessage<T> createRequestMessage() {
         return new InsertCommandMessage<T>(getNamespace(), getWriteConcern(), insert, new DocumentCodec(), encoder,
-                getMessageSettings(getServerDescription()));
+                                           getMessageSettings(getServerDescription()));
     }
 
     @Override

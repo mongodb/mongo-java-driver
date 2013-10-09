@@ -40,12 +40,12 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     @Override
     public Concrete decode(final BSONReader reader) {
         reader.readStartDocument();
-        final ObjectId id = reader.readObjectId("_id");
-        final String str = reader.readString("str");
-        final int i = reader.readInt32("i");
-        final long l = reader.readInt64("l");
-        final double d = reader.readDouble("d");
-        final long date = reader.readDateTime("date");
+        ObjectId id = reader.readObjectId("_id");
+        String str = reader.readString("str");
+        int i = reader.readInt32("i");
+        long l = reader.readInt64("l");
+        double d = reader.readDouble("d");
+        long date = reader.readDateTime("date");
 
         reader.readEndDocument();
         return new Concrete(id, str, i, l, d, date);

@@ -29,14 +29,13 @@ public class JSON {
     /**
      * Serializes an object into its JSON form.
      * <p/>
-     * This method delegates serialization to <code>JSONSerializers.getLegacy</code>
+     * This method delegates serialization to {@code JSONSerializers.getLegacy}
      *
      * @param o object to serialize
-     * @return  a String containing the JSON form of the object
      * @return String containing JSON form of the object
-     * @see com.mongodb.util.JSONSerializers#getLegacy()
+     * @see JSONSerializers#getLegacy()
      */
-    public static String serialize(Object o) {
+    public static String serialize(final Object o) {
         StringBuilder buf = new StringBuilder();
         serialize(o, buf);
         return buf.toString();
@@ -45,54 +44,47 @@ public class JSON {
     /**
      * Serializes an object into its JSON form.
      * <p/>
-     * This method delegates serialization to <code>JSONSerializers.getLegacy</code>
+     * This method delegates serialization to {@code JSONSerializers.getLegacy}
      *
      * @param o   object to serialize
      * @param buf StringBuilder containing the JSON representation under construction
-     * @see com.mongodb.util.JSONSerializers#getLegacy()
+     * @see JSONSerializers#getLegacy()
      */
-    public static void serialize(Object o, StringBuilder buf) {
+    public static void serialize(final Object o, final StringBuilder buf) {
         JSONSerializers.getLegacy().serialize(o, buf);
     }
 
     /**
-     *  Parses a JSON string and returns a corresponding Java object.
-     *  The returned value is either a {@link com.mongodb.DBObject DBObject}
-     *  (if the string is a JSON object or array), or a boxed primitive
-     *  value according to the following mapping:
-     *  <p>
-     *  <code>java.lang.Boolean</code> for <code>true</code> or <code>false</code><br>
-     *  <code>java.lang.Integer</code> for integers between
-     *  Integer.MIN_VALUE and Integer.MAX_VALUE<br>
-     *  <code>java.lang.Long</code> for integers outside of this range<br>
-     *  <code>java.lang.Double</code> for floating point numbers
-     *  <p>
-     *  If the parameter is a string that contains a single-quoted
-     *  or double-quoted string, it is returned as an unquoted
-     *  <code>java.lang.String</code>.
-     * Parses a JSON string representing a JSON value
+     * Parses a JSON string and returns a corresponding Java object. The returned value is either a {@link com.mongodb.DBObject DBObject}
+     * (if the string is a JSON object or array), or a boxed primitive value according to the following mapping:
+     * <p/>
+     * <code>java.lang.Boolean</code> for <code>true</code> or {@code false}<br> {@code java.lang.Integer} for integers between
+     * Integer.MIN_VALUE and Integer.MAX_VALUE<br> {@code java.lang.Long} for integers outside of this range<br> {@code java.lang.Double}
+     * for floating point numbers
+     * <p/>
+     * If the parameter is a string that contains a single-quoted or double-quoted string, it is returned as an unquoted {@code
+     * java.lang.String}. Parses a JSON string representing a JSON value
      *
      * @param s the string to parse
      * @return a Java object representing the JSON data
-     * @throws JSONParseException if s is not valid JSON 
+     * @throws JSONParseException if s is not valid JSON
      */
-    public static Object parse(String s) {
+    public static Object parse(final String s) {
         return parse(s, null);
     }
 
     /**
-     * Parses a JSON string and constructs a corresponding Java object by calling
-     * the methods of a {@link org.bson.BSONCallback BSONCallback} during parsing.
-     * If the callback <code>c</code> is null, this method is equivalent to
-     * {@link com.mongodb.util.JSON#parse(String) parse(String)}.
-     * 
+     * Parses a JSON string and constructs a corresponding Java object by calling the methods of a {@link org.bson.BSONCallback
+     * BSONCallback} during parsing. If the callback {@code c} is null, this method is equivalent to {@link JSON#parse(String)
+     * parse(String)}.
+     *
      * @param s the string to parse
      * @param c the BSONCallback to call during parsing
      * @return a Java object representing the JSON data
-     * @throws JSONParseException if s is not valid JSON 
+     * @throws JSONParseException if s is not valid JSON
      */
-    public static Object parse(String s, BSONCallback c) {
-        if (s == null || (s = s.trim()).equals("")) {
+    public static Object parse(final String s, final BSONCallback c) {
+        if (s == null || (s.trim()).equals("")) {
             return null;
         }
 
@@ -100,7 +92,7 @@ public class JSON {
         return p.parse();
     }
 
-    static void string(StringBuilder a, String s) {
+    static void string(final StringBuilder a, final String s) {
         a.append("\"");
         for (int i = 0; i < s.length(); ++i) {
             char c = s.charAt(i);
@@ -126,30 +118,28 @@ public class JSON {
     }
 }
 
-
 /**
  * Parser for JSON objects.
  * <p/>
- * Supports all types described at www.json.org, except for
- * numbers with "e" or "E" in them.
+ * Supports all types described at www.json.org, except for numbers with "e" or "E" in them.
  */
 class JSONParser {
 
-    String s;
+    final String s;
     int pos = 0;
-    BSONCallback _callback;
+    final BSONCallback _callback;
 
     /**
      * Create a new parser.
      */
-    public JSONParser(String s) {
+    public JSONParser(final String s) {
         this(s, null);
     }
 
     /**
      * Create a new parser.
      */
-    public JSONParser(String s, BSONCallback callback) {
+    public JSONParser(final String s, final BSONCallback callback) {
         this.s = s;
         _callback = (callback == null) ? new JSONCallback() : callback;
     }
@@ -171,7 +161,7 @@ class JSONParser {
      * @return Object the next item
      * @throws JSONParseException if invalid JSON is found
      */
-    protected Object parse(String name) {
+    protected Object parse(final String name) {
         Object value = null;
         char current = get();
 
@@ -258,7 +248,7 @@ class JSONParser {
      * @return DBObject the next object
      * @throws JSONParseException if invalid JSON is found
      */
-    protected Object parseObject(String name) {
+    protected Object parseObject(final String name) {
         if (name != null) {
             _callback.objectStart(name);
         } else {
@@ -284,7 +274,7 @@ class JSONParser {
         return _callback.objectDone();
     }
 
-    protected void doCallback(String name, Object value) {
+    protected void doCallback(final String name, final Object value) {
         if (value == null) {
             _callback.gotNull(name);
         } else if (value instanceof String) {
@@ -301,13 +291,12 @@ class JSONParser {
     }
 
     /**
-     * Read the current character, making sure that it is the expected character.
-     * Advances the pointer to the next character.
+     * Read the current character, making sure that it is the expected character. Advances the pointer to the next character.
      *
      * @param ch the character expected
      * @throws JSONParseException if the current character does not match the given character
      */
-    public void read(char ch) {
+    public void read(final char ch) {
         if (!check(ch)) {
             throw new JSONParseException(s, pos);
         }
@@ -327,10 +316,10 @@ class JSONParser {
      * @throws JSONParseException if the current character is not a hexidecimal character
      */
     public void readHex() {
-        if (pos < s.length() &&
-                ((s.charAt(pos) >= '0' && s.charAt(pos) <= '9') ||
-                        (s.charAt(pos) >= 'A' && s.charAt(pos) <= 'F') ||
-                        (s.charAt(pos) >= 'a' && s.charAt(pos) <= 'f'))) {
+        if (pos < s.length()
+            && ((s.charAt(pos) >= '0' && s.charAt(pos) <= '9')
+                || (s.charAt(pos) >= 'A' && s.charAt(pos) <= 'F')
+                || (s.charAt(pos) >= 'a' && s.charAt(pos) <= 'f'))) {
             pos++;
         } else {
             throw new JSONParseException(s, pos);
@@ -343,7 +332,7 @@ class JSONParser {
      * @param ch the character expected
      * @throws JSONParseException if the current character does not match the given character
      */
-    public boolean check(char ch) {
+    public boolean check(final char ch) {
         return get() == ch;
     }
 
@@ -357,8 +346,7 @@ class JSONParser {
     }
 
     /**
-     * Returns the current character.
-     * Returns -1 if there are no more characters.
+     * Returns the current character. Returns -1 if there are no more characters.
      *
      * @return the next character
      */
@@ -376,7 +364,7 @@ class JSONParser {
      * @return the next string.
      * @throws JSONParseException if invalid JSON is found
      */
-    public String parseString(boolean needQuote) {
+    public String parseString(final boolean needQuote) {
         char quot = 0;
         if (check('\'')) {
             quot = '\'';
@@ -607,7 +595,7 @@ class JSONParser {
      * @return the array
      * @throws JSONParseException if invalid JSON is found
      */
-    protected Object parseArray(String name) {
+    protected Object parseArray(final String name) {
         if (name != null) {
             _callback.arrayStart(name);
         } else {

@@ -29,9 +29,9 @@ public class QueryBuilderTest {
      */
     @Test
     public void shouldCreateValidBSONDocumentForOrWithDocumentVarargsOperands() {
-        final QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"), new Document("age", 43));
+        QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"), new Document("age", 43));
 
-        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -41,10 +41,10 @@ public class QueryBuilderTest {
      */
     @Test
     public void shouldCreateValidBSONDocumentForOrWithTwoStreamedDocumentOperands() {
-        final QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"))
-                                                              .or(new Document("age", 43));
+        QueryBuilder queryBuilder = QueryBuilder.query().or(new Document("name", "first"))
+                                                .or(new Document("age", 43));
 
-        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
@@ -54,28 +54,28 @@ public class QueryBuilderTest {
      */
     @Test
     public void shouldCreateValidBSONDocumentForOrWithTwoStreamedQueryBuilderOperands() {
-        final QueryBuilder queryBuilder = QueryBuilder.query().or(QueryBuilder.query("name").is("first"))
-                                                              .or(QueryBuilder.query("age").is(43));
+        QueryBuilder queryBuilder = QueryBuilder.query().or(QueryBuilder.query("name").is("first"))
+                                                .or(QueryBuilder.query("age").is(43));
 
-        final String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForValue() {
-        final QueryBuilder queryBuilder = QueryBuilder.query("name").is("first");
+        QueryBuilder queryBuilder = QueryBuilder.query("name").is("first");
 
-        final String expectedQuery = "{ \"name\" : \"first\" }";
+        String expectedQuery = "{ \"name\" : \"first\" }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForQueryBuilderValue() {
-        final QueryBuilder queryBuilder = QueryBuilder.query("numericValue").is(query(TYPE).is(16));
+        QueryBuilder queryBuilder = QueryBuilder.query("numericValue").is(query(TYPE).is(16));
 
-        final String expectedQuery = "{ \"numericValue\" : { \"$type\" : 16 } }";
+        String expectedQuery = "{ \"numericValue\" : { \"$type\" : 16 } }";
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }

@@ -26,9 +26,9 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
     }
 
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions options) {
-        final Builder builder = new Builder();
+        Builder builder = new Builder();
         builder.primitiveCodecs = getPrimitiveCodecs() != null ? getPrimitiveCodecs()
-                                                                    : options.getPrimitiveCodecs();
+                                                               : options.getPrimitiveCodecs();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
         builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec() : options.getDocumentCodec();

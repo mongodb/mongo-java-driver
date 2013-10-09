@@ -139,18 +139,36 @@ public class QueryOptions {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
-        final QueryOptions that = (QueryOptions) o;
+        QueryOptions that = (QueryOptions) o;
 
-        if (batchSize != that.batchSize) return false;
-        if (isolated != that.isolated) return false;
-        if (maxScan != that.maxScan) return false;
-        if (maxTimeMS != that.maxTimeMS) return false;
-        if (max != null ? !max.equals(that.max) : that.max != null) return false;
-        if (min != null ? !min.equals(that.min) : that.min != null) return false;
-        if (!queryFlags.equals(that.queryFlags)) return false;
+        if (batchSize != that.batchSize) {
+            return false;
+        }
+        if (isolated != that.isolated) {
+            return false;
+        }
+        if (maxScan != that.maxScan) {
+            return false;
+        }
+        if (maxTimeMS != that.maxTimeMS) {
+            return false;
+        }
+        if (max != null ? !max.equals(that.max) : that.max != null) {
+            return false;
+        }
+        if (min != null ? !min.equals(that.min) : that.min != null) {
+            return false;
+        }
+        if (!queryFlags.equals(that.queryFlags)) {
+            return false;
+        }
 
         return true;
     }
@@ -170,13 +188,13 @@ public class QueryOptions {
     @Override
     public String toString() {
         return "QueryOptions{"
-                + "queryFlags=" + queryFlags
-                + ", batchSize=" + batchSize
-                + ", maxScan=" + maxScan
-                + ", maxTimeMS=" + maxTimeMS
-                + ", min=" + min
-                + ", max=" + max
-                + ", isolated=" + isolated
-                + '}';
+               + "queryFlags=" + queryFlags
+               + ", batchSize=" + batchSize
+               + ", maxScan=" + maxScan
+               + ", maxTimeMS=" + maxTimeMS
+               + ", min=" + min
+               + ", max=" + max
+               + ", isolated=" + isolated
+               + '}';
     }
 }

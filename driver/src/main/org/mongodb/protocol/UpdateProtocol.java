@@ -52,7 +52,7 @@ public class UpdateProtocol extends WriteProtocol {
     @Override
     public WriteResult execute() {
         LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                getConnection().getServerAddress()));
+                           getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Update completed");
         return writeResult;

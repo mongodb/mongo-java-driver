@@ -228,9 +228,8 @@ public class ServerDescription {
     }
 
     /**
-     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone}
-     * or @code{ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
-     * those types.
+     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone} or @code{ServerType.ShardRouter}
+     * is considered to have all tags, so this method will always return true for instances of either of those types.
      *
      * @param desiredTags the tags
      * @return true if this server has the given tags
@@ -244,7 +243,7 @@ public class ServerDescription {
             return true;
         }
 
-        for (Map.Entry<String, String> tag : desiredTags.entrySet()) {
+        for (final Map.Entry<String, String> tag : desiredTags.entrySet()) {
             if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
                 return false;
             }
@@ -300,7 +299,7 @@ public class ServerDescription {
             return false;
         }
 
-        final ServerDescription that = (ServerDescription) o;
+        ServerDescription that = (ServerDescription) o;
 
         if (maxDocumentSize != that.maxDocumentSize) {
             return false;
@@ -370,32 +369,32 @@ public class ServerDescription {
     @Override
     public String toString() {
         return "ServerDescription{"
-                + "address=" + address
-                + ", type=" + type
-                + ", hosts=" + hosts
-                + ", passives=" + passives
-                + ", arbiters=" + arbiters
-                + ", primary='" + primary + '\''
-                + ", maxDocumentSize=" + maxDocumentSize
-                + ", maxMessageSize=" + maxMessageSize
-                + ", tags=" + tags
-                + ", setName='" + setName + '\''
-                + ", setVersion='" + setVersion + '\''
-                + ", averagePingTimeNanos=" + averagePingTimeNanos
-                + ", ok=" + ok
-                + ", state=" + state
-                + ", version=" + version
-                + '}';
+               + "address=" + address
+               + ", type=" + type
+               + ", hosts=" + hosts
+               + ", passives=" + passives
+               + ", arbiters=" + arbiters
+               + ", primary='" + primary + '\''
+               + ", maxDocumentSize=" + maxDocumentSize
+               + ", maxMessageSize=" + maxMessageSize
+               + ", tags=" + tags
+               + ", setName='" + setName + '\''
+               + ", setVersion='" + setVersion + '\''
+               + ", averagePingTimeNanos=" + averagePingTimeNanos
+               + ", ok=" + ok
+               + ", state=" + state
+               + ", version=" + version
+               + '}';
     }
 
     public String getShortDescription() {
         return "{"
-                + "address=" + address
-                + ", type=" + type
-                + (tags.isEmpty() ? "" : tags)
-                + (state == Connected ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
-                + ", state=" + state
-                + '}';
+               + "address=" + address
+               + ", type=" + type
+               + (tags.isEmpty() ? "" : tags)
+               + (state == Connected ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
+               + ", state=" + state
+               + '}';
     }
 
     ServerDescription(final Builder builder) {

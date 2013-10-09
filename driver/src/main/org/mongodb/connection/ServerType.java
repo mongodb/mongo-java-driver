@@ -17,7 +17,6 @@
 package org.mongodb.connection;
 
 /**
- *
  * The type of the server.
  *
  * @since 3.0

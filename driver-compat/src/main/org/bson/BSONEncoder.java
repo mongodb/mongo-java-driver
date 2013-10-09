@@ -19,9 +19,8 @@ package org.bson;
 import org.bson.io.OutputBuffer;
 
 /**
- * An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays.
- * The {@code BSONEncoder} walks down through the object graph and writes corresponding
- * {@code byte} sequences into underlying {@code OutputBuffer}.
+ * An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays. The {@code BSONEncoder} walks down through the
+ * object graph and writes corresponding {@code byte} sequences into underlying {@code OutputBuffer}.
  * <p/>
  * This class is a part of legacy APi. Please check {@link org.mongodb.Encoder} for a new one.
  */
@@ -42,7 +41,7 @@ public interface BSONEncoder {
      * @param document the document to be encoded
      * @return a byte sequence
      */
-    byte[] encode(final BSONObject document);
+    byte[] encode(BSONObject document);
 
     /**
      * Encoder and write a document into underlying buffer.
@@ -50,7 +49,7 @@ public interface BSONEncoder {
      * @param document the document to be encoded
      * @return number of bytes written
      */
-    int putObject(final BSONObject document);
+    int putObject(BSONObject document);
 
     /**
      * Free the resources.
@@ -62,5 +61,5 @@ public interface BSONEncoder {
      *
      * @param buffer the buffer to be used to write a byte sequences to
      */
-    void set(final OutputBuffer buffer);
+    void set(OutputBuffer buffer);
 }

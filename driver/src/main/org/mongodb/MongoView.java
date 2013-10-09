@@ -17,7 +17,7 @@
 package org.mongodb;
 
 public interface MongoView<T> extends MongoWritableView<T>, MongoAsyncWritableView<T>,
-        MongoReadableView<T>, MongoAsyncReadableView<T>, MongoIterable<T> {
+                                          MongoReadableView<T>, MongoAsyncReadableView<T>, MongoIterable<T> {
 
     MongoView<T> find(Document filter);
 

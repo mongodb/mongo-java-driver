@@ -26,7 +26,7 @@ import java.util.UUID;
 public class UUIDEncoder implements Encoder<UUID> {
     @Override
     public void encode(final BSONWriter bsonWriter, final UUID value) {
-        final byte[] bytes = new byte[16];
+        byte[] bytes = new byte[16];
 
         writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, value.getLeastSignificantBits());

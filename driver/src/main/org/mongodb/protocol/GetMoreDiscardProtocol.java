@@ -38,7 +38,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
-            final ResponseBuffers responseBuffers = connection.receiveMessage(curResponseTo);
+            ResponseBuffers responseBuffers = connection.receiveMessage(curResponseTo);
             try {
                 curCursorId = responseBuffers.getReplyHeader().getCursorId();
                 curResponseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -50,12 +50,11 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
     }
 
     public MongoFuture<Void> executeAsync() {
-        final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+        SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (cursorId == 0) {
             retVal.init(null, null);
-        }
-        else {
+        } else {
             connection.receiveMessageAsync(responseTo, new DiscardCallback(retVal));
         }
 
@@ -64,7 +63,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
     }
 
     private class DiscardCallback implements SingleResultCallback<ResponseBuffers> {
-        private SingleResultFuture<Void> future;
+        private final SingleResultFuture<Void> future;
 
         public DiscardCallback(final SingleResultFuture<Void> future) {
             this.future = future;
@@ -74,8 +73,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         public void onResult(final ResponseBuffers result, final MongoException e) {
             if (result.getReplyHeader().getCursorId() == 0) {
                 future.init(null, null);
-            }
-            else {
+            } else {
                 connection.receiveMessageAsync(responseTo, this);
             }
         }

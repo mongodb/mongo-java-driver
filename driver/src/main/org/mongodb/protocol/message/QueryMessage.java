@@ -23,7 +23,7 @@ import org.mongodb.operation.Find;
 
 public class QueryMessage extends BaseQueryMessage {
     private final Find find;
-    private Encoder<Document> encoder;
+    private final Encoder<Document> encoder;
 
     public QueryMessage(final String collectionName, final Find find, final Encoder<Document> encoder,
                         final MessageSettings settings) {
@@ -43,7 +43,7 @@ public class QueryMessage extends BaseQueryMessage {
     }
 
     private Document getQueryDocument() {
-        final Document document = new Document();
+        Document document = new Document();
         document.put("$query", find.getFilter());
         if (find.getOrder() != null && !find.getOrder().isEmpty()) {
             document.put("$orderby", find.getOrder());

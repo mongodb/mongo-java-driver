@@ -40,15 +40,15 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
     public void setUp() {
         super.setUp();
         pojoCollection = Fixture.getMongoClient()
-                .getDatabase(getDatabaseName())
-                .getCollection(COLLECTION_NAME,
-                        new PojoCodec<Person>(Codecs.createDefault(), Person.class));
+                                .getDatabase(getDatabaseName())
+                                .getCollection(COLLECTION_NAME,
+                                               new PojoCodec<Person>(Codecs.createDefault(), Person.class));
         pojoCollection.tools().drop();
     }
 
     @Test
     public void shouldInsertASimplePojoIntoMongoDB() {
-        final Person person = new Person("Eric", "Smith");
+        Person person = new Person("Eric", "Smith");
         pojoCollection.insert(person);
 
         assertInsertedIntoDatabase(person);
@@ -56,49 +56,50 @@ public class WorkingWithPojosAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldInsertASimplePojoIntoDatabaseAndRetrieveAsPojo() {
-        final Person person = new Person("Ian", "Brown");
+        Person person = new Person("Ian", "Brown");
         pojoCollection.insert(person);
 
-        final Person result = pojoCollection.find(new Document("firstName", person.getFirstName())
-                .append("lastName", person.getLastName())).getOne();
+        Person result = pojoCollection.find(new Document("firstName", person.getFirstName())
+                                                .append("lastName", person.getLastName())).getOne();
         assertThat(result, is(person));
     }
 
     @Test
     public void shouldCorrectlyInsertAndRetrievePojosContainingOtherPojos() {
-        final MongoCollection<Address> addresses = Fixture.getMongoClient()
-                .getDatabase(getDatabaseName())
-                .getCollection("addresses",
-                        new PojoCodec<Address>(Codecs.createDefault(), Address.class));
+        MongoCollection<Address> addresses = Fixture.getMongoClient()
+                                                    .getDatabase(getDatabaseName())
+                                                    .getCollection("addresses",
+                                                                   new PojoCodec<Address>(Codecs.createDefault(), Address.class));
         addresses.tools().drop();
 
-        final Address address = new Address("Address Line 1", "Town", new Postcode("W12"));
+        Address address = new Address("Address Line 1", "Town", new Postcode("W12"));
 
         addresses.insert(address);
 
-        final Address result = addresses.find().getOne();
+        Address result = addresses.find().getOne();
         assertThat(result, is(address));
     }
 
     @Test
     public void shouldIgnoreTransientFields() {
-        final Person person = new Person("Bob", "Smith");
+        Person person = new Person("Bob", "Smith");
         pojoCollection.insert(person);
 
-        final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
+        MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
-        final Document personInCollection = personCollection.find(new Document("firstName", person.getFirstName())
-                .append("lastName", person.getLastName())).getOne();
+        Document personInCollection = personCollection.find(new Document("firstName", person.getFirstName())
+                                                                .append("lastName", person.getLastName()))
+                                                      .getOne();
 
         assertThat(personInCollection.get("ignoredValue"), is(nullValue()));
     }
 
     private void assertInsertedIntoDatabase(final Person person) {
-        final MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
+        MongoCollection<Document> personCollection = database.getCollection(COLLECTION_NAME);
 
-        final List<Document> results = new ArrayList<Document>();
+        List<Document> results = new ArrayList<Document>();
         personCollection.find(new Document("firstName", person.getFirstName())
-                .append("lastName", person.getLastName())).into(results);
+                                  .append("lastName", person.getLastName())).into(results);
 
         assertThat(results.size(), is(1));
     }

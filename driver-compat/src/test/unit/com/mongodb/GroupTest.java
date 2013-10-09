@@ -37,41 +37,35 @@ public class GroupTest extends DatabaseTestCase {
 
     @Test
     public void testGroup() {
-        final DBObject result = collection.group(
-                new BasicDBObject("x", 1), null,
-                new BasicDBObject("count", 0),
-                "function( o , p ){ p.count++; }"
-        );
+        DBObject result = collection.group(new BasicDBObject("x", 1), null,
+                                           new BasicDBObject("count", 0),
+                                           "function( o , p ){ p.count++; }");
         assertThat(result, instanceOf(BasicDBList.class));
-        final BasicDBList list = (BasicDBList) result;
+        BasicDBList list = (BasicDBList) result;
         assertEquals(2, list.size());
         assertThat(list, hasItem(new BasicDBObject("x", "a").append("count", 3.0)));
     }
 
     @Test
     public void testGroupWithGroupCommand() {
-        final GroupCommand command = new GroupCommand(
-                collection,
-                new BasicDBObject("x", 1),
-                null,
-                new BasicDBObject("count", 0),
-                "function( o , p ){ p.count++; }",
-                null
-        );
+        GroupCommand command = new GroupCommand(collection,
+                                                new BasicDBObject("x", 1),
+                                                null,
+                                                new BasicDBObject("count", 0),
+                                                "function( o , p ){ p.count++; }",
+                                                null);
 
-        final BasicDBList result = (BasicDBList) collection.group(command);
+        BasicDBList result = (BasicDBList) collection.group(command);
         assertEquals(2, result.size());
         assertThat(result, hasItem(new BasicDBObject("x", "a").append("count", 3.0)));
     }
 
     @Test
     public void testGroupWithCondition() {
-        final BasicDBList result = (BasicDBList) collection.group(
-                new BasicDBObject("x", 1),
-                new BasicDBObject("x", "b"),
-                new BasicDBObject("z", 0),
-                "function(o,p){p.z = 2;}"
-        );
+        BasicDBList result = (BasicDBList) collection.group(new BasicDBObject("x", 1),
+                                                            new BasicDBObject("x", "b"),
+                                                            new BasicDBObject("z", 0),
+                                                            "function(o,p){p.z = 2;}");
 
         assertEquals(1, result.size());
         assertThat(result, hasItem(new BasicDBObject("x", "b").append("z", 2.0)));
@@ -79,12 +73,10 @@ public class GroupTest extends DatabaseTestCase {
 
     @Test
     public void testGroupWithoutKey() {
-        final BasicDBList result = (BasicDBList) collection.group(
-                null,
-                new BasicDBObject("x", "b"),
-                new BasicDBObject("z", 0),
-                "function(o,p){p.z = 2;}"
-        );
+        BasicDBList result = (BasicDBList) collection.group(null,
+                                                            new BasicDBObject("x", "b"),
+                                                            new BasicDBObject("z", 0),
+                                                            "function(o,p){p.z = 2;}");
 
         assertEquals(1, result.size());
         assertThat(result, hasItem(new BasicDBObject("z", 2.0)));
@@ -93,13 +85,11 @@ public class GroupTest extends DatabaseTestCase {
 
     @Test
     public void testGroupWithFinalize() {
-        final BasicDBList result = (BasicDBList) collection.group(
-                new BasicDBObject("x", 1),
-                new BasicDBObject("x", "b"),
-                new BasicDBObject("z", 0),
-                "function(o,p){p.z = 2;}",
-                "function(o){return {a:1}}"
-        );
+        BasicDBList result = (BasicDBList) collection.group(new BasicDBObject("x", 1),
+                                                            new BasicDBObject("x", "b"),
+                                                            new BasicDBObject("z", 0),
+                                                            "function(o,p){p.z = 2;}",
+                                                            "function(o){return {a:1}}");
 
         assertEquals(1, result.size());
         assertThat(result, hasItem(new BasicDBObject("a", 1.0)));
@@ -108,55 +98,47 @@ public class GroupTest extends DatabaseTestCase {
 
     @Test(expected = CommandFailureException.class)
     public void testGroupWithoutInitialValue() {
-        collection.group(
-                new BasicDBObject("x", 1),
-                new BasicDBObject("x", "b"),
-                null,
-                "function(o,p){p.z = 2;}"
-        );
+        collection.group(new BasicDBObject("x", 1),
+                         new BasicDBObject("x", "b"),
+                         null,
+                         "function(o,p){p.z = 2;}");
     }
 
 
     @Test(expected = CommandFailureException.class)
     public void testGroupWithoutReduce() {
-        collection.group(
-                new BasicDBObject("x", 1),
-                new BasicDBObject("x", "b"),
-                new BasicDBObject("z", 0),
-                null
-        );
+        collection.group(new BasicDBObject("x", 1),
+                         new BasicDBObject("x", "b"),
+                         new BasicDBObject("z", 0),
+                         null);
     }
 
     @Test
     @SuppressWarnings("deprecation")
     public void testGroupCommandWithPlainDBObject() {
-        final DBObject command = new BasicDBObject()
-                .append("key", new BasicDBObject("x", 1))
-                .append("cond", null)
-                .append("$reduce", "function( o , p ){ p.count++; }")
-                .append("initial", new BasicDBObject("count", 0));
+        DBObject command = new BasicDBObject().append("key", new BasicDBObject("x", 1))
+                                              .append("cond", null)
+                                              .append("$reduce", "function( o , p ){ p.count++; }")
+                                              .append("initial", new BasicDBObject("count", 0));
 
-        final BasicDBList result = (BasicDBList) collection.group(command);
+        BasicDBList result = (BasicDBList) collection.group(command);
         assertEquals(2, result.size());
         assertThat(result, hasItem(new BasicDBObject("x", "a").append("count", 3.0)));
     }
 
     @Test
     public void testGroupCommandToDBObject() {
-        final DBObject command = new GroupCommand(
-                collection,
-                new BasicDBObject("x", 1),
-                null,
-                new BasicDBObject("c", 0),
-                "function(o,p){}",
-                null
-        ).toDBObject();
+        DBObject command = new GroupCommand(collection,
+                                            new BasicDBObject("x", 1),
+                                            null,
+                                            new BasicDBObject("c", 0),
+                                            "function(o,p){}",
+                                            null).toDBObject();
 
-        final DBObject args = new BasicDBObject("ns", collection.getName())
-                .append("key", new BasicDBObject("x", 1))
-                .append("cond", null)
-                .append("$reduce", "function(o,p){}")
-                .append("initial", new BasicDBObject("c", 0));
+        DBObject args = new BasicDBObject("ns", collection.getName()).append("key", new BasicDBObject("x", 1))
+                                                                     .append("cond", null)
+                                                                     .append("$reduce", "function(o,p){}")
+                                                                     .append("initial", new BasicDBObject("c", 0));
         assertEquals(new BasicDBObject("group", args), command);
     }
 }

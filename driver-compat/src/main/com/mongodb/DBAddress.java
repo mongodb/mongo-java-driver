@@ -64,7 +64,7 @@ public class DBAddress extends ServerAddress {
             throw new NullPointerException("urlFormat can't be null");
         }
 
-        final int idx = urlFormat.indexOf("/");
+        int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
             return urlFormat.substring(0, idx);
         }
@@ -76,16 +76,15 @@ public class DBAddress extends ServerAddress {
             throw new NullPointerException("urlFormat can't be null");
         }
 
-        final int idx = urlFormat.indexOf("/");
+        int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
             return urlFormat.substring(idx + 1);
         }
         return urlFormat;
     }
 
-    static String _fixName(String name) {
-        name = name.replace('.', '-');
-        return name;
+    static String _fixName(final String name) {
+        return name.replace('.', '-');
     }
 
     /**
@@ -128,13 +127,13 @@ public class DBAddress extends ServerAddress {
         _db = databaseName.trim();
     }
 
-    static void _check(String thing, final String name) {
+    static void _check(final String thing, final String name) {
         if (thing == null) {
             throw new NullPointerException(name + " can't be null ");
         }
 
-        thing = thing.trim();
-        if (thing.length() == 0) {
+        String trimmedThing = thing.trim();
+        if (trimmedThing.length() == 0) {
             throw new IllegalArgumentException(name + " can't be empty");
         }
     }
@@ -147,12 +146,11 @@ public class DBAddress extends ServerAddress {
     @Override
     public boolean equals(final Object other) {
         if (other instanceof DBAddress) {
-            final DBAddress a = (DBAddress) other;
+            DBAddress a = (DBAddress) other;
             return a.getPort() == getPort() &&
-                    a._db.equals(_db) &&
-                    a.getHost().equals(getHost());
-        }
-        else if (other instanceof ServerAddress) {
+                   a._db.equals(_db) &&
+                   a.getHost().equals(getHost());
+        } else if (other instanceof ServerAddress) {
             return other.equals(this);
         }
         return false;

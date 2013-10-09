@@ -44,7 +44,7 @@ public class MongoClientConnectedAcceptanceTest {
     @Test
     public void shouldBeConnectedToMongoAsSoonAsNewSingleServerMongoClientIsCreated() {
 
-        final double pingValue = mongoClient.tools().ping();
+        double pingValue = mongoClient.tools().ping();
 
         assertThat(pingValue, is(1.0));
     }

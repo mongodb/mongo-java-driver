@@ -48,20 +48,24 @@ class PlainAuthenticator extends SaslAuthenticator {
         final MongoCredential credential = getCredential();
         isTrue("mechanism is PLAIN", credential.getMechanism() == PLAIN);
         try {
-            return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()}, credential.getUserName(),
-                    DEFAULT_PROTOCOL, getInternalConnection().getServerAddress().getHost(), null, new CallbackHandler() {
-                @Override
-                public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                    for (Callback callback : callbacks) {
-                        if (callback instanceof PasswordCallback) {
-                            ((PasswordCallback) callback).setPassword(credential.getPassword());
-                        }
-                        else if (callback instanceof NameCallback) {
-                            ((NameCallback) callback).setName(credential.getUserName());
-                        }
-                    }
-                }
-            });
+            return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()},
+                                         credential.getUserName(),
+                                         DEFAULT_PROTOCOL,
+                                         getInternalConnection().getServerAddress().getHost(),
+                                         null,
+                                         new CallbackHandler() {
+                                             @Override
+                                             public void handle(final Callback[] callbacks)
+                                                 throws IOException, UnsupportedCallbackException {
+                                                 for (final Callback callback : callbacks) {
+                                                     if (callback instanceof PasswordCallback) {
+                                                         ((PasswordCallback) callback).setPassword(credential.getPassword());
+                                                     } else if (callback instanceof NameCallback) {
+                                                         ((NameCallback) callback).setName(credential.getUserName());
+                                                     }
+                                                 }
+                                             }
+                                         });
         } catch (SaslException e) {
             throw new MongoSecurityException(credential, "Exception initializing SASL client", e);
         }

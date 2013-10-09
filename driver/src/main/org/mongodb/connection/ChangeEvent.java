@@ -23,7 +23,6 @@ public class ChangeEvent<T> {
     private final T newValue;
 
     /**
-     *
      * @param oldValue the value before the change
      * @param newValue the value after the change
      */
@@ -50,7 +49,7 @@ public class ChangeEvent<T> {
             return false;
         }
 
-        final ChangeEvent<?> that = (ChangeEvent<?>) o;
+        ChangeEvent<?> that = (ChangeEvent<?>) o;
 
         if (!newValue.equals(that.newValue)) {
             return false;
@@ -73,8 +72,8 @@ public class ChangeEvent<T> {
     @Override
     public String toString() {
         return "ChangeEvent{"
-                + "oldValue=" + oldValue
-                + ", newValue=" + newValue
-                + '}';
+               + "oldValue=" + oldValue
+               + ", newValue=" + newValue
+               + '}';
     }
 }

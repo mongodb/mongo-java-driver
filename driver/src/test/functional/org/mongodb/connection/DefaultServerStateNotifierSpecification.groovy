@@ -33,14 +33,20 @@ class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
 
     def setup() {
         serverStateNotifier = new ServerStateNotifier(getPrimary(),
-                new ChangeListener<ServerDescription>() {
-                    @Override
-                    void stateChanged(final ChangeEvent<ServerDescription> event) {
-                        newDescription = event.newValue
-                    }
-                },
-                new InternalStreamConnectionFactory('1', new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                        getBufferProvider(), getCredentialList(), new NoOpConnectionListener()), getBufferProvider())
+                                                      new ChangeListener<ServerDescription>() {
+                                                          @Override
+                                                          void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                              newDescription = event.newValue
+                                                          }
+                                                      },
+                                                      new InternalStreamConnectionFactory('1',
+                                                                                          new SocketStreamFactory(SocketSettings.builder()
+                                                                                                                                .build(),
+                                                                                                                  getSSLSettings()),
+                                                                                          getBufferProvider(),
+                                                                                          getCredentialList(),
+                                                                                          new NoOpConnectionListener()),
+                                                      getBufferProvider())
     }
 
     def cleanup() {

@@ -33,7 +33,7 @@ public class PatternCodec implements Codec<Pattern> {
 
     @Override
     public Pattern decode(final BSONReader reader) {
-        final RegularExpression regularExpression = reader.readRegularExpression();
+        RegularExpression regularExpression = reader.readRegularExpression();
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }
 
@@ -44,7 +44,7 @@ public class PatternCodec implements Codec<Pattern> {
 
     public String getOptionsAsString(final Pattern pattern) {
         int flags = pattern.flags();
-        final StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder();
 
         for (final RegexFlag flag : RegexFlag.values()) {
             if ((pattern.flags() & flag.javaFlag) > 0) {
@@ -72,17 +72,16 @@ public class PatternCodec implements Codec<Pattern> {
         optionsString = optionsString.toLowerCase();
 
         for (int i = 0; i < optionsString.length(); i++) {
-            final RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
+            RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
             if (flag != null) {
                 optionsInt |= flag.javaFlag;
                 //CHECKSTYLE:OFF
-                if (flag.unsupported != null) { // NOPMD
+                if (flag.unsupported != null) {
                     // TODO: deal with logging
                     // warnUnsupportedRegex( flag.unsupported );
                 }
                 //CHECKSTYLE:ON
-            }
-            else {
+            } else {
                 // TODO: throw a better exception here
                 throw new IllegalArgumentException("unrecognized flag [" + optionsString.charAt(i) + "] " + (int) optionsString.charAt(i));
             }

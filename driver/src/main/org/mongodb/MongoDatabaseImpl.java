@@ -48,11 +48,10 @@ class MongoDatabaseImpl implements MongoDatabase {
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
         return getCollection(collectionName,
-                            new CollectibleDocumentCodec(operationOptions
-                                                              .withDefaults(options)
-                                                              .getPrimitiveCodecs(),
-                                                             new ObjectIdGenerator()),
-                            operationOptions);
+                             new CollectibleDocumentCodec(operationOptions.withDefaults(options)
+                                                                          .getPrimitiveCodecs(),
+                                                          new ObjectIdGenerator()),
+                             operationOptions);
     }
 
     @Override
@@ -77,7 +76,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
         ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
         return new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec, client.getCluster().getDescription(),
-                client.getBufferProvider(), client.getSession(), false).execute();
+                                    client.getBufferProvider(), client.getSession(), false)
+                   .execute();
     }
 
     @Override

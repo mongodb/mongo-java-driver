@@ -62,9 +62,9 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     @Override
     public boolean containsAll(final Collection collection) {
-        final Set<Object> values = new HashSet<Object>();
-        for (Iterator it = iterator(); it.hasNext();) {
-            values.add(it.next());
+        Set<Object> values = new HashSet<Object>();
+        for (final Object o : this) {
+            values.add(o);
         }
         return values.containsAll(collection);
     }
@@ -76,7 +76,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     @Override
     public int indexOf(final Object o) {
-        final Iterator it = iterator();
+        Iterator it = iterator();
         for (int pos = 0; it.hasNext(); pos++) {
             if (o.equals(it.next())) {
                 return pos;
@@ -88,7 +88,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
     @Override
     public int lastIndexOf(final Object o) {
         int lastFound = -1;
-        final Iterator it = iterator();
+        Iterator it = iterator();
 
         for (int pos = 0; it.hasNext(); pos++) {
             if (o.equals(it.next())) {
@@ -142,7 +142,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
     }
 
     @Override
-    public ListIterator listIterator(int index) {
+    public ListIterator listIterator(final int index) {
         throw new UnsupportedOperationException("Operation is not supported instance of this type");
     }
 

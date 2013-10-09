@@ -24,9 +24,8 @@ public class Distinct extends Command {
         super(toDocument(collectionName, fieldName, query));
     }
 
-    private static Document toDocument(final String collectionName, final String fieldName,
-                                              final Find query) {
-        final Document cmd = new Document("distinct", collectionName);
+    private static Document toDocument(final String collectionName, final String fieldName, final Find query) {
+        Document cmd = new Document("distinct", collectionName);
         cmd.put("key", fieldName);
         if (query.getFilter() != null) {
             cmd.put("query", query.getFilter());

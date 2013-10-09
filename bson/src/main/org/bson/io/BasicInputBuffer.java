@@ -51,7 +51,7 @@ public class BasicInputBuffer implements InputBuffer {
     @Override
     public byte[] readBytes(final int size) {
         // TODO: should we really allocate byte array here?
-        final byte[] bytes = new byte[size];
+        byte[] bytes = new byte[size];
         buffer.get(bytes);
         return bytes;
     }
@@ -73,8 +73,8 @@ public class BasicInputBuffer implements InputBuffer {
 
     @Override
     public String readString() {
-        final int size = readInt32();
-        final byte[] bytes = readBytes(size);
+        int size = readInt32();
+        byte[] bytes = readBytes(size);
         return new String(bytes, 0, size - 1, UTF8_CHARSET);
     }
 
@@ -91,12 +91,12 @@ public class BasicInputBuffer implements InputBuffer {
     @Override
     public String readCString() {
         // TODO: potentially optimize this
-        final int mark = buffer.position();
+        int mark = buffer.position();
         readUntilNullByte();
-        final int size = buffer.position() - mark - 1;
+        int size = buffer.position() - mark - 1;
         buffer.position(mark);
 
-        final byte[] bytes = readBytes(size);
+        byte[] bytes = readBytes(size);
         readByte();  // read the trailing null byte
 
         return new String(bytes, UTF8_CHARSET);

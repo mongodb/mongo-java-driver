@@ -50,7 +50,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Decoder<T> resultDecoder;
     private final ServerDescription serverDescription;
     private final Connection connection;
-    private boolean closeConnection;
+    private final boolean closeConnection;
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
 
@@ -71,7 +71,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     public QueryResult<T> execute() {
         try {
             LOGGER.fine(format("Sending query to namespace %s on connection [%s] to server %s", namespace, connection.getId(),
-                    connection.getServerAddress()));
+                               connection.getServerAddress()));
             QueryResult<T> queryResult = receiveMessage(sendMessage());
             LOGGER.fine("Query completed");
             return queryResult;
@@ -83,26 +83,29 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public MongoFuture<QueryResult<T>> executeAsync() {
-        final SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
+        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
-        final QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
-                getMessageSettings(serverDescription));
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
+                                                getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
+        QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
+                                                                            resultDecoder,
+                                                                            message.getId(),
+                                                                            connection,
+                                                                            closeConnection);
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                message.getId(), new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
-                        new QueryResultCallback<T>(
-                                new SingleResultFutureCallback<QueryResult<T>>(retVal), resultDecoder, message.getId(), connection,
-                                closeConnection)));
+                                    message.getId(),
+                                    new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                                                                            receiveCallback));
         return retVal;
 
     }
 
     private QueryMessage sendMessage() {
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         try {
-            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
-                    getMessageSettings(serverDescription));
+            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder, getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
@@ -112,14 +115,15 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryResult<T> receiveMessage(final QueryMessage message) {
-        final ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
+        ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                final Document errorDocument =
-                        new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId()).getDocuments().get(0);
+                Document errorDocument = new ReplyMessage<Document>(responseBuffers,
+                                                                    new DocumentCodec(),
+                                                                    message.getId()).getDocuments().get(0);
                 throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
             }
-            final ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
+            ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
             return new QueryResult<T>(replyMessage, connection.getServerAddress());
         } finally {

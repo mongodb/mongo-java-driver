@@ -34,7 +34,6 @@ import static org.junit.Assert.assertTrue;
 
 // TODO: Write tests
 public class CollectibleDocumentCodecTest {
-
     private CollectibleDocumentCodec codec;
     private BasicOutputBuffer outputBuffer;
     private BSONWriter writer;
@@ -77,7 +76,7 @@ public class CollectibleDocumentCodecTest {
 
     @Test
     public void testBeforeFieldsWithGeneratedId() {
-        final Document document = new Document();
+        Document document = new Document();
         codec.beforeFields(writer, document);
         assertEquals(1, document.get("_id"));
         assertEquals(13, outputBuffer.size());    // TODO: Not such an accurate test
@@ -85,7 +84,7 @@ public class CollectibleDocumentCodecTest {
 
     @Test
     public void testBeforeFieldsWithExistingId() {
-        final Document document = new Document("_id", "Hi mom");
+        Document document = new Document("_id", "Hi mom");
         codec.beforeFields(writer, document);
         assertEquals("Hi mom", document.get("_id"));
         assertEquals(20, outputBuffer.size());    // TODO: Not such an accurate test

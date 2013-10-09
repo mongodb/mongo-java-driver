@@ -61,7 +61,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void testDBListEncoding() {
-        final BasicDBList list = new BasicDBList();
+        BasicDBList list = new BasicDBList();
         list.add(new BasicDBObject("a", 1).append("b", true));
         list.add(new BasicDBObject("c", "string").append("d", 0.1));
         collection.save(new BasicDBObject("l", list));

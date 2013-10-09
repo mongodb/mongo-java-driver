@@ -17,12 +17,11 @@
 package org.mongodb;
 
 /**
- *
  * @since 3.0
  */
 public class WriteResult {
     private final CommandResult commandResult;
-    private WriteConcern writeConcern;
+    private final WriteConcern writeConcern;
 
     public WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
         this.commandResult = commandResult;
@@ -57,8 +56,8 @@ public class WriteResult {
     @Override
     public String toString() {
         return "WriteResult{"
-                + "commandResult=" + commandResult
-                + ", writeConcern=" + writeConcern
-                + '}';
+               + "commandResult=" + commandResult
+               + ", writeConcern=" + writeConcern
+               + '}';
     }
 }

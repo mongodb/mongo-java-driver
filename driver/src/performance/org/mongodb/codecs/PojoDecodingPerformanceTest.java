@@ -191,7 +191,7 @@ public class PojoDecodingPerformanceTest {
         }
     }
 
-    private <T> BasicOutputBuffer gatherTestData(final T pojo, final PojoCodec<T>  pojoCodec) {
+    private <T> BasicOutputBuffer gatherTestData(final T pojo, final PojoCodec<T> pojoCodec) {
         final BasicOutputBuffer buffer = new BasicOutputBuffer();
         final BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
 

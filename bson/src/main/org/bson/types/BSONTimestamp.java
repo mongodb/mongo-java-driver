@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-// BSONTimestamp.java
-
 package org.bson.types;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * this is used for internal increment values. for normal dates you should use java.util.Date <b>time</b> is seconds
- * since epoch <b>inc<b> is an ordinal
+ * This is used for internal increment values. For normal dates you should use java.util.Date <b>time</b> is seconds since epoch <b>inc<b>
+ * is an ordinal.
  */
 public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 
@@ -43,7 +41,9 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
     }
 
     /**
-     * @return get time in seconds since epoch as an int
+     * Gets the time in seconds since epoch
+     *
+     * @return an int representing time in seconds since epoch
      */
     public int getTime() {
         if (time == null) {
@@ -64,15 +64,14 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
     public int compareTo(final BSONTimestamp ts) {
         if (getTime() != ts.getTime()) {
             return getTime() - ts.getTime();
-        }
-        else {
+        } else {
             return getInc() - ts.getInc();
         }
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + inc;
         result = prime * result + getTime();
@@ -85,7 +84,7 @@ public class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
             return true;
         }
         if (obj instanceof BSONTimestamp) {
-            final BSONTimestamp t2 = (BSONTimestamp) obj;
+            BSONTimestamp t2 = (BSONTimestamp) obj;
             return getTime() == t2.getTime() && getInc() == t2.getInc();
         }
         return false;

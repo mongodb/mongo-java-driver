@@ -51,11 +51,10 @@ final class SingleServerCluster extends BaseCluster {
                     ServerDescription descriptionToPublish = event.getNewValue();
                     if (event.getNewValue().isOk()) {
                         if (getSettings().getRequiredClusterType() != ClusterType.Unknown
-                                && getSettings().getRequiredClusterType() != event.getNewValue().getClusterType()) {
+                            && getSettings().getRequiredClusterType() != event.getNewValue().getClusterType()) {
                             descriptionToPublish = null;
-                        }
-                        else if (getSettings().getRequiredClusterType() == ClusterType.ReplicaSet
-                                && getSettings().getRequiredReplicaSetName() != null) {
+                        } else if (getSettings().getRequiredClusterType() == ClusterType.ReplicaSet
+                                   && getSettings().getRequiredReplicaSetName() != null) {
                             if (!getSettings().getRequiredReplicaSetName().equals(event.getNewValue().getSetName())) {
                                 descriptionToPublish = null;
                             }
@@ -75,7 +74,8 @@ final class SingleServerCluster extends BaseCluster {
             clusterType = serverDescription.getClusterType();
         }
         ClusterDescription description = new ClusterDescription(ClusterConnectionMode.Single, clusterType,
-                serverDescription == null ? Collections.<ServerDescription>emptyList() : Arrays.asList(serverDescription));
+                                                                serverDescription == null ? Collections.<ServerDescription>emptyList()
+                                                                                          : Arrays.asList(serverDescription));
 
         updateDescription(description);
         fireChangeEvent();

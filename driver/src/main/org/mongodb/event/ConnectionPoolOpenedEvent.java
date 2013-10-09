@@ -32,7 +32,7 @@ public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
      *
      * @param clusterId     the cluster id
      * @param serverAddress the server address
-     * @param settings the connection pool settings
+     * @param settings      the connection pool settings
      */
     public ConnectionPoolOpenedEvent(final String clusterId, final ServerAddress serverAddress, final ConnectionPoolSettings settings) {
         super(clusterId, serverAddress);
@@ -57,7 +57,7 @@ public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
             return false;
         }
 
-        final ConnectionPoolOpenedEvent that = (ConnectionPoolOpenedEvent) o;
+        ConnectionPoolOpenedEvent that = (ConnectionPoolOpenedEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;
