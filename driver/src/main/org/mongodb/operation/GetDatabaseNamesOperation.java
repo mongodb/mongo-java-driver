@@ -28,13 +28,14 @@ import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
 
-public class GetDatabaseNamesOperation extends BaseOperation<Collection<String>> {
-    private static final Document LIST_DATABASES_COMMAND = new Document("listDatabases", 1);
+/**
+ * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
+ */
+public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
     private final Codec<Document> commandCodec = new DocumentCodec();
 
     public GetDatabaseNamesOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
@@ -44,7 +45,7 @@ public class GetDatabaseNamesOperation extends BaseOperation<Collection<String>>
     @Override
     public List<String> execute() {
         ServerConnectionProvider provider = getServerConnectionProvider();
-        CommandResult listDatabasesResult = new CommandProtocol("admin", LIST_DATABASES_COMMAND, commandCodec, commandCodec,
+        CommandResult listDatabasesResult = new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
                                                                       getBufferProvider(), provider.getServerDescription(),
                                                                       provider.getConnection(), true).execute();
 

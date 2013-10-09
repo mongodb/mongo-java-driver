@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-
 import com.mongodb.codecs.CollectibleDBObjectCodec;
 import com.mongodb.codecs.CompoundDBObjectCodec;
 import com.mongodb.codecs.DBDecoderAdapter;
@@ -44,7 +43,6 @@ import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.command.MapReduceInlineCommandResult;
-import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CommandOperation;
@@ -66,6 +64,7 @@ import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
+import org.mongodb.operation.RenameCollectionOperation;
 import org.mongodb.operation.Replace;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.Update;
@@ -88,39 +87,33 @@ import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
 
 /**
- * Implementation of a database collection.
- * <p/>
- * A typical invocation sequence is thus <blockquote>
+ * Implementation of a database collection.  A typical invocation sequence is thus:
  * <pre>
- *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
- *     DB db = mongo.getDB("mydb");
- *     DBCollection collection = db.getCollection("test");
+ * {@code
+ * MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
+ * DB db = mongo.getDB("mydb");
+ * DBCollection collection = db.getCollection("test"); }
  * </pre>
- * </blockquote>
- * <p/>
- * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method: <blockquote>
+ * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
  * <pre>
- *     DBCollection coll = db.getCollection("testCollection");
+ * {@code
+ * DBCollection coll = db.getCollection("testCollection"); }
  * </pre>
- * </blockquote>
- * <p/>
- * Once you have the collection object, you can insert documents into the collection: <blockquote>
+ * Once you have the collection object, you can insert documents into the collection:
  * <pre>
- *     BasicDBObject doc = new BasicDBObject("name", "MongoDB")
- *     .append("type", "database")
- *     .append("count", 1)
- *     .append("info", new BasicDBObject("x", 203).append("y", 102));
- *     coll.insert(doc);
+ * {@code
+ * BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database")
+ *                                                         .append("count", 1)
+ *                                                         .append("info", new BasicDBObject("x", 203).append("y", 102));
+ * coll.insert(doc); }
  * </pre>
- * </blockquote>
- * <p/>
  * To show that the document we inserted in the previous step is there, we can do a simple findOne() operation to get the first document in
- * the collection: <blockquote>
+ * the collection:
  * <pre>
- *     DBObject myDoc = coll.findOne();
- *     System.out.println(myDoc);
+ * {@code
+ * DBObject myDoc = coll.findOne();
+ * System.out.println(myDoc); }
  * </pre>
- * </blockquote>
  */
 @ThreadSafe
 @SuppressWarnings({"rawtypes", "deprecation"})
@@ -861,7 +854,7 @@ public class DBCollection {
      *
      * @param newName specifies the new name of the collection
      * @return the collection with new name
-     * @throws MongoException if target is the name of an existing collection.
+     * @throws MongoException with code 10027 if newName is the name of an existing collection.
      */
     public DBCollection rename(final String newName) {
         return rename(newName, false);
@@ -871,19 +864,19 @@ public class DBCollection {
      * Change the name of an existing collection.
      *
      * @param newName    specifies the new name of the collection
-     * @param dropTarget If {@code true}, mongod will drop the collection with the target name in case it exists
+     * @param dropTarget If {@code true}, mongod will drop the collection with the target name if it exists
      * @return the collection with new name
-     * @throws MongoException if target is the name of an existing collection and {@code dropTarget=false}.
+     * @throws MongoException with code 10027 if target is the name of an existing collection and {@code dropTarget=false}.
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
-        final RenameCollectionOptions renameCollectionOptions = new RenameCollectionOptions(getName(), newName, dropTarget);
         try {
-            new CommandOperation("admin", renameCollectionOptions.toDocument(getDB().getName()), null, commandCodec, commandCodec,
-                                 getDB().getClusterDescription(), getBufferPool(), getSession(), false).execute();
-            return getDB().getCollection(newName);
+            new RenameCollectionOperation(getBufferPool(), getSession(), false, getNamespace().getDatabaseName(), getName(), newName,
+                                          dropTarget)
+                .execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
+        return getDB().getCollection(newName);
     }
 
     /**
