@@ -21,25 +21,55 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * Contains the common fields required by simple operations.
+ *
+ * @param <T> the return type for the execute method
+ */
 public abstract class BaseOperation<T> implements Operation<T> {
     private final BufferProvider bufferProvider;
     private final Session session;
     private final boolean closeSession;
 
+    /**
+     * The constructor of this abstract class takes the fields that are required by all basic operations.
+     *
+     * @param bufferProvider the BufferProvider to use when reading or writing to the network
+     * @param session        the current Session, which will give access to a connection to the MongoDB instance
+     * @param closeSession   true if the session should be closed at the end of the execute method
+     */
     public BaseOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
         this.session = notNull("session", session);
         this.closeSession = closeSession;
     }
 
+    /**
+     * Getter is largely used inside the execute method of subclasses.  This is a public method so that users can implement their own
+     * Operations that inherit from this abstract class.
+     *
+     * @return the bufferProvider injected via the constructor
+     */
     public BufferProvider getBufferProvider() {
         return bufferProvider;
     }
 
+    /**
+     * Getter is largely used inside the execute method of subclasses.  This is a public method so that users can implement their own
+     * Operations that inherit from this abstract class.
+     *
+     * @return the session injected via the constructor
+     */
     public Session getSession() {
         return session;
     }
 
+    /**
+     * Getter is largely used inside the execute method of subclasses.  This is a public method so that users can implement their own
+     * Operations that inherit from this abstract class.
+     *
+     * @return true if this operation should close the session at the end of the execute method
+     */
     public boolean isCloseSession() {
         return closeSession;
     }

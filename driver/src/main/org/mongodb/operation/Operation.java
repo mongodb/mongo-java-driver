@@ -16,6 +16,16 @@
 
 package org.mongodb.operation;
 
+/**
+ * An Operation is something that can be run against a MongoDB instance.  This includes CRUD operations and Commands.
+ *
+ * @param <T> the return type of the execute method
+ */
 public interface Operation<T> {
+    /**
+     * General execute which can return anything of type T
+     *
+     * @return T, the results of the execution
+     */
     T execute();
 }

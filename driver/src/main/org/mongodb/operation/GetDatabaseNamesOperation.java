@@ -38,16 +38,28 @@ import static java.util.Collections.unmodifiableList;
 public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
     private final Codec<Document> commandCodec = new DocumentCodec();
 
+    /**
+     * Set up the Operation with all the basic information required to get the database names from MongoDB
+     *
+     * @param bufferProvider the BufferProvider to use when reading or writing to the network
+     * @param session        the current Session, which will give access to a connection to the MongoDB instance
+     * @param closeSession   true if the session should be closed at the end of the execute method
+     */
     public GetDatabaseNamesOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
     }
 
+    /**
+     * Executing this will return a list of all the databases names in the MongoDB instance.
+     *
+     * @return a List of Strings of the names of all the databases in the MongoDB instance
+     */
     @Override
     public List<String> execute() {
         ServerConnectionProvider provider = getServerConnectionProvider();
         CommandResult listDatabasesResult = new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
-                                                                      getBufferProvider(), provider.getServerDescription(),
-                                                                      provider.getConnection(), true).execute();
+                                                                getBufferProvider(), provider.getServerDescription(),
+                                                                provider.getConnection(), true).execute();
 
         @SuppressWarnings("unchecked")
         List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
