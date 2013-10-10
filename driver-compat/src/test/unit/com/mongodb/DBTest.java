@@ -199,7 +199,7 @@ public class DBTest extends DatabaseTestCase {
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
 
-        database.removeUser(userName);
+        database.dropUser(userName);
 
         assertFalse(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
     }

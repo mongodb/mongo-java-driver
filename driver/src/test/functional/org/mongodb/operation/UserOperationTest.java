@@ -86,7 +86,7 @@ public class UserOperationTest extends DatabaseTestCase {
             // all good
         } finally {
             // cleanup:
-            new RemoveUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getBufferProvider(), getSession(),
+            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getBufferProvider(), getSession(),
                                     true).execute();
             cluster.close();
         }

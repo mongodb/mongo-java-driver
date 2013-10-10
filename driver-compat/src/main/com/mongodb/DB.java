@@ -33,10 +33,10 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CreateUserOperation;
+import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.RemoveUserOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.operation.UserExistsOperation;
@@ -381,8 +381,8 @@ public class DB {
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
-    public WriteResult removeUser(final String username) {
-        org.mongodb.WriteResult writeResult = new RemoveUserOperation(getName(), username, getBufferPool(), getSession(), true).execute();
+    public WriteResult dropUser(final String username) {
+        org.mongodb.WriteResult writeResult = new DropUserOperation(getName(), username, getBufferPool(), getSession(), true).execute();
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 

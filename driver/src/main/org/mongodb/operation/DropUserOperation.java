@@ -39,12 +39,12 @@ import static org.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class RemoveUserOperation extends BaseOperation<WriteResult> {
+public class DropUserOperation extends BaseOperation<WriteResult> {
     private final String database;
     private final String userName;
 
-    public RemoveUserOperation(final String source, final String userName, final BufferProvider bufferProvider,
-                               final Session session, final boolean closeSession) {
+    public DropUserOperation(final String source, final String userName, final BufferProvider bufferProvider,
+                             final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
@@ -73,7 +73,7 @@ public class RemoveUserOperation extends BaseOperation<WriteResult> {
     }
 
     private Document asCommandDocument() {
-        return new Document("removeUser", userName);
+        return new Document("dropUser", userName);
     }
 
     private WriteResult executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {

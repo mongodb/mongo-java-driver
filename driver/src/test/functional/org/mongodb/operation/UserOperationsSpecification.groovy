@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -54,8 +48,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def setup() {
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-        readOnlyUser = new User(createMongoCRCredential('jeff', getDatabaseName(), '123'.toCharArray()), true)
-        readWriteUser = new User(createMongoCRCredential('jeff', getDatabaseName(), '123'.toCharArray()), false)
+        readOnlyUser = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)
+        readWriteUser = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), false)
     }
 
     def cleanup() {
@@ -67,14 +61,14 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
 
         when:
-        def found = new UserExistsOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
                 .execute()
 
         then:
         found
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
     }
 
     def 'an added user should authenticate'() {
@@ -90,14 +84,14 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         cluster?.close()
     }
 
     def 'a removed user should not authenticate'() {
         given:
         new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
-        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         def cluster = getCluster()
 
         when:
@@ -127,7 +121,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         cluster?.close()
     }
 
@@ -143,7 +137,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         result.commandResult.isOk()
 
         cleanup:
-        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         cluster?.close()
     }
 
@@ -160,7 +154,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 //        thrown(MongoWriteException)
 //
 //        cleanup:
-//        new RemoveUserOperation(getDatabaseName(), readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+//        new RemoveUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
 //        cluster?.close()
 //    }
 
