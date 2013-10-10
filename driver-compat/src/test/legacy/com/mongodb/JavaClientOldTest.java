@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
@@ -99,7 +100,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void inlineAndDollarOut() {
+    public void testInlineAndDollarOut() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
@@ -118,7 +119,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void dollarOut() {
+    public void testDollarOut() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
@@ -136,7 +137,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void dollarOutOnSecondary() throws UnknownHostException {
+    public void testDollarOutOnSecondary() throws UnknownHostException {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         ServerAddress primary = new ServerAddress("localhost");
         Mongo mongo = new MongoClient(asList(primary,
@@ -167,7 +168,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
     @Ignore
-    public void aggregateOnSecondary() throws UnknownHostException {
+    public void testAggregateOnSecondary() throws UnknownHostException {
         Mongo mongo = new MongoClient(asList(new ServerAddress("localhost"),
                                              new ServerAddress("localhost", 27018),
                                              new ServerAddress("localhost", 27019)));
@@ -237,6 +238,18 @@ public class JavaClientOldTest extends DatabaseTestCase {
                                                         .getServerUsed());
     }
 
+    @Test
+    public void testExplain() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        pipeline.add(new BasicDBObject("$out", "aggCollection"));
+        final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
+                .allowDiskUsage(true)
+                .outputMode(AggregationOptions.OutputMode.CURSOR)
+                .build());
+        assertTrue(out.keySet().iterator().hasNext());
+    }
+    
     private void verify(final List<DBObject> pipeline, final AggregationOptions options) {
         verify(pipeline, options, ReadPreference.primary());
     }

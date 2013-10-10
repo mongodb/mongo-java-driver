@@ -1208,6 +1208,21 @@ public class DBCollection {
         }
     }
 
+    /**
+     * Return the explain plan for the aggregation pipeline.
+     *
+     * @param pipeline the aggregation pipeline to explain
+     * @param options the options to apply to the aggregation
+     * @return the command result.  The explain output may change from release to
+     *         release, so best to simply log this.
+     */
+    public CommandResult explainAggregate(List<DBObject> pipeline, AggregationOptions options) {
+        List<Document> stages = preparePipeline(pipeline);
+
+        return new CommandResult(new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
+            options.toNew(), getBufferPool(), getSession(), false, getReadPreference().toNew()).explain());
+    }
+    
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
         return dollarOutPresent ? primary() : readPreference;
     }

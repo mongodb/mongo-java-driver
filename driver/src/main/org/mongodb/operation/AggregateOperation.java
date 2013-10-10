@@ -82,6 +82,11 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
         }
     }
 
+    public CommandResult explain() {
+        command.put("explain", true);
+        return sendMessage();
+    }
+
     private CommandResult sendMessage() {
         if (options != null && options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
             command.put("cursor", options.toDocument());
