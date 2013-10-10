@@ -27,10 +27,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
- * Tests aspect of the DB - not really driver tests
+ * Tests aspect of the DB - not really driver tests.  Should be migrated into the appropriate unit or functional tests.
  */
 public class DBGeneralOldTests extends DatabaseTestCase {
 
@@ -66,59 +65,6 @@ public class DBGeneralOldTests extends DatabaseTestCase {
         assertEquals(0, firstCollection.find().count());
         assertEquals(1, secondCollection.find().count());
         assertEquals(1, renamedFirstCollection.find().count());
-
-        assertEquals(secondCollection.getName(), renamedFirstCollection.getName());
-    }
-
-    @Test
-    public void shouldFailToRenameCollectionToAnExistingCollectionName() {
-        String firstCollectionName = "firstCollection";
-        String secondCollectionName = "secondCollection";
-        DBCollection firstCollection = database.getCollection(firstCollectionName);
-        DBCollection secondCollection = database.getCollection(secondCollectionName);
-
-        firstCollection.drop();
-        secondCollection.drop();
-
-        assertEquals(0, firstCollection.find().count());
-        assertEquals(0, secondCollection.find().count());
-
-        firstCollection.save(new BasicDBObject("x", 1));
-        secondCollection.save(new BasicDBObject("x", 1));
-        assertEquals(1, firstCollection.find().count());
-        assertEquals(1, secondCollection.find().count());
-
-        // sadly we need the try/catch instead of expected exception because we want to check the code
-        try {
-            firstCollection.rename(secondCollectionName);
-            fail("Rename to existing collection must fail");
-        } catch (MongoException e) {
-            assertEquals(10027, e.getCode());
-        }
-    }
-
-    @Test
-    public void testRenameAndDrop() {
-        String firstCollectionName = "anotherCollection";
-        String secondCollectionName = "yetOneMoreCollection";
-        DBCollection firstCollection = database.getCollection(firstCollectionName);
-        DBCollection secondCollection = database.getCollection(secondCollectionName);
-
-        firstCollection.drop();
-        secondCollection.drop();
-
-        firstCollection.save(new BasicDBObject("_id", 1).append("x", 43432));
-        secondCollection.save(new BasicDBObject("_id", 2).append("x", 3938));
-        assertEquals(1, firstCollection.find().count());
-        assertEquals(1, secondCollection.find().count());
-
-        DBCollection renamedFirstCollection = firstCollection.rename(secondCollectionName, true);
-        assertEquals(0, firstCollection.find().count());
-        assertEquals(1, secondCollection.find().count());
-        assertEquals(1, renamedFirstCollection.find().count());
-
-        assertEquals(1, secondCollection.findOne().get("_id"));
-        assertEquals(1, renamedFirstCollection.findOne().get("_id"));
 
         assertEquals(secondCollection.getName(), renamedFirstCollection.getName());
     }

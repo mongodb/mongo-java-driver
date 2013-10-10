@@ -17,11 +17,10 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.RenameCollectionOptions;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.RenameCollectionOperation;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -83,16 +82,16 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        renameCollection(new RenameCollectionOptions(oldCollectionName, newCollectionName));
+        new RenameCollectionOperation(client.getBufferProvider(), client.getSession(), false,
+                                      databaseName, oldCollectionName, newCollectionName, false)
+            .execute();
     }
 
     @Override
-    public void renameCollection(final RenameCollectionOptions renameCollectionOptions) {
-        CommandResult commandResult = new CommandOperation("admin", renameCollectionOptions.toDocument(databaseName), null,
-                                                           commandCodec, new DocumentCodec(PrimitiveCodecs.createDefault()),
-                                                           client.getCluster().getDescription(), client.getBufferProvider(),
-                                                           client.getSession(), false).execute();
-        ErrorHandling.handleErrors(commandResult);
+    public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
+        new RenameCollectionOperation(client.getBufferProvider(), client.getSession(), false,
+                                      databaseName, oldCollectionName, newCollectionName, dropTarget)
+            .execute();
     }
 
 }

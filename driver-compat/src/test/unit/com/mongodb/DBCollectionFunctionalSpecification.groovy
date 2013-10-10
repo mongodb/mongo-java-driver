@@ -189,6 +189,77 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.indexInfo.size() == 1
     }
 
+    def 'should not be able to rename a collection to an existing collection name'() {
+        given:
+        BasicDBObject saveThisObjectToForceCollectionCreation = new BasicDBObject('some', 'value')
+
+        String originalCollectionName = 'originalCollectionToRename';
+        DBCollection originalCollection = database.getCollection(originalCollectionName);
+        originalCollection.save(saveThisObjectToForceCollectionCreation)
+
+        String anotherCollectionName = 'anExistingCollection';
+        DBCollection existingCollection = database.getCollection(anotherCollectionName);
+        existingCollection.save(saveThisObjectToForceCollectionCreation)
+
+        assert database.getCollectionNames().contains(anotherCollectionName)
+        assert database.getCollectionNames().contains(originalCollectionName)
+
+        when:
+        originalCollection.rename(anotherCollectionName);
+
+        then:
+        MongoException exception = thrown(MongoException)
+        exception.code == 10027
+
+        cleanup:
+        originalCollection.drop()
+        existingCollection.drop()
+    }
+
+    def 'should be able to rename a collection'() {
+        given:
+        assert database.getCollectionNames().contains(collectionName)
+        String newCollectionName = 'someNewName'
+
+        when:
+        collection.rename(newCollectionName);
+
+        then:
+        !database.getCollectionNames().contains(collectionName)
+
+        database.getCollection(newCollectionName) != null
+        database.getCollectionNames().contains(newCollectionName)
+    }
+
+    def 'should be able to rename collection to an existing collection name and replace it when drop is true'() {
+        given:
+        String existingCollectionName = 'anExistingCollection';
+        String originalCollectionName = 'someOriginalCollection';
+
+        DBCollection originalCollection = database.getCollection(originalCollectionName);
+        String keyInOriginalCollection = 'someKey';
+        String valueInOriginalCollection = 'someValue';
+        originalCollection.insert(new BasicDBObject(keyInOriginalCollection, valueInOriginalCollection));
+
+        DBCollection existingCollection = database.getCollection(existingCollectionName);
+        String keyInExistingCollection = 'aDifferentDocument';
+        existingCollection.insert(new BasicDBObject(keyInExistingCollection, 'withADifferentValue'));
+
+        assert database.getCollectionNames().contains(originalCollectionName)
+        assert database.getCollectionNames().contains(existingCollectionName)
+
+        when:
+        originalCollection.rename(existingCollectionName, true);
+
+        then:
+        !database.getCollectionNames().contains(originalCollectionName)
+        database.getCollectionNames().contains(existingCollectionName)
+
+        DBCollection replacedCollection = database.getCollection(existingCollectionName);
+        replacedCollection.findOne().get(keyInExistingCollection) == null
+        replacedCollection.findOne().get(keyInOriginalCollection).toString() == valueInOriginalCollection
+    }
+
     static class ClassA extends BasicDBObject { }
     static class ClassB extends BasicDBObject { }
 

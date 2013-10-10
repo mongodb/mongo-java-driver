@@ -21,15 +21,22 @@ import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
+import org.mongodb.MongoDatabase;
 import org.mongodb.MongoServerException;
-import org.mongodb.command.RenameCollectionOptions;
 
+import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.mongodb.Fixture.getMongoClient;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.
@@ -119,11 +126,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
                    renamedCollection.find().count(), is(1L));
     }
 
-    @Test(expected = MongoServerException.class)
+    @Test
     public void shouldNotBeAbleToRenameACollectionToAnExistingCollectionName() {
-        // TODO - maybe this needs to be an exception that maps directly onto error code 10027?
-        // Otherwise we can have false positives
-
         //given
         String originalCollectionName = "originalCollectionToRename";
         database.tools().createCollection(originalCollectionName);
@@ -135,7 +139,16 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
 
         //when
-        database.tools().renameCollection(getCollectionName(), anotherCollectionName);
+        try {
+            database.tools().renameCollection(originalCollectionName, anotherCollectionName);
+            fail("Should throw an exception when renaming a collection to a name that already exists");
+        } catch (MongoServerException e) {
+            assertThat(e.getErrorCode(), is(10027));
+        }
+
+        //cleanup
+        database.getCollection(originalCollectionName).tools().drop();
+        database.getCollection(anotherCollectionName).tools().drop();
     }
 
     @Test
@@ -158,7 +171,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
         //when
-        database.tools().renameCollection(new RenameCollectionOptions(originalCollectionName, existingCollectionName, true));
+        database.tools().renameCollection(originalCollectionName, existingCollectionName, true);
 
         //then
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
@@ -173,5 +186,30 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     @Ignore("not implemented")
     public void shouldFailRenameIfSharded() {
 
+    }
+
+    @Test
+    public void shouldBeAbleToListAllTheDatabasesAvailable() {
+        MongoClient mongoClient = getMongoClient();
+        MongoDatabase firstDatabase = mongoClient.getDatabase("FirstNewDatabase");
+        MongoDatabase secondDatabase = mongoClient.getDatabase("SecondNewDatabase");
+        MongoDatabase otherDatabase = mongoClient.getDatabase("DatabaseThatDoesNotExistYet");
+
+        try {
+            // given
+            firstDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
+            secondDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
+
+            //when
+            List<String> databaseNames = mongoClient.tools().getDatabaseNames();
+
+            //then
+            assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));
+            assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
+        } finally {
+            //tear down
+            firstDatabase.tools().drop();
+            secondDatabase.tools().drop();
+        }
     }
 }

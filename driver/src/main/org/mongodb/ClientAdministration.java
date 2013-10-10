@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * All the commands that can be run without needing a specific database.
@@ -30,7 +30,7 @@ public interface ClientAdministration {
     double ping();
 
     /**
-     * @return a Set of the names of all the databases on the server
+     * @return a List of the names of all the databases on the server
      */
-    Set<String> getDatabaseNames();
+    List<String> getDatabaseNames();
 }

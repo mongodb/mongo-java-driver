@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.ListDatabases;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
@@ -34,6 +33,7 @@ import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
+import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
@@ -56,6 +56,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
@@ -190,7 +191,7 @@ public class Mongo {
      *
      * @param left    left side of the pair
      * @param right   right side of the pair
-     * @param options the settings for the Mongo client
+     * @param options the optional settings for the Mongo instance
      * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
@@ -255,9 +256,7 @@ public class Mongo {
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated
-    public Mongo(
-                    @SuppressWarnings("deprecation")
-                    final MongoURI uri) throws UnknownHostException {
+    public Mongo(@SuppressWarnings("deprecation") final MongoURI uri) throws UnknownHostException {
         this(uri.toClientURI());
     }
 
@@ -290,7 +289,7 @@ public class Mongo {
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : ReadPreference.primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
         this.optionHolder = new Bytes.OptionHolder(null);
-        this.credentialsList = Collections.unmodifiableList(credentialsList);
+        this.credentialsList = unmodifiableList(credentialsList);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
     }
 
@@ -420,18 +419,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        //TODO: how do I make sure the exception is wrapped correctly?
-        org.mongodb.CommandResult listDatabasesResult;
-        listDatabasesResult = getDB(ADMIN_DATABASE_NAME).executeCommand(new ListDatabases());
-
-        @SuppressWarnings("unchecked")
-        List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
-
-        List<String> databaseNames = new ArrayList<String>();
-        for (final Document d : databases) {
-            databaseNames.add(d.get("name", String.class));
-        }
-        return Collections.unmodifiableList(databaseNames);
+        return new GetDatabaseNamesOperation(getBufferProvider(), getSession(), false).execute();
     }
 
     /**
@@ -644,37 +632,34 @@ public class Mongo {
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        return createCluster(
-                                ClusterSettings.builder().hosts(createNewSeedList(seedList))
-                                               .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                               .build(),
-                                credentialsList, options);
+        return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
+                                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .build(),
+                             credentialsList, options);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
-        return createCluster(
-                                ClusterSettings.builder()
-                                               .mode(getSingleServerClusterMode(options.toNew()))
-                                               .hosts(Arrays.asList(serverAddress.toNew()))
-                                               .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                               .build(),
-                                credentialsList, options);
+        return createCluster(ClusterSettings.builder()
+                                            .mode(getSingleServerClusterMode(options.toNew()))
+                                            .hosts(Arrays.asList(serverAddress.toNew()))
+                                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .build(),
+                             credentialsList, options);
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
-        return new DefaultClusterFactory().create(
-                                                     settings,
-                                                     options.getServerSettings(),
-                                                     options.getConnectionPoolSettings(),
-                                                     new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
-                                                     new SocketStreamFactory(options.getHeartbeatSocketSettings(),
-                                                                             options.getSocketFactory()),
-                                                     Executors.newScheduledThreadPool(3),  // TODO: allow configuration
-                                                     createNewCredentialList(credentialsList),
-                                                     new PowerOfTwoBufferPool(),
-                                                     null, new JMXConnectionPoolListener(), null);
+        return new DefaultClusterFactory().create(settings,
+                                                  options.getServerSettings(),
+                                                  options.getConnectionPoolSettings(),
+                                                  new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
+                                                  new SocketStreamFactory(options.getHeartbeatSocketSettings(),
+                                                                          options.getSocketFactory()),
+                                                  Executors.newScheduledThreadPool(3),  // TODO: allow configuration
+                                                  createNewCredentialList(credentialsList),
+                                                  new PowerOfTwoBufferPool(),
+                                                  null, new JMXConnectionPoolListener(), null);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
@@ -834,9 +819,9 @@ public class Mongo {
         }
     }
 
-    private static class SessionHolder {
-        final Session session;
-        int nestedBindings;
+    private static final class SessionHolder {
+        private final Session session;
+        private int nestedBindings;
 
         private SessionHolder(final Session session) {
             this.session = session;
