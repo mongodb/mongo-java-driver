@@ -62,7 +62,7 @@ public class ArrayCodec implements ComplexTypeEncoder<Object> {
         } else if (object instanceof Object[]) {
             encode(bsonWriter, (Object[]) object);
         } else {
-            System.out.println("AARRGGHH");
+            throw new EncodingException(String.format("No array encoder found for: %s", object));
         }
     }
 

@@ -52,10 +52,10 @@
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <!-- TODO: This has to be enabled at some point before we release -->
         <!--<module name="JavadocType">-->
-            <!--<property name="scope" value="public"/>-->
+        <!--<property name="scope" value="public"/>-->
         <!--</module>-->
         <!--<module name="JavadocMethod">-->
-            <!--<property name="scope" value="public"/>-->
+        <!--<property name="scope" value="public"/>-->
         <!--</module>-->
         <!--<module name="JavadocVariable"/>-->
         <!--<module name="JavadocStyle"/>-->
@@ -166,8 +166,13 @@
         <module name="UpperEll"/>
 
         <module name="FileContentsHolder"/>
-    </module>
 
+        <module name="Regexp">
+            <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+    </module>
     <module name="SuppressionCommentFilter"/>
 
 </module>

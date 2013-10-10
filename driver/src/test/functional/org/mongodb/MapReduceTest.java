@@ -55,7 +55,6 @@ public class MapReduceTest extends DatabaseTestCase {
 
         int count = 0;
         for (final Document cur : results) {
-            System.out.println(cur);
             count++;
         }
         assertEquals(4, count);

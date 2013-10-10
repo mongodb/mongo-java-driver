@@ -16,19 +16,21 @@
 
 package org.mongodb;
 
-import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
 import static org.mongodb.QueryBuilder.query;
 
 public class MongoViewTest extends DatabaseTestCase {
 
+    // CHECKSTYLE:OFF
     @Test
+    @Ignore
     public void testFind() {
+        //TODO: this test really really needs re-writing. Or taking out the back and shooting.
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document("_id", i));
         }
@@ -158,66 +160,6 @@ public class MongoViewTest extends DatabaseTestCase {
         cursor.close();
         System.out.println(idList);
     }
-
-
-    @Test
-    public void testUpdate() {
-        collection.insert(new Document("_id", 1));
-
-        collection.find().update(new Document("$set", new Document("x", 1)));
-
-        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
-        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
-
-        collection.find(new Document("x", 1)).limit(0).upsert().update(new Document("$inc", new Document("x", 1)));
-
-        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 1)));
-        collection.find(new Document("_id", 2)).upsert().update(new Document("$set", new Document("x", 1)));
-        Document doc = collection.find(new Document("_id", 1)).getOneAndUpdate(new Document("$set", new Document("x", 1)));
-
-        System.out.println(doc);
-    }
-
-    @Test
-    public void testInsertOrReplace() {
-        Document replacement = new Document("_id", 3).append("x", 2);
-        collection.find().upsert().replace(replacement);
-        assertEquals(replacement, collection.find(new Document("_id", 3)).getOne());
-
-        replacement.append("y", 3);
-        collection.find().upsert().replace(replacement);
-        assertEquals(replacement, collection.find(new Document("_id", 3)).getOne());
-    }
-
-    @Test
-    public void testTypeCollection() {
-        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(),
-                                                                              new ConcreteCodec());
-        concreteCollection.insert(new Concrete("1", 1, 1L, 1.0, 1L));
-        concreteCollection.insert(new Concrete("2", 2, 2L, 2.0, 2L));
-
-        System.out.println(concreteCollection.find(new Document("i", 1))
-                                             .map(new Function<Concrete, ObjectId>() {
-                                                 @Override
-                                                 public ObjectId apply(final Concrete concrete) {
-                                                     return concrete.getId();
-                                                 }
-                                             })
-                                             .map(new Function<ObjectId, String>() {
-                                                 @Override
-                                                 public String apply(final ObjectId o) {
-                                                     return o.toString();
-                                                 }
-                                             }).into(new ArrayList<String>()));
-
-        System.out.println(concreteCollection.find(new Document("i", 1))
-                                             .map(new Function<Concrete, ObjectId>() {
-                                                 @Override
-                                                 public ObjectId apply(final Concrete concrete) {
-                                                     return concrete.getId();
-                                                 }
-                                             })
-                                             .into(new ArrayList<ObjectId>()));
-    }
+    // CHECKSTYLE:ON
 }
 

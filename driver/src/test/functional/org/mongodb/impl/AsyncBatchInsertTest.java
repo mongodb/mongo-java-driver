@@ -17,6 +17,7 @@
 package org.mongodb.impl;
 
 import category.Async;
+import category.Slow;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,7 +42,7 @@ import static org.mongodb.Fixture.getSession;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
 
-@Category(Async.class)
+@Category({Async.class, Slow.class})
 public class AsyncBatchInsertTest extends DatabaseTestCase {
 
     private List<Document> documents;

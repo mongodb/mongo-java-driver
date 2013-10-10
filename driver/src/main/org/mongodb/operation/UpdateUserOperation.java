@@ -31,8 +31,6 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
-import java.util.Arrays;
-
 import static java.util.Arrays.asList;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCollectionQueryDocument;
@@ -73,12 +71,13 @@ public class UpdateUserOperation extends BaseOperation<WriteResult> {
         return new WriteResult(commandResult, WriteConcern.ACKNOWLEDGED);
     }
 
+    @SuppressWarnings("unchecked")
     private WriteResult executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         return new ReplaceProtocol<Document>(new MongoNamespace(user.getCredential().getSource(), "system.users"),
                                              WriteConcern.ACKNOWLEDGED,
-                                             Arrays.<Replace<Document>>asList(new Replace<Document>(WriteConcern.ACKNOWLEDGED,
-                                                                                                    asCollectionQueryDocument(user),
-                                                                                                    asCollectionDocument(user))),
+                                             asList(new Replace<Document>(WriteConcern.ACKNOWLEDGED,
+                                                                          asCollectionQueryDocument(user),
+                                                                          asCollectionDocument(user))),
                                              new DocumentCodec(),
                                              new DocumentCodec(),
                                              getBufferProvider(),

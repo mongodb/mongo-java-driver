@@ -23,9 +23,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 public class MongoCollectionTest extends DatabaseTestCase {
     @Test
@@ -206,4 +208,49 @@ public class MongoCollectionTest extends DatabaseTestCase {
         assertEquals(doc, newDoc);
     }
 
+    @Test
+    public void shouldBeAbleToQueryTypedCollectionAndMapResultsIntoTypedLists() {
+        // given
+        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), new ConcreteCodec());
+
+        Concrete firstItem = new Concrete("first", 1, 2L, 3.0, 5L);
+        concreteCollection.insert(firstItem);
+
+        Concrete secondItem = new Concrete("second", 7, 11L, 13.0, 17L);
+        concreteCollection.insert(secondItem);
+
+        // when
+        Document queryForObjectsWithFieldIThatHasValue1 = new Document("i", 1);
+        List<String> listOfStringObjectIds = concreteCollection.find(queryForObjectsWithFieldIThatHasValue1)
+                                                               .map(new Function<Concrete, ObjectId>() {
+                                                                   @Override
+                                                                   public ObjectId apply(final Concrete concrete) {
+                                                                       return concrete.getId();
+                                                                   }
+                                                               })
+                                                               .map(new Function<ObjectId, String>() {
+                                                                   @Override
+                                                                   public String apply(final ObjectId objectId) {
+                                                                       return objectId.toString();
+                                                                   }
+                                                               }).into(new ArrayList<String>());
+
+        // then
+        assertThat(listOfStringObjectIds.size(), is(1));
+        assertThat(listOfStringObjectIds.get(0), is(firstItem.getId().toString()));
+
+        // when
+        List<ObjectId> listOfObjectIds = concreteCollection.find(queryForObjectsWithFieldIThatHasValue1)
+                                                           .map(new Function<Concrete, ObjectId>() {
+                                                               @Override
+                                                               public ObjectId apply(final Concrete concrete) {
+                                                                   return concrete.getId();
+                                                               }
+                                                           })
+                                                           .into(new ArrayList<ObjectId>());
+
+        // then
+        assertThat(listOfObjectIds.size(), is(1));
+        assertThat(listOfObjectIds.get(0), is(firstItem.getId()));
+    }
 }
