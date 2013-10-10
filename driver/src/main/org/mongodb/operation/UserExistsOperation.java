@@ -25,9 +25,7 @@ import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.List;
@@ -54,12 +52,10 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
 
     @Override
     public Boolean execute() {
-        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false, new PrimaryServerSelector());
-        ServerConnectionProvider serverConnectionProvider = getSession().createServerConnectionProvider(options);
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
-            return executeCommandBasedProtocol(serverConnectionProvider);
+        if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
+            return executeCommandBasedProtocol(getPrimaryServerConnectionProvider());
         } else {
-            return executeCollectionBasedProtocol(serverConnectionProvider);
+            return executeCollectionBasedProtocol(getPrimaryServerConnectionProvider());
         }
     }
 

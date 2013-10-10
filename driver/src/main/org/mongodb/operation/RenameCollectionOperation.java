@@ -22,9 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
@@ -85,6 +83,6 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
     }
 
     private ServerConnectionProvider createServerConnectionProvider() {
-        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+        return getPrimaryServerConnectionProvider();
     }
 }

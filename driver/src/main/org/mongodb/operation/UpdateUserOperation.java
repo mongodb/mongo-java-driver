@@ -26,9 +26,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.ReplaceProtocol;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
@@ -53,7 +51,7 @@ public class UpdateUserOperation extends BaseOperation<WriteResult> {
     @SuppressWarnings("unchecked")
     public WriteResult execute() {
         ServerConnectionProvider serverConnectionProvider =
-            getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+            getPrimaryServerConnectionProvider();
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
             return executeCommandBasedProtocol(serverConnectionProvider);
         } else {

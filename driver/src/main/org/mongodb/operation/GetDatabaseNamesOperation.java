@@ -22,9 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
      */
     @Override
     public List<String> execute() {
-        ServerConnectionProvider provider = getServerConnectionProvider();
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult listDatabasesResult = new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
                                                                 getBufferProvider(), provider.getServerDescription(),
                                                                 provider.getConnection(), true).execute();
@@ -71,7 +69,4 @@ public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
         return unmodifiableList(databaseNames);
     }
 
-    private ServerConnectionProvider getServerConnectionProvider() {
-        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-    }
 }

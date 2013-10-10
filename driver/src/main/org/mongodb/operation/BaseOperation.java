@@ -17,6 +17,9 @@
 package org.mongodb.operation;
 
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.session.ServerConnectionProvider;
+import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -72,5 +75,15 @@ public abstract class BaseOperation<T> implements Operation<T> {
      */
     public boolean isCloseSession() {
         return closeSession;
+    }
+
+    /**
+     * Use this method to get a ServerConnectionProvider that doesn't rely on specified read preferences.  Used by Operations like commands
+     * which always run against the primary.
+     *
+     * @return a ServerConnectionProvider initialise with a PrimaryServerSelector
+     */
+    protected ServerConnectionProvider getPrimaryServerConnectionProvider() {
+        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
     }
 }

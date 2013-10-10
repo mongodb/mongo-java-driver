@@ -24,9 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 public class DropIndexOperation extends BaseOperation<CommandResult> {
@@ -43,7 +41,7 @@ public class DropIndexOperation extends BaseOperation<CommandResult> {
 
     @Override
     public CommandResult execute() {
-        ServerConnectionProvider provider = getServerConnectionProvider();
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         try {
             return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, getBufferProvider(),
                                        provider.getServerDescription(), provider.getConnection(), true).execute();
@@ -60,7 +58,4 @@ public class DropIndexOperation extends BaseOperation<CommandResult> {
         return e.getCommandResult();
     }
 
-    private ServerConnectionProvider getServerConnectionProvider() {
-        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
-    }
 }

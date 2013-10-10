@@ -56,8 +56,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
 
     @Override
     public WriteResult execute() {
-        ServerConnectionProvider provider = getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false,
-                                                                                                            new PrimaryServerSelector()));
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         Connection connection = provider.getConnection();
         try {
             if (writeConcern.isAcknowledged()

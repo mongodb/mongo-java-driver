@@ -24,9 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 /**
@@ -56,7 +54,7 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
     @Override
     public CommandResult execute() {
         try {
-            ServerConnectionProvider provider = getServerConnectionProvider();
+            ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
             return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec, getBufferProvider(),
                                        provider.getServerDescription(), provider.getConnection(), true).execute();
         } catch (MongoCommandFailureException e) {
@@ -71,7 +69,7 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
         return e.getCommandResult();
     }
 
-    private ServerConnectionProvider getServerConnectionProvider() {
-        return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+    private ServerConnectionProvider getPrimaryServerConnectionProvider() {
+        return super.getPrimaryServerConnectionProvider();
     }
 }
