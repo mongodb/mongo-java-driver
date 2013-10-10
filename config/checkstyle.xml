@@ -167,8 +167,23 @@
 
         <module name="FileContentsHolder"/>
 
+        <!--System.out.println not allowed-->
         <module name="Regexp">
             <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!--System.err.println not allowed-->
+        <module name="Regexp">
+            <property name="format" value="System\.err\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!--e.printStackTrace(); not allowed-->
+        <module name="Regexp">
+            <property name="format" value="printStackTrace"/>
             <property name="illegalPattern" value="true"/>
             <property name="ignoreComments" value="true"/>
         </module>
