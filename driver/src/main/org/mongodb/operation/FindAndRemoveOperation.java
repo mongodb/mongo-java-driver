@@ -62,9 +62,4 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
         command.put("remove", true);
         return command;
     }
-
-    private ServerConnectionProvider getPrimaryServerConnectionProvider() {
-        return super.getPrimaryServerConnectionProvider();
-    }
-
 }

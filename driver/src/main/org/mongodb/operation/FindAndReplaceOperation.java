@@ -67,8 +67,4 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
         command.put("update", findAndReplace.getReplacement());
         return command;
     }
-
-    private ServerConnectionProvider getPrimaryServerConnectionProvider() {
-        return super.getPrimaryServerConnectionProvider();
-    }
 }

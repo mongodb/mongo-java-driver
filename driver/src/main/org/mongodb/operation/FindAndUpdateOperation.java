@@ -49,7 +49,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
     @Override
     public T execute() {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        ServerConnectionProvider provider = createServerConnectionProvider();
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
                                                           commandEncoder, resultDecoder, getBufferProvider(),
                                                           provider.getServerDescription(), provider.getConnection(), true).execute();
@@ -76,9 +76,5 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
 
         command.put("update", findAndUpdate.getUpdateOperations());
         return command;
-    }
-
-    private ServerConnectionProvider createServerConnectionProvider() {
-        return getPrimaryServerConnectionProvider();
     }
 }

@@ -70,7 +70,7 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
      */
     @Override
     public CommandResult execute() {
-        ServerConnectionProvider provider = createServerConnectionProvider();
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         return new CommandProtocol("admin", createCommand(), commandCodec, commandCodec,
                                    getBufferProvider(), provider.getServerDescription(), provider.getConnection(), false)
                    .execute();
@@ -82,7 +82,4 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
                    .append("dropTarget", dropTarget);
     }
 
-    private ServerConnectionProvider createServerConnectionProvider() {
-        return getPrimaryServerConnectionProvider();
-    }
 }

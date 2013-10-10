@@ -52,10 +52,11 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
 
     @Override
     public Boolean execute() {
-        if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
-            return executeCommandBasedProtocol(getPrimaryServerConnectionProvider());
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+        if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
+            return executeCommandBasedProtocol(provider);
         } else {
-            return executeCollectionBasedProtocol(getPrimaryServerConnectionProvider());
+            return executeCollectionBasedProtocol(provider);
         }
     }
 

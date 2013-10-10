@@ -69,7 +69,4 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
         return e.getCommandResult();
     }
 
-    private ServerConnectionProvider getPrimaryServerConnectionProvider() {
-        return super.getPrimaryServerConnectionProvider();
-    }
 }
