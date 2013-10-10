@@ -48,7 +48,8 @@ class DefaultServer implements ClusterableServer {
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), mongo);
+        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(),
+                                                     settings.getHeartbeatSocketSettings(), mongo);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                                                                             settings.getHeartbeatFrequency(MILLISECONDS),
                                                                             MILLISECONDS);

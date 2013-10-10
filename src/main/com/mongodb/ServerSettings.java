@@ -18,9 +18,12 @@ package com.mongodb;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.bson.util.Assertions.notNull;
+
 class ServerSettings {
     private final long heartbeatFrequencyMS;
     private final long heartbeatConnectRetryFrequencyMS;
+    private final SocketSettings heartbeatSocketSettings;
 
     public static Builder builder() {
         return new Builder();
@@ -29,14 +32,20 @@ class ServerSettings {
     public static class Builder {
         private long heartbeatFrequencyMS = 5000;
         private long heartbeatConnectRetryFrequencyMS = 10;
+        private SocketSettings heartbeatSocketSettings = SocketSettings.builder().build();
 
         public Builder heartbeatFrequency(final long heartbeatFrequency, final TimeUnit timeUnit) {
             this.heartbeatFrequencyMS = TimeUnit.MILLISECONDS.convert(heartbeatFrequency, timeUnit);
             return this;
         }
 
-        public Builder connectRetryFrequency(final long heartbeatConnectRetryFrequency, final TimeUnit timeUnit) {
+        public Builder heartbeatConnectRetryFrequency(final long heartbeatConnectRetryFrequency, final TimeUnit timeUnit) {
             this.heartbeatConnectRetryFrequencyMS = TimeUnit.MILLISECONDS.convert(heartbeatConnectRetryFrequency, timeUnit);
+            return this;
+        }
+
+        public Builder heartbeatSocketSettings(final SocketSettings heartbeatSocketSettings) {
+            this.heartbeatSocketSettings = notNull("heartbeatSocketSettings", heartbeatSocketSettings);
             return this;
         }
 
@@ -53,9 +62,14 @@ class ServerSettings {
         return timeUnit.convert(heartbeatConnectRetryFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
+    public SocketSettings getHeartbeatSocketSettings() {
+        return heartbeatSocketSettings;
+    }
+
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
         heartbeatConnectRetryFrequencyMS = builder.heartbeatConnectRetryFrequencyMS;
+        heartbeatSocketSettings = builder.heartbeatSocketSettings;
     }
 
 }

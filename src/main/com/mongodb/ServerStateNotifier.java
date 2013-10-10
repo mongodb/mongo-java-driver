@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @ThreadSafe
 class ServerStateNotifier implements Runnable {
@@ -35,6 +36,7 @@ class ServerStateNotifier implements Runnable {
 
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
+    private final SocketSettings socketSettings;
     private final Mongo mongo;
     private int count;
     private long elapsedNanosSum;
@@ -42,9 +44,11 @@ class ServerStateNotifier implements Runnable {
     private volatile boolean isClosed;
     DBPort connection;
 
-    ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener, Mongo mongo) {
+    ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
+                        final SocketSettings socketSettings, final Mongo mongo) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
+        this.socketSettings = socketSettings;
         this.mongo = mongo;
         serverDescription = getConnectingServerDescription();
     }
@@ -60,7 +64,7 @@ class ServerStateNotifier implements Runnable {
         Throwable throwable = null;
         try {
             if (connection == null) {
-                connection = new DBPort(serverAddress, null, new MongoOptions()); // TODO
+                connection = new DBPort(serverAddress, null, getOptions());
             }
             try {
                 LOGGER.fine(format("Checking status of %s", serverAddress));
@@ -111,6 +115,14 @@ class ServerStateNotifier implements Runnable {
             connection.close();
             connection = null;
         }
+    }
+
+    private MongoOptions getOptions() {
+        MongoOptions options = new MongoOptions();
+        options.setConnectTimeout(socketSettings.getConnectTimeout(MILLISECONDS));
+        options.setSocketTimeout(socketSettings.getReadTimeout(MILLISECONDS));
+        options.setSocketFactory(socketSettings.getSocketFactory());
+        return options;
     }
 
     @SuppressWarnings("unchecked")

@@ -20,18 +20,17 @@ package com.mongodb;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.rmi.server.Operation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterConnectionMode.Single;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ClusterType.Sharded;
 import static com.mongodb.MongoAuthority.Type.Direct;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
 
 /**
@@ -39,6 +38,28 @@ import static org.bson.util.Assertions.isTrue;
  */
 @Deprecated
 public class DBTCPConnector implements DBConnector {
+
+    private static int heartbeatFrequencyMS;
+    private static int connectRetryFrequencyMS;
+    private static int heartbeatConnectTimeoutMS;
+    private static int heartbeatReadTimeoutMS;
+
+    private volatile boolean _closed;
+
+    private final Mongo _mongo;
+    private DBPortPool.Holder _portHolder;
+
+    private ScheduledExecutorService scheduledExecutorService;
+    private Cluster cluster;
+
+    private final MyPort _myPort = new MyPort();
+
+    static {
+        heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
+        connectRetryFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
+        heartbeatConnectTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        heartbeatReadTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+    }
 
     /**
      * @param mongo the Mongo instance
@@ -50,14 +71,25 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public void start() {
+        isTrue("open", !_closed);
+
         scheduledExecutorService = Executors.newScheduledThreadPool(_mongo.getAuthority().getServerAddresses().size());
-        cluster = Clusters.create(ClusterSettings.builder()
-                                                 .hosts(_mongo.getAuthority().getServerAddresses())
-                                                 .mode(_mongo.getAuthority().getType() == Direct ? Single : Multiple)
-                                                 .build(),
-                                  ServerSettings.builder().build(),
-                                  scheduledExecutorService, null,
-                                  _mongo);
+        cluster =
+        Clusters.create(ClusterSettings.builder()
+                                       .hosts(_mongo.getAuthority().getServerAddresses())
+                                       .mode(_mongo.getAuthority().getType() == Direct ? Single : Multiple)
+                                       .build(),
+                        ServerSettings.builder()
+                                      .heartbeatFrequency(heartbeatFrequencyMS, MILLISECONDS)
+                                      .heartbeatConnectRetryFrequency(connectRetryFrequencyMS, MILLISECONDS)
+                                      .heartbeatSocketSettings(SocketSettings.builder()
+                                                                             .connectTimeout(heartbeatConnectTimeoutMS,
+                                                                                             MILLISECONDS)
+                                                                             .readTimeout(heartbeatReadTimeoutMS, MILLISECONDS)
+                                                                             .socketFactory(_mongo.getMongoOptions().getSocketFactory())
+                                                                             .build())
+                                      .build(),
+                        scheduledExecutorService, null, _mongo);
     }
 
     /**
@@ -73,6 +105,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestStart(){
+        isTrue("open", !_closed);
         _myPort.requestStart();
     }
 
@@ -85,6 +118,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestDone(){
+        isTrue("open", !_closed);
         _myPort.requestDone();
     }
 
@@ -93,10 +127,11 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestEnsureConnection(){
+        isTrue("open", !_closed);
         _myPort.requestEnsureConnection();
     }
 
-    WriteResult _checkWriteError( DB db, DBPort port , WriteConcern concern )
+    private WriteResult _checkWriteError( DB db, DBPort port , WriteConcern concern )
         throws IOException{
         CommandResult e = port.runCommand( db , concern.getCommand() );
 
@@ -113,6 +148,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern ){
+        isTrue("open", !_closed);
         return say( db , m , concern , (ServerAddress) null);
     }
 
@@ -126,6 +162,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public WriteResult say( DB db , OutMessage m , WriteConcern concern , ServerAddress hostNeeded ){
+        isTrue("open", !_closed);
         DBPort port = _myPort.get(true, ReadPreference.primary(), hostNeeded);
 
         try {
@@ -137,7 +174,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     WriteResult say(final DB db, final OutMessage m, final WriteConcern concern, final DBPort port){
-        isTrue("open", !_closed.get());
+        isTrue("open", !_closed);
 
         if (concern == null) {
             throw new IllegalArgumentException("Write concern is null");
@@ -170,7 +207,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     <T> T doOperation(final DB db, final DBPort port, final DBPort.Operation<T> operation){
-        isTrue("open", !_closed.get());
+        isTrue("open", !_closed);
 
         try {
             port.checkAuth( db.getMongo() );
@@ -197,6 +234,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public Response call( DB db , DBCollection coll , OutMessage m, ServerAddress hostNeeded, DBDecoder decoder ){
+        isTrue("open", !_closed);
         return call( db , coll , m , hostNeeded , 2, null, decoder );
     }
 
@@ -211,6 +249,7 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ){
+        isTrue("open", !_closed);
         return call( db, coll, m, hostNeeded, retries, null, null);
     }
 
@@ -228,6 +267,7 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public Response call( DB db, DBCollection coll, OutMessage m, ServerAddress hostNeeded, int retries,
                           ReadPreference readPref, DBDecoder decoder ){
+        isTrue("open", !_closed);
         try {
             return innerCall(db, coll, m, hostNeeded, retries, readPref, decoder);
         } finally {
@@ -284,6 +324,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public ServerAddress getAddress() {
+        isTrue("open", !_closed);
         ClusterDescription clusterDescription = cluster.getDescription();
         if (clusterDescription.getConnectionMode() == Single) {
             return clusterDescription.getAny().get(0).getAddress();
@@ -299,6 +340,7 @@ public class DBTCPConnector implements DBConnector {
      * @return
      */
     public List<ServerAddress> getAllAddress() {
+        isTrue("open", !_closed);
         return _mongo._authority.getServerAddresses();
     }
 
@@ -309,6 +351,7 @@ public class DBTCPConnector implements DBConnector {
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
+        isTrue("open", !_closed);
         List<ServerAddress> serverAddressList = new ArrayList<ServerAddress>();
         ClusterDescription clusterDescription = cluster.getDescription();
         for (ServerDescription serverDescription : clusterDescription.getAll()) {
@@ -318,21 +361,24 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public ReplicaSetStatus getReplicaSetStatus() {
+        isTrue("open", !_closed);
         return cluster.getDescription().getType() == ReplicaSet && cluster.getDescription().getConnectionMode() == Multiple
                ? new ReplicaSetStatus(cluster) : null;
     }
 
     // This call can block if it's not yet known.
     boolean isMongosConnection() {
+        isTrue("open", !_closed);
         return cluster.getDescription().getType() == Sharded;
     }
 
     public String getConnectPoint(){
+        isTrue("open", !_closed);
         ServerAddress master = getAddress();
         return master != null ? master.toString() : null;
     }
 
-    boolean shouldRetryQuery(ReadPreference readPreference, final DBCollection coll, final IOException ioe, final int remainingRetries) {
+    private boolean shouldRetryQuery(ReadPreference readPreference, final DBCollection coll, final IOException ioe, final int remainingRetries) {
         if (remainingRetries == 0) {
             return false;
         }
@@ -349,14 +395,17 @@ public class DBTCPConnector implements DBConnector {
     }
 
     DBPort getPrimaryPort() {
+        isTrue("open", !_closed);
         return _myPort.get(true, ReadPreference.primary(), null);
     }
 
     void releasePort(final DBPort port) {
+        isTrue("open", !_closed);
         _myPort.done(port);
     }
 
     public ServerDescription getServerDescription(final ServerAddress address) {
+        isTrue("open", !_closed);
         return cluster.getDescription().getByServerAddress(address);
     }
 
@@ -496,7 +545,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public void close(){
-        _closed.set( true );
+        _closed = true;
         if (cluster != null) {
             cluster.close();
             cluster = null;
@@ -534,7 +583,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     public boolean isOpen(){
-        return ! _closed.get();
+        return !_closed;
     }
 
     @Override
@@ -567,14 +616,4 @@ public class DBTCPConnector implements DBConnector {
     MyPort getMyPort() {
         return _myPort;
     }
-
-    private final Mongo _mongo;
-    private DBPortPool.Holder _portHolder;
-
-    private final AtomicBoolean _closed = new AtomicBoolean(false);
-
-    private ScheduledExecutorService scheduledExecutorService;
-    private Cluster cluster;
-
-    MyPort _myPort = new MyPort();
 }
