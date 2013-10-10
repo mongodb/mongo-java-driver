@@ -114,8 +114,8 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test
     public void testMapReduceInlineWScope() {
         MapReduceCommand command = new MapReduceCommand(collection,
-                                                        "function(){ for (var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) " +
-                                                        "emit( this.x[i] , 1 ); } }",
+                                                        "function(){ for (var i=0; i<this.x.length; i++ ){ if(this.x[i] != exclude) "
+                                                        + "emit( this.x[i] , 1 ); } }",
                                                         DEFAULT_REDUCE,
                                                         null,
                                                         MapReduceCommand.OutputType.INLINE,

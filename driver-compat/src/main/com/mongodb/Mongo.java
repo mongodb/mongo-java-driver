@@ -255,7 +255,9 @@ public class Mongo {
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated
-    public Mongo(@SuppressWarnings("deprecation") final MongoURI uri) throws UnknownHostException {
+    public Mongo(
+                    @SuppressWarnings("deprecation")
+                    final MongoURI uri) throws UnknownHostException {
         this(uri.toClientURI());
     }
 
@@ -751,10 +753,9 @@ public class Mongo {
         ServerCursor cur;
         try {
             while ((cur = orphanedCursors.poll()) != null) {
-                ServerConnectionProvider provider = session.createServerConnectionProvider(
-                                                                                              new ServerConnectionProviderOptions(false,
-                                                                                                                                  new
-                                                                                                                                      ServerAddressSelector(cur.getAddress())));
+                ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false,
+                                                                                              new ServerAddressSelector(cur.getAddress()));
+                ServerConnectionProvider provider = session.createServerConnectionProvider(options);
                 new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
                                        true).execute();
 

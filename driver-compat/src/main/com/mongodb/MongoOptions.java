@@ -599,26 +599,26 @@ public class MongoOptions {
 
     @Override
     public String toString() {
-        return "MongoOptions{" +
-               "description='" + description + '\'' +
-               ", connectionsPerHost=" + connectionsPerHost +
-               ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier +
-               ", maxWaitTime=" + maxWaitTime +
-               ", connectTimeout=" + connectTimeout +
-               ", socketTimeout=" + socketTimeout +
-               ", socketKeepAlive=" + socketKeepAlive +
-               ", autoConnectRetry=" + autoConnectRetry +
-               ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime +
-               ", readPreference=" + readPreference +
-               ", dbDecoderFactory=" + dbDecoderFactory +
-               ", dbEncoderFactory=" + dbEncoderFactory +
-               ", safe=" + safe +
-               ", w=" + w +
-               ", wtimeout=" + wtimeout +
-               ", fsync=" + fsync +
-               ", j=" + j +
-               ", cursorFinalizerEnabled=" + cursorFinalizerEnabled +
-               ", writeConcern=" + writeConcern +
-               '}';
+        return "MongoOptions{"
+               + "description='" + description + '\''
+               + ", connectionsPerHost=" + connectionsPerHost
+               + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
+               + ", maxWaitTime=" + maxWaitTime
+               + ", connectTimeout=" + connectTimeout
+               + ", socketTimeout=" + socketTimeout
+               + ", socketKeepAlive=" + socketKeepAlive
+               + ", autoConnectRetry=" + autoConnectRetry
+               + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
+               + ", readPreference=" + readPreference
+               + ", dbDecoderFactory=" + dbDecoderFactory
+               + ", dbEncoderFactory=" + dbEncoderFactory
+               + ", safe=" + safe
+               + ", w=" + w
+               + ", wtimeout=" + wtimeout
+               + ", fsync=" + fsync
+               + ", j=" + j
+               + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
+               + ", writeConcern=" + writeConcern
+               + '}';
     }
 }

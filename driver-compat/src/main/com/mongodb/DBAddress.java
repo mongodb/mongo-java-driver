@@ -147,9 +147,9 @@ public class DBAddress extends ServerAddress {
     public boolean equals(final Object other) {
         if (other instanceof DBAddress) {
             DBAddress a = (DBAddress) other;
-            return a.getPort() == getPort() &&
-                   a._db.equals(_db) &&
-                   a.getHost().equals(getHost());
+            return a.getPort() == getPort()
+                   && a._db.equals(_db)
+                   && a.getHost().equals(getHost());
         } else if (other instanceof ServerAddress) {
             return other.equals(this);
         }

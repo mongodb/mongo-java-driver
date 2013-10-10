@@ -467,9 +467,9 @@ public class WriteConcern implements Serializable {
 
         @Override
         public String toString() {
-            return "WriteConcern.Majority{" +
-                   "command=" + getCommand() +
-                   "}";
+            return "WriteConcern.Majority{"
+                   + "command=" + getCommand()
+                   + "}";
         }
     }
 

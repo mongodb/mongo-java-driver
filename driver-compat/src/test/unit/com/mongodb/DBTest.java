@@ -110,15 +110,15 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDoEval() {
-        String code = "function(name, incAmount) {\n" +
-                      "var doc = db.myCollection.findOne( { name : name } );\n" +
-                      "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n" +
-                      "doc.num++;\n" +
-                      "doc.total += incAmount;\n" +
-                      "doc.avg = doc.total / doc.num;\n" +
-                      "db.myCollection.save( doc );\n" +
-                      "return doc;\n" +
-                      "}";
+        String code = "function(name, incAmount) {\n"
+                      + "var doc = db.myCollection.findOne( { name : name } );\n"
+                      + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"
+                      + "doc.num++;\n"
+                      + "doc.total += incAmount;\n"
+                      + "doc.avg = doc.total / doc.num;\n"
+                      + "db.myCollection.save( doc );\n"
+                      + "return doc;\n"
+                      + "}";
         database.doEval(code, "eliot", 5);
         assertEquals(database.getCollection("myCollection").findOne(), new BasicDBObject("_id", 1.0)
                                                                            .append("avg", 5.0)
@@ -130,9 +130,9 @@ public class DBTest extends DatabaseTestCase {
     @Test(expected = MongoException.class)
     @Ignore("Will be added as soon as error-handling mechanism settle down")
     public void shouldThrowErrorwhileDoingEval() {
-        String code = "function(a, b) {\n" +
-                      "var doc = db.myCollection.findOne( { name : b } );\n" +
-                      "}";
+        String code = "function(a, b) {\n"
+                      + "var doc = db.myCollection.findOne( { name : b } );\n"
+                      + "}";
         database.eval(code, 1);
     }
 

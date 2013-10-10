@@ -27,6 +27,7 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
+    <!-- TODO: This has to be enabled at some point before we release -->
     <!--<module name="JavadocPackage"/>-->
 
     <!-- Checks whether files end with a new line.                        -->
@@ -43,6 +44,7 @@
 
     <!-- Checks for whitespace                               -->
     <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+    <module name="FileTabCharacter"/>
 
     <!-- Miscellaneous other checks.                   -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
@@ -64,24 +66,28 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <!--<module name="JavadocMethod"/>-->
-        <!--<module name="JavadocType"/>-->
-        <!--<module name="JavadocVariable"/>-->
-        <!--<module name="JavadocStyle"/>-->
-
         <!-- TODO: This has to be enabled at some point before we release -->
         <!--<module name="JavadocType">-->
         <!--<property name="scope" value="public"/>-->
         <!--</module>-->
+        <!--<module name="JavadocMethod">-->
+        <!--<property name="scope" value="public"/>-->
+        <!--</module>-->
+        <!--<module name="JavadocVariable"/>-->
+        <!--<module name="JavadocStyle"/>-->
+
 
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See http://checkstyle.sf.net/config_naming.html -->
+        <!--<module name="ConstantName"/>-->
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
         <!--<module name="MemberName"/>-->
+        <!--<module name="MethodName"/>-->
         <module name="PackageName"/>
         <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
 
@@ -96,6 +102,9 @@
 
         <!-- Checks for Size Violations.                    -->
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
+        <module name="LineLength">
+            <property name="max" value="140"/>
+        </module>
 
         <module name="MethodLength"/>
         <module name="ParameterNumber">
@@ -109,6 +118,7 @@
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceAfter"/>
         <module name="NoWhitespaceBefore"/>
+        <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter"/>
@@ -160,10 +170,16 @@
         <module name="FinalParameters"/>
         <!-- Too many failures with this while we work on the new API -->
         <!--<module name="TodoComment"/>-->
+        <module name="UpperEll"/>
 
         <module name="FileContentsHolder"/>
-    </module>
 
+        <module name="Regexp">
+            <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+    </module>
     <module name="SuppressionCommentFilter"/>
 
 </module>

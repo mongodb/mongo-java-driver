@@ -79,9 +79,9 @@ public class ReplicaSetStatus {
 
     @Override
     public String toString() {
-        return "ReplicaSetStatus{" +
-               "name=" + getName() +
-               ", cluster=" + getClusterDescription() +
-               '}';
+        return "ReplicaSetStatus{"
+               + "name=" + getName()
+               + ", cluster=" + getClusterDescription()
+               + '}';
     }
 }

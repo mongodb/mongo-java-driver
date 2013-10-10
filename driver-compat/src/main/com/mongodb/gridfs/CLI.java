@@ -40,6 +40,7 @@ public class CLI {
     /**
      * Dumps usage info to stdout
      */
+    // CHECKSTYLE:OFF
     private static void printUsage() {
         System.out.println("Usage : [--bucket bucketname] action");
         System.out.println("  where  action is one of:");
@@ -48,6 +49,7 @@ public class CLI {
         System.out.println("      get filename1 filename2   : gets filename1 from store and sends to filename2");
         System.out.println("      md5 filename              : does an md5 hash on a file in the db (for testing)");
     }
+    // CHECKSTYLE:ON
 
     private static Mongo getMongo() throws Exception {
         if (mongo == null) {
@@ -63,6 +65,7 @@ public class CLI {
         return gridFS;
     }
 
+    // CHECKSTYLE:OFF
     public static void main(final String[] args) throws Exception {
 
         if (args.length < 1) {
@@ -163,7 +166,6 @@ public class CLI {
             System.err.println("unknown option: " + s);
             return;
         }
-
     }
-
+    // CHECKSTYLE:ON
 }
