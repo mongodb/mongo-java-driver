@@ -19,10 +19,13 @@ package com.mongodb;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.diagnostics.Loggers;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  * Tests aspect of the DB - not really driver tests.  Should be migrated into the appropriate unit or functional tests.
  */
 public class DBGeneralOldTests extends DatabaseTestCase {
+    private static final Logger LOGGER = Loggers.getLogger("test");
 
     @Test
     public void testGetCollectionNames() {
@@ -126,7 +130,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
         String errorMsg = result.getErrorMessage();
 
         if (errorMsg != null && errorMsg.contains("--replSet")) {
-            System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
+            LOGGER.log(Level.WARNING, "SecondaryReadTest: This is not a replica set - not testing secondary reads");
             return null;
         }
 
