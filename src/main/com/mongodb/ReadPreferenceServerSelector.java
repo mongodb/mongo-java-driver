@@ -17,19 +17,19 @@
 package com.mongodb;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 class ReadPreferenceServerSelector extends ChainingServerSelector {
     private final ReadPreference readPreference;
 
     public ReadPreferenceServerSelector(final ReadPreference readPreference) {
-        this(readPreference, new LatencyMinimizingServerSelector());
+        super(new LatencyMinimizingServerSelector());
+        this.readPreference = readPreference;
     }
 
-    public ReadPreferenceServerSelector(final ReadPreference readPreference, final ServerSelector chainedSelector) {
-        super(chainedSelector);
-        // TODO: this is hiding bugs:
-        // notNull("readPreference", readPreference);
-        this.readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
+    public ReadPreferenceServerSelector(final ReadPreference readPreference, final int acceptableLatency, final TimeUnit timeUnit) {
+        super(new LatencyMinimizingServerSelector(acceptableLatency, timeUnit));
+        this.readPreference = readPreference;
     }
 
     public ReadPreference getReadPreference() {

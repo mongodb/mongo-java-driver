@@ -43,6 +43,7 @@ public class DBTCPConnector implements DBConnector {
     private static int connectRetryFrequencyMS;
     private static int heartbeatConnectTimeoutMS;
     private static int heartbeatReadTimeoutMS;
+    private static final int acceptableLatencyMS;
 
     private volatile boolean _closed;
 
@@ -59,6 +60,7 @@ public class DBTCPConnector implements DBConnector {
         connectRetryFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
         heartbeatConnectTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
         heartbeatReadTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+        acceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
     }
 
     /**
@@ -438,7 +440,7 @@ public class DBTCPConnector implements DBConnector {
                 setPinnedRequestPortForThread(null);
             }
 
-            Server server = cluster.getServer(new ReadPreferenceServerSelector(readPref));
+            Server server = cluster.getServer(new ReadPreferenceServerSelector(readPref, acceptableLatencyMS, MILLISECONDS));
             DBPort port = _portHolder.get(server.getDescription().getAddress()).get();
 
             // if within request, remember port to stick to same server
