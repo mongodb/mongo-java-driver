@@ -23,11 +23,11 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -84,13 +84,13 @@ public class MapReduceTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         try {
-            final MapReduceCommand command = new MapReduceCommand(collection,
-                                                                  DEFAULT_MAP,
-                                                                  DEFAULT_REDUCE,
-                                                                  DEFAULT_COLLECTION,
-                                                                  MapReduceCommand.OutputType.INLINE,
-                                                                  new BasicDBObject());
-            command.setMaxTime(1, TimeUnit.SECONDS);
+            MapReduceCommand command = new MapReduceCommand(collection,
+                                                            DEFAULT_MAP,
+                                                            DEFAULT_REDUCE,
+                                                            DEFAULT_COLLECTION,
+                                                            MapReduceCommand.OutputType.INLINE,
+                                                            new BasicDBObject());
+            command.setMaxTime(1, SECONDS);
             collection.mapReduce(command);
         } finally {
             disableMaxTimeFailPoint();

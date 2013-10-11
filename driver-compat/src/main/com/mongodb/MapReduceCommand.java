@@ -360,6 +360,10 @@ public class MapReduceCommand {
     }
 
     Command toNew() {
+        return new org.mongodb.command.MapReduce(getMapReduceBean(), this.mapReduce);
+    }
+
+    public MapReduce getMapReduceBean() {
         MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {
             mapReduce = new MapReduce(new Code(map), new Code(reduce));
@@ -404,8 +408,6 @@ public class MapReduceCommand {
             mapReduce.verbose();
         }
         //TODO: jsMode?
-
-        return new org.mongodb.command.MapReduce(mapReduce, this.mapReduce);
-
+        return mapReduce;
     }
 }

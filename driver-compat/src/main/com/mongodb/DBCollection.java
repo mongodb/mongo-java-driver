@@ -36,7 +36,6 @@ import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.command.MapReduceInlineCommandResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
-import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.DistinctOperation;
 import org.mongodb.operation.DropCollectionOperation;
@@ -53,6 +52,7 @@ import org.mongodb.operation.GroupOperation;
 import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
@@ -1097,25 +1097,22 @@ public class DBCollection {
     /**
      * Perform mapReduce operation.
      *
-     * @param command specifies the command parameters
+     * @param command specifies the details of the Map Reduce operation to perform
      * @return a mapReduce output
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        MapReduceCommandResultCodec<DBObject> mapReduceCodec =
+        org.mongodb.codecs.DocumentCodec mapReduceCodec =
             new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
         org.mongodb.CommandResult executionResult;
 
         Command newStyleCommand = command.toNew();
         try {
-            Document commandDocument = newStyleCommand.toDocument();
-            if (command.getMaxTime(MILLISECONDS) != 0) {
-                commandDocument.append("maxTimeMS", command.getMaxTime(MILLISECONDS));
-            }
-            executionResult = new CommandOperation(getDB().getName(), commandDocument, newStyleCommand.getReadPreference(),
-                                                   mapReduceCodec, commandCodec, getDB().getClusterDescription(), getBufferPool(),
-                                                   getSession(), false).execute();
+            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() .toNew()
+                                                                                            : command.getReadPreference().toNew();
+            executionResult = new MapReduceOperation(getBufferPool(), getSession(), false, getNamespace(), command.getMapReduceBean(),
+                                                     mapReduceCodec, readPreference).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

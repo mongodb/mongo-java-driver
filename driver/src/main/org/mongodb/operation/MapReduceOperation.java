@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
@@ -38,7 +37,7 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
     private final Document command;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
-    private final MapReduceCommandResultCodec<Document> resultDecoder;
+    private final DocumentCodec resultDecoder;
     private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
@@ -48,13 +47,13 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      * @param namespace      the database and collection to perform the map reduce on
-     * @param mapReduce
-     * @param resultDecoder
+     * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
+     * @param resultDecoder  the decoder to use to decode the CommandResult containing the results
      * @param readPreference the read preference suggesting which server to run the command on
      */
     public MapReduceOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession,
                               final MongoNamespace namespace,
-                              final MapReduce mapReduce, final MapReduceCommandResultCodec<Document> resultDecoder,
+                              final MapReduce mapReduce, final DocumentCodec resultDecoder,
                               final ReadPreference readPreference) {
         super(bufferProvider, session, closeSession);
         this.namespace = namespace;
