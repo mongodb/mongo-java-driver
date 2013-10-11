@@ -29,8 +29,7 @@ import static org.junit.Assert.assertThat;
 import static org.mongodb.Sort.ascending;
 
 public class MapReduceAcceptanceTest extends DatabaseTestCase {
-    public void setUp() {
-        super.setUp();
+    private void insertLabelData() {
         collection.save(new Document("_id", 0).append("labels", new String[]{"a", "b"}));
         collection.save(new Document("_id", 1).append("labels", new String[]{"a", "b"}));
 
@@ -47,6 +46,10 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnCountOfAllArrayValuesUsingSimpleMapReduce() {
+        //given
+        insertLabelData();
+
+        //when
         // perform Map Reduce on all data
         MongoIterable<Document> results = collection.find()
                                                     .mapReduce("  function(){ "
@@ -62,6 +65,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                + "  return sum;"
                                                                + "}");
 
+        //then
         List<Document> resultList = results.into(new ArrayList<Document>());
         assertThat("There are four distinct labels, a b c d", resultList.size(), is(4));
 
@@ -73,6 +77,10 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldPerformMapReduceOnALimitedSetOfData() {
+        //given
+        insertLabelData();
+
+        //when
         MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0))) //find all IDs greater than zero
                                               .sort(ascending("_id"))   // sort by ID
                                               .skip(1)                  // skip the first in the results
@@ -91,6 +99,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                          + "}");
         // will perform Map Reduce on _ids 2-7
 
+        //then
         List<Document> resultList = results.into(new ArrayList<Document>());
         assertThat("There are four distinct labels, a b c d", resultList.size(), is(4));
 
@@ -102,7 +111,12 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldMapIterableOfDocumentsIntoAnObjectOfYourChoice() {
-        MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0))) //find all IDs greater than zero
+        //given
+        insertLabelData();
+
+        //when
+        //find all IDs greater than zero
+        MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0)))
                                               .sort(ascending("_id"))   // sort by ID
                                               .skip(1)                  // skip the first in the results
                                               .limit(6)                 // limit to 6 of the remaining results
@@ -128,6 +142,8 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
             }
         })
                                               .into(new ArrayList<LabelCount>());
+
+        //then
         assertThat("Transformed results should still be the same size as original results", labelCounts.size(), is(4));
 
         Collections.sort(labelCounts);
@@ -136,6 +152,41 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                                             new LabelCount("c", 4),
                                                                                             new LabelCount("b", 5)));
     }
+
+    private void insertCustomerData() {
+        // see http://docs.mongodb.org/manual/core/map-reduce/
+        collection.save(new Document("cust_id", "A123").append("amount", 500).append("status", "A"));
+        collection.save(new Document("cust_id", "A123").append("amount", 250).append("status", "A"));
+        collection.save(new Document("cust_id", "B212").append("amount", 200).append("status", "A"));
+        collection.save(new Document("cust_id", "A123").append("amount", 300).append("status", "D"));
+    }
+
+    @Test
+    public void shouldSumFilteredAmounts() {
+        // Given
+        insertCustomerData();
+
+        // When
+        //find all orders with status "A"
+        MongoIterable<Document> results = collection.find(new Document("status", "A"))
+                                                    .mapReduce("  function(){ "
+                                                               + "  emit( this.cust_id, this.amount ); "
+                                                               + "}",
+
+                                                               "  function(key,values){ "
+                                                               + "  return Array.sum(values);"
+                                                               + "}");
+
+        // Then
+        List<Document> totalForOrdersWithStatusAPerCustomer = results.into(new ArrayList<Document>());
+        assertThat(totalForOrdersWithStatusAPerCustomer.size(), is(2));
+
+        assertThat(totalForOrdersWithStatusAPerCustomer, contains(new Document("_id", "A123").append("value", 750.0),
+                                                                  new Document("_id", "B212").append("value", 200.0)));
+    }
+
+    //TODO: test map reduce into a collection
+
 
     static class LabelCount implements Comparable<LabelCount> {
         private final String tag;
