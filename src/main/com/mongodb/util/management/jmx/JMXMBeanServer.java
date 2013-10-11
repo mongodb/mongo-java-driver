@@ -1,12 +1,12 @@
-/**
- * Copyright (c) 2008 - 2011 10gen, Inc. <http://10gen.com>
- * <p/>
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,11 +16,13 @@
 
 package com.mongodb.util.management.jmx;
 
-import com.mongodb.util.management.JMException;
 import com.mongodb.util.management.MBeanServer;
 
-import javax.management.*;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
@@ -30,41 +32,38 @@ import java.lang.management.ManagementFactory;
  */
 @Deprecated
 public class JMXMBeanServer implements MBeanServer {
+    private static final Logger LOGGER = Logger.getLogger("com.mongodb.driver.management");
+
     @Override
-    public boolean isRegistered(String mBeanName) throws JMException {
-        return server.isRegistered(createObjectName(mBeanName));
+    public boolean isRegistered(String mBeanName) {
+        try {
+            return server.isRegistered(createObjectName(mBeanName));
+        } catch (MalformedObjectNameException e) {
+            LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
+            return false;
+        }
     }
 
     @Override
-    public void unregisterMBean(String mBeanName) throws JMException {
+    public void unregisterMBean(String mBeanName) {
         try {
             server.unregisterMBean(createObjectName(mBeanName));
-        } catch (InstanceNotFoundException e) {
-            throw new JMException(e);
-        } catch (MBeanRegistrationException e) {
-            throw new JMException(e);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
         }
     }
 
     @Override
-    public void registerMBean(Object mBean, String mBeanName) throws JMException {
+    public void registerMBean(Object mBean, String mBeanName) {
         try {
             server.registerMBean(mBean, createObjectName(mBeanName));
-        } catch (InstanceAlreadyExistsException e) {
-            throw new JMException(e);
-        } catch (MBeanRegistrationException e) {
-            throw new JMException(e);
-        } catch (NotCompliantMBeanException e) {
-            throw new JMException(e);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
         }
     }
 
-    private ObjectName createObjectName(String mBeanName) throws JMException {
-        try {
-            return new ObjectName(mBeanName);
-        } catch (MalformedObjectNameException e) {
-            throw new JMException(e);
-        }
+    private ObjectName createObjectName(String mBeanName) throws MalformedObjectNameException {
+        return new ObjectName(mBeanName);
     }
 
     private final javax.management.MBeanServer server = ManagementFactory.getPlatformMBeanServer();

@@ -1,20 +1,20 @@
-// DBPort.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// DBPort.java
 
 package com.mongodb;
 
@@ -43,9 +43,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.bson.util.Assertions.isTrue;
 
 /**
  * represents a Port to the database, which is effectively a single connection to a server
@@ -55,7 +56,7 @@ import java.util.logging.Logger;
  * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
-public class DBPort {
+public class DBPort implements Connection {
     
     /**
      * the default port
@@ -71,24 +72,64 @@ public class DBPort {
      */
     @SuppressWarnings("deprecation")
     public DBPort( ServerAddress addr ){
-        this( addr , null , new MongoOptions() );
+        this( addr , null , new MongoOptions(), 0 );
     }
     
-    DBPort( ServerAddress addr, DBPortPool pool, MongoOptions options ){
+    DBPort( ServerAddress addr, PooledConnectionProvider pool, MongoOptions options, int generation ) {
         _options = options;
         _sa = addr;
         _addr = addr;
-        _pool = pool;
+        provider = pool;
+        this.generation = generation;
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
         _decoder = _options.dbDecoderFactory.create();
+        try {
+            ensureOpen();
+            openedAt = System.currentTimeMillis();
+            lastUsedAt = openedAt;
+        } catch (IOException e) {
+            throw new MongoException.Network("Exception opening the socket", e);
+        }
+    }
+
+    /**
+     * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
+     *
+     * @return the generation.
+     */
+    @Override
+    public int getGeneration() {
+        return generation;
+    }
+
+    /**
+     * Returns the time at which this connection was opened, or {@code Long.MAX_VALUE} if it has not yet been opened.
+     *
+     * @return the time when this connection was opened, in milliseconds since the epoch.
+     */
+    @Override
+    public long getOpenedAt() {
+        return openedAt;
+    }
+
+    /**
+     * Returns the time at which this connection was last used, or {@code Long.MAX_VALUE} if it has not yet been used.
+     *
+     * @return the time when this connection was last used, in milliseconds since the epoch.
+     */
+    @Override
+    public long getLastUsedAt() {
+        return lastUsedAt;
     }
 
     Response call( OutMessage msg , DBCollection coll ) throws IOException{
+        isTrue("open", !closed);
         return call(msg, coll, null);
     }
 
     Response call(final OutMessage msg, final DBCollection coll, final DBDecoder decoder) throws IOException{
+        isTrue("open", !closed);
         return doOperation(new Operation<Response>() {
             @Override
             public Response execute() throws IOException {
@@ -101,21 +142,21 @@ public class DBPort {
     }
     
     void say( final OutMessage msg ) throws IOException {
+        isTrue("open", !closed);
         doOperation(new Operation<Void>() {
             @Override
             public Void execute() throws IOException {
                 setActiveState(new ActiveState(msg));
                 msg.prepare();
-                msg.pipe( _out );
+                msg.pipe(_out);
                 return null;
             }
         });
     }
 
     synchronized <T> T doOperation(Operation<T> operation) throws IOException {
-        ensureOpen();
-
-        _calls.incrementAndGet();
+        isTrue("open", !closed);
+        usageCount++;
 
         try {
             return operation.execute();
@@ -125,15 +166,18 @@ public class DBPort {
             throw ioe;
         }
         finally {
+            lastUsedAt = System.currentTimeMillis();
             _activeState = null;
         }
     }
 
     void setActiveState(ActiveState activeState) {
+        isTrue("open", !closed);
         _activeState = activeState;
     }
 
     synchronized CommandResult getLastError( DB db , WriteConcern concern ) throws IOException{
+        isTrue("open", !closed);
         return runCommand(db, concern.getCommand() );
     }
 
@@ -147,6 +191,7 @@ public class DBPort {
     }
 
     synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
+        isTrue("open", !closed);
         Response res = findOne(db, "$cmd", cmd);
         return convertToCommandResult(cmd, res);
     }
@@ -167,19 +212,20 @@ public class DBPort {
     }
 
     synchronized CommandResult tryGetLastError( DB db , long last, WriteConcern concern) throws IOException {
-        if ( last != _calls.get() )
+        isTrue("open", !closed);
+        if ( last != usageCount )
             return null;
         
         return getLastError(db, concern);
     }
 
     OutputStream getOutputStream() throws IOException {
-        ensureOpen();
+        isTrue("open", !closed);
         return _out;
     }
 
     InputStream getInputStream() throws IOException {
-        ensureOpen();
+        isTrue("open", !closed);
         return _in;
     }
 
@@ -212,14 +258,11 @@ public class DBPort {
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
                 successfullyConnected = true;
-                if (_pool != null) {
-                    _pool._everWorked = true;
-                }
             }
             catch ( IOException e ){
                 close();
 
-                if (!_options.autoConnectRetry || (_pool != null && !_pool._everWorked))
+                if (!_options.autoConnectRetry || (provider != null && !provider.hasWorked()))
                     throw e;
 
                 long waitSoFar = System.currentTimeMillis() - start;
@@ -270,10 +313,12 @@ public class DBPort {
     }
 
     ActiveState getActiveState() {
+        isTrue("open", !closed);
         return _activeState;
     }
 
     int getLocalPort() {
+        isTrue("open", !closed);
         return _socket != null ? _socket.getLocalPort() : -1;
     }
 
@@ -281,10 +326,16 @@ public class DBPort {
         return _addr;
     }
 
+    @Override
+    public boolean isClosed() {
+        return closed;
+    }
     /**
      * closes the underlying connection and streams
      */
-    protected void close(){
+    @Override
+    public void close(){
+        closed = true;
         authenticatedDatabases.clear();
                 
         if ( _socket != null ){
@@ -334,29 +385,44 @@ public class DBPort {
      * @return the pool that this port belongs to.
      */
     public DBPortPool getPool() {
-        return _pool;
+        return null;
+    }
+
+    public long getUsageCount() {
+        return usageCount;
+    }
+
+    PooledConnectionProvider getProvider() {
+        return provider;
+    }
+
+    Set<String> getAuthenticatedDatabases() {
+        return Collections.unmodifiableSet(authenticatedDatabases);
     }
 
     private static Logger _rootLogger = Logger.getLogger( "com.mongodb.port" );
 
-    final ServerAddress _sa;
-    final ServerAddress _addr;
-    final DBPortPool _pool;
-    final MongoOptions _options;
-    final Logger _logger;
-    final DBDecoder _decoder;
+    private volatile boolean closed;
+    private final long openedAt;
+    private volatile long lastUsedAt;
+    private final int generation;
+    private final PooledConnectionProvider provider;
+
+    private final ServerAddress _sa;
+    private final ServerAddress _addr;
+    private final MongoOptions _options;
+    private final Logger _logger;
+    private final DBDecoder _decoder;
     
     private volatile Socket _socket;
     private volatile InputStream _in;
     private volatile OutputStream _out;
 
     // needs synchronization to ensure that modifications are published.
-    final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());
 
-    volatile int _lastThread;
-    final AtomicLong _calls = new AtomicLong();
+    private volatile long usageCount;
     private volatile ActiveState _activeState;
-    private volatile Boolean useCRAMAuthenticationProtocol;
 
     class ActiveState {
         ActiveState(final OutMessage outMessage) {

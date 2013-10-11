@@ -220,5 +220,15 @@ abstract class BaseCluster implements Cluster {
         public ServerDescription getDescription() {
             return wrapped.getDescription();
         }
+
+        @Override
+        public Connection getConnection() {
+            return wrapped.getConnection();
+        }
+
+        @Override
+        public void invalidate() {
+            wrapped.invalidate();
+        }
     }
 }

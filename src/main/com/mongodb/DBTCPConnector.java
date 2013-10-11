@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// DBTCPConnector.java
-
 package com.mongodb;
 
 import java.io.IOException;
@@ -44,7 +42,6 @@ public class DBTCPConnector implements DBConnector {
     private volatile boolean _closed;
 
     private final Mongo _mongo;
-    private DBPortPool.Holder _portHolder;
 
     private ScheduledExecutorService scheduledExecutorService;
     private Cluster cluster;
@@ -59,7 +56,6 @@ public class DBTCPConnector implements DBConnector {
      */
     public DBTCPConnector( Mongo mongo  ) {
         _mongo = mongo;
-        _portHolder = new DBPortPool.Holder( mongo._options );
     }
 
     public void start() {
@@ -209,7 +205,7 @@ public class DBTCPConnector implements DBConnector {
         }
         catch ( IOException ioe ){
             _myPort.error(port, ioe);
-            throw  new MongoException.Network("Operation on server " + port.getAddress() + " failed" , ioe );
+            throw new MongoException.Network("Operation on server " + port.getAddress() + " failed" , ioe );
         }
         catch ( RuntimeException re ){
             _myPort.error(port, re);
@@ -409,7 +405,7 @@ public class DBTCPConnector implements DBConnector {
         _myPort.done(port);
     }
 
-    public ServerDescription getServerDescription(final ServerAddress address) {
+    ServerDescription getServerDescription(final ServerAddress address) {
         isTrue("open", !_closed);
         return getClusterDescription().getByServerAddress(address);
     }
@@ -426,7 +422,7 @@ public class DBTCPConnector implements DBConnector {
                 }
 
                 // asked for a specific host
-                return _portHolder.get( hostNeeded ).get();
+                return getConnection(new ServerAddressSelector(hostNeeded));
             }
 
             if ( pinnedRequestPort != null ){
@@ -439,12 +435,11 @@ public class DBTCPConnector implements DBConnector {
                 // it's write and primary has changed
                 // we fall back on new primary and try to go on with request
                 // this may not be best behavior if spec of request is to stick with same server
-                pinnedRequestPort.getPool().done(pinnedRequestPort);
+                pinnedRequestPort.getProvider().release(pinnedRequestPort);
                 setPinnedRequestPortForThread(null);
             }
 
-            Server server = getServer(createServerSelector(readPref));
-            DBPort port = _portHolder.get(server.getDescription().getAddress()).get();
+            DBPort port = getConnection(createServerSelector(readPref));
 
             // if within request, remember port to stick to same server
             if (threadHasPinnedRequest()) {
@@ -464,11 +459,11 @@ public class DBTCPConnector implements DBConnector {
         }
 
         void done( DBPort port ) {
-            DBPort requestPort = getPinnedRequestPortForThread();
+            Connection requestPort = getPinnedRequestPortForThread();
 
             // keep request port
             if (port != requestPort) {
-                port.getPool().done(port);
+                port.getProvider().release(port);
             }
         }
 
@@ -478,6 +473,9 @@ public class DBTCPConnector implements DBConnector {
          * @param e
          */
         void error( DBPort port , Exception e ){
+            if (!(e instanceof InterruptedIOException)) {
+                getServer(new ServerAddressSelector(port.getAddress())).invalidate();
+            }
             port.close();
             pinnedRequestStatusThreadLocal.remove();
         }
@@ -489,11 +487,11 @@ public class DBTCPConnector implements DBConnector {
             if ( getPinnedRequestPortForThread() != null )
                 return;
 
-            ClusterDescription clusterDescription = getClusterDescription();
-            if (clusterDescription.getPrimaries().isEmpty()) {
-                throw new MongoTimeoutException("Could not ensure a connection to a primary server");
-            }
-            setPinnedRequestPortForThread(_portHolder.get(clusterDescription.getPrimaries().get(0).getAddress()).get());
+            setPinnedRequestPortForThread(getConnection(new ReadPreferenceServerSelector(ReadPreference.primary())));
+        }
+
+        private DBPort getConnection(final ServerSelector serverSelector) {
+            return (DBPort) getServer(serverSelector).getConnection();
         }
 
         void requestStart() {
@@ -515,7 +513,7 @@ public class DBTCPConnector implements DBConnector {
                 else  {
                     pinnedRequestStatusThreadLocal.remove();
                     if (current.requestPort != null)
-                        current.requestPort.getPool().done(current.requestPort);
+                        current.requestPort.getProvider().release(current.requestPort);
                 }
             }
         }
@@ -578,12 +576,6 @@ public class DBTCPConnector implements DBConnector {
             scheduledExecutorService.shutdownNow();
             scheduledExecutorService = null;
         }
-        if ( _portHolder != null ) {
-            try {
-                _portHolder.close();
-                _portHolder = null;
-            } catch (final Throwable t) { /* nada */ }
-        }
     }
 
     /**
@@ -593,8 +585,6 @@ public class DBTCPConnector implements DBConnector {
      * @param addr
      */
     public void updatePortPool(ServerAddress addr) {
-        // just remove from map, a new pool will be created lazily
-        _portHolder._pools.remove(addr);
     }
 
     /**
@@ -603,7 +593,7 @@ public class DBTCPConnector implements DBConnector {
      * @return
      */
     public DBPortPool getDBPortPool(ServerAddress addr) {
-        return _portHolder.get(addr);
+        throw new UnsupportedOperationException();
     }
 
     public boolean isOpen(){

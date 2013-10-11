@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
+    private final PooledConnectionProvider connectionProvider;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
     Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ServerSettings settings;
@@ -42,6 +43,7 @@ class DefaultServer implements ClusterableServer {
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
+                         final PooledConnectionProvider connectionProvider,
                          final ScheduledExecutorService scheduledExecutorService,
                          Mongo mongo) {
         this.settings = notNull("settings", settings);
@@ -55,6 +57,7 @@ class DefaultServer implements ClusterableServer {
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                                                                             settings.getHeartbeatFrequency(MILLISECONDS),
                                                                             MILLISECONDS);
+        this.connectionProvider = connectionProvider;
     }
 
 
@@ -63,6 +66,11 @@ class DefaultServer implements ClusterableServer {
         isTrue("open", !isClosed());
 
         return description;
+    }
+
+    @Override
+    public Connection getConnection() {
+        return connectionProvider.get();
     }
 
     @Override
@@ -80,6 +88,7 @@ class DefaultServer implements ClusterableServer {
                                                                                                           .state(Connecting)
                                                                                                           .address(serverAddress).build()));
         scheduledExecutorService.submit(stateNotifier);
+        connectionProvider.invalidate();
     }
 
     @Override
@@ -87,6 +96,7 @@ class DefaultServer implements ClusterableServer {
         if (!isClosed()) {
             scheduledFuture.cancel(true);
             stateNotifier.close();
+            connectionProvider.close();
             isClosed = true;
         }
     }
@@ -94,10 +104,6 @@ class DefaultServer implements ClusterableServer {
     @Override
     public boolean isClosed() {
         return isClosed;
-    }
-
-    private void handleException() {
-        invalidate();  // TODO: handle different exceptions sub-classes differently
     }
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {

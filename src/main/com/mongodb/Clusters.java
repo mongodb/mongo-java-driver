@@ -35,7 +35,8 @@ final class Clusters {
                                  final Mongo mongo) {
         String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
 
-        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings, scheduledExecutorService, mongo);
+        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, serverSettings, scheduledExecutorService,
+                                                                                     mongo);
 
         if (settings.getMode() == ClusterConnectionMode.Single) {
             return new SingleServerCluster(clusterId, settings, serverFactory,

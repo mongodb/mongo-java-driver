@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -39,12 +38,12 @@ public class DBPortTest extends TestCase {
             db1.addUser("u1", "e".toCharArray());
             db2.addUser("u2", "e".toCharArray());
 
-            DBPort port = new DBPort(m.getAddress(), new DBPortPool(m.getAddress(), new MongoOptions()), new MongoOptions());
+            DBPort port = new DBPort(m.getAddress());
             port.checkAuth(m);
 
             Set<String> expected = new HashSet<String>();
 
-            assertEquals(expected, port.authenticatedDatabases);
+            assertEquals(expected, port.getAuthenticatedDatabases());
 
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u1", "DBPortTest1", "e".toCharArray()));
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest2", "e".toCharArray()));
@@ -53,7 +52,7 @@ public class DBPortTest extends TestCase {
 
             expected.add("DBPortTest1");
             expected.add("DBPortTest2");
-            assertEquals(expected, port.authenticatedDatabases);
+            assertEquals(expected, port.getAuthenticatedDatabases());
 
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest3", "e".toCharArray()));
 
@@ -76,14 +75,10 @@ public class DBPortTest extends TestCase {
         options.autoConnectRetry = true;
         options.maxAutoConnectRetryTime = 350;
 
-        final DBPortPool portPool = new DBPortPool(new ServerAddress("localhost", 50051), options);
-        portPool._everWorked = true;
-
-        DBPort port = new DBPort(new ServerAddress("localhost", 50051), portPool, options);
         try {
-            port.ensureOpen();
+            new DBPort(new ServerAddress("localhost", 50051));
             fail("Open should fail");
-        } catch (IOException e) {
+        } catch (MongoException.Network e) {
             // should get exception
         }
 

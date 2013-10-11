@@ -65,7 +65,7 @@ class ServerStateNotifier implements Runnable {
         Throwable throwable = null;
         try {
             if (connection == null) {
-                connection = new DBPort(serverAddress, null, getOptions());
+                connection = new DBPort(serverAddress, null, getOptions(), 0);
             }
             try {
                 LOGGER.fine(format("Checking status of %s", serverAddress));

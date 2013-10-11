@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.mongodb.util.management;
+package com.mongodb;
 
-/**
- * This class is NOT part of the public API.  It may change at any time without notification.
- *
- * @deprecated This class will be removed in 3.x versions of the driver,
- *             so please remove it from your compile time dependencies.
- */
-@Deprecated
-public interface MBeanServer {
-    boolean isRegistered(String mBeanName);
+import java.util.Arrays;
+import java.util.List;
 
-    void unregisterMBean(String mBeanName);
+class ServerAddressSelector implements ServerSelector {
+    private final ServerAddress address;
 
-    void registerMBean(Object mBean, String mBeanName);
+    public ServerAddressSelector(final ServerAddress address) {
+        this.address = address;
+    }
+
+    @Override
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+        return Arrays.asList(clusterDescription.getByServerAddress(address));
+    }
 }

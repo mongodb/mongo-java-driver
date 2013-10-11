@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
 
-/**
- * This class exists only so that, on Java 6 and above, the driver can create instances of an MXBean.
- */
-class MongoConnectionPool extends DBPortPool implements MongoConnectionPoolMXBean {
+interface Connection {
+    int getGeneration();
 
-    MongoConnectionPool(ServerAddress addr, MongoOptions options) {
-        super(addr, options);
-    }
+    long getOpenedAt();
+
+    long getLastUsedAt();
+
+    boolean isClosed();
+
+    void close();
 }

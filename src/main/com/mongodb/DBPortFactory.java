@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.mongodb.util.management;
+package com.mongodb;
 
-/**
- * This class is NOT part of the public API.  It may change at any time without notification.
- *
- * @deprecated This class will be removed in 3.x versions of the driver,
- *             so please remove it from your compile time dependencies.
- */
-@Deprecated
-public interface MBeanServer {
-    boolean isRegistered(String mBeanName);
+class DBPortFactory implements ConnectionFactory {
+    private final MongoOptions options;
 
-    void unregisterMBean(String mBeanName);
+    DBPortFactory(MongoOptions options) {
+        this.options = options;
+    }
 
-    void registerMBean(Object mBean, String mBeanName);
+    @Override
+    public Connection create(ServerAddress serverAddress, PooledConnectionProvider provider, int generation) {
+        return new DBPort(serverAddress, provider, options, generation);
+    }
 }
