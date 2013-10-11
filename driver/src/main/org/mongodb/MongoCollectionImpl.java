@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.command.MapReduceCommand;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
@@ -28,6 +27,7 @@ import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
@@ -240,10 +240,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoIterable<T> mapReduce(final String map, final String reduce) {
-            MapReduceCommand commandOperation = new MapReduceCommand(findOp, getName(), map, reduce);
-            CommandResult commandResult = getDatabase().executeCommand(commandOperation.toDocument(),
-                                                                       commandOperation.getReadPreference());
-            return new SingleShotCommandIterable<T>(commandResult);
+            //TODO: support supplied read preferences?
+            CommandResult execute = new MapReduceOperation(client.getBufferProvider(),
+                                                           client.getSession(),
+                                                           false,
+                                                           getNamespace(),
+                                                           findOp, map, reduce, options.getReadPreference()
+            )
+                                        .execute();
+            return new SingleShotCommandIterable<T>(execute);
         }
 
         @Override

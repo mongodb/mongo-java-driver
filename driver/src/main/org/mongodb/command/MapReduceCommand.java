@@ -24,7 +24,7 @@ public class MapReduceCommand extends Command {
         super(asDocument(find, collectionName, map, reduce));
     }
 
-    private static Document asDocument(final Find find, final String collectionName, final String map, final String reduce) {
+    public static Document asDocument(final Find find, final String collectionName, final String map, final String reduce) {
         Document cmd = new Document();
 
         cmd.put("mapreduce", collectionName);
