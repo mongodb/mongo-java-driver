@@ -25,7 +25,7 @@ public class MapReduce extends Command {
         super(asDocument(mapReduce, collectionName));
     }
 
-    private static Document asDocument(final org.mongodb.operation.MapReduce mapReduce, final String collectionName) {
+    public static Document asDocument(final org.mongodb.operation.MapReduce mapReduce, final String collectionName) {
 
         return new Document("mapReduce", collectionName).append("map", mapReduce.getMapFunction())
                                                         .append("reduce", mapReduce.getReduceFunction())

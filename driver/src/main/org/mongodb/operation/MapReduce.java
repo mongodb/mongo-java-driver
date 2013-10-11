@@ -84,8 +84,6 @@ public class MapReduce {
         return this;
     }
 
-    //CHECKSTYLE:OFF
-
     /**
      * Add a filter to the command. It specifies the selection criteria using query operators for determining the documents input to the map
      * function.
@@ -131,7 +129,6 @@ public class MapReduce {
         this.limit = limit;
         return this;
     }
-    //CHECKSTYLE:ON
 
     /**
      * Add a 'jsMode' flag to the command.

@@ -119,6 +119,9 @@ public class MapReduceOutput {
 
     private static DBCollection getTargetCollection(final DBCollection collection,
                                                     final String databaseName, final String collectionName) {
+        System.out
+              .println("collection = [" + collection + "], databaseName = [" + databaseName + "], collectionName = [" + collectionName
+                       + "]");
         DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
         return database.getCollection(collectionName);
     }

@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.bson.types.Code;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
@@ -27,6 +30,7 @@ import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
@@ -240,12 +244,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoIterable<T> mapReduce(final String map, final String reduce) {
+            MapReduceCommandResultCodec<Document> mapReduceCodec =
+                new MapReduceCommandResultCodec<Document>(options.getPrimitiveCodecs(), new DocumentCodec());
             //TODO: support supplied read preferences?
+            MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
+                                                                                .limit(findOp.getLimit());
             CommandResult execute = new MapReduceOperation(client.getBufferProvider(),
                                                            client.getSession(),
                                                            false,
                                                            getNamespace(),
-                                                           findOp, map, reduce, options.getReadPreference()
+                                                           mapReduce, mapReduceCodec, options.getReadPreference()
             )
                                         .execute();
             return new SingleShotCommandIterable<T>(execute);
