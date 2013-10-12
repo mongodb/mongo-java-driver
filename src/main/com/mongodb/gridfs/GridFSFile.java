@@ -228,7 +228,11 @@ public abstract class GridFSFile implements DBObject {
     }
 
     public void putAll( Map m ){
-        throw new UnsupportedOperationException();
+        for (Object key:m.keySet())
+        {
+            put(key.toString(), m.get(key));
+        }
+        
     }
 
     public Map toMap(){
