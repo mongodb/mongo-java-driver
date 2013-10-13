@@ -1107,7 +1107,6 @@ public class DBCollection {
 
         org.mongodb.CommandResult executionResult;
 
-        Command newStyleCommand = command.toNew();
         try {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() .toNew()
                                                                                             : command.getReadPreference().toNew();
@@ -1117,7 +1116,7 @@ public class DBCollection {
             throw mapException(e);
         }
 
-        BasicDBObject commandDocument = toDBObject(newStyleCommand.toDocument());
+        DBObject commandDocument = command.toDBObject();
         return command.getOutputType() == MapReduceCommand.OutputType.INLINE
                ? new MapReduceOutput(commandDocument, new MapReduceInlineCommandResult<DBObject>(executionResult))
                : new MapReduceOutput(this, commandDocument, new MapReduceCommandResult(executionResult));

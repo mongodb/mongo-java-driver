@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.command
+package org.mongodb.operation
 
 import org.bson.types.Code
 import org.mongodb.Document
 import org.mongodb.operation.MapReduce as MR
-import org.mongodb.operation.MapReduceOutput
 import spock.lang.Specification
 
-class MapReduceCommandSpecification extends Specification {
+class MapReduceOperationSpecification extends Specification {
 
     def setupSpec() {
         Map.metaClass.asType = { Class type ->
@@ -36,7 +35,7 @@ class MapReduceCommandSpecification extends Specification {
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert into correct documents'() {
         expect:
-        Document document = new MapReduce(mapReduce, 'foo').toDocument();
+        Document document = MapReduceOperation.createCommandDocument('foo', mapReduce);
         document.get('query') == query
         document.get('sort') == sort
         document.get('limit') == limit
@@ -65,7 +64,7 @@ class MapReduceCommandSpecification extends Specification {
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert output into correct document'() {
         expect:
-        new MapReduce(mapReduce, 'foo').toDocument().get('out') == document
+        MapReduceOperation.createCommandDocument('foo', mapReduce).get('out') == document
 
         where:
         output << [

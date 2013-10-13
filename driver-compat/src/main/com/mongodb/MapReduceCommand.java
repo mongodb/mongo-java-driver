@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.types.Code;
 import org.mongodb.Document;
-import org.mongodb.command.Command;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOutput;
 
@@ -357,10 +356,6 @@ public class MapReduceCommand {
         MERGE,
         REDUCE,
         INLINE
-    }
-
-    Command toNew() {
-        return new org.mongodb.command.MapReduce(getMapReduceBean(), this.mapReduce);
     }
 
     public MapReduce getMapReduceBean() {

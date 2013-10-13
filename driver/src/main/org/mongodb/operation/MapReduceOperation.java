@@ -59,7 +59,7 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
         this.namespace = namespace;
         this.readPreference = readPreference;
         this.resultDecoder = resultDecoder;
-        this.command = org.mongodb.command.MapReduce.asDocument(mapReduce, namespace.getCollectionName());
+        this.command = createCommandDocument(namespace.getCollectionName(), mapReduce);
     }
 
     /**
@@ -74,11 +74,39 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
         return new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, resultDecoder, getBufferProvider(),
                                    provider.getServerDescription(), provider.getConnection(), true)
                    .execute();
-
     }
 
     private ServerConnectionProviderOptions getServerConnectionProviderOptions() {
         return new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(readPreference));
+    }
+
+    /*
+     * Package protected so that it can be tested.  Not my favourite solution but the best way to test given the current architecture.
+     */
+    static Document createCommandDocument(final String collectionName, final MapReduce mapReduce) {
+
+        return new Document("mapReduce", collectionName).append("map", mapReduce.getMapFunction())
+                                                        .append("reduce", mapReduce.getReduceFunction())
+                                                        .append("out", mapReduce.isInline() ? new Document("inline", 1)
+                                                                                            : outputAsDocument(mapReduce.getOutput()))
+                                                        .append("query", mapReduce.getFilter())
+                                                        .append("sort", mapReduce.getSortCriteria())
+                                                        .append("limit", mapReduce.getLimit())
+                                                        .append("finalize", mapReduce.getFinalizeFunction())
+                                                        .append("scope", mapReduce.getScope())
+                                                        .append("jsMode", mapReduce.isJsMode())
+                                                        .append("verbose", mapReduce.isVerbose());
+    }
+
+    private static Document outputAsDocument(final MapReduceOutput output) {
+        Document document = new Document(output.getAction().getValue(), output.getCollectionName());
+        if (output.getDatabaseName() != null) {
+            document.append("db", output.getDatabaseName());
+        }
+        document.append("sharded", output.isSharded());
+        document.append("nonAtomic", output.isNonAtomic());
+
+        return document;
     }
 
 }
