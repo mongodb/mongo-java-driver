@@ -52,6 +52,11 @@ public class MongoOptionsTest extends TestCase {
         options.readPreference = ReadPreference.secondary();
         options.cursorFinalizerEnabled = true;
         options.alwaysUseMBeans = true;
+        options.heartbeatFrequencyMS = 5;
+        options.heartbeatConnectRetryFrequencyMS = 10;
+        options.heartbeatConnectTimeoutMS = 20;
+        options.heartbeatReadTimeoutMS = 23;
+        options.acceptableLatencyDifferenceMS = 42;
 
         final MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);

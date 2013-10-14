@@ -1,11 +1,3 @@
-package com.mongodb;
-
-import junit.framework.Assert;
-import org.testng.annotations.Test;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
-
 /**
  * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
  * <p/>
@@ -22,82 +14,161 @@ import javax.net.ssl.SSLSocketFactory;
  * limitations under the License.
  */
 
+package com.mongodb;
+
+import org.testng.annotations.Test;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
+import static com.mongodb.util.MyAsserts.assertEquals;
+import static com.mongodb.util.MyAsserts.assertNotNull;
+import static com.mongodb.util.MyAsserts.fail;
+
 public class MongoClientOptionsTest {
 
     @Test
     public void testBuilderDefaults() {
         MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         MongoClientOptions options = builder.build();
-        Assert.assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
-        Assert.assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
-        Assert.assertEquals(null, options.getDescription());
-        Assert.assertEquals(SocketFactory.getDefault(), options.getSocketFactory());
-        Assert.assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
-        Assert.assertEquals(100, options.getConnectionsPerHost());
-        Assert.assertEquals(10000, options.getConnectTimeout());
-        Assert.assertEquals(0, options.getMaxAutoConnectRetryTime());
-        Assert.assertEquals(ReadPreference.primary(), options.getReadPreference());
-        Assert.assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
-        Assert.assertEquals(false, options.isSocketKeepAlive());
-        Assert.assertEquals(true, options.isCursorFinalizerEnabled());
-        Assert.assertEquals(false, options.isAutoConnectRetry());
-        Assert.assertEquals(false, options.isAlwaysUseMBeans());
+        assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
+        assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
+        assertEquals(null, options.getDescription());
+        assertEquals(SocketFactory.getDefault(), options.getSocketFactory());
+        assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
+        assertEquals(100, options.getConnectionsPerHost());
+        assertEquals(120000, options.getMaxWaitTime());
+        assertEquals(10000, options.getConnectTimeout());
+        assertEquals(0, options.getMaxAutoConnectRetryTime());
+        assertEquals(ReadPreference.primary(), options.getReadPreference());
+        assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
+        assertEquals(false, options.isSocketKeepAlive());
+        assertEquals(true, options.isCursorFinalizerEnabled());
+        assertEquals(false, options.isAutoConnectRetry());
+        assertEquals(false, options.isAlwaysUseMBeans());
+        assertEquals(5000, options.getHeartbeatFrequency());
+        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(20000, options.getHeartbeatConnectTimeout());
+        assertEquals(20000, options.getHeartbeatSocketTimeout());
+        assertEquals(0, options.getHeartbeatThreadCount());
+        assertEquals(15, options.getAcceptableLatencyDifference());
     }
+
+    @Test
+    public void testSystemProperties() {
+        try {
+            System.setProperty("com.mongodb.updaterIntervalMS", "6000");
+            System.setProperty("com.mongodb.updaterIntervalNoMasterMS", "20");
+            System.setProperty("com.mongodb.updaterConnectTimeoutMS", "30000");
+            System.setProperty("com.mongodb.updaterSocketTimeoutMS", "40000");
+            System.setProperty("com.mongodb.slaveAcceptableLatencyMS", "25");
+
+            MongoClientOptions options = MongoClientOptions.builder().build();
+            assertEquals(options.getHeartbeatFrequency(), 6000);
+            assertEquals(options.getHeartbeatConnectRetryFrequency(), 20);
+            assertEquals(options.getHeartbeatConnectTimeout(), 30000);
+            assertEquals(options.getHeartbeatSocketTimeout(), 40000);
+            assertEquals(options.getAcceptableLatencyDifference(), 25);
+        } finally {
+            System.setProperty("com.mongodb.updaterIntervalMS", "5000");
+            System.setProperty("com.mongodb.updaterIntervalNoMasterMS", "10");
+            System.setProperty("com.mongodb.updaterConnectTimeoutMS", "20000");
+            System.setProperty("com.mongodb.updaterSocketTimeoutMS", "20000");
+            System.setProperty("com.mongodb.slaveAcceptableLatencyMS", "15");
+        }
+    }
+
 
     @Test
     public void testIllegalArguments() {
         MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         try {
           builder.dbDecoderFactory(null);
-          Assert.fail();
+          fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.dbEncoderFactory(null);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.socketFactory(null);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.writeConcern(null);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.readPreference(null);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.connectionsPerHost(0);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.connectTimeout(-1);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.maxAutoConnectRetryTime(-1);
-            Assert.fail();
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
         try {
             builder.threadsAllowedToBlockForConnectionMultiplier(0);
-            Assert.fail();
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.heartbeatFrequency(0);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.heartbeatConnectRetryFrequency(0);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.heartbeatConnectTimeout(-1);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.heartbeatSocketTimeout(-1);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.heartbeatThreadCount(0);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
+            builder.acceptableLatencyDifference(-1);
+            fail("should not get here");
         } catch (IllegalArgumentException e) {
             // all good
         }
@@ -119,6 +190,12 @@ public class MongoClientOptionsTest {
         builder.socketKeepAlive(true);
         builder.cursorFinalizerEnabled(true);
         builder.alwaysUseMBeans(true);
+        builder.acceptableLatencyDifference(41);
+        builder.heartbeatFrequency(51);
+        builder.heartbeatConnectRetryFrequency(52);
+        builder.heartbeatConnectTimeout(53);
+        builder.heartbeatSocketTimeout(54);
+        builder.heartbeatThreadCount(4);
 
         SocketFactory socketFactory = SSLSocketFactory.getDefault();
         builder.socketFactory(socketFactory);
@@ -139,34 +216,40 @@ public class MongoClientOptionsTest {
 
         MongoClientOptions options = builder.build();
 
-        Assert.assertEquals("test", options.getDescription());
-        Assert.assertEquals(ReadPreference.secondary(), options.getReadPreference());
-        Assert.assertEquals(WriteConcern.JOURNAL_SAFE, options.getWriteConcern());
-        Assert.assertEquals(true, options.isAutoConnectRetry());
-        Assert.assertEquals(500, options.getConnectionsPerHost());
-        Assert.assertEquals(100, options.getConnectTimeout());
-        Assert.assertEquals(300, options.getMaxAutoConnectRetryTime());
-        Assert.assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
-        Assert.assertEquals(true, options.isSocketKeepAlive());
-        Assert.assertEquals(true, options.isCursorFinalizerEnabled());
-        Assert.assertEquals(true, options.isAlwaysUseMBeans());
+        assertEquals("test", options.getDescription());
+        assertEquals(ReadPreference.secondary(), options.getReadPreference());
+        assertEquals(WriteConcern.JOURNAL_SAFE, options.getWriteConcern());
+        assertEquals(true, options.isAutoConnectRetry());
+        assertEquals(500, options.getConnectionsPerHost());
+        assertEquals(100, options.getConnectTimeout());
+        assertEquals(300, options.getMaxAutoConnectRetryTime());
+        assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
+        assertEquals(true, options.isSocketKeepAlive());
+        assertEquals(true, options.isCursorFinalizerEnabled());
+        assertEquals(true, options.isAlwaysUseMBeans());
+        assertEquals(41, options.getAcceptableLatencyDifference());
+        assertEquals(51, options.getHeartbeatFrequency());
+        assertEquals(52, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(53, options.getHeartbeatConnectTimeout());
+        assertEquals(54, options.getHeartbeatSocketTimeout());
+        assertEquals(4, options.getHeartbeatThreadCount());
 
-        Assert.assertEquals(socketFactory, options.getSocketFactory());
-        Assert.assertEquals(encoderFactory, options.getDbEncoderFactory());
-        Assert.assertEquals(decoderFactory, options.getDbDecoderFactory());
+        assertEquals(socketFactory, options.getSocketFactory());
+        assertEquals(encoderFactory, options.getDbEncoderFactory());
+        assertEquals(decoderFactory, options.getDbDecoderFactory());
     }
 
     @Test
     public void testStaticBuilderCreate() {
-        Assert.assertNotNull(MongoClientOptions.builder());
+        assertNotNull(MongoClientOptions.builder());
     }
 
     @Test
     public void testEqualsAndHashCode() {
-        Assert.assertEquals(MongoClientOptions.builder().build(), MongoClientOptions.builder().build());
-        Assert.assertEquals(MongoClientOptions.builder().build().hashCode(), MongoClientOptions.builder().build().hashCode());
+        assertEquals(MongoClientOptions.builder().build(), MongoClientOptions.builder().build());
+        assertEquals(MongoClientOptions.builder().build().hashCode(), MongoClientOptions.builder().build().hashCode());
 
-        Assert.assertEquals(MongoClientOptions.builder().socketFactory(SSLSocketFactory.getDefault()).build(),
+        assertEquals(MongoClientOptions.builder().socketFactory(SSLSocketFactory.getDefault()).build(),
                 MongoClientOptions.builder().socketFactory(SSLSocketFactory.getDefault()).build());
     }
 }

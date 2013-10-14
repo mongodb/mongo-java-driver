@@ -41,12 +41,6 @@ import static org.bson.util.Assertions.isTrue;
 @Deprecated
 public class DBTCPConnector implements DBConnector {
 
-    private static int heartbeatFrequencyMS;
-    private static int connectRetryFrequencyMS;
-    private static int heartbeatConnectTimeoutMS;
-    private static int heartbeatReadTimeoutMS;
-    private static final int acceptableLatencyMS;
-
     private volatile boolean _closed;
 
     private final Mongo _mongo;
@@ -58,14 +52,6 @@ public class DBTCPConnector implements DBConnector {
     private final MyPort _myPort = new MyPort();
 
     private ServerSelector prefixedServerSelector;
-
-    static {
-        heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
-        connectRetryFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
-        heartbeatConnectTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
-        heartbeatReadTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
-        acceptableLatencyMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
-    }
 
     /**
      * @param mongo the Mongo instance
@@ -79,19 +65,22 @@ public class DBTCPConnector implements DBConnector {
     public void start() {
         isTrue("open", !_closed);
 
-        scheduledExecutorService = Executors.newScheduledThreadPool(_mongo.getAuthority().getServerAddresses().size());
+        MongoOptions options = _mongo.getMongoOptions();
+        scheduledExecutorService = Executors.newScheduledThreadPool(options.heartbeatThreadCount > 0 ?
+                                                                    options.heartbeatThreadCount :
+                                                                    _mongo.getAuthority().getServerAddresses().size());
         cluster =
         Clusters.create(ClusterSettings.builder()
                                        .hosts(_mongo.getAuthority().getServerAddresses())
                                        .mode(_mongo.getAuthority().getType() == Direct ? Single : Multiple)
                                        .build(),
                         ServerSettings.builder()
-                                      .heartbeatFrequency(heartbeatFrequencyMS, MILLISECONDS)
-                                      .heartbeatConnectRetryFrequency(connectRetryFrequencyMS, MILLISECONDS)
+                                      .heartbeatFrequency(options.heartbeatFrequencyMS, MILLISECONDS)
+                                      .heartbeatConnectRetryFrequency(options.heartbeatConnectRetryFrequencyMS, MILLISECONDS)
                                       .heartbeatSocketSettings(SocketSettings.builder()
-                                                                             .connectTimeout(heartbeatConnectTimeoutMS,
+                                                                             .connectTimeout(options.heartbeatConnectTimeoutMS,
                                                                                              MILLISECONDS)
-                                                                             .readTimeout(heartbeatReadTimeoutMS, MILLISECONDS)
+                                                                             .readTimeout(options.heartbeatReadTimeoutMS, MILLISECONDS)
                                                                              .socketFactory(_mongo.getMongoOptions().getSocketFactory())
                                                                              .build())
                                       .build(),
@@ -543,7 +532,8 @@ public class DBTCPConnector implements DBConnector {
     private ServerSelector createServerSelector(final ReadPreference readPref) {
         return new CompositeServerSelector(Arrays.asList(getPrefixedServerSelector(),
                                                         new ReadPreferenceServerSelector(readPref),
-                                                        new LatencyMinimizingServerSelector(acceptableLatencyMS, MILLISECONDS)));
+                                                        new LatencyMinimizingServerSelector(_mongo.getMongoOptions()
+                                                                                            .acceptableLatencyDifferenceMS, MILLISECONDS)));
     }
 
     private synchronized ServerSelector getPrefixedServerSelector() {

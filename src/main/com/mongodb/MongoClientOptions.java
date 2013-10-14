@@ -56,6 +56,114 @@ public class MongoClientOptions {
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
         private boolean alwaysUseMBeans = false;
+        private int heartbeatFrequency = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
+        private int heartbeatConnectRetryFrequency = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
+        private int heartbeatConnectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        private int heartbeatSocketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+        private int heartbeatThreadCount;
+        private int acceptableLatencyDifference = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+
+        /**
+         * Sets the heartbeat frequency.
+         *
+         * @param heartbeatFrequency the heartbeat frequency, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatFrequency < 1
+         * @see com.mongodb.MongoClientOptions#getHeartbeatFrequency()
+         * @since 2.12.0
+         */
+        public Builder heartbeatFrequency(final int heartbeatFrequency) {
+            if (heartbeatFrequency < 1) {
+                throw new IllegalArgumentException("heartbeatFrequency must be greater than 0");
+            }
+            this.heartbeatFrequency = heartbeatFrequency;
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat connect retry frequency.
+         *
+         * @param heartbeatConnectRetryFrequency the heartbeat connect retry frequency, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatConnectRetryFrequency < 1
+         * @see com.mongodb.MongoClientOptions#getHeartbeatConnectRetryFrequency()
+         * @since 2.12.0
+         */
+        public Builder heartbeatConnectRetryFrequency(final int heartbeatConnectRetryFrequency) {
+            if (heartbeatConnectRetryFrequency < 1) {
+                throw new IllegalArgumentException("heartbeatConnectRetryFrequency must be greater than 0");
+            }
+            this.heartbeatConnectRetryFrequency = heartbeatConnectRetryFrequency;
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat connect timeout.
+         *
+         * @param heartbeatConnectTimeout the heartbeat connect timeout, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatConnectTimeout < 0
+         * @see com.mongodb.MongoClientOptions#getHeartbeatConnectTimeout()
+         * @since 2.12.0
+         */
+        public Builder heartbeatConnectTimeout(final int heartbeatConnectTimeout) {
+            if (heartbeatConnectTimeout < 0) {
+                throw new IllegalArgumentException("heartbeatConnectTimeout must be greater than or equal to 0");
+            }
+            this.heartbeatConnectTimeout = heartbeatConnectTimeout;
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat connect socket timeout.
+         *
+         * @param heartbeatSocketTimeout the heartbeat socket timeout, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatSocketTimeout < 0
+         * @see com.mongodb.MongoClientOptions#getHeartbeatSocketTimeout()
+         * @since 2.12.0
+         */
+        public Builder heartbeatSocketTimeout(final int heartbeatSocketTimeout) {
+            if (heartbeatSocketTimeout < 0) {
+                throw new IllegalArgumentException("heartbeatSocketTimeout must be greater than or equal to 0");
+            }
+            this.heartbeatSocketTimeout = heartbeatSocketTimeout;
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat thread count.
+         *
+         * @param heartbeatThreadCount the heartbeat thread count
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @see MongoClientOptions#getHeartbeatThreadCount()
+         * @since 2.12.0
+         */
+        public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
+            if (heartbeatThreadCount < 1) {
+                throw new IllegalArgumentException("heartbeatThreadCount must be greater than 0");
+            }
+            this.heartbeatThreadCount = heartbeatThreadCount;
+            return this;
+        }
+
+        /**
+         * Sets the acceptable latency difference.
+         *
+         * @param acceptableLatencyDifference the acceptable latency different, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
+         * @since 2.12.0
+         */
+        public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
+            if (acceptableLatencyDifference < 0) {
+                throw new IllegalArgumentException("acceptableLatencyDifference must be greater than or equal to 0");
+            }
+            this.acceptableLatencyDifference = acceptableLatencyDifference;
+            return this;
+        }
 
         /**
          * Sets the description.
@@ -511,31 +619,153 @@ public class MongoClientOptions {
         return alwaysUseMBeans;
     }
 
+    /**
+     * Gets the heartbeat frequency. This is the frequency that a background thread will attempt to connect to each MongoDB server that
+     * the MongoClient is connected to.
+     * <p>
+     * The default value is 5,000 milliseconds.
+     * </p>
+     *
+     * @return the heartbeat frequency, in milliseconds
+     * @since 2.12.0
+     */
+    public int getHeartbeatFrequency() {
+        return heartbeatFrequency;
+    }
+
+    /**
+     * Gets the heartbeat connect retry frequency. This is the frequency that a background thread will attempt to connect to each MongoDB
+     * server that the MongoClient is connected to, when that server is currently unreachable.
+     * <p>
+     * The default value is 10 milliseconds.
+     * </p>
+     *
+     * @return the heartbeat connect retry frequency, in milliseconds
+     * @since 2.12.0
+     */
+    public int getHeartbeatConnectRetryFrequency() {
+        return heartbeatConnectRetryFrequency;
+    }
+
+    /**
+     * Gets the heartbeat connect timeout. This is the socket connect timeout for sockets used by the background thread that is
+     * monitoring each MongoDB server that the MongoClient is connected to.
+     * <p>
+     * The default value is 20,000 milliseconds.
+     * </p>
+     *
+     * @return the heartbeat connect timeout, in milliseconds
+     * @since 2.12.0
+     */
+    public int getHeartbeatConnectTimeout() {
+        return heartbeatConnectTimeout;
+    }
+
+    /**
+     * Gets the heartbeat socket timeout. This is the socket timeout for sockets used by the background thread that is monitoring each
+     * MongoDB server that the MongoClient is connected to.
+     * <p>
+     * The default value is 20,000 milliseconds.
+     * </p>
+
+     * @return the heartbeat socket timeout, in milliseconds
+     * @since 2.12.0
+     */
+    public int getHeartbeatSocketTimeout() {
+        return heartbeatSocketTimeout;
+    }
+
+    /**
+     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
+     * MongoClient is connected to.
+     *
+     * <p>
+     * The default value is the number of servers in the seed list.
+     * </p>
+     * @return the heartbeat thread count
+     * @since 2.12.0
+     */
+    public int getHeartbeatThreadCount() {
+        return heartbeatThreadCount;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final MongoClientOptions that = (MongoClientOptions) o;
 
-        if (alwaysUseMBeans != that.alwaysUseMBeans) return false;
-        if (autoConnectRetry != that.autoConnectRetry) return false;
-        if (connectTimeout != that.connectTimeout) return false;
-        if (connectionsPerHost != that.connectionsPerHost) return false;
-        if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) return false;
-        if (maxAutoConnectRetryTime != that.maxAutoConnectRetryTime) return false;
-        if (maxWaitTime != that.maxWaitTime) return false;
-        if (socketKeepAlive != that.socketKeepAlive) return false;
-        if (socketTimeout != that.socketTimeout) return false;
-        if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier)
+        if (acceptableLatencyDifference != that.acceptableLatencyDifference) {
             return false;
-        if (!dbDecoderFactory.equals(that.dbDecoderFactory)) return false;
-        if (!dbEncoderFactory.equals(that.dbEncoderFactory)) return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (!readPreference.equals(that.readPreference)) return false;
-        // Compare SocketFactory Class, since some equivalent SocketFactory instances are not equal to each other
-        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) return false;
-        if (!writeConcern.equals(that.writeConcern)) return false;
+        }
+        if (alwaysUseMBeans != that.alwaysUseMBeans) {
+            return false;
+        }
+        if (autoConnectRetry != that.autoConnectRetry) {
+            return false;
+        }
+        if (connectTimeout != that.connectTimeout) {
+            return false;
+        }
+        if (connectionsPerHost != that.connectionsPerHost) {
+            return false;
+        }
+        if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) {
+            return false;
+        }
+        if (heartbeatConnectRetryFrequency != that.heartbeatConnectRetryFrequency) {
+            return false;
+        }
+        if (heartbeatConnectTimeout != that.heartbeatConnectTimeout) {
+            return false;
+        }
+        if (heartbeatFrequency != that.heartbeatFrequency) {
+            return false;
+        }
+        if (heartbeatSocketTimeout != that.heartbeatSocketTimeout) {
+            return false;
+        }
+        if (heartbeatThreadCount != that.heartbeatThreadCount) {
+            return false;
+        }
+        if (maxAutoConnectRetryTime != that.maxAutoConnectRetryTime) {
+            return false;
+        }
+        if (maxWaitTime != that.maxWaitTime) {
+            return false;
+        }
+        if (socketKeepAlive != that.socketKeepAlive) {
+            return false;
+        }
+        if (socketTimeout != that.socketTimeout) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
+            return false;
+        }
+        if (!dbDecoderFactory.equals(that.dbDecoderFactory)) {
+            return false;
+        }
+        if (!dbEncoderFactory.equals(that.dbEncoderFactory)) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (!readPreference.equals(that.readPreference)) {
+            return false;
+        }
+        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) {
+            return false;
+        }
+        if (!writeConcern.equals(that.writeConcern)) {
+            return false;
+        }
 
         return true;
     }
@@ -558,8 +788,37 @@ public class MongoClientOptions {
         result = 31 * result + socketFactory.hashCode();
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        result = 31 * result + heartbeatFrequency;
+        result = 31 * result + heartbeatConnectRetryFrequency;
+        result = 31 * result + heartbeatConnectTimeout;
+        result = 31 * result + heartbeatSocketTimeout;
+        result = 31 * result + heartbeatThreadCount;
+        result = 31 * result + acceptableLatencyDifference;
         return result;
     }
+
+    /**
+     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
+     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
+     * time plus the acceptable latency difference.
+     * <p>
+     * For example, let's say that the client is choosing a server to send a query when
+     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
+     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
+     * the client will send the query to either server1 or server2 (randomly selecting between the two).
+     * </p>
+     * <p>
+     * The default value is 15 milliseconds.
+     * </p>
+     *
+
+     * @return the acceptable latency difference, in milliseconds
+     * @since 2.12.0
+     */
+    public int getAcceptableLatencyDifference() {
+        return acceptableLatencyDifference;
+    }
+
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
@@ -578,6 +837,12 @@ public class MongoClientOptions {
         socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
+        heartbeatFrequency = builder.heartbeatFrequency;
+        heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
+        heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
+        heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
+        heartbeatThreadCount = builder.heartbeatThreadCount;
+        acceptableLatencyDifference = builder.acceptableLatencyDifference;
     }
 
 
@@ -597,4 +862,10 @@ public class MongoClientOptions {
     private final SocketFactory socketFactory;
     private final boolean cursorFinalizerEnabled;
     private final boolean alwaysUseMBeans;
+    private final int heartbeatFrequency;
+    private final int heartbeatConnectRetryFrequency;
+    private final int heartbeatConnectTimeout;
+    private final int heartbeatSocketTimeout;
+    private final int heartbeatThreadCount;
+    private final int acceptableLatencyDifference;
 }

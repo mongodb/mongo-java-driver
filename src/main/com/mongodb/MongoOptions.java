@@ -59,6 +59,12 @@ public class MongoOptions {
         writeConcern = options.getWriteConcern();
         slaveOk = false; // default to false, as readPreference field will be responsible
         alwaysUseMBeans = options.isAlwaysUseMBeans();
+        heartbeatFrequencyMS = options.getHeartbeatFrequency();
+        heartbeatConnectRetryFrequencyMS = options.getHeartbeatConnectRetryFrequency();
+        heartbeatConnectTimeoutMS = options.getHeartbeatConnectTimeout();
+        heartbeatReadTimeoutMS = options.getHeartbeatSocketTimeout();
+        heartbeatThreadCount = options.getHeartbeatThreadCount();
+        acceptableLatencyDifferenceMS = options.getAcceptableLatencyDifference();
     }
 
     public void reset(){
@@ -84,6 +90,12 @@ public class MongoOptions {
         description = null;
         cursorFinalizerEnabled = true;
         alwaysUseMBeans = false;
+        heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
+        heartbeatConnectRetryFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
+        heartbeatConnectTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
+        heartbeatReadTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
+        heartbeatThreadCount = 0;
+        acceptableLatencyDifferenceMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
     }
 
     public MongoOptions copy() {
@@ -110,6 +122,12 @@ public class MongoOptions {
         m.description = description;
         m.cursorFinalizerEnabled = cursorFinalizerEnabled;
         m.alwaysUseMBeans = alwaysUseMBeans;
+        m.heartbeatFrequencyMS = heartbeatFrequencyMS;
+        m.heartbeatConnectRetryFrequencyMS = heartbeatConnectRetryFrequencyMS;
+        m.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
+        m.heartbeatReadTimeoutMS = heartbeatReadTimeoutMS;
+        m.heartbeatThreadCount = heartbeatThreadCount;
+        m.acceptableLatencyDifferenceMS = acceptableLatencyDifferenceMS;
         return m;
     }
 
@@ -130,38 +148,99 @@ public class MongoOptions {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final MongoOptions options = (MongoOptions) o;
 
-        if (autoConnectRetry != options.autoConnectRetry) return false;
-        if (connectTimeout != options.connectTimeout) return false;
-        if (connectionsPerHost != options.connectionsPerHost) return false;
-        if (cursorFinalizerEnabled != options.cursorFinalizerEnabled) return false;
-        if (fsync != options.fsync) return false;
-        if (j != options.j) return false;
-        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) return false;
-        if (maxWaitTime != options.maxWaitTime) return false;
-        if (safe != options.safe) return false;
-        if (slaveOk != options.slaveOk) return false;
-        if (socketKeepAlive != options.socketKeepAlive) return false;
-        if (socketTimeout != options.socketTimeout) return false;
-        if (threadsAllowedToBlockForConnectionMultiplier != options.threadsAllowedToBlockForConnectionMultiplier)
+        if (acceptableLatencyDifferenceMS != options.acceptableLatencyDifferenceMS) {
             return false;
-        if (w != options.w) return false;
-        if (wtimeout != options.wtimeout) return false;
-        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(options.dbDecoderFactory) : options.dbDecoderFactory != null)
+        }
+        if (alwaysUseMBeans != options.alwaysUseMBeans) {
             return false;
-        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(options.dbEncoderFactory) : options.dbEncoderFactory != null)
+        }
+        if (autoConnectRetry != options.autoConnectRetry) {
             return false;
-        if (description != null ? !description.equals(options.description) : options.description != null) return false;
-        if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null)
+        }
+        if (connectTimeout != options.connectTimeout) {
             return false;
-        if (socketFactory != null ? !socketFactory.equals(options.socketFactory) : options.socketFactory != null)
+        }
+        if (connectionsPerHost != options.connectionsPerHost) {
             return false;
-        if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null)
+        }
+        if (cursorFinalizerEnabled != options.cursorFinalizerEnabled) {
             return false;
+        }
+        if (fsync != options.fsync) {
+            return false;
+        }
+        if (heartbeatConnectRetryFrequencyMS != options.heartbeatConnectRetryFrequencyMS) {
+            return false;
+        }
+        if (heartbeatConnectTimeoutMS != options.heartbeatConnectTimeoutMS) {
+            return false;
+        }
+        if (heartbeatFrequencyMS != options.heartbeatFrequencyMS) {
+            return false;
+        }
+        if (heartbeatReadTimeoutMS != options.heartbeatReadTimeoutMS) {
+            return false;
+        }
+        if (heartbeatThreadCount != options.heartbeatThreadCount) {
+            return false;
+        }
+        if (j != options.j) {
+            return false;
+        }
+        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) {
+            return false;
+        }
+        if (maxWaitTime != options.maxWaitTime) {
+            return false;
+        }
+        if (safe != options.safe) {
+            return false;
+        }
+        if (slaveOk != options.slaveOk) {
+            return false;
+        }
+        if (socketKeepAlive != options.socketKeepAlive) {
+            return false;
+        }
+        if (socketTimeout != options.socketTimeout) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != options.threadsAllowedToBlockForConnectionMultiplier) {
+            return false;
+        }
+        if (w != options.w) {
+            return false;
+        }
+        if (wtimeout != options.wtimeout) {
+            return false;
+        }
+        if (!dbDecoderFactory.equals(options.dbDecoderFactory)) {
+            return false;
+        }
+        if (!dbEncoderFactory.equals(options.dbEncoderFactory)) {
+            return false;
+        }
+        if (description != null ? !description.equals(options.description) : options.description != null) {
+            return false;
+        }
+        if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null) {
+            return false;
+        }
+        if (!socketFactory.equals(options.socketFactory)) {
+            return false;
+        }
+        if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null) {
+            return false;
+        }
 
         return true;
     }
@@ -179,16 +258,23 @@ public class MongoOptions {
         result = 31 * result + (int) (maxAutoConnectRetryTime ^ (maxAutoConnectRetryTime >>> 32));
         result = 31 * result + (slaveOk ? 1 : 0);
         result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
-        result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
-        result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
+        result = 31 * result + dbDecoderFactory.hashCode();
+        result = 31 * result + dbEncoderFactory.hashCode();
         result = 31 * result + (safe ? 1 : 0);
         result = 31 * result + w;
         result = 31 * result + wtimeout;
         result = 31 * result + (fsync ? 1 : 0);
         result = 31 * result + (j ? 1 : 0);
-        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
+        result = 31 * result + socketFactory.hashCode();
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
+        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        result = 31 * result + heartbeatFrequencyMS;
+        result = 31 * result + heartbeatConnectRetryFrequencyMS;
+        result = 31 * result + heartbeatConnectTimeoutMS;
+        result = 31 * result + heartbeatReadTimeoutMS;
+        result = 31 * result + acceptableLatencyDifferenceMS;
+        result = 31 * result + heartbeatThreadCount;
         return result;
     }
 
@@ -358,6 +444,13 @@ public class MongoOptions {
      * </p>
      */
     public boolean alwaysUseMBeans;
+
+    int heartbeatFrequencyMS;
+    int heartbeatConnectRetryFrequencyMS;
+    int heartbeatConnectTimeoutMS;
+    int heartbeatReadTimeoutMS;
+    int acceptableLatencyDifferenceMS;
+    int heartbeatThreadCount;
 
     /**
      * @return The description for <code>MongoClient</code> instances created with these options
