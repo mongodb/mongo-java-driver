@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2011 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,8 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
-
 import com.mongodb.util.TestCase;
+import org.testng.annotations.Test;
 
 /**
  * The mongo options test.
@@ -57,6 +56,9 @@ public class MongoOptionsTest extends TestCase {
         options.heartbeatConnectTimeoutMS = 20;
         options.heartbeatReadTimeoutMS = 23;
         options.acceptableLatencyDifferenceMS = 42;
+        options.minConnectionsPerHost = 5;
+        options.maxConnectionIdleTime = 50000;
+        options.maxConnectionLifeTime = 500000;
 
         final MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -79,6 +81,9 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.description, copy.description);
         assertEquals(options.readPreference, copy.readPreference);
         assertEquals(options.alwaysUseMBeans, copy.alwaysUseMBeans);
+        assertEquals(options.minConnectionsPerHost, copy.minConnectionsPerHost);
+        assertEquals(options.maxConnectionIdleTime, copy.maxConnectionIdleTime);
+        assertEquals(options.maxConnectionLifeTime, copy.maxConnectionLifeTime);
     }
 
     @Test

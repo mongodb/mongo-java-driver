@@ -1,20 +1,20 @@
-// MongoOptions.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// MongoOptions.java
 
 package com.mongodb;
 
@@ -59,6 +59,9 @@ public class MongoOptions {
         writeConcern = options.getWriteConcern();
         slaveOk = false; // default to false, as readPreference field will be responsible
         alwaysUseMBeans = options.isAlwaysUseMBeans();
+        minConnectionsPerHost = options.getMinConnectionsPerHost();
+        maxConnectionIdleTime = options.getMaxConnectionIdleTime();
+        maxConnectionLifeTime = options.getMaxConnectionLifeTime();
         heartbeatFrequencyMS = options.getHeartbeatFrequency();
         heartbeatConnectRetryFrequencyMS = options.getHeartbeatConnectRetryFrequency();
         heartbeatConnectTimeoutMS = options.getHeartbeatConnectTimeout();
@@ -90,6 +93,9 @@ public class MongoOptions {
         description = null;
         cursorFinalizerEnabled = true;
         alwaysUseMBeans = false;
+        minConnectionsPerHost = 0;
+        maxConnectionIdleTime = 0;
+        maxConnectionLifeTime = 0;
         heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
         heartbeatConnectRetryFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
         heartbeatConnectTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
@@ -122,6 +128,9 @@ public class MongoOptions {
         m.description = description;
         m.cursorFinalizerEnabled = cursorFinalizerEnabled;
         m.alwaysUseMBeans = alwaysUseMBeans;
+        m.minConnectionsPerHost = minConnectionsPerHost;
+        m.maxConnectionIdleTime = maxConnectionIdleTime;
+        m.maxConnectionLifeTime = maxConnectionLifeTime;
         m.heartbeatFrequencyMS = heartbeatFrequencyMS;
         m.heartbeatConnectRetryFrequencyMS = heartbeatConnectRetryFrequencyMS;
         m.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
@@ -444,6 +453,10 @@ public class MongoOptions {
      * </p>
      */
     public boolean alwaysUseMBeans;
+
+    int minConnectionsPerHost;
+    int maxConnectionIdleTime;
+    int maxConnectionLifeTime;
 
     int heartbeatFrequencyMS;
     int heartbeatConnectRetryFrequencyMS;

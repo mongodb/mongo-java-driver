@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb;
@@ -40,9 +41,12 @@ public class MongoClientOptions {
     public static class Builder {
 
         private String description;
+        private int minConnectionsPerHost;
         private int connectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
         private int maxWaitTime = 1000 * 60 * 2;
+        private int maxConnectionIdleTime;
+        private int maxConnectionLifeTime;
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean socketKeepAlive = false;
@@ -177,6 +181,22 @@ public class MongoClientOptions {
         }
 
         /**
+         * Sets the minimum number of connections per host.
+         *
+         * @param minConnectionsPerHost minimum number of connections
+         * @return {@code this}
+         * @throws IllegalArgumentException if {@code minConnectionsPerHost < 0}
+         * @see MongoClientOptions#getMinConnectionsPerHost()
+         */
+        public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
+            if (minConnectionsPerHost < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.minConnectionsPerHost = minConnectionsPerHost;
+            return this;
+        }
+
+        /**
          * Sets the maximum number of connections per host.
          *
          * @param connectionsPerHost maximum number of connections
@@ -222,6 +242,38 @@ public class MongoClientOptions {
                 throw new IllegalArgumentException("Minimum value is 0");
             }
             this.maxWaitTime = maxWaitTime;
+            return this;
+        }
+
+        /**
+         * Sets the maximum idle time for a pooled connection.
+         *
+         * @param maxConnectionIdleTime the maximum idle time
+         * @return {@code this}
+         * @throws IllegalArgumentException if {@code maxConnectionIdleTime < 0}
+         * @see MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
+            if (maxConnectionIdleTime < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.maxConnectionIdleTime = maxConnectionIdleTime;
+            return this;
+        }
+
+        /**
+         * Sets the maximum life time for a pooled connection.
+         *
+         * @param maxConnectionLifeTime the maximum life time
+         * @return {@code this}
+         * @throws IllegalArgumentException if {@code maxConnectionIdleTime < 0}
+         * @see MongoClientOptions#getMaxConnectionIdleTime() ()
+         */
+        public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
+            if (maxConnectionLifeTime < 0) {
+                throw new IllegalArgumentException("Minimum value is 0");
+            }
+            this.maxConnectionLifeTime = maxConnectionLifeTime;
             return this;
         }
 
@@ -438,6 +490,18 @@ public class MongoClientOptions {
     }
 
     /**
+     * The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and the
+     * pool will ensure over time that it contains at least this minimum number.
+     * <p/>
+     * Default is 0.
+     *
+     * @return the minimum size of the connection pool per host
+     */
+    public int getMinConnectionsPerHost() {
+        return minConnectionsPerHost;
+    }
+
+    /**
      * The maximum number of connections allowed per host for this MongoClient instance.
      * Those connections will be kept in a pool when idle.
      * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
@@ -474,6 +538,26 @@ public class MongoClientOptions {
      */
     public int getMaxWaitTime() {
         return maxWaitTime;
+    }
+
+    /**
+     * The maximum idle time of a pooled connection.  A zero value indicates no limit to the idle time.  A pooled connection that has
+     * exceeded its idle time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum idle time, in milliseconds
+     */
+    public int getMaxConnectionIdleTime() {
+        return maxConnectionIdleTime;
+    }
+
+    /**
+     * The maximum life time of a pooled connection.  A zero value indicates no limit to the life time.  A pooled connection that has
+     * exceeded its life time will be closed and replaced when necessary by a new connection.
+     *
+     * @return the maximum life time, in milliseconds
+     */
+    public int getMaxConnectionLifeTime() {
+        return maxConnectionLifeTime;
     }
 
     /**
@@ -757,7 +841,16 @@ public class MongoClientOptions {
         if (maxAutoConnectRetryTime != that.maxAutoConnectRetryTime) {
             return false;
         }
+        if (maxConnectionIdleTime != that.maxConnectionIdleTime) {
+            return false;
+        }
+        if (maxConnectionLifeTime != that.maxConnectionLifeTime) {
+            return false;
+        }
         if (maxWaitTime != that.maxWaitTime) {
+            return false;
+        }
+        if (minConnectionsPerHost != that.minConnectionsPerHost) {
             return false;
         }
         if (socketKeepAlive != that.socketKeepAlive) {
@@ -794,9 +887,12 @@ public class MongoClientOptions {
     @Override
     public int hashCode() {
         int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + minConnectionsPerHost;
         result = 31 * result + connectionsPerHost;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
         result = 31 * result + maxWaitTime;
+        result = 31 * result + maxConnectionIdleTime;
+        result = 31 * result + maxConnectionLifeTime;
         result = 31 * result + connectTimeout;
         result = 31 * result + socketTimeout;
         result = 31 * result + (socketKeepAlive ? 1 : 0);
@@ -806,7 +902,7 @@ public class MongoClientOptions {
         result = 31 * result + dbDecoderFactory.hashCode();
         result = 31 * result + dbEncoderFactory.hashCode();
         result = 31 * result + writeConcern.hashCode();
-        result = 31 * result + socketFactory.hashCode();
+        result = 31 * result + (socketFactory != null ? socketFactory.getClass().hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         result = 31 * result + heartbeatFrequency;
@@ -848,9 +944,12 @@ public class MongoClientOptions {
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
+        minConnectionsPerHost = builder.minConnectionsPerHost;
         connectionsPerHost = builder.connectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
         maxWaitTime = builder.maxWaitTime;
+        maxConnectionIdleTime = builder.maxConnectionIdleTime;
+        maxConnectionLifeTime = builder.maxConnectionLifeTime;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
         autoConnectRetry = builder.autoConnectRetry;
@@ -873,9 +972,12 @@ public class MongoClientOptions {
 
 
     private final String description;
+    private final int minConnectionsPerHost;
     private final int connectionsPerHost;
     private final int threadsAllowedToBlockForConnectionMultiplier;
     private final int maxWaitTime;
+    private final int maxConnectionIdleTime;
+    private final int maxConnectionLifeTime;
     private final int connectTimeout;
     private final int socketTimeout;
     private final boolean socketKeepAlive;

@@ -40,7 +40,10 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         MongoOptions options = mongo.getMongoOptions();
         ConnectionPoolSettings connectionPoolSettings =
         ConnectionPoolSettings.builder()
+                              .minSize(options.minConnectionsPerHost)
                               .maxSize(options.getConnectionsPerHost())
+                              .maxConnectionIdleTime(options.maxConnectionIdleTime, MILLISECONDS)
+                              .maxConnectionLifeTime(options.maxConnectionLifeTime, MILLISECONDS)
                               .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                               .maxWaitTime(options.getMaxWaitTime(), MILLISECONDS)
                               .build();
