@@ -97,10 +97,6 @@ public class Mongo {
 
     private static final String ADMIN_DATABASE_NAME = "admin";
 
-    private static final String SPACE = " ";
-
-    private static final String MSG_INVALID_DB_NAME_FORMAT = "Invalid database name format. Database name cannot be empty or null, and it cannot contain spaces.";
-
     static {
         cleanerIntervalMS = Integer.parseInt(System.getProperty("com.mongodb.cleanerIntervalMS", "1000"));
     }
@@ -362,8 +358,6 @@ public class Mongo {
      * @return
      */
     public DB getDB( String dbname ){
-        if (!isDBNameInValidFormat( dbname ))
-            throw new MongoException(MSG_INVALID_DB_NAME_FORMAT);
 
         DB db = _dbs.get( dbname );
         if ( db != null )
@@ -725,15 +719,6 @@ public class Mongo {
             return res.getInt("fsyncLock") == 1;
         }
         return false;
-    }
-
-    /**
-     * Returns true if the database name is not empty or null, and does not contain any spaces.
-     * @param dbname
-     * @return
-     */
-    private boolean isDBNameInValidFormat(String dbname){
-        return dbname!=null && !dbname.isEmpty() && !dbname.contains(SPACE);
     }
 
     // -------

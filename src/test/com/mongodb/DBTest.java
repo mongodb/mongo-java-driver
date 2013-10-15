@@ -186,22 +186,15 @@ public class DBTest extends TestCase {
 
         try{
             m.getDB("foo bar");
-        }catch (MongoException ex){
-            Assert.assertEquals(ex.getMessage(),errorMessage);
+        }catch (IllegalArgumentException ex){
+            assertEquals(ex.getMessage(),errorMessage);
         }
 
         try{
             m.getDB("");
         }
-        catch (MongoException ex){
-            Assert.assertEquals(ex.getMessage(),errorMessage);
-        }
-
-        try{
-            m.getDB(null);
-        }
-        catch (MongoException ex){
-            Assert.assertEquals(ex.getMessage(),errorMessage);
+        catch (IllegalArgumentException ex){
+            assertEquals(ex.getMessage(),errorMessage);
         }
 
         m.close();
