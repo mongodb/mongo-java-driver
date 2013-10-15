@@ -16,6 +16,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
@@ -173,6 +174,38 @@ public class DBTest extends TestCase {
     @Test(groups = {"basic"})
     public void whenRequestDoneIsCalledWithoutFirstCallingRequestStartNoExceptionIsThrown() throws UnknownHostException {
         _db.requestDone();
+    }
+
+    @Test(groups = {"basic"})
+    public void whenDBNameIsInInvalidFormatThenThrowException() throws  UnknownHostException{
+
+        String errorMessage = "Invalid database name format. Database name cannot be empty or null, and it cannot contain spaces.";
+
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+
+        try{
+            m.getDB("foo bar");
+        }catch (MongoException ex){
+            Assert.assertEquals(ex.getMessage(),errorMessage);
+        }
+
+        try{
+            m.getDB("");
+        }
+        catch (MongoException ex){
+            Assert.assertEquals(ex.getMessage(),errorMessage);
+        }
+
+        try{
+            m.getDB(null);
+        }
+        catch (MongoException ex){
+            Assert.assertEquals(ex.getMessage(),errorMessage);
+        }
+
+        m.close();
+
     }
 
 
