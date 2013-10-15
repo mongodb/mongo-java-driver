@@ -179,7 +179,7 @@ public class DBTest extends TestCase {
     @Test(groups = {"basic"})
     public void whenDBNameIsInInvalidFormatThenThrowException() throws  UnknownHostException{
 
-        String errorMessage = "Invalid database name format. Database name cannot be empty or null, and it cannot contain spaces.";
+        String errorMessage = "Invalid database name format. Database name is either empty or it contains spaces.";
 
         Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
                 MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());

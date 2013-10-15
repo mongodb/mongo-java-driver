@@ -68,7 +68,7 @@ public abstract class DB {
      */
     public DB( Mongo mongo , String name ){
         if(!isValidName(name))
-            throw new IllegalArgumentException("Invalid database name format. Database name cannot be empty or null, and it cannot contain spaces.");
+            throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
         _mongo = mongo;
     	_name = name;
         _options = new Bytes.OptionHolder( _mongo._netOptions );
