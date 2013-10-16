@@ -16,7 +16,6 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
