@@ -80,6 +80,15 @@ final class DBObjects {
         return res;
     }
 
+    public static BasicDBObject toNullableDBObject(final Document document) {
+        if (document == null) {
+            return null;
+        }
+        final BasicDBObject res = new BasicDBObject();
+        fill(document, res);
+        return res;
+    }
+
     private static void fill(final DBObject obj, final Document document) {
         if (obj != null) {
             for (final String key : obj.keySet()) {

@@ -34,10 +34,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.MongoExceptions.mapException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor} thus
@@ -224,6 +226,20 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public DBCursor hint(final String indexName) {
         find.hintIndex(indexName);
+        return this;
+    }
+
+    /**
+     * Set the maximum execution time for operations on this cursor.
+     *
+     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value
+     *                 requires a server version >= 2.6
+     * @param timeUnit the time unit
+     * @return same DBCursor for chaining operations
+     * @since 2.12.0
+     */
+    public DBCursor maxTime(final int maxTime, final TimeUnit timeUnit) {
+        find.maxTime(maxTime, timeUnit);
         return this;
     }
 
@@ -431,8 +447,17 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @see DBCursor#size
      */
     public int count() {
-        return (int) collection.count(getQuery(), getReadPreference());
+        return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreference(),
+                                         find.getMaxTime(MILLISECONDS), MILLISECONDS);
         // TODO: dangerous cast.  Throw exception instead?
+    }
+
+    /**
+     * @return the first matching document
+     */
+    public DBObject one() {
+        return collection.findOne(getQuery(), getKeysWanted(), DBObjects.toNullableDBObject(find.getOrder()), getReadPreference(),
+                                  find.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -474,7 +499,8 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @see #count()
      */
     public int size() {
-        return (int) collection.getCount(getQuery(), getKeysWanted(), find.getLimit(), find.getSkip(), getReadPreference());
+        return (int) collection.getCount(getQuery(), getKeysWanted(), find.getLimit(), find.getSkip(), getReadPreference(),
+                                         find.getMaxTime(MILLISECONDS), MILLISECONDS);
         // TODO: dangerous cast.  Throw exception instead?
     }
 
@@ -484,10 +510,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return the field selector that cursor used
      */
     public DBObject getKeysWanted() {
-        if (find.getFields() == null) {
-            return null;
-        }
-        return DBObjects.toDBObject(find.getFields());
+        return DBObjects.toNullableDBObject(find.getFields());
     }
 
     /**

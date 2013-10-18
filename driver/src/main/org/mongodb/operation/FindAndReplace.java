@@ -18,6 +18,8 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
+import java.util.concurrent.TimeUnit;
+
 public class FindAndReplace<T> extends FindAndModify {
     private final T replacement;
 
@@ -59,4 +61,9 @@ public class FindAndReplace<T> extends FindAndModify {
         return this;
     }
 
+    @Override
+    public FindAndReplace<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        super.maxTime(maxTime, timeUnit);
+        return this;
+    }
 }

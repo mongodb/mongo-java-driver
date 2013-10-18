@@ -21,6 +21,8 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.operation.Find;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 public class QueryMessage extends BaseQueryMessage {
     private final Find find;
     private final Encoder<Document> encoder;
@@ -62,6 +64,11 @@ public class QueryMessage extends BaseQueryMessage {
         if (find.getHint() != null) {
             document.put("$hint", find.getHint().getValue());
         }
+
+        if (find.getMaxTime(MILLISECONDS) != 0) {
+            document.put("$maxTimeMS", find.getMaxTime(MILLISECONDS));
+        }
+
         // TODO: special
         return document;
     }

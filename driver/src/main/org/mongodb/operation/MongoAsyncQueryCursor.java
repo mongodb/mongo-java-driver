@@ -133,9 +133,10 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (e != null) {
                 close(0);
-            } else {
-                cursor = result.getCursor();
+                return;
             }
+
+            cursor = result.getCursor();
 
             boolean breakEarly = false;
 

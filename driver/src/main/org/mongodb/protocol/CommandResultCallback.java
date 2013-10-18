@@ -19,7 +19,6 @@ package org.mongodb.protocol;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
@@ -38,7 +37,7 @@ class CommandResultCallback extends CommandResultBaseCallback {
         if (e != null) {
             callback.onResult(null, e);
         } else if (!commandResult.isOk()) {
-            callback.onResult(null, new MongoCommandFailureException(commandResult));
+            callback.onResult(null, ProtocolHelper.getCommandFailureException(commandResult));
         } else {
             callback.onResult(commandResult, null);
         }

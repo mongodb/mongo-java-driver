@@ -23,12 +23,18 @@ import org.junit.Test;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.disableMaxTimeFailPoint;
+import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCursorTest extends DatabaseTestCase {
     private DBCursor cursor;
@@ -229,6 +235,85 @@ public class DBCursorTest extends DatabaseTestCase {
         assertEquals(keys, local.getKeysWanted());
     }
 
+    @Test
+    public void testMaxTimeForIterator() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.hasNext();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForIterable() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.iterator().hasNext();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForOne() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.one();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForCount() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.count();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForSize() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.size();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
 
     @Test
     public void testClose() {

@@ -33,4 +33,10 @@ final class DocumentHelper {
             command.put(key, value);
         }
     }
+
+    static void putIfNotZero(final Document command, final String key, final Number value) {
+        if (value.longValue() != 0) {
+            command.put(key, value);
+        }
+    }
 }

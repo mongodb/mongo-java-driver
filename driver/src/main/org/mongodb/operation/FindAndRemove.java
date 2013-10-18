@@ -18,6 +18,8 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
+import java.util.concurrent.TimeUnit;
+
 public class FindAndRemove<T> extends FindAndModify {
 
     @Override
@@ -49,4 +51,9 @@ public class FindAndRemove<T> extends FindAndModify {
         throw new UnsupportedOperationException("Can't upsert a remove");
     }
 
+    @Override
+    public FindAndRemove<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        super.maxTime(maxTime, timeUnit);
+        return this;
+    }
 }

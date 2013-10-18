@@ -20,13 +20,19 @@ import org.mongodb.connection.ServerAddress;
 
 import static java.lang.String.format;
 
-public class MongoQueryFailureException extends MongoServerException {
-    private static final long serialVersionUID = -5113350133297015801L;
+/**
+ * Exception indicating that the execution of the current operation timed outas a result of the maximum operation time being exceeded.
+ */
+public class MongoExecutionTimeoutException extends MongoServerException {
+
+    private static final long serialVersionUID = -8831703372266982933L;
+
     private final int errorCode;
     private final String errorMessage;
 
-    public MongoQueryFailureException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        super(format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address), address);
+    public MongoExecutionTimeoutException(final ServerAddress address, final int errorCode, final String errorMessage) {
+        super(format("Execution timeout out with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
+              address);
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;
     }

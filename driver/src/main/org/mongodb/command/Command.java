@@ -23,6 +23,7 @@ import org.mongodb.operation.Query;
 import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 
 public class Command extends Query implements ConvertibleToDocument {
     private final Document command;
@@ -65,5 +66,39 @@ public class Command extends Query implements ConvertibleToDocument {
     @Override
     public Document toDocument() {
         return command;
+    }
+
+    @Override
+    public Query maxTime(final long maxTime, final TimeUnit timeUnit) {
+        super.maxTime(maxTime, timeUnit);
+        return this;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        final Command command1 = (Command) o;
+
+        if (!command.equals(command1.command)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + command.hashCode();
+        return result;
     }
 }

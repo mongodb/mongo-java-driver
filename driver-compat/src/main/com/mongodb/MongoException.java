@@ -31,7 +31,7 @@ public class MongoException extends RuntimeException {
     private final int code;
 
     public MongoException(final org.mongodb.MongoException e) {
-        super("Chained exception", e);
+        super(e.getMessage(), e);
         if (e instanceof MongoServerException) {
             code = ((MongoServerException) e).getErrorCode();
         } else {

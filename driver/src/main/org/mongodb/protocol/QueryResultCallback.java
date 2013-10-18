@@ -20,12 +20,13 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.message.ReplyMessage;
+
+import static org.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 
 class QueryResultCallback<T> extends ResponseCallback {
     private final SingleResultCallback<QueryResult<T>> callback;
@@ -48,7 +49,7 @@ class QueryResultCallback<T> extends ResponseCallback {
             } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
                                                                     getRequestId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(getConnection().getServerAddress(), errorDocument);
+                throw getQueryFailureException(getConnection().getServerAddress(), errorDocument);
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                                             getConnection().getServerAddress());

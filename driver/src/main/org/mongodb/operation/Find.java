@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 
 public class Find extends Query {
     private Document filter;
@@ -67,8 +68,6 @@ public class Find extends Query {
         return explain;
     }
 
-    //CHECKSTYLE:OFF
-    //I think we're going to have to turn off "hides a field" unless we can work out how to ignore it for builders
     public Find where(final Document filter) {
         this.filter = filter;
         return this;
@@ -88,7 +87,6 @@ public class Find extends Query {
         this.sortCriteria = sortCriteria;
         return this;
     }
-    //CHECKSTYLE:ON
 
     @Override
     public Find limit(final int limit) {
@@ -99,6 +97,12 @@ public class Find extends Query {
     @Override
     public Find batchSize(final int batchSize) {
         super.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public Find maxTime(final long maxTime, final TimeUnit timeUnit) {
+        super.maxTime(maxTime, timeUnit);
         return this;
     }
 

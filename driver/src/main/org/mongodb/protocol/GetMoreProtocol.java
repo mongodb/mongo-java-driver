@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoQueryFailureException;
 import org.mongodb.ServerCursor;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
@@ -41,6 +40,7 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
+import static org.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 
 public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
@@ -123,7 +123,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
                                                                     message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+                throw getQueryFailureException(connection.getServerAddress(), errorDocument);
             }
 
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),

@@ -76,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDBList;
 import static com.mongodb.DBObjects.toDBObject;
@@ -85,6 +86,7 @@ import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Implementation of a database collection.  A typical invocation sequence is thus:
@@ -640,12 +642,31 @@ public class DBCollection {
      */
     public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                             final ReadPreference readPreference) {
+        return findOne(query, projection, sort, readPreference, 0, MILLISECONDS);
+    }
+
+    /**
+     * Get a single document from collection.
+     *
+     * @param query          the selection criteria using query operators.
+     * @param projection     specifies which projection MongoDB will return from the documents in the result set.
+     * @param sort           A document whose fields specify the attributes on which to sort the result set.
+     * @param readPreference {@code ReadPreference} to be used for this operation
+     * @param maxTime        the maximum time that the server will allow this operation to execute before killing it
+     * @param maxTimeUnit    the unit that maxTime is specified in
+     * @return A document that satisfies the query specified as the argument to this method.
+     * @since 2.12.0
+     */
+    DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
+                     final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
+
 
         Find find = new Find().select(toFieldSelectorDocument(projection))
                               .where(toDocument(query))
                               .order(toDocument(sort))
                               .readPreference(readPreference.toNew())
-                              .batchSize(-1);
+                              .batchSize(-1)
+                              .maxTime(maxTime, maxTimeUnit);
 
         try {
             org.mongodb.MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
@@ -835,6 +856,24 @@ public class DBCollection {
      */
     public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
                          final ReadPreference readPreference) {
+        return getCount(query, projection, limit, skip, readPreference, 0, MILLISECONDS);
+    }
+
+    /**
+     * Get the count of documents in collection that would match a criteria.
+     *
+     * @param query          specifies the selection criteria
+     * @param projection     this is ignored
+     * @param limit          limit the count to this value
+     * @param skip           number of documents to skip
+     * @param readPreference {@link ReadPreference} to be used for this operation
+     * @param maxTime        the maximum time that the server will allow this operation to execute before killing it
+     * @param maxTimeUnit    the unit that maxTime is specified in
+     * @return the number of documents that matches selection criteria
+     * @throws MongoException
+     */
+    long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
+                  final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
         if (limit > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("limit is too large: " + limit);
         }
@@ -844,7 +883,8 @@ public class DBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew());
+        final Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew())
+                                                     .maxTime(maxTime, maxTimeUnit);
 
         return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getBufferPool(), getSession(), false));
     }
@@ -1456,15 +1496,40 @@ public class DBCollection {
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
-        Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                                          ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                                          : getObjectCodec();
+        return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS);
+    }
 
-        Operation<DBObject> operation;
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version >= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @return pre-modification document
+     * @since 2.12.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final long maxTime, final TimeUnit maxTimeUnit) {
+        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                                                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                                                : getObjectCodec();
+
+        final Operation<DBObject> operation;
         if (remove) {
-            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
-                                                                                 .sortBy(toNullableDocument(sort))
-                                                                                 .returnNew(returnNew);
+            final FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
+                                                                                       .sortBy(toNullableDocument(sort))
+                                                                                       .returnNew(returnNew)
+                                                                                       .maxTime(maxTime, maxTimeUnit);
             operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder, getBufferPool(),
                                                              getSession(), false);
         } else {
@@ -1473,20 +1538,24 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>().where(toNullableDocument(query))
-                                                                                     .sortBy(toNullableDocument(sort))
-                                                                                     .returnNew(returnNew)
-                                                                                     .select(toFieldSelectorDocument(fields))
-                                                                                     .updateWith(toUpdateOperationsDocument(update))
-                                                                                     .upsert(upsert);
+                final FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
+                                                              .where(toNullableDocument(query))
+                                                              .sortBy(toNullableDocument(sort))
+                                                              .returnNew(returnNew)
+                                                              .select(toFieldSelectorDocument(fields))
+                                                              .updateWith(toUpdateOperationsDocument(update))
+                                                              .upsert(upsert)
+                                                              .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder, getBufferPool(),
                                                                  getSession(), false);
             } else {
-                FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update).where(toNullableDocument(query))
-                                                                                              .sortBy(toNullableDocument(sort))
-                                                                                              .select(toFieldSelectorDocument(fields))
-                                                                                              .returnNew(returnNew)
-                                                                                              .upsert(upsert);
+                final FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
+                                                                .where(toNullableDocument(query))
+                                                                .sortBy(toNullableDocument(sort))
+                                                                .select(toFieldSelectorDocument(fields))
+                                                                .returnNew(returnNew)
+                                                                .upsert(upsert)
+                                                                .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
                                                                   getBufferPool(), getSession(), false);
             }

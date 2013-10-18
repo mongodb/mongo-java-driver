@@ -26,7 +26,9 @@ import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
 public class FindAndReplaceOperation<T> extends BaseOperation<T> {
@@ -63,6 +65,7 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "sort", findAndReplace.getSortCriteria());
         putIfTrue(command, "new", findAndReplace.isReturnNew());
         putIfTrue(command, "upsert", findAndReplace.isUpsert());
+        putIfNotZero(command, "maxTimeMS", findAndReplace.getMaxTime(MILLISECONDS));
 
         command.put("update", findAndReplace.getReplacement());
         return command;

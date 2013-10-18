@@ -20,7 +20,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.BufferProvider;
@@ -39,6 +38,7 @@ import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
+import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class CommandProtocol implements Protocol<CommandResult> {
@@ -129,7 +129,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
                                                         replyMessage.getDocuments().get(0),
                                                         replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
-            throw new MongoCommandFailureException(commandResult);
+            throw getCommandFailureException(commandResult);
         }
 
         return commandResult;

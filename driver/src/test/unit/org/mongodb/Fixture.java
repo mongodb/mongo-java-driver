@@ -30,6 +30,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import static java.util.Arrays.asList;
 import static org.mongodb.connection.ClusterConnectionMode.Multiple;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
@@ -160,5 +161,19 @@ public final class Fixture {
         getMongoClient();
         return mongoClient.getCluster().getDescription().getType() == ReplicaSet
                && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
+    }
+
+    public static void enableMaxTimeFailPoint() {
+        getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
+                                                             .append("mode", "alwaysOn"),
+                                                             ReadPreference.primary());
+    }
+
+    public static void disableMaxTimeFailPoint() {
+        if (serverVersionAtLeast(asList(2, 5, 3))) {
+            getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
+                                                                 .append("mode", "off"),
+                                                                 ReadPreference.primary());
+        }
     }
 }

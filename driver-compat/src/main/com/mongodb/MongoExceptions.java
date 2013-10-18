@@ -22,12 +22,15 @@ import org.mongodb.MongoWriteException;
 
 import java.io.IOException;
 
-public class MongoExceptions {
+public class
+MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
         Throwable cause = e.getCause();
         if (e instanceof org.mongodb.MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
+        } else if (e instanceof org.mongodb.MongoExecutionTimeoutException) {
+            return new MongoExecutionTimeoutException((org.mongodb.MongoExecutionTimeoutException) e);
         } else if (e instanceof MongoWriteException) {
             return new WriteConcernException((MongoWriteException) e);
         } else if (e instanceof org.mongodb.MongoInternalException) {
@@ -44,8 +47,8 @@ public class MongoExceptions {
             return new MongoInterruptedException((org.mongodb.MongoInterruptedException) e);
         } else if (e instanceof org.mongodb.connection.MongoSocketException && cause instanceof IOException) {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
+        } else {
+            return new MongoException(e.getMessage(), cause);
         }
-
-        return new MongoException(e.getMessage(), cause);
     }
 }

@@ -28,10 +28,11 @@
 
 
 
+
+
 package com.mongodb
 
 import com.mongodb.codecs.DocumentCodec
-import org.mongodb.Document
 import org.mongodb.MongoNamespace
 import org.mongodb.MongoQueryFailureException
 import org.mongodb.codecs.PrimitiveCodecs
@@ -39,6 +40,7 @@ import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static com.mongodb.Fixture.getPrimary
 import static com.mongodb.ReadPreference.PRIMARY
 import static org.mongodb.Fixture.getBufferProvider
 
@@ -75,7 +77,7 @@ class DBCursorSpecification extends Specification {
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in hasNext'() {
         given:
-        session.createServerConnectionProvider(_) >> { throw new MongoQueryFailureException(null, new Document('code', 123)) }
+        session.createServerConnectionProvider(_) >> { throw new MongoQueryFailureException(getPrimary().toNew(), 50, 'error') }
 
         when:
         dbCursor.hasNext()

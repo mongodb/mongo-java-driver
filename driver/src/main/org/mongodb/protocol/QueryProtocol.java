@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoQueryFailureException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
@@ -40,6 +39,7 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
+import static org.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 
 public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
@@ -121,7 +121,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers,
                                                                     new DocumentCodec(),
                                                                     message.getId()).getDocuments().get(0);
-                throw new MongoQueryFailureException(connection.getServerAddress(), errorDocument);
+                throw getQueryFailureException(connection.getServerAddress(), errorDocument);
             }
             ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 

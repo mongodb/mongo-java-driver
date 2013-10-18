@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -55,6 +56,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.disableMaxTimeFailPoint;
+import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCollectionTest extends DatabaseTestCase {
 
@@ -291,6 +296,44 @@ public class DBCollectionTest extends DatabaseTestCase {
                                                    true);
         assertNotNull(newDoc);
         assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
+    }
+
+    @Test(expected = MongoExecutionTimeoutException.class)
+    public void testFindAndUpdateTimeout() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        collection.insert(new BasicDBObject("_id", 1));
+        enableMaxTimeFailPoint();
+        try {
+            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                     false, false, 1, TimeUnit.SECONDS);
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test(expected = MongoExecutionTimeoutException.class)
+    public void testFindAndReplaceTimeout() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        collection.insert(new BasicDBObject("_id", 1));
+        enableMaxTimeFailPoint();
+        try {
+            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("x", 1), false, false,
+                                     1, TimeUnit.SECONDS);
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test(expected = MongoExecutionTimeoutException.class)
+    public void testFindAndRemoveTimeout() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        collection.insert(new BasicDBObject("_id", 1));
+        enableMaxTimeFailPoint();
+        try {
+            collection.findAndModify(new BasicDBObject("_id", 1), null, null, true, null, false, false, 1, TimeUnit.SECONDS);
+        } finally {
+            disableMaxTimeFailPoint();
+        }
     }
 
     @Test

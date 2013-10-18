@@ -29,6 +29,7 @@ import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.Fixture.getOptions;
 import static com.mongodb.Fixture.getPrimary;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
@@ -37,7 +38,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.disableMaxTimeFailPoint;
+import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBTest extends DatabaseTestCase {
     @Test
@@ -145,6 +150,17 @@ public class DBTest extends DatabaseTestCase {
     public void shouldExecuteCommand() {
         CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
         assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok", "serverUsed"}));
+    }
+
+    @Test(expected = MongoExecutionTimeoutException.class)
+    public void shouldTimeOutCommand() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        try {
+            database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
+        } finally {
+            disableMaxTimeFailPoint();
+        }
     }
 
     @Test

@@ -28,7 +28,9 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
 public class FindAndUpdateOperation<T> extends BaseOperation<T> {
@@ -73,6 +75,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "sort", findAndUpdate.getSortCriteria());
         putIfTrue(command, "new", findAndUpdate.isReturnNew());
         putIfTrue(command, "upsert", findAndUpdate.isUpsert());
+        putIfNotZero(command, "maxTimeMS", findAndUpdate.getMaxTime(MILLISECONDS));
 
         command.put("update", findAndUpdate.getUpdateOperations());
         return command;

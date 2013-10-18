@@ -27,7 +27,9 @@ import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 
 public class FindAndRemoveOperation<T> extends BaseOperation<T> {
     private final MongoNamespace namespace;
@@ -59,6 +61,8 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "query", findAndRemove.getFilter());
         putIfNotNull(command, "fields", findAndRemove.getSelector());
         putIfNotNull(command, "sort", findAndRemove.getSortCriteria());
+        putIfNotZero(command, "maxTimeMS", findAndRemove.getMaxTime(MILLISECONDS));
+
         command.put("remove", true);
         return command;
     }

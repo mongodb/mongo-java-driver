@@ -30,6 +30,8 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
 
     private final Session session;
@@ -95,6 +97,9 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
         }
         if (find.getSkip() > 0) {
             document.put("skip", find.getSkip());
+        }
+        if (find.getMaxTime(MILLISECONDS) > 0) {
+            document.put("maxTimeMS", find.getMaxTime(MILLISECONDS));
         }
 
         return document;
