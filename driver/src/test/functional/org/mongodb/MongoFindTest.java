@@ -18,18 +18,10 @@ package org.mongodb;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 public class MongoFindTest extends DatabaseTestCase {
-    @Test
+    @Test(expected = MongoQueryFailureException.class)
     public void shouldThrowQueryFailureException() {
         collection.insert(new Document("loc", new double[]{0, 0}));
-        try {
-            collection.find(new Document("loc", new Document("$near", new double[]{0, 0}))).getOne();
-            fail("Should be a query failure since there is no 2d index");
-        } catch (MongoQueryFailureException e) {
-            assertEquals(13038, e.getErrorCode());
-        }
+        collection.find(new Document("loc", new Document("$near", new double[]{0, 0}))).getOne();
     }
 }
