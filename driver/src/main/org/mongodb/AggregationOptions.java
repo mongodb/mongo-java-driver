@@ -18,6 +18,10 @@
 package org.mongodb;
 
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 public class AggregationOptions {
     public enum OutputMode {
         /**
@@ -33,11 +37,13 @@ public class AggregationOptions {
     private final Integer batchSize;
     private final Boolean allowDiskUsage;
     private final OutputMode outputMode;
+    private final long maxTimeMS;
 
-    public AggregationOptions(final Integer batchSize, final Boolean allowDiskUsage, final OutputMode outputMode) {
-        this.batchSize = batchSize;
-        this.allowDiskUsage = allowDiskUsage;
-        this.outputMode = outputMode;
+    public AggregationOptions(final Builder builder) {
+        batchSize = builder.batchSize;
+        allowDiskUsage = builder.allowDiskUsage;
+        outputMode = builder.outputMode;
+        maxTimeMS = builder.maxTimeMS;
     }
 
     public static Builder builder() {
@@ -54,6 +60,10 @@ public class AggregationOptions {
 
     public Boolean getAllowDiskUsage() {
         return allowDiskUsage;
+    }
+
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
     @Override
@@ -79,7 +89,7 @@ public class AggregationOptions {
         private Integer batchSize;
         private Boolean allowDiskUsage;
         private OutputMode outputMode = OutputMode.INLINE;
-        private ReadPreference readPreference = ReadPreference.primary();
+        private long maxTimeMS;
 
         protected Builder() {
         }
@@ -99,29 +109,13 @@ public class AggregationOptions {
             return this;
         }
 
-        public Builder readPreference(final ReadPreference preference) {
-            readPreference = preference;
+        public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
+            maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
             return this;
         }
 
-        public Boolean getAllowDiskUsage() {
-            return allowDiskUsage;
-        }
-
-        public Integer getBatchSize() {
-            return batchSize;
-        }
-
-        public OutputMode getOutputMode() {
-            return outputMode;
-        }
-
-        public ReadPreference getReadPreference() {
-            return readPreference;
-        }
-
         public AggregationOptions build() {
-            return new AggregationOptions(batchSize, allowDiskUsage, outputMode);
+            return new AggregationOptions(this);
         }
     }
 }

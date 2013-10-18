@@ -162,10 +162,6 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assertEquals(primary, cursor.getServerAddress());
     }
 
-    private boolean isStandalone(final Mongo mongo) {
-        return mongo.getCluster().getDescription().getSecondaries() == null;
-    }
-
     @Test
     @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {

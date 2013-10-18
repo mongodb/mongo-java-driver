@@ -1,10 +1,31 @@
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
+
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class AggregationOptions {
     private final Integer batchSize;
     private final Boolean allowDiskUsage;
     private final OutputMode outputMode;
+    private final long maxTimeMS;
 
     public enum OutputMode {
         /**
@@ -29,10 +50,11 @@ public class AggregationOptions {
         public abstract org.mongodb.AggregationOptions.OutputMode toNew();
     }
 
-    AggregationOptions(final Integer batchSize, final Boolean allowDiskUsage, final OutputMode outputMode) {
-        this.batchSize = batchSize;
-        this.allowDiskUsage = allowDiskUsage;
-        this.outputMode = outputMode;
+    AggregationOptions(final Builder builder) {
+        batchSize = builder.batchSize;
+        allowDiskUsage = builder.allowDiskUsage;
+        outputMode = builder.outputMode;
+        maxTimeMS = builder.maxTimeMS;
     }
 
     public Boolean getAllowDiskUsage() {
@@ -47,11 +69,16 @@ public class AggregationOptions {
         return outputMode;
     }
 
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
     public org.mongodb.AggregationOptions toNew() {
         return org.mongodb.AggregationOptions.builder()
                           .batchSize(getBatchSize())
                           .allowDiskUsage(getAllowDiskUsage())
                           .outputMode(getOutputMode().toNew())
+                          .maxTime(maxTimeMS, MILLISECONDS)
                           .build();
     }
 
@@ -64,6 +91,7 @@ public class AggregationOptions {
         private Integer batchSize;
         private Boolean allowDiskUsage;
         private OutputMode outputMode = OutputMode.INLINE;
+        private long maxTimeMS;
 
         protected Builder() {
         }
@@ -83,20 +111,13 @@ public class AggregationOptions {
             return this;
         }
 
-        public Boolean getAllowDiskUsage() {
-            return allowDiskUsage;
-        }
-
-        public Integer getBatchSize() {
-            return batchSize;
-        }
-
-        public OutputMode getOutputMode() {
-            return outputMode;
+        public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
+            maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+            return this;
         }
 
         public AggregationOptions build() {
-            return new AggregationOptions(batchSize, allowDiskUsage, outputMode);
+            return new AggregationOptions(this);
         }
     }
 }

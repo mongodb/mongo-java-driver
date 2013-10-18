@@ -40,13 +40,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     private static final Logger LOGGER = Loggers.getLogger("operation");
 
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
-    private final Document pipeline;
+    private final List<Document> pipeline;
     private final AggregationOptions options;
     private final ServerAddress serverAddress;
     private final Document command;
@@ -54,16 +56,14 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
 
     public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
                               final AggregationOptions options, final BufferProvider bufferProvider, final Session session,
-                              final boolean closeSession,
-                              final ReadPreference readPreference) {
+                              final boolean closeSession, final ReadPreference readPreference) {
         super(bufferProvider, session, closeSession);
 
         this.namespace = namespace;
         this.decoder = decoder;
-        this.pipeline = new Document("pipeline", pipeline);
+        this.pipeline = pipeline;
         this.options = options;
-        command = new Document("aggregate", namespace.getCollectionName());
-        command.put("pipeline", pipeline);
+        command = asCommandDocument();
         ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
         connectionProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
         serverAddress = connectionProvider.getServerDescription().getAddress();
@@ -123,5 +123,14 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
 
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    private Document asCommandDocument() {
+        Document commandDocument = new Document("aggregate", namespace.getCollectionName());
+        commandDocument.put("pipeline", pipeline);
+        if (options.getMaxTime(MILLISECONDS) > 0) {
+            commandDocument.put("maxTimeMS", options.getMaxTime(MILLISECONDS));
+        }
+        return commandDocument;
     }
 }
