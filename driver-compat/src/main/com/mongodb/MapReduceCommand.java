@@ -23,8 +23,10 @@ import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOutput;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDocument;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
@@ -44,6 +46,7 @@ public class MapReduceCommand {
     private final DBObject query;
     private DBObject sort;
     private int limit;
+    private long maxTimeMS;
     private Map<String, Object> scope;
     private Boolean verbose;
     private DBObject extraOptions;
@@ -198,6 +201,28 @@ public class MapReduceCommand {
      */
     public void setLimit(final int limit) {
         this.limit = limit;
+    }
+
+    /**
+     * Gets the max execution time for this command, in the given time unit.
+     *
+     * @param timeUnit the time unit to return the value in.
+     * @return the maximum execution time
+     * @since 2.12.0
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
+    /**
+     * Sets the max execution time for this command, in the given time unit.
+     *
+     * @param maxTime  the maximum execution time. A non-zero value requires a server version >= 2.6
+     * @param timeUnit the time unit that maxTime is specified in
+     * @since 2.12.0
+     */
+    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
     }
 
     /**

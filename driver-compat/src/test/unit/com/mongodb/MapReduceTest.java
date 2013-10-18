@@ -23,9 +23,11 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -36,6 +38,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.disableMaxTimeFailPoint;
+import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class MapReduceTest extends DatabaseTestCase {
 
@@ -71,6 +77,24 @@ public class MapReduceTest extends DatabaseTestCase {
 
         assertNotNull(output.results());
         assertThat(output.results(), everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
+    }
+
+    @Test(expected = MongoExecutionTimeoutException.class)
+    public void testMapReduceExecutionTimeout() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        try {
+            final MapReduceCommand command = new MapReduceCommand(collection,
+                                                                  DEFAULT_MAP,
+                                                                  DEFAULT_REDUCE,
+                                                                  DEFAULT_COLLECTION,
+                                                                  MapReduceCommand.OutputType.INLINE,
+                                                                  new BasicDBObject());
+            command.setMaxTime(1, TimeUnit.SECONDS);
+            collection.mapReduce(command);
+        } finally {
+            disableMaxTimeFailPoint();
+        }
     }
 
     @Test

@@ -1119,7 +1119,11 @@ public class DBCollection {
 
         Command newStyleCommand = command.toNew();
         try {
-            executionResult = new CommandOperation(getDB().getName(), newStyleCommand.toDocument(), newStyleCommand.getReadPreference(),
+            Document commandDocument = newStyleCommand.toDocument();
+            if (command.getMaxTime(MILLISECONDS) != 0) {
+                commandDocument.append("maxTimeMS", command.getMaxTime(MILLISECONDS));
+            }
+            executionResult = new CommandOperation(getDB().getName(), commandDocument, newStyleCommand.getReadPreference(),
                                                    mapReduceCodec, commandCodec, getDB().getClusterDescription(), getBufferPool(),
                                                    getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
