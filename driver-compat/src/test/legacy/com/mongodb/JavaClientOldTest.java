@@ -34,7 +34,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.clusterIsType;
 import static org.mongodb.Fixture.serverVersionAtLeast;
+import static org.mongodb.connection.ClusterType.ReplicaSet;
 
 public class JavaClientOldTest extends DatabaseTestCase {
 
@@ -139,14 +141,12 @@ public class JavaClientOldTest extends DatabaseTestCase {
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(clusterIsType(ReplicaSet));
         ServerAddress primary = new ServerAddress("localhost");
         Mongo mongo = new MongoClient(asList(primary,
                                              new ServerAddress("localhost", 27018),
                                              new ServerAddress("localhost", 27019)));
 
-        if (isStandalone(mongo)) {
-            return;
-        }
         DB rsDatabase = mongo.getDB(database.getName());
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
         aggCollection.drop();
@@ -169,13 +169,8 @@ public class JavaClientOldTest extends DatabaseTestCase {
     @Test
     @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
-        Mongo mongo = new MongoClient(asList(new ServerAddress("localhost"),
-                                             new ServerAddress("localhost", 27018),
-                                             new ServerAddress("localhost", 27019)));
+        assumeTrue(clusterIsType(ReplicaSet));
 
-        if (isStandalone(mongo)) {
-            return;
-        }
         ServerAddress primary = new ServerAddress("localhost");
         ServerAddress secondary = new ServerAddress("localhost", 27018);
         MongoClient rsClient = new MongoClient(asList(primary, secondary));

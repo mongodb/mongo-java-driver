@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
@@ -67,6 +68,10 @@ public final class Fixture {
             defaultDatabase = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
         }
         return defaultDatabase;
+    }
+
+    public static boolean clusterIsType(final ClusterType clusterType) {
+        return getCluster().getDescription().getType() == clusterType;
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
