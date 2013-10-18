@@ -43,7 +43,7 @@ public class AggregationOptions {
     }
 
     /**
-     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of 
+     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of
      * RAM.
      */
     public Boolean getAllowDiskUsage() {
@@ -58,7 +58,7 @@ public class AggregationOptions {
     }
 
     /**
-     * The mode of output for this configuration.  
+     * The mode of output for this configuration.
      * @see OutputMode
      */
     public OutputMode getOutputMode() {
@@ -75,12 +75,6 @@ public class AggregationOptions {
         return sb.toString();
     }
 
-    private void putIfNotNull(final DBObject document, final String name, final Object value) {
-        if (value != null) {
-            document.put(name, value);
-        }
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -92,21 +86,6 @@ public class AggregationOptions {
         private OutputMode outputMode = OutputMode.INLINE;
 
         private Builder() {
-        }
-
-        public Builder batchSize(final Integer size) {
-            batchSize = size;
-            return this;
-        }
-
-        public Builder allowDiskUsage(final Boolean allow) {
-            allowDiskUsage = allow;
-            return this;
-        }
-
-        public Builder outputMode(final OutputMode mode) {
-            outputMode = mode;
-            return this;
         }
 
         public AggregationOptions build() {
