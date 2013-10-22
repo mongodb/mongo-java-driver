@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -55,16 +54,11 @@ public class DBApiLayerTest extends TestCase {
         }
     }
 
-    @Test
+    @Test(expectedExceptions = MongoException.class)
     public void testQueryFailureException() {
         DBCollection collection = db.getCollection("testQueryFailureException");
         collection.insert(new BasicDBObject("loc", new double[]{0, 0}));
-        try {
-            collection.findOne(new BasicDBObject("loc", new BasicDBObject("$near", new double[]{0, 0})));
-            fail("Should be a query failure since there is no 2d index");
-        } catch (MongoException e) {
-            assertEquals(13038, e.getCode());
-        }
+        collection.findOne(new BasicDBObject("loc", new BasicDBObject("$near", new double[]{0, 0})));
     }
 
 }
