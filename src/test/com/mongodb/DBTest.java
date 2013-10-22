@@ -16,6 +16,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
@@ -23,10 +24,25 @@ import java.util.Arrays;
 
 public class DBTest extends TestCase {
 
-    public DBTest() {
+    public DBTest() throws UnknownHostException{
         super();
         cleanupDB = "com_mongodb_unittest_DBTest";
         _db = cleanupMongo.getDB(cleanupDB);
+        _mongo = initMongo();
+    }
+
+    private Mongo initMongo() throws UnknownHostException{
+        return new MongoClient(Arrays.asList(new ServerAddress("localhost")),
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+    }
+
+    @Override
+    @AfterTest
+    public void cleanup(){
+        super.cleanup();
+        if(_mongo != null){
+            _mongo.close();
+        }
     }
 
     @Test(groups = {"basic"})
@@ -147,27 +163,23 @@ public class DBTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
-    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
-        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
-                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
-        DB db = m.getDB("com_mongodb_unittest_DBTest");
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() {
 
+        DB db = _mongo.getDB("com_mongodb_unittest_DBTest");
+
+        db.requestStart();
         try {
+            db.command(new BasicDBObject("ping", 1));
             db.requestStart();
             try {
                 db.command(new BasicDBObject("ping", 1));
-                db.requestStart();
-                try {
-                    db.command(new BasicDBObject("ping", 1));
-                } finally {
-                    db.requestDone();
-                }
             } finally {
                 db.requestDone();
             }
         } finally {
-            m.close();
+            db.requestDone();
         }
+
     }
 
     @Test(groups = {"basic"})
@@ -175,31 +187,15 @@ public class DBTest extends TestCase {
         _db.requestDone();
     }
 
-    @Test(groups = {"basic"})
-    public void whenDBNameIsInInvalidFormatThenThrowException() throws  UnknownHostException{
-
-        String errorMessage = "Invalid database name format. Database name is either empty or it contains spaces.";
-
-        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
-                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
-
-        try{
-            m.getDB("foo bar");
-        }catch (IllegalArgumentException ex){
-            assertEquals(ex.getMessage(),errorMessage);
-        }
-
-        try{
-            m.getDB("");
-        }
-        catch (IllegalArgumentException ex){
-            assertEquals(ex.getMessage(),errorMessage);
-        }
-
-        m.close();
-
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void whenDBNameContainsSpacesThenThrowException(){
+        _mongo.getDB("foo bar");
     }
 
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void whenDBNameIsEmptyThenThrowException(){
+        _mongo.getDB("");
+    }
 
     /*public static class Person extends DBObject {
         
@@ -244,6 +240,8 @@ public class DBTest extends TestCase {
     */
 
     final DB _db;
+
+    final Mongo _mongo;
 
     public static void main(String args[])
             throws Exception {
