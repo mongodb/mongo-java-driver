@@ -16,7 +16,6 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
@@ -24,25 +23,10 @@ import java.util.Arrays;
 
 public class DBTest extends TestCase {
 
-    public DBTest() throws UnknownHostException{
+    public DBTest() {
         super();
         cleanupDB = "com_mongodb_unittest_DBTest";
         _db = cleanupMongo.getDB(cleanupDB);
-        _mongo = initMongo();
-    }
-
-    private Mongo initMongo() throws UnknownHostException{
-        return new MongoClient(Arrays.asList(new ServerAddress("localhost")),
-                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
-    }
-
-    @Override
-    @AfterTest
-    public void cleanup(){
-        super.cleanup();
-        if(_mongo != null){
-            _mongo.close();
-        }
     }
 
     @Test(groups = {"basic"})
@@ -165,7 +149,7 @@ public class DBTest extends TestCase {
     @Test(groups = {"basic"})
     public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() {
 
-        DB db = _mongo.getDB("com_mongodb_unittest_DBTest");
+        DB db = cleanupMongo.getDB("com_mongodb_unittest_DBTest");
 
         db.requestStart();
         try {
@@ -189,12 +173,12 @@ public class DBTest extends TestCase {
 
     @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
     public void whenDBNameContainsSpacesThenThrowException(){
-        _mongo.getDB("foo bar");
+        cleanupMongo.getDB("foo bar");
     }
 
     @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
     public void whenDBNameIsEmptyThenThrowException(){
-        _mongo.getDB("");
+        cleanupMongo.getDB("");
     }
 
     /*public static class Person extends DBObject {
@@ -240,8 +224,6 @@ public class DBTest extends TestCase {
     */
 
     final DB _db;
-
-    final Mongo _mongo;
 
     public static void main(String args[])
             throws Exception {
