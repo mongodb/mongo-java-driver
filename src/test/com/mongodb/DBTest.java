@@ -147,23 +147,27 @@ public class DBTest extends TestCase {
     }
 
     @Test(groups = {"basic"})
-    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() {
+    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+        DB db = m.getDB("com_mongodb_unittest_DBTest");
 
-        DB db = cleanupMongo.getDB("com_mongodb_unittest_DBTest");
-
-        db.requestStart();
         try {
-            db.command(new BasicDBObject("ping", 1));
             db.requestStart();
             try {
                 db.command(new BasicDBObject("ping", 1));
+                db.requestStart();
+                try {
+                    db.command(new BasicDBObject("ping", 1));
+                } finally {
+                    db.requestDone();
+                }
             } finally {
                 db.requestDone();
             }
         } finally {
-            db.requestDone();
+            m.close();
         }
-
     }
 
     @Test(groups = {"basic"})
