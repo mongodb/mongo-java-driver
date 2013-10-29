@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 class DBCollectionFunctionalSpecification extends FunctionalSpecification {
@@ -134,7 +136,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage() == 'index not found'
+        exception.getCommandResult().getErrorMessage().contains('index not found')
     }
 
     def 'should throw Exception if dropping an index with an incorrect type'() {
@@ -147,7 +149,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage() == 'index not found'
+        exception.getCommandResult().getErrorMessage().contains('index not found')
     }
 
     def 'should drop nested index'() {
