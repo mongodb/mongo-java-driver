@@ -1696,7 +1696,12 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        return executeOperation(new GetIndexesOperation<DBObject>(getNamespace(), objectCodec, getBufferPool(), getSession()));
+        List<Document> indexDocumentList = executeOperation(new GetIndexesOperation(getNamespace(), getBufferPool(), getSession()));
+        List<DBObject> indexDBObjectList = new ArrayList<DBObject>(indexDocumentList.size());
+        for (Document cur : indexDocumentList) {
+            indexDBObjectList.add(toDBObject(cur));
+        }
+        return indexDBObjectList;
     }
 
     /**
