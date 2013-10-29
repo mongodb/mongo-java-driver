@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
@@ -66,7 +67,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
             }
         });
 
-        latch.await();
+        latch.await(1, SECONDS);
         assertThat(actual.get(0), is(10L));
     }
 
@@ -88,7 +89,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
                 latch.countDown();
             }
         });
-        latch.await();
+        latch.await(1, SECONDS);
         assertThat(documentResultList.get(0), is(nullValue()));
         assertThat(exceptionList.get(0), is(nullValue()));
     }
@@ -109,7 +110,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
             }
         });
 
-        latch.await();
+        latch.await(1, SECONDS);
         assertThat(documentResultList, is(documentList));
     }
 
@@ -146,7 +147,7 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
             }
         });
 
-        latch.await();
+        latch.await(1, SECONDS);
         assertThat(results, is(documentList));
     }
 }
