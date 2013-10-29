@@ -17,21 +17,23 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.connection.NativeAuthenticationHelper;
 
 import java.util.Arrays;
+
+import static org.mongodb.connection.NativeAuthenticationHelper.createAuthenticationHash;
 
 final class UserOperationHelper {
 
     static Document asCommandDocument(final User user, final String commandName) {
         return new Document(commandName, user.getCredential().getUserName())
-                   .append("pwd", new String(user.getCredential().getPassword()))
-                   .append("roles", Arrays.asList(getRoleName(user)));
+               .append("pwd", createAuthenticationHash(user.getCredential().getUserName(), user.getCredential().getPassword()))
+               .append("digestPassword", false)
+               .append("roles", Arrays.asList(getRoleName(user)));
     }
 
-    // TODO: use different roles when source is "admin"
     private static String getRoleName(final User user) {
-        return user.isReadOnly() ? "read" : "readWrite";
+        return user.getCredential().getSource().equals("admin")
+               ? (user.isReadOnly() ? "readAnyDatabase" : "root") : (user.isReadOnly() ? "read" : "dbOwner");
     }
 
     static Document asCollectionQueryDocument(final User user) {
@@ -40,9 +42,8 @@ final class UserOperationHelper {
 
     static Document asCollectionDocument(final User user) {
         return asCollectionQueryDocument(user)
-                   .append("pwd", NativeAuthenticationHelper.createAuthenticationHash(user.getCredential().getUserName(),
-                                                                                      user.getCredential().getPassword()))
-                   .append("readOnly", user.isReadOnly());
+               .append("pwd", createAuthenticationHash(user.getCredential().getUserName(), user.getCredential().getPassword()))
+               .append("readOnly", user.isReadOnly());
 
     }
 

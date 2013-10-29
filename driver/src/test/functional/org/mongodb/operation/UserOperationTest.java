@@ -17,11 +17,14 @@
 package org.mongodb.operation;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;
@@ -36,7 +39,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.getMongoClientURI;
@@ -46,7 +51,7 @@ import static org.mongodb.Fixture.getSession;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
-// This test is here because the assertion is conditional on auth being enabled, and there's no way to do that in Spock
+// This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
 public class UserOperationTest extends DatabaseTestCase {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -66,12 +71,11 @@ public class UserOperationTest extends DatabaseTestCase {
 
     @Test
     public void readOnlyUserShouldNotBeAbleToWrite() throws Exception {
-        if (getMongoClientURI().getCredentialList().isEmpty()) {
-            return;
-        }
+        Assume.assumeFalse(getMongoClientURI().getCredentialList().isEmpty());
+
         // given:
         new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute();
-        Cluster cluster = createCluster();
+        Cluster cluster = createCluster(readOnlyUser);
 
         // when:
         try {
@@ -81,24 +85,100 @@ public class UserOperationTest extends DatabaseTestCase {
                                           getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()),
                                           true).execute();
-            fail("should have throw");
+            fail("should have thrown");
         } catch (MongoWriteException e) {
             // all good
         } finally {
             // cleanup:
             new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getBufferProvider(), getSession(),
-                                    true).execute();
+                                  true).execute();
             cluster.close();
         }
     }
 
-    private Cluster createCluster() throws Exception {
+    @Test
+    public void readWriteAdminUserShouldBeAbleToWriteToADifferentDatabase() throws InterruptedException {
+        // given
+        User adminUser = new User(createMongoCRCredential("jeff-rw-admin", "admin", "123".toCharArray()), false);
+        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+
+        Cluster cluster = createCluster(adminUser);
+        try {
+            // when
+            WriteResult result = new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
+                                                               new Insert<Document>(ACKNOWLEDGED, new Document()),
+                                                               new DocumentCodec(),
+                                                               getBufferProvider(),
+                                                               new ClusterSession(cluster, getExecutor()),
+                                                               true).execute();
+            // then
+            result.getCommandResult().isOk();
+        } finally {
+            // cleanup
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            cluster.close();
+        }
+    }
+
+    @Test
+    public void readOnlyAdminUserShouldNotBeAbleToWriteToADatabase() throws InterruptedException {
+        assumeTrue(org.mongodb.Fixture.isAuthenticated());
+        // given
+        User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
+        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+
+        Cluster cluster = createCluster(adminUser);
+        try {
+            // when
+            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
+                                          new Insert<Document>(ACKNOWLEDGED, new Document()),
+                                          new DocumentCodec(),
+                                          getBufferProvider(),
+                                          new ClusterSession(cluster, getExecutor()),
+                                          true).execute();
+            fail("Should have thrown");
+        } catch (MongoWriteException e) {
+            // all good
+        }
+        finally {
+            // cleanup
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            cluster.close();
+        }
+    }
+
+    @Test
+    public void readOnlyAdminUserShouldBeAbleToReadFromADifferentDatabase() throws InterruptedException {
+        // given
+        User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
+        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+
+        Cluster cluster = createCluster(adminUser);
+        try {
+            // when
+            long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
+                                             new Find(),
+                                             new DocumentCodec(),
+                                             getBufferProvider(),
+                                             new ClusterSession(cluster, getExecutor()),
+                                             true).execute();
+            // then
+            assertEquals(0, result);
+        } finally {
+            // cleanup
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            cluster.close();
+        }
+    }
+
+
+    private Cluster createCluster(final User user) throws InterruptedException {
         return new DefaultClusterFactory().create(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                                                   ServerSettings.builder().build(),
                                                   ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                  scheduledExecutorService, asList(readOnlyUser.getCredential()), getBufferProvider(),
+                                                  scheduledExecutorService, asList(user.getCredential()), getBufferProvider(),
                                                   null, null, null);
     }
 
