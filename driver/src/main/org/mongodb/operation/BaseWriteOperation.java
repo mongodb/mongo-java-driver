@@ -60,7 +60,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
         Connection connection = provider.getConnection();
         try {
             if (writeConcern.isAcknowledged()
-                && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
+                && provider.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 8, 0))) >= 0) {
                 return getCommandProtocol(provider.getServerDescription(), connection).execute();
             } else {
                 return getWriteProtocol(provider.getServerDescription(), connection).execute();
@@ -82,7 +82,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
                 public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
                     MongoFuture<WriteResult> protocolFuture;
                     if (writeConcern.isAcknowledged()
-                        && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0) {
+                        && pair.getServerDescription().getVersion().compareTo(new ServerVersion(Arrays.asList(2, 8, 0))) >= 0) {
                         protocolFuture = getCommandProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                     } else {
                         protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
