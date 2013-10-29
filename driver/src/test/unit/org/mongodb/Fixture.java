@@ -163,6 +163,10 @@ public final class Fixture {
                && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
     }
 
+    public static boolean isAuthenticated() {
+        return !getMongoClientURI().getCredentialList().isEmpty();
+    }
+
     public static void enableMaxTimeFailPoint() {
         getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                              .append("mode", "alwaysOn"),

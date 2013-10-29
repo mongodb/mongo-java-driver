@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
@@ -115,6 +116,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDoEval() {
+        assumeFalse(org.mongodb.Fixture.isAuthenticated());
         String code = "function(name, incAmount) {\n"
                       + "var doc = db.myCollection.findOne( { name : name } );\n"
                       + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"
