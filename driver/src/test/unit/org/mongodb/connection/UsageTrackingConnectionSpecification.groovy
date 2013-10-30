@@ -16,16 +16,17 @@
 
 
 
+
+
 package org.mongodb.connection
 
-import org.mongodb.Fixture
 import spock.lang.Specification
 
 class UsageTrackingConnectionSpecification extends Specification {
 
     def 'generation is initialized'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(Fixture.primary), 1);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 1);
 
         then:
         connection.generation == 1
@@ -33,7 +34,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'openAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(Fixture.primary), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -41,7 +42,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(Fixture.primary), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -49,7 +50,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(Fixture.primary), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
         Thread.sleep(5);
 
         when:
@@ -61,7 +62,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(Fixture.primary), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         when:
         connection.receiveMessage()
