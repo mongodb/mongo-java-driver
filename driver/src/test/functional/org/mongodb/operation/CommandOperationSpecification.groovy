@@ -16,9 +16,12 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.ReadPreference
@@ -55,6 +58,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
 
     def 'should throw execution timeout exception from executeAsync'() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+            assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
