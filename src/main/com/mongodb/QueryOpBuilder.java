@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 /**
@@ -13,6 +29,7 @@ class QueryOpBuilder {
 	private String hintStr;
 	private boolean explain;
 	private boolean snapshot;
+    private long maxTimeMS;
 	private ReadPreference readPref;
 
 	private DBObject specialFields;
@@ -103,6 +120,11 @@ class QueryOpBuilder {
         return this;
     }
 
+    public QueryOpBuilder addMaxTimeMS(final long maxTimeMS) {
+        this.maxTimeMS = maxTimeMS;
+        return this;
+    }
+
     /**
 	 * Constructs the query operation DBObject
 	 * @return DBObject representing the query command to be sent to server
@@ -131,6 +153,9 @@ class QueryOpBuilder {
                     queryop.put("$snapshot", true);
                 if (readPref != null && readPref != ReadPreference.primary())
                     queryop.put(READ_PREFERENCE_META_OPERATOR, readPref.toDBObject());
+                if (maxTimeMS > 0) {
+                    queryop.put("$maxTimeMS", maxTimeMS);
+                }
 
                 return queryop;
             }
@@ -151,6 +176,10 @@ class QueryOpBuilder {
         
         if ( hintStr != null || hintObj != null || snapshot || explain)
             return true;
+
+        if (maxTimeMS > 0) {
+            return true;
+        }
 
         return false;
     }
@@ -187,7 +216,7 @@ class QueryOpBuilder {
 
 		dbobj.put(field, obj);
 	}
-	
-	
+
+
 
 }

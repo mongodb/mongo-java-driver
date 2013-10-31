@@ -1,17 +1,17 @@
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
@@ -513,7 +513,92 @@ public class DBCursorTest extends TestCase {
             m.close();
         }
     }
-    
+
+    @Test
+    public void testMaxTimeForIterator() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = _db.getCollection("testMaxTimeForIterator");
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.hasNext();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForIterable() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = _db.getCollection("testMaxTimeForIterable");
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.iterator().hasNext();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForOne() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = _db.getCollection("testMaxTimeForOne");
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.one();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForCount() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = _db.getCollection("testMaxTimeForCount");
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.count();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeForSize() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = _db.getCollection("testMaxTimeForSize");
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.maxTime(1, TimeUnit.SECONDS);
+        try {
+            cursor.size();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
     final DB _db;
 
     public static void main( String args[] )

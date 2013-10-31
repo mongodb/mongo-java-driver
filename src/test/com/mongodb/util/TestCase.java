@@ -1,19 +1,17 @@
-// TestCase.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb.util;
@@ -22,7 +20,9 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 
 import java.io.BufferedReader;
@@ -263,6 +263,12 @@ public class TestCase extends MyAsserts {
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 
+    protected void checkServerVersion(double version) {
+        if (!serverIsAtLeastVersion(version)) {
+            throw new SkipException("Server is too old for this test.");
+        }
+    }
+
     /**
      *
      * @param mongo the connection
@@ -281,6 +287,19 @@ public class TestCase extends MyAsserts {
     protected String getASecondaryAsString(Mongo mongo) {
         return getMemberNameByState(mongo, "secondary");
     }
+
+    protected void enableMaxTimeFailPoint() {
+        cleanupMongo.getDB("admin").command(new BasicDBObject("configureFailPoint", "maxTimeAlwaysTimeOut").append("mode", "alwaysOn"),
+                                            0, ReadPreference.primary());
+    }
+
+    protected void disableMaxTimeFailPoint() {
+        if (serverIsAtLeastVersion(2.5)) {
+            cleanupMongo.getDB("admin").command(new BasicDBObject("configureFailPoint", "maxTimeAlwaysTimeOut").append("mode", "off"),
+                                                0, ReadPreference.primary());
+        }
+    }
+
 
     @SuppressWarnings({"unchecked"})
     protected String getMemberNameByState(Mongo mongo, String stateStrToMatch) {

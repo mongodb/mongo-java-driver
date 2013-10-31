@@ -1,18 +1,17 @@
-// JavaClientTest.java
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
@@ -39,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class JavaClientTest extends TestCase {
@@ -570,7 +570,29 @@ public class JavaClientTest extends TestCase {
         assertEquals( 1 , m.get( "d" ).intValue() );
 
     }
-    
+
+    @Test
+    public void testMapReduceExecutionTimeout() {
+        checkServerVersion(2.5);
+
+        String map = "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }";
+        String reduce = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
+
+        enableMaxTimeFailPoint();
+        DBCollection c = _db.getCollection( "jmr2" );
+        try {
+            final MapReduceCommand command = new MapReduceCommand(c, map, reduce, null, MapReduceCommand.OutputType.INLINE,
+                                                                  new BasicDBObject());
+            command.setMaxTime(1, TimeUnit.SECONDS);
+            c.mapReduce(command);
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
     @Test
     public void testAggregation(){
         if (!serverIsAtLeastVersion(2.1)) {

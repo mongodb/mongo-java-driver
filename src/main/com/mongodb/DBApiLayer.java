@@ -1,20 +1,20 @@
-// DBApiLayer.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// DBApiLayer.java
 
 package com.mongodb;
 
@@ -22,7 +22,15 @@ import com.mongodb.util.JSON;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
@@ -186,7 +194,12 @@ public class DBApiLayer extends DB {
     static void throwOnQueryFailure(final Response res, final long cursor) {
         if ((res._flags & Bytes.RESULTFLAG_ERRSET) > 0) {
             BSONObject errorDocument = res.get(0);
-            throw new MongoException(ServerError.getCode(errorDocument), ServerError.getMsg(errorDocument, null));
+            if (ServerError.getCode(errorDocument) == 50) {
+                throw new MongoExecutionTimeoutException(ServerError.getCode(errorDocument),
+                                                         ServerError.getMsg(errorDocument, null));
+            } else {
+                throw new MongoException(ServerError.getCode(errorDocument), ServerError.getMsg(errorDocument, null));
+            }
         }
         else if ((res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND) > 0) {
             throw new MongoException.CursorNotFound(cursor, res.serverUsed());

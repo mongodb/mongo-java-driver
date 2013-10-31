@@ -1,19 +1,17 @@
-// DBCursor.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
@@ -26,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 /** An iterator over database results.
@@ -99,6 +100,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         c._batchSize = _batchSize;
         c._snapshot = _snapshot;
         c._explain = _explain;
+        c._maxTimeMS = _maxTimeMS;
         if ( _specialFields != null )
             c._specialFields = new BasicDBObject( _specialFields.toMap() );
         return c;
@@ -171,6 +173,20 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             throw new IllegalStateException( "can't hint after executing query" );
 
         _hint = indexName;
+        return this;
+    }
+
+    /**
+     * Set the maximum execution time for operations on this cursor.
+     *
+     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value
+     *                 requires a server version >= 2.6
+     * @param timeUnit the time unit
+     * @return same DBCursor for chaining operations
+     * @since 2.12.0
+     */
+    public DBCursor maxTime(final int maxTime, final TimeUnit timeUnit) {
+        _maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -362,7 +378,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
                 .addHint(_hint)
                 .addExplain(_explain)
                 .addSnapshot(_snapshot)
-                .addSpecialFields(_specialFields);
+                .addSpecialFields(_specialFields)
+                .addMaxTimeMS(_maxTimeMS);
 
         if (_collection.getDB().getMongo().isMongosConnection()) {
             builder.addReadPreference(_readPref);
@@ -586,8 +603,18 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted, getReadPreference());
+        return (int)_collection.getCount(this._query, this._keysWanted, 0, 0, getReadPreference(), _maxTimeMS, MILLISECONDS);
     }
+
+    /**
+     * @return the first matching document
+     *
+     * @since 2.12
+     */
+    public DBObject one() {
+        return _collection.findOne(_query, _keysWanted, _orderBy, getReadPreference(), _maxTimeMS, MILLISECONDS);
+    }
+
 
     /**
      * Counts the number of objects matching the query
@@ -602,7 +629,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
         if ( _collection._db == null )
             throw new IllegalArgumentException( "why is _collection._db null" );
 
-        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip, getReadPreference() );
+        return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip, getReadPreference(), _maxTimeMS,
+                                         MILLISECONDS);
     }
 
 
@@ -717,6 +745,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     private int _skip = 0;
     private boolean _snapshot = false;
     private int _options = 0;
+    private long _maxTimeMS;
     private ReadPreference _readPref;
     private DBDecoderFactory _decoderFact;
 

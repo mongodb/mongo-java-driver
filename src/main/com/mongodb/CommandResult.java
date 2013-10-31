@@ -70,7 +70,12 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if ( !ok() ) {   // check for command failure
-            return new CommandFailureException( this );
+            if (getCode() == 50) {
+                return new MongoExecutionTimeoutException(getCode(), getErrorMessage());
+            }
+            else {
+                return new CommandFailureException( this );
+            }
         } else if ( hasErr() ) { // check for errors reported by getlasterror command
             if (getCode() == 11000 || getCode() == 11001 || getCode() == 12582) {
                 return new MongoException.DuplicateKey(this);

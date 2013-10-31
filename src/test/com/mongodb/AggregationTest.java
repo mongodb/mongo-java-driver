@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 import com.mongodb.AggregationOptions.OutputMode;
@@ -17,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class AggregationTest extends TestCase {
 
@@ -28,12 +45,6 @@ public class AggregationTest extends TestCase {
         cleanupDB = "com_mongodb_AggregationTest";
         database = cleanupMongo.getDB(cleanupDB);
         collection = database.getCollection(getClass().getSimpleName() + System.nanoTime());
-    }
-
-    public void checkServerVersion() {
-        if (!serverIsAtLeastVersion(2.5)) {
-            throw new SkipException("Server is too old for this test.");
-        }
     }
 
     @BeforeMethod
@@ -53,7 +64,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testOldAggregationWithOut() {
-        checkServerVersion();
+        checkServerVersion(2.5);
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final AggregationOutput out = collection.aggregate(pipeline);
@@ -64,7 +75,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testExplain() {
-        checkServerVersion();
+        checkServerVersion(2.5);
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
@@ -120,7 +131,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testAggregationCursor() {
-        checkServerVersion();
+        checkServerVersion(2.5);
         final List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
@@ -130,10 +141,10 @@ public class AggregationTest extends TestCase {
                 .build());
 
         verify(pipeline, AggregationOptions.builder()
-                .batchSize(1)
-                .outputMode(AggregationOptions.OutputMode.INLINE)
-                .allowDiskUsage(true)
-                .build());
+                                           .batchSize(1)
+                                           .outputMode(AggregationOptions.OutputMode.INLINE)
+                                           .allowDiskUsage(true)
+                                           .build());
 
         verify(pipeline, AggregationOptions.builder()
                 .batchSize(1)
@@ -143,12 +154,12 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testInlineAndDollarOut() {
-        checkServerVersion();
+        checkServerVersion(2.5);
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
         assertEquals(0, database.getCollection(aggCollection)
-                .count());
+                                .count());
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
 
@@ -157,30 +168,30 @@ public class AggregationTest extends TestCase {
                 .iterator()
                 .hasNext());
         assertEquals(database.getCollection(aggCollection)
-                .count(), 2);
+                             .count(), 2);
     }
 
     @Test
     public void testDollarOut() {
-        checkServerVersion();
+        checkServerVersion(2.5);
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
         Assert.assertEquals(database.getCollection(aggCollection)
-                .count(), 0);
+                                    .count(), 0);
 
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
-                .outputMode(AggregationOptions.OutputMode.CURSOR)
-                .build());
+                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
+                                           .build());
         assertEquals(2, database.getCollection(aggCollection)
                 .count());
     }
 
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException {
-        checkServerVersion();
+        checkServerVersion(2.5);
         if (isStandalone(cleanupMongo)) {
             throw new SkipException("Test can only be run against replica sets.");
         }
@@ -202,7 +213,7 @@ public class AggregationTest extends TestCase {
 
     @Test(enabled = false)
     public void testAggregateOnSecondary() throws UnknownHostException {
-        checkServerVersion();
+        checkServerVersion(2.5);
         if (isStandalone(cleanupMongo)) {
             return;
         }
@@ -220,6 +231,21 @@ public class AggregationTest extends TestCase {
                 .build();
         MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertNotEquals(primary, cursor.getServerAddress());
+    }
+
+    @Test
+    public void testMaxTime() {
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCollection collection = database.getCollection("testMaxTime");
+        try {
+            collection.aggregate(prepareData(), AggregationOptions.builder().maxTime(1, SECONDS).build());
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
     }
 
     public List<DBObject> prepareData() {

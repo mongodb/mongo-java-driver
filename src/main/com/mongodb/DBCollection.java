@@ -1,19 +1,17 @@
-// DBCollection.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
@@ -30,6 +28,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /** This class provides a skeleton implementation of a database collection.
  * <p>A typical invocation sequence is thus
@@ -359,7 +360,30 @@ public abstract class DBCollection {
      * @throws MongoException
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert){
+        return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS);
+    }
 
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version >= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @return pre-modification document
+     * @since 2.12.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final long maxTime, final TimeUnit maxTimeUnit) {
         BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
         if (query != null && !query.keySet().isEmpty())
             cmd.append( "query", query );
@@ -367,6 +391,9 @@ public abstract class DBCollection {
             cmd.append( "fields", fields );
         if (sort != null && !sort.keySet().isEmpty())
             cmd.append( "sort", sort );
+        if (maxTime > 0) {
+            cmd.append("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
+        }
 
         if (remove)
             cmd.append( "remove", remove );
@@ -726,9 +753,27 @@ public abstract class DBCollection {
      * @throws MongoException
      * @dochub find
      */
-    public DBObject findOne( DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref ){
+    public DBObject findOne(DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref) {
+        return findOne(o, fields, orderBy, readPref, 0, MILLISECONDS);
+    }
 
-        QueryOpBuilder queryOpBuilder = new QueryOpBuilder().addQuery(o).addOrderBy(orderBy);
+    /**
+     * Get a single document from collection.
+     *
+     * @param o           the selection criteria using query operators.
+     * @param fields      specifies which projection MongoDB will return from the documents in the result set.
+     * @param orderBy     A document whose fields specify the attributes on which to sort the result set.
+     * @param readPref    {@code ReadPreference} to be used for this operation
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @return A document that satisfies the query specified as the argument to this method.
+     * @since 2.12.0
+     */
+    DBObject findOne(DBObject o, DBObject fields, DBObject orderBy, ReadPreference readPref,
+                     long maxTime, TimeUnit maxTimeUnit) {
+
+        QueryOpBuilder queryOpBuilder = new QueryOpBuilder().addQuery(o).addOrderBy(orderBy)
+                                                            .addMaxTimeMS(MILLISECONDS.convert(maxTime, maxTimeUnit));
 
         if (getDB().getMongo().isMongosConnection()) {
             queryOpBuilder.addReadPreference(readPref);
@@ -977,8 +1022,25 @@ public abstract class DBCollection {
      *  @return number of documents that match query and fields
      *  @throws MongoException
      */
-
     public long getCount(DBObject query, DBObject fields, long limit, long skip, ReadPreference readPrefs ){
+        return getCount(query, fields, limit, skip, readPrefs, 0, MILLISECONDS);
+    }
+
+    /**
+     * Get the count of documents in collection that would match a criteria.
+     *
+     * @param query          specifies the selection criteria
+     * @param fields     this is ignored
+     * @param limit          limit the count to this value
+     * @param skip           number of documents to skip
+     * @param readPrefs {@link ReadPreference} to be used for this operation
+     * @param maxTime        the maximum time that the server will allow this operation to execute before killing it
+     * @param maxTimeUnit    the unit that maxTime is specified in
+     * @return the number of documents that matches selection criteria
+     * @throws MongoException
+     */
+    long getCount(final DBObject query, final DBObject fields, final long limit, final long skip,
+                  final ReadPreference readPrefs, final long maxTime, final TimeUnit maxTimeUnit) {
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("count", getName());
         cmd.put("query", query);
@@ -990,6 +1052,9 @@ public abstract class DBCollection {
             cmd.put( "limit" , limit );
         if ( skip > 0 )
             cmd.put( "skip" , skip );
+        if (maxTime > 0) {
+            cmd.put("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
+        }
 
         CommandResult res = _db.command(cmd,getOptions(),readPrefs);
         if ( ! res.ok() ){
@@ -1412,6 +1477,10 @@ public abstract class DBCollection {
             }
             command.put("cursor", cursor);
         }
+        if (options.getMaxTime(MILLISECONDS) > 0) {
+            command.put("maxTimeMS", options.getMaxTime(MILLISECONDS));
+        }
+
         if (options.getAllowDiskUsage() != null) {
             command.put("allowDiskUsage", options.getAllowDiskUsage());
         }

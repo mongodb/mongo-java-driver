@@ -1,23 +1,25 @@
-/**
- * Copyright (c) 2010 10gen, Inc. <http://10gen.com>
- * 
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
  */
 
 package com.mongodb;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
@@ -198,6 +200,28 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets the max execution time for this command, in the given time unit.
+     *
+     * @param timeUnit the time unit to return the value in.
+     * @return the maximum execution time
+     * @since 2.12.0
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(_maxTimeMS, MILLISECONDS);
+    }
+
+    /**
+     * Sets the max execution time for this command, in the given time unit.
+     *
+     * @param maxTime  the maximum execution time. A non-zero value requires a server version >= 2.6
+     * @param timeUnit the time unit that maxTime is specified in
+     * @since 2.12.0
+     */
+    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+        this._maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+    }
+
+    /**
      * Gets the (optional) JavaScript  scope 
      * 
      * @return The JavaScript scope
@@ -271,7 +295,11 @@ public class MapReduceCommand {
         if (_extra != null) {
             cmd.putAll(_extra);
         }
-        
+
+        if (_maxTimeMS != 0) {
+            cmd.put("maxTimeMS", _maxTimeMS);
+        }
+
         return cmd;
     }
 
@@ -323,4 +351,5 @@ public class MapReduceCommand {
     Map<String, Object> _scope;
     Boolean _verbose = true;
     DBObject _extra;
+    private long _maxTimeMS;
 }

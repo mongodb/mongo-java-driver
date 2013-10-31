@@ -17,13 +17,19 @@
 package com.mongodb;
 
 
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
+ *
  * @since 2.12
  */
 public class AggregationOptions {
     private final Integer batchSize;
     private final Boolean allowDiskUsage;
     private final OutputMode outputMode;
+    private final long maxTimeMS;
 
     public enum OutputMode {
         /**
@@ -40,6 +46,7 @@ public class AggregationOptions {
         batchSize = builder.batchSize;
         allowDiskUsage = builder.allowDiskUsage;
         outputMode = builder.outputMode;
+        maxTimeMS = builder.maxTimeMS;
     }
 
     /**
@@ -65,14 +72,24 @@ public class AggregationOptions {
         return outputMode;
     }
 
+    /**
+     * Gets the maximum execution time for the aggregation command.
+     *
+     * @param timeUnit the time unit for the result
+     * @return the max time
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("AggregationOptions{");
-        sb.append("allowDiskUsage=").append(allowDiskUsage);
-        sb.append(", batchSize=").append(batchSize);
-        sb.append(", outputMode=").append(outputMode);
-        sb.append('}');
-        return sb.toString();
+        return "AggregationOptions{"
+               + "batchSize=" + batchSize
+               + ", allowDiskUsage=" + allowDiskUsage
+               + ", outputMode=" + outputMode
+               + ", maxTimeMS=" + maxTimeMS
+               + '}';
     }
 
     public static Builder builder() {
@@ -84,8 +101,36 @@ public class AggregationOptions {
         private Integer batchSize;
         private Boolean allowDiskUsage;
         private OutputMode outputMode = OutputMode.INLINE;
+        private long maxTimeMS;
 
         private Builder() {
+        }
+
+        public Builder batchSize(final Integer size) {
+            batchSize = size;
+            return this;
+        }
+
+        public Builder allowDiskUsage(final Boolean allow) {
+            allowDiskUsage = allow;
+            return this;
+        }
+
+        public Builder outputMode(final OutputMode mode) {
+            outputMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets the maximum execution time for the aggregation command.
+         *
+         * @param maxTime the max time
+         * @param timeUnit the time unit
+         * @return this
+         */
+        public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
+            maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+            return this;
         }
 
         public AggregationOptions build() {
