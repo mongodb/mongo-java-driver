@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.connection
 
 import org.bson.ByteBuf
@@ -202,6 +190,8 @@ class PooledConnectionProviderSpecification extends Specification {
 
         when:
         provider.doMaintenance()
+        //not cool - but we have no way of being notified that the maintenance task has finished
+        Thread.sleep(500)
 
         then:
         connectionFactory.createdConnections.size() == 5
