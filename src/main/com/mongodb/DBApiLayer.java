@@ -123,6 +123,54 @@ public class DBApiLayer extends DB {
         _connector.requestEnsureConnection();
     }
 
+    public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
+        requestStart();
+        try {
+            if (useUserCommands(_connector.getPrimaryPort())) {
+                CommandResult userInfoResult = command(new BasicDBObject("usersInfo", username));
+                userInfoResult.throwOnError();
+                DBObject userCommandDocument = getUserCommandDocument(username, passwd, readOnly,
+                                                                      ((List) userInfoResult.get("users")).isEmpty()
+                                                                      ? "createUser" : "updateUser");
+                CommandResult commandResult = command(userCommandDocument);
+                commandResult.throwOnError();
+                return new WriteResult(commandResult, getWriteConcern());
+            } else {
+                return super.addUser(username, passwd, readOnly);
+            }
+        } finally {
+            requestDone();
+        }
+    }
+
+    public WriteResult removeUser( String username ){
+        requestStart();
+        try {
+            if (useUserCommands(_connector.getPrimaryPort())) {
+                CommandResult res = command(new BasicDBObject("dropUser", username));
+                res.throwOnError();
+                return new WriteResult(res, getWriteConcern());
+            }
+            else {
+                return super.removeUser(username);
+            }
+        } finally {
+            requestDone();
+        }
+    }
+
+    private DBObject getUserCommandDocument(String username, char[] passwd, boolean readOnly, final String commandName) {
+        return new BasicDBObject(commandName, username)
+               .append("pwd", _hash(username, passwd))
+               .append("digestPassword", false)
+               .append("roles", Arrays.asList(getUserRoleName(readOnly)));
+    }
+
+
+    private String getUserRoleName(boolean readOnly) {
+        return getName().equals("admin") ? (readOnly ? "readAnyDatabase" : "root") : (readOnly ? "read" : "dbOwner");
+    }
+
     protected MyCollection doGetCollection( String name ){
         MyCollection c = _collections.get( name );
         if ( c != null )
@@ -197,6 +245,10 @@ public class DBApiLayer extends DB {
     @Override
     CommandResult doAuthenticate(MongoCredential credentials) {
         return _connector.authenticate(credentials);
+    }
+
+    private boolean useUserCommands(final DBPort port) {
+        return _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
     }
 
     static void throwOnQueryFailure(final Response res, final long cursor) {

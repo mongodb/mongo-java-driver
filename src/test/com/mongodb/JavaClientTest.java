@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// JavaClientTest.java
+
+
 package com.mongodb;
 
 import com.mongodb.util.JSON;
@@ -21,7 +24,6 @@ import com.mongodb.util.TestCase;
 import com.mongodb.util.Util;
 import org.bson.BSON;
 import org.bson.Transformer;
-import org.bson.io.PoolOutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -41,8 +43,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
-import static java.lang.String.format;
 
 public class JavaClientTest extends TestCase {
 
@@ -683,14 +683,9 @@ public class JavaClientTest extends TestCase {
 
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
-        DBCollection usersCollection = db.getCollection( "system.users" );
 
         try {
-            usersCollection.remove(new BasicDBObject());
-            assertEquals(0, usersCollection.find().count());
-
             db.addUser("xx" , "e".toCharArray() );
-            assertEquals(1, usersCollection.find().count());
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
             assertNull(db.getAuthenticationCredentials());
@@ -708,132 +703,98 @@ public class JavaClientTest extends TestCase {
             }
         }
         finally {
-            usersCollection.remove( new BasicDBObject() );
+            db.removeUser("xx");
             m.close();
         }
     }
 
     @Test
     public void testAuthenticateCommand() throws UnknownHostException {
-        Mongo m = new MongoClient();
-        DB db = m.getDB(cleanupDB);
-        DBCollection usersCollections = db.getCollection( "system.users" );
-
         try {
-            usersCollections.remove(new BasicDBObject());
-            assertEquals(0, usersCollections.find().count());
+            _db.addUser("xx", "e".toCharArray());
 
-            db.addUser("xx", "e".toCharArray());
-            assertEquals(1, usersCollections.find().count());
-
+            MongoClient m = new MongoClient();
             try {
-                db.authenticateCommand( "xx" , "f".toCharArray());
-                fail("Auth should have failed");
-            } catch (CommandFailureException e) {
-                // all good
-            }
-            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
-            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
-            try {
-                db.authenticateCommand("xx", "f".toCharArray());
-                fail("can't auth with different credentials");
-            } catch (IllegalStateException e) {
-                // all good;
+                DB db = m.getDB(cleanupDB);
+                try {
+                    db.authenticateCommand( "xx" , "f".toCharArray());
+                    fail("Auth should have failed");
+                } catch (CommandFailureException e) {
+                    // all good
+                }
+                assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+                assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+                try {
+                    db.authenticateCommand("xx", "f".toCharArray());
+                    fail("can't auth with different credentials");
+                } catch (IllegalStateException e) {
+                    // all good;
+                }
+            } finally {
+                m.close();
             }
         }
         finally {
-            usersCollections.remove(new BasicDBObject());
-            m.close();
+            _db.removeUser("xx");
         }
     }
 
     @Test
     public void testAuthenticateWithCredentialsInURIAndNoDatabase() throws UnknownHostException {
-        // First add the user
-        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
-        DB db = m.getDB("admin");
-        DBCollection usersCollection = db.getCollection( "system.users" );
-        try {
-            usersCollection.remove(new BasicDBObject());
-            assertEquals(0, usersCollection.find().count());
-
-            db.addUser("xx", "e".toCharArray());
-        }
-        finally {
-            m.close();
-        }
-
-        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost"));
-        db = m.getDB("admin");
+        DB adminDB = cleanupMongo.getDB("admin");
+        adminDB.addUser("xx", "e".toCharArray());
 
         try {
-            assertEquals(1, m.getDB("admin").getCollection("system.users").find().count());
-            assertNotNull(db.getAuthenticationCredentials());
-            assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
-        }
-        finally {
-            db.getCollection( "system.users" ).remove(new BasicDBObject());
-            m.close();
+            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost"));
+            try {
+                DB db = m.getDB("admin");
+                assertNotNull(db.getAuthenticationCredentials());
+                assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
+            }
+            finally {
+                m.close();
+            }
+        } finally {
+            adminDB.removeUser("xx");
         }
     }
 
     @Test
     public void testAuthenticateWithCredentialsInURI() throws UnknownHostException {
-        // First add the user
-        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
-        DB db = m.getDB(cleanupDB);
-        DBCollection usersCollection = db.getCollection( "system.users" );
-        try {
-            usersCollection.remove(new BasicDBObject());
-            assertEquals(0, usersCollection.find().count());
-
-            db.addUser("xx", "e".toCharArray());
-            assertEquals(1, usersCollection.find().count());
-        }
-        finally {
-            m.close();
-        }
-
-        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
-        db = m.getDB(cleanupDB);
+        _db.addUser("xx", "e".toCharArray());
 
         try {
-            assertNotNull(db.getAuthenticationCredentials());
-            assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
-        }
-        finally {
-            db.getCollection( "system.users" ).remove(new BasicDBObject());
-            m.close();
+            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
+            try {
+                DB db = m.getDB(cleanupDB);
+                assertNotNull(db.getAuthenticationCredentials());
+                assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
+            }
+            finally {
+                m.close();
+            }
+        } finally {
+            _db.removeUser("xx");
         }
     }
 
     @Test
     public void testAuthenticateCommandWithCredentialsInURI() throws UnknownHostException {
-        // First add the user
-        Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
-        DB db = m.getDB(cleanupDB);
-        DBCollection usersCollection = db.getCollection( "system.users" );
-        try {
-            usersCollection.remove(new BasicDBObject());
-            assertEquals(0, usersCollection.find().count());
-
-            db.addUser("xx", "e".toCharArray());
-            assertEquals(1, usersCollection.find().count());
-        }
-        finally {
-            m.close();
-        }
-
-        m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
-        db = m.getDB(cleanupDB);
+        _db.addUser("xx", "e".toCharArray());
 
         try {
-            assertNotNull(db.getAuthenticationCredentials());
-            assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + cleanupDB));
+            try {
+                DB db = m.getDB(cleanupDB);
+
+                assertNotNull(db.getAuthenticationCredentials());
+                assertTrue(db.authenticateCommand("xx", "e".toCharArray()).ok());
+            } finally {
+                m.close();
+            }
         }
         finally {
-            db.getCollection( "system.users" ).remove(new BasicDBObject());
-            m.close();
+            _db.removeUser("xx");
         }
     }
 
