@@ -22,6 +22,10 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+/**
+ *
+ * @since 3.0
+ */
 public class AggregationOptions {
     public enum OutputMode {
         /**
@@ -62,6 +66,12 @@ public class AggregationOptions {
         return allowDiskUsage;
     }
 
+    /**
+     * Gets the maximum execution time for the aggregation command.
+     *
+     * @param timeUnit the time unit for the result
+     * @return the max time
+     */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
@@ -109,6 +119,13 @@ public class AggregationOptions {
             return this;
         }
 
+        /**
+         * Sets the maximum execution time for the aggregation command.
+         *
+         * @param maxTime the max time
+         * @param timeUnit the time unit
+         * @return this
+         */
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
             maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
             return this;

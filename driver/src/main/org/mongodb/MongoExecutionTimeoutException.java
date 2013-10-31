@@ -22,6 +22,8 @@ import static java.lang.String.format;
 
 /**
  * Exception indicating that the execution of the current operation timed outas a result of the maximum operation time being exceeded.
+ *
+ * @since 3.0
  */
 public class MongoExecutionTimeoutException extends MongoServerException {
 
@@ -31,7 +33,7 @@ public class MongoExecutionTimeoutException extends MongoServerException {
     private final String errorMessage;
 
     public MongoExecutionTimeoutException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        super(format("Execution timeout out with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
+        super(format("Execution timeout with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
               address);
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;

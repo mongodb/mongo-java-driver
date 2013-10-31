@@ -28,13 +28,17 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.clusterIsType;
+import static org.mongodb.Fixture.disableMaxTimeFailPoint;
+import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 import static org.mongodb.connection.ClusterType.ReplicaSet;
 
@@ -240,7 +244,22 @@ public class JavaClientOldTest extends DatabaseTestCase {
                 .build());
         assertTrue(out.keySet().iterator().hasNext());
     }
-    
+
+    @Test
+    public void testMaxTime() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        enableMaxTimeFailPoint();
+        DBCollection collection = database.getCollection("testMaxTime");
+        try {
+            collection.aggregate(prepareData(), AggregationOptions.builder().maxTime(1, SECONDS).build());
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
     private void verify(final List<DBObject> pipeline, final AggregationOptions options) {
         verify(pipeline, options, ReadPreference.primary());
     }

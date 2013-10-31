@@ -18,6 +18,8 @@ package com.mongodb;
 
 /**
  * Exception indicating that the execution of the current operation timed outas a result of the maximum operation time being exceeded.
+ *
+ * @since 2.12
  */
 public class MongoExecutionTimeoutException extends MongoException {
     private static final long serialVersionUID = 5955669123800274594L;
