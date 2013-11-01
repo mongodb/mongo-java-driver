@@ -228,8 +228,8 @@ public class ServerDescription {
     }
 
     /**
-     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone} or
-     * @code{ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of
+     * Returns true if the server has the given tags.  A server of either type {@code ServerType.STANDALONE} or
+     * {@code ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of
      * those types.
      *
      * @param desiredTags the tags
