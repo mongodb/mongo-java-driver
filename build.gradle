@@ -16,6 +16,8 @@
 
 
 
+
+
 def configDir = new File(rootDir, 'config')
 
 buildscript {
@@ -246,7 +248,7 @@ project(':driver-compat') {
     clirr {
         ignoreFailures = true
         excludeFilter = new File("$configDir/clirr-exclude.yml")
-        baseline 'org.mongodb:mongo-java-driver:2.11.2'
+        baseline 'org.mongodb:mongo-java-driver:2.12.0-SNAPSHOT'
     }
 
     checkstyle {

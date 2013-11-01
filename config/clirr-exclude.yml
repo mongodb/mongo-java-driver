@@ -83,6 +83,9 @@ members:
   com.mongodb.gridfs.GridFSFile:
   - _fs                                                              # JAVA-924
 
+  com.mongodb.MongoOptions:
+  - slaveOk
+
   com.mongodb.Mongo:
   - getMinorVersion()                              # JAVA-882
   - getMajorVersion()                              # JAVA-882
