@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
@@ -44,10 +43,10 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getExecutor;
-import static org.mongodb.Fixture.getMongoClientURI;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.isAuthenticated;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
@@ -71,7 +70,7 @@ public class UserOperationTest extends DatabaseTestCase {
 
     @Test
     public void readOnlyUserShouldNotBeAbleToWrite() throws Exception {
-        Assume.assumeFalse(getMongoClientURI().getCredentialList().isEmpty());
+        assumeTrue(isAuthenticated());
 
         // given:
         new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute();
@@ -98,6 +97,8 @@ public class UserOperationTest extends DatabaseTestCase {
 
     @Test
     public void readWriteAdminUserShouldBeAbleToWriteToADifferentDatabase() throws InterruptedException {
+        assumeTrue(isAuthenticated());
+
         // given
         User adminUser = new User(createMongoCRCredential("jeff-rw-admin", "admin", "123".toCharArray()), false);
         new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
@@ -115,14 +116,15 @@ public class UserOperationTest extends DatabaseTestCase {
             result.getCommandResult().isOk();
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), new ClusterSession(cluster),
+                                  true).execute();
             cluster.close();
         }
     }
 
     @Test
     public void readOnlyAdminUserShouldNotBeAbleToWriteToADatabase() throws InterruptedException {
-        assumeTrue(org.mongodb.Fixture.isAuthenticated());
+        assumeTrue(isAuthenticated());
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
         new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
@@ -149,6 +151,8 @@ public class UserOperationTest extends DatabaseTestCase {
 
     @Test
     public void readOnlyAdminUserShouldBeAbleToReadFromADifferentDatabase() throws InterruptedException {
+        assumeTrue(isAuthenticated());
+
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
         new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
