@@ -40,18 +40,26 @@ final class ProtocolHelper {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
     private static final List<Integer> EXECUTION_TIMEOUT_ERROR_CODES = Arrays.asList(50);
 
-    static MongoException getWriteException(final WriteResult writeResult) {
-        if (!writeResult.getCommandResult().isOk()) {
-            return new MongoCommandFailureException(writeResult.getCommandResult());
-        } else if (writeResult.getErrorMessage() != null) {
-            if (DUPLICATE_KEY_ERROR_CODES.contains(writeResult.getCommandResult().getErrorCode())) {
-                return new MongoDuplicateKeyException(writeResult);
-            } else {
-                return new MongoWriteException(writeResult);
-            }
-        } else {
-            return null;
+
+    static WriteResult getWriteResult(final CommandResult commandResult) {
+        if (!commandResult.isOk()) {
+            throw new MongoCommandFailureException(commandResult);
         }
+
+        String errorMessage = commandResult.getResponse().getString("err");
+        if (errorMessage != null) {
+            if (DUPLICATE_KEY_ERROR_CODES.contains(commandResult.getErrorCode())) {
+                throw new MongoDuplicateKeyException(commandResult.getErrorCode(), errorMessage,
+                                                     commandResult);
+            } else {
+                throw new MongoWriteException(commandResult.getErrorCode(), errorMessage, commandResult);
+            }
+        }
+
+        Boolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting");
+
+        return new AcknowledgedWriteResult(((Number) commandResult.getResponse().get("n")).intValue(),
+                               updatedExisting != null ? updatedExisting : false, commandResult.getResponse().get("upserted"));
     }
 
     static MongoException getCommandFailureException(final CommandResult commandResult) {

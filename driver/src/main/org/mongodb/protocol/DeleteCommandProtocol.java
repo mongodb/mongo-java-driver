@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package org.mongodb.protocol;
 
+import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Remove;
+import org.mongodb.operation.RemoveRequest;
+import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.DeleteCommandMessage;
 
 import java.util.List;
@@ -39,29 +40,35 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
-    private final List<Remove> removes;
+    private final List<RemoveRequest> removeRequests;
     private final Encoder<Document> queryEncoder;
 
-    public DeleteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> removes,
-                                 final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
-                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
-        this.removes = notNull("removes", removes);
+    public DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                 final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder,
+                                 final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                                 final Connection connection, final boolean closeConnection) {
+        super(namespace, ordered, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
+        this.removeRequests = notNull("removes", removeRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
-    public WriteResult execute() {
+    public BulkWriteResult execute() {
         LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
                            getConnection().getId(), getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+        BulkWriteResult writeResult = super.execute();
         LOGGER.fine("Delete completed");
         return writeResult;
     }
 
     @Override
+    protected WriteRequest.Type getType() {
+        return WriteRequest.Type.REMOVE;
+    }
+
+    @Override
     protected DeleteCommandMessage createRequestMessage() {
-        return new DeleteCommandMessage(getNamespace(), getWriteConcern(), removes, queryEncoder,
+        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder,
                                         getMessageSettings(getServerDescription()));
     }
 
@@ -69,4 +76,10 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     protected Logger getLogger() {
         return LOGGER;
     }
+
+    @Override
+    protected List<WriteRequest> getRequests() {
+        return ((List) removeRequests);
+    }
+
 }

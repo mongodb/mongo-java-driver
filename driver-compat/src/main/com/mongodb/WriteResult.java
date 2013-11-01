@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,35 +26,16 @@ package com.mongodb;
 public class WriteResult {
 
     private final com.mongodb.WriteConcern writeConcern;
-    private final CommandResult commandResult;
+    private final int n;
+    private final boolean updateOfExisting;
+    private final Object upsertedId;
 
-    WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
-        this.commandResult = commandResult;
+    public WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId,
+                      final WriteConcern writeConcern) {
+        this.n = n;
+        this.updateOfExisting = updateOfExisting;
+        this.upsertedId = upsertedId;
         this.writeConcern = writeConcern;
-    }
-
-    /**
-     * Gets the result of the write operation.  If the write was not an acknowledged one, throws {@code MongoException}.
-     *
-     * @return the result of the write operation
-     * @throws MongoException if the write was unacknowledged
-     * @see WriteConcern#UNACKNOWLEDGED
-     */
-    public com.mongodb.CommandResult getLastError() {
-        if (commandResult == null) {
-            throw new MongoException("Write was unacknowledged, so no result is available");
-        }
-        return commandResult;
-    }
-
-    /**
-     * Gets the result of the write operation. If the write was not an acknowledged one, returns null.
-     *
-     * @return the result of the write operation, or null if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
-     */
-    public CommandResult getCachedLastError() {
-        return commandResult;
     }
 
     /**
@@ -67,21 +48,6 @@ public class WriteResult {
     }
 
     /**
-     * Gets the error string for the write operation result (the "err" field)
-     *
-     * @return the error string
-     * @throws MongoException if the write was unacknowledged
-     * @see WriteConcern#UNACKNOWLEDGED
-     */
-    public String getError() {
-        Object errField = getField("err");
-        if (errField == null) {
-            return null;
-        }
-        return errField.toString();
-    }
-
-    /**
      * Gets the "n" field, which contains the number of documents affected in the write operation.
      *
      * @return the value of the "n" field
@@ -89,36 +55,37 @@ public class WriteResult {
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public int getN() {
-        return getLastError().getInt("n");
+        return n;
     }
 
     /**
-     * Gets a field from the result document.
+     * Gets the _id value of an upserted document that resulted from this write.  Note that for MongoDB servers prior to version 2.6,
+     * this method will return null unless the _id of the upserted document was of type ObjectId.
      *
-     * @param name field name
-     * @return the value of the field
-     * @throws MongoException if the write was unacknowledged
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @return the value of the _id of an upserted document
+     * @since 2.12
      */
-    public Object getField(final String name) {
-        return getLastError().get(name);
+    public Object getUpsertedId() {
+        return upsertedId;
     }
 
+
     /**
-     * Returns whether or not the result is lazy, meaning that getLastError was not called automatically
+     * Returns true if this write resulted in an update of an existing document.
      *
-     * @return true if the write operation was unacknowledged
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @return whether the write resulted in an update of an existing document.
+     * @since 2.12
      */
-    public boolean isLazy() {
-        return commandResult == null;
+    public boolean isUpdateOfExisting() {
+        return updateOfExisting;
     }
+
 
     @Override
     public String toString() {
         return "WriteResult{"
                + "writeConcern=" + writeConcern
-               + ", commandResult=" + commandResult
+               + ", n=" + n
                + '}';
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,20 @@ public class WriteConcernException extends MongoException {
         this(commandResult, commandResult.toString());
     }
 
-    public WriteConcernException(final CommandResult commandResult, final String message) {
+    WriteConcernException(final CommandResult commandResult, final String message) {
         super(ServerError.getCode(commandResult), message);
         this.commandResult = commandResult;
     }
 
     WriteConcernException(final MongoWriteException e) {
-        this(new CommandResult(e.getWriteResult().getCommandResult()), e.getMessage());
+        this(new CommandResult(DBObjects.toDBObject(e.getCommandResult().getResponse()), new ServerAddress(e.getServerAddress())),
+             e.getMessage());
+    }
+
+    WriteConcernException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
+        this(new CommandResult(new BasicDBObject("ok", 1.0).append("err", errorMessage).append("code", errorCode),
+                               serverAddress),
+             errorMessage);
     }
 
     /**

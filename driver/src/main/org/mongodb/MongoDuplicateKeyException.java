@@ -24,7 +24,7 @@ package org.mongodb;
 public class MongoDuplicateKeyException extends MongoWriteException {
     private static final long serialVersionUID = 3661905154229799985L;
 
-    public MongoDuplicateKeyException(final WriteResult writeResult) {
-        super(writeResult);
+    public MongoDuplicateKeyException(final int errorCode, final String errorMessage, final CommandResult commandResult) {
+        super(errorCode, errorMessage, commandResult);
     }
 }

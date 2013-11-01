@@ -17,29 +17,31 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 
-public class Remove extends BaseWrite {
-    private final Document filter;
-    private boolean isMulti = true;
+public class ReplaceRequest<T> extends BaseUpdateRequest {
+    private final T replacement;
 
-    public Remove(final WriteConcern writeConcern, final Document filter) {
-        super(writeConcern);
-        this.filter = filter;
+    public ReplaceRequest(final Document filter, final T replacement) {
+        super(filter);
+        this.replacement = replacement;
     }
 
-    public Document getFilter() {
-        return filter;
+    public T getReplacement() {
+        return replacement;
     }
 
-    //CHECKSTYLE:OFF
-    public Remove multi(final boolean isMulti) {
-        this.isMulti = isMulti;
+    public ReplaceRequest<T> upsert(final boolean isUpsert) {
+        super.upsert(isUpsert);
         return this;
     }
-    //CHECKSTYLE:ON
 
+    @Override
     public boolean isMulti() {
-        return isMulti;
+        return false;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.REPLACE;
     }
 }

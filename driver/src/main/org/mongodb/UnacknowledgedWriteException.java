@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb;
 
-import org.mongodb.WriteConcern;
+/**
+ * This exception is thrown if the application attempts to get information about the result of an unacknowledged write.
+ *
+ * @see WriteConcern#UNACKNOWLEDGED
+ * @see WriteResult
+ * @see BulkWriteResult
+ * @since 3.0
+ */
+public class UnacknowledgedWriteException extends MongoClientException {
+    private static final long serialVersionUID = 4553119015136533092L;
 
-public abstract class BaseWrite {
-    private final WriteConcern writeConcern;
-
-    protected BaseWrite(final WriteConcern writeConcern) {
-        this.writeConcern = writeConcern;
-    }
-
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
+    public UnacknowledgedWriteException(final String message) {
+        super(message);
     }
 }

@@ -532,13 +532,14 @@ public class DB {
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
-        org.mongodb.WriteResult writeResult;
         if (new UserExistsOperation(getName(), userName, getBufferPool(), getSession(), true).execute()) {
-            writeResult = new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
+            new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
+            return new WriteResult(1, false, null, getWriteConcern());
+
         } else {
-            writeResult = new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
+            new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
+            return new WriteResult(1, true, null, getWriteConcern());
         }
-        return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
     /**
@@ -551,8 +552,8 @@ public class DB {
      */
     @Deprecated
     public WriteResult removeUser(final String userName) {
-        org.mongodb.WriteResult writeResult = new DropUserOperation(getName(), userName, getBufferPool(), getSession(), true).execute();
-        return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
+        new DropUserOperation(getName(), userName, getBufferPool(), getSession(), true).execute();
+        return new WriteResult(1, true, null, getWriteConcern());
     }
 
     /**

@@ -22,17 +22,25 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertRequest;
+
+import java.util.List;
 
 public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
-    private final Insert<T> insert;
+    private final List<InsertRequest<T>> insertRequestList;
     private final Encoder<T> encoder;
 
-    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final Insert<T> insert,
-                                final Encoder<Document> commandEncoder, final Encoder<T> encoder, final MessageSettings settings) {
-        super(namespace, writeConcern, commandEncoder, settings);
-        this.insert = insert;
+    public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                final List<InsertRequest<T>> insertRequestList, final Encoder<Document> commandEncoder,
+                                final Encoder<T> encoder, final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, commandEncoder, settings);
+        this.insertRequestList = insertRequestList;
         this.encoder = encoder;
+    }
+
+    @Override
+    public int getItemCount() {
+        return insertRequestList.size();
     }
 
     protected String getCommandName() {
@@ -44,12 +52,13 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         InsertCommandMessage<T> nextMessage = null;
         writer.writeStartArray("documents");
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
-        for (int i = 0; i < insert.getDocuments().size(); i++) {
+        for (int i = 0; i < insertRequestList.size(); i++) {
             writer.mark();
-            encoder.encode(writer, insert.getDocuments().get(i));
+            encoder.encode(writer, insertRequestList.get(i).getDocument());
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
                 writer.reset();
-                nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), getWriteConcern(), new Insert<T>(insert, i),
+                nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),
+                                                          insertRequestList.subList(i, insertRequestList .size()),
                                                           getCommandEncoder(), encoder, getSettings());
                 break;
             }

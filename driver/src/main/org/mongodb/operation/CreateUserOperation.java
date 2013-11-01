@@ -16,11 +16,9 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
@@ -39,7 +37,7 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class CreateUserOperation extends BaseOperation<WriteResult> {
+public class CreateUserOperation extends BaseOperation<Void> {
     private final User user;
 
     public CreateUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
@@ -48,34 +46,33 @@ public class CreateUserOperation extends BaseOperation<WriteResult> {
     }
 
     @Override
-    public WriteResult execute() {
+    public Void execute() {
         ServerConnectionProvider serverConnectionProvider =
             getPrimaryServerConnectionProvider();
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
-            return executeCommandBasedProtocol(serverConnectionProvider);
+            executeCommandBasedProtocol(serverConnectionProvider);
         } else {
-            return executeCollectionBasedProtocol(serverConnectionProvider);
+            executeCollectionBasedProtocol(serverConnectionProvider);
         }
+        return null;
     }
 
-    private WriteResult executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
                                                               new DocumentCodec(),
                                                               new DocumentCodec(), getBufferProvider(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true);
-        CommandResult commandResult = commandProtocol.execute();
-        return new WriteResult(commandResult, WriteConcern.ACKNOWLEDGED);
+        commandProtocol.execute();
     }
 
-    private WriteResult executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        return new InsertProtocol<Document>(namespace,
-                                            new Insert<Document>(WriteConcern.ACKNOWLEDGED, asCollectionDocument(user)),
-                                            new DocumentCodec(),
-                                            getBufferProvider(),
-                                            serverConnectionProvider.getServerDescription(),
-                                            serverConnectionProvider.getConnection(),
-                                            true).execute();
+        new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                     asList(new InsertRequest<Document>(asCollectionDocument(user))),
+                                     new DocumentCodec(),
+                                     getBufferProvider(),
+                                     serverConnectionProvider.getServerDescription(),
+                                     serverConnectionProvider.getConnection(), true).execute();
     }
 }

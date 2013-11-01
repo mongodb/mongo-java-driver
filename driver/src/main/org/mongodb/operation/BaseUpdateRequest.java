@@ -17,37 +17,30 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 
-public class Update extends BaseUpdate {
-    private final Document updateOperations;
-    private boolean isMulti = false;
+public abstract class BaseUpdateRequest extends WriteRequest {
+    private final Document filter;
+    private boolean isUpsert = false;
 
-    public Update(final WriteConcern writeConcern, final Document filter, final Document updateOperations) {
-        super(writeConcern, filter);
-
-        this.updateOperations = updateOperations;
+    public BaseUpdateRequest(final Document filter) {
+        super();
+        this.filter = filter;
     }
 
-    public Document getUpdateOperations() {
-        return updateOperations;
+    public Document getFilter() {
+        return filter;
     }
 
-    public boolean isMulti() {
-        return isMulti;
+    public boolean isUpsert() {
+        return isUpsert;
     }
 
     //CHECKSTYLE:OFF
-    public Update multi(final boolean isMulti) {
-        this.isMulti = isMulti;
+    public BaseUpdateRequest upsert(final boolean isUpsert) {
+        this.isUpsert = isUpsert;
         return this;
     }
     //CHECKSTYLE:ON
 
-    @Override
-    public Update upsert(final boolean isUpsert) {
-        super.upsert(isUpsert);
-        return this;
-    }
+    public abstract boolean isMulti();
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,47 +17,44 @@
 package org.mongodb;
 
 /**
+ * The result of a successful write operation.  If the write was unacknowledged, then {@code wasAcknowledged} will return false and all
+ * other methods with throw {@code MongoUnacknowledgedWriteException}.
+ *
  * @since 3.0
+ * @see WriteConcern#UNACKNOWLEDGED
  */
-public class WriteResult {
-    private final CommandResult commandResult;
-    private final WriteConcern writeConcern;
+public interface WriteResult {
 
-    public WriteResult(final CommandResult commandResult, final WriteConcern writeConcern) {
-        this.commandResult = commandResult;
-        this.writeConcern = writeConcern;
-    }
+    /**
+     * Returns true if the write was acknowledged.
+     *
+     * @return true if the write was acknowledged
+     */
+    boolean wasAcknowledged();
 
-    public CommandResult getCommandResult() {
-        return commandResult;
-    }
+    /**
+     * Returns the number of documents affected by the write operation.
+     *
+     * @return the number of documents affected by the write operation
+     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     */
+    int getCount();
 
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
+    /**
+     * Returns true if the write was an update of an existing document.
+     *
+     * @return true if the write was an update of an existing document
+     *
+     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     */
+    boolean isUpdateOfExisting();
 
-    public long getNumDocumentsAffected() {
-        return ((Number) commandResult.getResponse().get("n")).longValue();
-    }
-
-    public String getErrorMessage() {
-        return commandResult.getResponse().getString("err");
-    }
-
-    public boolean updatedExisting() {
-        Boolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting");
-        return updatedExisting != null ? updatedExisting : false;
-    }
-
-    public int getErrorCode() {
-        return commandResult.getErrorCode();
-    }
-
-    @Override
-    public String toString() {
-        return "WriteResult{"
-               + "commandResult=" + commandResult
-               + ", writeConcern=" + writeConcern
-               + '}';
-    }
+    /**
+     * Returns the value of _id if this write resulted in an upsert.
+     *
+     * @return the value of _id if this write resulted in an upsert.
+     *
+     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     */
+    Object getUpsertedId();   // TODO: Should be of type BsonValue
 }

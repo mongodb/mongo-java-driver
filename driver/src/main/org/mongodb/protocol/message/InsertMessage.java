@@ -19,38 +19,45 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertRequest;
+
+import java.util.List;
 
 public class InsertMessage<T> extends RequestMessage {
 
-    private final Insert<T> insert;
+    private final boolean ordered;
+    private final WriteConcern writeConcern;
+    private final List<InsertRequest<T>> insertRequestList;
     private final Encoder<T> encoder;
 
-    public InsertMessage(final String collectionName, final Insert<T> insert, final Encoder<T> encoder,
-                         final MessageSettings settings) {
+    public InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
+                         final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder, final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
-        this.insert = insert;
+        this.ordered = ordered;
+        this.writeConcern = writeConcern;
+        this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeInsertPrologue(insert.getWriteConcern(), buffer);
-        for (int i = 0; i < insert.getDocuments().size(); i++) {
-            T document = insert.getDocuments().get(i);
+        writeInsertPrologue(buffer);
+        for (int i = 0; i < insertRequestList.size(); i++) {
+            T document = insertRequestList.get(i).getDocument();
             int pos = buffer.getPosition();
             addDocument(document, encoder, buffer);
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
-                return new InsertMessage<T>(getCollectionName(), new Insert<T>(insert, i), encoder, getSettings());
+                return new InsertMessage<T>(getCollectionName(), ordered, writeConcern,
+                                            insertRequestList.subList(i, insertRequestList.size()), encoder, getSettings());
             }
         }
         return null;
     }
 
-    private void writeInsertPrologue(final WriteConcern concern, final OutputBuffer buffer) {
+    private void writeInsertPrologue(final OutputBuffer buffer) {
         int flags = 0;
-        if (concern.getContinueOnError()) {
+        if (!ordered) {
             flags |= 1;
         }
         buffer.writeInt(flags);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.mongodb.protocol;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -46,15 +45,18 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
 
     private final MongoNamespace namespace;
     private final BufferProvider bufferProvider;
+    private final boolean ordered;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
-    public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final WriteConcern writeConcern,
-                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+    public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final boolean ordered,
+                         final WriteConcern writeConcern, final ServerDescription serverDescription, final Connection connection,
+                         final boolean closeConnection) {
         this.namespace = namespace;
         this.bufferProvider = bufferProvider;
+        this.ordered = ordered;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
         this.connection = connection;
@@ -80,7 +82,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         if (writeConcern.isAcknowledged()) {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
-                                                                    writeConcern.asDocument(),
+                                                                    createGetLastErrorCommandDocument(),
                                                                     new DocumentCodec(),
                                                                     getMessageSettings(serverDescription));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
@@ -90,6 +92,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                                                      new DocumentCodec(),
                                                                                                      getNamespace(),
                                                                                                      nextMessage,
+                                                                                                     ordered,
                                                                                                      writeConcern,
                                                                                                      getLastErrorMessage.getId(),
                                                                                                      bufferProvider,
@@ -101,6 +104,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                         new UnacknowledgedWriteResultCallback(retVal,
                                                                               getNamespace(),
                                                                               nextMessage,
+                                                                              ordered,
                                                                               buffer,
                                                                               bufferProvider,
                                                                               serverDescription,
@@ -131,7 +135,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
-                                                         writeConcern.asDocument(), new DocumentCodec(),
+                                                         createGetLastErrorCommandDocument(), new DocumentCodec(),
                                                          getMessageSettings(serverDescription)
                 );
                 getLastErrorMessage.encode(buffer);
@@ -144,18 +148,21 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         }
     }
 
+    private Document createGetLastErrorCommandDocument() {
+        Document command = new Document("getlasterror", 1);
+        command.putAll(writeConcern.asDocument());
+        return command;
+    }
+
     private WriteResult receiveMessage(final RequestMessage requestMessage) {
         if (requestMessage == null) {
-            return null;
+            return new UnacknowledgedWriteResult();
         }
         ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), requestMessage.getId());
-            WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),
-                                                                   replyMessage.getDocuments().get(0),
-                                                                   replyMessage.getElapsedNanoseconds()), writeConcern);
-            throwIfWriteException(result);
-            return result;
+            return ProtocolHelper.getWriteResult(new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
+                                                                   replyMessage.getElapsedNanoseconds()));
         } finally {
             responseBuffers.close();
         }
@@ -171,12 +178,13 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         return connection;
     }
 
-    protected abstract Logger getLogger();
-
-    private void throwIfWriteException(final WriteResult result) {
-        MongoException exception = ProtocolHelper.getWriteException(result);
-        if (exception != null) {
-            throw exception;
-        }
+    protected boolean isOrdered() {
+        return ordered;
     }
+
+    protected WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    protected abstract Logger getLogger();
 }

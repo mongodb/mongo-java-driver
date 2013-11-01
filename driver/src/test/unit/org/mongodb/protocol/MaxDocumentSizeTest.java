@@ -23,10 +23,11 @@ import org.mongodb.Document;
 import org.mongodb.MongoInvalidDocumentException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 
+import static java.util.Arrays.asList;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
@@ -36,10 +37,9 @@ public class MaxDocumentSizeTest {
 
     @Before
     public void setUp() {
-        message = new InsertMessage<Document>("test.test",
-                                              new Insert<Document>(ACKNOWLEDGED, new Document("bytes", new byte[2048])),
-                                              new DocumentCodec(),
-                                              MessageSettings.builder().maxDocumentSize(1024).build());
+        message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
+                                              asList(new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
+                                              new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }
 

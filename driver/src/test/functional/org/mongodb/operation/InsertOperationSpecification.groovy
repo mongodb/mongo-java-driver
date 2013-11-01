@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,53 +22,85 @@
 
 
 
+
+
+
+
 package org.mongodb.operation
 
 import org.junit.Test
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoDuplicateKeyException
-import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
 
+import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
+import static org.mongodb.WriteConcern.UNACKNOWLEDGED
 
 class InsertOperationSpecification extends FunctionalSpecification {
-    def 'should insert a single document'() {
+    def 'should return correct result'() {
         given:
-        def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(), true);
-
-        when:
-        op.execute();
-
-        then:
-        insert.getDocuments() == collection.find().into([])
-    }
-
-    def 'should insert multiple documents'() {
-        given:
-        def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, [new Document('_id', 1), new Document('_id', 2)])
-        def op = new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(), true);
-
-        when:
-        op.execute();
-
-        then:
-        insert.getDocuments() == collection.find().sort(new Document('_id', 1)).into([])
-    }
-
-    def 'should return null CommandResult with unacknowledged WriteConcern'() {
-        given:
-        def insert = new Insert<Document>(WriteConcern.UNACKNOWLEDGED, new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(), true);
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec(),
+                                               getBufferProvider(),
+                                               getSession(), true);
 
         when:
         def result = op.execute();
 
         then:
-        result == null
+        result.wasAcknowledged()
+        result.count == 0
+        result.upsertedId == null
+        !result.isUpdateOfExisting()
+    }
+
+    def 'should insert a single document'() {
+        given:
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec(),
+                                               getBufferProvider(),
+                                               getSession(), true);
+
+        when:
+        op.execute();
+
+        then:
+        asList(insert.getDocument()) == collection.find().into([])
+    }
+
+    def 'should insert multiple documents'() {
+        given:
+        List<Document> documents = [
+                new Document('_id', 1),
+                new Document('_id', 2)
+        ]
+
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec(),
+                                               getBufferProvider(), getSession(), true);
+
+        when:
+        op.execute();
+
+        then:
+        documents == collection.find().sort(new Document('_id', 1)).into([])
+    }
+
+    def 'should return null CommandResult with unacknowledged WriteConcern'() {
+        given:
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec(),
+                                               getBufferProvider(),
+                                               getSession(), true);
+
+        when:
+        def result = op.execute();
+
+        then:
+        !result.wasAcknowledged()
     }
 
     @Test
@@ -83,11 +115,9 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 new Document('bytes', smallerByteArray)
         ]
 
-        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, documents);
-
         when:
-        new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                                      false)
+        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec(),
+                                      getBufferProvider(), getSession(), false)
                 .execute();
 
         then:
@@ -106,18 +136,14 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 new Document('_id', 2),
         ]
 
-        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED.withContinueOnError(true), documents);
-
         when:
-        try {
-            new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                                          false)
-                    .execute()
-        } catch (MongoDuplicateKeyException e) {
-            // all good
-        }
+        new InsertOperation<Document>(collection.getNamespace(), false, ACKNOWLEDGED,
+                                      documentsToInserts(documents),
+                                      new DocumentCodec(), getBufferProvider(), getSession(), false)
+                .execute()
 
         then:
+        thrown(MongoDuplicateKeyException)
         2 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
                 .execute()
     }
@@ -132,19 +158,22 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 new Document('_id', 2),
         ]
 
-        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED.withContinueOnError(false), documents);
-
         when:
-        try {
-            new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                                          false)
-                    .execute()
-        } catch (MongoDuplicateKeyException e) {
-            // all good
-        }
+        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec(),
+                                      getBufferProvider(), getSession(), false)
+                .execute()
 
         then:
+        thrown(MongoDuplicateKeyException)
         1 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
                 .execute()
+    }
+
+    def documentsToInserts(List<Document> documents) {
+        def insertList = new ArrayList<InsertRequest<Document>>(documents.size());
+        for (def cur : documents) {
+            insertList.add(new InsertRequest<Document>(cur));
+        }
+        insertList
     }
 }

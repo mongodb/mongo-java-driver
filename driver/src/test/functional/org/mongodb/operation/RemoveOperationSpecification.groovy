@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
 
+import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class RemoveOperationSpecification extends FunctionalSpecification {
     def 'should remove a document'() {
         given:
-        def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
-                                      true).execute()
-        def op = new RemoveOperation(getNamespace(), WriteConcern.ACKNOWLEDGED,
-                                     [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))],
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec(), getBufferProvider(),
+                                      getSession(), true).execute()
+        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new RemoveRequest(new Document('_id', 1))],
                                      new DocumentCodec(),
                                      getBufferProvider(),
                                      getSession(),
@@ -46,15 +49,14 @@ class RemoveOperationSpecification extends FunctionalSpecification {
 
     def 'should split removes into batches'() {
         given:
-        def insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED,
-                                          [new Document('_id', 1)])
-        new InsertOperation<Document>(getNamespace(), insert,
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert),
                                       new DocumentCodec(),
                                       getBufferProvider(),
                                       getSession(),
                                       true).execute()
-        def op = new RemoveOperation(getNamespace(), WriteConcern.ACKNOWLEDGED,
-                                     [new Remove(WriteConcern.ACKNOWLEDGED, new Document('_id', 1))], new DocumentCodec(),
+        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new RemoveRequest(new Document('_id', 1))], new DocumentCodec(),
                                      getBufferProvider(), getSession(),
                                      true)
 

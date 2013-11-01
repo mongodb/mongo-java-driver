@@ -22,17 +22,17 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.BaseUpdate;
+import org.mongodb.operation.BaseUpdateRequest;
 
 import java.util.List;
 
-public abstract class BaseUpdateCommandMessage<T extends BaseUpdate> extends BaseWriteCommandMessage {
+public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> extends BaseWriteCommandMessage {
     private final List<T> updates;
 
-    public BaseUpdateCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern,
+    public BaseUpdateCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
                                     final List<T> updates, final Encoder<Document> commandEncoder,
                                     final MessageSettings settings) {
-        super(writeNamespace, writeConcern, commandEncoder, settings);
+        super(writeNamespace, ordered, writeConcern, commandEncoder, settings);
         this.updates = updates;
     }
 
@@ -67,6 +67,11 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdate> extends Bas
     protected abstract void writeUpdate(final BSONBinaryWriter writer, final T update);
 
     protected abstract BaseUpdateCommandMessage<T> createNextMessage(List<T> remainingUpdates);
+
+    @Override
+    public int getItemCount() {
+        return updates.size();
+    }
 
     @Override
     protected String getCommandName() {

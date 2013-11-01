@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,12 +72,11 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // when:
         try {
-            new InsertOperation<Document>(collection.getNamespace(),
-                                          new Insert<Document>(ACKNOWLEDGED, new Document()),
+            new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
+                                          asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec(),
                                           getBufferProvider(),
-                                          new ClusterSession(cluster, getExecutor()),
-                                          true).execute();
+                                          new ClusterSession(cluster, getExecutor()), true).execute();
             fail("should have thrown");
         } catch (MongoWriteException e) {
             // all good
@@ -101,13 +100,13 @@ public class UserOperationTest extends DatabaseTestCase {
         try {
             // when
             WriteResult result = new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                                               new Insert<Document>(ACKNOWLEDGED, new Document()),
+                                                               true, ACKNOWLEDGED,
+                                                               asList(new InsertRequest<Document>(new Document())),
                                                                new DocumentCodec(),
                                                                getBufferProvider(),
-                                                               new ClusterSession(cluster, getExecutor()),
-                                                               true).execute();
+                                                               new ClusterSession(cluster, getExecutor()), true).execute();
             // then
-            result.getCommandResult().isOk();
+            assertEquals(1, result.getCount());
         } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), new ClusterSession(cluster),
@@ -126,12 +125,11 @@ public class UserOperationTest extends DatabaseTestCase {
         Cluster cluster = createCluster(adminUser);
         try {
             // when
-            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                          new Insert<Document>(ACKNOWLEDGED, new Document()),
+            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
+                                          asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec(),
                                           getBufferProvider(),
-                                          new ClusterSession(cluster, getExecutor()),
-                                          true).execute();
+                                          new ClusterSession(cluster, getExecutor()), true).execute();
             fail("Should have thrown");
         } catch (MongoWriteException e) {
             // all good

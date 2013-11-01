@@ -16,8 +16,6 @@
 
 
 
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -63,10 +61,12 @@ class MongoExceptionsSpecification extends Specification {
         exceptionToBeMapped                                                                   | exceptionForCompatibilityApi     | errorCode
         new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException        | -4
         new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoSocketException             | -2
-        new org.mongodb.MongoDuplicateKeyException(writeResultWithErrorCode(ERROR_CODE))      | MongoException.DuplicateKey      | ERROR_CODE
+        new org.mongodb.MongoDuplicateKeyException(ERROR_CODE,
+                                                   MESSAGE,
+                                                   commandResultWithErrorCode(ERROR_CODE))    | MongoException.DuplicateKey      | ERROR_CODE
         new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException          | ERROR_CODE
         new org.mongodb.MongoInternalException(MESSAGE)                                       | MongoInternalException           | -4
-        new MongoWriteException(writeResultWithErrorCode(ERROR_CODE))                         | WriteConcernException            | ERROR_CODE
+        new MongoWriteException(ERROR_CODE, MESSAGE, commandResultWithErrorCode(ERROR_CODE))  | WriteConcernException            | ERROR_CODE
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
         new org.mongodb.MongoIncompatibleDriverException('', CLUSTER_DESCRIPTION)             | MongoIncompatibleDriverException | -3
@@ -110,9 +110,6 @@ class MongoExceptionsSpecification extends Specification {
         !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
-    private static org.mongodb.WriteResult writeResultWithErrorCode(int expectedErrorCode) {
-        new org.mongodb.WriteResult(commandResultWithErrorCode(expectedErrorCode), org.mongodb.WriteConcern.ACKNOWLEDGED)
-    }
 
     private static org.mongodb.CommandResult commandResultWithErrorCode(int expectedErrorCode) {
         new org.mongodb.CommandResult(new ServerAddress(), new Document('code', expectedErrorCode), 15L)

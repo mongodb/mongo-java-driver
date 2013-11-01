@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 
 package org.mongodb
 
@@ -28,17 +30,16 @@ class WriteConcernSpecification extends Specification {
         wc.getWtimeout() == wTimeout;
         wc.getFsync() == fsync;
         wc.getJ() == j;
-        wc.getContinueOnError() == continueOnError;
 
         where:
-        wc                                         | w | wTimeout | fsync | j     | continueOnError
-        new WriteConcern()                         | 0 | 0        | false | false | false
-        new WriteConcern(1)                        | 1 | 0        | false | false | false
-        new WriteConcern(1, 10)                    | 1 | 10       | false | false | false
-        new WriteConcern(true)                     | 1 | 0        | true  | false | false
-        new WriteConcern(1, 10, true)              | 1 | 10       | true  | false | false
-        new WriteConcern(1, 10, false, true)       | 1 | 10       | false | true  | false
-        new WriteConcern(1, 10, false, true, true) | 1 | 10       | false | true  | true
+        wc                                         | w | wTimeout | fsync | j
+        new WriteConcern()                         | 0 | 0        | false | false
+        new WriteConcern(1)                        | 1 | 0        | false | false
+        new WriteConcern(1, 10)                    | 1 | 10       | false | false
+        new WriteConcern(true)                     | 1 | 0        | true  | false
+        new WriteConcern(1, 10, true)              | 1 | 10       | true  | false
+        new WriteConcern(1, 10, false, true)       | 1 | 10       | false | true
+        new WriteConcern(1, 10, false, true) | 1 | 10       | false | true
     }
 
     @Unroll
@@ -48,13 +49,12 @@ class WriteConcernSpecification extends Specification {
         wc.getWtimeout() == wTimeout;
         wc.getFsync() == fsync;
         wc.getJ() == j;
-        wc.getContinueOnError() == continueOnError;
 
         where:
-        wc                                             | wString    | wTimeout | fsync | j     | continueOnError
-        new WriteConcern('majority')                   | 'majority' | 0        | false | false | false
-        new WriteConcern('dc1', 10, false, true)       | 'dc1'      | 10       | false | true  | false
-        new WriteConcern('dc1', 10, false, true, true) | 'dc1'      | 10       | false | true  | true
+        wc                                             | wString    | wTimeout | fsync | j
+        new WriteConcern('majority')                   | 'majority' | 0        | false | false
+        new WriteConcern('dc1', 10, false, true)       | 'dc1'      | 10       | false | true
+        new WriteConcern('dc1', 10, false, true) | 'dc1'      | 10       | false | true
     }
 
     def 'test getters'() {
@@ -64,9 +64,9 @@ class WriteConcernSpecification extends Specification {
         wc.getWObject() == wObject;
 
         where:
-        wc                                            | getLastError | raiseNetworkErrors | wObject
-        new WriteConcern('dc1', 10, true, true, true) | true         | true               | 'dc1'
-        new WriteConcern(-1, 10, false, true, true)   | false        | false              | -1
+        wc                                      | getLastError | raiseNetworkErrors | wObject
+        new WriteConcern('dc1', 10, true, true) | true         | true               | 'dc1'
+        new WriteConcern(-1, 10, false, true)   | false        | false              | -1
     }
 
     def 'test with methods'() {
@@ -77,25 +77,22 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern('dc1') == WriteConcern.UNACKNOWLEDGED.withW('dc1');
         new WriteConcern('dc1', 0, true, false) == new WriteConcern('dc1').withFsync(true);
         new WriteConcern('dc1', 0, false, true) == new WriteConcern('dc1').withJ(true);
-        new WriteConcern('dc1', 0, false, false, true) == new WriteConcern('dc1').withContinueOnError(true);
-        new WriteConcern(1, 0, false, false, true) == WriteConcern.ACKNOWLEDGED.withContinueOnError(true);
     }
 
     @Unroll
     @SuppressWarnings('DuplicateMapLiteral')
-    def '#wc should return getlasterror document #commandDocument'() {
+    def '#wc should return write concern document #commandDocument'() {
         expect:
         wc.asDocument() == commandDocument;
 
         where:
         wc                                | commandDocument
-        WriteConcern.UNACKNOWLEDGED       | ['getlasterror': 1]
-        WriteConcern.ACKNOWLEDGED         | ['getlasterror': 1]
-        WriteConcern.REPLICA_ACKNOWLEDGED | ['getlasterror': 1, 'w': 2]
-        WriteConcern.JOURNALED            | ['getlasterror': 1, 'j': true]
-        WriteConcern.FSYNCED              | ['getlasterror': 1, 'fsync': true]
-        new WriteConcern('majority')      | ['getlasterror': 1, 'w': 'majority']
-        new WriteConcern(1, 100)          | ['getlasterror': 1, 'wtimeout': 100]
+        WriteConcern.ACKNOWLEDGED         | ['w' : 1]
+        WriteConcern.REPLICA_ACKNOWLEDGED | ['w': 2]
+        WriteConcern.JOURNALED            | ['w' : 1, 'j': true]
+        WriteConcern.FSYNCED              | ['w' : 1, 'fsync': true]
+        new WriteConcern('majority')      | ['w': 'majority']
+        new WriteConcern(2, 100)          | ['w' : 2, 'wtimeout': 100]
     }
 
     @SuppressWarnings('ExplicitCallToEqualsMethod')
@@ -108,7 +105,6 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED                  | WriteConcern.ACKNOWLEDGED                   | true
         WriteConcern.ACKNOWLEDGED                  | null                                        | false
         WriteConcern.ACKNOWLEDGED                  | WriteConcern.UNACKNOWLEDGED                 | false
-        new WriteConcern(1, 0, false, false, true) | new WriteConcern(1, 0, false, false, false) | false
         new WriteConcern(1, 0, false, false)       | new WriteConcern(1, 0, false, true)         | false
         new WriteConcern(1, 0, false, false)       | new WriteConcern(1, 0, true, false)         | false
         new WriteConcern(1, 0)                     | new WriteConcern(1, 1)                      | false
@@ -137,5 +133,14 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf('ACKNOWLEDGED')
         WriteConcern.ACKNOWLEDGED | WriteConcern.valueOf('acknowledged')
         null                      | WriteConcern.valueOf('blahblah')
+    }
+
+    def 'write concern should know if it is the server default'() {
+        expect:
+        WriteConcern.ACKNOWLEDGED.serverDefault
+        !WriteConcern.UNACKNOWLEDGED.serverDefault
+        !new WriteConcern(2, 1000).serverDefault
+        !new WriteConcern(1, 0, true, false).serverDefault
+        !new WriteConcern(1, 0, false, true).serverDefault
     }
 }

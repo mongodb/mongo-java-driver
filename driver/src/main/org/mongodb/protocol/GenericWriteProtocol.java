@@ -30,9 +30,9 @@ class GenericWriteProtocol extends WriteProtocol {
     private final RequestMessage requestMessage;
 
     public GenericWriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider,
-                                final RequestMessage requestMessage, final WriteConcern writeConcern,
+                                final RequestMessage requestMessage, final boolean ordered, final WriteConcern writeConcern,
                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
+        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.requestMessage = requestMessage;
     }
 

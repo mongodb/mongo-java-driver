@@ -18,20 +18,11 @@ package org.mongodb;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 public class GetLastErrorTest extends DatabaseTestCase {
-    @Test
+    @Test(expected = MongoDuplicateKeyException.class)
     public void testDuplicateKeyException() {
         Document doc = new Document("_id", 1);
         collection.insert(doc);
-        try {
-            collection.insert(doc);
-            fail("Should throw MongoDuplicateKeyException");
-        } catch (MongoDuplicateKeyException e) {
-            assertThat(e.getWriteResult().getErrorCode(), is(11000));
-        }
+        collection.insert(doc);
     }
 }

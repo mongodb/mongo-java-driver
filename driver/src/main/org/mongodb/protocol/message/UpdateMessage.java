@@ -19,15 +19,15 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.operation.BaseUpdate;
-import org.mongodb.operation.Update;
+import org.mongodb.operation.BaseUpdateRequest;
+import org.mongodb.operation.UpdateRequest;
 
 import java.util.List;
 
 public class UpdateMessage extends BaseUpdateMessage {
-    private final List<Update> updates;
+    private final List<UpdateRequest> updates;
 
-    public UpdateMessage(final String collectionName, final List<Update> updates, final Encoder<Document> encoder,
+    public UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final Encoder<Document> encoder,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, encoder, settings);
         this.updates = updates;
@@ -45,7 +45,7 @@ public class UpdateMessage extends BaseUpdateMessage {
     }
 
     @Override
-    protected BaseUpdate getUpdateBase() {
+    protected BaseUpdateRequest getUpdateBase() {
         return updates.get(0);
     }
 }

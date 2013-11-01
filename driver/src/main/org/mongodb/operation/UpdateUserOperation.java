@@ -16,11 +16,9 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
@@ -39,7 +37,7 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class UpdateUserOperation extends BaseOperation<WriteResult> {
+public class UpdateUserOperation extends BaseOperation<Void> {
     private final User user;
 
     public UpdateUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
@@ -49,38 +47,37 @@ public class UpdateUserOperation extends BaseOperation<WriteResult> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public WriteResult execute() {
-        ServerConnectionProvider serverConnectionProvider =
-            getPrimaryServerConnectionProvider();
+    public Void execute() {
+        ServerConnectionProvider serverConnectionProvider = getPrimaryServerConnectionProvider();
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
-            return executeCommandBasedProtocol(serverConnectionProvider);
+            executeCommandBasedProtocol(serverConnectionProvider);
         } else {
-            return executeCollectionBasedProtocol(serverConnectionProvider);
+            executeCollectionBasedProtocol(serverConnectionProvider);
         }
+        return null;
     }
 
-    private WriteResult executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "updateUser"),
                                                               new DocumentCodec(),
                                                               new DocumentCodec(), getBufferProvider(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true);
-        CommandResult commandResult = commandProtocol.execute();
-        return new WriteResult(commandResult, WriteConcern.ACKNOWLEDGED);
+        commandProtocol.execute();
     }
 
     @SuppressWarnings("unchecked")
-    private WriteResult executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        return new ReplaceProtocol<Document>(new MongoNamespace(user.getCredential().getSource(), "system.users"),
-                                             WriteConcern.ACKNOWLEDGED,
-                                             asList(new Replace<Document>(WriteConcern.ACKNOWLEDGED,
-                                                                          asCollectionQueryDocument(user),
-                                                                          asCollectionDocument(user))),
-                                             new DocumentCodec(),
-                                             new DocumentCodec(),
-                                             getBufferProvider(),
-                                             serverConnectionProvider.getServerDescription(),
-                                             serverConnectionProvider.getConnection(),
-                                             true).execute();
+    private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+        new ReplaceProtocol<Document>(new MongoNamespace(user.getCredential().getSource(), "system.users"),
+                                      true, WriteConcern.ACKNOWLEDGED,
+                                      asList(new ReplaceRequest<Document>(
+                                                                  asCollectionQueryDocument(user),
+                                                                   asCollectionDocument(user))),
+                                      new DocumentCodec(),
+                                      new DocumentCodec(),
+                                      getBufferProvider(),
+                                      serverConnectionProvider.getServerDescription(),
+                                      serverConnectionProvider.getConnection(),
+                                      true).execute();
     }
 }

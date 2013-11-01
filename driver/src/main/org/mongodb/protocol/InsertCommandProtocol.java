@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,20 @@
 
 package org.mongodb.protocol;
 
+import org.mongodb.BulkWriteResult;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertRequest;
+import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.InsertCommandMessage;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
@@ -36,34 +39,46 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 
-    private final Insert<T> insert;
+    private final List<InsertRequest<T>> insertRequests;
     private final Encoder<T> encoder;
 
-    public InsertCommandProtocol(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
+    public InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                 final List<InsertRequest<T>> insertRequests, final Encoder<T> encoder,
                                  final BufferProvider bufferProvider, final ServerDescription serverDescription,
                                  final Connection connection, final boolean closeConnection) {
-        super(namespace, insert.getWriteConcern(), bufferProvider, serverDescription, connection, closeConnection);
-        this.insert = insert;
+        super(namespace, ordered, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
+        this.insertRequests = insertRequests;
         this.encoder = encoder;
     }
 
     @Override
-    public WriteResult execute() {
-        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insert.getDocuments().size(),
+    public BulkWriteResult execute() {
+        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+        BulkWriteResult writeResult = super.execute();
         LOGGER.fine("Insert completed");
         return writeResult;
     }
 
     @Override
+    protected WriteRequest.Type getType() {
+        return WriteRequest.Type.INSERT;
+    }
+
+    @Override
     protected InsertCommandMessage<T> createRequestMessage() {
-        return new InsertCommandMessage<T>(getNamespace(), getWriteConcern(), insert, new DocumentCodec(), encoder,
-                                           getMessageSettings(getServerDescription()));
+        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, new DocumentCodec(),
+                                           encoder, getMessageSettings(getServerDescription()));
     }
 
     @Override
     protected Logger getLogger() {
         return LOGGER;
     }
+
+    @Override
+    protected List<WriteRequest> getRequests() {
+        return (List) insertRequests;
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,6 @@ public class WriteConcern implements Serializable {
     private final boolean fsync;
 
     private final boolean j;
-
-    private final boolean continueOnError;
 
     /**
      * No exceptions are raised, even for network issues.
@@ -162,49 +160,16 @@ public class WriteConcern implements Serializable {
      * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
      * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w        number of writes
-     * @param wtimeout timeout for write operation
-     * @param fsync    whether or not to fsync
-     * @param j        whether writes should wait for a journaling group commit
-     */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
-        this(w, wtimeout, fsync, j, false);
-    }
-
-    /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
-     *
      * @param w               number of writes
      * @param wtimeout        timeout for write operation
      * @param fsync           whether or not to fsync
      * @param j               whether writes should wait for a journaling group commit
-     * @param continueOnError if batch inserts should continue after the first error
      */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j,
-                        final boolean continueOnError) {
+    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
         this.w = w;
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnError = continueOnError;
-    }
-
-    /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
-     *
-     * @param w        number of writes
-     * @param wtimeout timeout for write operation
-     * @param fsync    whether or not to fsync
-     * @param j        whether writes should wait for a journaling group commit
-     */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
-        this(w, wtimeout, fsync, j, false);
     }
 
     /**
@@ -217,10 +182,8 @@ public class WriteConcern implements Serializable {
      * @param wtimeout        timeout for write operation
      * @param fsync           whether or not to fsync
      * @param j               whether writes should wait for a journaling group commit
-     * @param continueOnError if batch inserts should continue after the first error
      */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j,
-                        final boolean continueOnError) {
+    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
         }
@@ -229,7 +192,6 @@ public class WriteConcern implements Serializable {
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnError = continueOnError;
     }
 
     /**
@@ -237,27 +199,46 @@ public class WriteConcern implements Serializable {
      *
      * @return The write concern as a Document, even if {@code w <= 0}
      */
-    // TODO: Don't include getlasterror, let the caller do that.
     public Document asDocument() {
-        Document command = new Document("getlasterror", 1);
-
-        if (w instanceof Integer && ((Integer) w > 1) || (w instanceof String)) {
-            command.put("w", w);
+        if (!isAcknowledged()) {
+            throw new IllegalStateException("The write is unacknowledged, so no document can be created");
         }
+        Document document = new Document();
 
-        if (wtimeout > 0) {
-            command.put("wtimeout", wtimeout);
-        }
+        document.put("w", w);
 
-        if (fsync) {
-            command.put("fsync", true);
-        }
+        addWTimeout(document);
+        addFSync(document);
+        addJ(document);
 
+        return document;
+    }
+
+    /**
+     * The server default is w == 1 and everything else the default value.
+     * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
+     * @return true if this write concern is the server's default
+     */
+    public boolean isServerDefault() {
+        return w.equals(1) && wtimeout == 0 && !fsync && !j;
+    }
+
+    private void addJ(final Document document) {
         if (j) {
-            command.put("j", true);
+            document.put("j", true);
         }
+    }
 
-        return command;
+    private void addFSync(final Document document) {
+        if (fsync) {
+            document.put("fsync", true);
+        }
+    }
+
+    private void addWTimeout(final Document document) {
+        if (wtimeout > 0) {
+            document.put("wtimeout", wtimeout);
+        }
     }
 
     /**
@@ -314,15 +295,6 @@ public class WriteConcern implements Serializable {
         return j;
     }
 
-    /**
-     * Gets the "continue inserts on error" mode
-     *
-     * @return true if set to continue on error
-     */
-    public boolean getContinueOnError() {
-        return continueOnError;
-    }
-
     //CHECKSTYLE:OFF
 
     /**
@@ -330,7 +302,7 @@ public class WriteConcern implements Serializable {
      * @return the WriteConcern matching the given w value
      */
     public WriteConcern withW(final int w) {
-        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnError());
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
     }
 
     /**
@@ -338,7 +310,7 @@ public class WriteConcern implements Serializable {
      * @return the WriteConcern
      */
     public WriteConcern withW(final String w) {
-        return new WriteConcern(w, getWtimeout(), getFsync(), getJ(), getContinueOnError());
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
     }
 
     /**
@@ -347,9 +319,9 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withFsync(final boolean fsync) {
         if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), fsync, getJ(), getContinueOnError());
+            return new WriteConcern(getW(), getWtimeout(), fsync, getJ());
         } else {
-            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ(), getContinueOnError());
+            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ());
         }
     }
 
@@ -359,23 +331,12 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withJ(final boolean j) {
         if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), getFsync(), j, getContinueOnError());
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), j);
         } else {
-            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j, getContinueOnError());
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j);
         }
     }
 
-    /**
-     * @param continueOnError true if batch operations should continue after the first error
-     * @return the WriteConcern
-     */
-    public WriteConcern withContinueOnError(final boolean continueOnError) {
-        if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), getFsync(), getJ(), continueOnError);
-        } else {
-            return new WriteConcern(getWString(), getWtimeout(), getFsync(), getJ(), continueOnError);
-        }
-    }
     //CHECKSTYLE:ON
 
     /**
@@ -405,17 +366,8 @@ public class WriteConcern implements Serializable {
 
     @Override
     public String toString() {
-        return "WriteConcern{w=" + w + ", wtimeout=" + wtimeout + ", fsync=" + fsync + ", j=" + j
-               + ", continueOnError=" + continueOnError + '}';
-    }
+        return "WriteConcern{w=" + w + ", wtimeout=" + wtimeout + ", fsync=" + fsync + ", j=" + j;
 
-    public String getShortDescription() {
-        return "{w=" + w
-               + (wtimeout != 0 ? (", wtimeout=" + wtimeout) : "")
-               + (fsync ? (", fsync=" + fsync) : "")
-               + (j ? (", j=" + j) : "")
-               + (continueOnError ? ", continueOnError=" + continueOnError : "")
-               + '}';
     }
 
     @Override
@@ -429,9 +381,6 @@ public class WriteConcern implements Serializable {
 
         WriteConcern that = (WriteConcern) o;
 
-        if (continueOnError != that.continueOnError) {
-            return false;
-        }
         if (fsync != that.fsync) {
             return false;
         }
@@ -450,7 +399,6 @@ public class WriteConcern implements Serializable {
         result = 31 * result + wtimeout;
         result = 31 * result + (fsync ? 1 : 0);
         result = 31 * result + (j ? 1 : 0);
-        result = 31 * result + (continueOnError ? 1 : 0);
         return result;
     }
 

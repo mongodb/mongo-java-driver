@@ -1,4 +1,5 @@
 /*
+
  * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,17 +23,23 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Remove;
+import org.mongodb.operation.RemoveRequest;
 
 import java.util.List;
 
 public class DeleteCommandMessage extends BaseWriteCommandMessage {
-    private final List<Remove> deletes;
+    private final List<RemoveRequest> deletes;
 
-    public DeleteCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> deletes,
-                                final Encoder<Document> commandEncoder, final MessageSettings settings) {
-        super(namespace, writeConcern, commandEncoder, settings);
+    public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                final List<RemoveRequest> deletes, final Encoder<Document> commandEncoder,
+                                final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, commandEncoder, settings);
         this.deletes = deletes;
+    }
+
+    @Override
+    public int getItemCount() {
+        return deletes.size();
     }
 
     @Override
@@ -47,17 +54,18 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {
             writer.mark();
-            Remove remove = deletes.get(i);
+            RemoveRequest removeRequest = deletes.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCommandEncoder().encode(writer, remove.getFilter());
-            writer.writeBoolean("multi", remove.isMulti());
+            getCommandEncoder().encode(writer, removeRequest.getFilter());
+            writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
                 writer.reset();
-                nextMessage = new DeleteCommandMessage(getWriteNamespace(), getWriteConcern(), deletes.subList(i, deletes.size()),
+                nextMessage = new DeleteCommandMessage(getWriteNamespace(),
+                                                       isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),
                                                        getCommandEncoder(), getSettings());
                 break;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package org.mongodb.protocol;
 
+import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Replace;
+import org.mongodb.operation.ReplaceRequest;
+import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.ReplaceCommandMessage;
 
 import java.util.List;
@@ -39,31 +40,37 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
 
-    private final List<Replace<T>> replaces;
+    private final List<ReplaceRequest<T>> replaceRequests;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
-    public ReplaceCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Replace<T>> replaces,
-                                  final Encoder<Document> queryEncoder, final Encoder<T> encoder, final BufferProvider bufferProvider,
+    public ReplaceCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                  final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
+                                  final Encoder<T> encoder, final BufferProvider bufferProvider,
                                   final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
-        this.replaces = notNull("replaces", replaces);
+        super(namespace, ordered, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
+        this.replaceRequests = notNull("replaces", replaceRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
     }
 
     @Override
-    public WriteResult execute() {
+    public BulkWriteResult execute() {
         LOGGER.fine(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
                            getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+        BulkWriteResult writeResult = super.execute();
         LOGGER.fine("Replace  completed");
         return writeResult;
     }
 
     @Override
+    protected WriteRequest.Type getType() {
+        return WriteRequest.Type.REPLACE;
+    }
+
+    @Override
     protected ReplaceCommandMessage<T> createRequestMessage() {
-        return new ReplaceCommandMessage<T>(getNamespace(), getWriteConcern(), replaces, queryEncoder, encoder,
+        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder,
                                             getMessageSettings(getServerDescription()));
     }
 
@@ -71,4 +78,10 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     protected Logger getLogger() {
         return LOGGER;
     }
+
+    @Override
+    protected List<WriteRequest> getRequests() {
+        return (List) replaceRequests;
+    }
+
 }

@@ -24,30 +24,29 @@ import static java.lang.String.format;
 public class MongoWriteException extends MongoServerException {
     private static final long serialVersionUID = -1139302724723542251L;
 
-    private final WriteResult writeResult;
+    private final int code;
+    private final String message;
+    private final CommandResult commandResult;
 
-    /**
-     * Construct a new instance with the write result returned from checking the success of the write operation.
-     *
-     * @param writeResult the write result
-     */
-    public MongoWriteException(final WriteResult writeResult) {
-        super(format("Write failed with error code %d and error message '%s'", writeResult.getErrorCode(),
-                     writeResult.getErrorMessage()), writeResult.getCommandResult().getAddress());
-        this.writeResult = writeResult;
+    public MongoWriteException(final int code, final String message, final CommandResult commandResult) {
+        super(format("Write failed with error code %d and error message '%s'", code, message),
+              commandResult.getAddress());
+        this.code = code;
+        this.message = message;
+        this.commandResult = commandResult;
     }
 
     @Override
     public int getErrorCode() {
-        return writeResult.getCommandResult().getErrorCode();
+        return code;
     }
 
     @Override
     public String getErrorMessage() {
-        return writeResult.getErrorMessage();
+        return message;
     }
 
-    public WriteResult getWriteResult() {
-        return writeResult;
+    public CommandResult getCommandResult() {
+        return commandResult;
     }
 }

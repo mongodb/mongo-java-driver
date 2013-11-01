@@ -17,14 +17,13 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.WriteConcern;
 
-public abstract class BaseUpdate extends BaseWrite {
+public class RemoveRequest extends WriteRequest {
     private final Document filter;
-    private boolean isUpsert = false;
+    private boolean isMulti = true;
 
-    public BaseUpdate(final WriteConcern writeConcern, final Document filter) {
-        super(writeConcern);
+    public RemoveRequest(final Document filter) {
+        super();
         this.filter = filter;
     }
 
@@ -32,16 +31,19 @@ public abstract class BaseUpdate extends BaseWrite {
         return filter;
     }
 
-    public boolean isUpsert() {
-        return isUpsert;
-    }
-
     //CHECKSTYLE:OFF
-    public BaseUpdate upsert(final boolean isUpsert) {
-        this.isUpsert = isUpsert;
+    public RemoveRequest multi(final boolean isMulti) {
+        this.isMulti = isMulti;
         return this;
     }
     //CHECKSTYLE:ON
 
-    public abstract boolean isMulti();
+    public boolean isMulti() {
+        return isMulti;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.REMOVE;
+    }
 }

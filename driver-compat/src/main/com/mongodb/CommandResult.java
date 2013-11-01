@@ -33,6 +33,11 @@ public class CommandResult extends BasicDBObject {
         putAll((BSONObject) toDBObject(commandResult.getResponse()));
     }
 
+    CommandResult(final DBObject response, final ServerAddress serverAddress) {
+        this(serverAddress);
+        putAll(response);
+    }
+
     CommandResult(final ServerAddress serverAddress) {
         host = notNull("serverAddress", serverAddress);
         // so it is shown in toString/debug

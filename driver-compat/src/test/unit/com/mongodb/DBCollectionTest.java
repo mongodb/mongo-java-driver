@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +61,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
@@ -160,7 +163,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testJAVA_794() {
+    public void testJAVA794() {
         Map<String, String> nested = new HashMap<String, String>();
         nested.put("my.dot.field", "foo");
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
@@ -232,8 +235,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("https://trello.com/c/Naqe9XX2/474-unignore-com-mongodb-dbcollectiontest-testcreateindexastext-when" 
-        + "-text-search-is-enable-by-default")
+    @Ignore("https://trello.com/c/Naqe9XX2/474-unignore-com-mongodb-dbcollectiontest-testcreateindexastext-when"
+            + "-text-search-is-enable-by-default")
     public void testCreateIndexAsText() {
         assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
         DBObject index = new BasicDBObject("x", "text");
@@ -553,6 +556,180 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertThat(codec.getDecoder(), instanceOf(DBDecoderAdapter.class));
     }
 
+    @Test
+    public void testBulkWriteOperation() {
+        // given
+        collection.insert(Arrays.<DBObject>asList(new BasicDBObject("_id", 3),
+                                                  new BasicDBObject("_id", 4),
+                                                  new BasicDBObject("_id", 5),
+                                                  new BasicDBObject("_id", 6).append("z", 1),
+                                                  new BasicDBObject("_id", 7).append("z", 1),
+                                                  new BasicDBObject("_id", 8).append("z", 2),
+                                                  new BasicDBObject("_id", 9).append("z", 2)));
+
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
+        bulkWriteOperation.insert(new BasicDBObject("_id", 0));
+        ObjectId upsertOneId = new ObjectId();
+        ObjectId upsertTwoId = new ObjectId();
+        bulkWriteOperation.find(new BasicDBObject("_id", upsertOneId)).upsert()
+                          .updateOne(new BasicDBObject("$set", new BasicDBObject("x", 2)));
+        bulkWriteOperation.find(new BasicDBObject("_id", upsertTwoId)).upsert()
+                          .replaceOne(new BasicDBObject("_id", upsertTwoId).append("y", 2));
+        bulkWriteOperation.find(new BasicDBObject("_id", 3)).removeOne();
+        bulkWriteOperation.find(new BasicDBObject("_id", 4)).updateOne(new BasicDBObject("$set", new BasicDBObject("x", 1)));
+        bulkWriteOperation.find(new BasicDBObject("_id", 5)).replaceOne(new BasicDBObject("_id", 5).append("y", 1));
+        bulkWriteOperation.find(new BasicDBObject("z", 1)).remove();
+        bulkWriteOperation.find(new BasicDBObject("z", 2)).update(new BasicDBObject("$set", new BasicDBObject("z", 3)));
+
+        BulkWriteResult result = bulkWriteOperation.execute();
+
+        // then
+        assertTrue(bulkWriteOperation.isOrdered());
+        assertTrue(result.isAcknowledged());
+        assertEquals(1, result.getInsertedCount());
+        assertEquals(4, result.getUpdatedCount());
+        assertEquals(3, result.getRemovedCount());
+        assertEquals(4, result.getModifiedCount());
+        assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId),
+                                   new BulkWriteUpsert(2, upsertTwoId)),
+                     result.getUpserts());
+
+        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0),
+                                             new BasicDBObject("_id", 4).append("x", 1),
+                                             new BasicDBObject("_id", 5).append("y", 1),
+                                             new BasicDBObject("_id", 8).append("z", 3),
+                                             new BasicDBObject("_id", 9).append("z", 3),
+                                             new BasicDBObject("_id", upsertOneId).append("x", 2),
+                                             new BasicDBObject("_id", upsertTwoId).append("y", 2)),
+
+                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+    }
+
+    @Test
+    public void testOrderedBulkWriteOperation() {
+        // given
+        collection.insert(new BasicDBObject("_id", 1));
+
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
+        bulkWriteOperation.insert(new BasicDBObject("_id", 0));
+        bulkWriteOperation.insert(new BasicDBObject("_id", 1));
+        bulkWriteOperation.insert(new BasicDBObject("_id", 2));
+
+        try {
+            bulkWriteOperation.execute();
+            fail();
+        } catch (BulkWriteException e) {
+            assertEquals(1, e.getWriteErrors().size());
+        }
+
+        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 1)),
+                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+
+    }
+
+    @Test
+    public void testUnorderedBulkWriteOperation() {
+        // given
+        collection.insert(new BasicDBObject("_id", 1));
+
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeUnorderedBulkOperation();
+        bulkWriteOperation.insert(new BasicDBObject("_id", 0));
+        bulkWriteOperation.insert(new BasicDBObject("_id", 1));
+        bulkWriteOperation.insert(new BasicDBObject("_id", 2));
+
+        try {
+            bulkWriteOperation.execute();
+            fail();
+        } catch (BulkWriteException e) {
+            assertEquals(1, e.getWriteErrors().size());
+        }
+
+        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 1), new BasicDBObject("_id", 2)),
+                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+
+    }
+    @Test(expected = BulkWriteException.class)
+    public void testBulkWriteException() {
+        // given
+        collection.insert(new BasicDBObject("_id", 1));
+
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
+        bulkWriteOperation.insert(new BasicDBObject("_id", 1));
+        bulkWriteOperation.execute();
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            WriteResult res = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
+            fail("Write should have failed but succeeded with result " + res);
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(0, e.getCommandResult().get("n"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        ObjectId id = new ObjectId();
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            WriteResult res = localCollection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                                     true, false, new WriteConcern(5, 1, false, false));
+            fail("Write should have failed but succeeded with result " + res);
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(1, e.getCommandResult().get("n"));
+            assertEquals(id, e.getCommandResult().get("upserted"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            localCollection.insert(new BasicDBObject());
+            WriteResult res = localCollection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
+            fail("Write should have failed but succeeded with result " + res);
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(1, e.getCommandResult().get("n"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+
+    @Test
+    public void testBulkWriteConcernException() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            BulkWriteOperation bulkWriteOperation = localCollection.initializeUnorderedBulkOperation();
+            bulkWriteOperation.insert(new BasicDBObject());
+            BulkWriteResult res = bulkWriteOperation.execute(new WriteConcern(5, 1, false, false));
+            fail("Write should have failed but succeeded with result " + res);
+        } catch (BulkWriteException e) {
+            assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
+        } finally {
+            mongoClient.close();
+        }
+    }
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
@@ -617,8 +794,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
         public static DBObject getConstantObject() {
             return new BasicDBObject()
-                       .append("_id", 1)
-                       .append("s", "foo");
+                   .append("_id", 1)
+                   .append("s", "foo");
         }
     }
 

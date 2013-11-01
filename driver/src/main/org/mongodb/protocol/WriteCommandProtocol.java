@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package org.mongodb.protocol;
 
+import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.EncoderRegistry;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -33,25 +32,34 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.BaseWriteCommandMessage;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
+import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException;
+import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteResult;
+import static org.mongodb.protocol.WriteCommandResultHelper.hasError;
 
-public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
+public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
+    private final boolean ordered;
     private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
-    public WriteCommandProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final BufferProvider bufferProvider,
-                                final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+    public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                                final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
+        this.ordered = ordered;
         this.bufferProvider = bufferProvider;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
@@ -63,9 +71,34 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
         return writeConcern;
     }
 
-    public WriteResult execute() {
+    public BulkWriteResult execute() {
         try {
-            return sendAndReceiveAllMessages();
+            BaseWriteCommandMessage message = createRequestMessage();
+            BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(serverDescription.getAddress(), ordered,
+                                                                                       writeConcern);
+            int batchNum = 0;
+            int currentRangeStartIndex = 0;
+            do {
+                batchNum++;
+                BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum);
+                int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
+                IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+                CommandResult commandResult = receiveMessage(message);
+
+                if (nextMessage != null || batchNum > 1) {
+                    getLogger().fine(format("Received response for batch %d", batchNum));
+                }
+
+                if (hasError(commandResult)) {
+                    bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), commandResult), indexMap);
+                } else {
+                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), commandResult), indexMap);
+                }
+                currentRangeStartIndex += itemCount;
+                message = nextMessage;
+            } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
+
+            return bulkWriteBatchCombiner.getResult();
         } finally {
             if (closeConnection) {
                 connection.close();
@@ -74,44 +107,13 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync() {
+    public MongoFuture<BulkWriteResult> executeAsync() {
         throw new UnsupportedOperationException();  // TODO!!!!!!!!!!!!!!!!
     }
 
+    protected abstract WriteRequest.Type getType();
+
     protected abstract BaseWriteCommandMessage createRequestMessage();
-
-    private WriteResult sendAndReceiveAllMessages() {
-        BaseWriteCommandMessage message = createRequestMessage();
-        WriteResult writeResult = null;
-        MongoException lastException = null;
-        int batchNum = 0;
-        do {
-            batchNum++;
-            BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum);
-            try {
-                writeResult = receiveMessage(message);
-                if (nextMessage != null || batchNum > 1) {
-                    getLogger().fine(format("Received response for batch %d", batchNum));
-                }
-            } catch (MongoException e) {
-                lastException = e;
-                if (!writeConcern.getContinueOnError()) {
-                    if (writeConcern.isAcknowledged()) {
-                        throw e;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            message = nextMessage;
-        } while (message != null);
-
-        if (writeConcern.isAcknowledged() && lastException != null) {
-            throw lastException;
-        }
-
-        return writeConcern.isAcknowledged() ? writeResult : null;
-    }
 
     private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
@@ -127,24 +129,20 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
         }
     }
 
-    private WriteResult receiveMessage(final RequestMessage message) {
+    private CommandResult receiveMessage(final RequestMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
-            WriteResult result = new WriteResult(new CommandResult(connection.getServerAddress(),
-                                                                   replyMessage.getDocuments().get(0),
-                                                                   replyMessage.getElapsedNanoseconds()), writeConcern);
-            throwIfWriteException(result);
-            return result;
+            CommandResult commandResult = new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
+                                                            replyMessage.getElapsedNanoseconds());
+            if (!commandResult.isOk()) {
+                throw getCommandFailureException(commandResult);
+            }
+
+            return commandResult;
+
         } finally {
             responseBuffers.close();
-        }
-    }
-
-    private void throwIfWriteException(final WriteResult result) {
-        MongoException exception = ProtocolHelper.getWriteException(result);
-        if (exception != null) {
-            throw exception;
         }
     }
 
@@ -164,7 +162,13 @@ public abstract class WriteCommandProtocol implements Protocol<WriteResult> {
         return connection;
     }
 
+    protected abstract List<WriteRequest> getRequests();
+
     protected abstract Logger getLogger();
+
+    protected boolean isOrdered() {
+        return ordered;
+    }
 
     protected static class CommandCodec<T> extends DocumentCodec {
         public CommandCodec(final Encoder<T> encoder) {

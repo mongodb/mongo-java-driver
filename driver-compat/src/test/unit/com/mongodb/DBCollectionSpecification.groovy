@@ -16,6 +16,10 @@
 
 
 
+
+
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -75,10 +79,8 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when insert fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.WriteResult(new org.mongodb.CommandResult(
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document(),
-                    15L), org.mongodb.WriteConcern.ACKNOWLEDGED))
+            throw new org.mongodb.MongoDuplicateKeyException(11000, 'duplicate key error', new org.mongodb.CommandResult(
+                    new org.mongodb.connection.ServerAddress(), new Document(), 15L))
         }
 
         when:
@@ -102,10 +104,8 @@ class DBCollectionSpecification extends Specification {
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.MongoDuplicateKeyException(new org.mongodb.WriteResult(new org.mongodb.CommandResult(
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document(),
-                    15L), org.mongodb.WriteConcern.ACKNOWLEDGED))
+            throw new org.mongodb.MongoDuplicateKeyException(11000, 'duplicate key error', new org.mongodb.CommandResult(
+                    new org.mongodb.connection.ServerAddress(), new Document(), 15L))
         }
 
         when:

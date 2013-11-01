@@ -16,11 +16,9 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
@@ -39,7 +37,7 @@ import static org.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class DropUserOperation extends BaseOperation<WriteResult> {
+public class DropUserOperation extends BaseOperation<Void> {
     private final String database;
     private final String userName;
 
@@ -51,41 +49,40 @@ public class DropUserOperation extends BaseOperation<WriteResult> {
     }
 
     @Override
-    public WriteResult execute() {
+    public Void execute() {
         ServerConnectionProvider serverConnectionProvider =
-            getPrimaryServerConnectionProvider();
+        getPrimaryServerConnectionProvider();
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
-            return executeCommandBasedProtocol(serverConnectionProvider);
+            executeCommandBasedProtocol(serverConnectionProvider);
         } else {
-            return executeCollectionBasedProtocol(serverConnectionProvider);
+            executeCollectionBasedProtocol(serverConnectionProvider);
         }
+        return null;
     }
 
-    private WriteResult executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(database, asCommandDocument(),
                                                               new DocumentCodec(),
                                                               new DocumentCodec(), getBufferProvider(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true);
-        CommandResult commandResult = commandProtocol.execute();
-        return new WriteResult(commandResult, WriteConcern.ACKNOWLEDGED);
-
+        commandProtocol.execute();
     }
 
     private Document asCommandDocument() {
         return new Document("dropUser", userName);
     }
 
-    private WriteResult executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        return new DeleteProtocol(namespace,
-                                  WriteConcern.ACKNOWLEDGED,
-                                  Arrays.asList(new Remove(WriteConcern.ACKNOWLEDGED, new Document("user", userName))),
-                                  codec,
-                                  getBufferProvider(),
-                                  serverConnectionProvider.getServerDescription(),
-                                  serverConnectionProvider.getConnection(),
-                                  true).execute();
+        new DeleteProtocol(namespace,
+                           true, WriteConcern.ACKNOWLEDGED,
+                           Arrays.asList(new RemoveRequest(new Document("user", userName))),
+                           codec,
+                           getBufferProvider(),
+                           serverConnectionProvider.getServerDescription(),
+                           serverConnectionProvider.getConnection(),
+                           true).execute();
     }
 }

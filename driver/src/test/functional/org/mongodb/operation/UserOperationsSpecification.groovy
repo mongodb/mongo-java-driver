@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
+
+
 
 package org.mongodb.operation
 
@@ -131,10 +135,12 @@ class UserOperationsSpecification extends FunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def result = new InsertOperation<Document>(getNamespace(), new Insert<Document>(ACKNOWLEDGED, new Document()), new DocumentCodec(),
-                                                   getBufferProvider(), new ClusterSession(cluster, getExecutor()), true).execute()
+        def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
+                                                   asList(new InsertRequest<Document>(new Document())),
+                                                   new DocumentCodec(), getBufferProvider(), new ClusterSession(cluster, getExecutor()),
+                                                   true).execute()
         then:
-        result.commandResult.isOk()
+        result.getCount() == 0
 
         cleanup:
         new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()

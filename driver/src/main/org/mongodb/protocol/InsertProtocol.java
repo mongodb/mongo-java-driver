@@ -18,16 +18,18 @@ package org.mongodb.protocol;
 
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
+import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Insert;
+import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
@@ -36,20 +38,21 @@ public class InsertProtocol<T> extends WriteProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 
-    private final Insert<T> insert;
+    private final List<InsertRequest<T>> insertRequestList;
     private final Encoder<T> encoder;
 
-    public InsertProtocol(final MongoNamespace namespace, final Insert<T> insert, final Encoder<T> encoder,
-                          final BufferProvider bufferProvider, final ServerDescription serverDescription,
+    public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                          final List<InsertRequest<T>> insertRequestList,
+                          final Encoder<T> encoder, final BufferProvider bufferProvider, final ServerDescription serverDescription,
                           final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, insert.getWriteConcern(), serverDescription, connection, closeConnection);
-        this.insert = insert;
+        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
+        this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }
 
     @Override
     public WriteResult execute() {
-        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insert.getDocuments().size(),
+        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequestList.size(),
                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
         LOGGER.fine("Insert completed");
@@ -57,7 +60,7 @@ public class InsertProtocol<T> extends WriteProtocol {
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new InsertMessage<T>(getNamespace().getFullName(), insert, encoder, settings);
+        return new InsertMessage<T>(getNamespace().getFullName(), isOrdered(), getWriteConcern(), insertRequestList, encoder, settings);
     }
 
     @Override

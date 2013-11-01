@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,16 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
     private static final int HEADROOM = 16 * 1024;
 
     private final MongoNamespace writeNamespace;
+    private final boolean ordered;
     private final WriteConcern writeConcern;
     private final Encoder<Document> commandEncoder;
 
-    public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern,
+    public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
                                    final Encoder<Document> commandEncoder, final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OP_QUERY, settings);
 
         this.writeNamespace = writeNamespace;
+        this.ordered = ordered;
         this.writeConcern = writeConcern;
         this.commandEncoder = commandEncoder;
     }
@@ -53,6 +55,10 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return writeConcern;
     }
 
+    public boolean isOrdered() {
+        return ordered;
+    }
+
     public Encoder<Document> getCommandEncoder() {
         return commandEncoder;
     }
@@ -60,6 +66,8 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
     public BaseWriteCommandMessage encode(final OutputBuffer buffer) {
         return (BaseWriteCommandMessage) super.encode(buffer);
     }
+
+    public abstract int getItemCount();
 
     @Override
     protected BaseWriteCommandMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
@@ -102,13 +110,10 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
 
     private void writeCommandPrologue(final BSONBinaryWriter writer) {
         writer.writeString(getCommandName(), getWriteNamespace().getCollectionName());
-        writer.writeBoolean("ordered", !getWriteConcern().getContinueOnError());
-        if (getWriteConcern().isAcknowledged()) {
-            Document writeConcernDocument = getWriteConcern().asDocument();
-            writeConcernDocument.remove("getlasterror");
+        writer.writeBoolean("ordered", ordered);
+        if (!getWriteConcern().isServerDefault()) {
             writer.writeName("writeConcern");
-            getCommandEncoder().encode(writer, writeConcernDocument);
+            getCommandEncoder().encode(writer, getWriteConcern().asDocument());
         }
     }
-
 }

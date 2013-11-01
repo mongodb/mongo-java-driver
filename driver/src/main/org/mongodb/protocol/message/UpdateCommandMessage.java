@@ -21,21 +21,23 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Update;
+import org.mongodb.operation.UpdateRequest;
 
 import java.util.List;
 
-public class UpdateCommandMessage extends BaseUpdateCommandMessage<Update> {
-    public UpdateCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Update> updates,
-                                final Encoder<Document> commandEncoder, final MessageSettings messageSettings) {
-        super(namespace, writeConcern, updates, commandEncoder, messageSettings);
+public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest> {
+    public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                final List<UpdateRequest> updates, final Encoder<Document> commandEncoder,
+                                final MessageSettings messageSettings) {
+        super(namespace, ordered, writeConcern, updates, commandEncoder, messageSettings);
     }
 
-    protected void writeUpdate(final BSONBinaryWriter writer, final Update update) {
+    protected void writeUpdate(final BSONBinaryWriter writer, final UpdateRequest update) {
         getCommandEncoder().encode(writer, update.getUpdateOperations());
     }
 
-    protected UpdateCommandMessage createNextMessage(final List<Update> remainingUpdates) {
-        return new UpdateCommandMessage(getWriteNamespace(), getWriteConcern(), remainingUpdates, getCommandEncoder(), getSettings());
+    protected UpdateCommandMessage createNextMessage(final List<UpdateRequest> remainingUpdates) {
+        return new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
+                                        getSettings());
     }
 }

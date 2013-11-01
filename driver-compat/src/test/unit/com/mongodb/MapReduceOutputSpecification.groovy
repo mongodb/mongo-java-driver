@@ -42,35 +42,35 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 //        elapsedNanoseconds=2777341000}
 
 
-    def 'should return the name of the collection the results are contained in if it is not inline'() throws Exception {
+    def 'should return the name of the collection the results are contained in if it is not inline'() {
         given:
-        String expectedCollectionName = 'collectionForResults';
-        DBCollection outputCollection = database.getCollection(expectedCollectionName)
-        DBCursor results = outputCollection.find()
+        def expectedCollectionName = 'collectionForResults';
+        def outputCollection = database.getCollection(expectedCollectionName)
+        def results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
 
         when:
-        String collectionName = mapReduceOutput.getCollectionName();
+        def collectionName = mapReduceOutput.getCollectionName();
 
         then:
         collectionName != null
         collectionName == expectedCollectionName
     }
 
-    def 'should return the name of the datbase the results are contained in if it is not inline'() throws Exception {
+    def 'should return the name of the database the results are contained in if it is not inline'() {
         given:
-        String expectedDatabaseName = databaseName
-        String expectedCollectionName = 'collectionForResults';
-        DBCollection outputCollection = database.getCollection(expectedCollectionName)
-        DBCursor results = outputCollection.find()
+        def expectedDatabaseName = databaseName
+        def expectedCollectionName = 'collectionForResults';
+        def outputCollection = database.getCollection(expectedCollectionName)
+        def results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
 
         when:
-        String databaseName = mapReduceOutput.getDatabaseName();
+        def databaseName = mapReduceOutput.getDatabaseName();
 
         then:
         databaseName != null
@@ -79,13 +79,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the duration for a map-reduce into a collection'() {
         given:
-        int expectedDuration = 2774
+        def expectedDuration = 2774
 
         MapReduceStatistics mapReduceStats = Mock();
         mapReduceStats.getDuration() >> expectedDuration
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null,
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null,
                                                               new org.mongodb.connection.ServerAddress());
 
         expect:
@@ -94,13 +94,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the duration for an inline map-reduce'() {
         given:
-        int expectedDuration = 2774
+        def expectedDuration = 2774
 
         MapReduceCursor mongoCursor = Mock();
         mongoCursor.getDuration() >> expectedDuration
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
                                                               new org.mongodb.connection.ServerAddress());
 
         expect:
@@ -109,9 +109,9 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the count values for a map-reduce into a collection'() {
         given:
-        int expectedInputCount = 3
-        int expectedOutputCount = 4
-        int expectedEmitCount = 6
+        def expectedInputCount = 3
+        def expectedOutputCount = 4
+        def expectedEmitCount = 6
 
         MapReduceStatistics mapReduceStats = Mock();
         mapReduceStats.getInputCount() >> expectedInputCount
@@ -119,7 +119,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         mapReduceStats.getEmitCount() >> expectedEmitCount
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null, null);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null, null);
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount
@@ -129,9 +129,9 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the count values for an inline map-reduce output'() {
         given:
-        int expectedInputCount = 3
-        int expectedOutputCount = 4
-        int expectedEmitCount = 6
+        def expectedInputCount = 3
+        def expectedOutputCount = 4
+        def expectedEmitCount = 6
 
         MapReduceCursor mapReduceStats = Mock();
         mapReduceStats.getInputCount() >> expectedInputCount
@@ -139,7 +139,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         mapReduceStats.getEmitCount() >> expectedEmitCount
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceStats,
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceStats,
                                                               new org.mongodb.connection.ServerAddress());
 
         expect:

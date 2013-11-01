@@ -21,27 +21,28 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.operation.Replace;
+import org.mongodb.operation.ReplaceRequest;
 
 import java.util.List;
 
-public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<Replace<T>> {
+public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRequest<T>> {
     private final Encoder<T> encoder;
 
-    public ReplaceCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Replace<T>> replaces,
-                                 final Encoder<Document> queryEncoder, final Encoder<T> encoder, final MessageSettings settings) {
-        super(namespace, writeConcern, replaces, queryEncoder, settings);
+    public ReplaceCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                 final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
+                                 final Encoder<T> encoder, final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, replaceRequests, queryEncoder, settings);
         this.encoder = encoder;
     }
 
     @Override
-    protected void writeUpdate(final BSONBinaryWriter writer, final Replace<T> update) {
+    protected void writeUpdate(final BSONBinaryWriter writer, final ReplaceRequest<T> update) {
         encoder.encode(writer, update.getReplacement());
     }
 
     @Override
-    protected ReplaceCommandMessage<T> createNextMessage(final List<Replace<T>> remainingUpdates) {
-        return new ReplaceCommandMessage<T>(getWriteNamespace(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
+    protected ReplaceCommandMessage<T> createNextMessage(final List<ReplaceRequest<T>> remainingUpdates) {
+        return new ReplaceCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
                                             encoder, getSettings());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
@@ -45,6 +46,7 @@ public class WriteConcern implements Serializable {
     private static final Map<String, WriteConcern> _namedConcerns;
 
     private final org.mongodb.WriteConcern proxied;
+    private final boolean continueOnError;
 
     /**
      * No exceptions are raised, even for network issues.
@@ -147,16 +149,6 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
 
     /**
-     * Factory method to convert an {@code org.mongodb.WriteConcern} into an instance of this class.
-     *
-     * @param writeConcern the write concern to convert
-     * @return the converted write concern
-     */
-    public static WriteConcern fromNew(final org.mongodb.WriteConcern writeConcern) {
-        return new WriteConcern(writeConcern);
-    }
-
-    /**
      * Default constructor keeping all options as default.  Be careful using this constructor, as it's equivalent to {@code
      * WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
      *
@@ -245,7 +237,8 @@ public class WriteConcern implements Serializable {
      * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
+        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j);
+        this.continueOnError = continueOnError;
     }
 
     /**
@@ -276,16 +269,29 @@ public class WriteConcern implements Serializable {
      * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j, continueOnError);
+        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j);
+        this.continueOnError = continueOnError;
     }
 
     /**
      * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
      *
-     * @param writeConcern the write concern to copy
+     * @param proxied the write concern to copy
      */
-    public WriteConcern(final org.mongodb.WriteConcern writeConcern) {
-        proxied = writeConcern;
+    WriteConcern(final org.mongodb.WriteConcern proxied) {
+        this(proxied, false);
+    }
+
+    /**
+     * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
+     *
+     * @param proxied the write concern to copy
+     * @param continueOnError if batch writes should continue after the first error
+     *
+     */
+    WriteConcern(final org.mongodb.WriteConcern proxied, final boolean continueOnError) {
+        this.proxied = proxied;
+        this.continueOnError = continueOnError;
     }
 
     /**
@@ -294,7 +300,9 @@ public class WriteConcern implements Serializable {
      * @return getlasterror command, even if {@code w <= 0}
      */
     public BasicDBObject getCommand() {
-        return DBObjects.toDBObject(proxied.asDocument());
+        BasicDBObject command = new BasicDBObject("getlasterror", 1);
+        command.putAll((BSONObject) DBObjects.toDBObject(proxied.asDocument()));
+        return command;
     }
 
     /**
@@ -424,7 +432,7 @@ public class WriteConcern implements Serializable {
      * @return true if set to continue on error
      */
     public boolean getContinueOnError() {
-        return proxied.getContinueOnError();
+        return continueOnError;
     }
 
     public org.mongodb.WriteConcern toNew() {
@@ -439,7 +447,7 @@ public class WriteConcern implements Serializable {
      * @param continueOnError true if the operation should continue when the server continues an error
      */
     public WriteConcern continueOnError(final boolean continueOnError) {
-        return new WriteConcern(proxied.withContinueOnError(continueOnError));
+        return new WriteConcern(proxied, continueOnError);
     }
 
     /**

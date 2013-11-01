@@ -25,7 +25,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Update;
+import org.mongodb.operation.UpdateRequest;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 import org.mongodb.protocol.message.UpdateMessage;
@@ -38,13 +38,14 @@ import static java.lang.String.format;
 public class UpdateProtocol extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.update");
 
-    private final List<Update> updates;
+    private final List<UpdateRequest> updates;
     private final Encoder<Document> queryEncoder;
 
-    public UpdateProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Update> updates,
+    public UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                          final List<UpdateRequest> updates,
                           final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
+        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.updates = updates;
         this.queryEncoder = queryEncoder;
     }

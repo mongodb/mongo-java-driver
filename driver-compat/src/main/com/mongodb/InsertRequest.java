@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package com.mongodb;
 
-import org.mongodb.Document;
-import org.mongodb.WriteConcern;
+class InsertRequest extends WriteRequest {
+    private final DBObject document;
 
-public class Replace<T> extends BaseUpdate {
-    private final T replacement;
-
-    public Replace(final WriteConcern writeConcern, final Document filter, final T replacement) {
-        super(writeConcern, filter);
-        this.replacement = replacement;
+    public InsertRequest(final DBObject document) {
+        this.document = document;
     }
 
-    public T getReplacement() {
-        return replacement;
+    InsertRequest(final org.mongodb.operation.InsertRequest<DBObject> insertRequest) {
+        this(insertRequest.getDocument());
     }
 
-    public Replace<T> upsert(final boolean isUpsert) {
-        super.upsert(isUpsert);
-        return this;
+    public DBObject getDocument() {
+        return document;
     }
 
     @Override
-    public boolean isMulti() {
-        return false;
+    org.mongodb.operation.WriteRequest toNew() {
+        return new org.mongodb.operation.InsertRequest<DBObject>(document);
     }
 }

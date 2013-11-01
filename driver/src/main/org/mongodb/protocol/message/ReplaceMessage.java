@@ -19,36 +19,36 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.operation.BaseUpdate;
-import org.mongodb.operation.Replace;
+import org.mongodb.operation.BaseUpdateRequest;
+import org.mongodb.operation.ReplaceRequest;
 
 import java.util.List;
 
 public class ReplaceMessage<T> extends BaseUpdateMessage {
-    private final List<Replace<T>> replaces;
+    private final List<ReplaceRequest<T>> replaceRequests;
     private final Encoder<T> encoder;
 
-    public ReplaceMessage(final String collectionName, final List<Replace<T>> replaces,
+    public ReplaceMessage(final String collectionName, final List<ReplaceRequest<T>> replaceRequests,
                           final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, baseEncoder, settings);
-        this.replaces = replaces;
+        this.replaceRequests = replaceRequests;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(replaces.get(0).getReplacement(), encoder, buffer);
-        if (replaces.size() == 1) {
+        addDocument(replaceRequests.get(0).getReplacement(), encoder, buffer);
+        if (replaceRequests.size() == 1) {
             return null;
         } else {
-            return new ReplaceMessage<T>(getCollectionName(), replaces.subList(1, replaces.size()), getBaseEncoder(), encoder,
+            return new ReplaceMessage<T>(getCollectionName(), replaceRequests.subList(1, replaceRequests.size()), getBaseEncoder(), encoder,
                                          getSettings());
         }
     }
 
     @Override
-    protected BaseUpdate getUpdateBase() {
-        return replaces.get(0);
+    protected BaseUpdateRequest getUpdateBase() {
+        return replaceRequests.get(0);
     }
 }

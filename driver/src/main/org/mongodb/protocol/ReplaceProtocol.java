@@ -25,7 +25,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
-import org.mongodb.operation.Replace;
+import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplaceMessage;
 import org.mongodb.protocol.message.RequestMessage;
@@ -38,15 +38,16 @@ import static java.lang.String.format;
 public class ReplaceProtocol<T> extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
 
-    private final List<Replace<T>> replaces;
+    private final List<ReplaceRequest<T>> replaceRequests;
     private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
-    public ReplaceProtocol(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Replace<T>> replaces,
+    public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<ReplaceRequest<T>> replaceRequests,
                            final Encoder<Document> queryEncoder, final Encoder<T> encoder, final BufferProvider bufferProvider,
                            final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, writeConcern, serverDescription, connection, closeConnection);
-        this.replaces = replaces;
+        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
+        this.replaceRequests = replaceRequests;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;
     }
@@ -62,7 +63,7 @@ public class ReplaceProtocol<T> extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replaces, queryEncoder, encoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replaceRequests, queryEncoder, encoder, settings);
     }
 
     @Override

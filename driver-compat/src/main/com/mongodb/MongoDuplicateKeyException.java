@@ -43,4 +43,7 @@ public class MongoDuplicateKeyException extends WriteConcernException {
         super(commandResult);
     }
 
+    MongoDuplicateKeyException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
+        super(errorCode, errorMessage, serverAddress);
+    }
 }

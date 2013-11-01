@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings({"rawtypes"})
@@ -308,6 +310,44 @@ public class DBCollectionOldTest extends DatabaseTestCase {
             failed = e;
         }
         assertNotNull(failed);
+    }
+
+    @Test
+    public void testWriteResultOnUnacknowledgedUpdate(){
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)),
+                                            false, false, WriteConcern.UNACKNOWLEDGED);
+        assertNull(res);
+    }
+
+    @Test
+    public void testWriteResultOnUpdate(){
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)));
+        assertEquals(1, res.getN());
+        assertTrue(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
+    }
+
+    @Test
+    public void testWriteResultOnUpsert(){
+        ObjectId id = new ObjectId();
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$inc", new BasicDBObject("x", 1)), true,
+                                            false);
+        assertEquals(1, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertEquals(id, res.getUpsertedId());
+    }
+
+    @Test
+    public void testWriteResultOnRemove() {
+        collection.insert(new BasicDBObject("_id", 1));
+        collection.insert(new BasicDBObject("_id", 2));
+        WriteResult res = collection.remove(new BasicDBObject());
+        assertEquals(2, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
     }
 
     @Test

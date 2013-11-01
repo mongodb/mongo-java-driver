@@ -19,7 +19,7 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.operation.BaseUpdate;
+import org.mongodb.operation.BaseUpdateRequest;
 
 public abstract class BaseUpdateMessage extends RequestMessage {
     private final Encoder<Document> baseEncoder;
@@ -47,7 +47,7 @@ public abstract class BaseUpdateMessage extends RequestMessage {
         addDocument(getUpdateBase().getFilter(), baseEncoder, buffer);
     }
 
-    protected abstract BaseUpdate getUpdateBase();
+    protected abstract BaseUpdateRequest getUpdateBase();
 
     public Encoder<Document> getBaseEncoder() {
         return baseEncoder;

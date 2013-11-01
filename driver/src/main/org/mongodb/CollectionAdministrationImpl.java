@@ -21,12 +21,13 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.GetIndexesOperation;
-import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.InsertRequest;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 /**
@@ -62,10 +63,10 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
 
-        Insert<Document> insertIndexOperation = new Insert<Document>(ACKNOWLEDGED, indexDetails);
+        InsertRequest<Document> insertRequestIndexOperation = new InsertRequest<Document>(indexDetails);
 
-        new InsertOperation<Document>(indexesNamespace, insertIndexOperation, documentCodec, client.getBufferProvider(),
-                                      client.getSession(), false).execute();
+        new InsertOperation<Document>(indexesNamespace, true, ACKNOWLEDGED, asList(insertRequestIndexOperation), documentCodec,
+                                      client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     @Override

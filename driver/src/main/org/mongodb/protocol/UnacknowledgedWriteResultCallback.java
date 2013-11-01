@@ -36,18 +36,20 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
     private final BufferProvider bufferProvider;
+    private final boolean ordered;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
-                                      final OutputBuffer writtenBuffer, final BufferProvider bufferProvider,
+                                      final boolean ordered, final OutputBuffer writtenBuffer, final BufferProvider bufferProvider,
                                       final ServerDescription serverDescription, final Connection connection,
                                       final boolean closeConnection) {
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
+        this.ordered = ordered;
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.writtenBuffer = writtenBuffer;
@@ -64,6 +66,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
             MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
                                                                           bufferProvider,
                                                                           nextMessage,
+                                                                          ordered,
                                                                           WriteConcern.UNACKNOWLEDGED,
                                                                           serverDescription,
                                                                           connection,

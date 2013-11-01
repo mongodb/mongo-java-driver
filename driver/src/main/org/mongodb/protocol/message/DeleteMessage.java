@@ -19,42 +19,42 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.operation.Remove;
+import org.mongodb.operation.RemoveRequest;
 
 import java.util.List;
 
 public class DeleteMessage extends RequestMessage {
-    private final List<Remove> removes;
+    private final List<RemoveRequest> removeRequests;
     private final Encoder<Document> encoder;
 
-    public DeleteMessage(final String collectionName, final List<Remove> removes, final Encoder<Document> encoder,
+    public DeleteMessage(final String collectionName, final List<RemoveRequest> removeRequests, final Encoder<Document> encoder,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
-        this.removes = removes;
+        this.removeRequests = removeRequests;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeDelete(removes.get(0), buffer);
-        if (removes.size() == 1) {
+        writeDelete(removeRequests.get(0), buffer);
+        if (removeRequests.size() == 1) {
             return null;
         } else {
-            return new DeleteMessage(getCollectionName(), removes.subList(1, removes.size()), encoder, getSettings());
+            return new DeleteMessage(getCollectionName(), removeRequests.subList(1, removeRequests.size()), encoder, getSettings());
         }
     }
 
-    private void writeDelete(final Remove remove, final OutputBuffer buffer) {
+    private void writeDelete(final RemoveRequest removeRequest, final OutputBuffer buffer) {
         buffer.writeInt(0); // reserved
         buffer.writeCString(getCollectionName());
 
-        if (remove.isMulti()) {
+        if (removeRequest.isMulti()) {
             buffer.writeInt(0);
         } else {
             buffer.writeInt(1);
         }
 
-        addDocument(remove.getFilter(), encoder, buffer);
+        addDocument(removeRequest.getFilter(), encoder, buffer);
     }
 }
 
