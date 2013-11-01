@@ -31,7 +31,7 @@ public class UUIDEncoder implements Encoder<UUID> {
         writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, value.getLeastSignificantBits());
 
-        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UuidLegacy, bytes));
+        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UUID_LEGACY, bytes));
     }
 
     @Override

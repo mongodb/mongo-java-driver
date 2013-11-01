@@ -25,10 +25,10 @@ public enum ClusterConnectionMode {
     /**
      * Connect directly to a server, regardless of the type of cluster it is a part of.
      */
-    Single,
+    SINGLE,
 
     /**
      * Connect to multiple servers in a cluster (either a replica set or multiple mongos servers)
      */
-    Multiple
+    MULTIPLE
 }

@@ -26,57 +26,57 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ClusterType.Unknown;
-import static org.mongodb.connection.ServerConnectionState.Connected;
-import static org.mongodb.connection.ServerConnectionState.Connecting;
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ClusterType.UNKNOWN;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 
 public class ClusterDescriptionTest {
     @Test
     public void testMode() {
-        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Collections.<ServerDescription>emptyList());
-        assertEquals(Multiple, description.getConnectionMode());
+        ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
+        assertEquals(MULTIPLE, description.getConnectionMode());
     }
 
     @Test
     public void testEmptySet() {
-        ClusterDescription description = new ClusterDescription(Multiple, Unknown, Collections.<ServerDescription>emptyList());
+        ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
         assertTrue(description.getAll().isEmpty());
     }
 
     @Test
     public void testIsConnecting() throws UnknownHostException {
-        ClusterDescription description = new ClusterDescription(Multiple, ReplicaSet, asList(ServerDescription.builder()
-                                                                                                              .state(Connecting)
+        ClusterDescription description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(ServerDescription.builder()
+                                                                                                              .state(CONNECTING)
                                                                                                               .address(new ServerAddress())
-                                                                                                              .type(ReplicaSetPrimary)
+                                                                                                              .type(REPLICA_SET_PRIMARY)
                                                                                                               .build()));
         assertTrue(description.isConnecting());
 
-        description = new ClusterDescription(Multiple, ReplicaSet, asList(ServerDescription.builder()
-                                                                                           .state(Connected)
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(ServerDescription.builder()
+                                                                                           .state(CONNECTED)
                                                                                            .address(new ServerAddress())
-                                                                                           .type(ReplicaSetPrimary)
+                                                                                           .type(REPLICA_SET_PRIMARY)
                                                                                            .build()));
         assertFalse(description.isConnecting());
     }
 
     @Test
     public void testSortingOfAll() {
-        ClusterDescription description = new ClusterDescription(Multiple,
-                                                                Unknown,
+        ClusterDescription description = new ClusterDescription(MULTIPLE,
+                                                                UNKNOWN,
                                                                 asList(ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27019"))
                                                                                         .build(),
                                                                        ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27018"))
                                                                                         .build(),
                                                                        ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27017"))
                                                                                         .build())
         );
@@ -88,33 +88,33 @@ public class ClusterDescriptionTest {
 
     @Test
     public void testObjectOverrides() {
-        ClusterDescription description = new ClusterDescription(Multiple,
-                                                                Unknown,
+        ClusterDescription description = new ClusterDescription(MULTIPLE,
+                                                                UNKNOWN,
                                                                 asList(ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27019"))
                                                                                         .build(),
                                                                        ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27018"))
                                                                                         .build(),
                                                                        ServerDescription.builder()
-                                                                                        .state(Connecting)
+                                                                                        .state(CONNECTING)
                                                                                         .address(new ServerAddress("loc:27017"))
                                                                                         .build())
         );
-        ClusterDescription descriptionTwo = new ClusterDescription(Multiple,
-                                                                   Unknown,
+        ClusterDescription descriptionTwo = new ClusterDescription(MULTIPLE,
+                                                                   UNKNOWN,
                                                                    asList(ServerDescription.builder()
-                                                                                           .state(Connecting)
+                                                                                           .state(CONNECTING)
                                                                                            .address(new ServerAddress("loc:27019"))
                                                                                            .build(),
                                                                           ServerDescription.builder()
-                                                                                           .state(Connecting)
+                                                                                           .state(CONNECTING)
                                                                                            .address(new ServerAddress("loc:27018"))
                                                                                            .build(),
                                                                           ServerDescription.builder()
-                                                                                           .state(Connecting)
+                                                                                           .state(CONNECTING)
                                                                                            .address(new ServerAddress("loc:27017"))
                                                                                            .build())
         );

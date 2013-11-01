@@ -259,7 +259,7 @@ public class PrimitiveCodecsTest {
         }).build();
         StringWriter stringWriter = new StringWriter();
         BSONWriter bsonWriter = new JSONWriter(stringWriter);
-        Binary binaryValue = new Binary(BSONBinarySubType.Binary, new byte[]{1, 2, 3});
+        Binary binaryValue = new Binary(BSONBinarySubType.BINARY, new byte[]{1, 2, 3});
         bsonWriter.writeStartDocument();
         bsonWriter.writeBinaryData("binary", binaryValue);
         bsonWriter.writeEndDocument();

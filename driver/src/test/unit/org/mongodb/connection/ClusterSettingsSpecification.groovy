@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.connection
 
 import spock.lang.Specification
@@ -24,14 +26,14 @@ class ClusterSettingsSpecification extends Specification {
         when:
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
-                                      .mode(ClusterConnectionMode.Multiple)
-                                      .requiredClusterType(ClusterType.ReplicaSet)
+                                      .mode(ClusterConnectionMode.MULTIPLE)
+                                      .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo').build();
 
         then:
         settings.hosts == hosts
-        settings.mode == ClusterConnectionMode.Multiple
-        settings.requiredClusterType == ClusterType.ReplicaSet
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
     }
 
@@ -40,7 +42,7 @@ class ClusterSettingsSpecification extends Specification {
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).requiredReplicaSetName('yeah').build()
 
         then:
-        ClusterType.ReplicaSet == settings.requiredClusterType
+        ClusterType.REPLICA_SET == settings.requiredClusterType
     }
 
     def 'connection mode should default to Multiple regardless of hosts count'() {
@@ -48,12 +50,12 @@ class ClusterSettingsSpecification extends Specification {
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).build()
 
         then:
-        settings.mode == ClusterConnectionMode.Multiple
+        settings.mode == ClusterConnectionMode.MULTIPLE
     }
 
     def 'when mode is Single and hosts size is greater than one, should throw'() {
         when:
-        ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).mode(ClusterConnectionMode.Single).build();
+        ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).mode(ClusterConnectionMode.SINGLE).build();
         then:
         thrown(IllegalArgumentException)
 
@@ -61,7 +63,7 @@ class ClusterSettingsSpecification extends Specification {
 
     def 'when cluster type is Standalone and multiple hosts are specified, should throw'() {
         when:
-        ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredClusterType(ClusterType.StandAlone)
+        ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredClusterType(ClusterType.STANDALONE)
                        .build();
         then:
         thrown(IllegalArgumentException)
@@ -70,7 +72,7 @@ class ClusterSettingsSpecification extends Specification {
     def 'when a replica set name is specified and type is Standalone, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredReplicaSetName('foo')
-                       .requiredClusterType(ClusterType.StandAlone).build();
+                       .requiredClusterType(ClusterType.STANDALONE).build();
         then:
         thrown(IllegalArgumentException)
     }
@@ -78,7 +80,7 @@ class ClusterSettingsSpecification extends Specification {
     def 'when a replica set name is specified and type is Sharded, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).requiredReplicaSetName('foo')
-                       .requiredClusterType(ClusterType.Sharded).build();
+                       .requiredClusterType(ClusterType.SHARDED).build();
         then:
         thrown(IllegalArgumentException)
     }

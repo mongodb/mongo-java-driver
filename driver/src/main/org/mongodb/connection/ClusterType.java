@@ -25,20 +25,20 @@ public enum ClusterType {
     /**
      * A standalone mongod server.  A cluster of one.
      */
-    StandAlone,
+    STANDALONE,
 
     /**
      * A replicas set cluster.
      */
-    ReplicaSet,
+    REPLICA_SET,
 
     /**
      * A sharded cluster, connected via one or more mongos servers.
      */
-    Sharded,
+    SHARDED,
 
     /**
      * The cluster type is not yet known.
      */
-    Unknown
+    UNKNOWN
 }

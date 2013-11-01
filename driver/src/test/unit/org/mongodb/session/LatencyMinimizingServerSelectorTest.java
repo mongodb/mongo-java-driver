@@ -27,44 +27,44 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
 public class LatencyMinimizingServerSelectorTest {
     @Test
     public void testLatencyDifferentialMinimization() throws UnknownHostException {
         LatencyMinimizingServerSelector selector = new LatencyMinimizingServerSelector(20, TimeUnit.MILLISECONDS);
         ServerDescription primary = ServerDescription.builder()
-                                                     .state(Connected)
+                                                     .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .averagePingTime(10, TimeUnit.MILLISECONDS)
                                                      .build();
         ServerDescription secondaryOne = ServerDescription.builder()
-                                                          .state(Connected)
+                                                          .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27018"))
                                                           .ok(true)
-                                                          .type(ServerType.ReplicaSetSecondary)
+                                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(15, TimeUnit.MILLISECONDS)
                                                           .build();
         ServerDescription secondaryTwo = ServerDescription.builder()
-                                                          .state(Connected)
+                                                          .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27019"))
                                                           .ok(true)
-                                                          .type(ServerType.ReplicaSetSecondary)
+                                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(31, TimeUnit.MILLISECONDS)
                                                           .build();
         ServerDescription secondaryThree = ServerDescription.builder()
-                                                            .state(Connected)
+                                                            .state(CONNECTED)
                                                             .address(new ServerAddress("localhost:27020"))
                                                             .ok(true)
-                                                            .type(ServerType.ReplicaSetSecondary)
+                                                            .type(ServerType.REPLICA_SET_SECONDARY)
                                                             .averagePingTime(30, TimeUnit.MILLISECONDS)
                                                             .build();
         assertEquals(Arrays.asList(primary, secondaryOne, secondaryThree),
-                     selector.choose(new ClusterDescription(Multiple, ReplicaSet,
+                     selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                             Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree))));
     }
 
@@ -72,20 +72,20 @@ public class LatencyMinimizingServerSelectorTest {
     public void testZeroLatencyDifferentialTolerance() throws UnknownHostException {
         LatencyMinimizingServerSelector selector = new LatencyMinimizingServerSelector(0, TimeUnit.NANOSECONDS);
         ServerDescription primary = ServerDescription.builder()
-                                                     .state(Connected)
+                                                     .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .averagePingTime(10, TimeUnit.NANOSECONDS)
                                                      .build();
         ServerDescription secondaryOne = ServerDescription.builder()
-                                                          .state(Connected)
+                                                          .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27018"))
                                                           .ok(true)
-                                                          .type(ServerType.ReplicaSetSecondary)
+                                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(11, TimeUnit.NANOSECONDS)
                                                           .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(Multiple, ReplicaSet,
+        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                                                     Arrays.asList(primary, secondaryOne))));
     }
 }

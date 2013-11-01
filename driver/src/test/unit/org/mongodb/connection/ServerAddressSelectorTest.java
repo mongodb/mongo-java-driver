@@ -24,9 +24,9 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
 public class ServerAddressSelectorTest {
     @Test
@@ -44,18 +44,18 @@ public class ServerAddressSelectorTest {
         assertEquals(selector.getServerAddress().hashCode(), selector.hashCode());
 
         ServerDescription primary = ServerDescription.builder()
-                                                     .state(Connected)
+                                                     .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .build();
         ServerDescription secondary = ServerDescription.builder()
-                                                       .state(Connected)
+                                                       .state(CONNECTED)
                                                        .address(new ServerAddress("localhost:27018"))
                                                        .ok(true)
-                                                       .type(ServerType.ReplicaSetSecondary)
+                                                       .type(ServerType.REPLICA_SET_SECONDARY)
                                                        .build();
-        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(Multiple, ReplicaSet,
+        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                                                       Arrays.asList(primary, secondary))));
     }
 }

@@ -121,7 +121,7 @@ public class BSONBinaryReader extends BSONReader {
         int numBytes = buffer.readInt32();
         byte type = buffer.readByte();
 
-        if (type == BSONBinarySubType.OldBinary.getValue()) {
+        if (type == BSONBinarySubType.OLD_BINARY.getValue()) {
             buffer.readInt32();
             numBytes -= 4;
         }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb
 
 import org.bson.types.ObjectId
@@ -62,7 +64,7 @@ class DocumentSpecification extends Specification {
         Pattern expectedPattern = Pattern.compile('abc', Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         when:
-        Document document = Document.valueOf("{'regex' : /abc/im }", JSONMode.JavaScript);
+        Document document = Document.valueOf("{'regex' : /abc/im }", JSONMode.JAVASCRIPT);
 
         then:
         document != null;

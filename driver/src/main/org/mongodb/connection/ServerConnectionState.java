@@ -20,15 +20,15 @@ public enum ServerConnectionState {
     /**
      * The application is actively attempting to connect to the remote server.
      */
-    Connecting,
+    CONNECTING,
 
     /**
      * The application failed in its last attempt to connect to the remote server
      */
-    Unconnected,
+    UNCONNECTED,
 
     /**
      * The application is connected to the remote server.
      */
-    Connected
+    CONNECTED
 }

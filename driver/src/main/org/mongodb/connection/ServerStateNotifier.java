@@ -33,18 +33,18 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.connection.CommandHelper.executeCommand;
-import static org.mongodb.connection.ServerConnectionState.Connected;
-import static org.mongodb.connection.ServerConnectionState.Connecting;
-import static org.mongodb.connection.ServerConnectionState.Unconnected;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerConnectionState.UNCONNECTED;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
-import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
-import static org.mongodb.connection.ServerType.ReplicaSetOther;
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
-import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
-import static org.mongodb.connection.ServerType.ShardRouter;
-import static org.mongodb.connection.ServerType.StandAlone;
-import static org.mongodb.connection.ServerType.Unknown;
+import static org.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
+import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
+import static org.mongodb.connection.ServerType.SHARD_ROUTER;
+import static org.mongodb.connection.ServerType.STANDALONE;
+import static org.mongodb.connection.ServerType.UNKNOWN;
 
 @ThreadSafe
 class ServerStateNotifier implements Runnable {
@@ -138,7 +138,7 @@ class ServerStateNotifier implements Runnable {
     private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
                                                 final long averagePingTimeNanos) {
         return ServerDescription.builder()
-                                .state(Connected)
+                                .state(CONNECTED)
                                 .version(getVersion(buildInfoResult))
                                 .address(commandResult.getAddress())
                                 .type(getServerType(commandResult.getResponse()))
@@ -173,25 +173,25 @@ class ServerStateNotifier implements Runnable {
     private static ServerType getServerType(final Document isMasterResult) {
         if (isReplicaSetMember(isMasterResult)) {
             if (getBoolean(isMasterResult.getBoolean("ismaster"), false)) {
-                return ReplicaSetPrimary;
+                return REPLICA_SET_PRIMARY;
             }
 
             if (getBoolean(isMasterResult.getBoolean("secondary"), false)) {
-                return ReplicaSetSecondary;
+                return REPLICA_SET_SECONDARY;
             }
 
             if (getBoolean(isMasterResult.getBoolean("arbiterOnly"), false)) {
-                return ReplicaSetArbiter;
+                return REPLICA_SET_ARBITER;
             }
 
-            return ReplicaSetOther;
+            return REPLICA_SET_OTHER;
         }
 
         if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals("isdbgrid")) {
-            return ShardRouter;
+            return SHARD_ROUTER;
         }
 
-        return StandAlone;
+        return STANDALONE;
     }
 
     private static boolean isReplicaSetMember(final Document isMasterResult) {
@@ -219,10 +219,10 @@ class ServerStateNotifier implements Runnable {
     }
 
     private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(Unknown).state(Connecting).address(serverAddress).build();
+        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverAddress).build();
     }
 
     private ServerDescription getUnconnectedServerDescription() {
-        return ServerDescription.builder().type(Unknown).state(Unconnected).address(serverAddress).build();
+        return ServerDescription.builder().type(UNKNOWN).state(UNCONNECTED).address(serverAddress).build();
     }
 }

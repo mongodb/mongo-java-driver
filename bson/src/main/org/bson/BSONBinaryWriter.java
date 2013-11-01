@@ -81,13 +81,13 @@ public class BSONBinaryWriter extends BSONWriter {
 
         int totalLen = binary.length();
 
-        if (binary.getType() == BSONBinarySubType.OldBinary.getValue()) {
+        if (binary.getType() == BSONBinarySubType.OLD_BINARY.getValue()) {
             totalLen += 4;
         }
 
         buffer.writeInt(totalLen);
         buffer.write(binary.getType());
-        if (binary.getType() == BSONBinarySubType.OldBinary.getValue()) {
+        if (binary.getType() == BSONBinarySubType.OLD_BINARY.getValue()) {
             buffer.writeInt(totalLen - 4);
         }
         buffer.write(binary.getData());

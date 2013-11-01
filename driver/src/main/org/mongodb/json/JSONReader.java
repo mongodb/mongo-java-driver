@@ -721,9 +721,9 @@ public class JSONReader extends BSONReader {
         verifyToken(")");
         String hexString = bytesToken.getValue(String.class).replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("-", "");
         byte[] bytes = DatatypeConverter.parseHexBinary(hexString);
-        BSONBinarySubType subType = BSONBinarySubType.UuidStandard;
+        BSONBinarySubType subType = BSONBinarySubType.UUID_STANDARD;
         if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
-            subType = BSONBinarySubType.UuidLegacy;
+            subType = BSONBinarySubType.UUID_LEGACY;
         }
         return new Binary(subType, bytes);
     }

@@ -32,7 +32,7 @@ public class AllPrimitiveTypes {
     private final long longVal = 2L;
     private final String stringVal = "hello";
     private final double doubleVal = 3.2;
-    private final Binary binaryVal = new Binary(BSONBinarySubType.UserDefined, new byte[]{0, 1, 2, 3});
+    private final Binary binaryVal = new Binary(BSONBinarySubType.USER_DEFINED, new byte[]{0, 1, 2, 3});
     private final Date jdkDateVal = new Date(1000);
     private final boolean booleanVal = true;
     private final Code codeVal = new Code("var i = 0");

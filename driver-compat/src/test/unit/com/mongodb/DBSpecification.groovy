@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -34,8 +36,8 @@ import spock.lang.Subject
 import static com.mongodb.ReadPreference.primary
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
-import static org.mongodb.connection.ClusterConnectionMode.Single
-import static org.mongodb.connection.ClusterType.Unknown
+import static org.mongodb.connection.ClusterConnectionMode.SINGLE
+import static org.mongodb.connection.ClusterType.UNKNOWN
 
 class DBSpecification extends Specification {
     private final Session session = Mock()
@@ -56,7 +58,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if createCollection fails'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
                                                                                  new Document(), 15L))
@@ -72,7 +74,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoCursorNotFoundException if cursor not found'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
         }
@@ -87,7 +89,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if executeCommand fails'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
                                                                                  new Document(), 15L))
@@ -118,7 +120,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if command fails for a reasons that is not a command failure'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new org.mongodb.MongoInternalException('An exception that is not a MongoCommandFailureException')
         }
@@ -133,7 +135,7 @@ class DBSpecification extends Specification {
     def 'should not throw MongoCommandFailureException if command fails'() {
         given:
         def expectedCommandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), new Document(), 15L)
-        cluster.getDescription() >> { new ClusterDescription(Single, Unknown, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(expectedCommandResult)
         }

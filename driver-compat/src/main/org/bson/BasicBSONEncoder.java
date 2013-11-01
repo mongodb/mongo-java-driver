@@ -240,7 +240,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         byte[] bytes = new byte[16];
         writeLongToArrayLittleEndian(bytes, 0, uuid.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, uuid.getLeastSignificantBits());
-        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UuidLegacy, bytes));
+        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UUID_LEGACY, bytes));
     }
 
     protected void putSymbol(final String name, final Symbol symbol) {

@@ -26,23 +26,23 @@ package org.mongodb.json;
 public enum JSONMode {
 
     /**
-     * Strict mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.
+     * This mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.
      */
-    Strict,
+    STRICT,
 
     /**
-     * JavaScript mode produces output that can be processed by most Javascript interpreters.
+     * This mode produces output that can be processed by most Javascript interpreters.
      */
-    JavaScript,
+    JAVASCRIPT,
 
     /**
-     * TenGen mode produces output that the MongoDB shell understands. This is basically an enhanced Javascript format.
+     * This mode produces output that the MongoDB shell understands. This is basically an enhanced Javascript format.
      */
-    TenGen,
+    TEN_GEN,
 
     /**
      * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually
      * produces when showing query results.
      */
-    Shell
+    SHELL
 }

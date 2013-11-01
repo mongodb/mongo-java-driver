@@ -34,16 +34,16 @@ public class TransformingBinaryDecoderTest {
         StringWriter stringWriter = new StringWriter();
         JSONWriter writer = new JSONWriter(stringWriter);
         writer.writeStartDocument();
-        writer.writeBinaryData("subtype0", new Binary(BSONBinarySubType.Binary, new byte[]{0}));
-        writer.writeBinaryData("subtype1", new Binary(BSONBinarySubType.Function, new byte[]{1}));
-        writer.writeBinaryData("subtype2", new Binary(BSONBinarySubType.OldBinary, new byte[]{2}));
+        writer.writeBinaryData("subtype0", new Binary(BSONBinarySubType.BINARY, new byte[]{0}));
+        writer.writeBinaryData("subtype1", new Binary(BSONBinarySubType.FUNCTION, new byte[]{1}));
+        writer.writeBinaryData("subtype2", new Binary(BSONBinarySubType.OLD_BINARY, new byte[]{2}));
 
         writer.writeName("subtype3");
         new UUIDEncoder().encode(writer, UUID.randomUUID());
 
-        writer.writeBinaryData("subtype4", new Binary(BSONBinarySubType.UuidStandard, new byte[]{4}));
+        writer.writeBinaryData("subtype4", new Binary(BSONBinarySubType.UUID_STANDARD, new byte[]{4}));
         writer.writeBinaryData("subtype5", new Binary(BSONBinarySubType.MD5, new byte[]{5}));
-        writer.writeBinaryData("subtype80", new Binary(BSONBinarySubType.UserDefined, new byte[]{(byte) 0x80}));
+        writer.writeBinaryData("subtype80", new Binary(BSONBinarySubType.USER_DEFINED, new byte[]{(byte) 0x80}));
         writer.writeEndDocument();
 
         JSONReader reader = new JSONReader(stringWriter.toString());

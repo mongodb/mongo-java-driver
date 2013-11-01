@@ -33,7 +33,7 @@ public class JSONReaderSettings extends BSONReaderSettings {
      * Creates a new instance with default values for all properties.
      */
     public JSONReaderSettings() {
-        this(JSONMode.Strict);
+        this(JSONMode.STRICT);
     }
 
     /**

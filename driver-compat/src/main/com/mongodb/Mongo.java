@@ -58,8 +58,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.mongodb.MongoExceptions.mapException;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
 @ThreadSafe
 public class Mongo {
@@ -407,7 +407,7 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return getClusterDescription().getType() == ReplicaSet && getClusterDescription().getConnectionMode() == Multiple
+        return getClusterDescription().getType() == REPLICA_SET && getClusterDescription().getConnectionMode() == MULTIPLE
                ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
     }
 
@@ -752,9 +752,9 @@ public class Mongo {
 
     private static ClusterConnectionMode getSingleServerClusterMode(final org.mongodb.MongoClientOptions options) {
         if (options.getRequiredReplicaSetName() == null) {
-            return ClusterConnectionMode.Single;
+            return ClusterConnectionMode.SINGLE;
         } else {
-            return ClusterConnectionMode.Multiple;
+            return ClusterConnectionMode.MULTIPLE;
         }
     }
 

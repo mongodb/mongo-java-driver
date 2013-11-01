@@ -29,8 +29,8 @@ import java.util.concurrent.ScheduledFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerConnectionState.Connecting;
-import static org.mongodb.connection.ServerConnectionState.Unconnected;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerConnectionState.UNCONNECTED;
 
 class DefaultServer implements ClusterableServer {
     private final ScheduledExecutorService scheduledExecutorService;
@@ -58,7 +58,7 @@ class DefaultServer implements ClusterableServer {
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionProvider = connectionProvider;
-        this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(), heartbeatStreamConnectionFactory,
                                                      bufferProvider);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier,
@@ -92,7 +92,7 @@ class DefaultServer implements ClusterableServer {
     public void invalidate() {
         isTrue("open", !isClosed());
 
-        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         scheduledExecutorService.submit(stateNotifier);
     }
 
@@ -122,7 +122,7 @@ class DefaultServer implements ClusterableServer {
             for (final ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
             }
-            if (event.getNewValue().getState() == Unconnected) {
+            if (event.getNewValue().getState() == UNCONNECTED) {
                 scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(MILLISECONDS), MILLISECONDS);
             }
         }

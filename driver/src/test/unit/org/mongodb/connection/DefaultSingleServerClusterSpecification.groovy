@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.event.ClusterListener
@@ -26,8 +28,8 @@ class DefaultSingleServerClusterSpecification extends Specification {
     private static final ServerDescription.Builder CONNECTED_DESCRIPTION_BUILDER = ServerDescription.builder()
             .address(SERVER_ADDRESS)
             .ok(true)
-            .state(ServerConnectionState.Connected)
-            .type(ServerType.ReplicaSetSecondary)
+            .state(ServerConnectionState.CONNECTED)
+            .type(ServerType.REPLICA_SET_SECONDARY)
             .hosts(new HashSet<String>(['localhost:27017', 'localhost:27018', 'localhost:27019']));
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
@@ -35,7 +37,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
         given:
         def listener = Mock(ClusterListener)
         new SingleServerCluster('1',
-                ClusterSettings.builder().mode(ClusterConnectionMode.Single).hosts([SERVER_ADDRESS]).build(), factory, listener)
+                ClusterSettings.builder().mode(ClusterConnectionMode.SINGLE).hosts([SERVER_ADDRESS]).build(), factory, listener)
 
         when:
         factory.getServer(SERVER_ADDRESS).sendNotification(CONNECTED_DESCRIPTION_BUILDER.build())

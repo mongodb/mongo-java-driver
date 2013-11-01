@@ -27,14 +27,14 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerConnectionState.Connected;
-import static org.mongodb.connection.ServerType.ReplicaSetArbiter;
-import static org.mongodb.connection.ServerType.ReplicaSetOther;
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
-import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
-import static org.mongodb.connection.ServerType.ShardRouter;
-import static org.mongodb.connection.ServerType.StandAlone;
-import static org.mongodb.connection.ServerType.Unknown;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
+import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
+import static org.mongodb.connection.ServerType.SHARD_ROUTER;
+import static org.mongodb.connection.ServerType.STANDALONE;
+import static org.mongodb.connection.ServerType.UNKNOWN;
 
 /**
  * Immutable snapshot state of a server.
@@ -65,7 +65,7 @@ public class ServerDescription {
 
     public static class Builder {
         private ServerAddress address;
-        private ServerType type = Unknown;
+        private ServerType type = UNKNOWN;
         private Set<String> hosts = Collections.emptySet();
         private Set<String> passives = Collections.emptySet();
         private Set<String> arbiters = Collections.emptySet();
@@ -180,23 +180,23 @@ public class ServerDescription {
     }
 
     public boolean isReplicaSetMember() {
-        return (type == ReplicaSetPrimary || type == ReplicaSetSecondary || type == ReplicaSetArbiter || type == ReplicaSetOther);
+        return (type == REPLICA_SET_PRIMARY || type == REPLICA_SET_SECONDARY || type == REPLICA_SET_ARBITER || type == REPLICA_SET_OTHER);
     }
 
     public boolean isShardRouter() {
-        return type == ShardRouter;
+        return type == SHARD_ROUTER;
     }
 
     public boolean isStandAlone() {
-        return type == StandAlone;
+        return type == STANDALONE;
     }
 
     public boolean isPrimary() {
-        return ok && (type == ReplicaSetPrimary || type == ShardRouter || type == StandAlone);
+        return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE);
     }
 
     public boolean isSecondary() {
-        return ok && (type == ReplicaSetSecondary || type == ShardRouter || type == StandAlone);
+        return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE);
     }
 
     public Set<String> getHosts() {
@@ -228,8 +228,9 @@ public class ServerDescription {
     }
 
     /**
-     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone} or @code{ServerType.ShardRouter}
-     * is considered to have all tags, so this method will always return true for instances of either of those types.
+     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone} or
+     * @code{ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of
+     * those types.
      *
      * @param desiredTags the tags
      * @return true if this server has the given tags
@@ -239,7 +240,7 @@ public class ServerDescription {
             return false;
         }
 
-        if (type == StandAlone || type == ShardRouter) {
+        if (type == STANDALONE || type == SHARD_ROUTER) {
             return true;
         }
 
@@ -392,7 +393,7 @@ public class ServerDescription {
                + "address=" + address
                + ", type=" + type
                + (tags.isEmpty() ? "" : tags)
-               + (state == Connected ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
+               + (state == CONNECTED ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
                + ", state=" + state
                + '}';
     }

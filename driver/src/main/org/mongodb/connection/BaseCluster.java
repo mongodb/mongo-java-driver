@@ -115,7 +115,7 @@ public abstract class BaseCluster implements Cluster {
             ClusterDescription curDescription = description;
             TimeUnit timeUnit = NANOSECONDS;
             long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
-            while (curDescription.getType() == ClusterType.Unknown) {
+            while (curDescription.getType() == ClusterType.UNKNOWN) {
 
                 if (!curDescription.isConnecting()) {
                     throw new MongoServerSelectionFailureException(format("Unable to connect to any servers"));

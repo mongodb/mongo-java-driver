@@ -38,7 +38,7 @@ public class SingleServerClusterTest {
     public void setUp() throws Exception {
         cluster = new SingleServerCluster("1",
                                           ClusterSettings.builder()
-                                                         .mode(ClusterConnectionMode.Single)
+                                                         .mode(ClusterConnectionMode.SINGLE)
                                                          .hosts(Arrays.asList(getPrimary()))
                                                          .build(),
                                           new DefaultClusterableServerFactory("1",

@@ -16,13 +16,15 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.event.ClusterListener
 import spock.lang.Specification
 
-import static org.mongodb.connection.ClusterConnectionMode.Single
-import static org.mongodb.connection.ServerConnectionState.Connected
+import static org.mongodb.connection.ClusterConnectionMode.SINGLE
+import static org.mongodb.connection.ServerConnectionState.CONNECTED
 
 class SingleServerClusterSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
@@ -34,24 +36,24 @@ class SingleServerClusterSpecification extends Specification {
     def 'should update description when the server connects'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.StandAlone)
+        sendNotification(firstServer, ServerType.STANDALONE)
 
         then:
-        cluster.description.type == ClusterType.StandAlone
-        cluster.description.connectionMode == Single
+        cluster.description.type == ClusterType.STANDALONE
+        cluster.description.connectionMode == SINGLE
         cluster.description.all == getDescriptions()
     }
 
     def 'should get server when open'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.StandAlone)
+        sendNotification(firstServer, ServerType.STANDALONE)
 
         then:
         cluster.getServer(firstServer) == factory.getServer(firstServer)
@@ -61,7 +63,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should not get server when closed'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
         cluster.close()
 
         when:
@@ -74,42 +76,42 @@ class SingleServerClusterSpecification extends Specification {
     def 'should have no servers of the wrong type in the description'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).requiredClusterType(ClusterType.Sharded).hosts(Arrays.asList(firstServer)).build(),
+                ClusterSettings.builder().mode(SINGLE).requiredClusterType(ClusterType.SHARDED).hosts(Arrays.asList(firstServer)).build(),
                 factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.ReplicaSetPrimary)
+        sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY)
 
         then:
-        cluster.description.type == ClusterType.Sharded
+        cluster.description.type == ClusterType.SHARDED
         cluster.description.all == [] as Set
     }
 
     def 'should have server in description when replica set name does matches required one'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                ClusterSettings.builder().mode(SINGLE).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
                 factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.ReplicaSetPrimary, 'test1')
+        sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test1')
 
         then:
-        cluster.description.type == ClusterType.ReplicaSet
+        cluster.description.type == ClusterType.REPLICA_SET
         cluster.description.all == getDescriptions()
     }
 
     def 'should have no replica set servers in description when replica set name does not match required one'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                ClusterSettings.builder().mode(SINGLE).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
                 factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.ReplicaSetPrimary, 'test2')
+        sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test2')
 
         then:
-        cluster.description.type == ClusterType.ReplicaSet
+        cluster.description.type == ClusterType.REPLICA_SET
         cluster.description.all == [] as Set
     }
 
@@ -126,6 +128,6 @@ class SingleServerClusterSpecification extends Specification {
     }
 
     def getBuilder(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {
-        ServerDescription.builder().address(serverAddress).type(serverType).setName(replicaSetName).ok(true).state(Connected)
+        ServerDescription.builder().address(serverAddress).type(serverType).setName(replicaSetName).ok(true).state(CONNECTED)
     }
 }

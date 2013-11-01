@@ -18,6 +18,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.connection.Cluster
@@ -46,8 +48,8 @@ class MongoSpecification extends Specification {
         //we should have a test builder for the cluster if we have to mock the behaviour to get it to do what we want
         //currently we're getting null pointers for description
         given:
-        clusterDescription.getType() >> ClusterType.ReplicaSet
-        clusterDescription.getConnectionMode() >> ClusterConnectionMode.Multiple
+        clusterDescription.getType() >> ClusterType.REPLICA_SET
+        clusterDescription.getConnectionMode() >> ClusterConnectionMode.MULTIPLE
 
         expect:
         mongo.getReplicaSetStatus() != null;
@@ -56,8 +58,8 @@ class MongoSpecification extends Specification {
 
     def 'should return null if cluster type not replica'() {
         given:
-        clusterDescription.getType() >> ClusterType.Sharded
-        clusterDescription.getConnectionMode() >> ClusterConnectionMode.Multiple
+        clusterDescription.getType() >> ClusterType.SHARDED
+        clusterDescription.getConnectionMode() >> ClusterConnectionMode.MULTIPLE
 
         expect:
         mongo.getReplicaSetStatus() == null;
@@ -65,8 +67,8 @@ class MongoSpecification extends Specification {
 
     def 'should return null if cluster mode not discovering'() {
         given:
-        clusterDescription.getType() >> ClusterType.ReplicaSet
-        clusterDescription.getConnectionMode() >> ClusterConnectionMode.Single
+        clusterDescription.getType() >> ClusterType.REPLICA_SET
+        clusterDescription.getConnectionMode() >> ClusterConnectionMode.SINGLE
 
         expect:
         mongo.getReplicaSetStatus() == null;

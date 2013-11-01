@@ -29,12 +29,12 @@ import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.Sharded;
-import static org.mongodb.connection.ClusterType.Unknown;
-import static org.mongodb.connection.ServerConnectionState.Connecting;
-import static org.mongodb.connection.ServerType.ShardRouter;
-import static org.mongodb.connection.ServerType.StandAlone;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.SHARDED;
+import static org.mongodb.connection.ClusterType.UNKNOWN;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerType.SHARD_ROUTER;
+import static org.mongodb.connection.ServerType.STANDALONE;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor
@@ -61,7 +61,7 @@ final class MultiServerCluster extends BaseCluster {
     public MultiServerCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                               final ClusterListener clusterListener) {
         super(clusterId, settings, serverFactory, clusterListener);
-        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.Multiple);
+        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
 
@@ -124,19 +124,19 @@ final class MultiServerCluster extends BaseCluster {
             serverTuple.description = newDescription;
 
             if (event.getNewValue().isOk()) {
-                if (clusterType == Unknown) {
+                if (clusterType == UNKNOWN) {
                     clusterType = newDescription.getClusterType();
                     LOGGER.info(format("Discovered cluster type of %s", clusterType));
                 }
 
                 switch (clusterType) {
-                    case ReplicaSet:
+                    case REPLICA_SET:
                         handleReplicaSetMemberChanged(newDescription);
                         break;
-                    case Sharded:
+                    case SHARDED:
                         handleShardRouterChanged(newDescription);
                         break;
-                    case StandAlone:
+                    case STANDALONE:
                         handleStandAloneChanged(newDescription);
                         break;
                     default:
@@ -182,9 +182,9 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void handleShardRouterChanged(final ServerDescription newDescription) {
-        if (newDescription.getClusterType() != Sharded) {
+        if (newDescription.getClusterType() != SHARDED) {
             LOGGER.severe(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
-                                 ShardRouter, newDescription.getType(), newDescription.getAddress()));
+                                 SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
     }
@@ -192,8 +192,8 @@ final class MultiServerCluster extends BaseCluster {
     private void handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
             LOGGER.severe(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
-                                 StandAlone, newDescription.getAddress()));
-            clusterType = Unknown;
+                                 STANDALONE, newDescription.getAddress()));
+            clusterType = UNKNOWN;
             removeServer(newDescription.getAddress());
         }
     }
@@ -222,12 +222,12 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private ServerDescription getConnectingServerDescription(final ServerAddress serverAddress) {
-        return ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        return ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
     }
 
     private void updateDescription() {
         List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(Multiple, clusterType, newServerDescriptionList));
+        updateDescription(new ClusterDescription(MULTIPLE, clusterType, newServerDescriptionList));
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

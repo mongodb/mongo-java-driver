@@ -27,7 +27,7 @@ import java.util.TreeSet;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.connection.ServerConnectionState.Connecting;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 
 /**
  * Immutable snapshot state of a cluster.
@@ -70,7 +70,7 @@ public class ClusterDescription {
      */
     public boolean isConnecting() {
         for (final ServerDescription cur : all) {
-            if (cur.getState() == Connecting) {
+            if (cur.getState() == CONNECTING) {
                 return true;
             }
         }

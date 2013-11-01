@@ -24,7 +24,7 @@ import org.mongodb.connection.ClusterType;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mongodb.connection.ClusterConnectionMode.Single;
+import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
 
 /**
  * Help for managing read preferences for commands.
@@ -66,7 +66,7 @@ public final class CommandReadPreferenceHelper {
      */
     public static ReadPreference getCommandReadPreference(final Document commandDocument, final ReadPreference readPreference,
                                                           final ClusterDescription clusterDescription) {
-        if (clusterDescription.getConnectionMode() == Single || clusterDescription.getType() != ClusterType.ReplicaSet) {
+        if (clusterDescription.getConnectionMode() == SINGLE || clusterDescription.getType() != ClusterType.REPLICA_SET) {
             return readPreference;
         }
 

@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import static org.mongodb.connection.ServerConnectionState.Connecting;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 
 public class TestServer implements ClusterableServer {
     private ChangeListener<ServerDescription> changeListener;
@@ -44,7 +44,7 @@ public class TestServer implements ClusterableServer {
 
     @Override
     public void invalidate() {
-        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
     }
 
     @Override

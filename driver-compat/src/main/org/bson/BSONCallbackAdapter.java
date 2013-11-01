@@ -99,7 +99,7 @@ class BSONCallbackAdapter extends BSONWriter {
 
     @Override
     public void writeBinaryData(final Binary binary) {
-        if (binary.getType() == BSONBinarySubType.UuidLegacy.getValue()) {
+        if (binary.getType() == BSONBinarySubType.UUID_LEGACY.getValue()) {
             bsonCallback.gotUUID(getName(),
                                  readLong(binary.getData(), 0),
                                  readLong(binary.getData(), 8));

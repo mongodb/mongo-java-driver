@@ -84,7 +84,7 @@ public class Document implements Map<String, Object>, Serializable {
      *          if the input is invalid
      */
     public static Document valueOf(final String s) {
-        return Document.valueOf(s, JSONMode.Strict);
+        return Document.valueOf(s, JSONMode.STRICT);
     }
 
     /**
@@ -252,7 +252,7 @@ public class Document implements Map<String, Object>, Serializable {
         //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
         // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
         StringWriter writer = new StringWriter();
-        BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.Strict));
+        BSONWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.STRICT));
         Codec<Document> codec = new DocumentCodec(PrimitiveCodecs.createDefault());
         codec.encode(bsonWriter, this);
 

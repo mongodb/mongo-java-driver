@@ -27,34 +27,34 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ServerConnectionState.Connected;
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
-import static org.mongodb.connection.ServerType.Unknown;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static org.mongodb.connection.ServerType.UNKNOWN;
 
 public class ServerDescriptionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testMissingStatus() throws UnknownHostException {
-        ServerDescription.builder().address(new ServerAddress()).type(ReplicaSetPrimary).build();
+        ServerDescription.builder().address(new ServerAddress()).type(REPLICA_SET_PRIMARY).build();
 
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMissingAddress() throws UnknownHostException {
-        ServerDescription.builder().state(Connected).type(ReplicaSetPrimary).build();
+        ServerDescription.builder().state(CONNECTED).type(REPLICA_SET_PRIMARY).build();
 
     }
 
     @Test
     public void testDefaults() throws UnknownHostException {
         ServerDescription serverDescription = ServerDescription.builder().address(new ServerAddress())
-                                                               .state(Connected)
+                                                               .state(CONNECTED)
                                                                .build();
 
         assertEquals(new ServerAddress(), serverDescription.getAddress());
         assertFalse(serverDescription.isOk());
-        assertEquals(Connected, serverDescription.getState());
-        assertEquals(Unknown, serverDescription.getType());
+        assertEquals(CONNECTED, serverDescription.getState());
+        assertEquals(UNKNOWN, serverDescription.getType());
 
         assertFalse(serverDescription.isReplicaSetMember());
         assertFalse(serverDescription.isShardRouter());
@@ -82,7 +82,7 @@ public class ServerDescriptionTest {
     public void testObjectOverrides() throws UnknownHostException {
         ServerDescription.Builder builder = ServerDescription.builder()
                                                              .address(new ServerAddress())
-                                                             .type(ServerType.ShardRouter)
+                                                             .type(ServerType.SHARD_ROUTER)
                                                              .tags(new Tags("dc", "ny"))
                                                              .setName("test")
                                                              .setVersion(11)
@@ -94,7 +94,7 @@ public class ServerDescriptionTest {
                                                                                                       "localhost:27018")))
                                                              .passives(new HashSet<String>(Arrays.asList("localhost:27019")))
                                                              .ok(true)
-                                                             .state(Connected)
+                                                             .state(CONNECTED)
                                                              .version(new ServerVersion(Arrays.asList(2, 4, 1)));
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());
@@ -105,45 +105,45 @@ public class ServerDescriptionTest {
     public void testIsPrimaryAndIsSecondary() throws UnknownHostException {
         ServerDescription serverDescription = ServerDescription.builder()
                                                                .address(new ServerAddress())
-                                                               .type(ServerType.ShardRouter)
+                                                               .type(ServerType.SHARD_ROUTER)
                                                                .ok(false)
-                                                               .state(Connected)
+                                                               .state(CONNECTED)
                                                                .build();
         assertFalse(serverDescription.isPrimary());
         assertFalse(serverDescription.isSecondary());
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ServerType.ShardRouter)
+                                             .type(ServerType.SHARD_ROUTER)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.isPrimary());
         assertTrue(serverDescription.isSecondary());
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ServerType.StandAlone)
+                                             .type(ServerType.STANDALONE)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.isPrimary());
         assertTrue(serverDescription.isSecondary());
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ReplicaSetPrimary)
+                                             .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.isPrimary());
         assertFalse(serverDescription.isSecondary());
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ServerType.ReplicaSetSecondary)
+                                             .type(ServerType.REPLICA_SET_SECONDARY)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertFalse(serverDescription.isPrimary());
         assertTrue(serverDescription.isSecondary());
@@ -153,60 +153,60 @@ public class ServerDescriptionTest {
     public void testHasTags() throws UnknownHostException {
         ServerDescription serverDescription = ServerDescription.builder()
                                                                .address(new ServerAddress())
-                                                               .type(ServerType.ShardRouter)
+                                                               .type(ServerType.SHARD_ROUTER)
                                                                .ok(false)
-                                                               .state(Connected)
+                                                               .state(CONNECTED)
                                                                .build();
         assertFalse(serverDescription.hasTags(new Tags("dc", "ny")));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ServerType.ShardRouter)
+                                             .type(ServerType.SHARD_ROUTER)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.hasTags(new Tags("dc", "ny")));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ServerType.StandAlone)
+                                             .type(ServerType.STANDALONE)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.hasTags(new Tags("dc", "ny")));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ReplicaSetPrimary)
+                                             .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.hasTags(new Tags()));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ReplicaSetPrimary)
+                                             .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
                                              .tags(new Tags("rack", "1"))
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertFalse(serverDescription.hasTags(new Tags("dc", "ny")));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ReplicaSetPrimary)
+                                             .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
                                              .tags(new Tags("rack", "1"))
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertFalse(serverDescription.hasTags(new Tags("rack", "2")));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
-                                             .type(ReplicaSetPrimary)
+                                             .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
                                              .tags(new Tags("rack", "1"))
-                                             .state(Connected)
+                                             .state(CONNECTED)
                                              .build();
         assertTrue(serverDescription.hasTags(new Tags("rack", "1")));
     }

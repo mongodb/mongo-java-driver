@@ -420,7 +420,7 @@ public class JSONReaderTest {
         assertEquals("pattern", regex.getPattern());
         assertEquals("imxs", regex.getOptions());
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
-        JSONWriterSettings settings = new JSONWriterSettings(JSONMode.Strict);
+        JSONWriterSettings settings = new JSONWriterSettings(JSONMode.STRICT);
 
     }
 
@@ -513,7 +513,7 @@ public class JSONReaderTest {
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.BINARY, bsonReader.readBSONType());
         Binary binary = bsonReader.readBinaryData();
-        assertEquals(BSONBinarySubType.UserDefined.getValue(), binary.getType());
+        assertEquals(BSONBinarySubType.USER_DEFINED.getValue(), binary.getType());
         assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
@@ -558,7 +558,7 @@ public class JSONReaderTest {
         bsonReader.readStartDocument();
         assertEquals(BSONType.BINARY, bsonReader.readBSONType());
         Binary binary = bsonReader.readBinaryData();
-        assertEquals(BSONBinarySubType.UserDefined.getValue(), binary.getType());
+        assertEquals(BSONBinarySubType.USER_DEFINED.getValue(), binary.getType());
         assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
         bsonReader.readEndDocument();
         assertEquals(BSONReader.State.DONE, bsonReader.getState());

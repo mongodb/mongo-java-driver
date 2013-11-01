@@ -45,8 +45,8 @@ public final class ClusterSettings {
      */
     public static final class Builder {
         private List<ServerAddress> hosts;
-        private ClusterConnectionMode mode = ClusterConnectionMode.Multiple;
-        private ClusterType requiredClusterType = ClusterType.Unknown;
+        private ClusterConnectionMode mode = ClusterConnectionMode.MULTIPLE;
+        private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
 
         private Builder() {
@@ -205,20 +205,20 @@ public final class ClusterSettings {
         notNull("hosts", builder.hosts);
         isTrueArgument("hosts size > 0", builder.hosts.size() > 0);
 
-        if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.StandAlone) {
-            throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.StandAlone.");
+        if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.STANDALONE) {
+            throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.STANDALONE.");
         }
 
-        if (builder.mode == ClusterConnectionMode.Single && builder.hosts.size() > 1) {
+        if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
             throw new IllegalArgumentException("Can not directly connect to more than one server");
         }
 
         if (builder.requiredReplicaSetName != null) {
-            if (builder.requiredClusterType == ClusterType.Unknown) {
-                builder.requiredClusterType = ClusterType.ReplicaSet;
-            } else if (builder.requiredClusterType != ClusterType.ReplicaSet) {
-                throw new IllegalArgumentException("When specifying a replica set name, only ClusterType.Unknown and ClusterType"
-                                                   + ".ReplicaSet are valid.");
+            if (builder.requiredClusterType == ClusterType.UNKNOWN) {
+                builder.requiredClusterType = ClusterType.REPLICA_SET;
+            } else if (builder.requiredClusterType != ClusterType.REPLICA_SET) {
+                throw new IllegalArgumentException("When specifying a replica set name, only ClusterType.UNKNOWN and "
+                                                   + "ClusterType.REPLICA_SET are valid.");
             }
         }
 

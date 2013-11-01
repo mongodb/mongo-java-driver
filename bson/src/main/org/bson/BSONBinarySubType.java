@@ -16,31 +16,35 @@
 
 package org.bson;
 
+/**
+ *
+ * @since 3.0
+ */
 public enum BSONBinarySubType {
     /**
      * Binary data.
      */
-    Binary((byte) 0x00),
+    BINARY((byte) 0x00),
 
     /**
      * A function.
      */
-    Function((byte) 0x01),
+    FUNCTION((byte) 0x01),
 
     /**
      * Obsolete binary data subtype (use Binary instead).
      */
-    OldBinary((byte) 0x02),
+    OLD_BINARY((byte) 0x02),
 
     /**
      * A UUID in a driver dependent legacy byte order.
      */
-    UuidLegacy((byte) 0x03),
+    UUID_LEGACY((byte) 0x03),
 
     /**
      * A UUID in standard network byte order.
      */
-    UuidStandard((byte) 0x04),
+    UUID_STANDARD((byte) 0x04),
 
     /**
      * An MD5 hash.
@@ -50,7 +54,7 @@ public enum BSONBinarySubType {
     /**
      * User defined binary data.
      */
-    UserDefined((byte) 0x80);
+    USER_DEFINED((byte) 0x80);
 
     private final byte value;
 

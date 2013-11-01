@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.session
 
 import org.mongodb.connection.ClusterDescription
@@ -25,18 +27,18 @@ import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.mongodb.connection.ClusterConnectionMode.Multiple
-import static org.mongodb.connection.ServerConnectionState.Connected
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary
-import static org.mongodb.connection.ServerType.ReplicaSetSecondary
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static org.mongodb.connection.ServerConnectionState.CONNECTED
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
+import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
 
 class PrimaryServerSelectorSpecification extends Specification {
     private static final ServerDescription.Builder SERVER_DESCRIPTION_BUILDER = ServerDescription.builder()
-            .state(Connected)
+            .state(CONNECTED)
             .address(new ServerAddress())
             .ok(true);
-    private static final ServerDescription PRIMARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(ReplicaSetPrimary).build()
-    private static final ServerDescription SECONDARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(ReplicaSetSecondary).build()
+    private static final ServerDescription PRIMARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_PRIMARY).build()
+    private static final ServerDescription SECONDARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_SECONDARY).build()
 
     def 'test constructor'() throws UnknownHostException {
         given:
@@ -57,9 +59,9 @@ class PrimaryServerSelectorSpecification extends Specification {
 
         where:
         expectedServerList | clusterDescription
-        [PRIMARY_SERVER]   | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [PRIMARY_SERVER])
-        [PRIMARY_SERVER]   | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [PRIMARY_SERVER, SECONDARY_SERVER])
-        []                 | new ClusterDescription(Multiple, ClusterType.ReplicaSet, [SECONDARY_SERVER])
+        [PRIMARY_SERVER]   | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [PRIMARY_SERVER])
+        [PRIMARY_SERVER]   | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [PRIMARY_SERVER, SECONDARY_SERVER])
+        []                 | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [SECONDARY_SERVER])
     }
 
 }

@@ -29,9 +29,9 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
 public class ReadPreferenceServerSelectorTest {
     @Test
@@ -49,40 +49,40 @@ public class ReadPreferenceServerSelectorTest {
         assertEquals("ReadPreferenceServerSelector{readPreference=primary}", selector.toString());
 
         ServerDescription primary = ServerDescription.builder()
-                                                     .state(Connected)
+                                                     .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .build();
-        assertEquals(asList(primary), selector.choose(new ClusterDescription(Multiple, ReplicaSet, asList(primary))));
+        assertEquals(asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary))));
     }
 
     @Test
     public void testChaining() throws UnknownHostException {
         ReadPreferenceServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.secondary());
         ServerDescription primary = ServerDescription.builder()
-                                                     .state(Connected)
+                                                     .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.ReplicaSetPrimary)
+                                                     .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .averagePingTime(1, TimeUnit.MILLISECONDS)
                                                      .build();
         ServerDescription secondaryOne = ServerDescription.builder()
-                                                          .state(Connected)
+                                                          .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27018"))
                                                           .ok(true)
-                                                          .type(ServerType.ReplicaSetSecondary)
+                                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(2, TimeUnit.MILLISECONDS)
                                                           .build();
         ServerDescription secondaryTwo = ServerDescription.builder()
-                                                          .state(Connected)
+                                                          .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27019"))
                                                           .ok(true)
-                                                          .type(ServerType.ReplicaSetSecondary)
+                                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(20, TimeUnit.MILLISECONDS)
                                                           .build();
-        assertEquals(asList(secondaryOne), selector.choose(new ClusterDescription(Multiple,
-                                                                                  ReplicaSet,
+        assertEquals(asList(secondaryOne), selector.choose(new ClusterDescription(MULTIPLE,
+                                                                                  REPLICA_SET,
                                                                                   asList(primary, secondaryOne, secondaryTwo))));
 
     }

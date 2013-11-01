@@ -153,10 +153,10 @@ public class LazyBSONObject implements BSONObject {
             case BINARY:
                 Binary binary = reader.readBinaryData();
                 byte binaryType = binary.getType();
-                if (binaryType == BSONBinarySubType.Binary.getValue()
-                    || binaryType == BSONBinarySubType.Binary.getValue()) {
+                if (binaryType == BSONBinarySubType.BINARY.getValue()
+                    || binaryType == BSONBinarySubType.BINARY.getValue()) {
                     return binary.getData();
-                } else if (binaryType == BSONBinarySubType.UuidLegacy.getValue()) {
+                } else if (binaryType == BSONBinarySubType.UUID_LEGACY.getValue()) {
                     return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
                 } else {
                     return binary;

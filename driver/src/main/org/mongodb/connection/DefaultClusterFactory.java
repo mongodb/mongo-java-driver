@@ -60,10 +60,10 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                                                                      ? connectionPoolListener
                                                                                      : new NoOpConnectionPoolListener());
 
-        if (settings.getMode() == ClusterConnectionMode.Single) {
+        if (settings.getMode() == ClusterConnectionMode.SINGLE) {
             return new SingleServerCluster(clusterId, settings, serverFactory,
                                            clusterListener != null ? clusterListener : new NoOpClusterListener());
-        } else if (settings.getMode() == ClusterConnectionMode.Multiple) {
+        } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
             return new MultiServerCluster(clusterId, settings, serverFactory,
                                           clusterListener != null ? clusterListener : new NoOpClusterListener());
         } else {

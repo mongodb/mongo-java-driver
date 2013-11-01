@@ -25,70 +25,70 @@ public enum ServerType {
     /**
      * A standalone mongod server.
      */
-    StandAlone {
+    STANDALONE {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.StandAlone;
+            return ClusterType.STANDALONE;
         }
     },
 
     /**
      * A replica set primary.
      */
-    ReplicaSetPrimary {
+    REPLICA_SET_PRIMARY {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.ReplicaSet;
+            return ClusterType.REPLICA_SET;
         }
     },
 
     /**
      * A replica set secondary.
      */
-    ReplicaSetSecondary {
+    REPLICA_SET_SECONDARY {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.ReplicaSet;
+            return ClusterType.REPLICA_SET;
         }
     },
 
     /**
      * A replica set arbiter.
      */
-    ReplicaSetArbiter {
+    REPLICA_SET_ARBITER {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.ReplicaSet;
+            return ClusterType.REPLICA_SET;
         }
     },
 
     /**
      * A replica set member that is none of the other types (a passive, for example).
      */
-    ReplicaSetOther {
+    REPLICA_SET_OTHER {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.ReplicaSet;
+            return ClusterType.REPLICA_SET;
         }
     },
 
     /**
      * A router to a sharded cluster, i.e. a mongos server.
      */
-    ShardRouter {
+    SHARD_ROUTER {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.Sharded;
+            return ClusterType.SHARDED;
         }
     },
 
     /**
      * The server type is not yet known.
      */
-    Unknown {
+    UNKNOWN {
         @Override
         public ClusterType getClusterType() {
-            return ClusterType.Unknown;
+            return ClusterType.UNKNOWN;
         }
     };
 

@@ -31,9 +31,9 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
 
     public TransformingBinaryDecoder() {
         subTypeTransformerMap = new HashMap<Byte, BinaryTransformer>();
-        subTypeTransformerMap.put(BSONBinarySubType.Binary.getValue(), new BinaryToByteArrayTransformer());
-        subTypeTransformerMap.put(BSONBinarySubType.OldBinary.getValue(), new BinaryToByteArrayTransformer());
-        subTypeTransformerMap.put(BSONBinarySubType.UuidLegacy.getValue(), new BinaryToUUIDTransformer());
+        subTypeTransformerMap.put(BSONBinarySubType.BINARY.getValue(), new BinaryToByteArrayTransformer());
+        subTypeTransformerMap.put(BSONBinarySubType.OLD_BINARY.getValue(), new BinaryToByteArrayTransformer());
+        subTypeTransformerMap.put(BSONBinarySubType.UUID_LEGACY.getValue(), new BinaryToUUIDTransformer());
     }
 
     @Override

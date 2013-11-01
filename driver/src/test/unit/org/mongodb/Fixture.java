@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import static java.util.Arrays.asList;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
@@ -159,8 +159,8 @@ public final class Fixture {
 
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
-        return mongoClient.getCluster().getDescription().getType() == ReplicaSet
-               && mongoClient.getCluster().getDescription().getConnectionMode() == Multiple;
+        return mongoClient.getCluster().getDescription().getType() == REPLICA_SET
+               && mongoClient.getCluster().getDescription().getConnectionMode() == MULTIPLE;
     }
 
     public static boolean isAuthenticated() {

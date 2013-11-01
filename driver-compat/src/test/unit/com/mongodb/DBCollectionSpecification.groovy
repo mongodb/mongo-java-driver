@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -47,7 +49,7 @@ class DBCollectionSpecification extends Specification {
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription() }
         database.getBufferPool() >> { getBufferProvider() }
-        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.Multiple, ClusterType.Unknown, []) }
+        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
     }
 
     def 'should throw com.mongodb.MongoException if rename fails'() {

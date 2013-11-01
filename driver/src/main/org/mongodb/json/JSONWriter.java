@@ -156,7 +156,7 @@ public class JSONWriter extends BSONWriter {
 
         try {
             switch (settings.getOutputMode()) {
-                case Shell:
+                case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
                                                printBase64Binary(binary.getData())));
@@ -193,17 +193,17 @@ public class JSONWriter extends BSONWriter {
 
         try {
             switch (settings.getOutputMode()) {
-                case Strict:
+                case STRICT:
                     writeStartDocument();
                     writeInt64("$date", value);
                     writeEndDocument();
                     break;
-                case JavaScript:
-                case TenGen:
+                case JAVASCRIPT:
+                case TEN_GEN:
                     writeNameHelper(getName());
                     writer.write(String.format("new Date(%d)", value));
                     break;
-                case Shell:
+                case SHELL:
                     writeNameHelper(getName());
 
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'");
@@ -256,12 +256,12 @@ public class JSONWriter extends BSONWriter {
         try {
             writeNameHelper(getName());
             switch (settings.getOutputMode()) {
-                case Strict:
-                case JavaScript:
+                case STRICT:
+                case JAVASCRIPT:
                     writer.write(Long.toString(value));
                     break;
-                case TenGen:
-                case Shell:
+                case TEN_GEN:
+                case SHELL:
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
                         writer.write(String.format("NumberLong(%d)", value));
                     } else {
@@ -343,14 +343,14 @@ public class JSONWriter extends BSONWriter {
 
         try {
             switch (settings.getOutputMode()) {
-                case Strict:
-                case JavaScript:
+                case STRICT:
+                case JAVASCRIPT:
                     writeStartDocument();
                     writeString("$oid", objectId.toString());
                     writeEndDocument();
                     break;
-                case TenGen:
-                case Shell:
+                case TEN_GEN:
+                case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("ObjectId(\"%s\")", objectId.toString()));
                     break;
@@ -370,15 +370,15 @@ public class JSONWriter extends BSONWriter {
 
         try {
             switch (settings.getOutputMode()) {
-                case Strict:
+                case STRICT:
                     writeStartDocument();
                     writeString("$regex", regularExpression.getPattern());
                     writeString("$options", regularExpression.getOptions());
                     writeEndDocument();
                     break;
-                case JavaScript:
-                case TenGen:
-                case Shell:
+                case JAVASCRIPT:
+                case TEN_GEN:
+                case SHELL:
                     writeNameHelper(getName());
                     writer.write("/");
                     String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression.getPattern()
@@ -427,8 +427,8 @@ public class JSONWriter extends BSONWriter {
 
         try {
             switch (settings.getOutputMode()) {
-                case Strict:
-                case JavaScript:
+                case STRICT:
+                case JAVASCRIPT:
                     writeStartDocument();
                     writeStartDocument("$timestamp");
                     writeInt32("t", value.getTime());
@@ -436,8 +436,8 @@ public class JSONWriter extends BSONWriter {
                     writeEndDocument();
                     writeEndDocument();
                     break;
-                case TenGen:
-                case Shell:
+                case TEN_GEN:
+                case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("Timestamp(%d, %d)", value.getTime(), value.getInc()));
                     break;

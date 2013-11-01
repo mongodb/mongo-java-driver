@@ -26,26 +26,26 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.ReadPreference.secondary;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterConnectionMode.Single;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ClusterType.Sharded;
-import static org.mongodb.connection.ServerConnectionState.Connected;
-import static org.mongodb.connection.ServerType.ReplicaSetPrimary;
-import static org.mongodb.connection.ServerType.ReplicaSetSecondary;
-import static org.mongodb.connection.ServerType.ShardRouter;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ClusterType.SHARDED;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
+import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
 
 public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testObedience() {
-        ClusterDescription clusterDescription = new ClusterDescription(Multiple,
-                                                                       ReplicaSet,
+        ClusterDescription clusterDescription = new ClusterDescription(MULTIPLE,
+                                                                       REPLICA_SET,
                                                                        asList(ServerDescription.builder()
-                                                                                               .state(Connected)
+                                                                                               .state(CONNECTED)
                                                                                                .address(new ServerAddress())
-                                                                                               .type(ReplicaSetPrimary)
+                                                                                               .type(REPLICA_SET_PRIMARY)
                                                                                                .build()));
         assertEquals(secondary(), getCommandReadPreference(new Document("group", "test.test").append("key", "x"), secondary(),
                                                            clusterDescription));
@@ -81,22 +81,22 @@ public class CommandReadPreferenceHelperTest {
 
     @Test
     public void testIgnoreObedienceForDirectConnection() {
-        ClusterDescription clusterDescription = new ClusterDescription(Single, ReplicaSet,
+        ClusterDescription clusterDescription = new ClusterDescription(SINGLE, REPLICA_SET,
                                                                        asList(ServerDescription.builder()
-                                                                                               .state(Connected)
+                                                                                               .state(CONNECTED)
                                                                                                .address(new ServerAddress())
-                                                                                               .type(ReplicaSetSecondary).build()));
+                                                                                               .type(REPLICA_SET_SECONDARY).build()));
 
         assertEquals(secondary(), getCommandReadPreference(new Document("shutdown", 1), secondary(), clusterDescription));
     }
 
     @Test
     public void testIgnoreObedienceForMongosDiscovering() {
-        ClusterDescription clusterDescription = new ClusterDescription(Multiple, Sharded,
+        ClusterDescription clusterDescription = new ClusterDescription(MULTIPLE, SHARDED,
                                                                        asList(ServerDescription.builder()
-                                                                                               .state(Connected)
+                                                                                               .state(CONNECTED)
                                                                                                .address(new ServerAddress())
-                                                                                               .type(ShardRouter).build()));
+                                                                                               .type(SHARD_ROUTER).build()));
 
         assertEquals(secondary(), getCommandReadPreference(new Document("shutdown", 1), secondary(), clusterDescription));
     }

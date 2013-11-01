@@ -38,7 +38,7 @@ final class SingleServerCluster extends BaseCluster {
                                final ClusterListener clusterListener) {
         super(clusterId, settings, serverFactory, clusterListener);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
-        isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.Single);
+        isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 
         LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
 
@@ -50,10 +50,10 @@ final class SingleServerCluster extends BaseCluster {
                 public void stateChanged(final ChangeEvent<ServerDescription> event) {
                     ServerDescription descriptionToPublish = event.getNewValue();
                     if (event.getNewValue().isOk()) {
-                        if (getSettings().getRequiredClusterType() != ClusterType.Unknown
+                        if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
                             && getSettings().getRequiredClusterType() != event.getNewValue().getClusterType()) {
                             descriptionToPublish = null;
-                        } else if (getSettings().getRequiredClusterType() == ClusterType.ReplicaSet
+                        } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
                                    && getSettings().getRequiredReplicaSetName() != null) {
                             if (!getSettings().getRequiredReplicaSetName().equals(event.getNewValue().getSetName())) {
                                 descriptionToPublish = null;
@@ -70,10 +70,10 @@ final class SingleServerCluster extends BaseCluster {
 
     private void publishDescription(final ServerDescription serverDescription) {
         ClusterType clusterType = getSettings().getRequiredClusterType();
-        if (clusterType == ClusterType.Unknown && serverDescription != null) {
+        if (clusterType == ClusterType.UNKNOWN && serverDescription != null) {
             clusterType = serverDescription.getClusterType();
         }
-        ClusterDescription description = new ClusterDescription(ClusterConnectionMode.Single, clusterType,
+        ClusterDescription description = new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType,
                                                                 serverDescription == null ? Collections.<ServerDescription>emptyList()
                                                                                           : Arrays.asList(serverDescription));
 

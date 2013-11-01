@@ -31,9 +31,9 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.Multiple;
-import static org.mongodb.connection.ClusterType.ReplicaSet;
-import static org.mongodb.connection.ServerConnectionState.Connected;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
@@ -55,24 +55,24 @@ public class ReadPreferenceTest {
         long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
         long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
-        primary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27017))
+        primary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27017))
                                    .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                                    .ok(true)
-                                   .type(ServerType.ReplicaSetPrimary)
+                                   .type(ServerType.REPLICA_SET_PRIMARY)
                                    .tags(tags1)
                                    .maxDocumentSize(FOUR_MEG).build();
 
-        secondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27018))
+        secondary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27018))
                                      .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                                      .ok(true)
-                                     .type(ServerType.ReplicaSetSecondary)
+                                     .type(ServerType.REPLICA_SET_SECONDARY)
                                      .tags(tags2)
                                      .maxDocumentSize(FOUR_MEG).build();
 
-        otherSecondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27019))
+        otherSecondary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27019))
                                           .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
                                           .ok(true)
-                                          .type(ServerType.ReplicaSetSecondary)
+                                          .type(ServerType.REPLICA_SET_SECONDARY)
                                           .tags(tags3)
                                           .maxDocumentSize(FOUR_MEG)
                                           .build();
@@ -82,9 +82,9 @@ public class ReadPreferenceTest {
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
 
-        set = new ClusterDescription(Multiple, ReplicaSet, nodeList);
-        setNoPrimary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(secondary, otherSecondary));
-        setNoSecondary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(primary));
+        set = new ClusterDescription(MULTIPLE, REPLICA_SET, nodeList);
+        setNoPrimary = new ClusterDescription(MULTIPLE, REPLICA_SET, Arrays.asList(secondary, otherSecondary));
+        setNoSecondary = new ClusterDescription(MULTIPLE, REPLICA_SET, Arrays.asList(primary));
     }
 
 

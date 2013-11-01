@@ -53,7 +53,7 @@ public final class MongoClients {
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                      final MongoClientOptions options) {
         return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
-                                                                         .mode(ClusterConnectionMode.Single)
+                                                                         .mode(ClusterConnectionMode.SINGLE)
                                                                          .hosts(Arrays.asList(serverAddress))
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
@@ -79,7 +79,7 @@ public final class MongoClients {
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
-                                                                             .mode(ClusterConnectionMode.Single)
+                                                                             .mode(ClusterConnectionMode.SINGLE)
                                                                              .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
                                                                                                                             .get(0))))
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())

@@ -36,7 +36,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
      * Creates a new instance with default values for all properties.
      */
     public JSONWriterSettings() {
-        this(JSONMode.Strict, false, null, null);
+        this(JSONMode.STRICT, false, null, null);
     }
 
     /**
@@ -54,7 +54,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
      * @param indent whether indent mode is enabled
      */
     public JSONWriterSettings(final boolean indent) {
-        this(JSONMode.Strict, true, "  ", null);
+        this(JSONMode.STRICT, true, "  ", null);
     }
 
     /**
@@ -143,7 +143,7 @@ public class JSONWriterSettings extends BSONWriterSettings {
     }
 
     /**
-     * The output mode to use.  The default value is {@code }JSONMode.Strict}.
+     * The output mode to use.  The default value is {@code }JSONMode.STRICT}.
      *
      * @return the output mode.
      */

@@ -27,7 +27,7 @@ import org.mongodb.annotations.ThreadSafe;
 public interface Server {
     /**
      * Gets the description of this server.  Implementations of this method should not block if the server has not yet been successfully
-     * contacted, but rather return immediately a @code{ServerDescription} in a @code{ServerDescription.Status.Connecting} state.
+     * contacted, but rather return immediately a @code{ServerDescription} in a @code{ServerConnectionState.CONNECTING} state.
      *
      * @return the description of this server
      */

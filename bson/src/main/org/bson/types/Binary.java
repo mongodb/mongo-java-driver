@@ -36,7 +36,7 @@ public class Binary implements Serializable {
      * @param data raw data
      */
     public Binary(final byte[] data) {
-        this(BSONBinarySubType.Binary, data);
+        this(BSONBinarySubType.BINARY, data);
     }
 
     /**

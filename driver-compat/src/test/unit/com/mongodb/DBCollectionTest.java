@@ -346,7 +346,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testOtherBinary() {
         byte[] data = {1, 2, 3};
-        Binary binaryValue = new Binary(BSONBinarySubType.UserDefined, data);
+        Binary binaryValue = new Binary(BSONBinarySubType.USER_DEFINED, data);
         collection.insert(new BasicDBObject("binary", binaryValue));
         assertEquals(binaryValue, collection.findOne().get("binary"));
     }
