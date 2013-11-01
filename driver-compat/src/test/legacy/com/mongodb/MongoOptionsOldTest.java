@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2011 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import org.junit.Test;
+
+import javax.net.ssl.SSLSocketFactory;
 
 import static org.junit.Assert.assertEquals;
 
@@ -49,6 +51,8 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.description = "cool";
         options.readPreference = ReadPreference.secondary();
         options.cursorFinalizerEnabled = true;
+        options.socketFactory = SSLSocketFactory.getDefault();
+        options.alwaysUseMBeans = true;
 
         MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -68,6 +72,8 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.dbEncoderFactory, copy.dbEncoderFactory);
         assertEquals(options.description, copy.description);
         assertEquals(options.readPreference, copy.readPreference);
+        assertEquals(options.alwaysUseMBeans, copy.alwaysUseMBeans);
+        assertEquals(options.socketFactory, copy.socketFactory);
     }
 
     @Test
@@ -93,6 +99,9 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.setDbEncoderFactory(null);
         options.setDescription("very cool");
         options.setReadPreference(ReadPreference.secondary());
+        options.setSocketFactory(SSLSocketFactory.getDefault());
+        options.setAlwaysUseMBeans(true);
+        options.setCursorFinalizerEnabled(false);
 
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 101);
@@ -111,6 +120,9 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.getDbEncoderFactory(), null);
         assertEquals(options.getDescription(), "very cool");
         assertEquals(options.getReadPreference(), ReadPreference.secondary());
+        assertEquals(options.isAlwaysUseMBeans(), true);
+        assertEquals(options.getSocketFactory(), options.socketFactory);
+        assertEquals(options.isCursorFinalizerEnabled(), false);
     }
 
     @Test

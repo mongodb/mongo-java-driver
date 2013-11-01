@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import javax.net.SocketFactory;
+
 /**
  * Various settings for a Mongo instance. Not thread safe, and superseded by MongoClientOptions.  This class may be deprecated in a future
  * release.
@@ -67,7 +69,6 @@ public class MongoOptions {
      */
     public int socketTimeout;
 
-    //CHECKSTYLE:ON
     /**
      * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
      * java.net.Socket#setKeepAlive(boolean)} Default is false.
@@ -136,6 +137,12 @@ public class MongoOptions {
     public boolean j;
 
     /**
+     * sets the socket factory for creating sockets to mongod
+     * Default is SocketFactory.getDefault()
+     */
+    public SocketFactory socketFactory;
+
+    /**
      * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
      * careful to always call the close method of DBCursor, then this can safely be set to false.
      *
@@ -155,15 +162,28 @@ public class MongoOptions {
      */
     public WriteConcern writeConcern;
 
+    /**
+     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
+     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
+     * the VM is Java 5.
+     * <p>
+     *     Default is false.
+     * </p>
+     */
+    public boolean alwaysUseMBeans;
+
+    @Deprecated
     public MongoOptions() {
         reset();
     }
 
+    @Deprecated
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
         threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
         maxWaitTime = options.getMaxWaitTime();
         connectTimeout = options.getConnectTimeout();
+        socketFactory = options.getSocketFactory();
         socketTimeout = options.getSocketTimeout();
         socketKeepAlive = options.isSocketKeepAlive();
         autoConnectRetry = options.isAutoConnectRetry();
@@ -173,13 +193,15 @@ public class MongoOptions {
         dbEncoderFactory = options.getDbEncoderFactory();
         description = options.getDescription();
         writeConcern = options.getWriteConcern();
-    }
+        alwaysUseMBeans = options.isAlwaysUseMBeans();
+   }
 
     public void reset() {
         connectionsPerHost = 10;
         threadsAllowedToBlockForConnectionMultiplier = 5;
         maxWaitTime = 1000 * 60 * 2;
         connectTimeout = 1000 * 10;
+        socketFactory = SocketFactory.getDefault();
         socketTimeout = 0;
         socketKeepAlive = false;
         autoConnectRetry = false;
@@ -195,6 +217,7 @@ public class MongoOptions {
         dbEncoderFactory = DefaultDBEncoder.FACTORY;
         description = null;
         cursorFinalizerEnabled = true;
+        alwaysUseMBeans = false;
     }
 
     public MongoOptions copy() {
@@ -203,6 +226,7 @@ public class MongoOptions {
         m.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
         m.maxWaitTime = maxWaitTime;
         m.connectTimeout = connectTimeout;
+        m.socketFactory = socketFactory;
         m.socketTimeout = socketTimeout;
         m.socketKeepAlive = socketKeepAlive;
         m.autoConnectRetry = autoConnectRetry;
@@ -218,6 +242,7 @@ public class MongoOptions {
         m.dbEncoderFactory = dbEncoderFactory;
         m.description = description;
         m.cursorFinalizerEnabled = cursorFinalizerEnabled;
+        m.alwaysUseMBeans = alwaysUseMBeans;
         return m;
     }
 
@@ -232,10 +257,12 @@ public class MongoOptions {
                                  .maxAutoConnectRetryTime(this.maxAutoConnectRetryTime)
                                  .maxWaitTime(this.maxWaitTime)
                                  .readPreference(this.readPreference)
+                                 .socketFactory(this.socketFactory)
                                  .socketKeepAlive(this.socketKeepAlive)
                                  .socketTimeout(this.socketTimeout)
                                  .threadsAllowedToBlockForConnectionMultiplier(this.threadsAllowedToBlockForConnectionMultiplier)
                                  .writeConcern(this.writeConcern)
+                                 .alwaysUseMBeans(this.alwaysUseMBeans)
                                  .build();
     }
 
@@ -259,6 +286,22 @@ public class MongoOptions {
      */
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
+    }
+
+    /**
+     *
+     * @return the socket factory for creating sockets to mongod
+     */
+    public synchronized SocketFactory getSocketFactory() {
+        return socketFactory;
+    }
+
+    /**
+     *
+     * @param factory sets the socket factory for creating sockets to mongod
+     */
+    public synchronized void setSocketFactory(final SocketFactory factory) {
+        socketFactory = factory;
     }
 
     /**
@@ -499,7 +542,39 @@ public class MongoOptions {
         this.readPreference = readPreference;
     }
 
-    //CHECKSTYLE:OFF
+    /**
+     *
+     * @return whether DBCursor finalizer is enabled
+     */
+    public boolean isCursorFinalizerEnabled() {
+        return cursorFinalizerEnabled;
+    }
+
+    /**
+     *
+     * @param cursorFinalizerEnabled whether cursor finalizer is enabled
+     */
+    public void setCursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
+        this.cursorFinalizerEnabled = cursorFinalizerEnabled;
+
+    }
+
+    /**
+     *
+     * @return true if the driver should always use MBeans, regardless of VM
+     */
+    public boolean isAlwaysUseMBeans() {
+        return alwaysUseMBeans;
+    }
+
+    /**
+     *
+     * @param alwaysUseMBeans sets whether the driver should always use MBeans, regardless of VM
+     */
+    public void setAlwaysUseMBeans(final boolean alwaysUseMBeans) {
+        this.alwaysUseMBeans = alwaysUseMBeans;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -509,8 +584,11 @@ public class MongoOptions {
             return false;
         }
 
-        MongoOptions options = (MongoOptions) o;
+        final MongoOptions options = (MongoOptions) o;
 
+        if (alwaysUseMBeans != options.alwaysUseMBeans) {
+            return false;
+        }
         if (autoConnectRetry != options.autoConnectRetry) {
             return false;
         }
@@ -565,13 +643,15 @@ public class MongoOptions {
         if (readPreference != null ? !readPreference.equals(options.readPreference) : options.readPreference != null) {
             return false;
         }
+        if (socketFactory != null ? !socketFactory.equals(options.socketFactory) : options.socketFactory != null) {
+            return false;
+        }
         if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null) {
             return false;
         }
 
         return true;
     }
-    //CHECKSTYLE:ON
 
     @Override
     public int hashCode() {
@@ -592,8 +672,10 @@ public class MongoOptions {
         result = 31 * result + wtimeout;
         result = 31 * result + (fsync ? 1 : 0);
         result = 31 * result + (j ? 1 : 0);
+        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
+        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         return result;
     }
 
@@ -617,8 +699,10 @@ public class MongoOptions {
                + ", wtimeout=" + wtimeout
                + ", fsync=" + fsync
                + ", j=" + j
+               + ", socketFactory=" + socketFactory
                + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
                + ", writeConcern=" + writeConcern
+               + ", alwaysUseMBeans=" + alwaysUseMBeans
                + '}';
     }
 }
