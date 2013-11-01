@@ -381,7 +381,7 @@ public class DB {
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
-    public WriteResult dropUser(final String username) {
+    public WriteResult removeUser(final String username) {
         org.mongodb.WriteResult writeResult = new DropUserOperation(getName(), username, getBufferPool(), getSession(), true).execute();
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
