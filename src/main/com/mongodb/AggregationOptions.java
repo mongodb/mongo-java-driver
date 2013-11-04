@@ -1,6 +1,9 @@
 package com.mongodb;
 
 
+/**
+ * @since 2.12
+ */
 public class AggregationOptions {
     private final Integer batchSize;
     private final Boolean allowDiskUsage;
@@ -17,29 +20,33 @@ public class AggregationOptions {
         CURSOR
     }
 
-    AggregationOptions(final Integer batchSize, final Boolean allowDiskUsage, final OutputMode outputMode) {
-        this.batchSize = batchSize;
-        this.allowDiskUsage = allowDiskUsage;
-        this.outputMode = outputMode;
+    AggregationOptions(final Builder builder) {
+        this.batchSize = builder.getBatchSize();
+        this.allowDiskUsage = builder.getAllowDiskUsage();
+        this.outputMode = builder.getOutputMode();
     }
 
+    /**
+     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of 
+     * RAM.
+     */
     public Boolean getAllowDiskUsage() {
         return allowDiskUsage;
     }
 
+    /**
+     * The size of batches to use when iterating over results.
+     */
     public Integer getBatchSize() {
         return batchSize;
     }
 
+    /**
+     * The mode of output for this configuration.  
+     * @see OutputMode
+     */
     public OutputMode getOutputMode() {
         return outputMode;
-    }
-
-    public Object toDBObject() {
-        DBObject document = new BasicDBObject();
-        putIfNotNull(document, "batchSize", batchSize);
-        putIfNotNull(document, "allowDiskUsage", allowDiskUsage);
-        return document;
     }
 
     @Override
@@ -99,7 +106,7 @@ public class AggregationOptions {
         }
 
         public AggregationOptions build() {
-            return new AggregationOptions(batchSize, allowDiskUsage, outputMode);
+            return new AggregationOptions(this);
         }
     }
 }

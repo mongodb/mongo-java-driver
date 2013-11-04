@@ -1359,6 +1359,9 @@ public abstract class DBCollection {
     public MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
         final ReadPreference readPreference) {
         
+        if(options == null) {
+            throw new IllegalArgumentException("options can not be null");
+        }
         DBObject last = pipeline.get(pipeline.size() - 1);
         
         DBObject command = prepareCommand(pipeline, options);
@@ -1398,14 +1401,21 @@ public abstract class DBCollection {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }
-              
-        DBObject command = new BasicDBObject("aggregate", _name );
 
-        command.put( "pipeline", pipeline);
-        if (options != null && options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
-            command.put("cursor", options.toDBObject());
+        DBObject command = new BasicDBObject("aggregate", getName());
+        command.put("pipeline", pipeline);
+
+        if (options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
+            BasicDBObject cursor = new BasicDBObject();
+            if (options.getBatchSize() != null) {
+                cursor.put("batchSize", options.getBatchSize());
+            }
+            command.put("cursor", cursor);
         }
-        
+        if (options.getAllowDiskUsage() != null) {
+            command.put("allowDiskUsage", options.getAllowDiskUsage());
+        }
+
         return command;
     }
 

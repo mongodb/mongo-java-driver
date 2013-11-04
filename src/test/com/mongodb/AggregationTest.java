@@ -73,6 +73,11 @@ public class AggregationTest extends TestCase {
                 .build());
         assertTrue(out.keySet().iterator().hasNext());
     }
+    
+    @Test(expectedExceptions = {IllegalArgumentException.class})
+    public void testNullOptions() {
+        collection.aggregate(new ArrayList<DBObject>(), (AggregationOptions) null);
+    }
 
     private void validate(List<DBObject> pipeline) {
         final AggregationOutput out = collection.aggregate(pipeline);
