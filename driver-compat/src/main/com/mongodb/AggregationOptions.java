@@ -61,14 +61,26 @@ public class AggregationOptions {
         maxTimeMS = builder.maxTimeMS;
     }
 
+    /**
+     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of 
+     * RAM.
+     */
     public Boolean getAllowDiskUsage() {
         return allowDiskUsage;
     }
 
+    /**
+     * The size of batches to use when iterating over results.
+     * @return
+     */
     public Integer getBatchSize() {
         return batchSize;
     }
 
+    /**
+     * The mode of output for this configuration.  
+     * @see OutputMode
+     */
     public OutputMode getOutputMode() {
         return outputMode;
     }
@@ -90,6 +102,21 @@ public class AggregationOptions {
                           .outputMode(getOutputMode().toNew())
                           .maxTime(maxTimeMS, MILLISECONDS)
                           .build();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("AggregationOptions{");
+        sb.append("allowDiskUsage=")
+            .append(allowDiskUsage);
+        sb.append(", batchSize=")
+            .append(batchSize);
+        sb.append(", outputMode=")
+            .append(outputMode);
+        sb.append(", maxTimeMS=")
+            .append(maxTimeMS);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static Builder builder() {

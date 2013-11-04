@@ -1231,6 +1231,9 @@ public class DBCollection {
     public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
                                  final ReadPreference readPreference) {
         try {
+            if (options == null) {
+                throw new IllegalArgumentException("options can not be null");
+            }
             List<Document> stages = preparePipeline(pipeline);
 
             String outCollection = stages.get(stages.size() - 1).getString("$out");

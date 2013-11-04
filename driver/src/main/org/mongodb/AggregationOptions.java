@@ -54,7 +54,7 @@ public class AggregationOptions {
         return new Builder();
     }
 
-    public int getBatchSize() {
+    public Integer getBatchSize() {
         return batchSize;
     }
 
@@ -79,19 +79,6 @@ public class AggregationOptions {
     @Override
     public String toString() {
         return "AggregationOptions{" + "batchSize=" + batchSize + ", allowDiskUsage=" + allowDiskUsage + ", outputMode=" + outputMode + '}';
-    }
-
-    public Document toDocument() {
-        Document document = new Document();
-        putIfNotNull(document, "batchSize", batchSize);
-        putIfNotNull(document, "allowDiskUsage", allowDiskUsage);
-        return document;
-    }
-
-    private void putIfNotNull(final Document document, final String name, final Object value) {
-        if (value != null) {
-            document.put(name, value);
-        }
     }
 
     public static class Builder {

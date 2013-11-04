@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+
 package com.mongodb;
+
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -42,6 +44,7 @@ import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
+
 public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
@@ -54,11 +57,11 @@ public class JavaClientOldTest extends DatabaseTestCase {
         DBObject projection = new BasicDBObject("name", 1).append("count", 1);
 
         DBObject group = new BasicDBObject().append("_id", "$name")
-                                            .append("docsPerName", new BasicDBObject("$sum", 1))
-                                            .append("countPerName", new BasicDBObject("$sum", "$count"));
+            .append("docsPerName", new BasicDBObject("$sum", 1))
+            .append("countPerName", new BasicDBObject("$sum", "$count"));
 
-        AggregationOutput out = collection.aggregate(Arrays.<DBObject>asList(new BasicDBObject("$project", projection),
-                                                                             new BasicDBObject("$group", group)));
+        AggregationOutput out = collection.aggregate(
+            Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group)));
 
         Map<String, DBObject> results = new HashMap<String, DBObject>();
         for (final DBObject result : out.results()) {
@@ -88,21 +91,21 @@ public class JavaClientOldTest extends DatabaseTestCase {
         List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
-                                           .batchSize(1)
-                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
-                                           .allowDiskUsage(true)
-                                           .build());
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .allowDiskUsage(true)
+            .build());
 
         verify(pipeline, AggregationOptions.builder()
-                                           .batchSize(1)
-                                           .outputMode(AggregationOptions.OutputMode.INLINE)
-                                           .allowDiskUsage(true)
-                                           .build());
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.INLINE)
+            .allowDiskUsage(true)
+            .build());
 
         verify(pipeline, AggregationOptions.builder()
-                                           .batchSize(1)
-                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
-                                           .build());
+            .batchSize(1)
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build());
     }
 
     @Test
@@ -110,18 +113,18 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
-                .drop();
+            .drop();
         assertEquals(0, database.getCollection(aggCollection)
-                                .count());
+            .count());
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
 
         AggregationOutput out = collection.aggregate(pipeline);
         assertFalse(out.results()
-                       .iterator()
-                       .hasNext());
+            .iterator()
+            .hasNext());
         assertEquals(2, database.getCollection(aggCollection)
-                                .count());
+            .count());
     }
 
     @Test
@@ -129,17 +132,17 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
-                .drop();
+            .drop();
         Assert.assertEquals(0, database.getCollection(aggCollection)
-                                       .count());
+            .count());
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
-                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
-                                           .build());
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build());
         assertEquals(2, database.getCollection(aggCollection)
-                                .count());
+            .count());
     }
 
     @Test
@@ -147,9 +150,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         assumeTrue(clusterIsType(REPLICA_SET));
         ServerAddress primary = new ServerAddress("localhost");
-        Mongo mongo = new MongoClient(asList(primary,
-                                             new ServerAddress("localhost", 27018),
-                                             new ServerAddress("localhost", 27019)));
+        Mongo mongo = new MongoClient(asList(primary, new ServerAddress("localhost", 27018), new ServerAddress("localhost", 27019)));
 
         DB rsDatabase = mongo.getDB(database.getName());
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
@@ -158,11 +159,11 @@ public class JavaClientOldTest extends DatabaseTestCase {
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOptions options = AggregationOptions.builder()
-                                                       .outputMode(AggregationOptions.OutputMode.CURSOR)
-                                                       .build();
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build();
         MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertEquals(2, rsDatabase.getCollection("aggCollection")
-                                  .count());
+            .count());
         assertEquals(primary, cursor.getServerAddress());
     }
 
@@ -181,8 +182,9 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         AggregationOptions options = AggregationOptions.builder()
-                                                       .outputMode(AggregationOptions.OutputMode.INLINE)
-                                                       .build();
+            .outputMode(AggregationOptions.OutputMode.INLINE)
+            .build();
+
         MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertNotEquals(primary, cursor.getServerAddress());
     }
@@ -198,8 +200,8 @@ public class JavaClientOldTest extends DatabaseTestCase {
         DBObject projection = new BasicDBObject("name", 1).append("count", 1);
 
         DBObject group = new BasicDBObject().append("_id", "$name")
-                                            .append("docsPerName", new BasicDBObject("$sum", 1))
-                                            .append("countPerName", new BasicDBObject("$sum", "$count"));
+            .append("docsPerName", new BasicDBObject("$sum", 1))
+            .append("countPerName", new BasicDBObject("$sum", "$count"));
         return Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
     }
 
@@ -211,10 +213,10 @@ public class JavaClientOldTest extends DatabaseTestCase {
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOutput out = collection.aggregate(pipeline);
         assertFalse(out.results()
-                       .iterator()
-                       .hasNext());
+            .iterator()
+            .hasNext());
         assertEquals(database.getCollection("aggCollection")
-                             .count(), 2);
+            .count(), 2);
     }
 
     @Test
@@ -225,12 +227,12 @@ public class JavaClientOldTest extends DatabaseTestCase {
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOutput out = collection.aggregate(pipeline, ReadPreference.secondary());
         assertFalse(out.results()
-                       .iterator()
-                       .hasNext());
+            .iterator()
+            .hasNext());
         assertEquals(database.getCollection("aggCollection")
-                             .count(), 2);
+            .count(), 2);
         assertEquals(new ServerAddress("localhost"), out.getCommandResult()
-                                                        .getServerUsed());
+            .getServerUsed());
     }
 
     @Test
@@ -239,10 +241,17 @@ public class JavaClientOldTest extends DatabaseTestCase {
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
-                .allowDiskUsage(true)
-                .outputMode(AggregationOptions.OutputMode.CURSOR)
-                .build());
-        assertTrue(out.keySet().iterator().hasNext());
+            .allowDiskUsage(true)
+            .outputMode(AggregationOptions.OutputMode.CURSOR)
+            .build());
+        assertTrue(out.keySet()
+            .iterator()
+            .hasNext());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullOptions() {
+        collection.aggregate(new ArrayList<DBObject>(), (AggregationOptions) null);
     }
 
     @Test
@@ -269,7 +278,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     private MongoCursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
-                               final DBCollection collection) {
+        final DBCollection collection) {
         MongoCursor cursor = collection.aggregate(pipeline, options, readPreference);
 
         Map<String, DBObject> results = new HashMap<String, DBObject>();

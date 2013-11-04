@@ -88,9 +88,17 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     }
 
     private CommandResult sendMessage() {
-        if (options != null && options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
-            command.put("cursor", options.toDocument());
+        if (options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
+            Document cursor = new Document();
+            if (options.getBatchSize() != null) {
+                cursor.put("batchSize", options.getBatchSize());
+            }
+            command.put("cursor", cursor);
         }
+        if (options.getAllowDiskUsage() != null) {
+            command.put("allowDiskUsage", options.getAllowDiskUsage());
+        }
+
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest(command.toString());
         }
