@@ -358,7 +358,7 @@ public class MapReduceCommand {
         INLINE
     }
 
-    MapReduce getMapReduceBean() {
+    MapReduce getMapReduce() {
         MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {
             mapReduce = new MapReduce(new Code(map), new Code(reduce));

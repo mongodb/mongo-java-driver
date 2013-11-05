@@ -1110,8 +1110,12 @@ public class DBCollection {
         try {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() .toNew()
                                                                                             : command.getReadPreference().toNew();
-            executionResult = new MapReduceOperation(getBufferPool(), getSession(), false, getNamespace(), command.getMapReduceBean(),
-                                                     mapReduceCodec, readPreference).execute();
+            executionResult = new MapReduceOperation(getNamespace(),
+                                                     command.getMapReduce(),
+                                                     mapReduceCodec,
+                                                     readPreference,
+                                                     getBufferPool(), getSession(), false
+            ).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

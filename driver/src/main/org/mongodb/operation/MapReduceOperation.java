@@ -43,18 +43,18 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
      *
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      * @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
      * @param resultDecoder  the decoder to use to decode the CommandResult containing the results
      * @param readPreference the read preference suggesting which server to run the command on
+     * @param bufferProvider the BufferProvider to use when reading or writing to the network
+     * @param session        the current Session, which will give access to a connection to the MongoDB instance
+     * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public MapReduceOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession,
-                              final MongoNamespace namespace,
-                              final MapReduce mapReduce, final DocumentCodec resultDecoder,
-                              final ReadPreference readPreference) {
+    public MapReduceOperation(final MongoNamespace namespace, final MapReduce mapReduce, final DocumentCodec resultDecoder,
+                              final ReadPreference readPreference, final BufferProvider bufferProvider,
+                              final Session session,
+                              final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.namespace = namespace;
         this.readPreference = readPreference;

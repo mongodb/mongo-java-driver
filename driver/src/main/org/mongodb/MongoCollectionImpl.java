@@ -249,12 +249,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
-            CommandResult execute = new MapReduceOperation(client.getBufferProvider(),
-                                                           client.getSession(),
-                                                           false,
-                                                           getNamespace(),
-                                                           mapReduce, mapReduceCodec, options.getReadPreference()
-            )
+            CommandResult execute = new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec, options.getReadPreference(),
+                                                           client.getBufferProvider(), client.getSession(), false)
                                         .execute();
             return new SingleShotCommandIterable<T>(execute);
         }
