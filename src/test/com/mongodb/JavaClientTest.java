@@ -504,7 +504,7 @@ public class JavaClientTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testMapReduceInlineSecondary() throws Exception {
-        if (isStandalone(cleanupMongo)) {
+        if (!isReplicaSet(cleanupMongo)) {
             return;
         }
 
@@ -685,7 +685,7 @@ public class JavaClientTest extends TestCase {
         DB db = m.getDB(cleanupDB);
 
         try {
-            db.addUser("xx" , "e".toCharArray() );
+            db.addUser("xx", "e".toCharArray());
 
             assertEquals(false, db.authenticate( "xx" , "f".toCharArray() ) );
             assertNull(db.getAuthenticationCredentials());
@@ -886,7 +886,7 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testOversizedDocumentFailure() {
         int maxObjSize = _mongo.getMaxBsonObjectSize();
-        DBCollection c = _db.getCollection( "OversizedDocument" );
+        DBCollection c = _db.getCollection("OversizedDocument");
         c.drop();
         try {
             c.save( new BasicDBObject( "foo" , new Binary(new byte[maxObjSize]) ) );

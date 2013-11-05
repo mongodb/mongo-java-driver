@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,7 @@ public class SecondaryReadTest extends TestCase {
      */
     @Test(groups = {"basic"})
     public void testSecondaryReadBalance() throws Exception {
-        if (isStandalone(cleanupMongo)) {
+        if (!isReplicaSet(cleanupMongo)) {
             return;
         }
 
@@ -72,7 +72,7 @@ public class SecondaryReadTest extends TestCase {
      */
     @Test(groups = {"basic"})
     public void testSecondaryReadCursor() throws Exception {
-        if (isStandalone(cleanupMongo)) {
+        if (!isReplicaSet(cleanupMongo)) {
             return;
         }
 

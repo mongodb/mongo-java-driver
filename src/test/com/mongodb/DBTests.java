@@ -130,7 +130,7 @@ public class DBTests extends TestCase {
 
     @Test
     public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
-        if (isStandalone(cleanupMongo)) {
+        if (!isReplicaSet(cleanupMongo)) {
             return;
         }
 

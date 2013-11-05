@@ -278,6 +278,10 @@ public class TestCase extends MyAsserts {
         return runReplicaSetStatusCommand(mongo) == null;
     }
 
+    protected boolean isReplicaSet(Mongo mongo) {
+        return runReplicaSetStatusCommand(mongo) != null;
+    }
+
     @SuppressWarnings({"unchecked"})
     protected String getPrimaryAsString(Mongo mongo) {
         return getMemberNameByState(mongo, "primary");
