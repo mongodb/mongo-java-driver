@@ -18,27 +18,18 @@ package com.mongodb;
 
 import java.util.List;
 
-class ReadPreferenceServerSelector implements ServerSelector {
-    private final ReadPreference readPreference;
-
-    public ReadPreferenceServerSelector(final ReadPreference readPreference) {
-        this.readPreference = readPreference;
+class NoOpStatefulServerSelector implements StatefulServerSelector {
+    @Override
+    public void clear() {
     }
-
-    public ReadPreference getReadPreference() {
-        return readPreference;
-    }
-
 
     @Override
     public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-        return readPreference.choose(clusterDescription);
+        return clusterDescription.getAny();
     }
 
     @Override
     public String toString() {
-        return "ReadPreferenceServerSelector{"
-               + "readPreference=" + readPreference
-               + '}';
+        return "NoOpStatefulServerSelector{}";
     }
 }

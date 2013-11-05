@@ -1,26 +1,28 @@
-// DBTCPConnector.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+// DBTCPConnector.java
 
 package com.mongodb;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -54,6 +56,8 @@ public class DBTCPConnector implements DBConnector {
     private Cluster cluster;
 
     private final MyPort _myPort = new MyPort();
+
+    private StatefulServerSelector prefixedServerSelector;
 
     static {
         heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
@@ -440,7 +444,7 @@ public class DBTCPConnector implements DBConnector {
                 setPinnedRequestPortForThread(null);
             }
 
-            Server server = cluster.getServer(new ReadPreferenceServerSelector(readPref, acceptableLatencyMS, MILLISECONDS));
+            Server server = cluster.getServer(createServerSelector(readPref));
             DBPort port = _portHolder.get(server.getDescription().getAddress()).get();
 
             // if within request, remember port to stick to same server
@@ -475,6 +479,9 @@ public class DBTCPConnector implements DBConnector {
          * @param e
          */
         void error( DBPort port , Exception e ){
+            if (e instanceof IOException && !(e instanceof InterruptedIOException)) {
+                prefixedServerSelector.clear();
+            }
             port.close();
             pinnedRequestStatusThreadLocal.remove();
         }
@@ -534,6 +541,24 @@ public class DBTCPConnector implements DBConnector {
         }
 
         private final ThreadLocal<PinnedRequestStatus> pinnedRequestStatusThreadLocal = new ThreadLocal<PinnedRequestStatus>();
+    }
+
+    private ServerSelector createServerSelector(final ReadPreference readPref) {
+        return new CompositeServerSelector(Arrays.asList(getPrefixedServerSelector(),
+                                                        new ReadPreferenceServerSelector(readPref),
+                                                        new LatencyMinimizingServerSelector(acceptableLatencyMS, MILLISECONDS)));
+    }
+
+    private synchronized ServerSelector getPrefixedServerSelector() {
+        if (prefixedServerSelector == null) {
+            ClusterDescription clusterDescription = cluster.getDescription();
+            if (clusterDescription.getConnectionMode() == Multiple && clusterDescription.getType() == Sharded) {
+                prefixedServerSelector = new StickyHAShardedClusterServerSelector();
+            } else {
+                prefixedServerSelector = new NoOpStatefulServerSelector();
+            }
+        }
+        return prefixedServerSelector;
     }
 
     static class PinnedRequestStatus {
