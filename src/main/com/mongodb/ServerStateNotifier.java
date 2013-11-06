@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.util.annotations.ThreadSafe;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ class ServerStateNotifier implements Runnable {
 
                 final CommandResult buildInfoResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1));
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
-            } catch (MongoSocketException e) {
+            } catch (IOException e) {
                 if (!isClosed) {
                     connection.close();
                     connection = null;
