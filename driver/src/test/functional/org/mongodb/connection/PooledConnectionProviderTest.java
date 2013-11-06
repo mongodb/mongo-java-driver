@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -33,9 +34,14 @@ public class PooledConnectionProviderTest {
     private static final String CLUSTER_ID = "1";
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
 
-    private final TestInternalConnectionFactory connectionFactory = new TestInternalConnectionFactory();
+    private TestInternalConnectionFactory connectionFactory;
 
     private PooledConnectionProvider provider;
+
+    @Before
+    public void setUp() {
+        connectionFactory = new TestInternalConnectionFactory();
+    }
 
     @After
     public void cleanup() {
@@ -97,6 +103,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
+                                                                      .maintenanceInitialDelay(5, MINUTES)
                                                                       .maxConnectionLifeTime(50, MILLISECONDS)
                                                                       .build(),
                                                 new NoOpConnectionPoolListener());
@@ -139,6 +146,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
+                                                                      .maintenanceInitialDelay(5, MINUTES)
                                                                       .maxConnectionIdleTime(50, MILLISECONDS).build(),
                                                 new NoOpConnectionPoolListener());
 
