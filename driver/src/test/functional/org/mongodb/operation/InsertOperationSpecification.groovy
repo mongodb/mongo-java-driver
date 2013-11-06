@@ -20,11 +20,14 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.junit.Test
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
 
@@ -93,5 +96,55 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 .execute()
     }
 
+    @Test
+    def 'should continue on error when continuing on error'() {
+        given:
 
+        List<Document> documents = [
+                new Document('_id', 1),
+                new Document('_id', 1),
+                new Document('_id', 2),
+        ]
+
+        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED.withContinueOnError(true), documents);
+
+        when:
+        try {
+            new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
+                                          false)
+                    .execute()
+        } catch (MongoDuplicateKeyException e) {
+            // all good
+        }
+
+        then:
+        2 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
+                .execute()
+    }
+
+    @Test
+    def 'should not continue on error when not continuing on error'() {
+        given:
+
+        List<Document> documents = [
+                new Document('_id', 1),
+                new Document('_id', 1),
+                new Document('_id', 2),
+        ]
+
+        Insert<Document> insert = new Insert<Document>(WriteConcern.ACKNOWLEDGED.withContinueOnError(false), documents);
+
+        when:
+        try {
+            new InsertOperation<Document>(collection.getNamespace(), insert, new DocumentCodec(), getBufferProvider(), getSession(),
+                                          false)
+                    .execute()
+        } catch (MongoDuplicateKeyException e) {
+            // all good
+        }
+
+        then:
+        1 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), getSession(), false)
+                .execute()
+    }
 }

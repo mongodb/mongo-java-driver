@@ -102,7 +102,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
 
     private void writeCommandPrologue(final BSONBinaryWriter writer) {
         writer.writeString(getCommandName(), getWriteNamespace().getCollectionName());
-        writer.writeBoolean("continueOnError", getWriteConcern().getContinueOnError());
+        writer.writeBoolean("ordered", !getWriteConcern().getContinueOnError());
         if (getWriteConcern().isAcknowledged()) {
             Document writeConcernDocument = getWriteConcern().asDocument();
             writeConcernDocument.remove("getlasterror");
