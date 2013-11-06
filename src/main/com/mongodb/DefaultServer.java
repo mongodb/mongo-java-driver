@@ -36,6 +36,7 @@ class DefaultServer implements ClusterableServer {
     private final Set<ChangeListener<ServerDescription>> changeListeners =
     Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ServerSettings settings;
+    private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
@@ -48,7 +49,8 @@ class DefaultServer implements ClusterableServer {
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, new DefaultServerStateListener(),
+        serverStateListener = new DefaultServerStateListener();
+        this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener,
                                                      settings.getHeartbeatSocketSettings(), mongo);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
                                                                             settings.getHeartbeatFrequency(MILLISECONDS),
@@ -74,7 +76,9 @@ class DefaultServer implements ClusterableServer {
     public void invalidate() {
         isTrue("open", !isClosed());
 
-        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
+                                                                                                          .state(Connecting)
+                                                                                                          .address(serverAddress).build()));
         scheduledExecutorService.submit(stateNotifier);
     }
 
@@ -98,7 +102,7 @@ class DefaultServer implements ClusterableServer {
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
         @Override
-        public void stateChanged(final ChangeEvent<ServerDescription> event) {
+        public synchronized void stateChanged(final ChangeEvent<ServerDescription> event) {
             description = event.getNewValue();
             for (ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
