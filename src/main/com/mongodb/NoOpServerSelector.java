@@ -16,6 +16,16 @@
 
 package com.mongodb;
 
-interface StatefulServerSelector extends ServerSelector {
-    void clear();
+import java.util.List;
+
+class NoOpServerSelector implements ServerSelector {
+    @Override
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+        return clusterDescription.getAny();
+    }
+
+    @Override
+    public String toString() {
+        return "NoOpServerSelector{}";
+    }
 }

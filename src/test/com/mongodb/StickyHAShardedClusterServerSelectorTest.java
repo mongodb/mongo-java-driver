@@ -96,18 +96,6 @@ public class StickyHAShardedClusterServerSelectorTest {
     }
 
     @Test
-    public void testClear() {
-        // stick it
-        selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnecting, first)));
-
-        selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first)));
-
-        selector.clear();
-
-        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first))), asList(secondConnected));
-    }
-
-    @Test
     public void testUnstick() {
         // stick it
         selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first)));

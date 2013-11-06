@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class StickyHAShardedClusterServerSelector implements StatefulServerSelector {
+class StickyHAShardedClusterServerSelector implements ServerSelector {
     private ServerAddress stickyMongos;
     private Set<ServerAddress> consideredServers = new HashSet<ServerAddress>();
 
@@ -58,10 +58,6 @@ class StickyHAShardedClusterServerSelector implements StatefulServerSelector {
                 return Arrays.asList(clusterDescription.getByServerAddress(stickyMongos));
             }
         }
-    }
-
-    public synchronized void clear() {
-        stickyMongos = null;
     }
 
     @Override

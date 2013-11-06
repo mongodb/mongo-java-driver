@@ -57,7 +57,7 @@ public class DBTCPConnector implements DBConnector {
 
     private final MyPort _myPort = new MyPort();
 
-    private StatefulServerSelector prefixedServerSelector;
+    private ServerSelector prefixedServerSelector;
 
     static {
         heartbeatFrequencyMS = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
@@ -256,7 +256,7 @@ public class DBTCPConnector implements DBConnector {
     @Override
     public Response call( DB db , DBCollection coll , OutMessage m , ServerAddress hostNeeded , int retries ){
         isTrue("open", !_closed);
-        return call( db, coll, m, hostNeeded, retries, null, null);
+        return call(db, coll, m, hostNeeded, retries, null, null);
     }
 
 
@@ -479,9 +479,6 @@ public class DBTCPConnector implements DBConnector {
          * @param e
          */
         void error( DBPort port , Exception e ){
-            if (e instanceof IOException && !(e instanceof InterruptedIOException)) {
-                prefixedServerSelector.clear();
-            }
             port.close();
             pinnedRequestStatusThreadLocal.remove();
         }
@@ -555,7 +552,7 @@ public class DBTCPConnector implements DBConnector {
             if (clusterDescription.getConnectionMode() == Multiple && clusterDescription.getType() == Sharded) {
                 prefixedServerSelector = new StickyHAShardedClusterServerSelector();
             } else {
-                prefixedServerSelector = new NoOpStatefulServerSelector();
+                prefixedServerSelector = new NoOpServerSelector();
             }
         }
         return prefixedServerSelector;
