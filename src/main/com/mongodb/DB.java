@@ -726,7 +726,10 @@ public abstract class DB {
      * @param username
      * @param passwd
      * @throws MongoException
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
+    @Deprecated
     public WriteResult addUser( String username , char[] passwd ){
         return addUser(username, passwd, false);
     }
@@ -739,7 +742,10 @@ public abstract class DB {
      * @param passwd
      * @param readOnly if true, user will only be able to read
      * @throws MongoException
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
+    @Deprecated
     public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
         DBCollection c = getCollection( "system.users" );
         DBObject o = c.findOne( new BasicDBObject( "user" , username ) );
@@ -755,7 +761,10 @@ public abstract class DB {
      *
      * @param username user to be removed
      * @throws MongoException
+     * @deprecated Use {@code DB.command} to call the dropUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
+    @Deprecated
     public WriteResult removeUser( String username ){
         DBCollection c = getCollection( "system.users" );
         return c.remove(new BasicDBObject( "user" , username ));
