@@ -445,6 +445,20 @@ public class MongoClientOptions {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "MongoClientOptions{"
+               + "connectionPoolSettings=" + connectionPoolSettings
+               + ", socketSettings=" + socketSettings
+               + ", serverSettings=" + serverSettings
+               + ", heartbeatSocketSettings=" + heartbeatSocketSettings
+               + ", dbDecoderFactory=" + dbDecoderFactory
+               + ", dbEncoderFactory=" + dbEncoderFactory
+               + ", socketFactory=" + socketFactory
+               + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
+               + '}';
+    }
+
     /**
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      *

@@ -45,4 +45,11 @@ public class SSLSettings {
     public SSLSettings(final Builder builder) {
         enabled = builder.enabled;
     }
+
+    @Override
+    public String toString() {
+        return "SSLSettings{"
+               + "enabled=" + enabled
+               + '}';
+    }
 }

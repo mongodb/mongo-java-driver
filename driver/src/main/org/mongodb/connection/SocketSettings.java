@@ -88,6 +88,17 @@ public class SocketSettings {
         return sendBufferSize;
     }
 
+    @Override
+    public String toString() {
+        return "SocketSettings{"
+               + "connectTimeoutMS=" + connectTimeoutMS
+               + ", readTimeoutMS=" + readTimeoutMS
+               + ", keepAlive=" + keepAlive
+               + ", receiveBufferSize=" + receiveBufferSize
+               + ", sendBufferSize=" + sendBufferSize
+               + '}';
+    }
+
     SocketSettings(final Builder builder) {
         connectTimeoutMS = builder.connectTimeoutMS;
         readTimeoutMS = builder.readTimeoutMS;

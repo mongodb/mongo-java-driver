@@ -53,6 +53,14 @@ public class ServerSettings {
         return timeUnit.convert(heartbeatConnectRetryFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
+    @Override
+    public String toString() {
+        return "ServerSettings{"
+               + "heartbeatFrequencyMS=" + heartbeatFrequencyMS
+               + ", heartbeatConnectRetryFrequencyMS=" + heartbeatConnectRetryFrequencyMS
+               + '}';
+    }
+
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
         heartbeatConnectRetryFrequencyMS = builder.heartbeatConnectRetryFrequencyMS;
