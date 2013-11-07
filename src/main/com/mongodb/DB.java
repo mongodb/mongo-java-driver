@@ -532,7 +532,10 @@ public abstract class DB {
      *
      * @return {@code DBObject} with error and status information
      * @throws MongoException
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public CommandResult getLastError(){
         return command(new BasicDBObject("getlasterror", 1));
     }
@@ -543,8 +546,10 @@ public abstract class DB {
      * @param concern a {@link WriteConcern} to be used while checking for the error status.
      * @return {@code DBObject} with error and status information
      * @throws MongoException
-     * @see {@link DB#getLastError() }
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public CommandResult getLastError( com.mongodb.WriteConcern concern ){
         return command( concern.getCommand() );
     }
@@ -557,8 +562,10 @@ public abstract class DB {
      * @param fsync    if <b>true</b>, wait for {@code mongod} to write this data to disk before returning. Defaults to <b>false</b>.
      * @return {@code DBObject} with error and status information
      * @throws MongoException
-     * @see {@link DB#getLastError(com.mongodb.WriteConcern) }
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public CommandResult getLastError( int w , int wtimeout , boolean fsync ){
         return command( (new com.mongodb.WriteConcern( w, wtimeout , fsync )).getCommand() );
     }
@@ -805,7 +812,10 @@ public abstract class DB {
      *
      * @return {@code DBObject} with error and status information
      * @throws MongoException
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public CommandResult getPreviousError(){
         return command(new BasicDBObject("getpreverror", 1));
     }
@@ -815,7 +825,10 @@ public abstract class DB {
      * Used to clear all errors such that {@link DB#getPreviousError()} will return no error.
      *
      * @throws MongoException
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public void resetError(){
         command(new BasicDBObject("reseterror", 1));
     }
@@ -824,7 +837,10 @@ public abstract class DB {
      * For testing purposes only - this method forces an error to help test error handling
      *
      * @throws MongoException
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
+     * @see WriteConcern#ACKNOWLEDGED
      */
+    @Deprecated
     public void forceError(){
         command(new BasicDBObject("forceerror", 1));
     }
@@ -893,6 +909,14 @@ public abstract class DB {
         return _options.get();
     }
 
+    /**
+     * Forcefully kills any cursors leaked by neglecting to call {@code DBCursor.close}
+     * @param force
+     *
+     * @see com.mongodb.DBCursor#close()
+     * @deprecated Clients should ensure that {@code DBCursor.close} is called.
+     */
+    @Deprecated
     public abstract void cleanCursors( boolean force );
 
     MongoCredential getAuthenticationCredentials() {
