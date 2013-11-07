@@ -27,7 +27,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
 import org.mongodb.command.Create;
-import org.mongodb.command.GetLastError;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
@@ -50,6 +49,17 @@ import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
+/**
+ * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient}
+ * instance using code like:<br>
+ * <code>
+ * MongoClient mongoClient = new MongoClient();<br>
+ * DB db = mongoClient.getDB("<db name>");
+ * </code>
+ *
+ * @see MongoClient
+ * @mongodb.driver.manual reference/glossary/#term-database database
+ */
 @ThreadSafe
 public class DB {
     private final Mongo mongo;
@@ -61,16 +71,22 @@ public class DB {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    DB(final Mongo mongo, final String dbName, final Codec<Document> documentCodec) {
+    DB(final Mongo mongo, final String name, final Codec<Document> documentCodec) {
         this.mongo = mongo;
-        this.name = dbName;
+        this.name = name;
         this.documentCodec = documentCodec;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
     }
 
-    public DB(final Mongo mongo, final String dbName) {
-        this(mongo, dbName, new DocumentCodec(PrimitiveCodecs.createDefault()));
+    /**
+     * Constructs a new instance of the {@code DB}.
+     *
+     * @param mongo the mongo instance
+     * @param name  the database name
+     */
+    public DB(final Mongo mongo, final String name) {
+        this(mongo, name, new DocumentCodec(PrimitiveCodecs.createDefault()));
     }
 
     /**
@@ -82,19 +98,42 @@ public class DB {
         return mongo;
     }
 
+    /**
+     * Sets the read preference for this database. Will be used as default for
+     * read operations from any collection in this database. See the
+     * documentation for {@link ReadPreference} for more information.
+     *
+     * @param readPreference {@code ReadPreference} to use
+     */
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
 
+    /**
+     * Sets the write concern for this database. It will be used for
+     * write operations to any collection in this database. See the
+     * documentation for {@link WriteConcern} for more information.
+     *
+     * @param writeConcern {@code WriteConcern} to use
+     */
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
 
+    /**
+     * Gets the read preference for this database.
+     *
+     * @return {@code ReadPreference} to be used for read operations, if not specified explicitly
+     */
     public ReadPreference getReadPreference() {
         return readPreference != null ? readPreference : mongo.getReadPreference();
     }
 
-    public WriteConcern getWriteConcern() {
+    /**
+     * Gets the write concern for this database.
+     *
+     * @return {@code WriteConcern} to be used for write operations, if not specified explicitly
+     */    public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
     }
 
@@ -120,10 +159,26 @@ public class DB {
         // do nothing for now
     }
 
+    /**
+     * Gets a collection with a given name.
+     * If the collection does not exist, a new collection is created.
+     * <p/>
+     * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+     *
+     * @param name the name of the collection
+     * @return the collection
+     */
     protected DBCollection doGetCollection(final String name) {
         return getCollection(name);
     }
 
+    /**
+     * Gets a collection with a given name.
+     * If the collection does not exist, a new collection is created.
+     *
+     * @param name the name of the collection to return
+     * @return the collection
+     */
     public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
         if (collection != null) {
@@ -160,6 +215,11 @@ public class DB {
         return getCollection(s);
     }
 
+    /**
+     * Returns the name of this database.
+     *
+     * @return the name
+     */
     public String getName() {
         return name;
     }
@@ -192,6 +252,35 @@ public class DB {
         }
     }
 
+    /**
+     * Creates a collection with a given name and options.
+     * If the collection does not exist, a new collection is created.
+     * <p/>
+     * Possible options:
+     * <ul>
+     * <li>
+     * <b>capped</b> ({@code boolean}) - Enables a collection cap.
+     * False by default. If enabled, you must specify a size parameter.
+     * </li>
+     * <li>
+     * <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection.
+     * When capped is false, you may use size to preallocate space.
+     * </li>
+     * <li>
+     * <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections.
+     * You must also specify size when specifying max.
+     * </li>
+     * <p/>
+     * </ul>
+     * <p/>
+     * Note that if the {@code options} parameter is {@code null},
+     * the creation will be deferred to when the collection is written to.
+     *
+     * @param collectionName    the name of the collection to return
+     * @param options options
+     * @return the collection
+     * @throws MongoException
+     */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
         executeCommand(new Create(createCollectionOptions));
@@ -244,6 +333,16 @@ public class DB {
         return command(new BasicDBObject(cmd, Boolean.TRUE), 0, getReadPreference());
     }
 
+    /**
+     * Executes a database command.
+     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     *
+     * @param cmd     name of the command to be executed
+     * @param options query options to use
+     * @return result of the command execution
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     */
     public CommandResult command(final String cmd, final int options) {
         return command(new BasicDBObject(cmd, Boolean.TRUE), options, getReadPreference());
     }
@@ -260,6 +359,15 @@ public class DB {
         return command(cmd, 0, getReadPreference());
     }
 
+    /**
+     * Executes a database command.
+     *
+     * @param cmd     {@code DBObject} representation the command to be executed
+     * @param options query options to use
+     * @return result of the command execution
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     */
     public CommandResult command(final DBObject cmd, final int options) {
         return command(cmd, options, getReadPreference());
     }
@@ -269,31 +377,64 @@ public class DB {
      *
      * @param cmd       dbobject representing the command to execute
      * @param options   query options to use
-     * @param readPrefs ReadPreferences for this command (nodes selection is the biggest part of this)
+     * @param readPreference ReadPreferences for this command (nodes selection is the biggest part of this)
      * @return result of command from the database
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs) {
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference) {
         Command mongoCommand = new Command(toDocument(cmd))
-                                   .readPreference(readPrefs.toNew())
+                                   .readPreference(readPreference.toNew())
                                    .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
 
+    /**
+     * Executes a database command.
+     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.DBEncoder) } with 0 as query option.
+     *
+     * @param cmd     {@code DBObject} representation of the command to be executed
+     * @param encoder {@link DBEncoder} to be used for command encoding
+     * @return result of the command execution
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     */
     public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
         return command(cmd, 0, getReadPreference(), encoder);
     }
 
+    /**
+     * Executes a database command.
+     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference,
+     * com.mongodb.DBEncoder) } with a null readPreference.
+     *
+     * @param cmd     {@code DBObject} representation the command to be executed
+     * @param options query options to use
+     * @param encoder {@link DBEncoder} to be used for command encoding
+     * @return result of the command execution
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     */
     public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
         return command(cmd, options, getReadPreference(), encoder);
     }
 
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPrefs,
+    /**
+     * Executes a database command.
+     *
+     * @param cmd       {@code DBObject} representation the command to be executed
+     * @param options   query options to use
+     * @param readPreference {@link ReadPreference} for this command (nodes selection is the biggest part of this)
+     * @param encoder   {@link DBEncoder} to be used for command encoding
+     * @return result of the command execution
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     */
+    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference,
                                  final DBEncoder encoder) {
         Document document = toDocument(cmd, encoder, commandCodec);
         Command mongoCommand = new Command(document)
-                                   .readPreference(readPrefs.toNew())
+                                   .readPreference(readPreference.toNew())
                                    .addFlags(QueryFlag.toSet(options));
         return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
     }
@@ -308,6 +449,13 @@ public class DB {
         return mongo.getDB(name);
     }
 
+    /**
+     * Checks to see if a collection with a given name exists on a server.
+     *
+     * @param collectionName a name of the collection to test for existence
+     * @return {@code false} if no collection by that name exists, {@code true} if a match to an existing collection was found
+     * @throws MongoException
+     */
     public boolean collectionExists(final String collectionName) {
         Set<String> collectionNames = getCollectionNames();
         for (final String name : collectionNames) {
@@ -318,62 +466,77 @@ public class DB {
         return false;
     }
 
-    public CommandResult getLastError(final WriteConcern concern) {
-        GetLastError getLastErrorCommand = new GetLastError(concern.toNew());
-        org.mongodb.CommandResult commandResult = executeCommand(getLastErrorCommand);
-        return new CommandResult(commandResult);
-    }
-
-    public CommandResult getLastError() {
-        return getLastError(WriteConcern.ACKNOWLEDGED);
-    }
-
-    public CommandResult getLastError(final int w, final int wtimeout, final boolean fsync) {
-        return getLastError(new WriteConcern(w, wtimeout, fsync));
-    }
-
+    /**
+     * Evaluates JavaScript functions on the database server.
+     * This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.
+     *
+     * @param code @{code String} representation of JavaScript function
+     * @param args arguments to pass to the JavaScript function
+     * @return result of the command execution
+     * @throws MongoException
+     */
     public CommandResult doEval(final String code, final Object... args) {
         Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
+    /**
+     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }.
+     * If the command is successful, the "retval" field is extracted and returned.
+     * Otherwise an exception is thrown.
+     *
+     * @param code @{code String} representation of JavaScript function
+     * @param args arguments to pass to the JavaScript function
+     * @return result of the execution
+     * @throws MongoException
+     */
     public Object eval(final String code, final Object... args) {
         CommandResult result = doEval(code, args);
         result.throwOnError();
         return result.get("retval");
     }
 
+    /**
+     * Helper method for calling a 'dbStats' command.
+     * It returns storage statistics for a given database.
+     *
+     * @return result of the execution
+     * @throws MongoException
+     */
     public CommandResult getStats() {
         Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
         return new CommandResult(executeCommand(mongoCommand));
     }
 
-    public CommandResult getPreviousError() {
-        Command mongoCommand = new Command(new Document("getPrevError", 1));
-        return new CommandResult(executeCommand(mongoCommand));
+    /**
+     * Adds or updates a user for this database
+     *
+     * @param userName the user name
+     * @param password the password
+     * @throws MongoException
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     */
+    @Deprecated
+    public WriteResult addUser(final String userName, final char[] password) {
+        return addUser(userName, password, false);
     }
 
-    public void resetError() {
-        Command mongoCommand = new Command(new Document("resetError", 1));
-        executeCommand(mongoCommand);
-    }
-
-    public void forceError() {
-        Command mongoCommand = new Command(new Document("forceerror", 1));
-        executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand);
-    }
-
-    public void cleanCursors(final boolean force) {
-    }
-
-    public WriteResult addUser(final String username, final char[] passwd) {
-        return addUser(username, passwd, false);
-    }
-
-    public WriteResult addUser(final String username, final char[] passwd, final boolean readOnly) {
-        User user = new User(createMongoCRCredential(username, getName(), passwd), readOnly);
+    /**
+     * Adds or updates a user for this database
+     *
+     * @param userName the user name
+     * @param password the password
+     * @param readOnly if true, user will only be able to read
+     * @throws MongoException
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     */
+    @Deprecated
+    public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
+        User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
         org.mongodb.WriteResult writeResult;
-        if (new UserExistsOperation(getName(), username, getBufferPool(), getSession(), true).execute()) {
+        if (new UserExistsOperation(getName(), userName, getBufferPool(), getSession(), true).execute()) {
             writeResult = new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
         } else {
             writeResult = new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
@@ -381,32 +544,66 @@ public class DB {
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
-    public WriteResult removeUser(final String username) {
-        org.mongodb.WriteResult writeResult = new DropUserOperation(getName(), username, getBufferPool(), getSession(), true).execute();
+    /**
+     * Removes the specified user from the database.
+     *
+     * @param userName user to be removed
+     * @throws MongoException
+     * @deprecated Use {@code DB.command} to call the dropUser command
+     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     */
+    @Deprecated
+    public WriteResult removeUser(final String userName) {
+        org.mongodb.WriteResult writeResult = new DropUserOperation(getName(), userName, getBufferPool(), getSession(), true).execute();
         return new WriteResult(new CommandResult(writeResult.getCommandResult()), getWriteConcern());
     }
 
+    /**
+     * Makes it possible to execute "read" queries on a slave node
+     *
+     * @see ReadPreference#secondaryPreferred()
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     */
     @Deprecated
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
+    /**
+     * Adds the given flag to the query options.
+     *
+     * @param option value to be added
+     */
     public void addOption(final int option) {
         optionHolder.add(option);
     }
 
+    /**
+     * Sets the query options, overwriting previous value.
+     *
+     * @param options bit vector of query options
+     */
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
 
+    /**
+     * Resets the query options.
+     */
     public void resetOptions() {
         optionHolder.reset();
     }
 
+    /**
+     * Gets the query options
+     *
+     * @return bit vector of query options
+     */
     public int getOptions() {
         return optionHolder.get();
     }
 
+    @Override
     public String toString() {
         return "DB{name='" + name + '\'' + '}';
     }

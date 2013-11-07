@@ -101,6 +101,12 @@ members:
   - isAuthenticated()                             # JAVA-838
   - setReadOnly(java.lang.Boolean)                # JAVA-878 Deprecate DB.setReadOnly()
   - _readOnly                                     # JAVA-878
+  - getLastError()                                # JAVA-1046 Deprecate getlasterror-related commands
+  - getLastError(com.mongodb.WriteConcern)        # JAVA-1046
+  - getLastError(int,int,boolean)                 # JAVA-1046
+  - getPreviousError()                            # JAVA-1046
+  - forceError()                                  # JAVA-1046
+
 
   com.mongodb.DBCollection:
   - checkReadOnly(boolean)                        # JAVA-878
