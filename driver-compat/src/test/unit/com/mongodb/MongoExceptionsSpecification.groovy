@@ -16,26 +16,40 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoWriteException
 import org.mongodb.ServerCursor
+import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.ServerAddress
+import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import static com.mongodb.MongoExceptions.mapException
+import static java.util.Arrays.asList
+import static org.mongodb.connection.ClusterConnectionMode.SINGLE
+import static org.mongodb.connection.ClusterType.STANDALONE
+import static org.mongodb.connection.ServerConnectionState.CONNECTED
 
 @SuppressWarnings('LineLength')
 class MongoExceptionsSpecification extends Specification {
     private final static String MESSAGE = 'New style exception'
     private final static int ERROR_CODE = 500
+    private final static CLUSTER_DESCRIPTION = new ClusterDescription(SINGLE, STANDALONE,
+                                                                     asList(ServerDescription.builder()
+                                                                                             .address(new ServerAddress())
+                                                                                             .state(CONNECTED)
+                                                                                             .build()))
 
     @Unroll
     def 'should convert #exceptionToBeMapped into #exceptionForCompatibilityApi'() {
+
         expect:
         MongoException actualException = mapException(exceptionToBeMapped)
         actualException.class == exceptionForCompatibilityApi
@@ -46,15 +60,16 @@ class MongoExceptionsSpecification extends Specification {
         !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
 
         where:
-        exceptionToBeMapped                                                                   | exceptionForCompatibilityApi | errorCode
-        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException    | -4
-        new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoSocketException         | -2
-        new org.mongodb.MongoDuplicateKeyException(writeResultWithErrorCode(ERROR_CODE))      | MongoException.DuplicateKey  | ERROR_CODE
-        new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException      | ERROR_CODE
-        new org.mongodb.MongoInternalException(MESSAGE)                                       | MongoInternalException       | -4
-        new MongoWriteException(writeResultWithErrorCode(ERROR_CODE))                         | WriteConcernException        | ERROR_CODE
-        new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException        | -3
-        new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException  | -3
+        exceptionToBeMapped                                                                   | exceptionForCompatibilityApi     | errorCode
+        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException        | -4
+        new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoSocketException             | -2
+        new org.mongodb.MongoDuplicateKeyException(writeResultWithErrorCode(ERROR_CODE))      | MongoException.DuplicateKey      | ERROR_CODE
+        new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException          | ERROR_CODE
+        new org.mongodb.MongoInternalException(MESSAGE)                                       | MongoInternalException           | -4
+        new MongoWriteException(writeResultWithErrorCode(ERROR_CODE))                         | WriteConcernException            | ERROR_CODE
+        new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
+        new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
+        new org.mongodb.MongoIncompatibleDriverException('', CLUSTER_DESCRIPTION)             | MongoIncompatibleDriverException | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {

@@ -55,6 +55,20 @@ public class ClusterDescription {
         this.all = Collections.unmodifiableSet(serverDescriptionSet);
     }
 
+    /**
+     * Return whether the cluster is compatible with the driver.
+     *
+     * @return true if the cluster is compatible with the driver.
+     */
+    public boolean isCompatibleWithDriver() {
+        for (final ServerDescription cur : all) {
+            if (!cur.isCompatibleWithDriver()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public ClusterConnectionMode getConnectionMode() {
         return connectionMode;
     }

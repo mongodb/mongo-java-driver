@@ -28,6 +28,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
+import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static org.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static org.mongodb.connection.ServerType.UNKNOWN;
 
@@ -76,6 +79,8 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getSetName());
         assertNull(serverDescription.getSetVersion());
         assertEquals(new ServerVersion(), serverDescription.getVersion());
+        assertEquals(0, serverDescription.getMinWireVersion());
+        assertEquals(0, serverDescription.getMaxWireVersion());
     }
 
     @Test
@@ -95,7 +100,9 @@ public class ServerDescriptionTest {
                                                              .passives(new HashSet<String>(Arrays.asList("localhost:27019")))
                                                              .ok(true)
                                                              .state(CONNECTED)
-                                                             .version(new ServerVersion(Arrays.asList(2, 4, 1)));
+                                                             .version(new ServerVersion(Arrays.asList(2, 4, 1)))
+                                                             .minWireVersion(1)
+                                                             .maxWireVersion(2);
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());
         assertTrue(builder.build().toString().startsWith("ServerDescription"));
@@ -211,4 +218,65 @@ public class ServerDescriptionTest {
         assertTrue(serverDescription.hasTags(new Tags("rack", "1")));
     }
 
+    @Test
+    public void notOkServerShouldBeCompatible() throws UnknownHostException {
+        assertTrue(ServerDescription.builder()
+                                    .address(new ServerAddress())
+                                    .state(CONNECTING)
+                                    .ok(false)
+                                    .build()
+                                    .isCompatibleWithDriver());
+    }
+
+    @Test
+    public void serverWithMinWireVersionEqualToDriverMaxWireVersionShouldBeCompatible() throws UnknownHostException {
+        assertTrue(ServerDescription.builder()
+                                    .address(new ServerAddress())
+                                    .state(CONNECTING)
+                                    .ok(true)
+                                    .minWireVersion(MAX_DRIVER_WIRE_VERSION)
+                                    .maxWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                    .build()
+                                    .isCompatibleWithDriver());
+
+    }
+
+    @Test
+    public void serverWithMaxWireVersionEqualToDriverMinWireVersionShouldBeCompatible() throws UnknownHostException {
+        assertTrue(ServerDescription.builder()
+                                    .address(new ServerAddress())
+                                    .state(CONNECTING)
+                                    .ok(true)
+                                    .minWireVersion(MIN_DRIVER_WIRE_VERSION - 1)
+                                    .maxWireVersion(MIN_DRIVER_WIRE_VERSION)
+                                    .build()
+                                    .isCompatibleWithDriver());
+
+    }
+
+    @Test
+    public void serverWithMinWireVersionGreaterThanDriverMaxWireVersionShouldBeIncompatible() throws UnknownHostException {
+        assertFalse(ServerDescription.builder()
+                                     .address(new ServerAddress())
+                                     .state(CONNECTING)
+                                     .ok(true)
+                                     .minWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                     .maxWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                     .build()
+                                     .isCompatibleWithDriver());
+
+    }
+
+    @Test
+    public void serverWithMaxWireVersionLessThanDriverMinWireVersionShouldBeIncompatible() throws UnknownHostException {
+        assertFalse(ServerDescription.builder()
+                                     .address(new ServerAddress())
+                                     .state(CONNECTING)
+                                     .ok(true)
+                                     .minWireVersion(MIN_DRIVER_WIRE_VERSION - 1)
+                                     .maxWireVersion(MIN_DRIVER_WIRE_VERSION - 1)
+                                     .build()
+                                     .isCompatibleWithDriver());
+
+    }
 }

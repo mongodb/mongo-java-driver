@@ -38,6 +38,8 @@ import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 import static org.mongodb.connection.ServerConnectionState.UNCONNECTED;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
+import static org.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
+import static org.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
 import static org.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
 import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
@@ -153,6 +155,10 @@ class ServerStateNotifier implements Runnable {
                                 .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
                                 .setName(commandResult.getResponse().getString("setName"))
                                 .setVersion(commandResult.getResponse().getInteger("setVersion"))
+                                .minWireVersion(getInteger(commandResult.getResponse().getInteger("minWireVersion"),
+                                                           getDefaultMinWireVersion()))
+                                .maxWireVersion(getInteger(commandResult.getResponse().getInteger("maxWireVersion"),
+                                                           getDefaultMaxWireVersion()))
                                 .averagePingTime(averagePingTimeNanos, NANOSECONDS)
                                 .ok(commandResult.isOk()).build();
     }

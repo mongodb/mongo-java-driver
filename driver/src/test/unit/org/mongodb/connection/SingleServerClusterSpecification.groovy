@@ -18,13 +18,18 @@
 
 
 
+
+
 package org.mongodb.connection
 
+import org.mongodb.MongoIncompatibleDriverException
 import org.mongodb.event.ClusterListener
+import org.mongodb.session.PrimaryServerSelector
 import spock.lang.Specification
 
 import static org.mongodb.connection.ClusterConnectionMode.SINGLE
 import static org.mongodb.connection.ServerConnectionState.CONNECTED
+import static org.mongodb.connection.ServerType.STANDALONE
 
 class SingleServerClusterSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
@@ -39,7 +44,7 @@ class SingleServerClusterSpecification extends Specification {
                 ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.STANDALONE)
+        sendNotification(firstServer, STANDALONE)
 
         then:
         cluster.description.type == ClusterType.STANDALONE
@@ -53,7 +58,7 @@ class SingleServerClusterSpecification extends Specification {
                 ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.STANDALONE)
+        sendNotification(firstServer, STANDALONE)
 
         then:
         cluster.getServer(firstServer) == factory.getServer(firstServer)
@@ -115,19 +120,42 @@ class SingleServerClusterSpecification extends Specification {
         cluster.description.all == [] as Set
     }
 
+    def 'getServer should throw when cluster is incompatible'() {
+        given:
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                                              ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(),
+                                              factory, CLUSTER_LISTENER)
+        sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
+
+        when:
+        cluster.getServer(new PrimaryServerSelector())
+
+        then:
+        thrown(MongoIncompatibleDriverException)
+    }
+
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
         sendNotification(serverAddress, serverType, null)
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, replicaSetName).build())
+        sendNotification(serverAddress, getBuilder(serverAddress, serverType, replicaSetName).build())
     }
+
+    def sendNotification(ServerAddress serverAddress, ServerDescription serverDescription) {
+        factory.getServer(serverAddress).sendNotification(serverDescription)
+    }
+
 
     def getDescriptions() {
         [factory.getServer(firstServer).description] as Set
     }
 
-    def getBuilder(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {
+    ServerDescription.Builder getBuilder(ServerAddress serverAddress) {
+        ServerDescription.builder().address(serverAddress).type(STANDALONE).ok(true).state(CONNECTED)
+    }
+
+    ServerDescription.Builder getBuilder(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {
         ServerDescription.builder().address(serverAddress).type(serverType).setName(replicaSetName).ok(true).state(CONNECTED)
     }
 }

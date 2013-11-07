@@ -42,6 +42,9 @@ import static org.mongodb.connection.ServerType.UNKNOWN;
 @Immutable
 public class ServerDescription {
 
+    static final int MIN_DRIVER_WIRE_VERSION = 0;
+    static final int MAX_DRIVER_WIRE_VERSION = 2;
+
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
@@ -63,6 +66,9 @@ public class ServerDescription {
     private final ServerVersion version;
     private final Integer setVersion;
 
+    private final int minWireVersion;
+    private final int maxWireVersion;
+
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;
@@ -79,6 +85,8 @@ public class ServerDescription {
         private boolean ok;
         private ServerConnectionState state;
         private ServerVersion version = new ServerVersion();
+        private int minWireVersion = 0;
+        private int maxWireVersion = 0;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -157,10 +165,42 @@ public class ServerDescription {
             return this;
         }
 
+        public Builder minWireVersion(final int minWireVersion) {
+            this.minWireVersion = minWireVersion;
+            return this;
+        }
+
+        public Builder maxWireVersion(final int maxWireVersion) {
+            this.maxWireVersion = maxWireVersion;
+            return this;
+        }
+
         public ServerDescription build() {
             return new ServerDescription(this);
         }
         // CHECKSTYLE:ON
+    }
+
+    /**
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that
+     * the driver's max wire version or a max wire version less than the driver's min wire version.
+     *
+     * @return true if the server is compatible with the driver.
+     */
+    public boolean isCompatibleWithDriver() {
+        if (!ok) {
+            return true;
+        }
+
+        if (minWireVersion > MAX_DRIVER_WIRE_VERSION) {
+            return false;
+        }
+
+        if (maxWireVersion < MIN_DRIVER_WIRE_VERSION) {
+            return false;
+        }
+
+        return true;
     }
 
     public static int getDefaultMaxDocumentSize() {
@@ -169,6 +209,14 @@ public class ServerDescription {
 
     public static int getDefaultMaxMessageSize() {
         return DEFAULT_MAX_MESSAGE_SIZE;
+    }
+
+    public static int getDefaultMinWireVersion() {
+        return 0;
+    }
+
+    public static int getDefaultMaxWireVersion() {
+        return 0;
     }
 
     public static Builder builder() {
@@ -227,6 +275,13 @@ public class ServerDescription {
         return tags;
     }
 
+    public int getMinWireVersion() {
+        return minWireVersion;
+    }
+
+    public int getMaxWireVersion() {
+        return maxWireVersion;
+    }
     /**
      * Returns true if the server has the given tags.  A server of either type {@code ServerType.STANDALONE} or
      * {@code ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of
@@ -344,6 +399,12 @@ public class ServerDescription {
         if (!version.equals(that.version)) {
             return false;
         }
+        if (minWireVersion != that.minWireVersion) {
+            return false;
+        }
+        if (maxWireVersion != that.maxWireVersion) {
+            return false;
+        }
 
         return true;
     }
@@ -364,6 +425,8 @@ public class ServerDescription {
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
+        result = 31 * result + minWireVersion;
+        result = 31 * result + maxWireVersion;
         return result;
     }
 
@@ -385,6 +448,8 @@ public class ServerDescription {
                + ", ok=" + ok
                + ", state=" + state
                + ", version=" + version
+               + ", minWireVersion=" + minWireVersion
+               + ", maxWireVersion=" + maxWireVersion
                + '}';
     }
 
@@ -414,5 +479,7 @@ public class ServerDescription {
         setVersion = builder.setVersion;
         averagePingTimeNanos = builder.averagePingTimeNanos;
         ok = builder.ok;
+        minWireVersion = builder.minWireVersion;
+        maxWireVersion = builder.maxWireVersion;
     }
 }

@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.MongoIncompatibleDriverException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.event.ClusterDescriptionChangedEvent;
@@ -75,6 +76,7 @@ public abstract class BaseCluster implements Cluster {
             TimeUnit timeUnit = NANOSECONDS;
             long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
             while (true) {
+                throwIfIncompatible(curDescription);
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
                     if (server != null) {
@@ -190,6 +192,14 @@ public abstract class BaseCluster implements Cluster {
             }
         }
         return null;
+    }
+
+    private void throwIfIncompatible(final ClusterDescription clusterDescription) {
+        if (!clusterDescription.isCompatibleWithDriver()) {
+            throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of the "
+                                                              + "servers to which it is connected: %s", clusterDescription),
+                                                       clusterDescription);
+        }
     }
 
     protected Random getRandom() {

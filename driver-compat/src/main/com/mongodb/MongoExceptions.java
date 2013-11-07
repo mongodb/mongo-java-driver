@@ -29,6 +29,8 @@ MongoExceptions {
         Throwable cause = e.getCause();
         if (e instanceof org.mongodb.MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
+        } else if (e instanceof org.mongodb.MongoIncompatibleDriverException) {
+            return new MongoIncompatibleDriverException(e.getMessage());
         } else if (e instanceof org.mongodb.MongoExecutionTimeoutException) {
             return new MongoExecutionTimeoutException((org.mongodb.MongoExecutionTimeoutException) e);
         } else if (e instanceof MongoWriteException) {
