@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import static org.bson.util.Assertions.notNull;
 
 /**
  * Immutable snapshot state of a cluster.
- *
  */
 @Immutable
 class ClusterDescription {
@@ -52,6 +51,20 @@ class ClusterDescription {
         });
         serverDescriptionSet.addAll(serverDescriptions);
         this.all = Collections.unmodifiableSet(serverDescriptionSet);
+    }
+
+    /**
+     * Return whether the cluster is compatible with the driver.
+     *
+     * @return true if the cluster is compatible with the driver.
+     */
+    public boolean isCompatibleWithDriver() {
+        for (final ServerDescription cur : all) {
+            if (!cur.isCompatibleWithDriver()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public ClusterConnectionMode getConnectionMode() {
@@ -78,6 +91,7 @@ class ClusterDescription {
 
     /**
      * Returns the Set of all server descriptions in this cluster, sorted by the String value of the ServerAddress of each one.
+     *
      * @return the set of server descriptions
      */
     public Set<ServerDescription> getAll() {
@@ -95,8 +109,8 @@ class ClusterDescription {
     }
 
     /**
-     * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary,
-     * it can in the case where the client's view of the cluster is a set of mongos servers, any of which can serve as the primary.
+     * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary, it can in the case where the client's view
+     * of the cluster is a set of mongos servers, any of which can serve as the primary.
      *
      * @return a list of servers that can act as primaries\
      */

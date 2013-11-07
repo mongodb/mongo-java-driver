@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 import org.testng.annotations.Test;
@@ -12,6 +28,7 @@ import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ClusterType.Unknown;
 import static com.mongodb.ServerConnectionState.Connected;
 import static com.mongodb.ServerConnectionState.Connecting;
+import static com.mongodb.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerType.ReplicaSetPrimary;
 import static com.mongodb.util.MyAsserts.assertFalse;
 import static com.mongodb.util.MyAsserts.assertTrue;
@@ -70,6 +87,49 @@ public class ClusterDescriptionTest {
         assertEquals(new ServerAddress("loc:27017"), iter.next().getAddress());
         assertEquals(new ServerAddress("loc:27018"), iter.next().getAddress());
         assertEquals(new ServerAddress("loc:27019"), iter.next().getAddress());
+    }
+
+    @Test
+    public void clusterDescriptionWithAnIncompatibleServerShouldBeIncompatible() throws UnknownHostException {
+        ClusterDescription description =
+        new ClusterDescription(Multiple, Unknown, Arrays.asList(
+                                                               ServerDescription.builder()
+                                                                                .state(Connecting)
+                                                                                .address(new ServerAddress("loc:27019"))
+                                                                                .build(),
+                                                               ServerDescription.builder()
+                                                                                .state(Connected)
+                                                                                .ok(true)
+                                                                                .address(new ServerAddress("loc:27018"))
+                                                                                .minWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                                                                .maxWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                                                                .build(),
+                                                               ServerDescription.builder()
+                                                                                .state(Connecting)
+                                                                                .address(new ServerAddress("loc:27017"))
+                                                                                .build())
+        );
+        assertFalse(description.isCompatibleWithDriver());
+    }
+
+    @Test
+    public void clusterDescriptionWithCompatibleServerShouldBeCompatible() throws UnknownHostException {
+        ClusterDescription description =
+        new ClusterDescription(Multiple, Unknown, Arrays.asList(
+                                                               ServerDescription.builder()
+                                                                                .state(Connecting)
+                                                                                .address(new ServerAddress("loc:27019"))
+                                                                                .build(),
+                                                               ServerDescription.builder()
+                                                                                .state(Connecting)
+                                                                                .address(new ServerAddress("loc:27018"))
+                                                                                .build(),
+                                                               ServerDescription.builder()
+                                                                                .state(Connecting)
+                                                                                .address(new ServerAddress("loc:27017"))
+                                                                                .build())
+        );
+        assertTrue(description.isCompatibleWithDriver());
     }
 
     @Test

@@ -1,9 +1,26 @@
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb
 
 import spock.lang.Specification
 
 import static com.mongodb.ClusterConnectionMode.Single
 import static com.mongodb.ServerConnectionState.Connected
+import static com.mongodb.ServerType.StandAlone
 
 class SingleServerClusterSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
@@ -19,7 +36,7 @@ class SingleServerClusterSpecification extends Specification {
                                               CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.StandAlone)
+        sendNotification(firstServer, StandAlone)
 
         then:
         cluster.description.type == ClusterType.StandAlone
@@ -34,7 +51,7 @@ class SingleServerClusterSpecification extends Specification {
                                               CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ServerType.StandAlone)
+        sendNotification(firstServer, StandAlone)
 
         then:
         cluster.getServer(firstServer) == factory.getServer(firstServer)
@@ -103,16 +120,38 @@ class SingleServerClusterSpecification extends Specification {
         cluster.description.all == [] as Set
     }
 
+    def 'getServer should throw when cluster is incompatible'() {
+        given:
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                                              ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(),
+                                              factory, CLUSTER_LISTENER)
+        sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
+
+        when:
+        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+
+        then:
+        thrown(MongoIncompatibleDriverException)
+    }
+
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
         sendNotification(serverAddress, serverType, null)
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, replicaSetName).build())
+        sendNotification(serverAddress, getBuilder(serverAddress, serverType, replicaSetName).build())
+    }
+
+    def sendNotification(ServerAddress serverAddress, ServerDescription serverDescription) {
+        factory.getServer(serverAddress).sendNotification(serverDescription)
     }
 
     def getDescriptions() {
         [factory.getServer(firstServer).description] as Set
+    }
+
+    def getBuilder(ServerAddress serverAddress) {
+        ServerDescription.builder().address(serverAddress).type(StandAlone).ok(true).state(Connected)
     }
 
     def getBuilder(ServerAddress serverAddress, ServerType serverType, String replicaSetName) {

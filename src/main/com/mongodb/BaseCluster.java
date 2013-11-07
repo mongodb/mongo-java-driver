@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ abstract class BaseCluster implements Cluster {
             final TimeUnit timeUnit = TimeUnit.NANOSECONDS;
             final long endTime = System.nanoTime() + timeUnit.convert(20, TimeUnit.SECONDS); // TODO: configurable
             while (true) {
+                throwIfIncompatible(curDescription);
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
                     if (server != null) {
@@ -189,6 +190,13 @@ abstract class BaseCluster implements Cluster {
             }
         }
         return null;
+    }
+
+    private void throwIfIncompatible(final ClusterDescription curDescription) {
+        if (!curDescription.isCompatibleWithDriver()) {
+            throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of the " +
+                                                              "servers to which it is connected: %s", curDescription));
+        }
     }
 
     protected Random getRandom() {

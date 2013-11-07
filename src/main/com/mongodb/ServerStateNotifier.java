@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,8 @@ class ServerStateNotifier implements Runnable {
                                 .tags(getTagsFromDocument((DBObject) commandResult.get("tags")))
                                 .setName(commandResult.getString("setName"))
                                 .setVersion((Integer) commandResult.get("setVersion"))
+                                .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
+                                .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
                                 .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
                                 .ok(commandResult.ok()).build();
     }
