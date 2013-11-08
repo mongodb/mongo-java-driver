@@ -18,7 +18,7 @@ apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
 
-sourceCompatibility = '1.6'
+sourceCompatibility = '1.5'
 targetCompatibility = '1.5'
 
 repositories {

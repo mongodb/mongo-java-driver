@@ -1,19 +1,17 @@
-// MapReduceOutput.java
-
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB, Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
@@ -24,7 +22,14 @@ package com.mongodb;
  */
 public class MapReduceOutput {
 
+    /**
+     * In the 3.0 version of the driver, this will be constructed only by the driver, and will therefore not have a public constructor.
+     * @param from the DBCollection the Map Reduce was run against
+     * @param cmd the original Map Reduce command as a DBObject
+     * @param raw the CommandResult containing the raw response from the server.
+     */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public MapReduceOutput( DBCollection from , DBObject cmd, CommandResult raw ){
         _commandResult = raw;
         _cmd = cmd;
@@ -71,7 +76,7 @@ public class MapReduceOutput {
         if ( _coll != null)
             _coll.drop();
     }
-    
+
     /**
      * gets the collection that holds the results
      * (Will return null if results are Inline)
@@ -86,6 +91,14 @@ public class MapReduceOutput {
         return _commandResult;
     }
 
+    /**
+     * This has been replaced with a series of specific getters for the values on the CommandResult (getCollectionName, getDatabaseName,
+     * getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an
+     * {@code Iterable<DBObjects>}, that should be used to obtain the results of the Map Reduce.  The CommandResult should not be
+     * used directly at all.
+     * @return
+     */
+    @Deprecated
     public CommandResult getCommandResult(){
         return _commandResult;
     }
@@ -101,7 +114,32 @@ public class MapReduceOutput {
     public String toString(){
         return _commandResult.toString();
     }
-    
+
+    public final String getCollectionName() {
+        return _collname;
+    }
+
+    public String getDatabaseName() {
+        return _dbname;
+    }
+
+    public int getDuration() {
+        return (Integer) _commandResult.get("timeMillis");
+    }
+
+    public int getInputCount() {
+        return _counts.getInt("input");
+    }
+
+    public int getOutputCount() {
+        return _counts.getInt("output");
+    }
+
+    public int getEmitCount() {
+        return _counts.getInt("emit");
+    }
+
+    @Deprecated
     final CommandResult _commandResult;
 
     final String _collname;
