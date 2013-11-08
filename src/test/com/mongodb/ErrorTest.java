@@ -1,24 +1,24 @@
-/**
- *      Copyright (C) 2008 10gen Inc.
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.mongodb;
 
-import org.testng.annotations.*;
-
-import com.mongodb.util.*;
+import com.mongodb.util.TestCase;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  *
@@ -38,14 +38,14 @@ public class ErrorTest extends TestCase {
         throws MongoException {
 
         _db.resetError();
-        assert(_db.getLastError().get("err") == null);
+        assertNull(_db.getLastError().get("err"));
 
         _db.forceError();
 
-        assert(_db.getLastError().get("err") != null);
+        assertNotNull(_db.getLastError().get("err"));
 
         _db.resetError();
-        assert(_db.getLastError().get("err") == null);
+        assertNull(_db.getLastError().get("err"));
     }
 
     @Test
@@ -54,8 +54,8 @@ public class ErrorTest extends TestCase {
 
         _db.resetError();
         CommandResult cr = _db.getLastError(WriteConcern.FSYNC_SAFE);
-        assert(cr.get("err") == null);
-        assert(cr.containsField("fsyncFiles") || cr.containsField("waited"));
+        assertNull(cr.get("err"));
+        assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
 
     @Test
@@ -64,8 +64,8 @@ public class ErrorTest extends TestCase {
         if ( /* TODO: running with slaves */ false ){
             _db.resetError();
             CommandResult cr = _db.getLastError(WriteConcern.REPLICAS_SAFE);
-            assert(cr.get("err") == null);
-            assert(cr.containsField("wtime"));
+            assertNull(cr.get("err"));
+            assertTrue(cr.containsField("wtime"));
         }
     }
 
@@ -74,23 +74,23 @@ public class ErrorTest extends TestCase {
         throws MongoException {
 
         _db.resetError();
-        
-        assert(_db.getLastError().get("err") == null);
-        assert(_db.getPreviousError().get("err") == null);
+
+        assertNull(_db.getLastError().get("err"));
+        assertNull(_db.getPreviousError().get("err"));
 
         _db.forceError();
 
-        assert(_db.getLastError().get("err") != null);
-        assert(_db.getPreviousError().get("err") != null);
+        assertNotNull(_db.getLastError().get("err"));
+        assertNotNull(_db.getPreviousError().get("err"));
 
         _db.getCollection("misc").insert(new BasicDBObject("foo", 1), WriteConcern.UNACKNOWLEDGED);
 
-        assert(_db.getLastError().get("err") == null);
-        assert(_db.getPreviousError().get("err") != null);
+        assertNull(_db.getLastError().get("err"));
+        assertNotNull(_db.getPreviousError().get("err"));
 
         _db.resetError();
 
-        assert(_db.getLastError().get("err") == null);
-        assert(_db.getPreviousError().get("err") == null);
+        assertNull(_db.getLastError().get("err"));
+        assertNull(_db.getPreviousError().get("err"));
     }
 }
