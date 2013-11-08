@@ -28,7 +28,7 @@ project('driver') {
 
 project(':driver-compat') {
     idea.module {
-        testSourceDirs = project.sourceSets.legacy.allSource.getSrcDirs()
+        testSourceDirs += project.sourceSets.legacy.allSource.getSrcDirs()
         iml {
             withXml { provider ->
 
