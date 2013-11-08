@@ -4,6 +4,7 @@ package org.mongodb.operation;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
+import org.mongodb.connection.ServerAddress;
 
 import java.util.Iterator;
 import java.util.List;
@@ -46,5 +47,10 @@ public class InlineMongoCursor<T> implements MongoCursor<T> {
     @Override
     public void remove() {
         throw new UnsupportedOperationException("Inline aggregations don't support remove operations.");
+    }
+
+    @Override
+    public ServerAddress getServerAddress() {
+        return commandResult.getAddress();
     }
 }

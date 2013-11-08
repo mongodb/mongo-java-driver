@@ -19,7 +19,9 @@ package com.mongodb;
 import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.SingleShotCommandIterable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +131,7 @@ public class MapReduceTest extends DatabaseTestCase {
         command.setOutputDB(MR_DATABASE);
         MapReduceOutput output = collection.mapReduce(command);
 
+
         DB db = database.getMongo().getDB(MR_DATABASE);
         assertTrue(db.collectionExists(DEFAULT_COLLECTION));
         assertEquals(toList(output.results()), toList(db.getCollection(DEFAULT_COLLECTION).find()));
@@ -149,10 +152,10 @@ public class MapReduceTest extends DatabaseTestCase {
         scope.put("exclude", "a");
         command.setScope(scope);
 
-        MapReduceOutput output = collection.mapReduce(command);
+        List<DBObject> resultsAsList = toList(collection.mapReduce(command).results());
 
-        assertThat(output.results(), not(hasItem(hasSubdocument(new BasicDBObject("_id", "a")))));
-        assertThat(output.results(), hasItem(hasSubdocument(new BasicDBObject("_id", "b"))));
+        assertThat(resultsAsList, not(hasItem(hasSubdocument(new BasicDBObject("_id", "a")))));
+        assertThat(resultsAsList, hasItem(hasSubdocument(new BasicDBObject("_id", "b"))));
     }
 
     @Test
@@ -207,11 +210,9 @@ public class MapReduceTest extends DatabaseTestCase {
         );
         command.setFinalize("function(key,reducedValue){ return reducedValue*5; }");
 
-        MapReduceOutput output = collection.mapReduce(command);
+        List<DBObject> output = toList(collection.mapReduce(command).results());
 
-        assertThat(output.results(),
-                   hasItem(hasSubdocument(new BasicDBObject("_id", "b").append("value", 10.0))));
-
+        assertThat(output, hasItem(hasSubdocument(new BasicDBObject("_id", "b").append("value", 10.0))));
     }
 
     @Test
@@ -286,67 +287,24 @@ public class MapReduceTest extends DatabaseTestCase {
         assertNotNull(output.getServerUsed());
     }
 
-
-    @Test
-    public void testWithDefaultVerboseValue() {
-        MapReduceCommand command = new MapReduceCommand(collection,
-                                                        DEFAULT_MAP,
-                                                        DEFAULT_REDUCE,
-                                                        DEFAULT_COLLECTION,
-                                                        MapReduceCommand.OutputType.REPLACE,
-                                                        new BasicDBObject());
-        MapReduceOutput output = collection.mapReduce(command);
-        assertThat(output.getCommandResult(), hasFields(new String[]{"timing"}));
-    }
-
-    @Test
-    public void testWithVerboseFalse() {
-        MapReduceCommand command = new MapReduceCommand(collection,
-                                                        DEFAULT_MAP,
-                                                        DEFAULT_REDUCE,
-                                                        DEFAULT_COLLECTION,
-                                                        MapReduceCommand.OutputType.REPLACE,
-                                                        new BasicDBObject());
-        command.setVerbose(false);
-
-        MapReduceOutput output = collection.mapReduce(command);
-
-        assertThat(output.getCommandResult(), not(hasFields(new String[]{"timing"})));
-    }
-
-    @Test
-    public void testMapReduceOutputLegacyConstructor() {
-        MapReduceOutput realOutput = collection.mapReduce(new MapReduceCommand(collection,
-                                                                               DEFAULT_MAP,
-                                                                               DEFAULT_REDUCE,
-                                                                               DEFAULT_COLLECTION,
-                                                                               MapReduceCommand.OutputType.REPLACE,
-                                                                               new BasicDBObject()));
-
-        MapReduceOutput output = new MapReduceOutput(collection,
-                                                     realOutput.getCommand(),
-                                                     realOutput.getCommandResult());
-
-        assertEquals(realOutput.getCommand(), output.getCommand());
-        assertEquals(realOutput.getCommandResult(), output.getCommandResult());
-        assertEquals(realOutput.getOutputCollection(), output.getOutputCollection());
-        assertEquals(realOutput.getServerUsed(), output.getServerUsed());
-    }
-
+    //TODO: test this MUCH more thoroughly.
     @Test
     public void testMapReduceInDocumentForm() {
         DBObject mapReduce = new BasicDBObject("mapReduce", collection.getName()).append("map", DEFAULT_MAP)
                                                                                  .append("reduce", DEFAULT_REDUCE)
                                                                                  .append("out", new BasicDBObject("inline", 1));
 
-        MapReduceOutput output = collection.mapReduce(mapReduce);
+        List<DBObject> results = toList(collection.mapReduce(mapReduce).results());
 
-        assertNotNull(output.results());
-        assertThat(output.results(), everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
+        assertNotNull(results);
+        assertThat(results, everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
     }
 
+    //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
+
     private List<DBObject> toList(final Iterable<DBObject> results) {
-        return results instanceof DBCursor ? ((DBCursor) results).toArray() : (List<DBObject>) results;
+        return results instanceof DBCursor ? ((DBCursor) results).toArray()
+                                           : ((SingleShotCommandIterable<DBObject>) results).into(new ArrayList<DBObject>());
     }
 
     private Map<String, Object> toMap(final Iterable<DBObject> result) {

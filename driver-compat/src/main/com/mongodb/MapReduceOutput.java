@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB, Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,51 +16,35 @@
 
 package com.mongodb;
 
-import org.mongodb.command.MapReduceCommandResult;
-import org.mongodb.command.MapReduceInlineCommandResult;
-
-import static com.mongodb.DBObjects.toDocument;
+import org.mongodb.Document;
+import org.mongodb.SingleShotCommandIterable;
+import org.mongodb.operation.InlineMongoCursor;
 
 /**
- * Represents the result of a map/reduce operation
- *
- * @author antoine
+ * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
+ * by interacting directly with the collection the results were input into.
+ * <p/>
+ * There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
+ * removed.
  */
 public class MapReduceOutput {
 
-    private final org.mongodb.CommandResult commandResult;
     private final DBCollection collection;
     private final DBObject command;
+    private final ServerAddress serverAddress;
+    private final org.mongodb.MongoCursor results;
 
-    MapReduceOutput(final DBCollection collection, final DBObject command, final MapReduceCommandResult commandResult) {
+    private org.mongodb.CommandResult commandResult;
+
+    //TODO: not really sure about outputCollection here.  Only needed for drop after all.
+    MapReduceOutput(final DBObject command, final org.mongodb.MongoCursor<DBObject> results, final DBCollection outputCollection) {
         this.command = command;
-        this.commandResult = commandResult;
-        this.collection = getTargetCollection(collection,
-                                              commandResult.getDatabaseName(),
-                                              commandResult.getCollectionName());
-    }
+        this.results = results;
 
-    MapReduceOutput(final DBObject command, final MapReduceInlineCommandResult<DBObject> commandResult) {
-        this.command = command;
-        this.collection = null;
-        this.commandResult = commandResult;
-    }
-
-    public MapReduceOutput(final DBCollection collection, final DBObject command, final CommandResult commandResult) {
-        this.command = command;
-        org.mongodb.CommandResult result = new org.mongodb.CommandResult(commandResult.getServerUsed().toNew(),
-                                                                         toDocument(commandResult),
-                                                                         0);
-
-        if (commandResult.containsField("results")) {
-            this.collection = null;
-            this.commandResult = new MapReduceInlineCommandResult<DBObject>(result);
-        } else {
-            MapReduceCommandResult mapReduceCommandResult = new MapReduceCommandResult(result);
-            this.collection = getTargetCollection(collection,
-                                                  mapReduceCommandResult.getDatabaseName(),
-                                                  mapReduceCommandResult.getCollectionName());
-            this.commandResult = mapReduceCommandResult;
+        this.serverAddress = new ServerAddress(results.getServerAddress());
+        this.collection = outputCollection;
+        if (results instanceof InlineMongoCursor) {
+            commandResult = ((InlineMongoCursor) results).getCommandResult();
         }
     }
 
@@ -71,9 +55,7 @@ public class MapReduceOutput {
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-        return commandResult instanceof MapReduceInlineCommandResult
-               ? ((MapReduceInlineCommandResult) commandResult).getResults()
-               : getOutputCollection().find();
+        return new SingleShotCommandIterable<DBObject>(results);
     }
 
     /**
@@ -96,31 +78,85 @@ public class MapReduceOutput {
         return collection;
     }
 
-    @Deprecated
-    public BasicDBObject getRaw() {
-        return getCommandResult();
-    }
-
     public CommandResult getCommandResult() {
         return new CommandResult(commandResult);
     }
 
+    /**
+     * Get the original command that was sent to the database.
+     *
+     * @return a DBObject containing the values of the original map-reduce command.
+     */
     public DBObject getCommand() {
         return command;
     }
 
+    /**
+     * Get the server that the map reduce command was run on.
+     *
+     * @return a ServerAddress of the server that the command ran against.
+     */
     public ServerAddress getServerUsed() {
-        return new ServerAddress(commandResult.getAddress());
+        return serverAddress;
     }
 
     public String toString() {
         return commandResult.toString();
     }
 
-    private static DBCollection getTargetCollection(final DBCollection collection,
-                                                    final String databaseName, final String collectionName) {
-        DB database = databaseName != null ? collection.getDB().getSisterDB(databaseName) : collection.getDB();
-        return database.getCollection(collectionName);
+    /**
+     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
+     *
+     * @return the name of the collection that the map reduce results are stored in
+     */
+    public final String getCollectionName() {
+        return collection.getName();
     }
 
+    /**
+     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
+     *
+     * @return the name of the database that holds the collection that the map reduce results are stored in
+     */
+    public String getDatabaseName() {
+        return collection.getDB().getName();
+    }
+
+    /**
+     * Get the amount of time, in milliseconds, that it took to run this map reduce.
+     *
+     * @return an int representing the number of milliseconds it took to run the map reduce operation
+     */
+    public int getDuration() {
+        return commandResult.getResponse().getInteger("timeMillis");
+    }
+
+    /**
+     * Get the number of documents that were input into the map reduce operation
+     *
+     * @return the number of documents that read while processing this map reduce
+     */
+    public int getInputCount() {
+        return ((Document) commandResult.getResponse().get("counts")).getInteger("input");
+    }
+
+    /**
+     * Get the number of documents generated as a result of this map reduce
+     *
+     * @return the number of documents output by the map reduce
+     */
+    public int getOutputCount() {
+        return ((Document) commandResult.getResponse().get("counts")).getInteger("output");
+    }
+
+    /**
+     * Get the number of messages emitted from the provided map function.
+     *
+     * @return the number of items emitted from the map function
+     */
+    public int getEmitCount() {
+        return ((Document) commandResult.getResponse().get("counts")).getInteger("emit");
+    }
 }

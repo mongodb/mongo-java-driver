@@ -30,8 +30,10 @@ import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.IterateOperation;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOperation;
+import org.mongodb.operation.MappingIterable;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
@@ -249,10 +251,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
-            CommandResult execute = new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec, options.getReadPreference(),
-                                                           client.getBufferProvider(), client.getSession(), false)
-                                        .execute();
-            return new SingleShotCommandIterable<T>(execute);
+
+            return new SingleShotCommandIterable<T>(new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec,
+                                                                           options.getReadPreference(), client.getBufferProvider(),
+                                                                           client.getSession(), false, getCodec())
+                                                        .execute());
         }
 
         @Override
@@ -604,9 +607,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            Document document = new Document("aggregate", getNamespace().getCollectionName()).append("pipeline", pipeline);
-            CommandResult commandResult = getDatabase().executeCommand(document, null);
-            return new SingleShotCursor<T>((Iterable<T>) commandResult.getResponse().get("result"));
+            return new IterateOperation<T>(getNamespace(), pipeline, options.getReadPreference(), client.getBufferProvider(),
+                                           client.getSession(), false)
+                       .execute();
         }
 
         @Override

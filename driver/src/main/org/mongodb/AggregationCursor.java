@@ -21,6 +21,7 @@ package org.mongodb;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.operation.GetMore;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.KillCursor;
@@ -160,4 +161,8 @@ public class AggregationCursor<T> implements MongoCursor<T> {
         }
     }
 
+    @Override
+    public ServerAddress getServerAddress() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
 }

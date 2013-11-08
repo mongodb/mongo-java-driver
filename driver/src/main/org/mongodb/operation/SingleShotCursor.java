@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.operation;
+
+import org.mongodb.MongoCursor;
+import org.mongodb.ServerCursor;
+import org.mongodb.connection.ServerAddress;
 
 import java.util.Iterator;
 
@@ -22,7 +26,7 @@ class SingleShotCursor<T> implements MongoCursor<T> {
     private final Iterator<T> iterator;
 
     SingleShotCursor(final Iterable<T> results) {
-        iterator = results.iterator();
+        iterator = results == null ? null : results.iterator();
     }
 
     @Override
@@ -47,5 +51,10 @@ class SingleShotCursor<T> implements MongoCursor<T> {
     @Override
     public void remove() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ServerAddress getServerAddress() {
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 }

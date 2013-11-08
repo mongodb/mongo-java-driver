@@ -31,9 +31,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
-import org.mongodb.command.MapReduceInlineCommandResult;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CountOperation;
@@ -52,6 +50,7 @@ import org.mongodb.operation.GroupOperation;
 import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
+import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
@@ -1102,28 +1101,33 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        org.mongodb.codecs.DocumentCodec mapReduceCodec =
+        MapReduceCommandResultCodec mapReduceCodec =
             new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
-        org.mongodb.CommandResult executionResult;
+        org.mongodb.MongoCursor<DBObject> executionResult;
 
         try {
-            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() .toNew()
+            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
                                                                                             : command.getReadPreference().toNew();
-            executionResult = new MapReduceOperation(getNamespace(),
-                                                     command.getMapReduce(),
-                                                     mapReduceCodec,
-                                                     readPreference,
-                                                     getBufferPool(), getSession(), false
-            ).execute();
+            executionResult = new MapReduceOperation(getNamespace(), command.getMapReduce(), mapReduceCodec, readPreference,
+                                                     getBufferPool(), getSession(), false, objectCodec)
+                                  .execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
 
-        DBObject commandDocument = command.toDBObject();
-        return command.getOutputType() == MapReduceCommand.OutputType.INLINE
-               ? new MapReduceOutput(commandDocument, new MapReduceInlineCommandResult<DBObject>(executionResult))
-               : new MapReduceOutput(this, commandDocument, new MapReduceCommandResult(executionResult));
+        return new MapReduceOutput(command.toDBObject(), executionResult, determineMapReduceOutputCollection(command.getMapReduce()));
+    }
+
+    private DBCollection determineMapReduceOutputCollection(final MapReduce mapReduce) {
+        if (!mapReduce.isInline()) {
+            String requestedDatabaseName = mapReduce.getOutput().getDatabaseName();
+            DB database = requestedDatabaseName != null
+                          ? getDB().getSisterDB(requestedDatabaseName)
+                          : getDB();
+            return database.getCollection(mapReduce.getOutput().getCollectionName());
+        }
+        return this;
     }
 
     /**
@@ -1137,7 +1141,28 @@ public class DBCollection {
             throw new IllegalArgumentException("Operation requires mapReduce command");
         }
         CommandResult res = database.command(command, getOptions(), getReadPreference());
-        return new MapReduceOutput(this, command, res);
+        MapReduce mapReduce = MapReduceCommand.getMapReduceFromDBObject(command);
+
+        MapReduceCommandResultCodec mapReduceCodec =
+            new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
+
+        org.mongodb.MongoCursor executionResult;
+        try {
+//            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
+//                                                                                            : command.getReadPreference().toNew();
+            executionResult = new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
+                                                     getBufferPool(), getSession(), false, objectCodec)
+                                  .execute();
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
+
+        return new MapReduceOutput(command, executionResult, determineMapReduceOutputCollection(mapReduce));
+
+    }
+
+    public boolean isInlineMapReduce(final CommandResult commandResult) {
+        return commandResult.containsField("results") ? true : false;
     }
 
     /**
@@ -1520,16 +1545,16 @@ public class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-        final Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                                                ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                                                : getObjectCodec();
+        Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
+                                          ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
+                                          : getObjectCodec();
 
-        final Operation<DBObject> operation;
+        Operation<DBObject> operation;
         if (remove) {
-            final FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
-                                                                                       .sortBy(toNullableDocument(sort))
-                                                                                       .returnNew(returnNew)
-                                                                                       .maxTime(maxTime, maxTimeUnit);
+            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
+                                                                                 .sortBy(toNullableDocument(sort))
+                                                                                 .returnNew(returnNew)
+                                                                                 .maxTime(maxTime, maxTimeUnit);
             operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder, getBufferPool(),
                                                              getSession(), false);
         } else {
@@ -1538,24 +1563,24 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                final FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
-                                                              .where(toNullableDocument(query))
-                                                              .sortBy(toNullableDocument(sort))
-                                                              .returnNew(returnNew)
-                                                              .select(toFieldSelectorDocument(fields))
-                                                              .updateWith(toUpdateOperationsDocument(update))
-                                                              .upsert(upsert)
-                                                              .maxTime(maxTime, maxTimeUnit);
+                FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
+                                                            .where(toNullableDocument(query))
+                                                            .sortBy(toNullableDocument(sort))
+                                                            .returnNew(returnNew)
+                                                            .select(toFieldSelectorDocument(fields))
+                                                            .updateWith(toUpdateOperationsDocument(update))
+                                                            .upsert(upsert)
+                                                            .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder, getBufferPool(),
                                                                  getSession(), false);
             } else {
-                final FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
-                                                                .where(toNullableDocument(query))
-                                                                .sortBy(toNullableDocument(sort))
-                                                                .select(toFieldSelectorDocument(fields))
-                                                                .returnNew(returnNew)
-                                                                .upsert(upsert)
-                                                                .maxTime(maxTime, maxTimeUnit);
+                FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
+                                                              .where(toNullableDocument(query))
+                                                              .sortBy(toNullableDocument(sort))
+                                                              .select(toFieldSelectorDocument(fields))
+                                                              .returnNew(returnNew)
+                                                              .upsert(upsert)
+                                                              .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
                                                                   getBufferPool(), getSession(), false);
             }

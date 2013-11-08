@@ -50,7 +50,7 @@ public class MapReduce {
         this.mapFunction = mapFunction;
         this.reduceFunction = reduceFunction;
         this.output = output;
-        this.inline = false;
+        this.inline = output == null;
     }
 
     /**

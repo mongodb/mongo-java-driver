@@ -16,28 +16,33 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.MappingIterable;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;
 
-class SingleShotCommandIterable<T> implements MongoIterable<T> {
-    private final CommandResult commandResult;
+public class SingleShotCommandIterable<T> implements MongoIterable<T> {
+    private final MongoCursor<T> cursor;
 
-    public SingleShotCommandIterable(final CommandResult commandResult) {
-        this.commandResult = commandResult;
+    public SingleShotCommandIterable(final MongoCursor<T> cursor) {
+        this.cursor = cursor;
     }
 
     @Override
     public MongoCursor<T> iterator() {
-        return new SingleShotCursor<T>(getResults());
+        return cursor;
     }
 
     @Override
     public void forEach(final Block<? super T> block) {
-        for (final T document : getResults()) {
-            if (!block.run(document)) {
-                break;
+        try {
+            while (cursor.hasNext()) {
+                if (!block.run(cursor.next())) {
+                    break;
+                }
             }
+        } finally {
+            cursor.close();
         }
     }
 
@@ -60,22 +65,20 @@ class SingleShotCommandIterable<T> implements MongoIterable<T> {
 
     @Override
     public void asyncForEach(final AsyncBlock<? super T> block) {
-        for (final T document : getResults()) {
-            if (!block.run(document)) {
-                break;
+        try {
+            while (cursor.hasNext()) {
+                if (!block.run(cursor.next())) {
+                    break;
+                }
             }
+        } finally {
+            cursor.close();
         }
-        block.done();
     }
 
     @Override
     public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
         return new SingleResultFuture<A>(into(target), null);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Iterable<T> getResults() {
-        return ((Iterable<T>) commandResult.getResponse().get("results"));
     }
 
 }

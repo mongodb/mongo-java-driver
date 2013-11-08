@@ -18,6 +18,7 @@ package org.mongodb;
 
 
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.ServerAddress;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -34,4 +35,6 @@ public interface MongoCursor<T> extends Iterator<T>, Closeable {
     T next();
 
     ServerCursor getServerCursor();
+
+    ServerAddress getServerAddress();
 }

@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
+import org.mongodb.AsyncBlock;
+import org.mongodb.Block;
+import org.mongodb.Function;
+import org.mongodb.MongoCursor;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoIterable;
+import org.mongodb.MongoMappingCursor;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 
 import java.util.Collection;
 
-class MappingIterable<U, V> implements MongoIterable<V> {
+//TODO: ?
+public class MappingIterable<U, V> implements MongoIterable<V> {
 
     private final MongoIterable<U> iterable;
     private final Function<U, V> mapper;

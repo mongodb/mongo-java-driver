@@ -18,27 +18,37 @@ package org.mongodb.operation;
 
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
+import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoQueryCursor;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import java.util.List;
+
+import static org.mongodb.operation.MapReduceResponseParser.getResultsNamespaceFromResponse;
+
 /**
  * Operation encapsulating everything for running a Map Reduce against a MongoDB instance.
  *
  * @see <a href="http://docs.mongodb.org/manual/core/map-reduce/">Map-Reduce</a>
  */
-public class MapReduceOperation extends BaseOperation<CommandResult> {
+public class MapReduceOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final Document command;
     private final MongoNamespace namespace;
+    private final MapReduce mapReduce;
     private final ReadPreference readPreference;
     private final DocumentCodec resultDecoder;
     private final Codec<Document> commandCodec = new DocumentCodec();
+    private final Decoder<T> collectibleDecoder;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
@@ -50,30 +60,44 @@ public class MapReduceOperation extends BaseOperation<CommandResult> {
      * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
+     * @param collectibleDecoder uses this to decode the items from a collection in the case of a non-inline MapReduce
      */
-    public MapReduceOperation(final MongoNamespace namespace, final MapReduce mapReduce, final DocumentCodec resultDecoder,
+    public MapReduceOperation(final MongoNamespace namespace, final MapReduce mapReduce, final MapReduceCommandResultCodec resultDecoder,
                               final ReadPreference readPreference, final BufferProvider bufferProvider,
-                              final Session session,
-                              final boolean closeSession) {
+                              final Session session, final boolean closeSession, final Decoder<T> collectibleDecoder) {
         super(bufferProvider, session, closeSession);
         this.namespace = namespace;
+        this.mapReduce = mapReduce;
         this.readPreference = readPreference;
         this.resultDecoder = resultDecoder;
+        this.collectibleDecoder = collectibleDecoder;
         this.command = createCommandDocument(namespace.getCollectionName(), mapReduce);
     }
 
     /**
-     * Executing this will return a command result.  If all went well, this contains the results of the map reduce.
+     * Executing this will return a cursor with your results in.
      *
-     * @return CommandResult which will contain either the results of the map reduce, or an error message stating what went wrong
+     * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
-    public CommandResult execute() {
-        ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
-        ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
-        return new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, resultDecoder, getBufferProvider(),
-                                   provider.getServerDescription(), provider.getConnection(), true)
-                   .execute();
+    public MongoCursor<T> execute() {
+        ServerConnectionProvider provider = getSession().createServerConnectionProvider(getServerConnectionProviderOptions());
+        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, resultDecoder,
+                                                          getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
+                                                          isCloseSession())
+                                          .execute();
+
+        if (mapReduce.isInline()) {
+            return new InlineMongoCursor<T>(commandResult, (List<T>) commandResult.getResponse().get("results"));
+        } else {
+            return new MongoQueryCursor(getResultsNamespaceFromResponse(commandResult.getResponse(), namespace.getDatabaseName()),
+                                        new Find(),
+                                        commandCodec,
+                                        collectibleDecoder,
+                                        getBufferProvider(),
+                                        getSession(),
+                                        isCloseSession());
+        }
     }
 
     private ServerConnectionProviderOptions getServerConnectionProviderOptions() {

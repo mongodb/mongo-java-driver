@@ -23,15 +23,6 @@ import spock.lang.Specification
 
 class MapReduceOperationSpecification extends Specification {
 
-    def setupSpec() {
-        Map.metaClass.asType = { Class type ->
-            if (type == Document) {
-                return new Document(delegate)
-            }
-        }
-    }
-
-
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert into correct documents'() {
         expect:
