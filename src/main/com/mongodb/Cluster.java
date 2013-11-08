@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 
 package com.mongodb;
 
+import java.util.concurrent.TimeUnit;
+
 interface Cluster {
 
-    ClusterDescription getDescription();
+    ClusterDescription getDescription(final long maxWaitTime, final TimeUnit timeUnit);
 
-    Server getServer(ServerSelector serverSelector);
+    Server getServer(ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit);
 
     void close();
 

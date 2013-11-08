@@ -179,12 +179,11 @@ public class DBTCPConnector implements DBConnector {
             return doOperation(db, port, new DBPort.Operation<WriteResult>() {
                 @Override
                 public WriteResult execute() throws IOException {
-                    port.say( m );
-                    if ( concern.callGetLastError() ){
-                        return _checkWriteError( db , port , concern );
-                    }
-                    else {
-                        return new WriteResult( db , port , concern );
+                    port.say(m);
+                    if (concern.callGetLastError()) {
+                        return _checkWriteError(db, port, concern);
+                    } else {
+                        return new WriteResult(db, port, concern);
                     }
                 }
             });
@@ -320,7 +319,7 @@ public class DBTCPConnector implements DBConnector {
 
     public ServerAddress getAddress() {
         isTrue("open", !_closed);
-        ClusterDescription clusterDescription = cluster.getDescription();
+        ClusterDescription clusterDescription = getClusterDescription();
         if (clusterDescription.getConnectionMode() == Single) {
             return clusterDescription.getAny().get(0).getAddress();
         }
@@ -348,7 +347,7 @@ public class DBTCPConnector implements DBConnector {
     public List<ServerAddress> getServerAddressList() {
         isTrue("open", !_closed);
         List<ServerAddress> serverAddressList = new ArrayList<ServerAddress>();
-        ClusterDescription clusterDescription = cluster.getDescription();
+        ClusterDescription clusterDescription = getClusterDescription();
         for (ServerDescription serverDescription : clusterDescription.getAll()) {
             serverAddressList.add(serverDescription.getAddress());
         }
@@ -357,14 +356,16 @@ public class DBTCPConnector implements DBConnector {
 
     public ReplicaSetStatus getReplicaSetStatus() {
         isTrue("open", !_closed);
-        return cluster.getDescription().getType() == ReplicaSet && cluster.getDescription().getConnectionMode() == Multiple
-               ? new ReplicaSetStatus(cluster) : null;
+        ClusterDescription description = getClusterDescription();
+        return description.getType() == ReplicaSet &&
+               description.getConnectionMode() == Multiple
+               ? new ReplicaSetStatus(description) : null;
     }
 
     // This call can block if it's not yet known.
     boolean isMongosConnection() {
         isTrue("open", !_closed);
-        return cluster.getDescription().getType() == Sharded;
+        return getClusterDescription().getType() == Sharded;
     }
 
     public String getConnectPoint(){
@@ -386,7 +387,16 @@ public class DBTCPConnector implements DBConnector {
         if (readPreference.equals(ReadPreference.primary())) {
             return false;
         }
-        return cluster.getDescription().getConnectionMode() == Multiple && cluster.getDescription().getType() == ReplicaSet;
+        ClusterDescription description = getClusterDescription();
+        return description.getConnectionMode() == Multiple && description.getType() == ReplicaSet;
+    }
+
+    private ClusterDescription getClusterDescription() {
+        return cluster.getDescription(getClusterWaitTimeMS(), MILLISECONDS);
+    }
+
+    private int getClusterWaitTimeMS() {
+        return Math.min(_mongo.getMongoOptions().maxWaitTime, _mongo.getMongoOptions().connectTimeout);
     }
 
     DBPort getPrimaryPort() {
@@ -401,7 +411,7 @@ public class DBTCPConnector implements DBConnector {
 
     public ServerDescription getServerDescription(final ServerAddress address) {
         isTrue("open", !_closed);
-        return cluster.getDescription().getByServerAddress(address);
+        return getClusterDescription().getByServerAddress(address);
     }
 
     class MyPort {
@@ -433,7 +443,7 @@ public class DBTCPConnector implements DBConnector {
                 setPinnedRequestPortForThread(null);
             }
 
-            Server server = cluster.getServer(createServerSelector(readPref));
+            Server server = getServer(createServerSelector(readPref));
             DBPort port = _portHolder.get(server.getDescription().getAddress()).get();
 
             // if within request, remember port to stick to same server
@@ -445,7 +455,7 @@ public class DBTCPConnector implements DBConnector {
         }
 
         private boolean portIsAPrimary(final DBPort pinnedRequestPort) {
-            for (ServerDescription cur : cluster.getDescription().getPrimaries()) {
+            for (ServerDescription cur : getClusterDescription().getPrimaries()) {
                 if (cur.getAddress().equals(pinnedRequestPort.serverAddress())) {
                     return true;
                 }
@@ -479,14 +489,14 @@ public class DBTCPConnector implements DBConnector {
             if ( getPinnedRequestPortForThread() != null )
                 return;
 
-            ClusterDescription clusterDescription = cluster.getDescription();
+            ClusterDescription clusterDescription = getClusterDescription();
             if (clusterDescription.getPrimaries().isEmpty()) {
                 throw new MongoTimeoutException("Could not ensure a connection to a primary server");
             }
             setPinnedRequestPortForThread(_portHolder.get(clusterDescription.getPrimaries().get(0).getAddress()).get());
         }
 
-        void requestStart(){
+        void requestStart() {
             PinnedRequestStatus current = getPinnedRequestStatusForThread();
             if (current == null) {
                 pinnedRequestStatusThreadLocal.set(new PinnedRequestStatus());
@@ -538,7 +548,7 @@ public class DBTCPConnector implements DBConnector {
 
     private synchronized ServerSelector getPrefixedServerSelector() {
         if (prefixedServerSelector == null) {
-            ClusterDescription clusterDescription = cluster.getDescription();
+            ClusterDescription clusterDescription = getClusterDescription();
             if (clusterDescription.getConnectionMode() == Multiple && clusterDescription.getType() == Sharded) {
                 prefixedServerSelector = new StickyHAShardedClusterServerSelector();
             } else {
@@ -555,7 +565,7 @@ public class DBTCPConnector implements DBConnector {
 
 
     public String debugString(){
-        return cluster.getDescription().getShortDescription();
+        return getClusterDescription().getShortDescription();
     }
 
     public void close(){
@@ -619,7 +629,7 @@ public class DBTCPConnector implements DBConnector {
      * @return the maximum size, or 0 if not obtained from servers yet.
      */
     public int getMaxBsonObjectSize() {
-        ClusterDescription clusterDescription = cluster.getDescription();
+        ClusterDescription clusterDescription = getClusterDescription();
         if (clusterDescription.getPrimaries().isEmpty()) {
             return Bytes.MAX_OBJECT_SIZE;
         }
@@ -629,5 +639,9 @@ public class DBTCPConnector implements DBConnector {
     // expose for unit testing
     MyPort getMyPort() {
         return _myPort;
+    }
+
+    private Server getServer(final ServerSelector serverSelector) {
+        return cluster.getServer(serverSelector, getClusterWaitTimeMS(), MILLISECONDS);
     }
 }

@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+
 package com.mongodb
 
 import spock.lang.Specification
@@ -11,6 +29,8 @@ import static com.mongodb.ServerType.ReplicaSetPrimary
 import static com.mongodb.ServerType.ReplicaSetSecondary
 import static com.mongodb.ServerType.ShardRouter
 import static com.mongodb.ServerType.StandAlone
+import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class MultiServerClusterSpecification extends Specification {
     private static final ClusterListener CLUSTER_LISTENER = new NoOpClusterListener()
@@ -30,9 +50,11 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, ReplicaSetPrimary)
 
         then:
-        cluster.description.isConnecting()
-        cluster.description.type == ReplicaSet
-        cluster.description.connectionMode == Multiple
+        getClusterDescription(cluster).with {
+            isConnecting()
+            type == ReplicaSet
+            connectionMode == Multiple
+        }
     }
 
     def 'should not get server when closed'() {
@@ -57,7 +79,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, ReplicaSetPrimary)
 
         then:
-        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should remove a server when it no longer appears in hosts'() {
@@ -73,7 +95,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer])
 
         then:
-        cluster.description.all == getDescriptions(firstServer, secondServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
     }
 
     def 'should remove a server of the wrong type when type is replica set'() {
@@ -86,8 +108,10 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ShardRouter)
 
         then:
-        cluster.description.type == ReplicaSet
-        cluster.description.all == getDescriptions(firstServer)
+        getClusterDescription(cluster).with {
+            type == ReplicaSet
+            all == getServerDescriptions(firstServer)
+        }
     }
 
     def 'should remove a server of the wrong type when type is sharded'() {
@@ -101,8 +125,10 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetPrimary)
 
         then:
-        cluster.description.type == Sharded
-        cluster.description.all == getDescriptions(firstServer)
+        getClusterDescription(cluster).with {
+            type == Sharded
+            all == getServerDescriptions(firstServer)
+        }
     }
 
     def 'should remove a server of wrong type from discovered replica set'() {
@@ -116,8 +142,10 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, StandAlone)
 
         then:
-        cluster.description.type == ReplicaSet
-        cluster.description.all == getDescriptions(firstServer, thirdServer)
+        getClusterDescription(cluster).with {
+            type == ReplicaSet
+            all == getServerDescriptions(firstServer, thirdServer)
+        }
     }
 
     def 'should invalidate existing primary when a new primary notifies'() {
@@ -130,8 +158,8 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetPrimary)
 
         then:
-        getDescription(firstServer).state == Connecting
-        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+        getServerDescription(firstServer).state == Connecting
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should remove a server when a server in the seed list is not in hosts list, it should be removed'() {
@@ -145,7 +173,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(serverAddressAlias, ReplicaSetPrimary)
 
         then:
-        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should retain a Standalone server given a hosts list of size 1'() {
@@ -157,8 +185,10 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, StandAlone)
 
         then:
-        cluster.description.type == ClusterType.StandAlone
-        cluster.description.all == getDescriptions(firstServer)
+        getClusterDescription(cluster).with {
+            type == ClusterType.StandAlone
+            all == getServerDescriptions(firstServer)
+        }
     }
 
     def 'should remove any Standalone server given a hosts list of size greater than one'() {
@@ -172,8 +202,8 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetPrimary, [secondServer, thirdServer])
 
         then:
-        !(getDescription(firstServer) in cluster.description.all)
-        cluster.description.type == ReplicaSet
+        !(getServerDescription(firstServer) in getClusterDescription(cluster).all)
+        getClusterDescription(cluster).type == ReplicaSet
     }
 
     def 'should remove a member whose replica set name does not match the required one'() {
@@ -185,8 +215,10 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], 'test2')
 
         then:
-        cluster.description.type == ReplicaSet
-        cluster.description.all == [] as Set
+        getClusterDescription(cluster).with {
+            type == ReplicaSet
+            all == [] as Set
+        }
     }
 
     def 'should throw from getServer if cluster is closed'() {
@@ -196,7 +228,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS)
 
         then:
         thrown(IllegalStateException)
@@ -212,7 +244,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetSecondary, [secondServer])
 
         then:
-        cluster.description.all == getDescriptions(firstServer, thirdServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, thirdServer)
     }
 
     def 'should ignore replica set member lists from a server that has an older replica set version'() {
@@ -226,7 +258,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetSecondary, [firstServer, secondServer], 'test', 1)
 
         then:
-        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should ignore a notification from a server that is not ok'() {
@@ -239,7 +271,7 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(secondServer, ReplicaSetSecondary, [], false)
 
         then:
-        cluster.description.all == getDescriptions(firstServer, secondServer, thirdServer)
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should fire cluster opened and closed events'() {
@@ -292,11 +324,15 @@ class MultiServerClusterSpecification extends Specification {
         factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, ok, null, null).build())
     }
 
-    def getDescription(ServerAddress server) {
+    def getClusterDescription(MultiServerCluster cluster) {
+        cluster.getDescription(1, MILLISECONDS)
+    }
+
+    def getServerDescription(ServerAddress server) {
         factory.getServer(server).description
     }
 
-    def getDescriptions(ServerAddress... servers) {
+    def getServerDescriptions(ServerAddress... servers) {
         servers.collect { factory.getServer(it).description } as Set
     }
 
