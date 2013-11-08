@@ -56,3 +56,4 @@ src/test/ed/webtests/webtest-local.bash
 atlassian-ide-plugin.xml
 
 out/*
+.gradle/*

@@ -17,16 +17,21 @@
 package com.mongodb;
 
 /**
- * Represents the result of a map/reduce operation
- * @author antoine
+ * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
+ * by interacting directly with the collection the results were input into.
+ * <p/>
+ * There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
+ * removed.
  */
 public class MapReduceOutput {
 
     /**
-     * In the 3.0 version of the driver, this will be constructed only by the driver, and will therefore not have a public constructor.
+     * Creates a new MapReduceOutput
      * @param from the DBCollection the Map Reduce was run against
      * @param cmd the original Map Reduce command as a DBObject
      * @param raw the CommandResult containing the raw response from the server.
+     * @deprecated In the 3.0 version of the driver, this will be constructed only by the driver,
+     * and will therefore not have a public constructor.
      */
     @SuppressWarnings("unchecked")
     @Deprecated
@@ -61,7 +66,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * returns a cursor to the results of the operation
+     * Returns a cursor to the results of the operation
      * @return
      */
     public Iterable<DBObject> results(){
@@ -92,21 +97,31 @@ public class MapReduceOutput {
     }
 
     /**
-     * This has been replaced with a series of specific getters for the values on the CommandResult (getCollectionName, getDatabaseName,
-     * getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an
-     * {@code Iterable<DBObjects>}, that should be used to obtain the results of the Map Reduce.  The CommandResult should not be
-     * used directly at all.
-     * @return
+     * The CommandResult should not be used directly at all, this will be removed.
+     *
+     * @return a CommandResult representing the output of the Map Reduce in its raw form from the server.
+     * @deprecated This has been replaced with a series of specific getters for the values on the CommandResult (getCollectionName,
+     *             getDatabaseName, getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue
+     *             to return an {@code Iterable<DBObjects>}, that should be used to obtain the results of the Map Reduce.
      */
     @Deprecated
-    public CommandResult getCommandResult(){
+    public CommandResult getCommandResult() {
         return _commandResult;
     }
 
+    /**
+     * Get the original command that was sent to the database.
+     * @return a DBObject containing the values of the original map-reduce command.
+     */
     public DBObject getCommand() {
         return _cmd;
     }
 
+    /**
+     * Get the server that the map reduce command was run on.
+     *
+     * @return a ServerAddress of the server that the command ran against.
+     */
     public ServerAddress getServerUsed() {
         return _commandResult.getServerUsed();
     }
@@ -115,33 +130,63 @@ public class MapReduceOutput {
         return _commandResult.toString();
     }
 
+    /**
+     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
+     *
+     * @return the name of the collection that the map reduce results are stored in
+     */
     public final String getCollectionName() {
         return _collname;
     }
 
+    /**
+     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
+     *
+     * @return the name of the database that holds the collection that the map reduce results are stored in
+     */
     public String getDatabaseName() {
         return _dbname;
     }
 
+    /**
+     * Get the amount of time, in milliseconds, that it took to run this map reduce.
+     *
+     * @return an int representing the number of milliseconds it took to run the map reduce operation
+     */
     public int getDuration() {
-        return (Integer) _commandResult.get("timeMillis");
+        return _commandResult.getInt("timeMillis");
     }
 
+    /**
+     * Get the number of documents that were input into the map reduce operation
+     *
+     * @return the number of documents that read while processing this map reduce
+     */
     public int getInputCount() {
         return _counts.getInt("input");
     }
 
+    /**
+     * Get the number of documents generated as a result of this map reduce
+     *
+     * @return the number of documents output by the map reduce
+     */
     public int getOutputCount() {
         return _counts.getInt("output");
     }
 
+    /**
+     * Get the number of messages emitted from the provided map function.
+     *
+     * @return the number of items emitted from the map function
+     */
     public int getEmitCount() {
         return _counts.getInt("emit");
     }
 
-    @Deprecated
     final CommandResult _commandResult;
-
     final String _collname;
     String _dbname = null;
     final Iterable<DBObject> _resultSet;
