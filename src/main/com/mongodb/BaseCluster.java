@@ -222,8 +222,8 @@ abstract class BaseCluster implements Cluster {
         }
 
         @Override
-        public Connection getConnection() {
-            return wrapped.getConnection();
+        public Connection getConnection(final long maxWaitTime, final TimeUnit timeUnit) {
+            return wrapped.getConnection(maxWaitTime, timeUnit);
         }
 
         @Override

@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ServerConnectionState.Connecting;
 import static com.mongodb.ServerConnectionState.Unconnected;
@@ -69,8 +70,8 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public Connection getConnection() {
-        return connectionProvider.get();
+    public Connection getConnection(final long maxWaitTime, final TimeUnit timeUnit) {
+        return connectionProvider.get(maxWaitTime, timeUnit);
     }
 
     @Override

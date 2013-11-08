@@ -18,6 +18,8 @@ package com.mongodb;
 
 import org.bson.util.annotations.ThreadSafe;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * A logical connection to a MongoDB server.
  */
@@ -31,7 +33,7 @@ interface Server {
      */
     ServerDescription getDescription();
 
-    Connection getConnection();
+    Connection getConnection(final long maxWaitTime, final TimeUnit timeUnit);
 
     void invalidate();
 }

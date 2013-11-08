@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.mongodb.ServerConnectionState.Connecting;
 
 public class TestServer implements ClusterableServer {
@@ -58,7 +60,7 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public DBPort getConnection() {
+    public DBPort getConnection(final long maxWaitTime, final TimeUnit timeUnit) {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 }

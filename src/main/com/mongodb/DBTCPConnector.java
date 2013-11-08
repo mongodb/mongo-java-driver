@@ -395,6 +395,10 @@ public class DBTCPConnector implements DBConnector {
         return Math.min(_mongo.getMongoOptions().maxWaitTime, _mongo.getMongoOptions().connectTimeout);
     }
 
+    private int getConnectionWaitTimeMS() {
+        return _mongo.getMongoOptions().maxWaitTime;
+    }
+
     DBPort getPrimaryPort() {
         isTrue("open", !_closed);
         return _myPort.get(true, ReadPreference.primary(), null);
@@ -491,7 +495,7 @@ public class DBTCPConnector implements DBConnector {
         }
 
         private DBPort getConnection(final ServerSelector serverSelector) {
-            return (DBPort) getServer(serverSelector).getConnection();
+            return (DBPort) getServer(serverSelector).getConnection(getConnectionWaitTimeMS(), MILLISECONDS);
         }
 
         void requestStart() {
