@@ -163,6 +163,6 @@ public class AggregationCursor<T> implements MongoCursor<T> {
 
     @Override
     public ServerAddress getServerAddress() {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return provider.getServerDescription().getAddress();
     }
 }

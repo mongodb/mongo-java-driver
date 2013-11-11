@@ -126,7 +126,6 @@ public class DBCollection {
     private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private final Codec<Document> commandCodec = new org.mongodb.codecs.DocumentCodec();
     private CompoundDBObjectCodec objectCodec;
 
 
@@ -1101,7 +1100,7 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        MapReduceCommandResultCodec mapReduceCodec =
+        MapReduceCommandResultCodec<DBObject> mapReduceCodec =
             new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
         org.mongodb.MongoCursor<DBObject> executionResult;
@@ -1109,8 +1108,8 @@ public class DBCollection {
         try {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
                                                                                             : command.getReadPreference().toNew();
-            executionResult = new MapReduceOperation(getNamespace(), command.getMapReduce(), mapReduceCodec, readPreference,
-                                                     getBufferPool(), getSession(), false, objectCodec)
+            executionResult = new MapReduceOperation<DBObject>(getNamespace(), command.getMapReduce(), mapReduceCodec, readPreference,
+                                                               getBufferPool(), getSession(), false, objectCodec)
                                   .execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
@@ -1140,17 +1139,16 @@ public class DBCollection {
         if (!command.containsField("mapreduce") && !command.containsField("mapReduce")) {
             throw new IllegalArgumentException("Operation requires mapReduce command");
         }
-        CommandResult res = database.command(command, getOptions(), getReadPreference());
         MapReduce mapReduce = MapReduceCommand.getMapReduceFromDBObject(command);
 
-        MapReduceCommandResultCodec mapReduceCodec =
-            new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
+        MapReduceCommandResultCodec<DBObject> mapReduceCodec = new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
-        org.mongodb.MongoCursor executionResult;
+        org.mongodb.MongoCursor<DBObject> executionResult;
         try {
+            //TODO: read preference
 //            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
 //                                                                                            : command.getReadPreference().toNew();
-            executionResult = new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
+            executionResult = new MapReduceOperation<DBObject>(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
                                                      getBufferPool(), getSession(), false, objectCodec)
                                   .execute();
         } catch (org.mongodb.MongoException e) {
@@ -1159,10 +1157,6 @@ public class DBCollection {
 
         return new MapReduceOutput(command, executionResult, determineMapReduceOutputCollection(mapReduce));
 
-    }
-
-    public boolean isInlineMapReduce(final CommandResult commandResult) {
-        return commandResult.containsField("results") ? true : false;
     }
 
     /**

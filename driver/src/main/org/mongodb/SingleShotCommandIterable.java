@@ -21,7 +21,7 @@ import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;
 
-public class SingleShotCommandIterable<T> implements MongoIterable<T> {
+class SingleShotCommandIterable<T> implements MongoIterable<T> {
     private final MongoCursor<T> cursor;
 
     public SingleShotCommandIterable(final MongoCursor<T> cursor) {

@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.bson.types.Code;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CountOperation;
@@ -28,9 +27,9 @@ import org.mongodb.operation.FindAndReplace;
 import org.mongodb.operation.FindAndReplaceOperation;
 import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
+import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.IterateOperation;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.MappingIterable;
@@ -246,15 +245,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoIterable<T> mapReduce(final String map, final String reduce) {
-            MapReduceCommandResultCodec<Document> mapReduceCodec =
-                new MapReduceCommandResultCodec<Document>(options.getPrimitiveCodecs(), new DocumentCodec());
+            //TODO: encode out into other types?
+            MapReduceCommandResultCodec<T> mapReduceCodec =
+                new MapReduceCommandResultCodec<T>(options.getPrimitiveCodecs(), getCodec());
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
 
-            return new SingleShotCommandIterable<T>(new MapReduceOperation(getNamespace(), mapReduce, mapReduceCodec,
-                                                                           options.getReadPreference(), client.getBufferProvider(),
-                                                                           client.getSession(), false, getCodec())
+            return new SingleShotCommandIterable<T>(new MapReduceOperation<T>(getNamespace(), mapReduce, mapReduceCodec,
+                                                                              options.getReadPreference(), client.getBufferProvider(),
+                                                                              client.getSession(), false, getCodec())
                                                         .execute());
         }
 
@@ -607,9 +607,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return new IterateOperation<T>(getNamespace(), pipeline, options.getReadPreference(), client.getBufferProvider(),
-                                           client.getSession(), false)
-                       .execute();
+            Document document = new Document("aggregate", getNamespace().getCollectionName()).append("pipeline", pipeline);
+            CommandResult commandResult = getDatabase().executeCommand(document, null);
+            return new InlineMongoCursor<T>(commandResult, (List<T>) commandResult.getResponse().get("result"));
         }
 
         @Override

@@ -17,8 +17,9 @@
 package com.mongodb;
 
 import org.mongodb.Document;
-import org.mongodb.SingleShotCommandIterable;
 import org.mongodb.operation.InlineMongoCursor;
+
+import java.util.Iterator;
 
 /**
  * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
@@ -32,7 +33,7 @@ public class MapReduceOutput {
     private final DBCollection collection;
     private final DBObject command;
     private final ServerAddress serverAddress;
-    private final org.mongodb.MongoCursor results;
+    private final org.mongodb.MongoCursor<DBObject> results;
 
     private org.mongodb.CommandResult commandResult;
 
@@ -55,7 +56,7 @@ public class MapReduceOutput {
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-        return new SingleShotCommandIterable<DBObject>(results);
+        return new SingleShotIterable(results);
     }
 
     /**
@@ -75,6 +76,7 @@ public class MapReduceOutput {
      * @return the collection or null
      */
     public DBCollection getOutputCollection() {
+        //TODO: test this
         return collection;
     }
 
@@ -158,5 +160,18 @@ public class MapReduceOutput {
      */
     public int getEmitCount() {
         return ((Document) commandResult.getResponse().get("counts")).getInteger("emit");
+    }
+
+    private final class SingleShotIterable implements Iterable<DBObject> {
+        private final org.mongodb.MongoCursor<DBObject> cursor;
+
+        private SingleShotIterable(final org.mongodb.MongoCursor<DBObject> cursor) {
+            this.cursor = cursor;
+        }
+
+        @Override
+        public Iterator<DBObject> iterator() {
+            return cursor;
+        }
     }
 }

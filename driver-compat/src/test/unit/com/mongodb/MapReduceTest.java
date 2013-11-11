@@ -19,7 +19,6 @@ package com.mongodb;
 import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.SingleShotCommandIterable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -303,8 +302,11 @@ public class MapReduceTest extends DatabaseTestCase {
     //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
-        return results instanceof DBCursor ? ((DBCursor) results).toArray()
-                                           : ((SingleShotCommandIterable<DBObject>) results).into(new ArrayList<DBObject>());
+        List<DBObject> resultsAsList = new ArrayList<DBObject>();
+        for (final DBObject result : results) {
+            resultsAsList.add(result);
+        }
+        return resultsAsList;
     }
 
     private Map<String, Object> toMap(final Iterable<DBObject> result) {
