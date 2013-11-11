@@ -238,7 +238,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @return same DBCursor for chaining operations
      * @since 2.12.0
      */
-    public DBCursor maxTime(final int maxTime, final TimeUnit timeUnit) {
+    public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {
         find.maxTime(maxTime, timeUnit);
         return this;
     }
