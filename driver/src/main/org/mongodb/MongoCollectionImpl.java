@@ -32,7 +32,6 @@ import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOperation;
-import org.mongodb.operation.MappingIterable;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;

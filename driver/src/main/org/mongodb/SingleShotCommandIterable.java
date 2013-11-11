@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MappingIterable;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;
