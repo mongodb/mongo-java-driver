@@ -80,10 +80,6 @@ public class MapReduceOutput {
         return collection;
     }
 
-    public CommandResult getCommandResult() {
-        return new CommandResult(commandResult);
-    }
-
     /**
      * Get the original command that was sent to the database.
      *
