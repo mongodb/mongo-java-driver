@@ -26,7 +26,7 @@ class LatencyMinimizingServerSelector implements ServerSelector {
     private final long acceptableLatencyDifference;
     private final TimeUnit timeUnit;
 
-    public LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
+    LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
         this.acceptableLatencyDifference = acceptableLatencyDifference;
         this.timeUnit = timeUnit;
     }

@@ -67,39 +67,33 @@ public class StickyHAShardedClusterServerSelectorTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNotMultipleConnectionMode() throws UnknownHostException {
+    public void shouldThrowIfConnectionModeIsNotMultiple() throws UnknownHostException {
         selector.choose(new ClusterDescription(Single, Sharded, Collections.<ServerDescription>emptyList()));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNotShardedClusterType() throws UnknownHostException {
+    public void shouldThrowIfConnectionTypeIsNotSharded() throws UnknownHostException {
         selector.choose(new ClusterDescription(Multiple, ReplicaSet, Collections.<ServerDescription>emptyList()));
     }
 
     @Test
-    public void testInitial() {
-        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnecting, first))),
-                     asList(first));
-    }
-
-    @Test
-    public void testStickiness() {
-        // stick the first
-        selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnecting, first)));
-
+    public void shouldChooseFastestConnectedServer() {
         assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first))), asList(secondConnected));
     }
 
     @Test
-    public void testNoneStuck() {
-        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first))), asList(secondConnected));
-    }
-
-    @Test
-    public void testUnstick() {
+    public void shouldStickToNewServerIfStuckServerBecomesUnconnected() {
         // stick it
         selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first)));
 
         assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnecting, first))), asList(first));
+    }
+
+    @Test
+    public void shouldSwitchToFasterServerIfItWasNotPreviouslyConsidered() {
+        // stick the first
+        selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnecting, first)));
+
+        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(secondConnected, first))), asList(secondConnected));
     }
 }

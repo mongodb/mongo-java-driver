@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 import java.net.UnknownHostException;
 
 import static com.mongodb.ClusterConnectionMode.Multiple;
-import static com.mongodb.ClusterType.Sharded;
+import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
 import static com.mongodb.util.MyAsserts.assertEquals;
 import static java.util.Arrays.asList;
@@ -40,41 +40,32 @@ public class CompositeServerSelectorTest {
                                  .state(Connected)
                                  .address(new ServerAddress())
                                  .ok(true)
-                                 .averagePingTime(10, MILLISECONDS)
-                                 .type(ServerType.ShardRouter)
+                                 .averagePingTime(5, MILLISECONDS)
+                                 .type(ServerType.ReplicaSetPrimary)
                                  .build();
 
         second = ServerDescription.builder()
                                   .state(Connected)
                                   .address(new ServerAddress("localhost:27018"))
                                   .ok(true)
-                                  .averagePingTime(8, MILLISECONDS)
-                                  .type(ServerType.ShardRouter)
+                                  .averagePingTime(30, MILLISECONDS)
+                                  .type(ServerType.ReplicaSetSecondary)
                                   .build();
 
         third = ServerDescription.builder()
                                  .state(Connected)
                                  .address(new ServerAddress("localhost:27019"))
                                  .ok(true)
-                                 .averagePingTime(30, MILLISECONDS)
-                                 .type(ServerType.ShardRouter)
+                                 .averagePingTime(35, MILLISECONDS)
+                                 .type(ServerType.ReplicaSetSecondary)
                                  .build();
     }
 
     @Test
-    public void testMultipleServersChosen() {
-        selector = new CompositeServerSelector(asList(new ReadPreferenceServerSelector(ReadPreference.primary()),
-                                                     new LatencyMinimizingServerSelector(15, MILLISECONDS)));
-        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(first, second, third))),
-                     asList(first, second));
-    }
-
-    @Test
-    public void testSingleServerChosen() {
-        selector = new CompositeServerSelector(asList(new StickyHAShardedClusterServerSelector(),
-                                                     new ReadPreferenceServerSelector(ReadPreference.primary()),
-                                                     new LatencyMinimizingServerSelector(15, MILLISECONDS)));
-        assertEquals(selector.choose(new ClusterDescription(Multiple, Sharded, asList(first, second, third))),
-                     asList(second));
+    public void shouldApplyServerSelectorsInOrder() {
+        selector = new CompositeServerSelector(asList(new ReadPreferenceServerSelector(ReadPreference.secondary()),
+                                                      new LatencyMinimizingServerSelector(15, MILLISECONDS)));
+        assertEquals(selector.choose(new ClusterDescription(Multiple, ReplicaSet, asList(first, second, third))),
+                     asList(second, third));
     }
 }

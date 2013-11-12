@@ -37,7 +37,7 @@ class StickyHAShardedClusterServerSelector implements ServerSelector {
 
         synchronized (this) {
             if (!consideredServers.containsAll(okServers) || !okServers.contains(stickyMongos)) {
-                if (!okServers.contains(stickyMongos)) {
+                if (stickyMongos != null && !okServers.contains(stickyMongos)) {
                     stickyMongos = null;
                     consideredServers.clear();
                 }
