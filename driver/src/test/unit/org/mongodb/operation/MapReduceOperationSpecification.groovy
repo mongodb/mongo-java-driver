@@ -81,5 +81,6 @@ class MapReduceOperationSpecification extends Specification {
         ]
     }
 
+    //TODO: need to test read preferences
 
 }

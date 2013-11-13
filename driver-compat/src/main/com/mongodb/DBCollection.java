@@ -1139,15 +1139,13 @@ public class DBCollection {
         if (!command.containsField("mapreduce") && !command.containsField("mapReduce")) {
             throw new IllegalArgumentException("Operation requires mapReduce command");
         }
+        //TODO this is not complete, and the tests havne't been written to show the options that are not implemented yet.
         MapReduce mapReduce = MapReduceCommand.getMapReduceFromDBObject(command);
 
         MapReduceCommandResultCodec<DBObject> mapReduceCodec = new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
 
         org.mongodb.MongoCursor<DBObject> executionResult;
         try {
-            //TODO: read preference
-//            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
-//                                                                                            : command.getReadPreference().toNew();
             executionResult = new MapReduceOperation<DBObject>(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
                                                      getBufferPool(), getSession(), false)
                                   .execute();
