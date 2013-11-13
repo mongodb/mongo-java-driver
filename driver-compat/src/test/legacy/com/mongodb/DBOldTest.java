@@ -25,46 +25,9 @@ import java.net.UnknownHostException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 
 public class DBOldTest extends DatabaseTestCase {
-    @Test
-    public void testCreateCollection() {
-        database.getCollection("foo1").drop();
-        database.getCollection("foo2").drop();
-        database.getCollection("foo3").drop();
-        database.getCollection("foo4").drop();
-
-        BasicDBObject o1 = new BasicDBObject("capped", false);
-        database.createCollection("foo1", o1);
-
-        DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
-                                          .add("size", 100000).add("max", 10).get();
-        DBCollection c = database.createCollection("foo2", o2);
-        for (int i = 0; i < 30; i++) {
-            c.insert(new BasicDBObject("x", i));
-        }
-        assertTrue(c.find().count() <= 10);
-
-        DBObject o3 = BasicDBObjectBuilder.start().add("capped", true)
-                                          .add("size", 1000).add("max", 2).get();
-        c = database.createCollection("foo3", o3);
-        for (int i = 0; i < 30; i++) {
-            c.insert(new BasicDBObject("x", i));
-        }
-        assertEquals(c.find().count(), 2);
-
-        try {
-            DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
-                                              .add("size", -20).get();
-            database.createCollection("foo4", o4);
-            fail();
-        } catch (MongoException e) { // NOPMD
-            // all good;
-        }
-    }
-
     @Test
     public void testForCollectionExistence() {
         database.getCollection("foo1").drop();

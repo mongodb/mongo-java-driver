@@ -26,7 +26,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.command.Create;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
@@ -283,7 +282,7 @@ public class DB {
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
-        executeCommand(new Create(createCollectionOptions));
+        executeCommand(createCollectionOptions.asDocument(), getReadPreference().toNew());
         return getCollection(collectionName);
     }
 

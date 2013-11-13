@@ -32,6 +32,7 @@ import static com.mongodb.Fixture.getPrimary;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
@@ -88,23 +89,48 @@ public class DBTest extends DatabaseTestCase {
 
     @Test(expected = MongoException.class)
     public void shouldReceiveAnErrorIfCreatingCappedCollectionWithoutSize() {
-        database.createCollection("c1", new BasicDBObject("capped", true));
+        database.createCollection("someName", new BasicDBObject("capped", true));
     }
 
     @Test
     public void shouldCreateCappedCollection() {
-        database.createCollection("c1", new BasicDBObject("capped", true).append("size", 242880));
-        assertTrue(database.getCollection("c1").isCapped());
+        collection.drop();
+        database.createCollection(collectionName, new BasicDBObject("capped", true)
+                                                      .append("size", 242880));
+        assertTrue(database.getCollection(collectionName).isCapped());
     }
 
     @Test
     public void shouldCreateCollectionWithMax() {
         collection.drop();
-        DBCollection c1 = database.createCollection(collectionName, new BasicDBObject("capped", true)
-                                                                        .append("size", 242880)
-                                                                        .append("max", 10));
+        DBCollection cappedCollectionWithMax = database.createCollection(collectionName, new BasicDBObject("capped", true)
+                                                                                             .append("size", 242880)
+                                                                                             .append("max", 10));
 
-        assertThat(c1.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
+        assertThat(cappedCollectionWithMax.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
+
+        for (int i = 0; i < 11; i++) {
+            cappedCollectionWithMax.insert(new BasicDBObject("x", i));
+        }
+        assertThat(cappedCollectionWithMax.find().count(), is(10));
+
+    }
+
+    @Test
+    public void shouldCreateUncappedCollection() {
+        collection.drop();
+        BasicDBObject creationOptions = new BasicDBObject("capped", false);
+        database.createCollection(collectionName, creationOptions);
+
+        assertFalse(database.getCollection(collectionName).isCapped());
+    }
+
+    @Test(expected = CommandFailureException.class)
+    public void testCreateCollection() {
+        collection.drop();
+        DBObject creationOptions = BasicDBObjectBuilder.start().add("capped", true)
+                                                       .add("size", -20).get();
+        database.createCollection(collectionName, creationOptions);
     }
 
     @Test(expected = MongoDuplicateKeyException.class)
