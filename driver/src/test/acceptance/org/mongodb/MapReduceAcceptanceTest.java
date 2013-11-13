@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import junit.framework.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -185,8 +187,11 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                   new Document("_id", "B212").append("value", 200.0)));
     }
 
-    //TODO: test map reduce into a collection
-
+    @Test
+    @Ignore("not implemented yet - waiting until fluent API is defined")
+    public void shouldInsertMapReduceResultsIntoACollectionWhenOutputTypeIsNotInline() {
+        Assert.fail("API not defined");
+    }
 
     static class LabelCount implements Comparable<LabelCount> {
         private final String tag;
@@ -231,12 +236,12 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
         // So Collections.sort works.  Sorts by count.
         @Override
-        public int compareTo(final LabelCount o) {
-            int cmp = Double.compare(count, o.count);
+        public int compareTo(final LabelCount labelCount) {
+            int cmp = Double.compare(count, labelCount.count);
             if (cmp != 0) {
                 return cmp;
             }
-            return tag.compareTo(o.tag);
+            return tag.compareTo(labelCount.tag);
         }
 
         @Override
