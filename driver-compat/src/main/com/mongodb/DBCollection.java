@@ -31,7 +31,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CountOperation;
@@ -51,6 +50,7 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
+import org.mongodb.operation.MapReduceCommandResultCodec;
 import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
@@ -1109,7 +1109,7 @@ public class DBCollection {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
                                                                                             : command.getReadPreference().toNew();
             executionResult = new MapReduceOperation<DBObject>(getNamespace(), command.getMapReduce(), mapReduceCodec, readPreference,
-                                                               getBufferPool(), getSession(), false, objectCodec)
+                                                               getBufferPool(), getSession(), false)
                                   .execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
@@ -1149,7 +1149,7 @@ public class DBCollection {
 //            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
 //                                                                                            : command.getReadPreference().toNew();
             executionResult = new MapReduceOperation<DBObject>(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
-                                                     getBufferPool(), getSession(), false, objectCodec)
+                                                     getBufferPool(), getSession(), false)
                                   .execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);

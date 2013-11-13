@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import junit.framework.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -28,6 +27,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mongodb.Sort.ascending;
 
 public class MapReduceAcceptanceTest extends DatabaseTestCase {
@@ -190,7 +190,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
     @Test
     @Ignore("not implemented yet - waiting until fluent API is defined")
     public void shouldInsertMapReduceResultsIntoACollectionWhenOutputTypeIsNotInline() {
-        Assert.fail("API not defined");
+        fail("API not defined");
     }
 
     static class LabelCount implements Comparable<LabelCount> {

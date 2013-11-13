@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.command;
+package org.mongodb.operation;
 
 import org.bson.BSONReader;
 import org.bson.BSONType;
@@ -51,5 +51,9 @@ public class MapReduceCommandResultCodec<T> extends DocumentCodec {
         }
         reader.readEndArray();
         return list;
+    }
+
+    Decoder<T> getResultDecoder() {
+        return decoder;
     }
 }

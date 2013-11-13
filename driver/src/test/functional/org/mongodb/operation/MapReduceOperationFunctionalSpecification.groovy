@@ -6,7 +6,6 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.codecs.PrimitiveCodecs
-import org.mongodb.command.MapReduceCommandResultCodec
 
 import static org.hamcrest.CoreMatchers.not
 import static org.hamcrest.Matchers.hasKey
@@ -30,7 +29,7 @@ class MapReduceOperationFunctionalSpecification extends FunctionalSpecification 
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
         MapReduceOperation operation = new MapReduceOperation<Document>(namespace, mapReduce, codec, primary(), bufferProvider,
-                                                                        session, false, new DocumentCodec())
+                                                                        session, false)
 
 
         when:
@@ -49,7 +48,7 @@ class MapReduceOperationFunctionalSpecification extends FunctionalSpecification 
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
         MapReduceOperation operation = new MapReduceOperation<Document>(namespace, mapReduce, codec, primary(), bufferProvider,
-                                                                        session, false, new DocumentCodec())
+                                                                        session, false)
 
 
         when:

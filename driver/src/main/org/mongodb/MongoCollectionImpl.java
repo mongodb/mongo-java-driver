@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.bson.types.Code;
-import org.mongodb.command.MapReduceCommandResultCodec;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
@@ -31,6 +31,7 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
+import org.mongodb.operation.MapReduceCommandResultCodec;
 import org.mongodb.operation.MapReduceOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
@@ -243,17 +244,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoIterable<T> mapReduce(final String map, final String reduce) {
+        public MongoIterable<Document> mapReduce(final String map, final String reduce) {
             //TODO: encode out into other types?
-            MapReduceCommandResultCodec<T> mapReduceCodec =
-                new MapReduceCommandResultCodec<T>(options.getPrimitiveCodecs(), getCodec());
+            MapReduceCommandResultCodec<Document> mapReduceCodec =
+                new MapReduceCommandResultCodec<Document>(options.getPrimitiveCodecs(), new DocumentCodec());
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
 
-            return new SingleShotCommandIterable<T>(new MapReduceOperation<T>(getNamespace(), mapReduce, mapReduceCodec,
+            return new SingleShotCommandIterable<Document>(new MapReduceOperation<Document>(getNamespace(), mapReduce, mapReduceCodec,
                                                                               options.getReadPreference(), client.getBufferProvider(),
-                                                                              client.getSession(), false, getCodec())
+                                                                              client.getSession(), false)
                                                         .execute());
         }
 
