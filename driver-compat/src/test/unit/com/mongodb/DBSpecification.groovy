@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import org.mongodb.Document
@@ -24,7 +22,6 @@ import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.command.Command
-import org.mongodb.command.GetLastError
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
@@ -35,7 +32,6 @@ import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.primary
 import static org.mongodb.Fixture.getBufferProvider
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.connection.ClusterConnectionMode.SINGLE
 import static org.mongodb.connection.ClusterType.UNKNOWN
 
@@ -87,22 +83,6 @@ class DBSpecification extends Specification {
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
-    def 'should throw com.mongodb.MongoException if executeCommand fails'() {
-        given:
-        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
-        session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
-                                                                                 new Document(), 15L))
-        }
-
-        when:
-        database.executeCommand(new GetLastError(ACKNOWLEDGED));
-
-        then:
-        thrown(com.mongodb.CommandFailureException)
-    }
-
-    @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if getCollectionNames fails'() {
         given:
         session.createServerConnectionProvider(_) >> {
@@ -115,37 +95,6 @@ class DBSpecification extends Specification {
 
         then:
         thrown(com.mongodb.CommandFailureException)
-    }
-
-    @SuppressWarnings('UnnecessaryQualifiedReference')
-    def 'should throw com.mongodb.MongoException if command fails for a reasons that is not a command failure'() {
-        given:
-        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
-        session.createServerConnectionProvider(_) >> {
-            throw new org.mongodb.MongoInternalException('An exception that is not a MongoCommandFailureException')
-        }
-
-        when:
-        database.executeCommandAndReturnCommandResultIfCommandFailureException(new GetLastError(ACKNOWLEDGED))
-
-        then:
-        thrown(com.mongodb.MongoException)
-    }
-
-    def 'should not throw MongoCommandFailureException if command fails'() {
-        given:
-        def expectedCommandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), new Document(), 15L)
-        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
-        session.createServerConnectionProvider(_) >> {
-            throw new MongoCommandFailureException(expectedCommandResult)
-        }
-
-        when:
-        org.mongodb.CommandResult actualCommandResult = database.executeCommandAndReturnCommandResultIfCommandFailureException(
-                new GetLastError(ACKNOWLEDGED))
-
-        then:
-        actualCommandResult == expectedCommandResult
     }
 
     @SuppressWarnings('UnnecessaryQualifiedReference')
