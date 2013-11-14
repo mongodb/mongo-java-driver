@@ -19,6 +19,7 @@ package com.mongodb
 import static org.hamcrest.Matchers.contains
 import static spock.util.matcher.HamcrestSupport.that
 
+@SuppressWarnings('DuplicateMapLiteral')
 class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     private idOfExistingDocument
 
@@ -298,6 +299,169 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         then:
         distinctValuesOfFieldX.size() == 5
         that distinctValuesOfFieldX, contains(1, 3, 5, 7, 9)
+    }
+
+    @SuppressWarnings('UnnecessaryObjectReferences')
+    def insertDataForGroupTests() {
+        collection.drop();
+        collection.save(~['x': 'a']);
+        collection.save(~['x': 'a']);
+        collection.save(~['x': 'a']);
+        collection.save(~['x': 'b']);
+        collection.save(~['x': 'b']);
+        collection.save(~['x': 'b']);
+        collection.save(~['x': 'b']);
+        collection.save(~['x': 'c']);
+    }
+
+    def 'should group by the x field and apply the provided count function'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        DBObject result = collection.group(~['x': 1],
+                                           null,
+                                           ~['count': 0],
+                                           'function(o , p){ p.count++; }');
+
+        then:
+        result.size() == 3
+        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
+    }
+
+    def 'should group by the x field and apply the provided count function using a GroupCommand'() {
+        given:
+        insertDataForGroupTests()
+        GroupCommand command = new GroupCommand(collection,
+                                                ~['x': 1],
+                                                null,
+                                                ~['count': 0],
+                                                'function(o , p){ p.count++; }',
+                                                null);
+
+        when:
+        DBObject result = collection.group(command);
+
+        then:
+        result.size() == 3
+        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
+    }
+
+    def 'should group and count only those documents that fulfull the given condition'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        def result = collection.group(~['x': 1],
+                                      ~['x': 'b'],
+                                      ~['count': 0],
+                                      'function(o , p){ p.count++; }')
+
+        then:
+        result.size() == 1;
+        that result, contains(~['x': 'b', 'count': 4.0]);
+    }
+
+    def 'should be able to set a value in the results'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        def result = collection.group(~['x': 1],
+                                      ~['x': 'c'],
+                                      ~['valueFound': false],
+                                      'function(o, p){ p.valueFound = true; }');
+
+        then:
+        result.size() == 1;
+        that result, contains(~['x': 'c', 'valueFound': true]);
+    }
+
+    def 'should return results set by the function, based on condition supplied without key'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        def result = collection.group(null,
+                                      ~['x': 'b'],
+                                      ~['valueFound': 0],
+                                      'function(o, p){ p.valueFound = true; }');
+
+        then:
+        result.size() == 1
+        that result, contains(~['valueFound': true]);
+    }
+
+    def 'finalize function should replace the whole result document if a document is the return type of finalize function'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        def result = collection.group(~['x': 1],
+                                      ~['x': 'b'],
+                                      ~['valueFound': 0],
+                                      'function(o, p){ p.valueFound = true; }',
+                                      'function(o){ return { a:1 } }');
+
+        then:
+        result.size() == 1;
+        that result, contains(~['a': 1.0]);
+    }
+
+    def 'finalize function should modify the result document'() {
+        given:
+        insertDataForGroupTests()
+
+        when:
+        def result = collection.group(~['x': 1],
+                                      ~['x': 'b'],
+                                      ~['valueFound': 0],
+                                      'function(o, p){ p.valueFound = true; }',
+                                      'function(o){ o.a = 1 }');
+
+        then:
+        result.size() == 1;
+        that result, contains(~['x': 'b', 'valueFound': true, 'a': 1.0]);
+    }
+
+    def 'should throw an Exception if no initial document provided'() {
+        when:
+        collection.group(~['x': 1],
+                         ~['x': 'b'],
+                         null,
+                         'function(o, p){ p.valueFound = true; }');
+
+        then:
+        CommandFailureException exception = thrown(CommandFailureException)
+        exception.getCommandResult().getErrorMessage().contains('initial has to be an object')
+    }
+
+    def 'should throw an Exception if no reduce function provided'() {
+        when:
+        collection.group(~['x': 1],
+                         ~['x': 'b'],
+                         ~['z': 0],
+                         null);
+
+        then:
+        thrown(CommandFailureException)
+    }
+
+    @SuppressWarnings('deprecation')
+    def 'should be able to perform group operations by providing the plain Command object'() {
+        given:
+        insertDataForGroupTests()
+        DBObject command = ~['key'    : ~['x': 1],
+                             'cond'   : null,
+                             '$reduce': 'function(o, p){ p.count++; }',
+                             'initial': ~['count': 0]];
+
+        when:
+        def result = collection.group(command);
+
+        then:
+        result.size() == 3;
+        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
     }
 
     static class ClassA extends BasicDBObject { }

@@ -69,6 +69,10 @@ public class GroupCommand {
             group.filter(toDocument(condition));
         }
 
+        return getGroupCommand(group);
+    }
+
+    private org.mongodb.command.Group getGroupCommand(final Group group) {
         return new org.mongodb.command.Group(group, input);
     }
 }

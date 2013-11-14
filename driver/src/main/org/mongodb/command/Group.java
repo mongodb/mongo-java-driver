@@ -24,7 +24,7 @@ public class Group extends Command {
         super(asDocument(group, collectionName));
     }
 
-    private static Document asDocument(final org.mongodb.operation.Group group, final String collectionName) {
+    public static Document asDocument(final org.mongodb.operation.Group group, final String collectionName) {
 
         Document document = new Document("ns", collectionName);
 
