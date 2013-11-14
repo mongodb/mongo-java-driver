@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,9 +540,9 @@ public class DBApiLayer extends DB {
                 if (writeCommandResult.containsKey("errDetails")) {
                     @SuppressWarnings("unchecked")
                     List<DBObject> errDetails = (List<DBObject>) writeCommandResult.get("errDetails");
-                    code = (Integer) errDetails.get(errDetails.size() - 1).get("errCode");
+                    code = (Integer) errDetails.get(errDetails.size() - 1).get("code");
                 } else {
-                    code = writeCommandResult.getInt("errCode");
+                    code = writeCommandResult.getInt("code");
                 }
                 if (code == 11000 || code == 11001 || code == 12582) {
                     throw new MongoException.DuplicateKey(code, writeCommandResult);
