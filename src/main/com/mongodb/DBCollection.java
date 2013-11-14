@@ -1258,7 +1258,7 @@ public abstract class DBCollection {
      *            reduce function in javascript code
      * @param query
      *            to match
-     * @return
+     * @return a MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
      */
@@ -1267,7 +1267,7 @@ public abstract class DBCollection {
     }
 
     /**
-     * performs a map reduce operation
+     * Performs a map reduce operation
      * Specify an outputType to control job execution
      * * INLINE - Return results inline
      * * REPLACE - Replace the output collection with the job output
@@ -1285,7 +1285,7 @@ public abstract class DBCollection {
      *            reduce function in javascript code
      * @param query
      *            to match
-     * @return
+     * @return a MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
      */
@@ -1294,7 +1294,7 @@ public abstract class DBCollection {
     }
 
     /**
-     * performs a map reduce operation
+     * Performs a map reduce operation
      * Specify an outputType to control job execution
      * * INLINE - Return results inline
      * * REPLACE - Replace the output collection with the job output
@@ -1314,7 +1314,7 @@ public abstract class DBCollection {
      *            to match
      * @param readPrefs
      *            ReadPreferences for this operation
-     * @return
+     * @return a MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
      */
@@ -1325,11 +1325,11 @@ public abstract class DBCollection {
     }
 
     /**
-     * performs a map reduce operation
+     * Performs a map reduce operation
      *
      * @param command
      *            object representing the parameters
-     * @return
+     * @return a MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      */
     public MapReduceOutput mapReduce( MapReduceCommand command ){
@@ -1341,13 +1341,15 @@ public abstract class DBCollection {
     }
 
     /**
-     * performs a map reduce operation
+     * Performs a map reduce operation
      *
      * @param command
      *            object representing the parameters
-     * @return
+     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @deprecated use {@code mapReduce (MapReduceCommand command)} instead
      * @throws MongoException
      */
+    @Deprecated
     public MapReduceOutput mapReduce( DBObject command ){
         if ( command.get( "mapreduce" ) == null && command.get( "mapReduce" ) == null )
             throw new IllegalArgumentException( "need mapreduce arg" );
