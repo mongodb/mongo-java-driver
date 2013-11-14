@@ -1,52 +1,24 @@
 commit-*
-.jsshell
-.js*shell
 
-*.[oa]
 *~
-*.pyc
-*CVS
-*.so
-*.d
 *.class*
-.cvsignore*
-.svn
 .project
 .#*
 .git
 *#
-*.swp
-.MQLshell
+*.rc
 
 #os x stuff
 *Thumbs.db*
 *.DS_Store
 
-src/main/Foo.java
-src/main/Eliot.java
-settings.py
-foo.java
-
-10gen.properties
-logs
 test-output
 build
-crap
-hs_err_*
 doc
 docs
 bin
 target
-include/jython/cachedir
-mongo.jar
-mongo-*.jar
-bson.jar
-bson-*.jar
-
-TAGS
-
-#test local files
-src/test/ed/webtests/webtest-local.bash
+*.jar
 
 *.ipr
 *.iml
