@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -518,8 +518,8 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
-        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
-        WriteResult wr = c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
+        c.save(new BasicDBObject("x", new String[]{"b", "c"}));
+        WriteResult wr = c.save(new BasicDBObject("x", new String[]{"c", "d"}));
         if (mongo.getReplicaSetStatus() != null  && mongo.getReplicaSetStatus().getName() != null) {
             wr.getLastError(new WriteConcern(size));
         }
@@ -552,7 +552,7 @@ public class JavaClientTest extends TestCase {
         c.drop();
 
         c.save( new BasicDBObject( "x" , new String[]{ "a" , "b" } ) );
-        c.save( new BasicDBObject( "x" , new String[]{ "b" , "c" } ) );
+        c.save(new BasicDBObject("x", new String[]{"b", "c"}));
         c.save( new BasicDBObject( "x" , new String[]{ "c" , "d" } ) );
 
         Map<String, Object> scope = new HashMap<String, Object>();
@@ -736,26 +736,6 @@ public class JavaClientTest extends TestCase {
         }
         finally {
             _db.removeUser("xx");
-        }
-    }
-
-    @Test
-    public void testAuthenticateWithCredentialsInURIAndNoDatabase() throws UnknownHostException {
-        DB adminDB = cleanupMongo.getDB("admin");
-        adminDB.addUser("xx", "e".toCharArray());
-
-        try {
-            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost"));
-            try {
-                DB db = m.getDB("admin");
-                assertNotNull(db.getAuthenticationCredentials());
-                assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
-            }
-            finally {
-                m.close();
-            }
-        } finally {
-            adminDB.removeUser("xx");
         }
     }
 
