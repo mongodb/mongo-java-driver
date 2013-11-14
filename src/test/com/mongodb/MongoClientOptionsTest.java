@@ -1,12 +1,12 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
- * <p/>
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,8 @@ import javax.net.ssl.SSLSocketFactory;
 import static com.mongodb.util.MyAsserts.assertEquals;
 import static com.mongodb.util.MyAsserts.assertNotNull;
 import static com.mongodb.util.MyAsserts.fail;
+import static java.lang.Integer.parseInt;
+import static java.lang.System.getProperty;
 
 public class MongoClientOptionsTest {
 
@@ -51,7 +53,9 @@ public class MongoClientOptionsTest {
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
         assertEquals(0, options.getHeartbeatThreadCount());
-        assertEquals(15, options.getAcceptableLatencyDifference());
+        assertEquals(getProperty("com.mongodb.slaveAcceptableLatencyMS") != null
+                     ? parseInt(getProperty("com.mongodb.slaveAcceptableLatencyMS")) : 15,
+                     options.getAcceptableLatencyDifference());
     }
 
     @Test
