@@ -20,8 +20,6 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
-
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -253,26 +251,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
         c.dropIndexes("z_2d");
         assertEquals(1, c.getIndexInfo().size());
-
-    }
-
-    @Test
-    public void testDistinct() {
-        DBCollection c = collection;
-
-        for (int i = 0; i < 100; i++) {
-            BasicDBObject o = new BasicDBObject();
-            o.put("_id", i);
-            o.put("x", i % 10);
-            c.save(o);
-        }
-        assertEquals(100, c.count());
-
-        List l = c.distinct("x");
-        assertEquals(10, l.size());
-
-        l = c.distinct("x", new BasicDBObject("_id", new BasicDBObject("$gt", 95)));
-        assertEquals(4, l.size());
 
     }
 

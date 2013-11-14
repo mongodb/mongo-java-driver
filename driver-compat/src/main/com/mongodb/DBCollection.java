@@ -22,6 +22,7 @@ import com.mongodb.codecs.DBDecoderAdapter;
 import com.mongodb.codecs.DBEncoderAdapter;
 import com.mongodb.codecs.DBEncoderFactoryAdapter;
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.operation.DistinctOperation;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;
@@ -37,8 +38,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.command.Distinct;
-import org.mongodb.command.DistinctCommandResult;
 import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
@@ -883,8 +882,10 @@ public class DBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        final Find find = new Find(toDocument(query)).limit((int) limit).skip((int) skip).readPreference(readPreference.toNew())
-                                                     .maxTime(maxTime, maxTimeUnit);
+        Find find = new Find(toDocument(query)).limit((int) limit)
+                                               .skip((int) skip)
+                                               .readPreference(readPreference.toNew())
+                                               .maxTime(maxTime, maxTimeUnit);
 
         return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getBufferPool(), getSession(), false));
     }
@@ -1051,8 +1052,15 @@ public class DBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(toDocument(query))
                               .readPreference(readPreference.toNew());
-        Distinct distinctOperation = new Distinct(getName(), fieldName, find);
-        return new DistinctCommandResult(getDB().executeCommand(distinctOperation)).getValue();
+        org.mongodb.MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getBufferPool(),
+                                                                       getSession(), false).execute();
+
+        List<String> results = new ArrayList<String>();
+        while (result.hasNext()) {
+            results.add(result.next());
+        }
+
+        return results;
     }
 
     /**

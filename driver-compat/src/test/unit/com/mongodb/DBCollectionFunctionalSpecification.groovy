@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
+
+import static org.hamcrest.Matchers.contains
+import static spock.util.matcher.HamcrestSupport.that
 
 class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     private idOfExistingDocument
@@ -260,6 +261,43 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         DBCollection replacedCollection = database.getCollection(existingCollectionName);
         replacedCollection.findOne().get(keyInExistingCollection) == null
         replacedCollection.findOne().get(keyInOriginalCollection).toString() == valueInOriginalCollection
+    }
+
+    def 'should return a list of all the values of a given field without duplicates'() {
+        given:
+        collection.drop()
+        for (int i = 0; i < 100; i++) {
+            def document = ~['_id': i,
+                             'x'  : i % 10]
+            collection.save(document);
+        }
+        assert collection.count() == 100;
+
+        when:
+        List distinctValuesOfFieldX = collection.distinct('x')
+
+        then:
+        distinctValuesOfFieldX.size() == 10
+        that distinctValuesOfFieldX, contains(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+    }
+
+    def 'should query database for values and return a list of all the distinct values of a given field that match the filter'() {
+        given:
+        collection.drop()
+        for (int i = 0; i < 100; i++) {
+            def document = ~['_id'        : i,
+                             'x'          : i % 10,
+                             'isOddNumber': i % 2]
+            collection.save(document);
+        }
+        assert collection.count() == 100;
+
+        when:
+        List distinctValuesOfFieldX = collection.distinct('x', ~['isOddNumber': 1]);
+
+        then:
+        distinctValuesOfFieldX.size() == 5
+        that distinctValuesOfFieldX, contains(1, 3, 5, 7, 9)
     }
 
     static class ClassA extends BasicDBObject { }
