@@ -33,7 +33,6 @@ import org.mongodb.diagnostics.Loggers;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import java.util.List;
@@ -64,8 +63,7 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
         this.pipeline = pipeline;
         this.options = options;
         command = asCommandDocument();
-        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
-        connectionProvider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
+        connectionProvider = getConnectionProvider(readPreference);
         serverAddress = connectionProvider.getServerDescription().getAddress();
     }
 
