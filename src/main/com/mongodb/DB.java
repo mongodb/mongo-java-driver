@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ public abstract class DB {
                 primaryRequired = true;
             }
         } else if(comString.equals("aggregate")) {
+            @SuppressWarnings("unchecked")
             List<DBObject> pipeline = (List<DBObject>) command.get("pipeline");
             primaryRequired = pipeline.get(pipeline.size()-1).get("$out") != null;
         } else {
