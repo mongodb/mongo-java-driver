@@ -447,23 +447,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         thrown(CommandFailureException)
     }
 
-    @SuppressWarnings('deprecation')
-    def 'should be able to perform group operations by providing the plain Command object'() {
-        given:
-        insertDataForGroupTests()
-        DBObject command = ~['key'    : ~['x': 1],
-                             'cond'   : null,
-                             '$reduce': 'function(o, p){ p.count++; }',
-                             'initial': ~['count': 0]];
-
-        when:
-        def result = collection.group(command);
-
-        then:
-        result.size() == 3;
-        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
-    }
-
     static class ClassA extends BasicDBObject { }
     static class ClassB extends BasicDBObject { }
 

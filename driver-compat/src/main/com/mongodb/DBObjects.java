@@ -132,5 +132,18 @@ final class DBObjects {
         return dbList;
     }
 
+    public static BasicDBList toDBList(final org.mongodb.MongoCursor<?> source) {
+        BasicDBList dbList = new BasicDBList();
+        while (source.hasNext()) {
+            Object o = source.next();
+            if (o instanceof Document) {
+                dbList.add(toDBObject((Document) o));
+            } else {
+                dbList.add(o);
+            }
+        }
+        return dbList;
+    }
+
     private DBObjects() { }
 }

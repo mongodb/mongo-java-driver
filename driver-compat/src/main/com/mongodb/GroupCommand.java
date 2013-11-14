@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import org.bson.types.Code;
-import org.mongodb.command.Command;
 import org.mongodb.operation.Group;
 
 import static com.mongodb.DBObjects.toDocument;
@@ -57,7 +56,7 @@ public class GroupCommand {
         return new BasicDBObject("group", args);
     }
 
-    public Command toNew() {
+    Group toNew() {
         Group group = new Group(toNullableDocument(keys),
                                 reduce != null ? new Code(reduce) : null,
                                 toNullableDocument(initial));
@@ -69,10 +68,6 @@ public class GroupCommand {
             group.filter(toDocument(condition));
         }
 
-        return getGroupCommand(group);
-    }
-
-    private org.mongodb.command.Group getGroupCommand(final Group group) {
-        return new org.mongodb.command.Group(group, input);
+        return group;
     }
 }

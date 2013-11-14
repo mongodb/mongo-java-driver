@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.ReadPreference;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
@@ -81,9 +82,21 @@ public abstract class BaseOperation<T> implements Operation<T> {
      * Use this method to get a ServerConnectionProvider that doesn't rely on specified read preferences.  Used by Operations like commands
      * which always run against the primary.
      *
-     * @return a ServerConnectionProvider initialise with a PrimaryServerSelector
+     * @return a ServerConnectionProvider initialised with a PrimaryServerSelector
      */
     protected ServerConnectionProvider getPrimaryServerConnectionProvider() {
         return getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+    }
+
+    /**
+     * Use this method to get a provider that works based upon a given readPreference.  According to the implementation of
+     * ReadPreferenceServerSelector, if readPreference is null, primary will be used by default.
+     *
+     * @param readPreference the requested ReadPreference for this operation
+     * @return a ServerConnectionProvider initialised with a ReadPreferenceServerSelector
+     */
+    protected ServerConnectionProvider getConnectionProvider(final ReadPreference readPreference) {
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
+        return session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
     }
 }

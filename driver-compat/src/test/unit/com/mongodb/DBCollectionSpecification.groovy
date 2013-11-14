@@ -19,7 +19,6 @@
 package com.mongodb
 
 import org.mongodb.Document
-import org.mongodb.MongoCommandFailureException
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
@@ -29,7 +28,6 @@ import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
-import static com.mongodb.MongoExceptions.mapException
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.Fixture.getBufferProvider
 
@@ -99,25 +97,6 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(com.mongodb.MongoException)
-    }
-
-    @SuppressWarnings('GrDeprecatedAPIUsage') //yes this is deprecated but still needs to be tested
-    def 'should throw com.mongodb.CommandFailureException when group fails'() {
-        given:
-        database.executeCommand(_) >> {
-            Exception exception = new MongoCommandFailureException(new org.mongodb.CommandResult(
-                    new org.mongodb.connection.ServerAddress(),
-                    new Document(),
-                    15L))
-
-            throw mapException(exception)
-        }
-
-        when:
-        collection.group(new BasicDBObject());
-
-        then:
-        thrown(com.mongodb.CommandFailureException)
     }
 
     def 'should throw MongoDuplicateKeyException when createIndex fails'() {

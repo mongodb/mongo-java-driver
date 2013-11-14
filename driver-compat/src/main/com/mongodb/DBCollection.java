@@ -38,7 +38,6 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.command.Command;
-import org.mongodb.command.GroupCommandResult;
 import org.mongodb.command.MapReduceCommandResult;
 import org.mongodb.command.MapReduceCommandResultCodec;
 import org.mongodb.command.MapReduceInlineCommandResult;
@@ -56,6 +55,7 @@ import org.mongodb.operation.FindAndReplaceOperation;
 import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.GetIndexesOperation;
+import org.mongodb.operation.GroupOperation;
 import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
@@ -987,26 +987,14 @@ public class DBCollection {
      * @return a document with the grouped records as well as the command meta-data
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        return group(cmd.toNew());
-    }
-
-    /**
-     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
-     * Deprecated. Use {@link #group(com.mongodb.GroupCommand)} instead.
-     *
-     * @param args specifies the arguments to the group function
-     * @return a document with the grouped records as well as the command meta-data
-     */
-    @Deprecated
-    public DBObject group(final DBObject args) {
-        Document commandDocument = new Document("group", toDocument(args).append("ns", getName()));
-        return group(new Command(commandDocument));
-    }
-
-
-    private DBObject group(final Command command) {
-        GroupCommandResult commandResult = new GroupCommandResult(getDB().executeCommand(command));
-        return toDBList(commandResult.getValue());
+        //TODO: test read preference
+        org.mongodb.MongoCursor<Document> cursor = executeOperation(new GroupOperation(getNamespace(),
+                                                                                       cmd.toNew(),
+                                                                                       readPreference.toNew(),
+                                                                                       getBufferPool(),
+                                                                                       getSession(),
+                                                                                       false));
+        return toDBList(cursor);
     }
 
     /**
@@ -1284,7 +1272,7 @@ public class DBCollection {
         return new CommandResult(new AggregateOperation<Document>(getNamespace(), stages, getDocumentCodec(),
             options.toNew(), getBufferPool(), getSession(), false, getReadPreference().toNew()).explain());
     }
-    
+
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
         return dollarOutPresent ? primary() : readPreference;
     }
@@ -1432,12 +1420,8 @@ public class DBCollection {
     }
 
     private <T> void insertIndex(final Insert<T> insertIndexOperation, final Encoder<T> encoder) {
-        try {
-            new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
-                                   getBufferPool(), getSession(), false).execute();
-        } catch (org.mongodb.MongoException exception) {
-            throw mapException(exception);
-        }
+        executeOperation(new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"), insertIndexOperation, encoder,
+                                                getBufferPool(), getSession(), false));
     }
 
     /**
