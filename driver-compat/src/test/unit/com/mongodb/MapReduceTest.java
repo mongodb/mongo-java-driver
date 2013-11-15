@@ -286,19 +286,6 @@ public class MapReduceTest extends DatabaseTestCase {
         assertNotNull(output.getServerUsed());
     }
 
-    //TODO: test this MUCH more thoroughly.
-    @Test
-    public void testMapReduceInDocumentForm() {
-        DBObject mapReduce = new BasicDBObject("mapReduce", collection.getName()).append("map", DEFAULT_MAP)
-                                                                                 .append("reduce", DEFAULT_REDUCE)
-                                                                                 .append("out", new BasicDBObject("inline", 1));
-
-        List<DBObject> results = toList(collection.mapReduce(mapReduce).results());
-
-        assertNotNull(results);
-        assertThat(results, everyItem(allOf(isA(DBObject.class), hasFields(new String[]{"_id", "value"}))));
-    }
-
     //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
 
     private List<DBObject> toList(final Iterable<DBObject> results) {

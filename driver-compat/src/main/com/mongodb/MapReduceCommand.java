@@ -358,24 +358,6 @@ public class MapReduceCommand {
         INLINE
     }
 
-    // yes, I know, this actually has nothing to do with MapReduceCommand.  But it didn't feel right in DBCollection, and it can't go into
-    // MapReduce because that wouold pollute org.mongodb with com.mongodb stuff.
-    // http://docs.mongodb.org/manual/reference/command/mapReduce/#mapreduce-out-cmd
-    static MapReduce getMapReduceFromDBObject(final DBObject command) {
-        //TODO test drive this
-
-        MapReduceOutput mapReduceOutput = null;
-        Object output = command.get("out");
-        if (output instanceof String) {
-            mapReduceOutput = new MapReduceOutput((String) output);
-        }
-        MapReduce mapReduce = new MapReduce(new Code((String) command.get("map")),
-                                            new Code((String) command.get("reduce")),
-                                            mapReduceOutput);
-
-        return mapReduce;
-    }
-
     MapReduce getMapReduce() {
         MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {

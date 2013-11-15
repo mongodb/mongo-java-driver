@@ -1130,34 +1130,6 @@ public class DBCollection {
     }
 
     /**
-     * Perform mapReduce operation.
-     *
-     * @param command specifies the command parameters
-     * @return a mapReduce output
-     */
-    public MapReduceOutput mapReduce(final DBObject command) {
-        if (!command.containsField("mapreduce") && !command.containsField("mapReduce")) {
-            throw new IllegalArgumentException("Operation requires mapReduce command");
-        }
-        //TODO this is not complete, and the tests havne't been written to show the options that are not implemented yet.
-        MapReduce mapReduce = MapReduceCommand.getMapReduceFromDBObject(command);
-
-        MapReduceCommandResultCodec<DBObject> mapReduceCodec = new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
-
-        org.mongodb.MongoCursor<DBObject> executionResult;
-        try {
-            executionResult = new MapReduceOperation<DBObject>(getNamespace(), mapReduce, mapReduceCodec, getReadPreference().toNew(),
-                                                     getBufferPool(), getSession(), false)
-                                  .execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
-
-        return new MapReduceOutput(command, executionResult, determineMapReduceOutputCollection(mapReduce));
-
-    }
-
-    /**
      * Method implements aggregation framework.
      *
      * @param firstOp       requisite first operation to be performed in the aggregation pipeline
