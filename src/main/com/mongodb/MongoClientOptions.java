@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
+/*
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.mongodb;
@@ -689,6 +688,28 @@ public class MongoClientOptions {
         return heartbeatThreadCount;
     }
 
+    /**
+     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
+     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
+     * time plus the acceptable latency difference.
+     * <p>
+     * For example, let's say that the client is choosing a server to send a query when
+     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
+     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
+     * the client will send the query to either server1 or server2 (randomly selecting between the two).
+     * </p>
+     * <p>
+     * The default value is 15 milliseconds.
+     * </p>
+     *
+
+     * @return the acceptable latency difference, in milliseconds
+     * @since 2.12.0
+     */
+    public int getAcceptableLatencyDifference() {
+        return acceptableLatencyDifference;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -797,28 +818,33 @@ public class MongoClientOptions {
         return result;
     }
 
-    /**
-     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
-     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
-     * time plus the acceptable latency difference.
-     * <p>
-     * For example, let's say that the client is choosing a server to send a query when
-     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
-     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
-     * the client will send the query to either server1 or server2 (randomly selecting between the two).
-     * </p>
-     * <p>
-     * The default value is 15 milliseconds.
-     * </p>
-     *
-
-     * @return the acceptable latency difference, in milliseconds
-     * @since 2.12.0
-     */
-    public int getAcceptableLatencyDifference() {
-        return acceptableLatencyDifference;
+    @Override
+    public String toString() {
+        return "MongoClientOptions{"
+               + "description='" + description + '\''
+               + ", connectionsPerHost=" + connectionsPerHost
+               + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
+               + ", maxWaitTime=" + maxWaitTime
+               + ", connectTimeout=" + connectTimeout
+               + ", socketTimeout=" + socketTimeout
+               + ", socketKeepAlive=" + socketKeepAlive
+               + ", autoConnectRetry=" + autoConnectRetry
+               + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
+               + ", readPreference=" + readPreference
+               + ", dbDecoderFactory=" + dbDecoderFactory
+               + ", dbEncoderFactory=" + dbEncoderFactory
+               + ", writeConcern=" + writeConcern
+               + ", socketFactory=" + socketFactory
+               + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
+               + ", alwaysUseMBeans=" + alwaysUseMBeans
+               + ", heartbeatFrequency=" + heartbeatFrequency
+               + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
+               + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
+               + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
+               + ", heartbeatThreadCount=" + heartbeatThreadCount
+               + ", acceptableLatencyDifference=" + acceptableLatencyDifference
+               + '}';
     }
-
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
