@@ -184,6 +184,15 @@ public class DBTest extends TestCase {
         _db.requestDone();
     }
 
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void whenDBNameContainsSpacesThenThrowException(){
+        cleanupMongo.getDB("foo bar");
+    }
+
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void whenDBNameIsEmptyThenThrowException(){
+        cleanupMongo.getDB("");
+    }
 
     /*public static class Person extends DBObject {
         
