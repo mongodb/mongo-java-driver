@@ -65,6 +65,7 @@ public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
      */
     @Override
+    @SuppressWarnings("unchecked")
     public MongoCursor<Document> execute() {
         ServerConnectionProvider provider = getConnectionProvider(readPreference);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), commandDocument,
