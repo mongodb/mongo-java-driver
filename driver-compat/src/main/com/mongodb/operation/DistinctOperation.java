@@ -21,7 +21,7 @@ import java.util.List;
  * When possible, the distinct command uses an index to find documents and return values.
  * <p/>
  *
- * @see <a href="http://docs.mongodb.org/manual/reference/command/distinct/">Distinct command</a>
+ * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
 public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
