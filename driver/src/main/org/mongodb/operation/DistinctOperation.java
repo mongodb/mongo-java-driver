@@ -1,4 +1,4 @@
-package com.mongodb.operation;
+package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
@@ -6,9 +6,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.operation.BaseOperation;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
