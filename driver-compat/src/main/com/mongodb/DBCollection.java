@@ -50,8 +50,8 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
-import org.mongodb.operation.MapReduceCommandResultCodec;
-import org.mongodb.operation.MapReduceOperation;
+import org.mongodb.operation.MapReduceToCollectionOperation;
+import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
@@ -1100,33 +1100,40 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
 
-        MapReduceCommandResultCodec<DBObject> mapReduceCodec =
-            new MapReduceCommandResultCodec<DBObject>(getPrimitiveCodecs(), objectCodec);
-
-        org.mongodb.MongoCursor<DBObject> executionResult;
-
         try {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
                                                                                             : command.getReadPreference().toNew();
-            executionResult = new MapReduceOperation<DBObject>(getNamespace(), command.getMapReduce(), mapReduceCodec, readPreference,
-                                                               getBufferPool(), getSession(), false)
-                                  .execute();
+            MapReduce mapReduce = command.getMapReduce();
+            if (mapReduce.isInline()) {
+                org.mongodb.MongoCursor<DBObject> executionResult = new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
+                                                                                                                      mapReduce,
+                                                                                                                      objectCodec,
+                                                                                                                      readPreference,
+                                                                                                                      getBufferPool(),
+                                                                                                                      getSession(),
+                                                                                                                      false).execute();
+                return new MapReduceOutput(command.toDBObject(), executionResult);
+            } else {
+                MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce,
+                                                                                                       getBufferPool(), getSession(),
+                                                                                                       false);
+                mapReduceOperation.execute();
+                DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
+                DBCursor executionResult = mapReduceOutputCollection.find();
+                return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceOutputCollection,
+                                           mapReduceOperation.getServerUsed());
+            }
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }
-
-        return new MapReduceOutput(command.toDBObject(), executionResult, determineMapReduceOutputCollection(command.getMapReduce()));
     }
 
-    private DBCollection determineMapReduceOutputCollection(final MapReduce mapReduce) {
-        if (!mapReduce.isInline()) {
-            String requestedDatabaseName = mapReduce.getOutput().getDatabaseName();
-            DB database = requestedDatabaseName != null
-                          ? getDB().getSisterDB(requestedDatabaseName)
-                          : getDB();
-            return database.getCollection(mapReduce.getOutput().getCollectionName());
-        }
-        return this;
+    private DBCollection getMapReduceOutputCollection(final MapReduce mapReduce) {
+        String requestedDatabaseName = mapReduce.getOutput().getDatabaseName();
+        DB database = requestedDatabaseName != null
+                      ? getDB().getSisterDB(requestedDatabaseName)
+                      : getDB();
+        return database.getCollection(mapReduce.getOutput().getCollectionName());
     }
 
     /**

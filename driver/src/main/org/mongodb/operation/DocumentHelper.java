@@ -28,7 +28,7 @@ final class DocumentHelper {
         }
     }
 
-    static void putIfNotNull(final Document command, final String key, final Document value) {
+    static void putIfNotNull(final Document command, final String key, final Object value) {
         if (value != null) {
             command.put(key, value);
         }

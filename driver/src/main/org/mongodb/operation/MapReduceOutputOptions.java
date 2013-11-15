@@ -21,11 +21,14 @@ package org.mongodb.operation;
  * or output inline. You may output to a collection when performing map reduce operations on the primary members of the set; on secondary
  * members you may only use the <b>inline</b> output.
  * <p/>
+ * This class defines all the options if the output is not inline.  For results that are returned inline, a MapReduceOutput is not
+ * required.
+ * <p/>
  * This class follows a builder pattern.
  *
  * @mongodb.driver.manual reference/command/mapReduce/#out-options Out Options for Map-Reduce
  */
-public class MapReduceOutput {
+public class MapReduceOutputOptions {
 
     private final String collectionName;
     private Action action;
@@ -33,18 +36,15 @@ public class MapReduceOutput {
     private boolean sharded;
     private boolean nonAtomic;
 
-
     /**
      * Constructs a new instance of the {@code MapReduceOutput}.
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      */
-    public MapReduceOutput(final String collectionName) {
+    public MapReduceOutputOptions(final String collectionName) {
         this.collectionName = collectionName;
         this.action = Action.REPLACE;
     }
-
-    //CHECKSTYLE:OFF
 
     /**
      * Specify the name of the database that you want the map-reduce operation to write its output.
@@ -52,7 +52,7 @@ public class MapReduceOutput {
      * @param databaseName the name of the database.
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
-    public MapReduceOutput database(final String databaseName) {
+    public MapReduceOutputOptions database(final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
@@ -63,11 +63,10 @@ public class MapReduceOutput {
      * @param action an {@link Action} to perform on the Collection
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
-    public MapReduceOutput action(final Action action) {
+    public MapReduceOutputOptions action(final Action action) {
         this.action = action;
         return this;
     }
-    //CHECKSTYLE:ON
 
     /**
      * Add a 'sharded' flag.
@@ -77,7 +76,7 @@ public class MapReduceOutput {
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
-    public MapReduceOutput sharded() {
+    public MapReduceOutputOptions sharded() {
         this.sharded = true;
         return this;
     }
@@ -91,31 +90,50 @@ public class MapReduceOutput {
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
-    public MapReduceOutput nonAtomic() {
+    public MapReduceOutputOptions nonAtomic() {
         this.nonAtomic = true;
         return this;
     }
 
+    /**
+     * @return the name of the collection to output into
+     */
     public String getCollectionName() {
         return collectionName;
     }
 
+    /**
+     * @return the Action determining what to do if the output collection already exists
+     */
     public Action getAction() {
         return action;
     }
 
+    /**
+     * @return the name of the Database that the output collection is in
+     */
     public String getDatabaseName() {
         return databaseName;
     }
 
+    /**
+     * @return true if the the output database is sharded
+     */
     public boolean isSharded() {
         return sharded;
     }
 
+    /**
+     * @return if true the post-processing step will prevent MongoDB from locking the database
+     */
     public boolean isNonAtomic() {
         return nonAtomic;
     }
 
+    /**
+     * This option is only available when passing out a collection that already exists. This option is not available on secondary members of
+     * replica sets.  The Enum values dictate what to do with the output collection if it already exists when the map reduce is run.
+     */
     public static enum Action {
         /**
          * Replace the contents of the <collectionName> if the collection with the <collectionName> exists.
@@ -141,6 +159,9 @@ public class MapReduceOutput {
             this.value = value;
         }
 
+        /**
+         * @return the String representation of this Action that the MongoDB server understands
+         */
         public String getValue() {
             return value;
         }

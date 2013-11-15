@@ -14,7 +14,7 @@ import static org.mongodb.Fixture.session
 import static org.mongodb.ReadPreference.primary
 import static spock.util.matcher.HamcrestSupport.that
 
-class MapReduceOperationFunctionalSpecification extends FunctionalSpecification {
+class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
 
     def setup() {
         collection.save(['x': ['a', 'b'], 's': 1] as Document);
@@ -28,9 +28,8 @@ class MapReduceOperationFunctionalSpecification extends FunctionalSpecification 
                       new Code('function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceOperation operation = new MapReduceOperation<Document>(namespace, mapReduce, codec, primary(), bufferProvider,
-                                                                        session, false)
-
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary(),
+                                                                                                bufferProvider, session, false)
 
         when:
         MongoCursor<Document> results = operation.execute()
@@ -47,8 +46,8 @@ class MapReduceOperationFunctionalSpecification extends FunctionalSpecification 
         mapReduce.verbose();
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceOperation operation = new MapReduceOperation<Document>(namespace, mapReduce, codec, primary(), bufferProvider,
-                                                                        session, false)
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary(),
+                                                                                      bufferProvider, session, false)
 
 
         when:

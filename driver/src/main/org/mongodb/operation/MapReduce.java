@@ -29,7 +29,7 @@ import org.mongodb.Document;
 public class MapReduce {
     private final Code mapFunction;
     private final Code reduceFunction;
-    private final MapReduceOutput output;
+    private final MapReduceOutputOptions output;
     private final boolean inline;
     private Code finalizeFunction;
     private Document scope;
@@ -46,7 +46,7 @@ public class MapReduce {
      * @param reduceFunction a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      * @param output         specifies the location of the result of the map-reduce operation.
      */
-    public MapReduce(final Code mapFunction, final Code reduceFunction, final MapReduceOutput output) {
+    public MapReduce(final Code mapFunction, final Code reduceFunction, final MapReduceOutputOptions output) {
         this.mapFunction = mapFunction;
         this.reduceFunction = reduceFunction;
         this.output = output;
@@ -179,7 +179,7 @@ public class MapReduce {
         return scope;
     }
 
-    public MapReduceOutput getOutput() {
+    public MapReduceOutputOptions getOutput() {
         return output;
     }
 
@@ -197,5 +197,22 @@ public class MapReduce {
 
     public boolean isInline() {
         return inline;
+    }
+
+    @Override
+    public String toString() {
+        return "MapReduce{"
+               + "mapFunction=" + mapFunction
+               + ", reduceFunction=" + reduceFunction
+               + ", output=" + output
+               + ", inline=" + inline
+               + ", finalizeFunction=" + finalizeFunction
+               + ", scope=" + scope
+               + ", filter=" + filter
+               + ", sortCriteria=" + sortCriteria
+               + ", limit=" + limit
+               + ", jsMode=" + jsMode
+               + ", verbose=" + verbose
+               + '}';
     }
 }

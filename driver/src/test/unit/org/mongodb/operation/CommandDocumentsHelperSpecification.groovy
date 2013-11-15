@@ -21,12 +21,12 @@ import org.mongodb.Document
 import org.mongodb.operation.MapReduce as MR
 import spock.lang.Specification
 
-class MapReduceOperationSpecification extends Specification {
+class CommandDocumentsHelperSpecification extends Specification {
 
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert into correct documents'() {
         expect:
-        Document document = MapReduceOperation.createCommandDocument('foo', mapReduce);
+        Document document = CommandDocuments.createMapReduce('foo', mapReduce);
         document.get('query') == query
         document.get('sort') == sort
         document.get('limit') == limit
@@ -55,18 +55,18 @@ class MapReduceOperationSpecification extends Specification {
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert output into correct document'() {
         expect:
-        MapReduceOperation.createCommandDocument('foo', mapReduce).get('out') == document
+        CommandDocuments.createMapReduce('foo', mapReduce).get('out') == document
 
         where:
         output << [
-                new MapReduceOutput('foo'),
-                new MapReduceOutput('foo').database('bar'),
-                new MapReduceOutput('foo').action(MapReduceOutput.Action.MERGE),
-                new MapReduceOutput('foo').action(MapReduceOutput.Action.REPLACE),
-                new MapReduceOutput('foo').database('bar').action(MapReduceOutput.Action.REDUCE),
-                new MapReduceOutput('foo').sharded(),
-                new MapReduceOutput('foo').nonAtomic(),
-                new MapReduceOutput('foo').database('bar').sharded()
+                new MapReduceOutputOptions('foo'),
+                new MapReduceOutputOptions('foo').database('bar'),
+                new MapReduceOutputOptions('foo').action(MapReduceOutputOptions.Action.MERGE),
+                new MapReduceOutputOptions('foo').action(MapReduceOutputOptions.Action.REPLACE),
+                new MapReduceOutputOptions('foo').database('bar').action(MapReduceOutputOptions.Action.REDUCE),
+                new MapReduceOutputOptions('foo').sharded(),
+                new MapReduceOutputOptions('foo').nonAtomic(),
+                new MapReduceOutputOptions('foo').database('bar').sharded()
         ]
         mapReduce = new MR(new Code('a'), new Code('b'), output)
         document << [
@@ -80,7 +80,4 @@ class MapReduceOperationSpecification extends Specification {
                 ['replace': 'foo', 'db': 'bar', 'sharded': true, 'nonAtomic': false] as Document,
         ]
     }
-
-    //TODO: need to test read preferences
-
 }

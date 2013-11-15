@@ -24,9 +24,6 @@ import java.util.Iterator;
 /**
  * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
  * by interacting directly with the collection the results were input into.
- * <p/>
- * There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
- * removed.
  */
 public class MapReduceOutput {
 
@@ -34,19 +31,37 @@ public class MapReduceOutput {
     private final DBObject command;
     private final ServerAddress serverAddress;
     private final org.mongodb.MongoCursor<DBObject> results;
+    private final DBCursor executionResult;
 
     private org.mongodb.CommandResult commandResult;
 
-    //TODO: not really sure about outputCollection here.  Only needed for drop after all.
-    MapReduceOutput(final DBObject command, final org.mongodb.MongoCursor<DBObject> results, final DBCollection outputCollection) {
+    /**
+     * Constructor for use with inline map reduce.  Collection will always be null.
+     *
+     * @param command the original map reduce command
+     * @param results the results of running the map reduce
+     */
+    MapReduceOutput(final DBObject command, final org.mongodb.MongoCursor<DBObject> results) {
         this.command = command;
         this.results = results;
 
         this.serverAddress = new ServerAddress(results.getServerAddress());
-        this.collection = outputCollection;
         if (results instanceof InlineMongoCursor) {
             commandResult = ((InlineMongoCursor) results).getCommandResult();
         }
+        this.collection = null;
+        this.executionResult = null;
+    }
+
+    //output collection only used for drop
+    MapReduceOutput(final DBObject command, final DBCursor executionResult, final DBCollection outputCollection,
+                    final org.mongodb.connection.ServerAddress serverAddress) {
+        this.command = command;
+        results = null;
+
+        this.collection = outputCollection;
+        this.executionResult = executionResult;
+        this.serverAddress = new ServerAddress(serverAddress);
     }
 
     /**
@@ -56,13 +71,15 @@ public class MapReduceOutput {
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-        return new SingleShotIterable(results);
+        if (results != null) {
+            return new SingleShotIterable(results);
+        } else {
+            return executionResult;
+        }
     }
 
     /**
-     * drops the collection that holds the results
-     *
-     * @throws MongoException
+     * Drops the collection that holds the results.  Does nothing if the map-reduce returned the results inline.
      */
     public void drop() {
         if (collection != null) {
@@ -158,16 +175,16 @@ public class MapReduceOutput {
         return ((Document) commandResult.getResponse().get("counts")).getInteger("emit");
     }
 
-    private final class SingleShotIterable implements Iterable<DBObject> {
-        private final org.mongodb.MongoCursor<DBObject> cursor;
+private final class SingleShotIterable implements Iterable<DBObject> {
+    private final org.mongodb.MongoCursor<DBObject> cursor;
 
-        private SingleShotIterable(final org.mongodb.MongoCursor<DBObject> cursor) {
-            this.cursor = cursor;
-        }
-
-        @Override
-        public Iterator<DBObject> iterator() {
-            return cursor;
-        }
+    private SingleShotIterable(final org.mongodb.MongoCursor<DBObject> cursor) {
+        this.cursor = cursor;
     }
+
+    @Override
+    public Iterator<DBObject> iterator() {
+        return cursor;
+    }
+}
 }

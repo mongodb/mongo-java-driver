@@ -20,7 +20,6 @@ import org.mongodb.Document
 import org.mongodb.operation.InlineMongoCursor
 import spock.lang.Subject
 
-
 @SuppressWarnings('deprecated')
 class MapReduceOutputSpecification extends FunctionalSpecification {
     //example response:
@@ -43,18 +42,14 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 //        elapsedNanoseconds=2777341000}
 
 
-    def 'should return the name of the collection the results are contained in'() throws Exception {
+    def 'should return the name of the collection the results are contained in if it is not inline'() throws Exception {
         given:
         String expectedCollectionName = 'collectionForResults';
         DBCollection outputCollection = database.getCollection(expectedCollectionName)
-        Document result = new BasicDBObject('db', 'databaseName')
-                .append('collection', expectedCollectionName);
-        Document response = new Document('result', result);
-        org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
-        org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
+        DBCursor results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection, null);
 
         when:
         String collectionName = mapReduceOutput.getCollectionName();
@@ -64,19 +59,15 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         collectionName == expectedCollectionName
     }
 
-    def 'should return the name of the datbase the results are contained in'() throws Exception {
+    def 'should return the name of the datbase the results are contained in if it is not inline'() throws Exception {
         given:
         String expectedDatabaseName = databaseName
         String expectedCollectionName = 'collectionForResults';
         DBCollection outputCollection = database.getCollection(expectedCollectionName)
-        Document result = new BasicDBObject('db', expectedDatabaseName)
-                .append('collection', expectedCollectionName);
-        Document response = new Document('result', result);
-        org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
-        org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
+        DBCursor results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection, null);
 
         when:
         String databaseName = mapReduceOutput.getDatabaseName();
@@ -89,13 +80,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
     def 'should return the duration'() {
         given:
         int expectedDuration = 2774
-        Document response = new Document('result', 'stubCollectionName');
-        response.append('timeMillis', expectedDuration);
+        Document response = ['result'    : 'stubCollectionName',
+                             'timeMillis': expectedDuration];
         org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
         org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, collection);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results);
 
         when:
         int duration = mapReduceOutput.getDuration();
@@ -110,17 +101,17 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         int expectedInputCount = 3
         int expectedOutputCount = 4
         int expectedEmitCount = 6
-        Document response = new Document('result', 'stubCollectionName');
-        Document counts = new Document();
-        counts.append('input', expectedInputCount)
-        counts.append('output', expectedOutputCount)
-        counts.append('emit', expectedEmitCount)
-        response.append('counts', counts);
+        Document counts = ['input' : expectedInputCount,
+                           'output': expectedOutputCount,
+                           'emit'  : expectedEmitCount]
+        Document response = ['result': 'stubCollectionName',
+                             'counts': counts];
+
         org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
         org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, collection);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results);
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount

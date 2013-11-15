@@ -19,7 +19,7 @@ package com.mongodb;
 import org.bson.types.Code;
 import org.mongodb.Document;
 import org.mongodb.operation.MapReduce;
-import org.mongodb.operation.MapReduceOutput;
+import org.mongodb.operation.MapReduceOutputOptions;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -363,16 +363,16 @@ public class MapReduceCommand {
         if (outputType == OutputType.INLINE) {
             mapReduce = new MapReduce(new Code(map), new Code(reduce));
         } else {
-            MapReduceOutput output = new MapReduceOutput(outputCollection).database(outputDB);
+            MapReduceOutputOptions output = new MapReduceOutputOptions(outputCollection).database(outputDB);
             switch (outputType) {
                 case MERGE:
-                    output.action(MapReduceOutput.Action.MERGE);
+                    output.action(MapReduceOutputOptions.Action.MERGE);
                     break;
                 case REDUCE:
-                    output.action(MapReduceOutput.Action.REDUCE);
+                    output.action(MapReduceOutputOptions.Action.REDUCE);
                     break;
                 case REPLACE:
-                    output.action(MapReduceOutput.Action.REPLACE);
+                    output.action(MapReduceOutputOptions.Action.REPLACE);
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected action on target collection");

@@ -31,8 +31,8 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
-import org.mongodb.operation.MapReduceCommandResultCodec;
-import org.mongodb.operation.MapReduceOperation;
+import org.mongodb.operation.MapReduceToCollectionOperation;
+import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.Remove;
 import org.mongodb.operation.RemoveOperation;
@@ -245,17 +245,26 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoIterable<Document> mapReduce(final String map, final String reduce) {
-            //TODO: encode out into other types?
-            MapReduceCommandResultCodec<Document> mapReduceCodec =
-                new MapReduceCommandResultCodec<Document>(options.getPrimitiveCodecs(), new DocumentCodec());
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
 
-            return new SingleShotCommandIterable<Document>(new MapReduceOperation<Document>(getNamespace(), mapReduce, mapReduceCodec,
-                                                                              options.getReadPreference(), client.getBufferProvider(),
-                                                                              client.getSession(), false)
-                                                        .execute());
+            if (mapReduce.isInline()) {
+                return new SingleShotCommandIterable<Document>(new MapReduceWithInlineResultsOperation<Document>(getNamespace(),
+                                                                                                                 mapReduce,
+                                                                                                                 new DocumentCodec(),
+                                                                                                                 options
+                                                                                                                     .getReadPreference(),
+                                                                                                                 client.getBufferProvider(),
+                                                                                                                 client.getSession(),
+                                                                                                                 false).execute());
+            } else {
+                new MapReduceToCollectionOperation(getNamespace(), mapReduce, client.getBufferProvider(), client.getSession(), false)
+                    .execute();
+                return client.getDatabase(mapReduce.getOutput().getDatabaseName())
+                             .getCollection(mapReduce.getOutput().getCollectionName())
+                             .find();
+            }
         }
 
         @Override
