@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,8 +182,8 @@ public class ServerDescription {
     }
 
     /**
-     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that
-     * the driver's max wire version or a max wire version less than the driver's min wire version.
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
+     * driver's max wire version or a max wire version less than the driver's min wire version.
      *
      * @return true if the server is compatible with the driver.
      */
@@ -282,10 +282,11 @@ public class ServerDescription {
     public int getMaxWireVersion() {
         return maxWireVersion;
     }
+
     /**
-     * Returns true if the server has the given tags.  A server of either type {@code ServerType.STANDALONE} or
-     * {@code ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of
-     * those types.
+     * Returns true if the server has the given tags.  A server of either type {@code ServerType.STANDALONE} or {@code
+     * ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of those
+     * types.
      *
      * @param desiredTags the tags
      * @return true if this server has the given tags
@@ -435,21 +436,27 @@ public class ServerDescription {
         return "ServerDescription{"
                + "address=" + address
                + ", type=" + type
-               + ", hosts=" + hosts
-               + ", passives=" + passives
-               + ", arbiters=" + arbiters
-               + ", primary='" + primary + '\''
-               + ", maxDocumentSize=" + maxDocumentSize
-               + ", maxMessageSize=" + maxMessageSize
-               + ", tags=" + tags
-               + ", setName='" + setName + '\''
-               + ", setVersion='" + setVersion + '\''
-               + ", averagePingTimeNanos=" + averagePingTimeNanos
-               + ", ok=" + ok
                + ", state=" + state
-               + ", version=" + version
-               + ", minWireVersion=" + minWireVersion
-               + ", maxWireVersion=" + maxWireVersion
+               + (state == CONNECTED
+                  ?
+                  ", ok=" + ok
+                  + ", version=" + version
+                  + ", minWireVersion=" + minWireVersion
+                  + ", maxWireVersion=" + maxWireVersion
+                  + ", maxDocumentSize=" + maxDocumentSize
+                  + ", maxMessageSize=" + maxMessageSize
+                  + ", averagePingTimeNanos=" + averagePingTimeNanos
+                  : "")
+               + (isReplicaSetMember()
+                  ?
+                  ", setName='" + setName + '\''
+                  + ", hosts=" + hosts
+                  + ", passives=" + passives
+                  + ", arbiters=" + arbiters
+                  + ", primary='" + primary + '\''
+                  + ", tags=" + tags
+                  + ", setVersion='" + setVersion + '\''
+                  : "")
                + '}';
     }
 
