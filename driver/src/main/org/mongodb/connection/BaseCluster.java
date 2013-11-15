@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,11 @@ public abstract class BaseCluster implements Cluster {
             TimeUnit timeUnit = NANOSECONDS;
             long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
             while (true) {
-                throwIfIncompatible(curDescription);
+                if (!curDescription.isCompatibleWithDriver()) {
+                    throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of "
+                                                                      + "the servers to which it is connected: %s", curDescription),
+                                                               curDescription);
+                }
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
                     if (server != null) {
@@ -85,8 +89,8 @@ public abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("Unable to connect to any server that satisfies the selector %s",
-                                                                          serverSelector));
+                    throw new MongoServerSelectionFailureException(format("Unable to connect to any server in cluster %s that satisfies "
+                                                                          + "the selector %s", curDescription, serverSelector));
                 }
 
                 long timeout = endTime - System.nanoTime();
@@ -192,14 +196,6 @@ public abstract class BaseCluster implements Cluster {
             }
         }
         return null;
-    }
-
-    private void throwIfIncompatible(final ClusterDescription clusterDescription) {
-        if (!clusterDescription.isCompatibleWithDriver()) {
-            throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of the "
-                                                              + "servers to which it is connected: %s", clusterDescription),
-                                                       clusterDescription);
-        }
     }
 
     protected Random getRandom() {
