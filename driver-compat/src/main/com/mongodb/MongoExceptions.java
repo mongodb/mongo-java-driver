@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import org.mongodb.MongoWriteException;
 
 import java.io.IOException;
 
-public class
-MongoExceptions {
+final class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
         Throwable cause = e.getCause();
@@ -52,5 +51,8 @@ MongoExceptions {
         } else {
             return new MongoException(e.getMessage(), cause);
         }
+    }
+
+    private MongoExceptions() {
     }
 }

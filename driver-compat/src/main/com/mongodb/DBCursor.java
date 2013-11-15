@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.codecs.DBDecoderAdapter;
-import com.mongodb.codecs.DBObjectCodec;
 import org.mongodb.Decoder;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.ServerCursor;

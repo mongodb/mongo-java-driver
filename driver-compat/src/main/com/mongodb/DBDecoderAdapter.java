@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.codecs;
+package com.mongodb;
 
-import com.mongodb.DBCollection;
-import com.mongodb.DBDecoder;
-import com.mongodb.DBObject;
-import com.mongodb.MongoInternalException;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.mongodb.Decoder;
@@ -29,7 +25,7 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class DBDecoderAdapter implements Decoder<DBObject> {
+class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBDecoder decoder;
     private final DBCollection collection;
     private final BufferProvider bufferProvider;

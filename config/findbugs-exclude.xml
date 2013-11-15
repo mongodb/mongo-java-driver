@@ -14,7 +14,7 @@
 
     <!-- these specific issues are deliberate design decisions -->
     <Match>
-        <Class name="com.mongodb.codecs.DocumentCodec">
+        <Class name="com.mongodb.DocumentCodec">
             <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
         </Class>
     </Match>

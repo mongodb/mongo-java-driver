@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.codecs.CollectibleDBObjectCodec;
-import com.mongodb.codecs.CompoundDBObjectCodec;
-import com.mongodb.codecs.DBDecoderAdapter;
-import com.mongodb.codecs.DBEncoderAdapter;
-import com.mongodb.codecs.DBEncoderFactoryAdapter;
-import com.mongodb.codecs.DocumentCodec;
 import org.bson.types.ObjectId;
 import org.mongodb.Codec;
 import org.mongodb.CollectibleCodec;

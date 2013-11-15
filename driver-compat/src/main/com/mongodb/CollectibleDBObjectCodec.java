@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.codecs;
+package com.mongodb;
 
-import com.mongodb.DB;
-import com.mongodb.DBObject;
-import com.mongodb.DBObjectFactory;
 import org.bson.BSONWriter;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.IdGenerator;
@@ -28,7 +25,7 @@ import org.mongodb.codecs.validators.FieldNameValidator;
 /**
  * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written first.
  */
-public class CollectibleDBObjectCodec extends DBObjectCodec implements CollectibleCodec<DBObject> {
+class CollectibleDBObjectCodec extends DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 

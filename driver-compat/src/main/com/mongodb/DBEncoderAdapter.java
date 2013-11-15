@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.codecs;
+package com.mongodb;
 
-import com.mongodb.DBEncoder;
-import com.mongodb.DBObject;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONWriter;
 import org.bson.ByteBufNIO;
@@ -28,7 +26,7 @@ import org.mongodb.IdGenerator;
 
 import static java.nio.ByteBuffer.wrap;
 
-public class DBEncoderAdapter implements Encoder<DBObject> {
+class DBEncoderAdapter implements Encoder<DBObject> {
 
     private static final String ID_FIELD_NAME = "_id";
 
