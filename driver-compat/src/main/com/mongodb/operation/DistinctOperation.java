@@ -15,6 +15,15 @@ import org.mongodb.session.Session;
 
 import java.util.List;
 
+/**
+ * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
+ * <p/>
+ * When possible, the distinct command uses an index to find documents and return values.
+ * <p/>
+ *
+ * @see <a href="http://docs.mongodb.org/manual/reference/command/distinct/">Distinct command</a>
+ * @since 3.0
+ */
 public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
     private final MongoNamespace namespace;
     private final String fieldName;
@@ -29,7 +38,6 @@ public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
      * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
-     * @see <a href="http://docs.mongodb.org/manual/reference/command/distinct/">Distinct command</a>
      */
     public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Find find, final BufferProvider bufferProvider,
                              final Session session, final boolean closeSession) {

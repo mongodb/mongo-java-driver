@@ -32,6 +32,9 @@ import java.util.List;
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
  * command is analogous to a SELECT <...> GROUP BY statement in SQL.
+ *
+ * @see <a href="http://docs.mongodb.org/manual/reference/command/group/">Group command</a>
+ * @since 3.0
  */
 public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
