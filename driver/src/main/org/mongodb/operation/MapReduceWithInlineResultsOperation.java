@@ -33,6 +33,7 @@ import org.mongodb.session.Session;
 
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 
 /**
@@ -41,7 +42,8 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * <p/>
  * To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.
  *
- * @see <a href="http://docs.mongodb.org/manual/core/map-reduce/">Map-Reduce</a>
+ * @mongodb.driver.manual core/map-reduce Map-Reduce
+ * @since 3.0
  */
 public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final Document command;
@@ -65,7 +67,11 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MongoC
                                                final Decoder<T> decoder, final ReadPreference readPreference,
                                                final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
-        this.namespace = namespace;
+        if (!mapReduce.isInline()) {
+            throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
+                                               + mapReduce);
+        }
+        this.namespace = notNull("namespace", namespace);
         this.readPreference = readPreference;
         this.mapReduceResultDecoder = new MapReduceCommandResultCodec<T>(PrimitiveCodecs.createDefault(), decoder);
         this.command = createMapReduce(namespace.getCollectionName(), mapReduce);

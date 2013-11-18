@@ -1112,7 +1112,7 @@ public class DBCollection {
                                                                                                                       getBufferPool(),
                                                                                                                       getSession(),
                                                                                                                       false).execute();
-                return new MapReduceOutput(command.toDBObject(), executionResult);
+                return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
             } else {
                 MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce,
                                                                                                        getBufferPool(), getSession(),

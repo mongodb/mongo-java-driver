@@ -41,11 +41,13 @@ public class MapReduceOutput {
      * @param command the original map reduce command
      * @param results the results of running the map reduce
      */
-    MapReduceOutput(final DBObject command, final org.mongodb.MongoCursor<DBObject> results) {
+    MapReduceOutput(final DBObject command, final org.mongodb.MongoCursor<DBObject> results,
+                    final org.mongodb.connection.ServerAddress serverAddress) {
+
         this.command = command;
         this.results = results;
 
-        this.serverAddress = new ServerAddress(results.getServerAddress());
+        this.serverAddress = new ServerAddress(serverAddress);
         if (results instanceof InlineMongoCursor) {
             commandResult = ((InlineMongoCursor) results).getCommandResult();
         }
@@ -115,8 +117,16 @@ public class MapReduceOutput {
         return serverAddress;
     }
 
+    @Override
     public String toString() {
-        return commandResult.toString();
+        return "MapReduceOutput{"
+               + "collection=" + collection
+               + ", command=" + command
+               + ", serverAddress=" + serverAddress
+               + ", results=" + results
+               + ", executionResult=" + executionResult
+               + ", commandResult=" + commandResult
+               + '}';
     }
 
     /**

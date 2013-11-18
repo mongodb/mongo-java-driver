@@ -37,7 +37,8 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * To run a map reduce operation and receive the results inline (i.e. as a response to running the command) use {@code
  * MapReduceWithInlineResultsOperation}.
  *
- * @see <a href="http://docs.mongodb.org/manual/core/map-reduce/">Map-Reduce</a>
+ * @mongodb.driver.manual core/map-reduce Map-Reduce
+ * @since 3.0
  */
 public class MapReduceToCollectionOperation extends BaseOperation<Void> {
     private final Document command;
