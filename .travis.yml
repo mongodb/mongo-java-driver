@@ -9,7 +9,7 @@ notifications:
     recipients:
       - jeff.yemin@10gen.com
       - trisha.gee@10gen.com
-      - uladzimir.mihura@10gen.com
+      - justin.lee@10gen.com
     on_success: change
     on_failure: always
   flowdock:
