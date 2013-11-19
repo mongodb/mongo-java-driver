@@ -32,8 +32,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -285,6 +287,45 @@ public class MapReduceTest extends DatabaseTestCase {
 
         assertNotNull(output.getServerUsed());
     }
+
+    @Test
+    public void shouldReturnStatisticsForInlineMapReduce() {
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.INLINE,
+                                                        new BasicDBObject());
+
+        //when
+        MapReduceOutput output = collection.mapReduce(command);
+
+        //then
+        assertThat(output.getDuration(), is(greaterThan(0)));
+        assertThat(output.getEmitCount(), is(6));
+        assertThat(output.getInputCount(), is(3));
+        assertThat(output.getOutputCount(), is(4));
+    }
+
+    @Test
+    public void shouldReturnStatisticsForMapReduceIntoACollection() {
+        MapReduceCommand command = new MapReduceCommand(collection,
+                                                        DEFAULT_MAP,
+                                                        DEFAULT_REDUCE,
+                                                        DEFAULT_COLLECTION,
+                                                        MapReduceCommand.OutputType.REPLACE,
+                                                        new BasicDBObject());
+
+        //when
+        MapReduceOutput output = collection.mapReduce(command);
+
+        //then
+        assertThat(output.getDuration(), is(greaterThan(0)));
+        assertThat(output.getEmitCount(), is(6));
+        assertThat(output.getInputCount(), is(3));
+        assertThat(output.getOutputCount(), is(4));
+    }
+
 
     //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
 

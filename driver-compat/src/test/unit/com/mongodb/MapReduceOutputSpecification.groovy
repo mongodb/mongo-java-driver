@@ -16,8 +16,8 @@
 
 package com.mongodb
 
-import org.mongodb.Document
-import org.mongodb.operation.InlineMongoCursor
+import org.mongodb.MapReduceStatistics
+import org.mongodb.operation.MapReduceCursor
 import spock.lang.Subject
 
 @SuppressWarnings('deprecated')
@@ -49,7 +49,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         DBCursor results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection, null);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
 
         when:
         String collectionName = mapReduceOutput.getCollectionName();
@@ -67,7 +67,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         DBCursor results = outputCollection.find()
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, outputCollection, null);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection, null);
 
         when:
         String databaseName = mapReduceOutput.getDatabaseName();
@@ -77,41 +77,70 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         databaseName == expectedDatabaseName
     }
 
-    def 'should return the duration'() {
+    def 'should return the duration for a map-reduce into a collection'() {
         given:
         int expectedDuration = 2774
-        Document response = ['result'    : 'stubCollectionName',
-                             'timeMillis': expectedDuration];
-        org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
-        org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
+
+        MapReduceStatistics mapReduceStats = Mock();
+        mapReduceStats.getDuration() >> expectedDuration
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null,
+                                                              new org.mongodb.connection.ServerAddress());
 
-        when:
-        int duration = mapReduceOutput.getDuration();
-
-        then:
-        duration != null
-        duration == expectedDuration
+        expect:
+        mapReduceOutput.getDuration() == expectedDuration;
     }
 
-    def 'should return the count values'() {
+    def 'should return the duration for an inline map-reduce'() {
+        given:
+        int expectedDuration = 2774
+
+        MapReduceCursor mongoCursor = Mock();
+        mongoCursor.getDuration() >> expectedDuration
+
+        @Subject
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
+                                                              new org.mongodb.connection.ServerAddress());
+
+        expect:
+        mapReduceOutput.getDuration() == expectedDuration
+    }
+
+    def 'should return the count values for a map-reduce into a collection'() {
         given:
         int expectedInputCount = 3
         int expectedOutputCount = 4
         int expectedEmitCount = 6
-        Document counts = ['input' : expectedInputCount,
-                           'output': expectedOutputCount,
-                           'emit'  : expectedEmitCount]
-        Document response = ['result': 'stubCollectionName',
-                             'counts': counts];
 
-        org.mongodb.CommandResult commandResult = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(), response, 1L);
-        org.mongodb.MongoCursor<DBObject> results = new InlineMongoCursor<DBObject>(commandResult, Collections.<DBObject> emptyList());
+        MapReduceStatistics mapReduceStats = Mock();
+        mapReduceStats.getInputCount() >> expectedInputCount
+        mapReduceStats.getOutputCount() >> expectedOutputCount
+        mapReduceStats.getEmitCount() >> expectedEmitCount
 
         @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results);
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null, null);
+
+        expect:
+        mapReduceOutput.getInputCount() == expectedInputCount
+        mapReduceOutput.getOutputCount() == expectedOutputCount
+        mapReduceOutput.getEmitCount() == expectedEmitCount
+    }
+
+    def 'should return the count values for an inline map-reduce output'() {
+        given:
+        int expectedInputCount = 3
+        int expectedOutputCount = 4
+        int expectedEmitCount = 6
+
+        MapReduceCursor mapReduceStats = Mock();
+        mapReduceStats.getInputCount() >> expectedInputCount
+        mapReduceStats.getOutputCount() >> expectedOutputCount
+        mapReduceStats.getEmitCount() >> expectedEmitCount
+
+        @Subject
+        MapReduceOutput mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceStats,
+                                                              new org.mongodb.connection.ServerAddress());
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount

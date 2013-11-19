@@ -20,7 +20,6 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
@@ -31,8 +30,6 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
-import java.util.List;
-
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 
@@ -42,10 +39,11 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * <p/>
  * To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.
  *
+ * @param <T> the type contained in the collection
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MongoCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapReduceCursor<T>> {
     private final Document command;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
@@ -57,7 +55,7 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MongoC
      *
      * @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
-     * @param decoder        the decoder to use for decoding the Documents in the results of the map-reduce operation
+     * @param decoder        the decoder to use for decoding the documents in the results of the map-reduce operation
      * @param readPreference the read preference suggesting which server to run the command on
      * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
@@ -78,20 +76,20 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MongoC
     }
 
     /**
-     * Executing this will return a cursor with your results in.
+     * Executing this will return a cursor with your results and the statistics in.
      *
-     * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
+     * @return a MapReduceCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<T> execute() {
+    public MapReduceCursor<T> execute() {
         ServerConnectionProvider provider = getSession().createServerConnectionProvider(getServerConnectionProviderOptions());
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, mapReduceResultDecoder,
                                                           getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
                                                           isCloseSession())
                                           .execute();
 
-        return new InlineMongoCursor<T>(commandResult, (List<T>) commandResult.getResponse().get("results"));
+        return new MapReduceCursor<T>(commandResult);
     }
 
     private ServerConnectionProviderOptions getServerConnectionProviderOptions() {

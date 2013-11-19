@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
@@ -40,7 +41,7 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceToCollectionOperation extends BaseOperation<Void> {
+public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStatistics> {
     private final Document command;
     private final MongoNamespace namespace;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -73,14 +74,14 @@ public class MapReduceToCollectionOperation extends BaseOperation<Void> {
      * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
-    public Void execute() {
+    public MapReduceStatistics execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
                                                           getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
                                                           isCloseSession())
                                           .execute();
         serverUsed = commandResult.getAddress();
-        return null;
+        return new MapReduceIntoCollectionStatistics(commandResult);
     }
 
     /**

@@ -24,6 +24,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Function;
 import org.mongodb.Index;
+import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
@@ -50,6 +51,7 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
+import org.mongodb.operation.MapReduceCursor;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.Operation;
@@ -1096,31 +1098,30 @@ public class DBCollection {
      * Perform mapReduce operation.
      *
      * @param command specifies the details of the Map Reduce operation to perform
-     * @return a mapReduce output
+     * @return a MapReduceOutput containing the results of the map reduce operation
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
-
         try {
             org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
                                                                                             : command.getReadPreference().toNew();
             MapReduce mapReduce = command.getMapReduce();
             if (mapReduce.isInline()) {
-                org.mongodb.MongoCursor<DBObject> executionResult = new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
-                                                                                                                      mapReduce,
-                                                                                                                      objectCodec,
-                                                                                                                      readPreference,
-                                                                                                                      getBufferPool(),
-                                                                                                                      getSession(),
-                                                                                                                      false).execute();
+                MapReduceCursor<DBObject> executionResult = new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
+                                                                                                              mapReduce,
+                                                                                                              objectCodec,
+                                                                                                              readPreference,
+                                                                                                              getBufferPool(),
+                                                                                                              getSession(),
+                                                                                                              false).execute();
                 return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
             } else {
                 MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce,
                                                                                                        getBufferPool(), getSession(),
                                                                                                        false);
-                mapReduceOperation.execute();
+                MapReduceStatistics mapReduceStatistics = mapReduceOperation.execute();
                 DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
                 DBCursor executionResult = mapReduceOutputCollection.find();
-                return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceOutputCollection,
+                return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection,
                                            mapReduceOperation.getServerUsed());
             }
         } catch (org.mongodb.MongoException e) {
