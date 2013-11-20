@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the inlineResults of the map reduce via the inlineResults()
- * method, or by interacting directly with the collection the inlineResults were input into.
+ * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results()
+ * method, or by interacting directly with the collection the results were input into.
  */
 public class MapReduceOutput {
 
@@ -68,9 +68,9 @@ public class MapReduceOutput {
     }
 
     /**
-     * Returns a cursor to the inlineResults of the operation.
+     * Returns a cursor to the results of the operation.
      *
-     * @return the inlineResults in iterable form
+     * @return the results in iterable form
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
@@ -82,7 +82,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * Drops the collection that holds the inlineResults.  Does nothing if the map-reduce returned the inlineResults inline.
+     * Drops the collection that holds the results.  Does nothing if the map-reduce returned the results inline.
      */
     public void drop() {
         if (collection != null) {
@@ -91,7 +91,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * Gets the collection that holds the inlineResults (Will return null if inlineResults are Inline).
+     * Gets the collection that holds the results (Will return null if results are Inline).
      *
      * @return the collection or null
      */
