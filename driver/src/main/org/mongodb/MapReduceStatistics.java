@@ -47,7 +47,7 @@ public interface MapReduceStatistics {
     /**
      * Get the amount of time it took to run the map-reduce.
      *
-     * @return the amount of time it took to run the map reduce
+     * @return the duration in milliseconds
      */
     int getDuration();
 }

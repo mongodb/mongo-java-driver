@@ -25,6 +25,8 @@ import java.util.List;
 /**
  * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results()
  * method, or by interacting directly with the collection the results were input into.
+ *
+ * @since 2.0
  */
 public class MapReduceOutput {
 
@@ -34,8 +36,6 @@ public class MapReduceOutput {
     private final List<DBObject> inlineResults;
     private final MapReduceStatistics mapReduceStatistics;
     private final DBCursor resultsFromCollection;
-
-    private org.mongodb.CommandResult commandResult;
 
     /**
      * Constructor for use with inline map reduce.  Collection will always be null.
@@ -47,10 +47,12 @@ public class MapReduceOutput {
         this.mapReduceStatistics = results;
 
         this.serverAddress = new ServerAddress(serverAddress);
-        commandResult = results.getCommandResult();
         this.collection = null;
         this.resultsFromCollection = null;
-        this.inlineResults = results.into(new ArrayList<DBObject>());
+        this.inlineResults = new ArrayList<DBObject>();
+        while (results.hasNext()) {
+            this.inlineResults.add(results.next());
+        }
     }
 
     /**
@@ -126,7 +128,6 @@ public class MapReduceOutput {
                + ", serverAddress=" + serverAddress
                + ", inlineResults=" + inlineResults
                + ", resultsFromCollection=" + resultsFromCollection
-               + ", commandResult=" + commandResult
                + '}';
     }
 

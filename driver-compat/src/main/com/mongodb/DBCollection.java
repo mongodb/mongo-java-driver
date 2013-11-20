@@ -24,6 +24,7 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.Function;
 import org.mongodb.Index;
+import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
@@ -51,7 +52,6 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
-import org.mongodb.MapReduceCursor;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.Operation;
@@ -865,6 +865,7 @@ public class DBCollection {
      * @return the number of documents that matches selection criteria
      * @throws MongoException
      */
+    @SuppressWarnings("UnusedParameters")
     long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
                   final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
         if (limit > Integer.MAX_VALUE) {
@@ -1084,6 +1085,7 @@ public class DBCollection {
      * @param outputTarget specifies the location of the result of the map-reduce operation.
      * @param outputType   specifies the type of job output
      * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @param readPreference the read preference specifying where to run the query.  Only applied for Inline output type
      * @return a mapReduce output
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
@@ -1168,6 +1170,7 @@ public class DBCollection {
      * Method implements aggregation framework.
      *
      * @param pipeline operations to be performed in the aggregation pipeline
+     * @param readPreference the read preference specifying where to run the query
      * @return the aggregation's result set
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {

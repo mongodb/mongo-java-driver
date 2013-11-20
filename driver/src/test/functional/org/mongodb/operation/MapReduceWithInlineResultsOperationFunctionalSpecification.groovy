@@ -35,7 +35,7 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         MongoCursor<Document> results = operation.execute()
 
         then:
-        that results.getCommandResult().getResponse(), not(hasKey('timing'))
+        that results.commandResult.getResponse(), not(hasKey('timing'))
     }
 
     def 'when verbose is set the command result should contain less information'() {
@@ -54,7 +54,7 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         MongoCursor<Document> results = operation.execute()
 
         then:
-        that results.getCommandResult().getResponse(), hasKey('timing')
+        that results.commandResult.getResponse(), hasKey('timing')
     }
 
 }

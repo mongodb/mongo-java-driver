@@ -90,7 +90,7 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
                                                           isCloseSession())
                                           .execute();
 
-        return new MapReduceCursor<T>(commandResult);
+        return new MapReduceInlineResultsCursor<T>(commandResult);
     }
 
     private ServerConnectionProviderOptions getServerConnectionProviderOptions() {

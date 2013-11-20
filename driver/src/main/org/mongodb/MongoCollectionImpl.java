@@ -250,10 +250,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                 .limit(findOp.getLimit());
 
             if (mapReduce.isInline()) {
-                return new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec(),
-                                                                         options.getReadPreference(), client.getBufferProvider(),
-                                                                         client.getSession(), false)
-                           .execute();
+                MapReduceWithInlineResultsOperation<Document> operation = new MapReduceWithInlineResultsOperation<Document>(getNamespace(),
+                                                                                                  mapReduce,
+                                                                                                  new DocumentCodec(),
+                                                                                                  options.getReadPreference(),
+                                                                                                  client.getBufferProvider(),
+                                                                                                  client.getSession(),
+                                                                                                  false);
+                return new MapReduceResultsIterable<Document>(operation);
             } else {
                 new MapReduceToCollectionOperation(getNamespace(), mapReduce, client.getBufferProvider(), client.getSession(), false)
                     .execute();
