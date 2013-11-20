@@ -23,17 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
- * by interacting directly with the collection the results were input into.
+ * Represents the result of a map/reduce operation.  Users should interact with the inlineResults of the map reduce via the inlineResults() method, or
+ * by interacting directly with the collection the inlineResults were input into.
  */
 public class MapReduceOutput {
 
     private final DBCollection collection;
     private final DBObject command;
     private final ServerAddress serverAddress;
-    private final List<DBObject> results;
+    private final List<DBObject> inlineResults;
     private final MapReduceStatistics mapReduceStatistics;
-    private final DBCursor executionResult;
+    private final DBCursor resultsFromCollection;
 
     private org.mongodb.CommandResult commandResult;
 
@@ -49,43 +49,43 @@ public class MapReduceOutput {
         this.serverAddress = new ServerAddress(serverAddress);
         commandResult = results.getCommandResult();
         this.collection = null;
-        this.executionResult = null;
-        this.results = new ArrayList<DBObject>();
+        this.resultsFromCollection = null;
+        this.inlineResults = new ArrayList<DBObject>();
         while (results.hasNext()) {
-            this.results.add(results.next());
+            this.inlineResults.add(results.next());
         }
     }
 
     /**
      * Constructor for use when the map reduce output was put into a collection
      */
-    MapReduceOutput(final DBObject command, final DBCursor executionResult, final MapReduceStatistics mapReduceStatistics,
+    MapReduceOutput(final DBObject command, final DBCursor resultsFromCollection, final MapReduceStatistics mapReduceStatistics,
                     final DBCollection outputCollection, final org.mongodb.connection.ServerAddress serverAddress) {
         this.command = command;
-        this.results = null;
+        this.inlineResults = null;
         this.mapReduceStatistics = mapReduceStatistics;
 
         this.collection = outputCollection;
-        this.executionResult = executionResult;
+        this.resultsFromCollection = resultsFromCollection;
         this.serverAddress = new ServerAddress(serverAddress);
     }
 
     /**
-     * Returns a cursor to the results of the operation.
+     * Returns a cursor to the inlineResults of the operation.
      *
-     * @return the results in iterable form
+     * @return the inlineResults in iterable form
      */
     @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
-        if (results != null) {
-            return results;
+        if (inlineResults != null) {
+            return inlineResults;
         } else {
-            return executionResult;
+            return resultsFromCollection;
         }
     }
 
     /**
-     * Drops the collection that holds the results.  Does nothing if the map-reduce returned the results inline.
+     * Drops the collection that holds the inlineResults.  Does nothing if the map-reduce returned the inlineResults inline.
      */
     public void drop() {
         if (collection != null) {
@@ -94,7 +94,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * Gets the collection that holds the results (Will return null if results are Inline).
+     * Gets the collection that holds the inlineResults (Will return null if inlineResults are Inline).
      *
      * @return the collection or null
      */
@@ -127,27 +127,27 @@ public class MapReduceOutput {
                + "collection=" + collection
                + ", command=" + command
                + ", serverAddress=" + serverAddress
-               + ", results=" + results
-               + ", executionResult=" + executionResult
+               + ", inlineResults=" + inlineResults
+               + ", resultsFromCollection=" + resultsFromCollection
                + ", commandResult=" + commandResult
                + '}';
     }
 
     /**
-     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
-     * the results were returned directly from calling the map reduce) this will return null.
+     * Get the name of the collection that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the inlineResults were returned directly from calling the map reduce) this will return null.
      *
-     * @return the name of the collection that the map reduce results are stored in
+     * @return the name of the collection that the map reduce inlineResults are stored in
      */
     public final String getCollectionName() {
         return collection.getName();
     }
 
     /**
-     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
-     * the results were returned directly from calling the map reduce) this will return null.
+     * Get the name of the database that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the inlineResults were returned directly from calling the map reduce) this will return null.
      *
-     * @return the name of the database that holds the collection that the map reduce results are stored in
+     * @return the name of the database that holds the collection that the map reduce inlineResults are stored in
      */
     public String getDatabaseName() {
         return collection.getDB().getName();
