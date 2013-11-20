@@ -51,7 +51,7 @@ import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.Insert;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.MapReduce;
-import org.mongodb.operation.MapReduceCursor;
+import org.mongodb.MapReduceCursor;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.Operation;

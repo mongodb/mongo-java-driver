@@ -250,14 +250,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                 .limit(findOp.getLimit());
 
             if (mapReduce.isInline()) {
-                return new SingleShotCommandIterable<Document>(new MapReduceWithInlineResultsOperation<Document>(getNamespace(),
-                                                                                                                 mapReduce,
-                                                                                                                 new DocumentCodec(),
-                                                                                                                 options
-                                                                                                                     .getReadPreference(),
-                                                                                                                 client.getBufferProvider(),
-                                                                                                                 client.getSession(),
-                                                                                                                 false).execute());
+                MapReduceCursor<Document> results = new MapReduceWithInlineResultsOperation<Document>(getNamespace(),
+                                                                                                      mapReduce,
+                                                                                                      new DocumentCodec(),
+                                                                                                      options.getReadPreference(),
+                                                                                                      client.getBufferProvider(),
+                                                                                                      client.getSession(),
+                                                                                                      false).execute();
+                return results;
             } else {
                 new MapReduceToCollectionOperation(getNamespace(), mapReduce, client.getBufferProvider(), client.getSession(), false)
                     .execute();

@@ -16,15 +16,15 @@
 
 package com.mongodb;
 
+import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
-import org.mongodb.operation.MapReduceCursor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the inlineResults of the map reduce via the inlineResults() method, or
- * by interacting directly with the collection the inlineResults were input into.
+ * Represents the result of a map/reduce operation.  Users should interact with the inlineResults of the map reduce via the inlineResults()
+ * method, or by interacting directly with the collection the inlineResults were input into.
  */
 public class MapReduceOutput {
 
@@ -50,10 +50,7 @@ public class MapReduceOutput {
         commandResult = results.getCommandResult();
         this.collection = null;
         this.resultsFromCollection = null;
-        this.inlineResults = new ArrayList<DBObject>();
-        while (results.hasNext()) {
-            this.inlineResults.add(results.next());
-        }
+        this.inlineResults = results.into(new ArrayList<DBObject>());
     }
 
     /**
@@ -134,8 +131,8 @@ public class MapReduceOutput {
     }
 
     /**
-     * Get the name of the collection that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
-     * the inlineResults were returned directly from calling the map reduce) this will return null.
+     * Get the name of the collection that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation
+     * (i.e . the inlineResults were returned directly from calling the map reduce) this will return null.
      *
      * @return the name of the collection that the map reduce inlineResults are stored in
      */
@@ -144,8 +141,8 @@ public class MapReduceOutput {
     }
 
     /**
-     * Get the name of the database that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
-     * the inlineResults were returned directly from calling the map reduce) this will return null.
+     * Get the name of the database that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation
+     * (i.e . the inlineResults were returned directly from calling the map reduce) this will return null.
      *
      * @return the name of the database that holds the collection that the map reduce inlineResults are stored in
      */

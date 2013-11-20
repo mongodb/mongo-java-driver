@@ -20,6 +20,7 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;

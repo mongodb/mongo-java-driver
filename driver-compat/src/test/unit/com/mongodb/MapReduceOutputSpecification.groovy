@@ -17,7 +17,7 @@
 package com.mongodb
 
 import org.mongodb.MapReduceStatistics
-import org.mongodb.operation.MapReduceCursor
+import org.mongodb.MapReduceCursor
 import spock.lang.Subject
 
 @SuppressWarnings('deprecated')
