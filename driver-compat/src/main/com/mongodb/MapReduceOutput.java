@@ -131,20 +131,20 @@ public class MapReduceOutput {
     }
 
     /**
-     * Get the name of the collection that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation
-     * (i.e . the inlineResults were returned directly from calling the map reduce) this will return null.
+     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation
+     * (i.e . the results were returned directly from calling the map reduce) this will return null.
      *
-     * @return the name of the collection that the map reduce inlineResults are stored in
+     * @return the name of the collection that the map reduce results are stored in
      */
     public final String getCollectionName() {
         return collection.getName();
     }
 
     /**
-     * Get the name of the database that the inlineResults of the map reduce were saved into.  If the map reduce was an inline operation
-     * (i.e . the inlineResults were returned directly from calling the map reduce) this will return null.
+     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation
+     * (i.e . the results were returned directly from calling the map reduce) this will return null.
      *
-     * @return the name of the database that holds the collection that the map reduce inlineResults are stored in
+     * @return the name of the database that holds the collection that the map reduce results are stored in
      */
     public String getDatabaseName() {
         return collection.getDB().getName();

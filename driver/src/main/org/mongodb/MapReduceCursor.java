@@ -128,8 +128,6 @@ public class MapReduceCursor<T> implements MongoCursor<T>, MapReduceStatistics, 
 
     @Override
     public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-        SingleResultFuture<A> future = new SingleResultFuture<A>();
-        future.init(into(target), null);
-        return future;
+        return new SingleResultFuture<A>(into(target), null);
     }
 }

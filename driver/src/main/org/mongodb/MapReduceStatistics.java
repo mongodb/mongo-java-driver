@@ -16,13 +16,38 @@
 
 package org.mongodb;
 
+/**
+ * Common statistics returned by running all types of map-reduce operations.
+ *
+ * @since 3.0
+ */
 public interface MapReduceStatistics {
 
+    /**
+     * Get the number of documents that were input into the map reduce operation
+     *
+     * @return the number of documents that read while processing this map reduce
+     */
     int getInputCount();
 
+    /**
+     * Get the number of documents generated as a result of this map reduce
+     *
+     * @return the number of documents output by the map reduce
+     */
     int getOutputCount();
 
+    /**
+     * Get the number of messages emitted from the provided map function.
+     *
+     * @return the number of items emitted from the map function
+     */
     int getEmitCount();
 
+    /**
+     * Get the amount of time it took to run the map-reduce.
+     *
+     * @return the amount of time it took to run the map reduce
+     */
     int getDuration();
 }
