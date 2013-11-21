@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ package org.mongodb.connection;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 
+import java.util.Deque;
 import java.util.Iterator;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +29,7 @@ class ConcurrentPool<T> implements Pool<T> {
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
 
-    private final Queue<T> available = new ConcurrentLinkedQueue<T>();
+    private final Deque<T> available = new ConcurrentLinkedDeque<T>();
     private final Semaphore permits;
     private volatile boolean closed;
 
@@ -88,7 +87,7 @@ class ConcurrentPool<T> implements Pool<T> {
         if (prune) {
             close(t);
         } else {
-            available.add(t);
+            available.addLast(t);
         }
 
         releasePermit();
@@ -122,7 +121,7 @@ class ConcurrentPool<T> implements Pool<T> {
             throw new MongoTimeoutException(String.format("Timeout waiting for a pooled item after %d %s", timeout, timeUnit));
         }
 
-        T t = available.poll();
+        T t = available.pollLast();
         if (t == null) {
             t = createNewAndReleasePermitIfFailure();
         }
@@ -136,7 +135,7 @@ class ConcurrentPool<T> implements Pool<T> {
             if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            T cur = available.poll();
+            T cur = available.pollFirst();
             if (cur == null) {
                 releasePermit();
                 break;
