@@ -16,17 +16,17 @@
 
 package com.mongodb;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.Closeable;
 
+import static com.mongodb.util.MyAsserts.assertEquals;
+import static com.mongodb.util.MyAsserts.assertFalse;
+import static com.mongodb.util.MyAsserts.assertNotNull;
+import static com.mongodb.util.MyAsserts.assertTrue;
+import static com.mongodb.util.MyAsserts.fail;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class ConcurrentPoolTest {
     private ConcurrentPool<TestCloseable> pool;
@@ -49,7 +49,7 @@ public class ConcurrentPoolTest {
         }
     }
 
-    @Before
+    @BeforeMethod
     public void setUp() {
         pool = new ConcurrentPool<TestCloseable>(3, new ConcurrentPool.ItemFactory<TestCloseable>() {
             @Override
@@ -76,7 +76,7 @@ public class ConcurrentPoolTest {
         pool.get();
         try {
             pool.get(1, MILLISECONDS);
-            fail();
+            fail("should have timed out");
         } catch (MongoTimeoutException e) {
             // all good
         }
