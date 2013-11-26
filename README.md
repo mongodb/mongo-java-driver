@@ -10,10 +10,10 @@ Support / Feedback
 ==================
 
 For issues with, questions about, or feedback for the MongoDB Java driver, please look into
-our `support channels <http://www.mongodb.org/about/support>`_. Please
+our [support channels](http://www.mongodb.org/about/support). Please
 do not email any of the Java driver developers directly with issues or
-questions - you're more likely to get an answer on the `mongodb-user
-<http://groups.google.com/group/mongodb-user>`_ list on Google Groups.
+questions - you're more likely to get an answer on the [mongodb-user]
+(http://groups.google.com/group/mongodb-user) list on Google Groups.
 
 Bugs / Feature Requests
 =======================
@@ -21,8 +21,8 @@ Bugs / Feature Requests
 Think you’ve found a bug? Want to see a new feature in the Java driver? Please open a
 case in our issue management tool, JIRA:
 
-- `Create an account and login <https://jira.mongodb.org>`_.
-- Navigate to `the JAVA project <https://jira.mongodb.org/browse/JAVA>`_.
+- [Create an account and login](https://jira.mongodb.org).
+- Navigate to [the JAVA project](https://jira.mongodb.org/browse/JAVA).
 - Click **Create Issue** - Please provide as much information as possible about the issue type and how to reproduce it.
 
 Bug reports in JIRA for all driver projects (i.e. JAVA, PYTHON, CSHARP) and the
@@ -32,8 +32,8 @@ Security Vulnerabilities
 ------------------------
 
 If you’ve identified a security vulnerability in a driver or any other
-MongoDB project, please report it according to the `instructions here
-<http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report>`_.
+MongoDB project, please report it according to the [instructions here]
+(http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
 
 ### Build status:
 [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
