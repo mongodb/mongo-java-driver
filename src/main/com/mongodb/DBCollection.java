@@ -779,7 +779,7 @@ public abstract class DBCollection {
             queryOpBuilder.addReadPreference(readPref);
         }
 
-        Iterator<DBObject> i = __find(queryOpBuilder.get(), fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
+        Iterator<DBObject> i = __find(queryOpBuilder.get(), fields , 0 , -1 , 1, getOptions(), readPref, getDecoder() );
         
         DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
