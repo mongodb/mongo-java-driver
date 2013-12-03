@@ -1,7 +1,8 @@
 package com.mongodb;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,8 +12,9 @@ import java.util.List;
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
-import static com.mongodb.util.MyAsserts.assertTrue;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 
 public class ReadPreferenceTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
@@ -23,7 +25,7 @@ public class ReadPreferenceTest {
     private ClusterDescription setNoSecondary;
     private ClusterDescription setNoPrimary;
 
-    @BeforeMethod
+    @Before
     public void setUp() throws IOException {
         final Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
         final Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");

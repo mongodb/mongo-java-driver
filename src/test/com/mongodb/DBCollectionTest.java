@@ -18,26 +18,22 @@ package com.mongodb;
 
 import com.mongodb.util.TestCase;
 import org.bson.types.ObjectId;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 public class DBCollectionTest extends TestCase {
 
-    public DBCollectionTest()
-        throws IOException , MongoException {
-        super();
-        cleanupDB = "com_mongodb_unittest_DBCollectionTest";
-        _db = cleanupMongo.getDB( cleanupDB );
-    }
-
-    @Test(groups = {"basic"})
+    @Test
     public void testMultiInsert() {
-        DBCollection c = _db.getCollection("testmultiinsert");
-        c.drop();
+        DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -47,31 +43,30 @@ public class DBCollectionTest extends TestCase {
         c.insert(inserted1,inserted2);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testCappedCollection() {
         String collectionName = "testCapped";
         int collectionSize = 1000;
         
-        DBCollection c = _db.getCollection(collectionName);
+        DBCollection c = getDatabase().getCollection(collectionName);
         c.drop();
-        
+
         DBObject options = new BasicDBObject("capped", true);
         options.put("size", collectionSize);
-        c = _db.createCollection(collectionName, options);
+        c = getDatabase().createCollection(collectionName, options);
         
         assertEquals(c.isCapped(), true);
     }
     
-    @Test(groups = {"basic"})
+    @Test
     public void testDuplicateKeyException() {
-        DBCollection c = _db.getCollection("testDuplicateKey");
-        c.drop();
-        
+        DBCollection c = collection;
+
         DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
         try {
            c.insert(obj, WriteConcern.SAFE);
-           Assert.fail();
+           fail();
         }
         catch (MongoException.DuplicateKey e) {
             assertNotNull(e.getCommandResult());
@@ -79,10 +74,9 @@ public class DBCollectionTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testFindOne() {
-        DBCollection c = _db.getCollection("test");
-        c.drop();
+        DBCollection c = collection;
 
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -125,8 +119,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testFindOneSort(){
     	
-    	DBCollection c = _db.getCollection("test");
-    	c.drop();
+    	DBCollection c = collection;
     	
         DBObject obj = c.findOne();
         assertEquals(obj, null);
@@ -171,8 +164,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testDropIndex(){
-        DBCollection c = _db.getCollection( "dropindex1" );
-        c.drop();
+        DBCollection c = collection;
 
         c.save( new BasicDBObject( "x" , 1 ) );
         assertEquals( 1 , c.getIndexInfo().size() );
@@ -222,8 +214,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testDistinct(){
-        DBCollection c = _db.getCollection( "distinct1" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<100; i++ ){
             BasicDBObject o = new BasicDBObject();
@@ -242,8 +233,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testEnsureIndex(){
-        DBCollection c = _db.getCollection( "ensureIndex1" );
-        c.drop();
+        DBCollection c = collection;
 
         c.save( new BasicDBObject( "x" , 1 ) );
         assertEquals( 1 , c.getIndexInfo().size() );
@@ -255,8 +245,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testEnsureNestedIndex(){
-        DBCollection c = _db.getCollection( "ensureNestedIndex1" );
-        c.drop();
+        DBCollection c = collection;
 
         BasicDBObject newDoc = new BasicDBObject( "x", new BasicDBObject( "y", 1 ) );
         c.save( newDoc );
@@ -269,20 +258,17 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testIndexExceptions(){
-        DBCollection c = _db.getCollection( "indexExceptions" );
-        c.drop();
+        collection.insert(new BasicDBObject("x", 1));
+        collection.insert(new BasicDBObject("x", 1));
 
-        c.insert( new BasicDBObject( "x" , 1 ) );
-        c.insert( new BasicDBObject( "x" , 1 ) );
-
-        c.ensureIndex( new BasicDBObject( "y" , 1 ) );
-        c.resetIndexCache();
-        c.ensureIndex( new BasicDBObject( "y" , 1 ) ); // make sure this doesn't throw
-        c.resetIndexCache();
+        collection.ensureIndex(new BasicDBObject("y", 1));
+        collection.resetIndexCache();
+        collection.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
+        collection.resetIndexCache();
 
         Exception failed = null;
         try {
-            c.ensureIndex( new BasicDBObject( "x" , 1 ) , new BasicDBObject( "unique" , true ) );
+            collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
         }
         catch ( MongoException.DuplicateKey e ){
             failed = e;
@@ -293,22 +279,24 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        DBCollection c = _db.getCollection("testmultiinsertNoContinue");
-        c.setWriteConcern( WriteConcern.NORMAL );
-        c.drop();
+        collection.setWriteConcern(WriteConcern.NORMAL);
 
-        DBObject obj = c.findOne();
-        assertEquals(obj, null);
+        try {
+            DBObject obj = collection.findOne();
+            assertEquals(obj, null);
 
-        ObjectId id = new ObjectId();
-        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
-        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
-        DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-        WriteResult r = c.insert(inserted1,inserted2, inserted3);
-        assertEquals(1, c.count());
-        assertFalse(c.getWriteConcern().getContinueOnErrorForInsert());
+            ObjectId id = new ObjectId();
+            DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
+            DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
+            DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
+            WriteResult r = collection.insert(inserted1, inserted2, inserted3);
+            assertEquals(1, collection.count());
+            assertFalse(collection.getWriteConcern().getContinueOnErrorForInsert());
 
-        assertEquals( c.count(), 1);
+            assertEquals(collection.count(), 1);
+        } finally {
+            collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+        }
     }
 
     @Test
@@ -317,10 +305,7 @@ public class DBCollectionTest extends TestCase {
             return;
         }
     
-        DBCollection c = _db.getCollection("testmultiinsertWithContinue");
-        c.drop();
-
-        DBObject obj = c.findOne();
+        DBObject obj = collection.findOne();
         assertEquals(obj, null);
 
         ObjectId id = new ObjectId();
@@ -329,48 +314,36 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
         WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
         try {
-            c.insert(newWC, inserted1, inserted2, inserted3);
+            collection.insert(newWC, inserted1, inserted2, inserted3);
             fail("Insert should have failed");
         } catch (MongoException e) {
             assertEquals(11000, e.getCode());
         }
-        assertEquals( c.count(), 2 );
+        assertEquals( collection.count(), 2 );
     }
 
-    @Test( expectedExceptions = IllegalArgumentException.class )
+    @Test( expected =  IllegalArgumentException.class )
     public void testDotKeysFail() {
-        DBCollection c = _db.getCollection("testdotkeysFail");
-        c.drop();
-
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo.bar","baz").get();
-        c.insert(obj);
+        collection.insert(obj);
     }
 
-    @Test( expectedExceptions = IllegalArgumentException.class )
+    @Test( expected =  IllegalArgumentException.class )
     public void testNullKeysFail() {
-        DBCollection c = _db.getCollection("testnullkeysFail");
-        c.drop();
-
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo\0bar","baz").get();
-        c.insert(obj);
+        collection.insert(obj);
     }
 
-    @Test( expectedExceptions = IllegalArgumentException.class )
+    @Test( expected =  IllegalArgumentException.class )
     public void testNullKeysFailWhenNested() {
-        DBCollection c = _db.getCollection("testnullkeysFailWhenNested");
-        c.drop();
-
         final BasicDBList list = new BasicDBList();
         list.add(new BasicDBObject("foo\0bar","baz"));
         DBObject obj = BasicDBObjectBuilder.start().add("x", list).get();
-        c.insert(obj);
+        collection.insert(obj);
     }
     
     @Test
     public void testLazyDocKeysPass() {
-        DBCollection c = _db.getCollection("testLazyDotKeysPass");
-        c.drop();
-        
         DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x",1).add("y",2).add("foo.bar","baz").get();
         
         //convert to a lazydbobject
@@ -378,11 +351,11 @@ public class DBCollectionTest extends TestCase {
         byte[] encodedBytes = encoder.encode(obj);
 
         LazyDBDecoder lazyDecoder = new LazyDBDecoder();
-        DBObject lazyObj = lazyDecoder.decode(encodedBytes, c);
+        DBObject lazyObj = lazyDecoder.decode(encodedBytes, collection);
         
-        c.insert(lazyObj);
+        collection.insert(lazyObj);
         
-        DBObject insertedObj = c.findOne();
+        DBObject insertedObj = collection.findOne();
         assertEquals("lazydottest1", insertedObj.get("_id"));
         assertEquals(1, insertedObj.get("x"));
         assertEquals(2, insertedObj.get("y"));
@@ -392,7 +365,6 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testFindAndUpdateTimeout() {
         checkServerVersion(2.5);
-        DBCollection collection = _db.getCollection("testFindAndUpdateTimeout");
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -409,7 +381,6 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testFindAndReplaceTimeout() {
         checkServerVersion(2.5);
-        DBCollection collection = _db.getCollection("testFindAndReplaceTimeout");
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -426,7 +397,6 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testFindAndRemoveTimeout() {
         checkServerVersion(2.5);
-        DBCollection collection = _db.getCollection("testFindAndRemoveTimeout");
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -438,14 +408,4 @@ public class DBCollectionTest extends TestCase {
             disableMaxTimeFailPoint();
         }
     }
-
-
-
-    final DB _db;
-
-    public static void main( String args[] )
-        throws Exception {
-        (new DBCollectionTest()).runConsole();
-    }
-
 }

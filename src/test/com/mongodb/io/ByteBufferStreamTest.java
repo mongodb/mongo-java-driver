@@ -18,18 +18,20 @@
 
 package com.mongodb.io;
 
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-import java.util.zip.*;
+import com.mongodb.util.TestCase;
+import org.junit.Test;
 
-import org.testng.annotations.Test;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Random;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import com.mongodb.util.*;
+import static org.junit.Assert.assertEquals;
 
 public class ByteBufferStreamTest extends TestCase {
 
-    @Test(groups = {"basic"})
+    @Test
     public void test1()
 	throws IOException {
 	_testInOut( 16 , 128 );
@@ -54,7 +56,7 @@ public class ByteBufferStreamTest extends TestCase {
 
     }
     
-    @Test(groups = {"basic"})
+    @Test
     public void testplay()
 	throws IOException {
 	_testplay( 16 , 128 );
@@ -88,7 +90,7 @@ public class ByteBufferStreamTest extends TestCase {
     }
 
 
-    @Test(groups = {"basic"})
+    @Test
     public void testZip1()
 	throws IOException {
 	_testZip( 128 , 2048 );
@@ -122,8 +124,4 @@ public class ByteBufferStreamTest extends TestCase {
     }
 
     static final Random _rand = new Random( 123123 );
-
-    public static void main( String args[] ){
-        (new ByteBufferStreamTest()).runConsole();
-    }
 }

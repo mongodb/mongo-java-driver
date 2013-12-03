@@ -1,9 +1,10 @@
 package com.mongodb.util;
 
-import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Sjoerd Mulder
@@ -24,10 +25,10 @@ public class Base64CodecTest {
     @Test
     public void testDecodeEncode() throws Exception {
         Base64Codec codec = new Base64Codec();
-        assertEquals(abc, codec.decode(codec.encode(abc)));
-        assertEquals(abcd, codec.decode(codec.encode(abcd)));
-        assertEquals(abcde, codec.decode(codec.encode(abcde)));
-        assertEquals(allBytes, codec.decode(codec.encode(allBytes)));
+        assertArrayEquals(abc, codec.decode(codec.encode(abc)));
+        assertArrayEquals(abcd, codec.decode(codec.encode(abcd)));
+        assertArrayEquals(abcde, codec.decode(codec.encode(abcde)));
+        assertArrayEquals(allBytes, codec.decode(codec.encode(allBytes)));
     }
 
 }

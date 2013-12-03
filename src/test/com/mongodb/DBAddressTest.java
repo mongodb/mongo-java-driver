@@ -16,15 +16,17 @@
 
 package com.mongodb;
 
-import java.net.*;
+import com.mongodb.util.TestCase;
+import org.junit.Test;
 
-import org.testng.annotations.Test;
+import java.net.UnknownHostException;
 
-import com.mongodb.util.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DBAddressTest extends TestCase {
 
-    @Test(groups = {"basic"})
+    @Test
     public void testCTOR() 
         throws UnknownHostException {
         DBAddress foo = new DBAddress( "www.10gen.com:1000/some.host" );
@@ -33,7 +35,7 @@ public class DBAddressTest extends TestCase {
         assertEquals( foo.getSocketAddress().hashCode(), bar.getSocketAddress().hashCode() );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testInvalid() 
         throws UnknownHostException {
         boolean threw = false;
@@ -43,7 +45,7 @@ public class DBAddressTest extends TestCase {
         catch( NullPointerException e ) {
             threw = true;
         }
-        assertTrue( threw, "new DBAddress(null) didn't throw exception" );
+        assertTrue(threw);
         threw = false;
 
         try { 
@@ -52,7 +54,7 @@ public class DBAddressTest extends TestCase {
         catch( IllegalArgumentException e ) {
             threw = true;
         }
-        assertTrue( threw, "new DBAddress(\" \") didn't throw exception" );
+        assertTrue(threw);
         threw = false;
     }
 
@@ -72,9 +74,5 @@ public class DBAddressTest extends TestCase {
         assertEquals( 9999 , a.getPort() );
         assertEquals( "abc" , a.getDBName() );
     }
-    
-    public static void main( String args[] ) {
-        (new DBAddressTest()).runConsole();
-    }
-}
+ }
 

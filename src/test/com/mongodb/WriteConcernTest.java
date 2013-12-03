@@ -19,8 +19,8 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
+
+import static org.junit.Assert.assertEquals;
 
 public class WriteConcernTest extends TestCase {
 

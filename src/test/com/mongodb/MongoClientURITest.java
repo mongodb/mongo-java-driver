@@ -18,12 +18,18 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 import java.net.UnknownHostException;
-import java.util.Arrays;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class MongoClientURITest extends TestCase {
 

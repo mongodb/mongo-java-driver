@@ -17,22 +17,21 @@
  */
 package com.mongodb;
 
-
-/*
- * modified April 11, 2012 by Bryan Reinero
- *  added $near, $nearSphere, $centerSphere and $within $polygon tests
- */
 import com.mongodb.QueryBuilder.QueryBuilderException;
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Test for various methods of <code/>QueryBuilder</code>
- * @author Julson Lim
  */
 public class QueryBuilderTest extends TestCase {
     private DB _testDB;

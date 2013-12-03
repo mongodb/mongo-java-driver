@@ -18,7 +18,11 @@
 
 package org.bson;
 
-import static org.testng.Assert.assertNotEquals;
+
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
+import org.bson.types.CodeWScope;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,13 +30,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
-import org.bson.io.BasicOutputBuffer;
-import org.bson.io.OutputBuffer;
-import org.bson.types.CodeWScope;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
-public class BSONTest extends Assert {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class BSONTest {
 
 
     public BSONTest(){
@@ -87,7 +92,7 @@ public class BSONTest extends Assert {
         _test( new BasicBSONObject( "x" , 4 ) , 12 , "d1ed8dbf79b78fa215e2ded74548d89d" );
     }
 
-    @Test( expectedExceptions = IllegalArgumentException.class )
+    @Test( expected =  IllegalArgumentException.class )
     public void testNullKeysFail() {
         BSONEncoder e = new BasicBSONEncoder();
         OutputBuffer buf = new BasicOutputBuffer();
@@ -192,11 +197,10 @@ public class BSONTest extends Assert {
         catch ( IllegalArgumentException ieE ) {
             encodeFailed = true;
         }
-        assertTrue( encodeFailed, "Expected encoding to fail but it didn't." );
+        assertTrue( encodeFailed);
         // Reset the buffer
         buf.seekStart();
-        assertTrue( td instanceof TestDate );
-        assertTrue( tf.transform( td ) instanceof java.util.Date, "Transforming a TestDate should yield a JDK Date" );
+        assertTrue( tf.transform( td ) instanceof java.util.Date );
 
         BSON.addEncodingHook( TestDate.class, tf );
         e.putObject( o );
@@ -204,7 +208,7 @@ public class BSONTest extends Assert {
 
         d.decode( new ByteArrayInputStream( buf.toByteArray() ), cb );
         Object result = cb.get();
-        assertTrue( result instanceof BSONObject, "Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead." );
+        assertTrue( result instanceof BSONObject );
         BSONObject bson = (BSONObject) result;
         assertNotNull( bson.get( "date" ) );
         assertTrue( bson.get( "date" ) instanceof java.util.Date );
@@ -240,7 +244,7 @@ public class BSONTest extends Assert {
 
         d.decode( new ByteArrayInputStream( buf.toByteArray() ), cb );
         Object result = cb.get();
-        assertTrue( result instanceof BSONObject, "Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead." );
+        assertTrue( result instanceof BSONObject );
         BSONObject bson = (BSONObject) result;
         assertNotNull( bson.get( "date" ) );
         assertTrue( bson.get( "date" ) instanceof java.util.Date );
@@ -266,23 +270,17 @@ public class BSONTest extends Assert {
     
     @Test
     public void testEquals() {
-        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L),
-                "longs should not be equal");
+        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L));
 
-        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D),
-                "doubles should not be equal");
+        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D));
         
-        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F),
-                "floats should not be equal");
+        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
         
-        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D),
-                "doubles should be equal");
+        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
         
-        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F),
-                "floats should be equal");
+        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
         
-        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L),
-                "int and long should be equal");
+        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L));
     }
 
     private class TestDate {

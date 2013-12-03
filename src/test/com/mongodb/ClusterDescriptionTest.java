@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -30,9 +30,9 @@ import static com.mongodb.ServerConnectionState.Connected;
 import static com.mongodb.ServerConnectionState.Connecting;
 import static com.mongodb.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerType.ReplicaSetPrimary;
-import static com.mongodb.util.MyAsserts.assertFalse;
-import static com.mongodb.util.MyAsserts.assertTrue;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ClusterDescriptionTest {
     @Test

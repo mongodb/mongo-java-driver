@@ -17,7 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -33,17 +34,10 @@ import java.util.concurrent.TimeoutException;
 
 public class DBCursorTest extends TestCase {
 
-    public DBCursorTest() throws IOException , MongoException {
-        super();
-        cleanupDB = "com_mongodb_unittest_DBCursorTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
-
-    @Test(groups = {"basic"})
+    @Test
     public void testGetServerAddressLoop() {
 
-        final DBCollection c = _db.getCollection("getServerAddress");
-        c.drop();
+        final DBCollection c = collection;
 
         // Insert some data.
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
@@ -56,11 +50,10 @@ public class DBCursorTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetServerAddressQuery() {
 
-        final DBCollection c = _db.getCollection("getServerAddress");
-        c.drop();
+        final DBCollection c = collection;
 
         // Insert some data.
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
@@ -70,12 +63,10 @@ public class DBCursorTest extends TestCase {
         assertNotNull(cur.getServerAddress());
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetServerAddressQuery1() {
 
-        final DBCollection c = _db.getCollection("getServerAddress");
-        c.drop();
-
+        final DBCollection c = collection;
         // Insert some data.
         for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", i));
 
@@ -84,11 +75,10 @@ public class DBCursorTest extends TestCase {
         assertNotNull(cur.getServerAddress());
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testCount() {
         try {
-            DBCollection c = _db.getCollection("test");
-            c.drop();
+            DBCollection c = collection;
 
             assertEquals(c.find().count(), 0);
 
@@ -103,10 +93,10 @@ public class DBCursorTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testSnapshot() {
-        DBCollection c = _db.getCollection("snapshot1");
-        c.drop();
+        DBCollection c = collection;
+
         for ( int i=0; i<100; i++ )
             c.save( new BasicDBObject( "x" , i ) );
         assertEquals( 100 , c.find().count() );
@@ -117,9 +107,9 @@ public class DBCursorTest extends TestCase {
         assertEquals( 50 , c.find().snapshot().limit(50).toArray().size() );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testOptions() {
-        DBCollection c = _db.getCollection("test");
+        DBCollection c = collection;
         DBCursor dbCursor = c.find();
 
         assertEquals(0, dbCursor.getOptions());
@@ -148,9 +138,9 @@ public class DBCursorTest extends TestCase {
 
     @Test//(enabled = false)
     public void testTailable() {
-        DBCollection c = _db.getCollection("tail1");
+        DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
-        _db.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         for (int i = 0; i < 10; i++) {
             c.save(new BasicDBObject("x", i));
         }
@@ -171,9 +161,9 @@ public class DBCursorTest extends TestCase {
 
     @Test//(enabled = false)
     public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
-        DBCollection c = _db.getCollection("tail1");
+        DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
-        _db.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         for (int i = 0; i < 10; i++) {
             c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
         }
@@ -213,9 +203,7 @@ public class DBCursorTest extends TestCase {
     
     @Test
     public void testBig(){
-        DBCollection c = _db.getCollection("big1");
-        c.drop();
-
+        DBCollection c = collection;
         String bigString;
         {
             StringBuilder buf = new StringBuilder( 16000 );
@@ -238,7 +226,7 @@ public class DBCursorTest extends TestCase {
 
         // negative limit works like negative batchsize, for legacy reason
         int x = c.find().limit(-800).toArray().size();
-        assertLess( x , 800 );
+        assertTrue( x < 800 );
 
         DBCursor a = c.find();
         assertEquals( numToInsert , a.itcount() );
@@ -247,7 +235,7 @@ public class DBCursorTest extends TestCase {
         assertEquals( numToInsert , b.itcount() );
         assertEquals( 10 , b.getSizes().get(0).intValue() );
 
-        assertLess( a.numGetMores() , b.numGetMores() );
+        assertTrue( a.numGetMores() < b.numGetMores() );
 
         assertEquals( numToInsert , c.find().batchSize(2).itcount() );
         assertEquals( numToInsert , c.find().batchSize(1).itcount() );
@@ -268,9 +256,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testExplain(){
-        DBCollection c = _db.getCollection( "explain1" );
-        c.drop();
-
+        DBCollection c = collection;
         for ( int i=0; i<100; i++ )
             c.save( new BasicDBObject( "x" , i ) );
 
@@ -300,8 +286,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testBatchWithActiveCursor(){
-        DBCollection c = _db.getCollection( "testBatchWithActiveCursor" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<100; i++ )
             c.save( new BasicDBObject( "x" , i ) );
@@ -331,8 +316,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testBatchWithLimit(){
-        DBCollection c = _db.getCollection( "batchWithLimit1" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<100; i++ )
             c.save( new BasicDBObject( "x" , i ) );
@@ -343,8 +327,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testLargeBatch(){
-        DBCollection c = _db.getCollection( "largeBatch1" );
-        c.drop();
+        DBCollection c = collection;
 
         int total = 50000;
         int batch = 10000;
@@ -357,7 +340,7 @@ public class DBCursorTest extends TestCase {
     }
     @Test
     public void testSpecial(){
-        DBCollection c = _db.getCollection( "testSpecial" );
+        DBCollection c = collection;
         c.insert( new BasicDBObject( "x" , 1 ) );
         c.insert( new BasicDBObject( "x" , 2 ) );
         c.insert( new BasicDBObject( "x" , 3 ) );
@@ -373,8 +356,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testUpsert(){
-        DBCollection c = _db.getCollection( "upsert1" );
-        c.drop();
+        DBCollection c = collection;
 
         c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject( "$inc" , new BasicDBObject( "count" , 1 ) ), true, false );
         c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject( "$inc" , new BasicDBObject( "count" , 1 ) ), true, false );
@@ -385,8 +367,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testLimitAndBatchSize() {
-        DBCollection c = _db.getCollection( "LimitAndBatchSize" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<1000; i++ )
             c.save( new BasicDBObject( "x" , i ) );
@@ -428,8 +409,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testSort(){
-        DBCollection c = _db.getCollection( "SortTest" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<1000; i++ )
             c.save( new BasicDBObject( "x" , i ).append("y", 1000-i));
@@ -463,9 +443,9 @@ public class DBCursorTest extends TestCase {
         }
     }
 
-    @Test(expectedExceptions = NoSuchElementException.class)
+    @Test(expected = NoSuchElementException.class)
     public void testShouldThrowNoSuchElementException() {
-        DBCollection c = _db.getCollection("emptyCollection");
+        DBCollection c = collection;
 
         DBCursor cursor = c.find();
 
@@ -474,8 +454,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testHasFinalizer() throws UnknownHostException {
-        DBCollection c = _db.getCollection( "HasFinalizerTest" );
-        c.drop();
+        DBCollection c = collection;
 
         for ( int i=0; i<1000; i++ )
             c.save( new BasicDBObject("_id", i), WriteConcern.SAFE);
@@ -504,7 +483,7 @@ public class DBCursorTest extends TestCase {
         MongoClientOptions mongoOptions = new MongoClientOptions.Builder().cursorFinalizerEnabled(false).build();
         Mongo m = new MongoClient("127.0.0.1", mongoOptions);
         try {
-            c = m.getDB(cleanupDB).getCollection("HasFinalizerTest");
+            c = m.getDB(getDatabase().getName()).getCollection("HasFinalizerTest");
             cursor = c.find();
             cursor.hasNext();
             assertFalse(cursor.hasFinalizer());
@@ -518,7 +497,6 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeForIterator() {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
-        DBCollection collection = _db.getCollection("testMaxTimeForIterator");
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
         try {
@@ -535,7 +513,6 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeForIterable() {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
-        DBCollection collection = _db.getCollection("testMaxTimeForIterable");
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
         try {
@@ -552,7 +529,6 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeForOne() {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
-        DBCollection collection = _db.getCollection("testMaxTimeForOne");
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
         try {
@@ -569,7 +545,6 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeForCount() {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
-        DBCollection collection = _db.getCollection("testMaxTimeForCount");
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
         try {
@@ -586,7 +561,6 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeForSize() {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
-        DBCollection collection = _db.getCollection("testMaxTimeForSize");
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
         try {
@@ -598,13 +572,4 @@ public class DBCursorTest extends TestCase {
             disableMaxTimeFailPoint();
         }
     }
-
-    final DB _db;
-
-    public static void main( String args[] )
-        throws Exception {
-        (new DBCursorTest()).runConsole();
-
-    }
-
 }

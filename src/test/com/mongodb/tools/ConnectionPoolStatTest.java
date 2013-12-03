@@ -19,10 +19,12 @@ package com.mongodb.tools;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import javax.management.JMException;
 import java.io.IOException;
+
+import static org.junit.Assert.assertNotNull;
 
 public class ConnectionPoolStatTest extends TestCase {
 

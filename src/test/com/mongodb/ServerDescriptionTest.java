@@ -16,7 +16,8 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
+
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -29,20 +30,20 @@ import static com.mongodb.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerType.ReplicaSetPrimary;
 import static com.mongodb.ServerType.Unknown;
-import static com.mongodb.util.MyAsserts.assertFalse;
-import static com.mongodb.util.MyAsserts.assertTrue;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ServerDescriptionTest {
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expected =  IllegalArgumentException.class)
     public void testMissingStatus() throws UnknownHostException {
         ServerDescription.builder().address(new ServerAddress()).type(ReplicaSetPrimary).build();
 
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expected =  IllegalArgumentException.class)
     public void testMissingAddress() throws UnknownHostException {
         ServerDescription.builder().state(Connected).type(ReplicaSetPrimary).build();
 

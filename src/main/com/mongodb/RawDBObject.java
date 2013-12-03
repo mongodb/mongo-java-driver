@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import static com.mongodb.util.MyAsserts.assertEquals;
 import static org.bson.BSON.ARRAY;
 import static org.bson.BSON.BINARY;
 import static org.bson.BSON.BOOLEAN;
@@ -62,7 +61,6 @@ public class RawDBObject implements DBObject {
 
     RawDBObject( ByteBuffer buf ){
         this( buf , 0 );
-        assertEquals( _end , _buf.limit() );
     }
     
     RawDBObject( ByteBuffer buf , int offset ){

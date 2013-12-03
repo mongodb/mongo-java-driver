@@ -16,17 +16,17 @@
 
 package com.mongodb;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
-import static com.mongodb.util.MyAsserts.assertEquals;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.Assert.assertEquals;
 
 public class CompositeServerSelectorTest {
     CompositeServerSelector selector;
@@ -34,7 +34,7 @@ public class CompositeServerSelectorTest {
     private ServerDescription first;
     private ServerDescription third;
 
-    @BeforeMethod
+    @Before
     public void setUp() throws UnknownHostException {
         first = ServerDescription.builder()
                                  .state(Connected)

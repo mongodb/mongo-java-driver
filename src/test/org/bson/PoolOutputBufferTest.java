@@ -18,14 +18,15 @@
 
 package org.bson;
 
-import java.util.*;
+import org.bson.io.PoolOutputBuffer;
+import org.junit.Test;
 
-import org.testng.annotations.Test;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.bson.io.*;
-import org.testng.Assert;
+import static org.junit.Assert.assertEquals;
 
-public class PoolOutputBufferTest extends Assert {
+public class PoolOutputBufferTest {
 
     public PoolOutputBufferTest(){
         for ( int x = 8; x<(PoolOutputBuffer.BUF_SIZE*3); x*=2 ){

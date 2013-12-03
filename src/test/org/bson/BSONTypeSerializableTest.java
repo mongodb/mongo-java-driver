@@ -17,16 +17,25 @@
  */
 package org.bson;
 
-import org.bson.types.*;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class BSONTypeSerializableTest extends Assert {
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+public class BSONTypeSerializableTest {
 
     @Test
     public void testSerializeMinKey() throws Exception {
@@ -69,8 +78,8 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Binary binary2 = (Binary) objectInputStream.readObject();
         
-        Assert.assertEquals(binary.getData(), binary2.getData());
-        Assert.assertEquals(binary.getType(), binary2.getType());
+        assertArrayEquals(binary.getData(), binary2.getData());
+        assertEquals(binary.getType(), binary2.getType());
     }
 
     @Test
@@ -86,8 +95,8 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         BSONTimestamp object2 = (BSONTimestamp) objectInputStream.readObject();
 
-        Assert.assertEquals(object.getTime(), object2.getTime());
-        Assert.assertEquals(object.getInc(), object2.getInc());
+        assertEquals(object.getTime(), object2.getTime());
+        assertEquals(object.getInc(), object2.getInc());
     }
 
     @Test
@@ -103,7 +112,7 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Code object2 = (Code) objectInputStream.readObject();
 
-        Assert.assertEquals(object.getCode(), object2.getCode());
+        assertEquals(object.getCode(), object2.getCode());
     }
 
     @Test
@@ -120,8 +129,8 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         CodeWScope object2 = (CodeWScope) objectInputStream.readObject();
 
-        Assert.assertEquals(object.getCode(), object2.getCode());
-        Assert.assertEquals(object.getScope().get("t"), object2.getScope().get("t"));
+        assertEquals(object.getCode(), object2.getCode());
+        assertEquals(object.getScope().get("t"), object2.getScope().get("t"));
     }
 
     @Test
@@ -137,7 +146,7 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Symbol object2 = (Symbol) objectInputStream.readObject();
 
-        Assert.assertEquals(object.getSymbol(), object2.getSymbol());
+        assertEquals(object.getSymbol(), object2.getSymbol());
     }
 
     @Test
@@ -153,6 +162,6 @@ public class BSONTypeSerializableTest extends Assert {
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         ObjectId object2 = (ObjectId) objectInputStream.readObject();
 
-        Assert.assertEquals(object.toString(), object2.toString());
+        assertEquals(object.toString(), object2.toString());
     }
 }

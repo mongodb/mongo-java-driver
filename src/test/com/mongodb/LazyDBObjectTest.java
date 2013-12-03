@@ -28,8 +28,8 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,13 +42,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 @SuppressWarnings( { "unchecked" , "deprecation" } )
 public class LazyDBObjectTest extends TestCase {
-
-    public LazyDBObjectTest(){
-        cleanupDB = "com_mongodb_unittest_LazyDBObjectTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
 
     BSONEncoder e;
     OutputBuffer buf;
@@ -56,7 +58,7 @@ public class LazyDBObjectTest extends TestCase {
     LazyDBDecoder lazyDBDecoder;
     DefaultDBDecoder defaultDBDecoder;
 
-    @BeforeMethod
+    @Before
     public void beforeMethod() {
         e = new BasicBSONEncoder();
         buf = new BasicOutputBuffer();
@@ -311,7 +313,7 @@ public class LazyDBObjectTest extends TestCase {
         /*
         b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
         b.append( "str", "foobarbaz" );
-        b.append( "ref", new DBRef( _db, "testRef", test_ref_id ) );
+        b.append( "ref", new DBRef( getDatabase(), "testRef", test_ref_id ) );
         b.append( "object", test_doc );
         b.append( "array", test_arr );
         b.append( "binary", test_bin );
@@ -379,12 +381,6 @@ public class LazyDBObjectTest extends TestCase {
         public Object setValue(Object value) {
             throw new UnsupportedOperationException();
         }
-    }
-
-    private DB _db;
-
-    public static void main( String args[] ){
-        ( new LazyDBObjectTest() ).runConsole();
     }
 }
 

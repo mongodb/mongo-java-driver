@@ -22,7 +22,7 @@ import org.bson.BSONDecoder;
 import org.bson.BSONObject;
 import org.bson.BasicBSONDecoder;
 import org.bson.types.ObjectId;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,17 +36,13 @@ import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class ByteTest extends TestCase {
 
-    public ByteTest() throws IOException , MongoException {
-        super();
-        cleanupDB = "com_mongodb_unittest_ByteTest";
-        _db = cleanupMongo.getDB( cleanupDB );
-    }
-
-    @Test(groups = {"basic"})
+    @Test
     public void testObject1(){
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
@@ -56,10 +52,10 @@ public class ByteTest extends TestCase {
         BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( "horowitz" , read.get( "eliot" ).toString() );
-        assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue() );
+        assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue(), .01 );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testString()
         throws Exception {
         
@@ -72,11 +68,11 @@ public class ByteTest extends TestCase {
         BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( eliot , read.get( "eliot" ).toString() );
-        assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue() );
+        assertEquals( 517.0 , ((Integer)read.get( "num" )).doubleValue(), .01 );
 
     }
     
-    @Test(groups = {"basic"})
+    @Test
     public void testObject2(){
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
@@ -92,7 +88,7 @@ public class ByteTest extends TestCase {
         BSONObject read = BSON.decode( BSON.encode( o ) );
         
         assertEquals( "horowitz" , read.get( "eliot" ).toString() );
-        assertEquals( 517.3 , ((Double)read.get( "num" )).doubleValue() );
+        assertEquals( 517.3 , ((Double)read.get( "num" )).doubleValue(), .01 );
         assertEquals( "b" , ((BSONObject)read.get( "next" ) ).get( "a" ).toString() );
         assertEquals( "a" , ((BSONObject)read.get( "next" ) ).get( "b" ).toString() );
         assertEquals( "y" , read.get( "z" ).toString() );
@@ -100,7 +96,7 @@ public class ByteTest extends TestCase {
 
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testArray1(){
         DBObject o = new BasicDBObject();
         o.put( "eliot" , "horowitz" );
@@ -175,8 +171,8 @@ public class ByteTest extends TestCase {
         assertEquals( "s" , y.get("b") );
     }
 
-    @Test(groups = {"basic"})
-    public void testObjcetId(){
+    @Test
+    public void testObjectId(){
         assertTrue( (new ObjectId()).compareTo( new ObjectId() ) < 0 );
         assertTrue( (new ObjectId(0 , 0 , 0 )).compareTo( new ObjectId() ) < 0 );
         assertTrue( (new ObjectId(0 , 0 , 0 )).compareTo( new ObjectId( 0 , 0 , 1 ) ) < 0 );
@@ -188,7 +184,7 @@ public class ByteTest extends TestCase {
     }
 
 
-    @Test(groups = {"basic"}) 
+    @Test
     public void testBinary() {
         byte barray[] = new byte[256];
         for( int i=0; i<256; i++ ) {
@@ -225,7 +221,7 @@ public class ByteTest extends TestCase {
             assertEquals( o , read );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testEncodeDecode() {
         ArrayList t = new ArrayList();
         Object obj = null;
@@ -233,7 +229,7 @@ public class ByteTest extends TestCase {
         // null object
         boolean threw = false;
         try {
-            go( (DBObject)null, 0 );
+            go(null, 0 );
         }
         catch( RuntimeException e ) {
             threw = true;
@@ -264,22 +260,10 @@ public class ByteTest extends TestCase {
         assertEquals( Bytes.getType( obj ), Bytes.OID );
         go( o, 22 );
 
-        // dbcollection
-        try {
-            obj = _db.getCollection( "test" );
-            o.put( "_id" , obj );
-            assertEquals( Bytes.getType( obj ), 0 );
-            go( o, 22 );
-        }
-        catch( RuntimeException e ) {
-            threw = true;
-        }
-        assertEquals( threw, true );
-        threw = false;
 
         t.add( "collection" );
         o = new BasicDBObject();
-        o.put( "collection" , _db.getCollection( "test" ) );
+        o.put( "collection" , collection);
         o.put( "_transientFields" , t );
         go( o, 5, 2 );
         t.clear();        
@@ -314,7 +298,7 @@ public class ByteTest extends TestCase {
         go( o, 17 );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testPatternFlags() {
         boolean threw = false;
         assertEquals( 0, Bytes.regexFlags( "" ) );
@@ -359,7 +343,7 @@ public class ByteTest extends TestCase {
         assertEquals( lotsoflags.flags(), check );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testPattern() {
         Pattern p = Pattern.compile( "([a-zA-Z0-9_-])([a-zA-Z0-9_.-]*)@(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.))" );
         DBObject o = new BasicDBObject();
@@ -372,15 +356,14 @@ public class ByteTest extends TestCase {
 
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testLong() {
         long s = -9223372036854775808l;
         long m = 1l;
         long l = 9223372036854775807l;
 
         DBObject obj = BasicDBObjectBuilder.start().add("s", s).add("m", m).add("l", l).get();
-        DBCollection c = _db.getCollection("test");
-        c.drop();
+        DBCollection c = collection;
 
         c.insert(obj);
         DBObject r = c.findOne();
@@ -390,12 +373,11 @@ public class ByteTest extends TestCase {
         assertEquals(r.get("l"), 9223372036854775807l);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testIdOrder() {
         
-        DBCollection c = _db.getCollection( "testidorder" );
-        c.drop();
-        
+        DBCollection c = collection;
+
         BasicDBObject x = new BasicDBObject();
         x.put( "a" , 5 );
         x.put( "_id" , 6 );
@@ -420,7 +402,7 @@ public class ByteTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBytes2(){
         DBObject x = BasicDBObjectBuilder.start( "x" , 1 ).add( "y" , "asdasd" ).get();
         byte[] b = Bytes.encode( x );
@@ -480,8 +462,7 @@ public class ByteTest extends TestCase {
             throw new RuntimeException( "broken [" + l.get(0) + "] [" + l.get(i) + "] a: " + a + " b: " + b );
         }
 
-        DBCollection c = _db.getCollection( "testObjcetIdCompare" );
-        c.drop();
+        DBCollection c = collection;
         
         for ( ObjectId o : l ){
             c.insert( new BasicDBObject( "_id" , o ) );
@@ -499,13 +480,4 @@ public class ByteTest extends TestCase {
         
             
     }
-
-    final DB _db;
-
-    public static void main( String args[] )
-        throws Exception {
-        (new ByteTest()).runConsole();
-        
-    }
-
 }

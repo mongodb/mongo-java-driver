@@ -23,73 +23,75 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.ObjectId;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class BSONBinaryWriterTest extends TestCase {
 
     private BSONBinaryWriter writer;
     private BasicOutputBuffer buffer;
 
-    @BeforeMethod
+    @Before
     public void setup() {
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BSONWriterSettings(100), new BSONBinaryWriterSettings(1024), buffer);
     }
 
-    @AfterMethod
+    @After
     public void tearDown() {
         writer.close();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
         writer.writeBoolean("b1", true);
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionForArrayWhenWritingBeforeStartingDocument() {
         writer.writeStartArray();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionForNullWhenWritingBeforeStartingDocument() {
         writer.writeNull();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionForStringWhenStateIsValue() {
         writer.writeStartDocument();
         writer.writeString("SomeString");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionWhenEndingAnArrayWhenStateIsValue() {
         writer.writeStartDocument();
         writer.writeEndArray();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionWhenWritingASecondName() {
         writer.writeStartDocument();
         writer.writeName("f1");
         writer.writeName("i2");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionWhenEndingADocumentBeforeValueIsWritten() {
         writer.writeStartDocument();
         writer.writeName("f1");
         writer.writeEndDocument();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenTryingToWriteASecondValue() {
         writer.writeStartDocument();
         writer.writeName("f1");
@@ -97,7 +99,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeString("i2");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenTryingToWriteJavaScript() {
         writer.writeStartDocument();
         writer.writeName("f1");
@@ -105,7 +107,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeJavaScript("var i");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenWritingANameInAnArray() {
         writer.writeStartDocument();
         writer.writeName("f1");
@@ -114,7 +116,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeName("i3");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenEndingDocumentInTheMiddleOfWritingAnArray() {
         writer.writeStartDocument();
         writer.writeName("f1");
@@ -123,7 +125,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeEndDocument();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenEndingAnArrayInASubDocument() {
         writer.writeStartDocument();
         writer.writeName("f1");
@@ -133,7 +135,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeEndArray();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenWritingANameInAnArrayEvenWhenSubDocumentExistsInArray() {
         //Does this test even make sense?
         writer.writeStartDocument();
@@ -145,7 +147,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeName("i3");
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowExceptionWhenWritingObjectsIntoNestedArrays() {
         //This test seem redundant?
         writer.writeStartDocument();
@@ -158,7 +160,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeInt64("i4", 10);
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted() {
         writer.writeStartDocument();
         writer.writeStartArray("f2");
@@ -166,7 +168,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeEndArray();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope1() {
         writer.writeStartDocument();
         writer.writeJavaScriptWithScope("js1", "var i = 1");
@@ -174,7 +176,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeBoolean("b4", true);
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope2() {
         //do we really need to test every type written after writeJavaScriptWithScope?
         writer.writeStartDocument();
@@ -183,7 +185,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeBinaryData(new Binary(new byte[]{0, 0, 1, 0}));
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope3() {
         //do we really need to test every type written after writeJavaScriptWithScope?
         writer.writeStartDocument();
@@ -192,7 +194,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeStartArray();
     }
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope4() {
         //do we really need to test every type written after writeJavaScriptWithScope?
         writer.writeStartDocument();
@@ -496,7 +498,7 @@ public class BSONBinaryWriterTest extends TestCase {
                      decoder.decode(baos.toByteArray(), cleanupMongo.getDB("test").getCollection("testMarkAndReset")));
     }
 
-    @Test(expectedExceptions = MongoInternalException.class)
+    @Test(expected =  MongoInternalException.class)
     public void testPushOfMaxDocumentSize() {
         writer.writeStartDocument();
         writer.pushMaxDocumentSize(10);
@@ -505,7 +507,7 @@ public class BSONBinaryWriterTest extends TestCase {
         writer.writeEndDocument();
     }
 
-    @Test(expectedExceptions = MongoInternalException.class)
+    @Test(expected =  MongoInternalException.class)
     public void testPopOfMaxDocumentSize() {
         writer.writeStartDocument();
         writer.pushMaxDocumentSize(10);

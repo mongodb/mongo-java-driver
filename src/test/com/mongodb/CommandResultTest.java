@@ -17,9 +17,15 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class CommandResultTest extends TestCase {
 
@@ -64,7 +70,7 @@ public class CommandResultTest extends TestCase {
         assertNull(commandResult.getException());
     }
 
-    @Test(expectedExceptions = MongoInternalException.class)
+    @Test(expected =  MongoInternalException.class)
     public void okShouldThrowWhenOkFieldTypeIsNotBooleanOrNumber() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         commandResult.put("ok", "1");

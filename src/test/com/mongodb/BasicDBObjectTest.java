@@ -18,69 +18,72 @@
 
 package com.mongodb;
 
-import org.bson.types.*;
-import com.mongodb.util.*;
+import com.mongodb.util.JSON;
+import com.mongodb.util.TestCase;
+import org.bson.types.ObjectId;
+import org.junit.Test;
 
-import org.testng.annotations.*;
+import java.util.Date;
+
+import static org.junit.Assert.assertTrue;
 
 // Java
-import java.util.Date;
 
 public class BasicDBObjectTest extends TestCase {
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetDate() {
         final Date date = new Date();
         BasicDBObject doc = new BasicDBObject( "foo" , date);
-        assert( doc.getDate( "foo" ).equals( date ) );
+        assertTrue( doc.getDate( "foo" ).equals( date ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetDateWithDefault() {
         final Date date = new Date();
         BasicDBObject doc = new BasicDBObject( "foo" , date);
-        assert( doc.getDate( "foo", new Date() ).equals( date ) );
-        assert( doc.getDate( "bar", date ).equals( date ) );
+        assertTrue( doc.getDate( "foo", new Date() ).equals( date ) );
+        assertTrue( doc.getDate( "bar", date ).equals( date ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetObjectId() {
         final ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject( "foo" , objId);
-        assert( doc.getObjectId( "foo" ).equals( objId ) );
+        assertTrue( doc.getObjectId( "foo" ).equals( objId ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetObjectIdWithDefault() {
         final ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject( "foo" , objId);
-        assert( doc.getObjectId( "foo", ObjectId.get() ).equals( objId ) );
-        assert( doc.getObjectId( "bar", objId ).equals( objId ) );
+        assertTrue( doc.getObjectId( "foo", ObjectId.get() ).equals( objId ) );
+        assertTrue( doc.getObjectId( "bar", objId ).equals( objId ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetLongWithDefault() {
         final long test = 100;
         BasicDBObject doc = new BasicDBObject( "foo" , test);
-        assert( doc.getLong( "foo", 0l ) == test );
-        assert( doc.getLong( "bar", 0l ) == 0l );
+        assertTrue( doc.getLong( "foo", 0l ) == test );
+        assertTrue( doc.getLong( "bar", 0l ) == 0l );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetDoubleWithDefault() {
         BasicDBObject doc = new BasicDBObject( "foo" , Double.MAX_VALUE);
-        assert( doc.getDouble( "foo", (double)0 ) == Double.MAX_VALUE);
-        assert( doc.getDouble( "bar", Double.MIN_VALUE ) == Double.MIN_VALUE);
+        assertTrue( doc.getDouble( "foo", (double)0 ) == Double.MAX_VALUE);
+        assertTrue( doc.getDouble( "bar", Double.MIN_VALUE ) == Double.MIN_VALUE);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetStringWithDefault() {
         BasicDBObject doc = new BasicDBObject( "foo" , "badmf");
-        assert( doc.getString( "foo", "ID" ).equals("badmf"));
-        assert( doc.getString( "bar", "DEFAULT" ).equals("DEFAULT") );
+        assertTrue( doc.getString( "foo", "ID" ).equals("badmf"));
+        assertTrue( doc.getString( "bar", "DEFAULT" ).equals("DEFAULT") );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBasic(){
         BasicDBObject a = new BasicDBObject( "x" , 1 );
         BasicDBObject b = new BasicDBObject( "x" , 1 );
@@ -91,7 +94,7 @@ public class BasicDBObjectTest extends TestCase {
     }
 
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBasic2(){
         BasicDBObject a = new BasicDBObject( "x" , 1 );
         DBObject b = BasicDBObjectBuilder.start().append( "x" , 1 ).get();
@@ -100,7 +103,7 @@ public class BasicDBObjectTest extends TestCase {
         assert( ! a.equals( JSON.parse( "{ 'x' : 2 }" ) ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBuilderIsEmpty(){
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         assert( b.isEmpty() );
@@ -109,7 +112,7 @@ public class BasicDBObjectTest extends TestCase {
         assert( b.get().equals( JSON.parse( "{ 'a' : 1 }" ) ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBuilderNested(){
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.add( "a", 1 );
@@ -118,7 +121,7 @@ public class BasicDBObjectTest extends TestCase {
         assert( a.equals( JSON.parse( "{ 'a' : 1, 'b' : { 'c' : 2 } }" ) ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testDown1(){
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.append( "x" , 1 );
@@ -173,12 +176,4 @@ public class BasicDBObjectTest extends TestCase {
         b.put( "x" , null );
         _notequal( a , b );
     }
-
-
-    public static void main( String args[] )
-        throws Exception {
-        (new BasicDBObjectTest()).runConsole();
-
-    }
-
 }

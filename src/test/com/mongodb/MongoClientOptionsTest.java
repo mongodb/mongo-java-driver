@@ -16,16 +16,17 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
+
+import org.junit.Test;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
-import static com.mongodb.util.MyAsserts.assertEquals;
-import static com.mongodb.util.MyAsserts.assertNotNull;
-import static com.mongodb.util.MyAsserts.fail;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class MongoClientOptionsTest {
 

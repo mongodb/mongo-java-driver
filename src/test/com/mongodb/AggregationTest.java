@@ -18,12 +18,11 @@ package com.mongodb;
 
 import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.util.TestCase;
-import org.testng.Assert;
-import org.testng.SkipException;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -34,27 +33,24 @@ import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public class AggregationTest extends TestCase {
 
     private DBCollection collection;
     private DB database;
 
-    @BeforeTest
-    public void collection() {
-        cleanupDB = "com_mongodb_AggregationTest";
-        database = cleanupMongo.getDB(cleanupDB);
+    @Before
+    public void before() {
+        database = getDatabase();
         collection = database.getCollection(getClass().getSimpleName() + System.nanoTime());
-    }
-
-    @BeforeMethod
-    private void dropCollection() {
         collection.drop();
-    }
-
-    @AfterTest
-    public void cleanup() {
-        database.dropDatabase();
     }
 
     @Test
@@ -85,7 +81,7 @@ public class AggregationTest extends TestCase {
         assertTrue(out.keySet().iterator().hasNext());
     }
     
-    @Test(expectedExceptions = {IllegalArgumentException.class})
+    @Test(expected = IllegalArgumentException.class)
     public void testNullOptions() {
         collection.aggregate(new ArrayList<DBObject>(), (AggregationOptions) null);
     }
@@ -177,8 +173,7 @@ public class AggregationTest extends TestCase {
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
-        Assert.assertEquals(database.getCollection(aggCollection)
-                                    .count(), 0);
+        assertEquals(database.getCollection(aggCollection).count(), 0);
 
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
@@ -192,9 +187,8 @@ public class AggregationTest extends TestCase {
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException {
         checkServerVersion(2.5);
-        if (isStandalone(cleanupMongo)) {
-            throw new SkipException("Test can only be run against replica sets.");
-        }
+        assumeFalse(isStandalone(cleanupMongo));
+
         ServerAddress primary = new ServerAddress("localhost");
         MongoClient rsClient = new MongoClient(asList(primary, new ServerAddress("localhost", 27018)));
         DB rsDatabase = rsClient.getDB(database.getName());
@@ -211,7 +205,8 @@ public class AggregationTest extends TestCase {
         assertEquals(primary, cursor.getServerAddress());
     }
 
-    @Test(enabled = false)
+    @Test
+    @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
         checkServerVersion(2.5);
         if (isStandalone(cleanupMongo)) {

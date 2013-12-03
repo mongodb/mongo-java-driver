@@ -16,32 +16,30 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public class DBTest extends TestCase {
 
-    public DBTest() {
-        super();
-        cleanupDB = "com_mongodb_unittest_DBTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
-
-    @Test(groups = {"basic"})
+    @Test
     public void testCreateCollection() {
-        _db.getCollection("foo1").drop();
-        _db.getCollection("foo2").drop();
-        _db.getCollection("foo3").drop();
-        _db.getCollection("foo4").drop();
+        getDatabase().getCollection("foo1").drop();
+        getDatabase().getCollection("foo2").drop();
+        getDatabase().getCollection("foo3").drop();
+        getDatabase().getCollection("foo4").drop();
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
-        DBCollection c = _db.createCollection("foo1", o1);
+        DBCollection c = getDatabase().createCollection("foo1", o1);
 
         DBObject o2 = BasicDBObjectBuilder.start().add("capped", true)
                 .add("size", 100000).add("max", 10).get();
-        c = _db.createCollection("foo2", o2);
+        c = getDatabase().createCollection("foo2", o2);
         for (int i = 0; i < 30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
@@ -49,7 +47,7 @@ public class DBTest extends TestCase {
 
         DBObject o3 = BasicDBObjectBuilder.start().add("capped", true)
                 .add("size", 1000).add("max", 2).get();
-        c = _db.createCollection("foo3", o3);
+        c = getDatabase().createCollection("foo3", o3);
         for (int i = 0; i < 30; i++) {
             c.insert(new BasicDBObject("x", i));
         }
@@ -58,35 +56,35 @@ public class DBTest extends TestCase {
         try {
             DBObject o4 = BasicDBObjectBuilder.start().add("capped", true)
                     .add("size", -20).get();
-            c = _db.createCollection("foo4", o4);
+            c = getDatabase().createCollection("foo4", o4);
         } catch (MongoException e) {
             return;
         }
         assertEquals(0, 1);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testForCollectionExistence() {
-        _db.getCollection("foo1").drop();
-        _db.getCollection("foo2").drop();
-        _db.getCollection("foo3").drop();
-        _db.getCollection("foo4").drop();
+        getDatabase().getCollection("foo1").drop();
+        getDatabase().getCollection("foo2").drop();
+        getDatabase().getCollection("foo3").drop();
+        getDatabase().getCollection("foo4").drop();
 
-        assertFalse(_db.collectionExists("foo1"));
+        assertFalse(getDatabase().collectionExists("foo1"));
 
         BasicDBObject o1 = new BasicDBObject("capped", false);
-        DBCollection c = _db.createCollection("foo1", o1);
+        DBCollection c = getDatabase().createCollection("foo1", o1);
 
-        assertTrue(_db.collectionExists("foo1"), "Collection 'foo' was supposed to be created, but 'collectionExists' did not return true.");
-        assertTrue(_db.collectionExists("FOO1"));
-        assertTrue(_db.collectionExists("fOo1"));
+        assertTrue(getDatabase().collectionExists("foo1"));
+        assertTrue(getDatabase().collectionExists("FOO1"));
+        assertTrue(getDatabase().collectionExists("fOo1"));
 
-        _db.getCollection("foo1").drop();
+        getDatabase().getCollection("foo1").drop();
 
-        assertFalse(_db.collectionExists("foo1"));
+        assertFalse(getDatabase().collectionExists("foo1"));
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testReadPreferenceObedience() throws UnknownHostException {
         if (isStandalone(cleanupMongo)) {
             return;
@@ -95,7 +93,7 @@ public class DBTest extends TestCase {
         Mongo mongo =  new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
 
 
-        DB db = mongo.getDB(cleanupDB);
+        DB db = mongo.getDB(getDatabase().getName());
 
         DBObject obj = new BasicDBObject("mapreduce", 1).append("out", "myColl");
         assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondary()));
@@ -134,7 +132,7 @@ public class DBTest extends TestCase {
         assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testEnsureConnection() throws UnknownHostException {
 
         Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
@@ -155,7 +153,7 @@ public class DBTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
         Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
                 MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
@@ -179,67 +177,19 @@ public class DBTest extends TestCase {
         }
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void whenRequestDoneIsCalledWithoutFirstCallingRequestStartNoExceptionIsThrown() throws UnknownHostException {
-        _db.requestDone();
+        getDatabase().requestDone();
     }
 
-    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void whenDBNameContainsSpacesThenThrowException(){
         cleanupMongo.getDB("foo bar");
     }
 
-    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void whenDBNameIsEmptyThenThrowException(){
         cleanupMongo.getDB("");
     }
 
-    /*public static class Person extends DBObject {
-        
-        public Person(){
-
-        }
-
-        Person( String name ){
-            _name = name;
-        }
-
-        public String getName(){
-            return _name;
-        }
-
-        public void setName(String name){
-            _name = name;
-        }
-
-        String _name;
-    }
-
-    public DBTest()
-        throws IOException {
-        _db = new Mongo( "127.0.0.1" , "dbbasetest" );        
-    }
-    
-
-    @Test
-    public void test1(){
-        DBCollection c = _db.getCollection( "persen.test1" );
-        c.drop();
-        c.setObjectClass( Person.class );
-        
-        Person p = new Person( "eliot" );
-        c.save( p );
-
-        DBObject out = c.findOne();
-        assertEquals( "eliot" , out.get( "Name" ) );
-        assertTrue( out instanceof Person , "didn't come out as Person" );
-    }
-    */
-
-    final DB _db;
-
-    public static void main(String args[])
-            throws Exception {
-        (new DBTest()).runConsole();
-    }
 }

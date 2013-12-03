@@ -19,11 +19,13 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import javax.net.SocketFactory;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 @SuppressWarnings("deprecation")
 public class MongoURITest extends TestCase {

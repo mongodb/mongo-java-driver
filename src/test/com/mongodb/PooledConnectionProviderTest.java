@@ -16,18 +16,17 @@
 
 package com.mongodb;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 
-import static com.mongodb.util.MyAsserts.assertEquals;
-import static com.mongodb.util.MyAsserts.assertNotNull;
-import static com.mongodb.util.MyAsserts.assertTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.testng.Assert.fail;
+import static org.junit.Assert.*;
+
 
 public class PooledConnectionProviderTest {
     private static final String CLUSTER_ID = "1";
@@ -38,13 +37,13 @@ public class PooledConnectionProviderTest {
 
     private PooledConnectionProvider provider;
 
-    @BeforeMethod
+    @Before
     public void setup() throws UnknownHostException {
         serverAddress = new ServerAddress();
         connectionFactory = new TestInternalConnectionFactory();
     }
 
-    @AfterMethod
+    @After
     public void cleanup() {
         provider.close();
     }

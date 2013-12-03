@@ -1,7 +1,9 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.*;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Test that QueryOpBuilder creates query operations that abide by

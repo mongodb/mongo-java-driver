@@ -16,11 +16,13 @@
 
 package com.mongodb.util;
 
-import org.testng.annotations.Test;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class UniqueListTest extends com.mongodb.util.TestCase {
 
-    @org.testng.annotations.Test
+    @Test
     @SuppressWarnings("unchecked")
     public void test1(){
         UniqueList l = new UniqueList();
@@ -30,9 +32,5 @@ public class UniqueListTest extends com.mongodb.util.TestCase {
         assertEquals( 1 , l.size() );
         l.add( "b" );
         assertEquals( 2 , l.size() );
-    }
-    
-    public static void main( String args[] ){
-        (new UniqueListTest()).runConsole();
     }
 }

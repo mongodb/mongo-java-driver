@@ -1,6 +1,7 @@
 package com.mongodb;
 
-import org.testng.annotations.Test;
+
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -9,7 +10,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
+
 
 public class LatencyMinimizingServerSelectorTest {
     @Test

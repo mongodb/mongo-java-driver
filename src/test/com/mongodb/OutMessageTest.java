@@ -18,19 +18,20 @@
 package com.mongodb;
 
 import org.bson.types.ObjectId;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import static org.junit.Assert.*;
 
 public class OutMessageTest {
 
     Mongo m;
 
-    @BeforeTest
+    @Before
     public void setup() throws UnknownHostException {
         m = new MongoClient();
     }
@@ -48,35 +49,35 @@ public class OutMessageTest {
 
         try {
             om.doneWithMessage();
-            Assert.fail();
+            fail();
         } catch (IllegalStateException e) {
             // expected
         }
 
         try {
             om.prepare();
-            Assert.fail();
+            fail();
         } catch (IllegalStateException e) {
             // expected
         }
 
         try {
             om.putObject(new BasicDBObject("_id", new ObjectId()));
-            Assert.fail();
+            fail();
         } catch (IllegalStateException e) {
             // expected
         }
 
         try {
             om.pipe(new ByteArrayOutputStream(100));
-            Assert.fail();
+            fail();
         } catch (IllegalStateException e) {
             // expected
         }
 
         try {
             om.size();
-            Assert.fail();
+            fail();
         } catch (IllegalStateException e) {
             // expected
         }

@@ -17,43 +17,35 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
  */
 public class ErrorTest extends TestCase {
-
-    DB _db;
-
-    @BeforeClass
-    public void setUp() throws Exception{
-	cleanupDB = "com_mongodb_unittest_ErrorTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
-
     @Test
     public void testLastError()
         throws MongoException {
 
-        _db.resetError();
-        assertNull(_db.getLastError().get("err"));
+        getDatabase().resetError();
+        assertNull(getDatabase().getLastError().get("err"));
 
-        _db.forceError();
+        getDatabase().forceError();
 
-        assertNotNull(_db.getLastError().get("err"));
+        assertNotNull(getDatabase().getLastError().get("err"));
 
-        _db.resetError();
-        assertNull(_db.getLastError().get("err"));
+        getDatabase().resetError();
+        assertNull(getDatabase().getLastError().get("err"));
     }
 
     @Test
     public void testLastErrorWithConcern()
         throws MongoException {
 
-        _db.resetError();
-        CommandResult cr = _db.getLastError(WriteConcern.FSYNC_SAFE);
+        getDatabase().resetError();
+        CommandResult cr = getDatabase().getLastError(WriteConcern.FSYNC_SAFE);
         assertNull(cr.get("err"));
         assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
@@ -62,8 +54,8 @@ public class ErrorTest extends TestCase {
     public void testLastErrorWithConcernAndW()
         throws MongoException {
         if ( /* TODO: running with slaves */ false ){
-            _db.resetError();
-            CommandResult cr = _db.getLastError(WriteConcern.REPLICAS_SAFE);
+            getDatabase().resetError();
+            CommandResult cr = getDatabase().getLastError(WriteConcern.REPLICAS_SAFE);
             assertNull(cr.get("err"));
             assertTrue(cr.containsField("wtime"));
         }
@@ -73,24 +65,24 @@ public class ErrorTest extends TestCase {
     public void testPrevError()
         throws MongoException {
 
-        _db.resetError();
+        getDatabase().resetError();
 
-        assertNull(_db.getLastError().get("err"));
-        assertNull(_db.getPreviousError().get("err"));
+        assertNull(getDatabase().getLastError().get("err"));
+        assertNull(getDatabase().getPreviousError().get("err"));
 
-        _db.forceError();
+        getDatabase().forceError();
 
-        assertNotNull(_db.getLastError().get("err"));
-        assertNotNull(_db.getPreviousError().get("err"));
+        assertNotNull(getDatabase().getLastError().get("err"));
+        assertNotNull(getDatabase().getPreviousError().get("err"));
 
-        _db.getCollection("misc").insert(new BasicDBObject("foo", 1), WriteConcern.UNACKNOWLEDGED);
+        getDatabase().getCollection("misc").insert(new BasicDBObject("foo", 1), WriteConcern.UNACKNOWLEDGED);
 
-        assertNull(_db.getLastError().get("err"));
-        assertNotNull(_db.getPreviousError().get("err"));
+        assertNull(getDatabase().getLastError().get("err"));
+        assertNotNull(getDatabase().getPreviousError().get("err"));
 
-        _db.resetError();
+        getDatabase().resetError();
 
-        assertNull(_db.getLastError().get("err"));
-        assertNull(_db.getPreviousError().get("err"));
+        assertNull(getDatabase().getLastError().get("err"));
+        assertNull(getDatabase().getPreviousError().get("err"));
     }
 }

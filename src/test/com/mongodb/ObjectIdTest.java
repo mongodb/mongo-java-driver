@@ -20,35 +20,18 @@ package com.mongodb;
 
 import com.mongodb.util.TestCase;
 import org.bson.types.ObjectId;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 public class ObjectIdTest extends TestCase {
-    
-    final Mongo _mongo;
-    final DB _db;
 
-    public ObjectIdTest() {
-        _mongo = cleanupMongo;
-	cleanupDB = "com_mongodb_unittest_ObjectIdTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
-
-    /*
-    @Test(groups = {"basic"})
-    public void testTSM(){
-
-        ObjectId a = new ObjectId( 2667563522304714314L , -1912742877 );
-        assertEquals( "4a26c3e2e316052523dcfd8d" , a.toStringMongod() );
-        assertEquals( "250516e3e2c3264a8dfddc23" , a.toStringBabble() );
-        assertEquals( "4a26c3e2e316052523dcfd8d" , a.toString() );
-    }
-    */
-
-    @Test(groups = {"basic"})
+    @Test
     public void testRT1(){
         ObjectId a = new ObjectId();
         assertEquals( a.toStringBabble() , (new ObjectId( a.toStringBabble() , true ) ).toStringBabble() );
@@ -57,7 +40,7 @@ public class ObjectIdTest extends TestCase {
         assertEquals( a.toString() , (new ObjectId( a.toString() , false ) ).toString() );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBabbleToMongo(){
         ObjectId a = new ObjectId();
         assertEquals( a.toStringMongod() , ObjectId.babbleToMongod( a.toStringBabble() ) );
@@ -81,7 +64,7 @@ public class ObjectIdTest extends TestCase {
     public void testTime(){
         long a = System.currentTimeMillis();
         long b = (new ObjectId()).getTime();
-        assertLess( Math.abs( b - a ) , 3000 );
+        assertTrue( Math.abs( b - a ) < 3000 );
     }
 
     @Test
@@ -101,7 +84,7 @@ public class ObjectIdTest extends TestCase {
     @Test
     public void testStringOnServer(){
         ObjectId oid = new ObjectId();
-        DBObject res = _db.command( new BasicDBObject( "driverOIDTest" , oid ) );
+        DBObject res = getDatabase().command( new BasicDBObject( "driverOIDTest" , oid ) );
         assertEquals( oid.toString() , res.get( "str" ).toString() );
     }
 
@@ -140,7 +123,7 @@ public class ObjectIdTest extends TestCase {
             ObjectId id = new ObjectId(now);
             assertEquals(id.getTime() / 1000, now.getTime() / 1000);
             if (prev != null) {
-                assertTrue(prev.compareTo(id) < 0, "Wrong comparison for ids " + prev + " and " + id);
+                assertTrue(prev.compareTo(id) < 0);
             }
             prev = id;
         }
@@ -151,21 +134,4 @@ public class ObjectIdTest extends TestCase {
         ObjectId id = new ObjectId();
         assertEquals(id, ObjectId.createFromLegacyFormat(id.getTimeSecond(), id.getMachine(), id.getInc()));
     }
-
-    public static void main( String args[] )
-        throws Exception {
-        (new ObjectIdTest()).runConsole();
-
-        long num = 5000000;
-
-        long start = System.currentTimeMillis();
-        for ( long i=0; i<num; i++ ){
-            ObjectId id = new ObjectId();
-        }
-        long end = System.currentTimeMillis();
-
-        System.out.println( ( ( num / 1000L ) / ( end - start ) ) + "M ObjectId gen/sec" );
-
-    }
-
 }

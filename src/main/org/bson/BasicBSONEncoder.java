@@ -411,7 +411,6 @@ public class BasicBSONEncoder implements BSONEncoder {
         int before = _buf.getPosition();
         _buf.write( data );
         int after = _buf.getPosition();
-        com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
     }
     
     protected void putUUID( String name , UUID val ){

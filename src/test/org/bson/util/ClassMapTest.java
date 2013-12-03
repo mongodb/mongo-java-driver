@@ -18,12 +18,14 @@
 
 package org.bson.util;
 
-import java.io.Serializable;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
+import java.io.Serializable;
+
+import static org.junit.Assert.*;
 public class ClassMapTest extends com.mongodb.util.TestCase {
 
-    @org.testng.annotations.Test
+    @Test
     public void test(){
 	// maps Classes to Strings
 	ClassMap<String> m = new ClassMap<String>();
@@ -45,10 +47,5 @@ public class ClassMapTest extends com.mongodb.util.TestCase {
 
 	m.put(Integer.class, "Integer");
 	assertEquals(m.get(Integer.class), "Integer");
-    }
-
-    public static void main( String args[] ){
-	ClassMapTest t = new ClassMapTest();
-	t.runConsole();
     }
 }

@@ -18,7 +18,8 @@
 package com.mongodb;
 
 import junit.framework.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
+
 
 import java.net.UnknownHostException;
 import java.util.Arrays;

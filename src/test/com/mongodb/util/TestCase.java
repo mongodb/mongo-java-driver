@@ -18,239 +18,76 @@ package com.mongodb.util;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 
-public class TestCase extends MyAsserts {
+import static org.junit.Assume.assumeTrue;
 
-    static class Test {
-        Test( Object o , Method m ){
-            _o = o;
-            _m = m;
-        }
-        
-        Result run(){
-            try {
-                _m.invoke( _o );
-                return new Result( this );
-            }
-            catch ( IllegalAccessException e ){
-                return new Result( this , e );
-            }
-            catch ( InvocationTargetException ite ){
-                return new Result( this , ite.getTargetException() );
-            }
-        }
+public class TestCase {
 
-        public String toString(){
-            String foo = _o.getClass().getName() + "." + _m.getName();
-            if ( _name == null )
-                return foo;
-            return _name + "(" + foo + ")";
-        }
-
-        protected String _name = null;
-
-        final Object _o;
-        final Method _m;
+    public TestCase(){
+        cleanupMongo = staticMongoClient;
     }
 
-    static class Result {
-        Result( Test t ){
-            this( t , null );
-        }
+    private static String cleanupDB = "mongo-java-driver-test";
+    public Mongo cleanupMongo = null;
+    protected DBCollection collection;
 
-        Result( Test t , Throwable error ){
-            _test = t;
-            _error = error;
-        }
+    private static MongoClient staticMongoClient;
 
-        boolean ok(){
-            return _error == null;
-        }
-
-        public String toString(){
-            StringBuilder buf = new StringBuilder();
-            buf.append( _test );
-            Throwable error = _error;
-            while ( error != null ){
-                buf.append( "\n\t" + error + "\n" );
-                for ( StackTraceElement ste : error.getStackTrace() ){
-                    buf.append( "\t\t" + ste + "\n" );
-                }
-                error = error.getCause();
-            }
-            return buf.toString();
-        }
-        
-        final Test _test;
-        final Throwable _error;
-    }
-
-
-    /**
-     * this is for normal class tests
-     */
-
-    public TestCase(){ 
-        this( null );
-    }
-
-    public TestCase( String name ) {
+    @BeforeClass
+    public static void testCaseBeforeClass() {
         if (staticMongoClient == null) {
             try {
                 staticMongoClient = new MongoClient();
-                staticMongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+                staticMongoClient.dropDatabase(cleanupDB);
+                Runtime.getRuntime().addShutdownHook(new ShutdownHook());
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
         }
-        cleanupMongo = staticMongoClient;
-
-        for ( Method m : getClass().getMethods() ){
-            
-            if ( ! m.getName().startsWith( "test" ) )
-                continue;
-            
-            if ( ( m.getModifiers() & Member.PUBLIC ) > 0 )
-                continue;
-
-            Test t = new Test( this , m );
-            t._name = name;
-            _tests.add( t );
-            
-        }
     }
 
-    public TestCase( Object o , String m )
-        throws NoSuchMethodException {
-        this( o , o.getClass().getDeclaredMethod( m ) );
+    @Before
+    public void testCaseBefore() {
+        collection = getDatabase().getCollection(getClass().getName());
     }
 
-    public TestCase( Object o , Method m ){
-        _tests.add( new Test( o , m ) );
+    @After
+    public void testCaseAfter() {
+        collection.drop();
     }
 
-    public void add( TestCase tc ){
-        _tests.addAll( tc._tests );
-    }
-
-    public String cleanupDB = null;
-    public Mongo cleanupMongo = null;
-
-    private static MongoClient staticMongoClient;
-
-    @AfterClass
-    public void cleanup() {
-        if (cleanupMongo != null) {
-            if (cleanupDB != null) {
-                cleanupMongo.dropDatabase(cleanupDB);
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (staticMongoClient != null) {
+                if (cleanupDB != null) {
+                    staticMongoClient.dropDatabase(cleanupDB);
+                }
+                staticMongoClient.close();
+                staticMongoClient = null;
             }
         }
     }
 
-    /**
-     * @return true if everything succeeds
-     */
-    public boolean runConsole(){
-        List<Result> errors = new ArrayList<Result>();
-        List<Result> fails = new ArrayList<Result>();
-
-        System.out.println( "Num Tests : " + _tests.size() );
-        System.out.println( "----" );
-
-        for ( Test t : _tests ){
-            Result r = t.run();
-            if ( r.ok() ){
-                System.out.print(".");
-                continue;
-            }
-            
-            System.out.print( "x" );
-
-            if ( r._error instanceof MyAssert )
-                fails.add( r );
-            else
-                errors.add( r );
-        }
-        cleanup();
-        System.out.println( "\n----" );
-
-        int pass = _tests.size() - ( errors.size() + fails.size() );
-
-        System.out.println( "Passes : " + pass + " / " + _tests.size() );
-        System.out.println( "% Pass : " + ( ((double)pass*100) / _tests.size() ) );
-        if ( pass == _tests.size() ){
-            System.out.println( "SUCCESS" );
-            return true;
-        }
-        
-        System.err.println( "Num Pass : " + ( _tests.size() - ( errors.size() + fails.size() ) ) );
-        System.err.println( "Num Erros : " + (  errors.size() ) );
-        System.err.println( "Num Fails : " + (  fails.size() ) );
-
-        System.err.println( "---------" );
-        System.err.println( "ERRORS" );
-        for ( Result r : errors )
-            System.err.println( r );
-        
-        System.err.println( "---------" );
-        System.err.println( "FAILS" );
-        for ( Result r : fails )
-            System.err.println( r );
-        
-        return false;
+    protected static MongoClient getMongoClient() {
+        return staticMongoClient;
     }
 
-    public String toString(){
-        return  "TestCase numCase:" + _tests.size();
-    }
-    
-    final List<Test> _tests = new ArrayList<Test>();
-    
-    protected static void run( String args[] ){
-        Args a = new Args( args );
-        
-        boolean foundMe = false;
-        String theClass = null;
-        for ( StackTraceElement ste : Thread.currentThread().getStackTrace() ){
-            if ( foundMe ){
-                theClass = ste.getClassName();
-                break;
-            }
-            
-            if ( ste.getClassName().equals( "com.mongodb.util.TestCase" ) && 
-                 ste.getMethodName().equals( "run" ) )
-                foundMe = true;
-        }
-        
-        if ( theClass == null )
-            throw new RuntimeException( "something is broken" );
-        
-        try {
-            TestCase tc = (TestCase) Class.forName( theClass ).newInstance();
-
-            if ( a.getOption( "m" ) != null )
-                tc = new TestCase( tc , a.getOption( "m" ) );
-            
-            tc.runConsole();
-        }
-        catch ( Exception e ){
-            throw new RuntimeException( e );
-        }
+    protected static DB getDatabase() {
+        return staticMongoClient.getDB(cleanupDB);
     }
 
     /**
@@ -264,9 +101,7 @@ public class TestCase extends MyAsserts {
     }
 
     protected void checkServerVersion(double version) {
-        if (!serverIsAtLeastVersion(version)) {
-            throw new SkipException("Server is too old for this test.");
-        }
+        assumeTrue(serverIsAtLeastVersion(version));
     }
 
     /**
@@ -274,7 +109,7 @@ public class TestCase extends MyAsserts {
      * @param mongo the connection
      * @return true if connected to a standalone server
      */
-    protected boolean isStandalone(Mongo mongo) {
+    protected static boolean isStandalone(Mongo mongo) {
         return runReplicaSetStatusCommand(mongo) == null;
     }
 
@@ -341,7 +176,7 @@ public class TestCase extends MyAsserts {
     }
 
     
-    protected CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
+    protected static CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
         // Check to see if this is a replica set... if not, get out of here.
         final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
 
@@ -353,51 +188,5 @@ public class TestCase extends MyAsserts {
         }
 
         return result;
-    }
-
-
-
-    public static void main( String args[] )
-        throws Exception {
-        
-        String dir = "src/test";
-        if ( args != null && args.length > 0 )
-            dir = args[0];
-
-        Process p = Runtime.getRuntime().exec( "find " + dir );
-        BufferedReader in = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-
-        TestCase theTestCase = new TestCase();
-        
-        String line;
-        while ( ( line = in.readLine() ) != null ){
-
-            if ( ! line.endsWith( "Test.java" ) ) {
-                continue;
-            }
-        	
-            line = line.substring( "src/test/".length() );        	
-            line = line.substring( 0 , line.length() - ".java".length() );
-            line = line.replaceAll( "//+" , "/" );
-            line = line.replace( '/' , '.' );
-
-            
-            try {
-		Class c = Class.forName( line );
-		Object thing = c.newInstance();
-		if ( ! ( thing instanceof TestCase ) )
-		    continue;
-
-		System.out.println( line );
-	    
-                TestCase tc = (TestCase)thing;
-                theTestCase._tests.addAll( tc._tests );
-            }
-            catch ( Exception e ){
-                e.printStackTrace();
-            }
-        }
-        
-        theTestCase.runConsole();
     }
 }

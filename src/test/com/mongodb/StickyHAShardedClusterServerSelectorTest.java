@@ -16,8 +16,11 @@
 
 package com.mongodb;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+
+import static org.junit.Assert.*;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Collections;
@@ -30,7 +33,7 @@ import static com.mongodb.ServerConnectionState.Connected;
 import static com.mongodb.ServerConnectionState.Connecting;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.testng.Assert.assertEquals;
+
 
 public class StickyHAShardedClusterServerSelectorTest {
 
@@ -39,7 +42,7 @@ public class StickyHAShardedClusterServerSelectorTest {
     private ServerDescription secondConnecting;
     private ServerDescription secondConnected;
 
-    @BeforeMethod
+    @Before
     public void setUp() throws UnknownHostException {
         selector = new StickyHAShardedClusterServerSelector();
         first = ServerDescription.builder()
@@ -66,12 +69,12 @@ public class StickyHAShardedClusterServerSelectorTest {
                                   .build();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expected =  IllegalArgumentException.class)
     public void shouldThrowIfConnectionModeIsNotMultiple() throws UnknownHostException {
         selector.choose(new ClusterDescription(Single, Sharded, Collections.<ServerDescription>emptyList()));
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expected =  IllegalArgumentException.class)
     public void shouldThrowIfConnectionTypeIsNotSharded() throws UnknownHostException {
         selector.choose(new ClusterDescription(Multiple, ReplicaSet, Collections.<ServerDescription>emptyList()));
     }

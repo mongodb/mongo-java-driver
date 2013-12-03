@@ -17,8 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
+import static org.junit.Assert.*;
 public class ReflectionTest extends TestCase {
     
     public static class Person extends ReflectionDBObject {
@@ -37,16 +38,10 @@ public class ReflectionTest extends TestCase {
         String _name;
     }
 
-    public ReflectionTest() {
-	cleanupDB = "com_mongodb_unittest_ReflectionTest";
-	_db = cleanupMongo.getDB( cleanupDB );
-    }    
-
     @Test
     public void test1()
         throws MongoException {
-        DBCollection c = _db.getCollection( "person.test1" );
-        c.drop();
+        DBCollection c = collection;
         c.setObjectClass( Person.class );
         
         Person p = new Person();
@@ -84,8 +79,7 @@ public class ReflectionTest extends TestCase {
     public void test2()
         throws MongoException {
 
-        DBCollection c = _db.getCollection( "embedref1" );
-        c.drop();
+        DBCollection c = collection;
         c.setObjectClass( Outer.class );
 
         Outer o = new Outer();
@@ -128,8 +122,7 @@ public class ReflectionTest extends TestCase {
 
     @Test
     public void testFindAndModify() {
-        DBCollection c = _db.getCollection( "findAndModify" );
-        c.drop();
+        DBCollection c = collection;
         c.setObjectClass( Process.class );
 
         Process p = new Process();
@@ -143,12 +136,4 @@ public class ReflectionTest extends TestCase {
         assertEquals(0, pModified.getStatus());
         assertEquals("test", pModified.getName());
     }
-
-    final DB _db;
-    
-    public static void main( String args[] )
-        throws Exception {
-        (new ReflectionTest()).runConsole();
-    }
-
 }

@@ -28,6 +28,7 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.types.ObjectId;
+import org.junit.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,10 +37,10 @@ import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
+import static org.junit.Assert.*;
 public class JSONTest extends com.mongodb.util.TestCase {
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testSerializationMethods(){
         
         // basic test of each of JSON class' serialization methods
@@ -50,7 +51,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(JSON.serialize(obj), json);
     }
     
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testNumbers(){
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5 }")), "{ \"x\" : 5}");
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0 }")), "{ \"x\" : 5.0}");
@@ -64,7 +65,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(JSON.serialize(JSON.parse("{'x' : 5.0E-1 }")), "{ \"x\" : 0.5}");
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testLongValues() {
         Long bigVal = Integer.MAX_VALUE + 1L;
         String test = String.format("{ \"x\" : %d}", bigVal);
@@ -82,14 +83,14 @@ public class JSONTest extends com.mongodb.util.TestCase {
         }
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testSimple() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : true}")), "{ \"csdf\" : true}");
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : false}")), "{ \"csdf\" : false}");
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : null}")), "{ \"csdf\" :  null }");
     }
     
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testString() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \"foo\"}")), "{ \"csdf\" : \"foo\"}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : \'foo\'}")), "{ \"csdf\" : \"foo\"}") ;
@@ -98,7 +99,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
                      "{ \"id\" : \"1689c12eb234c54a84ebd100\"}");
     }
     
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testArray() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : [\"foo\"]}")), "{ \"csdf\" : [ \"foo\"]}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : [3, 5, \'foo\', null]}")), "{ \"csdf\" : [ 3 , 5 , \"foo\" ,  null ]}") ;
@@ -106,26 +107,26 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : [[],[[]],false]}")), "{ \"csdf\" : [ [ ] , [ [ ]] , false]}");
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testObject() {
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : {}}")), "{ \"csdf\" : { }}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : {\"foo\":\"bar\"}}")), "{ \"csdf\" : { \"foo\" : \"bar\"}}") ;
         assertEquals(JSON.serialize(JSON.parse("{'csdf' : {\'hi\':{\'hi\':[{}]}}}")), "{ \"csdf\" : { \"hi\" : { \"hi\" : [ { }]}}}");
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testMulti() {
         assertEquals(JSON.serialize(JSON.parse("{\'\' : \"\", \"34\" : -52.5}")), "{ \"\" : \"\" , \"34\" : -52.5}") ;
     }    
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testUnicode() {
         assertEquals(JSON.serialize(JSON.parse("{'x' : \"hi\\u0020\"}")),"{ \"x\" : \"hi \"}") ;
         assertEquals(JSON.serialize(JSON.parse("{ \"x\" : \"\\u0E01\\u2702\\uF900\"}")), "{ \"x\" : \"\u0E01\u2702\uF900\"}");
         assertEquals(JSON.serialize(JSON.parse("{ \"x\" : \"foo\\u0020bar\"}")), "{ \"x\" : \"foo bar\"}");
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testBin() {
         byte b[] = {'a', 'b', 0, 'd'};
         DBObject obj = BasicDBObjectBuilder.start().add("b", b).get();
@@ -133,7 +134,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
     }
 
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testErrors(){
         boolean threw = false;
         try {
@@ -178,7 +179,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         threw = false;
     }
 
-    @org.testng.annotations.Test(groups = {"basic"})
+    @Test
     public void testBasic(){
         assertEquals( JSON.serialize(JSON.parse("{}")), "{ }");
         assertEquals( JSON.parse(""), null );
@@ -225,7 +226,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         assertEquals( 4 , JSON.parse( "4" ) );
     }
 
-    @org.testng.annotations.Test    
+    @Test
     public void testNumbers2(){
         DBObject x = new BasicDBObject( "x" , 123 );
         assertEquals( x , JSON.parse( x.toString() ) );
@@ -251,7 +252,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
 
 
 
-    @org.testng.annotations.Test    
+    @Test
     public void testEscape1(){
         String raw = "a\nb";
 
@@ -287,7 +288,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
         _escapeChar( "\\" );
     }
 
-   @org.testng.annotations.Test
+   @Test
    public void testPattern() {
        String x = "^Hello$";
        String serializedPattern = 
@@ -304,7 +305,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals( a.toString() , b.toString() );
    }
 
-   @org.testng.annotations.Test
+   @Test
    public void testRegexNoOptions() {
        String x = "^Hello$";
        String serializedPattern =
@@ -321,7 +322,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals( a.toString() , b.toString() );
    }
 
-   @org.testng.annotations.Test
+   @Test
    public void testObjectId() {
        ObjectId oid = new ObjectId(new Date());
 
@@ -332,7 +333,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertEquals(oid, oid2);
    }
 
-   @org.testng.annotations.Test
+   @Test
    public void testDate() {
        Date d = new Date();
        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -347,7 +348,7 @@ public class JSONTest extends com.mongodb.util.TestCase {
        assertTrue(d.equals(d2));
    }
 
-    @org.testng.annotations.Test
+    @Test
     public void testJSONEncoding() throws ParseException {
         String json = "{ 'str' : 'asdfasd' , 'long' : 123123123123 , 'int' : 5 , 'float' : 0.4 , 'bool' : false , 'date' : { '$date' : '2011-05-18T18:56:00Z'} , 'pat' : { '$regex' : '.*' , '$options' : ''} , 'oid' : { '$oid' : '4d83ab3ea39562db9c1ae2ae'} , 'ref' : { '$ref' : 'test.test' , '$id' : { '$oid' : '4d83ab59a39562db9c1ae2af'}} , 'code' : { '$code' : 'asdfdsa'} , 'codews' : { '$code' : 'ggggg' , '$scope' : { }} , 'ts' : { '$ts' : 1300474885 , '$inc' : 10} , 'null' :  null, 'uuid' : { '$uuid' : '60f65152-6d4a-4f11-9c9b-590b575da7b5' }}";
         BasicDBObject a = (BasicDBObject) JSON.parse(json);
@@ -377,9 +378,4 @@ public class JSONTest extends com.mongodb.util.TestCase {
         a.equals(b);
         assert (a.equals(b));
     }
-
-    public static void main( String args[] ){
-        (new JSONTest()).runConsole();
-    }
-    
 }

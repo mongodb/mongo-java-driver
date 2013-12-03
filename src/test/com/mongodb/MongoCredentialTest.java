@@ -16,15 +16,16 @@
  */
 
 package com.mongodb;
-
+import static org.junit.Assert.*;
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
+
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import static org.junit.Assert.*;
 public class MongoCredentialTest extends TestCase {
 
     @Test

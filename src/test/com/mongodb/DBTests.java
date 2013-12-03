@@ -17,33 +17,25 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
+
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
-
+import static org.junit.Assert.*;
+import static org.junit.Assert.*;
 /**
  * Tests aspect of the DB - not really driver tests
  */
 public class DBTests extends TestCase {
-
-    final Mongo _mongo;
-    final DB _db;
-
-    public DBTests() {
-        _mongo = cleanupMongo;
-        cleanupDB = "java_com_mongodb_unittest_DBTests";
-        _db = cleanupMongo.getDB(cleanupDB);
-    }
-
     @Test
     public void testGetCollectionNames() throws MongoException {
         String name = "testGetCollectionNames";
-        DBCollection c = _db.getCollection(name);
+        DBCollection c = getDatabase().getCollection(name);
         c.drop();
-        assertFalse(_db.getCollectionNames().contains(name));
+        assertFalse(getDatabase().getCollectionNames().contains(name));
         c.save(new BasicDBObject("x", 1));
-        assertTrue(_db.getCollectionNames().contains(name));
+        assertTrue(getDatabase().getCollectionNames().contains(name));
 
     }
 
@@ -52,8 +44,8 @@ public class DBTests extends TestCase {
     public void testRename() throws MongoException {
         String namea = "testRenameA";
         String nameb = "testRenameB";
-        DBCollection a = _db.getCollection(namea);
-        DBCollection b = _db.getCollection(nameb);
+        DBCollection a = getDatabase().getCollection(namea);
+        DBCollection b = getDatabase().getCollection(nameb);
 
         a.drop();
         b.drop();
@@ -78,8 +70,8 @@ public class DBTests extends TestCase {
     public void testRenameAndDrop() throws MongoException {
         String namea = "testRenameA";
         String nameb = "testRenameB";
-        DBCollection a = _db.getCollection(namea);
-        DBCollection b = _db.getCollection(nameb);
+        DBCollection a = getDatabase().getCollection(namea);
+        DBCollection b = getDatabase().getCollection(nameb);
 
         a.drop();
         b.drop();
@@ -94,7 +86,7 @@ public class DBTests extends TestCase {
 
         try {
             DBCollection b2 = a.rename(nameb);
-            assertTrue(false, "Rename to existing collection must fail");
+            fail();
         } catch (MongoException e) {
             assertEquals(e.getCode(), 10027);
         }
@@ -179,7 +171,7 @@ public class DBTests extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         try {
-            CommandResult res = _db.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
+            CommandResult res = getDatabase().command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
             res.throwOnError();
             fail("Show have thrown");
         } catch (MongoExecutionTimeoutException e) {

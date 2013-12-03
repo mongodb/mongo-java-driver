@@ -17,13 +17,14 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
+
 
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
-
+import static org.junit.Assert.*;
 public class DBPortTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")

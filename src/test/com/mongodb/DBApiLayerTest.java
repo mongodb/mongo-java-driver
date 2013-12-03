@@ -17,18 +17,20 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class DBApiLayerTest extends TestCase {
     private final DBApiLayer db;
 
     public DBApiLayerTest() throws IOException, MongoException {
         super();
-        cleanupDB = "com_mongodb_unittest_DBApiLayerTest";
-        db = (DBApiLayer) cleanupMongo.getDB( cleanupDB );
+        db = (DBApiLayer) getDatabase();
     }
 
     @Test
@@ -54,7 +56,7 @@ public class DBApiLayerTest extends TestCase {
         }
     }
 
-    @Test(expectedExceptions = MongoException.class)
+    @Test(expected =  MongoException.class)
     public void testQueryFailureException() {
         DBCollection collection = db.getCollection("testQueryFailureException");
         collection.insert(new BasicDBObject("loc", new double[]{0, 0}));

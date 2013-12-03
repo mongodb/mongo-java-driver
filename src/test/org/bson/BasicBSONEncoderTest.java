@@ -18,12 +18,11 @@
 package org.bson;
 
 import org.bson.io.BasicOutputBuffer;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-public class BasicBSONEncoderTest extends Assert {
+public class BasicBSONEncoderTest  {
 
-    @Test(expectedExceptions = BSONException.class)
+    @Test(expected =  BSONException.class)
     public void testNullCharacterInCString() {
         BasicBSONEncoder encoder = new BasicBSONEncoder();
         encoder.set(new BasicOutputBuffer());

@@ -21,7 +21,9 @@ import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoException;
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,13 +31,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Random;
-
+import static org.junit.Assert.*;
 public class GridFSTest extends TestCase {
     
     public GridFSTest() {
-        cleanupDB = "com_mongodb_unittest_GridFSTest";
-        _db = cleanupMongo.getDB(cleanupDB);
-        _fs = new GridFS(_db);
+        _fs = new GridFS(getDatabase());
+    }
+
+    @Before
+    public void beforeMethod() {
+        getDatabase().getCollection("fs.files").drop();
+        getDatabase().getCollection("fs.chunks").drop();
     }
 
     int[] _get(){
@@ -67,13 +73,13 @@ public class GridFSTest extends TestCase {
         assertEquals( start[1] , end[1] );
     }
     
-    @Test(groups = {"basic"})
+    @Test
     public void testSmall()
         throws Exception {
         testInOut( "this is a simple test" );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBig()
         throws Exception {
         int target = GridFS.DEFAULT_CHUNKSIZE * 3;
@@ -107,12 +113,12 @@ public class GridFSTest extends TestCase {
         assertEquals( start[1], end[1] );
     }
     
-    @Test(groups = { "basic" })
+    @Test
     public void testOutStreamSmall() throws Exception {
         testOutStream( "this is a simple test" );
     }
     
-    @Test(groups = { "basic" })
+    @Test
     public void testOutStreamBig() throws Exception {
         int target = (int) (GridFS.DEFAULT_CHUNKSIZE * 3.5);
         StringBuilder buf = new StringBuilder( target );
@@ -123,7 +129,7 @@ public class GridFSTest extends TestCase {
         testOutStream( s );
     }
 
-    @Test(groups = { "basic" })
+    @Test
     public void testOutStreamBigAligned() throws Exception {
         int target = (GridFS.DEFAULT_CHUNKSIZE * 4);
         StringBuilder buf = new StringBuilder( target );
@@ -134,7 +140,7 @@ public class GridFSTest extends TestCase {
         testOutStream( s );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testMetadata()
         throws Exception {
 
@@ -145,9 +151,9 @@ public class GridFSTest extends TestCase {
         assert( out.get("meta").equals( 5 ) );
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testBadChunkSize() throws Exception {
-        int fileSize = 2 * _db.getMongo().getMaxBsonObjectSize();
+        int fileSize = 2 * getMongoClient().getMaxBsonObjectSize();
         if (fileSize > 1024 * 1024 * 1024)
             //If this is the case, GridFS is probably obsolete...
             fileSize = 10 * 1024 * 1024;
@@ -167,7 +173,7 @@ public class GridFSTest extends TestCase {
         }
 
         //For good measure let's save and restore the bytes
-        inputFile.save(_db.getMongo().getMaxBsonObjectSize() - 500 * 1000);
+        inputFile.save(getMongoClient().getMaxBsonObjectSize() - 500 * 1000);
         GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
         ByteArrayOutputStream savedFileByteStream = new ByteArrayOutputStream();
         savedFile.writeTo(savedFileByteStream);
@@ -176,7 +182,7 @@ public class GridFSTest extends TestCase {
         assertArrayEquals(randomBytes, savedFileBytes);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void getBigChunkSize() throws Exception {
         GridFSInputFile file = _fs.createFile("512kb_bucket");
         file.setChunkSize(file.getChunkSize() * 2);
@@ -188,7 +194,7 @@ public class GridFSTest extends TestCase {
    }
 
 
-    @Test(groups = {"basic"})
+    @Test
     public void testInputStreamSkipping() throws Exception {
         //int chunkSize = 5;
         int chunkSize = GridFS.DEFAULT_CHUNKSIZE;
@@ -244,7 +250,7 @@ public class GridFSTest extends TestCase {
         assertEquals(-1, inputStream.read());
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testCustomFileID() throws IOException {
         int chunkSize = 10;
         int fileSize = (int)(3.25 * chunkSize);
@@ -267,7 +273,7 @@ public class GridFSTest extends TestCase {
             assertEquals((byte)(idx % 251), (byte)inputStream.read());
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testGetFileListWithSorting() throws Exception  {
         _fs.remove(new BasicDBObject());
 
@@ -302,7 +308,7 @@ public class GridFSTest extends TestCase {
         assertEquals(cursor.next().get("_id"),1);
     }
 
-    @Test(groups = {"basic"})
+    @Test
     public void testFindWithSorting() throws Exception  {
         _fs.remove(new BasicDBObject());
 
@@ -337,12 +343,5 @@ public class GridFSTest extends TestCase {
         assertEquals(result.get(3).getId(),1);
     }
 
-    final DB _db;
     final GridFS _fs;
-    
-    public static void main( String args[] )
-        throws Exception {
-        (new GridFSTest()).runConsole();
-    }
-
 }

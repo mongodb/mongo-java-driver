@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
-import org.testng.annotations.Test;
+
+
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 
@@ -24,7 +26,7 @@ import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
 import static java.util.Arrays.asList;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class ReadPreferenceServerSelectorTest {
     @Test

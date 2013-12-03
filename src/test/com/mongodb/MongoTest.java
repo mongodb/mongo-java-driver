@@ -19,18 +19,24 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("deprecation")
 public class MongoTest extends TestCase {
     
     public MongoTest()
-        throws IOException , MongoException {
+        throws IOException, MongoException {
         _db = new MongoClient().getDB( "mongotest" );
     }
     
@@ -38,7 +44,7 @@ public class MongoTest extends TestCase {
 
     int _originalCleanerIntervalMs;
 
-    @BeforeTest
+    @Before
     public void setUp() {
         _originalCleanerIntervalMs = Mongo.cleanerIntervalMS;
     }
@@ -87,14 +93,8 @@ public class MongoTest extends TestCase {
         assertNull(mongo.getDB("test").getAuthenticationCredentials());
     }
 
-    @AfterTest
+    @After
     public void tearDown() {
         Mongo.cleanerIntervalMS = _originalCleanerIntervalMs;
     }
-
-    public static void main( String args[] )
-        throws Exception {
-        (new MongoTest()).runConsole();
-    }
-    
 }

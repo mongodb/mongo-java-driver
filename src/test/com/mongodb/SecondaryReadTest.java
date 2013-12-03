@@ -16,15 +16,13 @@
 
 package com.mongodb;
 
-// Mongo
-
 import com.mongodb.util.TestCase;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// Java
+import static org.junit.Assert.assertTrue;
 
 public class SecondaryReadTest extends TestCase {
 
@@ -36,7 +34,7 @@ public class SecondaryReadTest extends TestCase {
     /**
      * Assert that the percentage of reads to each secondary does not deviate by more than 1 %
      */
-    @Test(groups = {"basic"})
+    @Test
     public void testSecondaryReadBalance() throws Exception {
         if (!isReplicaSet(cleanupMongo)) {
             return;
@@ -70,7 +68,7 @@ public class SecondaryReadTest extends TestCase {
     /**
      * Assert that secondary reads actually are routed to a secondary
      */
-    @Test(groups = {"basic"})
+    @Test
     public void testSecondaryReadCursor() throws Exception {
         if (!isReplicaSet(cleanupMongo)) {
             return;
@@ -103,7 +101,7 @@ public class SecondaryReadTest extends TestCase {
     }
 
   /*
-    @Test(groups = {"basic"})
+    @Test
     public void testSecondaryCalls() throws Exception{
     	final Mongo mongo = loadMongo();
     	
@@ -241,7 +239,7 @@ public class SecondaryReadTest extends TestCase {
             } else {
                 deviation = (double)100 - (((double)queriesExecuted / (double)expectedPerSecondary) * (double)100);
             }
-            assertLess(deviation, MAX_DEVIATION_PERCENT);
+            assertTrue(deviation < MAX_DEVIATION_PERCENT);
         }
     }
 

@@ -19,13 +19,19 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Testing functionality of database TCP connector.  The structure of this class is a bit unusual,
@@ -33,34 +39,37 @@ import java.util.Arrays;
  */
 public class DBTCPConnectorTest extends TestCase {
 
-    private MongoClient _mongoClient;
-    private DB _db;
-    private DBCollection _collection;
+    private static MongoClient _mongoClient;
+    private static DB _db;
+    private static DBCollection _collection;
     private DBTCPConnector _connector;
 
     @BeforeClass
-    public void beforeClass() throws UnknownHostException {
-        if (isStandalone(cleanupMongo)) {
+    public static void beforeClass() throws UnknownHostException {
+        if (isStandalone(getMongoClient())) {
             _mongoClient = new MongoClient();
         }
         else {
             _mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost:27017"), new ServerAddress("localhost:27018")));
         }
-        cleanupDB = "com_mongodb_DBTCPConnectorTest";
-        _db = _mongoClient.getDB(cleanupDB);
-        _collection = _db.getCollection("testCol");
+        _db = _mongoClient.getDB(getDatabase().getName());
+        _collection = _db.getCollection(DBTCPConnectorTest.class.getName());
     }
 
     @AfterClass
-    public void afterClass() {
+    public static void afterClass() {
         _mongoClient.close();
-        _connector.close();
     }
 
-    @BeforeMethod
+    @Before
     public void beforeMethod() throws UnknownHostException {
         _connector = new DBTCPConnector(_mongoClient);
         _connector.start();
+    }
+
+    @After
+    public void afterMethod() {
+        _connector.close();
     }
 
     /**

@@ -16,13 +16,14 @@
 
 package org.bson.io;
 
-import org.testng.annotations.Test;
+
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class BitsTest {
 
@@ -38,7 +39,7 @@ public class BitsTest {
     public void testReadFullyWithBufferLargerThanExpected() throws IOException {
         final byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, BYTES.length);
-        assertEquals(BYTES, copyOfRange(buffer, 0, BYTES.length));
+        assertArrayEquals(BYTES, copyOfRange(buffer, 0, BYTES.length));
     }
 
     @Test
@@ -46,7 +47,7 @@ public class BitsTest {
         final int offset = 10;
         final byte[] buffer = new byte[8192];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
-        assertEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
+        assertArrayEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
     @Test
@@ -54,15 +55,15 @@ public class BitsTest {
         final int offset = 10;
         final byte[] buffer = new byte[offset+BYTES.length];
         Bits.readFully(new ByteArrayInputStream(BYTES), buffer, offset, BYTES.length);
-        assertEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
+        assertArrayEquals(BYTES, copyOfRange(buffer, offset, BYTES.length + offset));
     }
 
-    @Test (expectedExceptions = IllegalArgumentException.class)
+    @Test (expected =  IllegalArgumentException.class)
     public void testReadFullyUsingNotEnoughBigBuffer() throws IOException {
         Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], BYTES.length);
     }
 
-    @Test (expectedExceptions = IllegalArgumentException.class)
+    @Test (expected =  IllegalArgumentException.class)
      public void testReadFullyUsingNotEnoughBigBufferWithOffset() throws IOException {
         final int offset = 10;
         final byte[] buffer = new byte[BYTES.length];
@@ -94,7 +95,7 @@ public class BitsTest {
         assertEquals(Long.MAX_VALUE, Bits.readLong(BYTES, 24));
     }
 
-    @Test(expectedExceptions = ArrayIndexOutOfBoundsException.class)
+    @Test(expected =  ArrayIndexOutOfBoundsException.class)
     public void testReadLongWithNotEnoughData() {
         Bits.readLong(copyOfRange(BYTES, 24, 30), 0);
     }
