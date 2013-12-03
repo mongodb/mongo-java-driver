@@ -187,4 +187,8 @@ public class MapReduceOutput {
         return mapReduceStatistics.getEmitCount();
     }
 
+    @Deprecated
+    public DBObject getCommandResult() {
+        throw new MongoException("This method is gone.  Remove this implementation after 2.12 ships.");
+    }
 }

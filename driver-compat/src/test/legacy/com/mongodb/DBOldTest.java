@@ -126,4 +126,19 @@ public class DBOldTest extends DatabaseTestCase {
             database.requestDone();
         }
     }
+    
+    @Test
+    public void testInsertUpdatesUnsafe() throws Exception {
+        database.requestStart();
+        try {
+            BasicDBObject query = new BasicDBObject();
+            BasicDBObject update = new BasicDBObject("$inc", new BasicDBObject("radius", 1D));
+            DBCollection circle = database.getCollection("circle");
+            circle.update(query, update, true, false, WriteConcern.NONE);
+            assertEquals(1, circle.getCount());
+        } finally {
+            database.requestDone();
+        }
+    }
+    
 }

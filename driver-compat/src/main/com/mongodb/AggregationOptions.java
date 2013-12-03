@@ -71,7 +71,6 @@ public class AggregationOptions {
 
     /**
      * The size of batches to use when iterating over results.
-     * @return
      */
     public Integer getBatchSize() {
         return batchSize;
