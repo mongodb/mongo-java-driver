@@ -23,6 +23,7 @@
 package com.mongodb;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -244,8 +245,8 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder near( double x , double y  ){
-        addOperand(QueryOperators.NEAR,
-                    new Double[]{ x , y } );
+        addOperand( QueryOperators.NEAR,
+                    Arrays.asList(x, y));
         return this;
     }
 
@@ -258,7 +259,10 @@ public class QueryBuilder {
      */
     public QueryBuilder near( double x , double y , double maxDistance ){
         addOperand( QueryOperators.NEAR ,
-                    new Double[]{ x , y , maxDistance } );
+                    Arrays.asList(x, y));
+        addOperand( QueryOperators.MAX_DISTANCE ,
+                    maxDistance );
+
         return this;
     }
     
@@ -269,8 +273,8 @@ public class QueryBuilder {
      * @return
      */
     public QueryBuilder nearSphere( double longitude , double latitude ){
-        addOperand(QueryOperators.NEAR_SPHERE,
-                    new Double[]{ longitude , latitude } );
+        addOperand( QueryOperators.NEAR_SPHERE,
+                    Arrays.asList(longitude, latitude));
         return this;
     }
     
@@ -283,10 +287,12 @@ public class QueryBuilder {
      */
     public QueryBuilder nearSphere( double longitude , double latitude , double maxDistance ){
         addOperand( QueryOperators.NEAR_SPHERE ,
-                    new Double[]{ longitude , latitude , maxDistance } );
+                    Arrays.asList(longitude, latitude));
+        addOperand( QueryOperators.MAX_DISTANCE ,
+                    maxDistance );
         return this;
     }
-    
+
     /**
      * Equivalent of the $centerSphere operand
      * mostly intended for queries up to a few hundred miles or km.
@@ -300,7 +306,7 @@ public class QueryBuilder {
                 new BasicDBObject(QueryOperators.CENTER_SPHERE, new Object[]{ new Double[]{longitude , latitude} , maxDistance } ) );
         return this;
     }
-    
+
     /**
      * Equivalent to a $within operand, based on a bounding box using represented by two corners
      * 
