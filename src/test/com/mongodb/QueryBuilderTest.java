@@ -297,20 +297,30 @@ public class QueryBuilderTest extends TestCase {
         BasicDBObject geoSpatialIndex = new BasicDBObject();
         geoSpatialIndex.put(key, "2d");
         collection.ensureIndex(geoSpatialIndex);
+
+        DBObject expected = null;
         
         Double[] coordinates = {(double) 50, (double) 30};
         saveTestDocument(collection, key, coordinates);
         
         DBObject queryTrue = QueryBuilder.start(key).near(45, 45).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$near", Arrays.asList(45.0, 45.0)));
+        assertEquals(expected, queryTrue);
         assertTrue(testQuery(collection, queryTrue));
         
         queryTrue = QueryBuilder.start(key).near(45, 45, 16).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$near", Arrays.asList(45.0, 45.0)).append("$maxDistance", 16.0));
+        assertEquals(expected, queryTrue);
         assertTrue(testQuery(collection, queryTrue));
         
         queryTrue = QueryBuilder.start(key).nearSphere(45, 45).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$nearSphere", Arrays.asList(45.0, 45.0)));
+        assertEquals(expected, queryTrue);
         assertTrue(testQuery(collection, queryTrue));
         
         queryTrue = QueryBuilder.start(key).nearSphere(45, 45, 0.5).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$nearSphere", Arrays.asList(45.0, 45.0)).append("$maxDistance", 0.5));
+        assertEquals(expected, queryTrue);
         assertTrue(testQuery(collection, queryTrue));
         
         queryTrue = QueryBuilder.start(key).withinCenterSphere(50, 30, 0.5).get();
