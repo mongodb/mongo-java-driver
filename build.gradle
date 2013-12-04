@@ -73,7 +73,7 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.7'
+    gradleVersion = '1.9'
 }
 
 apply from: 'gradle/ide-settings.gradle'
