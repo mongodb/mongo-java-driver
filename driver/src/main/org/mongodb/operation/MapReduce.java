@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@ package org.mongodb.operation;
 
 import org.bson.types.Code;
 import org.mongodb.Document;
+
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A class that groups arguments for a map-reduce operation.
@@ -38,6 +42,7 @@ public class MapReduce {
     private int limit;
     private boolean jsMode;
     private boolean verbose;
+    private long maxTimeMS;
 
     /**
      * Constructs a new instance of the {@code MapReduce} with output to a another collection.
@@ -154,6 +159,11 @@ public class MapReduce {
         return this;
     }
 
+    public MapReduce maxTime(final long maxTime, final TimeUnit timeUnit) {
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
 
     public Code getMapFunction() {
         return mapFunction;
@@ -199,6 +209,10 @@ public class MapReduce {
         return inline;
     }
 
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
     @Override
     public String toString() {
         return "MapReduce{"
@@ -213,6 +227,7 @@ public class MapReduce {
                + ", limit=" + limit
                + ", jsMode=" + jsMode
                + ", verbose=" + verbose
+               + ", maxTimeMS" + maxTimeMS
                + '}';
     }
 }

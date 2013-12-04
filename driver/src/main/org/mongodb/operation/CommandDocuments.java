@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,30 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 
 final class CommandDocuments {
-    private CommandDocuments() { }
+    private CommandDocuments() {
+    }
 
     static Document createMapReduce(final String collectionName, final MapReduce mapReduce) {
 
-        return new Document("mapReduce", collectionName).append("map", mapReduce.getMapFunction())
-                                                        .append("reduce", mapReduce.getReduceFunction())
-                                                        .append("out", mapReduce.isInline() ? new Document("inline", 1)
-                                                                                            : outputAsDocument(mapReduce.getOutput()))
-                                                        .append("query", mapReduce.getFilter())
-                                                        .append("sort", mapReduce.getSortCriteria())
-                                                        .append("limit", mapReduce.getLimit())
-                                                        .append("finalize", mapReduce.getFinalizeFunction())
-                                                        .append("scope", mapReduce.getScope())
-                                                        .append("jsMode", mapReduce.isJsMode())
-                                                        .append("verbose", mapReduce.isVerbose());
+        Document commandDocument = new Document("mapReduce", collectionName)
+                                   .append("map", mapReduce.getMapFunction())
+                                   .append("reduce", mapReduce.getReduceFunction())
+                                   .append("out", mapReduce.isInline() ? new Document("inline", 1)
+                                                                       : outputAsDocument(mapReduce.getOutput()))
+                                   .append("query", mapReduce.getFilter())
+                                   .append("sort", mapReduce.getSortCriteria())
+                                   .append("limit", mapReduce.getLimit())
+                                   .append("finalize", mapReduce.getFinalizeFunction())
+                                   .append("scope", mapReduce.getScope())
+                                   .append("jsMode", mapReduce.isJsMode())
+                                   .append("verbose", mapReduce.isVerbose());
+        putIfNotZero(commandDocument, "maxTimeMS", mapReduce.getMaxTime(MILLISECONDS));
+        return commandDocument;
     }
 
     private static Document outputAsDocument(final MapReduceOutputOptions output) {

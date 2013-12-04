@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -395,6 +395,8 @@ public class MapReduceCommand {
         }
 
         mapReduce.limit(limit);
+
+        mapReduce.maxTime(maxTimeMS, MILLISECONDS);
 
         if (scope != null) {
             mapReduce.scope(new Document(scope));
