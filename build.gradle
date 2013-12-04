@@ -43,6 +43,16 @@ sourceSets {
     }
 }
 
+/* Compiling */
+tasks.withType(AbstractCompile) {
+    options.encoding = 'ISO-8859-1'
+    options.fork = true
+    options.debug = true
+
+    onlyIf { JavaVersion.current().isJava6Compatible() }
+}
+
+
 test {
     maxHeapSize = "512m"
 
