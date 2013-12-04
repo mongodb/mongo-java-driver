@@ -23,7 +23,7 @@ import spock.lang.Subject
 
 import java.util.concurrent.TimeUnit
 
-import static java.util.concurrent.TimeUnit.MINUTES
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class PooledConnectionProviderSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
@@ -170,7 +170,7 @@ class PooledConnectionProviderSpecification extends Specification {
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(10)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .build(),
                                                 new NoOpConnectionPoolListener())
 
@@ -188,7 +188,7 @@ class PooledConnectionProviderSpecification extends Specification {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(10)
                                                                       .minSize(5)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .build(),
                                                 new NoOpConnectionPoolListener())
 

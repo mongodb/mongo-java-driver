@@ -19,7 +19,7 @@ package com.mongodb;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.bson.util.Assertions.isTrue;
 
 class ConnectionPoolSettings {
@@ -44,7 +44,7 @@ class ConnectionPoolSettings {
         private long maxConnectionLifeTimeMS;
         private long maxConnectionIdleTimeMS;
         private long maintenanceInitialDelayMS;
-        private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
+        private long maintenanceFrequencyMS = MILLISECONDS.convert(60, SECONDS);
 
         // CHECKSTYLE:OFF
         public Builder maxSize(final int maxSize) {

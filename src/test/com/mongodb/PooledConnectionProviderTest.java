@@ -24,8 +24,11 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.*;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 public class PooledConnectionProviderTest {
@@ -145,7 +148,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .maxConnectionIdleTime(50, MILLISECONDS)
                                                                       .build(),
                                                 new NoOpConnectionPoolListener());
@@ -168,7 +171,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .maxConnectionLifeTime(20, MILLISECONDS).build(),
                                                 new NoOpConnectionPoolListener());
 
@@ -190,7 +193,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .maxConnectionLifeTime(20, MILLISECONDS).build(),
                                                 new NoOpConnectionPoolListener());
 
@@ -213,7 +216,7 @@ public class PooledConnectionProviderTest {
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(10)
                                                                       .maxConnectionLifeTime(1, MILLISECONDS)
-                                                                      .maintenanceInitialDelay(5, MINUTES)
+                                                                      .maintenanceInitialDelay(60, SECONDS)
                                                                       .maxWaitQueueSize(1)
                                                                       .build(),
                                                 new NoOpConnectionPoolListener());
