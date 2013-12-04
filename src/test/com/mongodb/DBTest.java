@@ -156,7 +156,7 @@ public class DBTest extends TestCase {
     @Test
     public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd() throws UnknownHostException {
         Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")),
-                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10).build());
+                MongoClientOptions.builder().connectionsPerHost(1).maxWaitTime(10000).build());
         DB db = m.getDB("com_mongodb_unittest_DBTest");
 
         try {
