@@ -138,10 +138,8 @@ class ServerStateNotifier implements Runnable {
                                 .passives(listToSet((List<String>) commandResult.get("passives")))
                                 .arbiters(listToSet((List<String>) commandResult.get("arbiters")))
                                 .primary(commandResult.getString("primary"))
-                                .maxDocumentSize(getInteger(commandResult.getInt("maxBsonObjectSize"),
-                                                            ServerDescription.getDefaultMaxDocumentSize()))
-                                .maxMessageSize(getInteger(commandResult.getInt("maxMessageSizeBytes"),
-                                                           ServerDescription.getDefaultMaxMessageSize()))
+                                .maxDocumentSize(commandResult.getInt("maxBsonObjectSize", ServerDescription.getDefaultMaxDocumentSize()))
+                                .maxMessageSize(commandResult.getInt("maxMessageSizeBytes", ServerDescription.getDefaultMaxMessageSize()))
                                 .tags(getTagsFromDocument((DBObject) commandResult.get("tags")))
                                 .setName(commandResult.getString("setName"))
                                 .setVersion((Integer) commandResult.get("setVersion"))
@@ -167,15 +165,15 @@ class ServerStateNotifier implements Runnable {
 
     private static ServerType getServerType(final BasicDBObject isMasterResult) {
         if (isReplicaSetMember(isMasterResult)) {
-            if (getBoolean(isMasterResult.getBoolean("ismaster"), false)) {
+            if (isMasterResult.getBoolean("ismaster", false)) {
                 return ServerType.ReplicaSetPrimary;
             }
 
-            if (getBoolean(isMasterResult.getBoolean("secondary"), false)) {
+            if (isMasterResult.getBoolean("secondary", false)) {
                 return ServerType.ReplicaSetSecondary;
             }
 
-            if (getBoolean(isMasterResult.getBoolean("arbiterOnly"), false)) {
+            if (isMasterResult.getBoolean("arbiterOnly", false)) {
                 return ServerType.ReplicaSetArbiter;
             }
 
@@ -190,16 +188,7 @@ class ServerStateNotifier implements Runnable {
     }
 
     private static boolean isReplicaSetMember(final BasicDBObject isMasterResult) {
-        return isMasterResult.containsKey("setName") || getBoolean(isMasterResult.getBoolean("isreplicaset"), false);
-    }
-
-    private static boolean getBoolean(final Boolean value, final boolean defaultValue) {
-        return value == null ? defaultValue : value;
-    }
-
-
-    private static int getInteger(final Integer value, final int defaultValue) {
-        return (value != null) ? value : defaultValue;
+        return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", false);
     }
 
     private static Tags getTagsFromDocument(final DBObject tagsDocuments) {
