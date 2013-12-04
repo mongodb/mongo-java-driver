@@ -335,7 +335,7 @@ public class Mongo {
      *
      * @return the full version string, e.g. "3.0.0"
      */
-    public static String getVersion() {
+    public String getVersion() {
         return VERSION;
     }
 
