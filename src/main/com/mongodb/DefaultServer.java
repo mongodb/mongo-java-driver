@@ -16,8 +16,7 @@
 
 package com.mongodb;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,8 +34,8 @@ class DefaultServer implements ClusterableServer {
     private final ServerStateNotifier stateNotifier;
     private final ScheduledFuture<?> scheduledFuture;
     private final PooledConnectionProvider connectionProvider;
-    private final Set<ChangeListener<ServerDescription>> changeListeners =
-    Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
+    private final Map<ChangeListener<ServerDescription>, Boolean> changeListeners =
+    new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>();
     private final ServerSettings settings;
     private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
@@ -78,7 +77,7 @@ class DefaultServer implements ClusterableServer {
     public void addChangeListener(final ChangeListener<ServerDescription> changeListener) {
         isTrue("open", !isClosed());
 
-        changeListeners.add(changeListener);
+        changeListeners.put(changeListener, true);
     }
 
     @Override
@@ -111,7 +110,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public synchronized void stateChanged(final ChangeEvent<ServerDescription> event) {
             description = event.getNewValue();
-            for (ChangeListener<ServerDescription> listener : changeListeners) {
+            for (ChangeListener<ServerDescription> listener : changeListeners.keySet()) {
                 listener.stateChanged(event);
             }
             if (event.getNewValue().getState() == Unconnected) {
