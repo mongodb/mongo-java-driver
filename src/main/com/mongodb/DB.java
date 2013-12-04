@@ -918,7 +918,7 @@ public abstract class DB {
      * @return
      */
     private boolean isValidName(String dbname){
-        return !dbname.isEmpty() && !dbname.contains(" ");
+        return dbname.length() != 0 && !dbname.contains(" ");
     }
 
     /**

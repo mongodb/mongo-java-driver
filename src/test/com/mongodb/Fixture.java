@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import java.net.UnknownHostException;
-import java.util.List;
 
 /**
  * Helper class for the acceptance tests.
@@ -71,7 +70,7 @@ public final class Fixture {
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
             String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+            String mongoURIString = mongoURIProperty == null || mongoURIProperty.length() == 0
                                     ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
