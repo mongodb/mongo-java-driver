@@ -351,7 +351,49 @@ public class QueryBuilderTest extends TestCase {
             fail("IllegalArgumentException should have been thrown");
         }catch(IllegalArgumentException e) {}
     }
-	
+
+    @Test
+    public void textTest() {
+        if (!serverIsAtLeastVersion(2.5)) {
+             return;
+        }
+
+        BasicDBObject enableTextCommand = new BasicDBObject("setParameter", 1).append("textSearchEnabled", true);
+        BasicDBObject result = _testDB.getSisterDB("admin").command(enableTextCommand);
+        DBCollection collection = _testDB.getCollection("text-test");
+        BasicDBObject textIndex = new BasicDBObject("comments", "text");
+        collection.ensureIndex(textIndex);
+
+        BasicDBObject doc = new BasicDBObject("comments", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+                .append("meaning", 42);
+        collection.save(doc);
+
+        try {
+            QueryBuilder.start("x").text("funny");
+            fail("QueryBuilderException should have been thrown.");
+        } catch(QueryBuilderException e) { }
+
+        DBObject queryTrue = QueryBuilder.start().text("dolor").get();
+        DBObject expected = new BasicDBObject("$text", new BasicDBObject("$search", "dolor"));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        queryTrue = QueryBuilder.start().text("dolor", "english").get();
+        expected = new BasicDBObject("$text", new BasicDBObject("$search", "dolor").append("$language", "english"));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        queryTrue = QueryBuilder.start().and(
+                QueryBuilder.start().text("dolor").get(),
+                QueryBuilder.start("meaning").greaterThan(21).get()).get();
+        expected = new BasicDBObject("$and",
+            Arrays.asList(
+                new BasicDBObject("$text", new BasicDBObject("$search", "dolor")),
+                new BasicDBObject("meaning", new BasicDBObject("$gt", 21))));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+    }
+
     @Test
     public void failureTest() {
         boolean thrown = false;
