@@ -19,6 +19,7 @@
 package com.mongodb.gridfs;
 
 import java.io.ByteArrayInputStream;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.mongodb.MongoException;
-
 import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;

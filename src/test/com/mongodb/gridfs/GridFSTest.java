@@ -361,12 +361,6 @@ public class GridFSTest extends TestCase {
     	  _fs.remove(dbObjectQuery);
     }
 
-   /* @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
-    public void whenDBNameIsEmptyThenThrowException(){
-        cleanupMongo.getDB("");
-    }
-*/
-
     final DB _db;
     final GridFS _fs;
     
