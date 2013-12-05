@@ -62,7 +62,7 @@ public class GridFSTest extends DatabaseTestCase {
 
     void testOutStream(final String s) throws Exception {
 
-        int[] start = _get();
+        int[] start = getCurrentCollectionCounts();
 
         GridFSInputFile in = gridFS.createFile();
         OutputStream writeStream = in.getOutputStream();
@@ -78,7 +78,7 @@ public class GridFSTest extends DatabaseTestCase {
         assert (outString.equals(s));
 
         out.remove();
-        int[] end = _get();
+        int[] end = getCurrentCollectionCounts();
         assertEquals(start[0], end[0]);
         assertEquals(start[1], end[1]);
     }
@@ -248,16 +248,9 @@ public class GridFSTest extends DatabaseTestCase {
         }
     }
 
-    int[] _get() {
-        int[] i = new int[2];
-        i[0] = gridFS.getFilesCollection().find().count();
-        i[1] = gridFS.getChunksCollection().find().count();
-        return i;
-    }
-
     void testInOut(final String s) throws Exception {
 
-        int[] start = _get();
+        int[] start = getCurrentCollectionCounts();
 
         GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
         in.save();
@@ -271,27 +264,33 @@ public class GridFSTest extends DatabaseTestCase {
         assert (outString.equals(s));
 
         out.remove();
-        int[] end = _get();
+        int[] end = getCurrentCollectionCounts();
         assertEquals(start[0], end[0]);
         assertEquals(start[1], end[1]);
     }
 
-    @Test(expected= IllegalArgumentException.class)
-    public void testRemoveWhenObjectIdIsNull(){
+    int[] getCurrentCollectionCounts() {
+        int[] i = new int[2];
+        i[0] = gridFS.getFilesCollection().find().count();
+        i[1] = gridFS.getChunksCollection().find().count();
+        return i;
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveWhenObjectIdIsNull() {
         ObjectId objectId = null;
         gridFS.remove(objectId);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testRemoveWhenFileNameIsNull(){
+    public void testRemoveWhenFileNameIsNull() {
         String fileName = null;
         gridFS.remove(fileName);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testRemoveWhenQueryIsNull(){
+    public void testRemoveWhenQueryIsNull() {
         DBObject dbObjectQuery = null;
         gridFS.remove(dbObjectQuery);
     }
-
 }
