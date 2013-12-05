@@ -69,3 +69,5 @@ MongoDB project, please report it according to the [instructions here]
 * Brendan McAdams
 * Kristina Chodorow
 * Mike Dirolf
+
+We proudly develop this project with ![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)
