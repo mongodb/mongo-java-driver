@@ -16,17 +16,23 @@
 
 package com.mongodb.gridfs;
 
+import com.mongodb.AggregationOptions;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.util.TestCase;
+
+import org.bson.types.ObjectId;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -336,6 +342,30 @@ public class GridFSTest extends TestCase {
         assertEquals(result.get(2).getId(),2);
         assertEquals(result.get(3).getId(),1);
     }
+
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void testRemoveWhenObjectIdisNull(){
+    	   ObjectId objectId=null;
+    	  _fs.remove(objectId);
+    }
+   
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void testRemoveWhenFileNameisNull(){
+    	   String fileName =null;
+    	  _fs.remove(fileName);
+    }
+    
+    @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void testRemoveWhenQueryisNull(){
+    	   DBObject dbObjectQuery =null;
+    	  _fs.remove(dbObjectQuery);
+    }
+
+   /* @Test(groups = {"basic"}, expectedExceptions= IllegalArgumentException.class)
+    public void whenDBNameIsEmptyThenThrowException(){
+        cleanupMongo.getDB("");
+    }
+*/
 
     final DB _db;
     final GridFS _fs;

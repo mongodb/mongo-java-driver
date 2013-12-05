@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.mongodb.MongoException;
+
 import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
@@ -276,6 +277,9 @@ public class GridFS {
      * @throws MongoException 
      */
     public void remove( ObjectId id ){
+    	 if(id == null) {
+             throw new IllegalArgumentException("file id can not be null");
+         }
         _filesCollection.remove( new BasicDBObject( "_id" , id ) );
         _chunkCollection.remove( new BasicDBObject( "files_id" , id ) );
     }
@@ -286,6 +290,9 @@ public class GridFS {
      * @throws MongoException 
      */
     public void remove( String filename ){
+        if(filename == null) {
+            throw new IllegalArgumentException("filename can not be null");
+        }
         remove( new BasicDBObject( "filename" , filename ) );
     }
 
@@ -295,6 +302,9 @@ public class GridFS {
      * @throws MongoException 
      */
     public void remove( DBObject query ){
+    	if(query == null) {
+              throw new IllegalArgumentException("query can not be null");
+          }
         for ( GridFSDBFile f : find( query ) ){
             f.remove();
         }
