@@ -17,21 +17,25 @@
 package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.util.TestCase;
+import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
-
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Random;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 public class GridFSTest extends TestCase {
     
     public GridFSTest() {
@@ -293,14 +297,14 @@ public class GridFSTest extends TestCase {
             inputFile.save(chunkSize);
         }
 
-        DBCursor cursor =  _fs.getFileList(null,new BasicDBObject("orderTest", 1));
+        DBCursor cursor =  _fs.getFileList(null, new BasicDBObject("orderTest", 1));
         assertEquals(cursor.size(),4);
         assertEquals(cursor.next().get("_id"),1);
         assertEquals(cursor.next().get("_id"),2);
         assertEquals(cursor.next().get("_id"),3);
         assertEquals(cursor.next().get("_id"),4);
 
-         cursor =  _fs.getFileList(null,new BasicDBObject("filename", -1));
+         cursor =  _fs.getFileList(null, new BasicDBObject("filename", -1));
         assertEquals(cursor.size(),4);
         assertEquals(cursor.next().get("_id"),4);
         assertEquals(cursor.next().get("_id"),3);
@@ -341,6 +345,24 @@ public class GridFSTest extends TestCase {
         assertEquals(result.get(1).getId(),3);
         assertEquals(result.get(2).getId(),2);
         assertEquals(result.get(3).getId(),1);
+    }
+
+    @Test(expected= IllegalArgumentException.class)
+    public void testRemoveWhenObjectIdIsNull(){
+    	   ObjectId objectId=null;
+    	  _fs.remove(objectId);
+    }
+   
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveWhenFileNameIsNull(){
+    	   String fileName =null;
+    	  _fs.remove(fileName);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveWhenQueryIsNull(){
+    	   DBObject dbObjectQuery =null;
+    	  _fs.remove(dbObjectQuery);
     }
 
     final GridFS _fs;
