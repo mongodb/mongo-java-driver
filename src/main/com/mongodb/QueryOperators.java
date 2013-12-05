@@ -58,6 +58,10 @@ public class QueryOperators {
     public static final String MAX_DISTANCE = "$maxDistance";
     public static final String UNIQUE_DOCS = "$uniqueDocs";
 
+    // text operators
+    public static final String TEXT = "$text";
+    public static final String SEARCH = "$search";
+    public static final String LANGUAGE = "$language";
 
     // meta query operators (to be implemented in QueryBuilder)
     public static final String RETURN_KEY = "$returnKey";
