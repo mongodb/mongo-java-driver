@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,6 +274,10 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      */
     public void remove(final ObjectId id) {
+        if (id == null) {
+            throw new IllegalArgumentException("file id can not be null");
+        }
+
         filesCollection.remove(new BasicDBObject("_id", id));
         chunksCollection.remove(new BasicDBObject("files_id", id));
     }
@@ -285,6 +289,10 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      */
     public void remove(final String filename) {
+        if (filename == null) {
+            throw new IllegalArgumentException("filename can not be null");
+        }
+
         remove(new BasicDBObject("filename", filename));
     }
 
@@ -295,6 +303,10 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      */
     public void remove(final DBObject query) {
+        if (query == null) {
+            throw new IllegalArgumentException("query can not be null");
+        }
+
         for (final GridFSDBFile f : find(query)) {
             f.remove();
         }

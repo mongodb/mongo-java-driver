@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@
 package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.DatabaseTestCase;
 import com.mongodb.MongoException;
+import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -273,4 +275,23 @@ public class GridFSTest extends DatabaseTestCase {
         assertEquals(start[0], end[0]);
         assertEquals(start[1], end[1]);
     }
+
+    @Test(expected= IllegalArgumentException.class)
+    public void testRemoveWhenObjectIdIsNull(){
+        ObjectId objectId = null;
+        gridFS.remove(objectId);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveWhenFileNameIsNull(){
+        String fileName = null;
+        gridFS.remove(fileName);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveWhenQueryIsNull(){
+        DBObject dbObjectQuery = null;
+        gridFS.remove(dbObjectQuery);
+    }
+
 }
