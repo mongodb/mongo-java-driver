@@ -277,15 +277,25 @@ public class QueryBuilderTest extends DatabaseTestCase {
         saveTestDocument(collection, key, coordinates);
 
         DBObject queryTrue = QueryBuilder.start(key).near(45, 45).get();
+        DBObject expected = new BasicDBObject(key, new BasicDBObject("$near", Arrays.asList(45.0, 45.0)));
+        assertEquals(queryTrue, expected);
         assertTrue(testQuery(collection, queryTrue));
 
         queryTrue = QueryBuilder.start(key).near(45, 45, 16).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$near", Arrays.asList(45.0, 45.0))
+                .append("$maxDistance", 16.0));
+        assertEquals(queryTrue, expected);
         assertTrue(testQuery(collection, queryTrue));
 
         queryTrue = QueryBuilder.start(key).nearSphere(45, 45).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$nearSphere", Arrays.asList(45.0, 45.0)));
+        assertEquals(queryTrue, expected);
         assertTrue(testQuery(collection, queryTrue));
 
         queryTrue = QueryBuilder.start(key).nearSphere(45, 45, 0.5).get();
+        expected = new BasicDBObject(key, new BasicDBObject("$nearSphere", Arrays.asList(45.0, 45.0))
+                .append("$maxDistance", 0.5));
+        assertEquals(queryTrue, expected);
         assertTrue(testQuery(collection, queryTrue));
 
         queryTrue = QueryBuilder.start(key).withinCenterSphere(50, 30, 0.5).get();

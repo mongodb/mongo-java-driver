@@ -97,4 +97,22 @@ public class QueryBuilderTest {
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
+
+    @Test
+    public void shouldCreateCorrectNearQueryWhenMaxDistanceIsSpecified() {
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").near(45.0, 45.0, 0.5);
+
+        String expectedQuery = "{ \"loc\" : { \"$near\" : [45.0, 45.0], \"$maxDistance\" : 0.5 } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    @Test
+    public void shouldCreateCorrectNearSphereQueryWhenMaxDistanceIsSpecified() {
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").nearSphere(45.0, 45.0, 0.5);
+
+        String expectedQuery = "{ \"loc\" : { \"$nearSphere\" : [45.0, 45.0], \"$maxDistance\" : 0.5 } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
 }
