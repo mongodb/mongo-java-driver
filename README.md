@@ -70,4 +70,4 @@ MongoDB project, please report it according to the [instructions here]
 * Kristina Chodorow
 * Mike Dirolf
 
-We proudly develop this project with ![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)
+We proudly develop this project with [![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/)
