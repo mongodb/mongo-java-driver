@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -194,6 +195,45 @@ public class DBCollectionTest extends DatabaseTestCase {
                                                             .append("unique", true);
 
         assertThat(collection.getIndexInfo(), hasItem(hasSubdocument(document)));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testCreateIndexWithInvalidIndexType() {
+        DBObject index = new BasicDBObject("x", "funny");
+        collection.createIndex(index);
+    }
+
+    @Test
+    public void testCreateIndexAsAscending() {
+        DBObject index = new BasicDBObject("x", 1);
+        collection.createIndex(index);
+
+        assertThat(collection.getIndexInfo(), notNullValue());
+    }
+
+    @Test
+    public void testCreateIndexAsDescending() {
+        DBObject index = new BasicDBObject("x", -1);
+        collection.createIndex(index);
+
+        assertThat(collection.getIndexInfo(), notNullValue());
+    }
+
+    @Test
+    public void testCreateIndexAs2d() {
+        DBObject index = new BasicDBObject("x", "2d");
+        collection.createIndex(index);
+
+        assertThat(collection.getIndexInfo(), notNullValue());
+    }
+
+    @Test
+    public void testCreateIndexAsText() {
+        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
+        DBObject index = new BasicDBObject("x", "text");
+        collection.createIndex(index);
+
+        assertThat(collection.getIndexInfo(), notNullValue());
     }
 
     @Test
