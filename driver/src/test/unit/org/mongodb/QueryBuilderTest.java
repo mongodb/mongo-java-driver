@@ -80,4 +80,21 @@ public class QueryBuilderTest {
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
 
+    @Test
+    public void shouldCreateValidBSONDocumentToTestForText() {
+        QueryBuilder queryBuilder = QueryBuilder.query().text("dolor");
+
+        String expectedQuery = "{ \"$text\" : { \"$search\" : \"dolor\" } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    @Test
+    public void shouldCreateValidBSONDocumentToTestForTextWithLanguage() {
+        QueryBuilder queryBuilder = QueryBuilder.query().text("dolor", "latin");
+
+        String expectedQuery = "{ \"$text\" : { \"$search\" : \"dolor\", \"$language\" : \"latin\" } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
 }

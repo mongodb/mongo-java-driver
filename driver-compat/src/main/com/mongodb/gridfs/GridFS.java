@@ -41,8 +41,8 @@ import java.util.List;
  * file chunks, and the other stores file metadata.
  * <p/>
  * When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. You can perform range queries on
- * files stored through GridFS. You also can access information from arbitrary sections of files, which allows you to “skip” into the middle
- * of a video or audio file.
+ * files stored through GridFS. You also can access information from arbitrary sections of files, which allows you to “skip” into the
+ * middle of a video or audio file.
  * <p/>
  * GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having to
  * load the entire file into memory. For more information on the indications of GridFS, see MongoDB official documentation.

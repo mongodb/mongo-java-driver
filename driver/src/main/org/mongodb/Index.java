@@ -144,6 +144,24 @@ public final class Index implements ConvertibleToDocument {
         }
     }
 
+    public static class Text implements Key<String> {
+        private final String fieldName;
+
+        public Text(final String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        @Override
+        public String getValue() {
+            return "text";
+        }
+    }
+
     public interface Key<T> {
         String getFieldName();
 

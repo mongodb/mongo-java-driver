@@ -349,6 +349,36 @@ public class QueryBuilder {
     }
 
     /**
+     * Equivalent to a $text operand.
+     * @param search the search terms to apply to the text index.
+     * @return this
+     */
+    public QueryBuilder text(final String search) {
+        return text(search, null);
+    }
+
+    /**
+     * Equivalent to a $text operand.
+     * @param search the search terms to apply to the text index.
+     * @param language the language to use.
+     * @return this
+     */
+    public QueryBuilder text(final String search, final String language) {
+        if (_currentKey != null) {
+            throw new QueryBuilderException("The text operand may only occur at the top-level of a query. It does"
+                    + " not apply to a specific element, but rather to a document as a whole.");
+        }
+
+        put(QueryOperators.TEXT);
+        addOperand(QueryOperators.SEARCH, search);
+        if (language != null) {
+            addOperand(QueryOperators.LANGUAGE, language);
+        }
+
+        return this;
+    }
+
+    /**
      * Equivalent to $not meta operator. Must be followed by an operand, not a value, e.g. {@code
      * QueryBuilder.start("val").not().mod(Arrays.asList(10, 1)) }
      *

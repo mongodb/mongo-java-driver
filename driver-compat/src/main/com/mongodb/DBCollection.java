@@ -1847,10 +1847,11 @@ public class DBCollection {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
             } else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
+            } else if (keyType.equals("text")) {
+                keys.add(new Index.Text(key));
             } else {
                 throw new UnsupportedOperationException("Unsupported index type: " + keyType);
             }
-
         }
         return keys;
     }
