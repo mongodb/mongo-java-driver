@@ -323,12 +323,12 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void findAndUpdateAndReturnNew() {
         collection.insert(new BasicDBObject("_id", 1).append("x", true));
         DBObject newDoc = collection.findAndModify(new BasicDBObject("x", false),
-                null,
-                null,
-                false,
-                new BasicDBObject("$set", new BasicDBObject("x", false)),
-                true,
-                true);
+                                                   null,
+                                                   null,
+                                                   false,
+                                                   new BasicDBObject("$set", new BasicDBObject("x", false)),
+                                                   true,
+                                                   true);
         assertNotNull(newDoc);
         assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
     }
