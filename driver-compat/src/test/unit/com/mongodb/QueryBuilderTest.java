@@ -23,10 +23,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class QueryBuilderTest extends DatabaseTestCase {
 
@@ -314,6 +317,48 @@ public class QueryBuilderTest extends DatabaseTestCase {
             fail("IllegalArgumentException should have been thrown");
         } catch (IllegalArgumentException e) {
         }
+    }
+
+    @Test
+    public void textTest() {
+        if (!serverVersionAtLeast(asList(2, 5, 5))) {
+            return;
+        }
+
+        BasicDBObject enableTextCommand = new BasicDBObject("setParameter", 1).append("textSearchEnabled", true);
+        database.getSisterDB("admin").command(enableTextCommand);
+        DBCollection collection = database.getCollection("text-test");
+        BasicDBObject textIndex = new BasicDBObject("comments", "text");
+        collection.ensureIndex(textIndex);
+
+        BasicDBObject doc = new BasicDBObject("comments", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+                .append("meaning", 42);
+        collection.save(doc);
+
+        try {
+            QueryBuilder.start("x").text("funny");
+            fail("QueryBuilderException should have been thrown.");
+        } catch (QueryBuilderException e) { }
+
+        DBObject queryTrue = QueryBuilder.start().text("dolor").get();
+        DBObject expected = new BasicDBObject("$text", new BasicDBObject("$search", "dolor"));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        queryTrue = QueryBuilder.start().text("dolor", "english").get();
+        expected = new BasicDBObject("$text", new BasicDBObject("$search", "dolor").append("$language", "english"));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        queryTrue = QueryBuilder.start().and(
+                QueryBuilder.start().text("dolor").get(),
+                QueryBuilder.start("meaning").greaterThan(21).get()).get();
+        expected = new BasicDBObject("$and",
+                Arrays.asList(
+                        new BasicDBObject("$text", new BasicDBObject("$search", "dolor")),
+                        new BasicDBObject("meaning", new BasicDBObject("$gt", 21))));
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
     }
 
     @Test
