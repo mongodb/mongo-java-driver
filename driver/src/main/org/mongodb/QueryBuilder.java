@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -260,55 +261,56 @@ public class QueryBuilder implements ConvertibleToDocument {
 
     /**
      * Equivalent of the $near operand
-     *
      * @param x x coordinate
      * @param y y coordinate
-     * @return the current QueryBuilder with the geo query params added
+     * @return
      */
-    public QueryBuilder near(final double x, final double y) {
+    public QueryBuilder near(final double x, final double y){
         addOperand(QueryOperators.NEAR,
-                   new Double[]{x, y});
+                   Arrays.asList(x, y));
         return this;
     }
 
     /**
      * Equivalent of the $near operand
-     *
-     * @param x           x coordinate
-     * @param y           y coordinate
+     * @param x x coordinate
+     * @param y y coordinate
      * @param maxDistance max distance
-     * @return the current QueryBuilder with the geo query params added
+     * @return
      */
-    public QueryBuilder near(final double x, final double y, final double maxDistance) {
+    public QueryBuilder near(final double x, final double y, final double maxDistance){
         addOperand(QueryOperators.NEAR,
-                   new Double[]{x, y, maxDistance});
+                   Arrays.asList(x, y));
+        addOperand(QueryOperators.MAX_DISTANCE,
+                   maxDistance);
+
         return this;
     }
 
     /**
      * Equivalent of the $nearSphere operand
-     *
      * @param longitude coordinate in decimal degrees
-     * @param latitude  coordinate in decimal degrees
-     * @return the current QueryBuilder with the geo query params added
+     * @param latitude coordinate in decimal degrees
+     * @return
      */
-    public QueryBuilder nearSphere(final double longitude, final double latitude) {
+    public QueryBuilder nearSphere(final double longitude, final double latitude){
         addOperand(QueryOperators.NEAR_SPHERE,
-                   new Double[]{longitude, latitude});
+                   Arrays.asList(longitude, latitude));
         return this;
     }
 
     /**
      * Equivalent of the $nearSphere operand
-     *
-     * @param longitude   coordinate in decimal degrees
-     * @param latitude    coordinate in decimal degrees
+     * @param longitude coordinate in decimal degrees
+     * @param latitude coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return the current QueryBuilder with the geo query params added
+     * @return
      */
-    public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance) {
+    public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance){
         addOperand(QueryOperators.NEAR_SPHERE,
-                   new Double[]{longitude, latitude, maxDistance});
+                   Arrays.asList(longitude, latitude));
+        addOperand(QueryOperators.MAX_DISTANCE,
+                   maxDistance);
         return this;
     }
 
