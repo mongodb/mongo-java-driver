@@ -16,6 +16,9 @@ notifications:
 services: 
 - mongodb
 
+before_script:
+  - mongo admin --eval 'db.runCommand({setParameter : 1, textSearchEnabled : true})'
+
 branches: 
   only: 
   - master
