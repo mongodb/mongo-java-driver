@@ -26,7 +26,7 @@ limitations under the License.
 
     <property file="../build.properties" prefix="build.conf"/>
     
-    <property file="${user.home}/.gradle/gradle.properties"/>
+    <property file="${user.home}/.gradle/gradle.properties" />
 
     <property name="dir.build" value="../build"/>
 
@@ -195,6 +195,7 @@ limitations under the License.
     <!-- ******************************************************************* -->
 
     <target name="maven.snapshot" depends="maven.init" description="Deploy build to maven central server - snapshot">
+        <echo>user home is ${user.home}</echo>
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file"/>
             <arg value="-Durl=${maven-snapshots-repository-url}"/>
