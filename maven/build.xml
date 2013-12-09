@@ -26,7 +26,7 @@ limitations under the License.
 
     <property file="../build.properties" prefix="build.conf"/>
     
-    <property file="/home/jenkins/.gradle/gradle.properties"/>
+    <property file="${user.home}/.gradle/gradle.properties"/>
 
     <property name="dir.build" value="../build"/>
 
