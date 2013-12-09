@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
+@SuppressWarnings("deprecation")
 public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldGetDefaultWriteConcern() {
