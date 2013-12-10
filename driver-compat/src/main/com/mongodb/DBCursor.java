@@ -68,7 +68,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
     private final List<DBObject> all = new ArrayList<DBObject>();
     private MongoQueryCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
-    private final OptionalFinalizer optionalFinalizer; // IDEs will say it's unused, but don't believe them
+    private final OptionalFinalizer optionalFinalizer; // IDEs will say it can be converted to a local variable, resist the urge
 
 
     /**
@@ -202,7 +202,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @mongodb.driver.manual reference/operator Special Operators
      */
     public DBCursor addSpecial(final String name, final Object o) {
-        throw new UnsupportedOperationException();  // TODO
+        throw new UnsupportedOperationException("TBD");  // TODO
     }
 
     /**
@@ -220,7 +220,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * Informs the database of an indexed field of the collection in order to improve performance.
      *
      * @param indexName the name of an index
-     * @return same DBCursort for chaining operations
+     * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final String indexName) {
         find.hintIndex(indexName);
