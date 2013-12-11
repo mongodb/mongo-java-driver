@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
@@ -28,6 +29,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -228,6 +230,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore("https://trello.com/c/Naqe9XX2/474-unignore-com-mongodb-dbcollectiontest-testcreateindexastext-when-text-search-is-enable-by-default")
     public void testCreateIndexAsText() {
         assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
         DBObject index = new BasicDBObject("x", "text");
