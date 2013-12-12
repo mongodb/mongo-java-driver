@@ -122,12 +122,21 @@ public class GridFSTest extends DatabaseTestCase {
 
     @Test
     public void testBadChunkSize() throws Exception {
-        int fileSize = 2 * database.getMongo().getMaxBsonObjectSize();
-        if (fileSize > 1024 * 1024 * 1024) {
-            //If this is the case, GridFS is probably obsolete...
-            fileSize = 10 * 1024 * 1024;
+        byte[] randomBytes = new byte[256];
+        GridFSInputFile inputFile = gridFS.createFile(randomBytes);
+        inputFile.setFilename("bad_chunk_size.bin");
+        try {
+            inputFile.save(0);
+            fail("should have received an exception about a chunk size being zero");
+        } catch (MongoException e) {
+            //We expect this exception to complain about the chunksize
+            assertTrue(e.toString().contains("chunkSize must be greater than zero"));
         }
+    }
 
+    @Test
+    public void testMultipleChunks() throws Exception {
+        int fileSize = 1024 * 128;
         byte[] randomBytes = new byte[fileSize];
         for (int idx = 0; idx < fileSize; ++idx) {
             randomBytes[idx] = (byte) (256 * Math.random());
@@ -135,16 +144,9 @@ public class GridFSTest extends DatabaseTestCase {
 
         GridFSInputFile inputFile = gridFS.createFile(randomBytes);
         inputFile.setFilename("bad_chunk_size.bin");
-        try {
-            inputFile.save(0);
-            fail("should have received an exception about a chunk size being zero");
-        } catch (MongoException mongoExc) {
-            //We expect this exception to complain about the chunksize
-            assertTrue(mongoExc.toString().contains("chunkSize must be greater than zero"));
-        }
 
         //For good measure let's save and restore the bytes
-        inputFile.save(database.getMongo().getMaxBsonObjectSize() - 500 * 1000);
+        inputFile.save(1024);
         GridFSDBFile savedFile = gridFS.findOne(new BasicDBObject("_id", inputFile.getId()));
         ByteArrayOutputStream savedFileByteStream = new ByteArrayOutputStream();
         savedFile.writeTo(savedFileByteStream);
