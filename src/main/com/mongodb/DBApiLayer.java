@@ -486,7 +486,7 @@ public class DBApiLayer extends DB {
 
         private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
             return concern.callGetLastError() &&
-                   _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0;
+                   _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 6, 0))) >= 0;
         }
 
         private MessageSettings getMessageSettings(final ServerAddress address) {
