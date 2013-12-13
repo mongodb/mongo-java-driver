@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class QueryOptions {
     private final EnumSet<QueryFlag> queryFlags = EnumSet.noneOf(QueryFlag.class);
     private int batchSize;
-    private long maxScan;
+    private int maxScan;
     private long maxTimeMS;
     private Document min;
     private Document max;
@@ -52,7 +52,7 @@ public class QueryOptions {
         return batchSize;
     }
 
-    public long getMaxScan() {
+    public int getMaxScan() {
         return maxScan;
     }
 
@@ -105,7 +105,7 @@ public class QueryOptions {
         return this;
     }
 
-    public QueryOptions maxScan(final long maxScan) {
+    public QueryOptions maxScan(final int maxScan) {
         this.maxScan = maxScan;
         return this;
     }

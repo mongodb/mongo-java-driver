@@ -236,6 +236,17 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testMaxScan() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4);
+        int count = 0;
+        while (cursor.hasNext()) {
+            cursor.next();
+            count++;
+        }
+        assertEquals(4, count);
+    }
+
+    @Test
     public void testMaxTimeForIterator() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();

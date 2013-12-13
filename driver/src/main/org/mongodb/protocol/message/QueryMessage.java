@@ -69,6 +69,11 @@ public class QueryMessage extends BaseQueryMessage {
             document.put("$maxTimeMS", find.getMaxTime(MILLISECONDS));
         }
 
+        int maxScan = find.getOptions().getMaxScan();
+        if (maxScan > 0) {
+            document.put("$maxScan", maxScan);
+        }
+
         // TODO: special
         return document;
     }

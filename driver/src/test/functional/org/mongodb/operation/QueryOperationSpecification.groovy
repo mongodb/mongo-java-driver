@@ -92,4 +92,24 @@ class QueryOperationSpecification extends FunctionalSpecification {
         cleanup:
         disableMaxTimeFailPoint()
     }
+    
+    def '$maxScan should limit items returned'() {
+        given:
+        for (i in 1..100) {
+            collection.insert(new Document("x", "y"))
+        }
+        def count = 0;
+        def find = new Find()
+        find.getOptions().maxScan(34)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec(),
+                                                                  bufferProvider, session, true) 
+        when:
+        queryOperation.execute().each {
+            count++ 
+        }
+        
+        then:
+        count == 34
+    }
+    
 }

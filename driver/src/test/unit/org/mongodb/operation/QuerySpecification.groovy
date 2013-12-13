@@ -25,7 +25,7 @@ class QuerySpecification extends Specification {
         new Find().limit(10).batchSize(-7)  | -7
     }
 
-    def 'testOptions'() {
+    def 'testFlags'() {
         expect:
         query.getFlags() == flags
 

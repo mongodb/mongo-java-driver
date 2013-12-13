@@ -202,7 +202,18 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * @mongodb.driver.manual reference/operator Special Operators
      */
     public DBCursor addSpecial(final String name, final Object o) {
-        throw new UnsupportedOperationException("TBD");  // TODO
+        if ("$maxScan".equals(name)) {
+            maxScan(((Number) o).intValue());
+        } else {
+            throw new UnsupportedOperationException("TBD");  // TODO
+        }
+        return this;
+    }
+
+    public DBCursor maxScan(final int max) {
+        find.getOptions()
+            .maxScan(max);
+        return this;
     }
 
     /**
