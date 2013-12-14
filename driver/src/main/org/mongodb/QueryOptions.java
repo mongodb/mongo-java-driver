@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ public class QueryOptions {
     public int hashCode() {
         int result = queryFlags.hashCode();
         result = 31 * result + batchSize;
-        result = 31 * result + (int) (maxScan ^ (maxScan >>> 32));
+        result = 31 * result + maxScan;
         result = 31 * result + (int) (maxTimeMS ^ (maxTimeMS >>> 32));
         result = 31 * result + (min != null ? min.hashCode() : 0);
         result = 31 * result + (max != null ? max.hashCode() : 0);

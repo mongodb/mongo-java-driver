@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def '$maxScan should limit items returned'() {
         given:
         for (i in 1..100) {
-            collection.insert(new Document("x", "y"))
+            collection.insert(new Document('x', 'y'))
         }
         def count = 0;
         def find = new Find()
