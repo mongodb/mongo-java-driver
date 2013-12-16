@@ -18,9 +18,7 @@ package com.mongodb;
 
 import com.mongodb.util.TestCase;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -32,6 +30,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 public class DBCursorTest extends TestCase {
 
     @Test
@@ -40,7 +44,9 @@ public class DBCursorTest extends TestCase {
         final DBCollection c = collection;
 
         // Insert some data.
-        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
+        for (int i = 0; i < 10; i++) {
+            c.insert(new BasicDBObject("one", "two"));
+        }
 
         final DBCursor cur = c.find();
 
@@ -56,7 +62,9 @@ public class DBCursorTest extends TestCase {
         final DBCollection c = collection;
 
         // Insert some data.
-        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", "two"));
+        for (int i = 0; i < 10; i++) {
+            c.insert(new BasicDBObject("one", "two"));
+        }
 
         final DBCursor cur = c.find();
         cur.hasNext();
@@ -68,7 +76,9 @@ public class DBCursorTest extends TestCase {
 
         final DBCollection c = collection;
         // Insert some data.
-        for (int i=0; i < 10; i++) c.insert(new BasicDBObject("one", i));
+        for (int i = 0; i < 10; i++) {
+            c.insert(new BasicDBObject("one", i));
+        }
 
         final DBCursor cur = c.find(new BasicDBObject("one", 9));
         cur.hasNext();
@@ -87,8 +97,7 @@ public class DBCursorTest extends TestCase {
             c.insert(obj);
 
             assertEquals(c.find().count(), 1);
-        }
-        catch (MongoException e) {
+        } catch (MongoException e) {
             assertTrue(false);
         }
     }
@@ -97,14 +106,15 @@ public class DBCursorTest extends TestCase {
     public void testSnapshot() {
         DBCollection c = collection;
 
-        for ( int i=0; i<100; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
-        assertEquals( 100 , c.find().count() );
-        assertEquals( 100 , c.find().toArray().size() );
-        assertEquals( 100 , c.find().snapshot().count() );
-        assertEquals( 100 , c.find().snapshot().toArray().size() );
-        assertEquals( 100 , c.find().snapshot().limit(50).count() );
-        assertEquals( 50 , c.find().snapshot().limit(50).toArray().size() );
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+        assertEquals(100, c.find().count());
+        assertEquals(100, c.find().toArray().size());
+        assertEquals(100, c.find().snapshot().count());
+        assertEquals(100, c.find().snapshot().toArray().size());
+        assertEquals(100, c.find().snapshot().limit(50).count());
+        assertEquals(50, c.find().snapshot().limit(50).toArray().size());
     }
 
     @Test
@@ -113,27 +123,27 @@ public class DBCursorTest extends TestCase {
         DBCursor dbCursor = c.find();
 
         assertEquals(0, dbCursor.getOptions());
-        dbCursor.setOptions( Bytes.QUERYOPTION_TAILABLE );
+        dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
         assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
-        dbCursor.addOption( Bytes.QUERYOPTION_SLAVEOK );
+        dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
         assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
         dbCursor.resetOptions();
         assertEquals(0, dbCursor.getOptions());
     }
 
-//    @Test
-//    public void testTailable() {
-//        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
-//        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
-//
-//        long start = System.currentTimeMillis();
-//        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
-//        cursor.next();
-//        long end = System.currentTimeMillis();
-//        System.err.println(  "[ " + end + " ] Tailable next returned." );
-//        assertLess(start - end, 100);
-//        c.drop();
-//    }
+    //    @Test
+    //    public void testTailable() {
+    //        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
+    //        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
+    //
+    //        long start = System.currentTimeMillis();
+    //        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
+    //        cursor.next();
+    //        long end = System.currentTimeMillis();
+    //        System.err.println(  "[ " + end + " ] Tailable next returned." );
+    //        assertLess(start - end, 100);
+    //        c.drop();
+    //    }
 
 
     @Test//(enabled = false)
@@ -168,7 +178,9 @@ public class DBCursorTest extends TestCase {
             c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
         }
 
-        final DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
+        final DBCursor cur = c.find()
+                              .sort(new BasicDBObject("$natural", 1))
+                              .addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
         Callable<Object> callable = new Callable<Object>() {
             @Override
             public Object call() throws Exception {
@@ -178,8 +190,9 @@ public class DBCursorTest extends TestCase {
                     while (cur.hasNext()) {
                         DBObject obj = cur.next();
                         i++;
-                        if (i > 10)
+                        if (i > 10) {
                             return obj.get("x");
+                        }
                     }
 
                     return null;
@@ -200,54 +213,56 @@ public class DBCursorTest extends TestCase {
         Object retVal = future.get(5, TimeUnit.SECONDS);
         assertEquals(10, retVal);
     }
-    
+
     @Test
-    public void testBig(){
+    public void testBig() {
         DBCollection c = collection;
         String bigString;
         {
-            StringBuilder buf = new StringBuilder( 16000 );
-            for ( int i=0; i<16000; i++ )
-                buf.append( "x" );
+            StringBuilder buf = new StringBuilder(16000);
+            for (int i = 0; i < 16000; i++) {
+                buf.append("x");
+            }
             bigString = buf.toString();
         }
 
-        int numToInsert = ( 15 * 1024 * 1024 ) / bigString.length();
+        int numToInsert = (15 * 1024 * 1024) / bigString.length();
 
-        for ( int i=0; i<numToInsert; i++ )
-            c.save( BasicDBObjectBuilder.start().add( "x" , i ).add( "s" , bigString ).get() );
+        for (int i = 0; i < numToInsert; i++) {
+            c.save(BasicDBObjectBuilder.start().add("x", i).add("s", bigString).get());
+        }
 
-        assert( 800 < numToInsert );
+        assert (800 < numToInsert);
 
-        assertEquals( numToInsert , c.find().count() );
-        assertEquals( numToInsert , c.find().toArray().size() );
-        assertEquals( numToInsert , c.find().limit(800).count() );
-        assertEquals( 800 , c.find().limit(800).toArray().size() );
+        assertEquals(numToInsert, c.find().count());
+        assertEquals(numToInsert, c.find().toArray().size());
+        assertEquals(numToInsert, c.find().limit(800).count());
+        assertEquals(800, c.find().limit(800).toArray().size());
 
         // negative limit works like negative batchsize, for legacy reason
         int x = c.find().limit(-800).toArray().size();
-        assertTrue( x < 800 );
+        assertTrue(x < 800);
 
         DBCursor a = c.find();
-        assertEquals( numToInsert , a.itcount() );
+        assertEquals(numToInsert, a.itcount());
 
-        DBCursor b = c.find().batchSize( 10 );
-        assertEquals( numToInsert , b.itcount() );
-        assertEquals( 10 , b.getSizes().get(0).intValue() );
+        DBCursor b = c.find().batchSize(10);
+        assertEquals(numToInsert, b.itcount());
+        assertEquals(10, b.getSizes().get(0).intValue());
 
-        assertTrue( a.numGetMores() < b.numGetMores() );
+        assertTrue(a.numGetMores() < b.numGetMores());
 
-        assertEquals( numToInsert , c.find().batchSize(2).itcount() );
-        assertEquals( numToInsert , c.find().batchSize(1).itcount() );
+        assertEquals(numToInsert, c.find().batchSize(2).itcount());
+        assertEquals(numToInsert, c.find().batchSize(1).itcount());
 
-        assertEquals( numToInsert , _count( c.find( null , null).skip(  0 ).batchSize( 5 ) ) );
-        assertEquals( 5 , _count( c.find( null , null).skip(  0 ).batchSize( -5 ) ) );
+        assertEquals(numToInsert, _count(c.find(null, null).skip(0).batchSize(5)));
+        assertEquals(5, _count(c.find(null, null).skip(0).batchSize(-5)));
     }
 
     @SuppressWarnings("unchecked")
-	int _count( Iterator i ){
+    int _count(Iterator i) {
         int c = 0;
-        while ( i.hasNext() ){
+        while (i.hasNext()) {
             i.next();
             c++;
         }
@@ -255,191 +270,200 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
-    public void testExplain(){
+    public void testExplain() {
         DBCollection c = collection;
-        for ( int i=0; i<100; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
 
-        DBObject q = BasicDBObjectBuilder.start().push( "x" ).add( "$gt" , 50 ).get();
+        DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();
 
-        assertEquals( 49 , c.find( q ).count() );
-        assertEquals( 49 , c.find( q ).itcount() );
-        assertEquals( 49 , c.find( q ).toArray().size() );
-        assertEquals( 49 , c.find( q ).itcount() );
-        assertEquals( 20 , c.find( q ).limit(20).itcount() );
-        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
+        assertEquals(49, c.find(q).count());
+        assertEquals(49, c.find(q).itcount());
+        assertEquals(49, c.find(q).toArray().size());
+        assertEquals(49, c.find(q).itcount());
+        assertEquals(20, c.find(q).limit(20).itcount());
+        assertEquals(20, c.find(q).limit(-20).itcount());
 
-        c.ensureIndex( new BasicDBObject( "x" , 1 ) );
+        c.ensureIndex(new BasicDBObject("x", 1));
 
-        assertEquals( 49 , c.find( q ).count() );
-        assertEquals( 49 , c.find( q ).toArray().size() );
-        assertEquals( 49 , c.find( q ).itcount() );
-        assertEquals( 20 , c.find( q ).limit(20).itcount() );
-        assertEquals( 20 , c.find( q ).limit(-20).itcount() );
+        assertEquals(49, c.find(q).count());
+        assertEquals(49, c.find(q).toArray().size());
+        assertEquals(49, c.find(q).itcount());
+        assertEquals(20, c.find(q).limit(20).itcount());
+        assertEquals(20, c.find(q).limit(-20).itcount());
 
-        assertEquals( 49 , c.find( q ).explain().get("n") );
+        assertEquals(49, c.find(q).explain().get("n"));
 
-        assertEquals( 20 , c.find( q ).limit(20).explain().get("n") );
-        assertEquals( 20 , c.find( q ).limit(-20).explain().get("n") );
+        assertEquals(20, c.find(q).limit(20).explain().get("n"));
+        assertEquals(20, c.find(q).limit(-20).explain().get("n"));
 
     }
 
     @Test
-    public void testBatchWithActiveCursor(){
+    public void testBatchWithActiveCursor() {
         DBCollection c = collection;
 
-        for ( int i=0; i<100; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
 
         try {
-	        DBCursor cursor = c.find().batchSize(2); // setting to 1, actually sets to 2 (why, oh why?)
-	        cursor.next(); //creates real cursor on server.
-	        cursor.next();
-	        assertEquals(0, cursor.numGetMores());
-	        cursor.next();
-	        assertEquals(1, cursor.numGetMores());
-	        cursor.next();
-	        cursor.next();
-	        assertEquals(2, cursor.numGetMores());
-	        cursor.next();
-	        cursor.next();
-	        assertEquals(3, cursor.numGetMores());
-	        cursor.batchSize(20);
-	        cursor.next();
-	        cursor.next();
-	        cursor.next();
-	        assertEquals(4, cursor.numGetMores());
+            DBCursor cursor = c.find().batchSize(2); // setting to 1, actually sets to 2 (why, oh why?)
+            cursor.next(); //creates real cursor on server.
+            cursor.next();
+            assertEquals(0, cursor.numGetMores());
+            cursor.next();
+            assertEquals(1, cursor.numGetMores());
+            cursor.next();
+            cursor.next();
+            assertEquals(2, cursor.numGetMores());
+            cursor.next();
+            cursor.next();
+            assertEquals(3, cursor.numGetMores());
+            cursor.batchSize(20);
+            cursor.next();
+            cursor.next();
+            cursor.next();
+            assertEquals(4, cursor.numGetMores());
         } catch (IllegalStateException e) {
-        	assertNotNull(e); // there must be a better way to detect this.
+            assertNotNull(e); // there must be a better way to detect this.
         }
     }
 
     @Test
-    public void testBatchWithLimit(){
+    public void testBatchWithLimit() {
         DBCollection c = collection;
 
-        for ( int i=0; i<100; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
 
-        assertEquals( 50 , c.find().limit(50).itcount() );
-        assertEquals( 50 , c.find().batchSize( 5 ).limit(50).itcount() );
+        assertEquals(50, c.find().limit(50).itcount());
+        assertEquals(50, c.find().batchSize(5).limit(50).itcount());
     }
 
     @Test
-    public void testLargeBatch(){
+    public void testLargeBatch() {
         DBCollection c = collection;
 
         int total = 50000;
         int batch = 10000;
-        for ( int i=0; i<total; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
+        for (int i = 0; i < total; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
 
         DBCursor cursor = c.find().batchSize(batch);
-        assertEquals( total , cursor.itcount() );
-        assertEquals( total/batch + 1, cursor.getSizes().size());
-    }
-    @Test
-    public void testSpecial(){
-        DBCollection c = collection;
-        c.insert( new BasicDBObject( "x" , 1 ) );
-        c.insert( new BasicDBObject( "x" , 2 ) );
-        c.insert( new BasicDBObject( "x" , 3 ) );
-        c.ensureIndex( "x" );
-
-        for ( DBObject o : c.find().sort( new BasicDBObject( "x" , 1 ) ).addSpecial( "$returnKey" , 1 ) )
-            assertTrue( o.get("_id") == null );
-
-        for ( DBObject o : c.find().sort( new BasicDBObject( "x" , 1 ) ) )
-            assertTrue( o.get("_id") != null );
-
+        assertEquals(total, cursor.itcount());
+        assertEquals(total / batch + 1, cursor.getSizes().size());
     }
 
     @Test
-    public void testUpsert(){
+    public void testSpecial() {
+        DBCollection c = collection;
+        c.insert(new BasicDBObject("x", 1));
+        c.insert(new BasicDBObject("x", 2));
+        c.insert(new BasicDBObject("x", 3));
+        c.ensureIndex("x");
+
+        for (DBObject o : c.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
+            assertTrue(o.get("_id") == null);
+        }
+
+        for (DBObject o : c.find().sort(new BasicDBObject("x", 1))) {
+            assertTrue(o.get("_id") != null);
+        }
+
+    }
+
+    @Test
+    public void testUpsert() {
         DBCollection c = collection;
 
-        c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject( "$inc" , new BasicDBObject( "count" , 1 ) ), true, false );
-        c.update( new BasicDBObject( "page" , "/" ), new BasicDBObject( "$inc" , new BasicDBObject( "count" , 1 ) ), true, false );
+        c.update(new BasicDBObject("page", "/"), new BasicDBObject("$inc", new BasicDBObject("count", 1)), true, false);
+        c.update(new BasicDBObject("page", "/"), new BasicDBObject("$inc", new BasicDBObject("count", 1)), true, false);
 
-        assertEquals( 1, c.getCount() );
-        assertEquals( 2, c.findOne().get( "count" ) );
+        assertEquals(1, c.getCount());
+        assertEquals(2, c.findOne().get("count"));
     }
 
     @Test
     public void testLimitAndBatchSize() {
         DBCollection c = collection;
 
-        for ( int i=0; i<1000; i++ )
-            c.save( new BasicDBObject( "x" , i ) );
+        for (int i = 0; i < 1000; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
 
-        DBObject q = BasicDBObjectBuilder.start().push( "x" ).add( "$lt" , 200 ).get();
+        DBObject q = BasicDBObjectBuilder.start().push("x").add("$lt", 200).get();
 
-        DBCursor cur = c.find( q );
+        DBCursor cur = c.find(q);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 200 , cur.itcount() );
+        assertEquals(200, cur.itcount());
 
-        cur = c.find( q ).limit(50);
+        cur = c.find(q).limit(50);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 50 , cur.itcount() );
+        assertEquals(50, cur.itcount());
 
-        cur = c.find( q ).batchSize(50);
+        cur = c.find(q).batchSize(50);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 200 , cur.itcount() );
+        assertEquals(200, cur.itcount());
 
-        cur = c.find( q ).batchSize(100).limit(50);
+        cur = c.find(q).batchSize(100).limit(50);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 50 , cur.itcount() );
+        assertEquals(50, cur.itcount());
 
-        cur = c.find( q ).batchSize(-40);
+        cur = c.find(q).batchSize(-40);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 40 , cur.itcount() );
+        assertEquals(40, cur.itcount());
 
-        cur = c.find( q ).limit(-100);
+        cur = c.find(q).limit(-100);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 100 , cur.itcount() );
+        assertEquals(100, cur.itcount());
 
-        cur = c.find( q ).batchSize(-40).limit(20);
+        cur = c.find(q).batchSize(-40).limit(20);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 20 , cur.itcount() );
+        assertEquals(20, cur.itcount());
 
-        cur = c.find( q ).batchSize(-20).limit(100);
+        cur = c.find(q).batchSize(-20).limit(100);
         assertEquals(0, cur.getCursorId());
-        assertEquals( 20 , cur.itcount() );
+        assertEquals(20, cur.itcount());
     }
 
     @Test
-    public void testSort(){
+    public void testSort() {
         DBCollection c = collection;
 
-        for ( int i=0; i<1000; i++ )
-            c.save( new BasicDBObject( "x" , i ).append("y", 1000-i));
+        for (int i = 0; i < 1000; i++) {
+            c.save(new BasicDBObject("x", i).append("y", 1000 - i));
+        }
 
         //x ascending
-        DBCursor cur = c.find().sort( new BasicDBObject("x", 1));
+        DBCursor cur = c.find().sort(new BasicDBObject("x", 1));
         int curmax = -100;
-        while(cur.hasNext()){
-        	int val = (Integer)cur.next().get("x");
-        	assertTrue( val > curmax);
-        	curmax = val;
+        while (cur.hasNext()) {
+            int val = (Integer) cur.next().get("x");
+            assertTrue(val > curmax);
+            curmax = val;
         }
-        
+
         //x desc
-        cur = c.find().sort( new BasicDBObject("x", -1));
+        cur = c.find().sort(new BasicDBObject("x", -1));
         curmax = 9999;
-        while(cur.hasNext()){
-        	int val = (Integer)cur.next().get("x");
-        	assertTrue( val < curmax);
-        	curmax = val;
+        while (cur.hasNext()) {
+            int val = (Integer) cur.next().get("x");
+            assertTrue(val < curmax);
+            curmax = val;
         }
-        
+
         //query and sort
-        cur = c.find( QueryBuilder.start("x").greaterThanEquals(500).get()).sort(new BasicDBObject("y", 1));
+        cur = c.find(QueryBuilder.start("x").greaterThanEquals(500).get()).sort(new BasicDBObject("y", 1));
         assertEquals(500, cur.count());
         curmax = -100;
-        while(cur.hasNext()){
-        	int val = (Integer)cur.next().get("y");
-        	assertTrue( val > curmax);
-        	curmax = val;
+        while (cur.hasNext()) {
+            int val = (Integer) cur.next().get("y");
+            assertTrue(val > curmax);
+            curmax = val;
         }
     }
 
@@ -456,8 +480,9 @@ public class DBCursorTest extends TestCase {
     public void testHasFinalizer() throws UnknownHostException {
         DBCollection c = collection;
 
-        for ( int i=0; i<1000; i++ )
-            c.save( new BasicDBObject("_id", i), WriteConcern.SAFE);
+        for (int i = 0; i < 1000; i++) {
+            c.save(new BasicDBObject("_id", i), WriteConcern.SAFE);
+        }
 
         // finalizer is on by default so after calling hasNext should report that it has one
         DBCursor cursor = c.find();
