@@ -21,6 +21,7 @@ package com.mongodb;
 import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -87,6 +88,81 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     public BasicDBObject append( String key , Object val ){
         put( key , val );
         return this;
+    }
+
+    /**
+     * Wrapper for {@link #append(String, Object)} to check for blank strings
+     * 
+     * @param key key under which to store
+     * @param val value to store
+     * @return {@link BasicDBObject}
+     */
+    public BasicDBObject appendIfNotBlank(String key, String val) {
+    	if (val.isEmpty()) {
+    		throw new IllegalArgumentException("Value is blank");
+    	} else {
+    		return append(key,val);
+    	}
+    }
+
+    /**
+     * Wrapper for {@link #append(String, Object)} to check for empty collection
+     * 
+     * @param key key under which to store
+     * @param val value to store
+     * @return {@link BasicDBObject}
+     */
+    public BasicDBObject appendIfNotEmpty(String key, Collection<?> val) {
+    	if (val == null || val.isEmpty()) {
+    		throw new IllegalArgumentException("Value Collection is empty");
+    	} else {
+    		return append(key, val);
+    	}
+    }
+
+    /**
+     * Wrapper for {@link #append(String, Object)} to check for empty array
+     * 
+     * @param key key under which to store
+     * @param val value to store
+     * @return {@link BasicDBObject}
+     */
+    public BasicDBObject appendIfNotEmpty(String key, Object[] val) {
+    	if (val == null || val.length == 0) {
+    		throw new IllegalArgumentException("Value Object array is empty");
+    	} else {
+    		return append(key, val);
+    	}
+    }
+
+    /**
+     * Wrapper for {@link #append(String, Object)} to check for empty string
+     * 
+     * @param key key under which to store
+     * @param val value to store
+     * @return {@link BasicDBObject}
+     */
+    public BasicDBObject appendIfNotEmpty(String key, String val) {
+    	if (val == null || val.isEmpty()) {
+    		throw new IllegalArgumentException("Value is empty");
+    	} else {
+    		return append(key, val);
+    	}
+    }
+
+    /**
+     * Wrapper for {@link #append(String, Object)} to check for null value
+     * 
+     * @param key key under which to store
+     * @param val value to store
+     * @return {@link BasicDBObject}
+     */
+    public BasicDBObject appendIfNotNull(String key, Object val) {
+    	if (val == null) {
+    		throw new IllegalArgumentException("Valye is null");
+    	} else {
+    		return append(key, val);
+    	}
     }
 
     public Object copy() {
