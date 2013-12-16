@@ -131,22 +131,7 @@ public class DBCursorTest extends TestCase {
         assertEquals(0, dbCursor.getOptions());
     }
 
-    //    @Test
-    //    public void testTailable() {
-    //        DBCollection c = _db.createCollection( "tailableTest", new BasicDBObject( "capped", true ).append( "size", 10000));
-    //        DBCursor cursor = c.find( ).addOption( Bytes.QUERYOPTION_TAILABLE );
-    //
-    //        long start = System.currentTimeMillis();
-    //        System.err.println( "[ " + start + " ] Has Next?" +  cursor.hasNext());
-    //        cursor.next();
-    //        long end = System.currentTimeMillis();
-    //        System.err.println(  "[ " + end + " ] Tailable next returned." );
-    //        assertLess(start - end, 100);
-    //        c.drop();
-    //    }
-
-
-    @Test//(enabled = false)
+    @Test
     public void testTailable() {
         DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
@@ -169,7 +154,7 @@ public class DBCursorTest extends TestCase {
         assert (!cur.hasNext());
     }
 
-    @Test//(enabled = false)
+    @Test
     public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
         DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
