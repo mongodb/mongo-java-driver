@@ -46,11 +46,15 @@ dependencies {
     testCompile ('org.spockframework:spock-core:0.7-groovy-2.0') {
         exclude group: 'junit', module: 'junit-dep'
     }
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
 }
 
 sourceSets {
     main {
-        java { srcDirs = ['src/main'] }
+        java { srcDirs = ['src/main', 'src/util'] }
+    }
+    util {
+        java { srcDirs = ['src/util'] }
     }
     test {
         groovy { srcDirs = ['src/test'] }
@@ -83,6 +87,14 @@ test {
     beforeTest { descr ->
         logger.info("[Test ${descr.className} > ${descr.name}]")
     }
+}
+
+javadoc {
+    options.author = true
+    options.version = true
+    options.links 'http://docs.oracle.com/javase/7/docs/api/'
+    options.tagletPath project.sourceSets.main.output.classesDir
+    options.taglets 'ManualTaglet'
 }
 
 task testAll(dependsOn: tasks.withType(Test))
