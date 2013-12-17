@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -582,4 +583,133 @@ public class DBCursorTest extends TestCase {
             disableMaxTimeFailPoint();
         }
     }
+
+    private void insertData() {
+        for (int i = 0; i < 10; i++) {
+            collection.insert(new BasicDBObject("_id", i).append("x", i));
+        }
+        collection.ensureIndex("x");
+    }
+
+    @Test
+    public void testMaxScan() {
+        insertData();
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                         .addSpecial("$maxScan", 4), 4);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
+    }
+
+    @Test
+    public void testMax() {
+        insertData();
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                         .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                         .max(new BasicDBObject("x", 4)), 4);
+    }
+
+    @Test
+    public void testMin() {
+        insertData();
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                         .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                         .min(new BasicDBObject("x", 4)), 6);
+    }
+
+    @Test
+    public void testReturnKey() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .addSpecial("$returnKey", true);
+        try {
+            while (cursor.hasNext()) {
+                Assert.assertNull(cursor.next()
+                                        .get("_id"));
+            }
+        } finally {
+            cursor.close();
+        }
+        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                     .returnKey();
+        try {
+            while (cursor.hasNext()) {
+                Assert.assertNull(cursor.next()
+                                        .get("_id"));
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test
+    public void testShowDiskLoc() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .addSpecial("$showDiskLoc", true);
+        try {
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+                Assert.assertNotNull(next.toString(), next.get("$diskLoc"));
+            }
+        } finally {
+            cursor.close();
+        }
+        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                     .showDiskLoc();
+        try {
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+                Assert.assertNotNull(next.toString(), next.get("$diskLoc"));
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test(expected = MongoException.class)
+    public void testSnapshotWithHint() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .hint("x")
+                              .addSpecial("$snapshot", true);
+        try {
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test(expected = MongoException.class)
+    public void testSnapshotWithSort() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .sort(new BasicDBObject("x", 1))
+                              .addSpecial("$snapshot", true);
+        try {
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    private void countResults(final DBCursor cursor, final int expected) {
+        int count = 0;
+        while (cursor.hasNext()) {
+            cursor.next();
+            count++;
+        }
+        cursor.close();
+        assertEquals(expected, count);
+    }
+
+    @Test
+    public void testComment() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .addSpecial("$comment", "test comment");
+        while (cursor.hasNext()) {
+            cursor.next();
+        }
+    }
+
 }
