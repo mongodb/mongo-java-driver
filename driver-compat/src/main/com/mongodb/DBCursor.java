@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+
 import org.mongodb.Decoder;
+import org.mongodb.Document;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
@@ -197,22 +199,104 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      * adds a special operator like $maxScan or $returnKey e.g. addSpecial( "$returnKey" , 1 ) e.g. addSpecial( "$maxScan" , 100 )
      *
      * @param name the name of the special query operator
-     * @param o    the value of the special query operator
+     * @param o the value of the special query operator
      * @return this
      * @mongodb.driver.manual reference/operator Special Operators
      */
     public DBCursor addSpecial(final String name, final Object o) {
-        if ("$maxScan".equals(name)) {
+        if (name == null || o == null) {
+            return this;
+        }
+
+        if ("$comment".equals(name)) {
+            comment(o.toString());
+        } else if ("$maxScan".equals(name)) {
             maxScan(((Number) o).intValue());
+        } else if ("$max".equals(name)) {
+            max(((DBObject) o));
+        } else if ("$min".equals(name)) {
+            min(((DBObject) o));
+        } else if ("$returnKey".equals(name)) {
+            returnKey();
+        } else if ("$showDiskLoc".equals(name)) {
+            showDiskLoc();
+        } else if ("$snapshot".equals(name)) {
+            snapshot();
         } else {
-            throw new UnsupportedOperationException("TBD");  // TODO
+            throw new IllegalArgumentException(name + "is not a supported modifier");
         }
         return this;
     }
 
+    /**
+     * Adds a comment to the query to identify queries in the database profiler output.
+     * 
+     * @mongodb.driver.manual reference/operator/meta/comment/ $comment
+     * @since 2.12
+     */
+    public DBCursor comment(final String comment) {
+        find.getOptions()
+            .comment(comment);
+        return this;
+    }
+
+    /**
+     * Limits the number of documents a cursor will return for a query.
+     * 
+     * @mongodb.driver.manual reference/operator/meta/maxScan/ $maxScan
+     * @see #limit(int) 
+     * @since 2.12
+     */
     public DBCursor maxScan(final int max) {
         find.getOptions()
             .maxScan(max);
+        return this;
+    }
+
+    /**
+     * Specifies a minimum exclusive upper limit for the index to use in a query.
+     *
+     * @mongodb.driver.manual reference/operator/meta/max/ $max
+     * @since 2.12
+     */
+    public DBCursor max(final DBObject max) {
+        find.getOptions()
+            .max(new Document(max.toMap()));
+        return this;
+    }
+    
+    /**
+     * Specifies a minimum inclusive lower limit for the index to use in a query. 
+     *
+     * @mongodb.driver.manual reference/operator/meta/min/ $min
+     * @since 2.12
+     */
+    public DBCursor min(final DBObject min) {
+        find.getOptions()
+            .min(new Document(min.toMap()));
+        return this;
+    }
+    
+    /**
+     * Forces the cursor to only return fields included in the index.
+     * @mongodb.driver.manual reference/operator/meta/returnKey/ $returnKey
+     * @since 2.12
+     */
+    public DBCursor returnKey() {
+        find.getOptions()
+            .returnKey();
+        return this;
+    }
+
+    /**
+     * Modifies the documents returned to include references to the on-disk location of each document.  The location will be returned
+     * in a property named {@code $diskLoc}
+     * @mongodb.driver.manual reference/operator/meta/showDiskLoc/ $showDiskLoc
+     * @since 2.12
+     */
+    public DBCursor showDiskLoc() {
+        find.getOptions()
+            .showDiskLoc();
         return this;
     }
 
@@ -457,7 +541,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public int count() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreference(),
-                                         find.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                         find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
         // TODO: dangerous cast.  Throw exception instead?
     }
 
@@ -466,7 +550,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public DBObject one() {
         return collection.findOne(getQuery(), getKeysWanted(), DBObjects.toNullableDBObject(find.getOrder()), getReadPreference(),
-                                  find.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                  find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -509,7 +593,7 @@ public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeab
      */
     public int size() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), find.getLimit(), find.getSkip(), getReadPreference(),
-                                         find.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                         find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
         // TODO: dangerous cast.  Throw exception instead?
     }
 

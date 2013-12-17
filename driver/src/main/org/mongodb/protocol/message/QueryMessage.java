@@ -65,8 +65,33 @@ public class QueryMessage extends BaseQueryMessage {
             document.put("$hint", find.getHint().getValue());
         }
 
-        if (find.getMaxTime(MILLISECONDS) != 0) {
-            document.put("$maxTimeMS", find.getMaxTime(MILLISECONDS));
+        if (find.getOptions().getComment() != null) {
+            document.put("$comment", find.getOptions().getComment());
+        }
+
+        if (find.getOptions().getMax() != null) {
+            document.put("$max", find.getOptions().getMax());
+        }
+
+        if (find.getOptions().getMin() != null) {
+            document.put("$min", find.getOptions().getMin());
+        }
+
+        if (find.getOptions().isReturnKey()) {
+            document.put("$returnKey", true);
+        }
+
+        if (find.getOptions().isShowDiskLoc()) {
+            document.put("$showDiskLoc", true);
+        }
+
+        if (find.getOptions().isSnapshot()) {
+            document.put("$snapshot", true);
+        }
+
+        long maxTime = find.getOptions().getMaxTime(MILLISECONDS);
+        if (maxTime != 0) {
+            document.put("$maxTimeMS", maxTime);
         }
 
         int maxScan = find.getOptions().getMaxScan();
@@ -77,4 +102,5 @@ public class QueryMessage extends BaseQueryMessage {
         // TODO: special
         return document;
     }
+
 }

@@ -98,8 +98,8 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
         if (find.getSkip() > 0) {
             document.put("skip", find.getSkip());
         }
-        if (find.getMaxTime(MILLISECONDS) > 0) {
-            document.put("maxTimeMS", find.getMaxTime(MILLISECONDS));
+        if (find.getOptions().getMaxTime(MILLISECONDS) > 0) {
+            document.put("maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
         }
 
         return document;

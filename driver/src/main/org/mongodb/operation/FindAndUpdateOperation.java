@@ -75,7 +75,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "sort", findAndUpdate.getSortCriteria());
         putIfTrue(command, "new", findAndUpdate.isReturnNew());
         putIfTrue(command, "upsert", findAndUpdate.isUpsert());
-        putIfNotZero(command, "maxTimeMS", findAndUpdate.getMaxTime(MILLISECONDS));
+        putIfNotZero(command, "maxTimeMS", findAndUpdate.getOptions().getMaxTime(MILLISECONDS));
 
         command.put("update", findAndUpdate.getUpdateOperations());
         return command;

@@ -24,6 +24,7 @@ import org.mongodb.AsyncBlock
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
+import org.mongodb.Index
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.codecs.DocumentCodec
 
@@ -93,6 +94,48 @@ class QueryOperationSpecification extends FunctionalSpecification {
         disableMaxTimeFailPoint()
     }
     
+    
+    def '$max should limit items returned'() {
+        given:
+        for (i in 1..100) {
+            collection.insert(new Document('x', 'y').append('count', i))
+        }
+        collection.tools().ensureIndex(Index.builder().addKey('count').build())
+        def count = 0;
+        def find = new Find()
+        find.getOptions().max(new Document('count', 10))
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec(),
+                                                                  bufferProvider, session, true) 
+        when:
+        queryOperation.execute().each {
+            count++ 
+        }
+        
+        then:
+        count == 10
+    }
+    
+    def '$min should limit items returned'() {
+        given:
+        collection.find().remove();
+        for (i in 1..100) {
+            collection.insert(new Document('x', 'y').append('count', i))
+        }
+        collection.tools().ensureIndex(Index.builder().addKey('count').build())
+        def count = 0;
+        def find = new Find()
+        find.getOptions().min(new Document('count', 10))
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec(),
+                                                                  bufferProvider, session, true) 
+        when:
+        queryOperation.execute().each {
+            count++ 
+        }
+        
+        then:
+        count == 91
+    }
+    
     def '$maxScan should limit items returned'() {
         given:
         for (i in 1..100) {
@@ -110,6 +153,43 @@ class QueryOperationSpecification extends FunctionalSpecification {
         
         then:
         count == 34
+    }
+
+    def '$returnKey should limit properties returned'() {
+        given:
+        for (i in 1..100) {
+            collection.insert(new Document('x', 'y'))
+        }
+        def idFound = false;
+        def find = new Find()
+        find.getOptions().returnKey()
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec(),
+                                                                  bufferProvider, session, true) 
+        when:
+        queryOperation.execute().each {
+            idFound |= it['_id'] != null
+        }
+        
+        then:
+        !idFound
+    }
+     def '$showDiskLoc should return disk locations'() {
+        given:
+        for (i in 1..100) {
+            collection.insert(new Document('x', 'y'))
+        }
+        def found = true;
+        def find = new Find()
+        find.getOptions().showDiskLoc()
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec(),
+                                                                  bufferProvider, session, true) 
+        when:
+        queryOperation.execute().each {
+            found &= it['$diskLoc'] != null
+        }
+        
+        then:
+        found
     }
     
 }

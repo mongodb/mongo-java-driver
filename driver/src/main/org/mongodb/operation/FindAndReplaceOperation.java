@@ -65,7 +65,7 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "sort", findAndReplace.getSortCriteria());
         putIfTrue(command, "new", findAndReplace.isReturnNew());
         putIfTrue(command, "upsert", findAndReplace.isUpsert());
-        putIfNotZero(command, "maxTimeMS", findAndReplace.getMaxTime(MILLISECONDS));
+        putIfNotZero(command, "maxTimeMS", findAndReplace.getOptions().getMaxTime(MILLISECONDS));
 
         command.put("update", findAndReplace.getReplacement());
         return command;

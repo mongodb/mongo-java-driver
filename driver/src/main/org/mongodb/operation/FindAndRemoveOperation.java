@@ -61,7 +61,7 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
         putIfNotNull(command, "query", findAndRemove.getFilter());
         putIfNotNull(command, "fields", findAndRemove.getSelector());
         putIfNotNull(command, "sort", findAndRemove.getSortCriteria());
-        putIfNotZero(command, "maxTimeMS", findAndRemove.getMaxTime(MILLISECONDS));
+        putIfNotZero(command, "maxTimeMS", findAndRemove.getOptions().getMaxTime(MILLISECONDS));
 
         command.put("remove", true);
         return command;
