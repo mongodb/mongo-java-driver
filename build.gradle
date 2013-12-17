@@ -51,10 +51,7 @@ dependencies {
 
 sourceSets {
     main {
-        java { srcDirs = ['src/main', 'src/util'] }
-    }
-    util {
-        java { srcDirs = ['src/util'] }
+        java { srcDirs = ['src/main'] }
     }
     test {
         groovy { srcDirs = ['src/test'] }
@@ -89,6 +86,7 @@ test {
     }
 }
 
+/*
 javadoc {
     options.author = true
     options.version = true
@@ -96,6 +94,7 @@ javadoc {
     options.tagletPath project.sourceSets.main.output.classesDir
     options.taglets 'ManualTaglet'
 }
+*/
 
 task testAll(dependsOn: tasks.withType(Test))
 
