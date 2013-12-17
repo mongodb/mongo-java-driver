@@ -17,13 +17,28 @@
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
+apply plugin: 'clirr'
 
 sourceCompatibility = '1.5'
 targetCompatibility = '1.5'
 
+def configDir = new File(rootDir, 'config')
+
+buildscript {
+    repositories {
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'me.trnl:clirr-gradle-plugin:0.4'
+    }
+}
+
 repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     mavenCentral()
 }
+
 
 dependencies {
     testCompile 'junit:junit:4.11'
@@ -42,6 +57,12 @@ sourceSets {
         java { srcDirs = ['src/test'] }
     }
 }
+
+clirr {
+    excludeFilter = new File("$configDir/clirr-exclude.yml")
+    baseline 'org.mongodb:mongo-java-driver:2.11.3'
+}
+
 
 /* Compiling */
 tasks.withType(AbstractCompile) {
