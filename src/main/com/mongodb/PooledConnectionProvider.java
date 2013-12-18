@@ -142,7 +142,8 @@ class PooledConnectionProvider  {
             return null;
         } else {
             ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
-            newTimer.scheduleAtFixedRate(maintenanceTask, 0, settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
+            newTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
+                                         settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
             return newTimer;
         }
     }
