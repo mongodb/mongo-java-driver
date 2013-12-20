@@ -82,6 +82,7 @@ class WriteConcernSpecification extends Specification {
     }
 
     @Unroll
+    @SuppressWarnings('DuplicateMapLiteral')
     def '#wc should return getlasterror document #commandDocument'() {
         expect:
         wc.asDocument() == commandDocument;
