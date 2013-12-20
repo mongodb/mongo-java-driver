@@ -86,13 +86,32 @@ public class ServerAddress implements Serializable {
         }
 
         int portToUse = port;
-        int idx = hostToUse.indexOf(":");
-        if (idx > 0) {
-            if (port != getDefaultPort()) {
-                throw new IllegalArgumentException("can't specify port in construct and via host");
+
+        if (hostToUse.startsWith("[")) {
+            int idx = host.indexOf("]");
+            if (idx == -1) {
+                throw new IllegalArgumentException("an IPV6 address must be encosed with '[' and ']'"
+                                                    + " according to RFC 2732.");
             }
-            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
-            hostToUse = hostToUse.substring(0, idx).trim();
+
+            int portIdx = host.indexOf("]:");
+            if (portIdx != -1) {
+                if (port != getDefaultPort()) {
+                    throw new IllegalArgumentException("can't specify port in construct and via host");
+                }
+                portToUse = Integer.parseInt(host.substring(portIdx + 2));
+            }
+            hostToUse = host.substring(1, idx);
+        }
+        else {
+            int idx = hostToUse.indexOf(":");
+            if (idx > 0) {
+                if (port != getDefaultPort()) {
+                    throw new IllegalArgumentException("can't specify port in construct and via host");
+                }
+                portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+                hostToUse = hostToUse.substring(0, idx).trim();
+            }
         }
 
         this.host = hostToUse;
