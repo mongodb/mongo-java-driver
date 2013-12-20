@@ -21,25 +21,13 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 
-import static com.mongodb.ServerConnectionState.Connected;
-import static com.mongodb.ServerConnectionState.Connecting;
-import static com.mongodb.ServerDescription.MAX_DRIVER_WIRE_VERSION;
-import static com.mongodb.ServerDescription.MIN_DRIVER_WIRE_VERSION;
-import static com.mongodb.ServerType.ReplicaSetPrimary;
-import static com.mongodb.ServerType.Unknown;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class ServerAddressTest {
 
     @Test
-         public void testDefault() throws UnknownHostException {
+    public void testDefault() throws UnknownHostException {
         ServerAddress subject = new ServerAddress();
 
         assertEquals(ServerAddress.defaultHost(), subject.getHost());
@@ -63,7 +51,7 @@ public class ServerAddressTest {
     }
 
     @Test
-         public void testIPV4WithPort() throws UnknownHostException {
+    public void testIPV4WithPort() throws UnknownHostException {
         ServerAddress subject = new ServerAddress("10.0.0.1", 1000);
 
         assertEquals("10.0.0.1", subject.getHost());
@@ -76,6 +64,45 @@ public class ServerAddressTest {
 
         assertEquals("somewhere", subject.getHost());
         assertEquals(27017, subject.getPort());
+    }
+
+    @Test
+    public void testParseIPV6WithoutPort() throws UnknownHostException {
+        ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]");
+
+        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals(ServerAddress.defaultPort(), subject.getPort());
+    }
+
+    @Test
+    public void testParseIPV6WithPort() throws UnknownHostException {
+        ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]:1000");
+
+        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals(1000, subject.getPort());
+    }
+
+    @Test
+    public void testIPV6WithPort() throws UnknownHostException {
+        ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]", 1000);
+
+        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals(1000, subject.getPort());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseIPV6AddressMissingClosingBracket() throws UnknownHostException {
+        new ServerAddress("[2010:836B:4179::836B:4179");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseIPV6WithPortWhenEquivalentPortIsAlsoSpecified() throws UnknownHostException {
+        new ServerAddress("[2010:836B:4179::836B:4179]:80", 80);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseIPV6WithPortWhenNonEquivalentPortIsAlsoSpecified() throws UnknownHostException {
+        new ServerAddress("[2010:836B:4179::836B:4179]:80", 1000);
     }
 
     @Test

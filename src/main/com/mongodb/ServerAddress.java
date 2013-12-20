@@ -63,12 +63,28 @@ public class ServerAddress {
         if ( host.length() == 0 )
             host = defaultHost();
 
-        int idx = host.indexOf( ":" );
-        if ( idx > 0 ){
-            if ( port != defaultPort() )
-                throw new IllegalArgumentException( "can't specify port in construct and via host" );
-            port = Integer.parseInt( host.substring( idx + 1 ) );
-            host = host.substring( 0 , idx ).trim();
+        if ( host.startsWith( "[" ) ) {
+            int idx = host.indexOf( "]" );
+            if( idx == -1 )
+                throw new IllegalArgumentException( "an IPV6 address must be encosed with '[' and ']'"
+                                                    + " according to RFC 2732." );
+
+            int portIdx = host.indexOf( "]:" );
+            if(portIdx != -1) {
+                if (port != defaultPort())
+                    throw new IllegalArgumentException( "can't specify port in construct and via host" );
+                port = Integer.parseInt( host.substring( portIdx + 2 ) );
+            }
+            host = host.substring(1, idx);
+        }
+        else {
+            int idx = host.indexOf( ":" );
+            if ( idx > 0 ){
+                if ( port != defaultPort() )
+                    throw new IllegalArgumentException( "can't specify port in construct and via host" );
+                port = Integer.parseInt( host.substring( idx + 1 ) );
+                host = host.substring( 0 , idx ).trim();
+            }
         }
 
         _host = host;
