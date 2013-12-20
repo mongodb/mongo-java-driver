@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb
 
 import spock.lang.Specification
@@ -85,19 +81,20 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(1, 0, false, false, true) == WriteConcern.ACKNOWLEDGED.withContinueOnError(true);
     }
 
-    def 'test command'() {
+    @Unroll
+    def '#wc should return getlasterror document #commandDocument'() {
         expect:
         wc.asDocument() == commandDocument;
 
         where:
         wc                                | commandDocument
-        WriteConcern.UNACKNOWLEDGED       | new Document('getlasterror', 1)
-        WriteConcern.ACKNOWLEDGED         | new Document('getlasterror', 1)
-        WriteConcern.REPLICA_ACKNOWLEDGED | new Document('getlasterror', 1).append('w', 2)
-        WriteConcern.FSYNCED              | new Document('getlasterror', 1).append('fsync', true)
-        WriteConcern.JOURNALED            | new Document('getlasterror', 1).append('j', true)
-        new WriteConcern('majority')      | new Document('getlasterror', 1).append('w', 'majority')
-        new WriteConcern(1, 100)          | new Document('getlasterror', 1).append('wtimeout', 100)
+        WriteConcern.UNACKNOWLEDGED       | ['getlasterror': 0]
+        WriteConcern.ACKNOWLEDGED         | ['getlasterror': 1]
+        WriteConcern.REPLICA_ACKNOWLEDGED | ['getlasterror': 1, 'w': 2]
+        WriteConcern.JOURNALED            | ['getlasterror': 1, 'j': true]
+        WriteConcern.FSYNCED              | ['getlasterror': 1, 'fsync': true]
+        new WriteConcern('majority')      | ['getlasterror': 1, 'w': 'majority']
+        new WriteConcern(1, 100)          | ['getlasterror': 1, 'wtimeout': 100]
     }
 
     @SuppressWarnings('ExplicitCallToEqualsMethod')

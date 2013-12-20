@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb
 
 import org.mongodb.connection.Tags
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static java.util.Arrays.asList
+import static org.mongodb.MongoCredential.createGSSAPICredential
+import static org.mongodb.MongoCredential.createMongoCRCredential
+import static org.mongodb.MongoCredential.createMongoX509Credential
+import static org.mongodb.MongoCredential.createPlainCredential
 import static org.mongodb.ReadPreference.secondaryPreferred
 
 class MongoClientURISpecification extends Specification {
@@ -48,7 +37,7 @@ class MongoClientURISpecification extends Specification {
     }
 
     @Unroll
-    def 'should parse URI into correct components'() {
+    def 'should parse #uri into correct components'() {
         expect:
         uri.getHosts().size() == num;
         uri.getHosts() == hosts;
@@ -166,26 +155,22 @@ class MongoClientURISpecification extends Specification {
 
         where:
         uri                                                   | credentialList
-        new MongoClientURI('mongodb://jeff:123@localhost')    | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'admin',
-                                                                                                      '123'.toCharArray()))
+        new MongoClientURI('mongodb://jeff:123@localhost')    | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'admin',
-                                                                                                      '123'.toCharArray()))
+                           'authMechanism=MONGODB-CR')        | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
-                'authMechanism=MONGODB-CR&authSource=test')   | Arrays.asList(MongoCredential.createMongoCRCredential('jeff', 'test',
-                                                                                                      '123'.toCharArray()))
+                           'authMechanism=MONGODB-CR' +
+                           '&authSource=test')                | asList(createMongoCRCredential('jeff', 'test', '123'.toCharArray()))
         new MongoClientURI('mongodb://jeff@localhost/?' +
-                           'authMechanism=GSSAPI')            | Arrays.asList(MongoCredential.createGSSAPICredential('jeff'))
+                           'authMechanism=GSSAPI')            | asList(createGSSAPICredential('jeff'))
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=PLAIN')             | Arrays.asList(MongoCredential.createPlainCredential('jeff', 'admin',
-                                                                                                      '123'.toCharArray()))
+                           'authMechanism=PLAIN')             | asList(createPlainCredential('jeff', 'admin', '123'.toCharArray()))
         new MongoClientURI('mongodb://jeff@localhost/?' +
-                           'authMechanism=MONGODB-X509')      | Arrays.asList(MongoCredential.createMongoX509Credential('jeff'))
-
+                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential('jeff'))
         new MongoClientURI('mongodb://jeff@localhost/?' +
-                          'authMechanism=GSSAPI' +
-                          '&gssapiServiceName=foo')           | Arrays.asList(MongoCredential.createGSSAPICredential('jeff')
-                                                                                             .withMechanismProperty('SERVICE_NAME', 'foo'))
+                           'authMechanism=GSSAPI' +
+                           '&gssapiServiceName=foo')          | asList(createGSSAPICredential('jeff')
+                                                                                       .withMechanismProperty('SERVICE_NAME', 'foo'))
     }
 
     @Unroll
