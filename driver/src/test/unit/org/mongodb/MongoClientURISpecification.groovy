@@ -60,7 +60,11 @@ class MongoClientURISpecification extends Specification {
         where:
         uri                                            | num | hosts              | database | collection | username | password
         new MongoClientURI('mongodb://db.example.com') | 1   | ['db.example.com'] | null     | null       | null     | null
+        new MongoClientURI('mongodb://10.0.0.1')       | 1   | ['10.0.0.1']       | null     | null       | null     | null
+        new MongoClientURI('mongodb://[::1]')          | 1   | ['[::1]']          | null     | null       | null     | null
         new MongoClientURI('mongodb://foo/bar')        | 1   | ['foo']            | 'bar'    | null       | null     | null
+        new MongoClientURI('mongodb://10.0.0.1/bar')   | 1   | ['10.0.0.1']       | 'bar'    | null       | null     | null
+        new MongoClientURI('mongodb://[::1]/bar')      | 1   | ['[::1]']          | 'bar'    | null       | null     | null
         new MongoClientURI('mongodb://localhost/' +
                                    'test.my.coll')     | 1   | ['localhost']      | 'test'   | 'my.coll'  | null     | null
         new MongoClientURI('mongodb://foo/bar.goo')    | 1   | ['foo']            | 'bar'    | 'goo'      | null     | null
@@ -69,10 +73,20 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://user:pass@' +
                                    'host:27011/bar')   | 1   | ['host:27011']     | 'bar'    | null       | 'user'   | 'pass' as char[]
         new MongoClientURI('mongodb://user:pass@' +
+                           '10.0.0.1:27011/bar')       | 1   | ['10.0.0.1:27011'] | 'bar'    | null       | 'user'   | 'pass' as char[]
+        new MongoClientURI('mongodb://user:pass@' +
+                           '[::1]:27011/bar')          | 1   | ['[::1]:27011']    | 'bar'    | null       | 'user'   | 'pass' as char[]
+        new MongoClientURI('mongodb://user:pass@' +
                                    'host:7,' +
                                    'host2:8,' +
                                    'host3:9/bar')      | 3   | ['host:7',
                                                                 'host2:8',
+                                                                'host3:9']        | 'bar'    | null       | 'user'   | 'pass' as char[]
+        new MongoClientURI('mongodb://user:pass@' +
+                           '10.0.0.1:7,' +
+                           '[::1]:8,' +
+                           'host3:9/bar')              | 3   | ['10.0.0.1:7',
+                                                                '[::1]:8',
                                                                 'host3:9']        | 'bar'    | null       | 'user'   | 'pass' as char[]
     }
 
