@@ -88,7 +88,7 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                | commandDocument
-        WriteConcern.UNACKNOWLEDGED       | ['getlasterror': 0]
+        WriteConcern.UNACKNOWLEDGED       | ['getlasterror': 1]
         WriteConcern.ACKNOWLEDGED         | ['getlasterror': 1]
         WriteConcern.REPLICA_ACKNOWLEDGED | ['getlasterror': 1, 'w': 2]
         WriteConcern.JOURNALED            | ['getlasterror': 1, 'j': true]
