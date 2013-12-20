@@ -17,7 +17,6 @@
 
 package com.mongodb;
 
-import com.mongodb.util.TestCase;
 import org.junit.Test;
 
 import javax.net.SocketFactory;
@@ -31,7 +30,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class MongoClientURITest extends TestCase {
+public class MongoClientURITest {
 
     @Test
     public void testUnsupportedOption() {
@@ -51,8 +50,8 @@ public class MongoClientURITest extends TestCase {
         } catch (IllegalArgumentException e) {
             // ok
         }
-
     }
+
     @Test()
     public void testSingleServer() {
         MongoClientURI u = new MongoClientURI("mongodb://db.example.com");
@@ -262,6 +261,45 @@ public class MongoClientURITest extends TestCase {
                         new BasicDBObject()
                 ),
                 uri.getOptions().getReadPreference());
+    }
+
+    @Test()
+    public void testSingleIPV6Server() {
+        MongoClientURI u = new MongoClientURI("mongodb://[2010:836B:4179::836B:4179]");
+        assertEquals(1, u.getHosts().size());
+        assertEquals("[2010:836B:4179::836B:4179]", u.getHosts().get(0));
+    }
+
+    @Test()
+    public void testSingleIPV6ServerWithPort() {
+        MongoClientURI u = new MongoClientURI("mongodb://[2010:836B:4179::836B:4179]:1000");
+        assertEquals(1, u.getHosts().size());
+        assertEquals("[2010:836B:4179::836B:4179]:1000", u.getHosts().get(0));
+    }
+
+    @Test()
+    public void testSingleIPV6ServerWithUserAndPass() {
+        MongoClientURI u = new MongoClientURI("mongodb://user:pass@[2010:836B:4179::836B:4179]");
+        assertEquals("user", u.getUsername());
+        assertArrayEquals("pass".toCharArray(), u.getPassword());
+        assertEquals(1, u.getHosts().size());
+        assertEquals("[2010:836B:4179::836B:4179]", u.getHosts().get(0));
+    }
+
+    @Test()
+    public void testMultipleIPV6Servers() {
+        MongoClientURI u = new MongoClientURI("mongodb://[::1],[2010:836B:4179::836B:4179]");
+        assertEquals(2, u.getHosts().size());
+        assertEquals("[::1]", u.getHosts().get(0));
+        assertEquals("[2010:836B:4179::836B:4179]", u.getHosts().get(1));
+    }
+
+    @Test()
+    public void testMultipleIPV6ServersWithPorts() {
+        MongoClientURI u = new MongoClientURI("mongodb://[::1]:1000,[2010:836B:4179::836B:4179]:2000");
+        assertEquals(2, u.getHosts().size());
+        assertEquals("[::1]:1000", u.getHosts().get(0));
+        assertEquals("[2010:836B:4179::836B:4179]:2000", u.getHosts().get(1));
     }
 
     @SuppressWarnings("deprecation")
