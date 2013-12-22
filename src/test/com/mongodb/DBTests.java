@@ -19,11 +19,13 @@ package com.mongodb;
 import com.mongodb.util.TestCase;
 import org.junit.Test;
 
-
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import static org.junit.Assert.*;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 /**
  * Tests aspect of the DB - not really driver tests
  */
@@ -84,20 +86,12 @@ public class DBTests extends TestCase {
         assertEquals(1, a.find().count());
         assertEquals(1, b.find().count());
 
-        try {
-            DBCollection b2 = a.rename(nameb);
-            fail();
-        } catch (MongoException e) {
-            assertEquals(e.getCode(), 10027);
-        }
-
         DBCollection b2 = a.rename(nameb, true);
         assertEquals(0, a.find().count());
         assertEquals(1, b.find().count());
         assertEquals(1, b2.find().count());
 
         assertEquals(b.getName(), b2.getName());
-
     }
 
 //    @Test
