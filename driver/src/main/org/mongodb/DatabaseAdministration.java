@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ public interface DatabaseAdministration {
      *
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
-     * @throws MongoServerException with code 10027 if you provide a newCollectionName that is the name of an existing collection, with code
-     *                              10026 if the oldCollectionName is the name of a collection that doesn't exist
+     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection,
+     * or if the oldCollectionName is the name of a collection that doesn't exist
      * @see <a href="http://docs.mongodb.org/manual/reference/command/renameCollection/">Rename collection</a>
      */
     void renameCollection(String oldCollectionName, String newCollectionName);
@@ -68,8 +68,8 @@ public interface DatabaseAdministration {
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
      * @param dropTarget        setting this to true will drop any existing database with the name newCollectionName
-     * @throws MongoServerException with code 10027 if you provide a newCollectionName that is the name of an existing collection and
-     *                              dropTarget is false, with code 10026 if the oldCollectionName is the name of a collection that doesn't
+     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection and
+     *                              dropTarget is false, or if the oldCollectionName is the name of a collection that doesn't
      *                              exist
      * @see <a href="http://docs.mongodb.org/manual/reference/command/renameCollection/">Rename collection</a>
      */

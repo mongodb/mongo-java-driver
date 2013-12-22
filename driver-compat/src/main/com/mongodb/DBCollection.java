@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -890,7 +890,7 @@ public class DBCollection {
      *
      * @param newName specifies the new name of the collection
      * @return the collection with new name
-     * @throws MongoException with code 10027 if newName is the name of an existing collection.
+     * @throws MongoException if newName is the name of an existing collection.
      */
     public DBCollection rename(final String newName) {
         return rename(newName, false);
@@ -902,7 +902,7 @@ public class DBCollection {
      * @param newName    specifies the new name of the collection
      * @param dropTarget If {@code true}, mongod will drop the collection with the target name if it exists
      * @return the collection with new name
-     * @throws MongoException with code 10027 if target is the name of an existing collection and {@code dropTarget=false}.
+     * @throws MongoException if target is the name of an existing collection and {@code dropTarget=false}.
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {

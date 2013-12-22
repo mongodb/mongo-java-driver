@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
-import org.mongodb.MongoServerException;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mongodb.Fixture.getMongoClient;
 
 /**
@@ -124,31 +122,6 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
                    renamedCollection.find().count(), is(1L));
-    }
-
-    @Test
-    public void shouldNotBeAbleToRenameACollectionToAnExistingCollectionName() {
-        //given
-        String originalCollectionName = "originalCollectionToRename";
-        database.tools().createCollection(originalCollectionName);
-
-        String anotherCollectionName = "anExistingCollection";
-        database.tools().createCollection(anotherCollectionName);
-
-        assertThat(database.tools().getCollectionNames().contains(anotherCollectionName), is(true));
-        assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
-
-        //when
-        try {
-            database.tools().renameCollection(originalCollectionName, anotherCollectionName);
-            fail("Should throw an exception when renaming a collection to a name that already exists");
-        } catch (MongoServerException e) {
-            assertThat(e.getErrorCode(), is(10027));
-        }
-
-        //cleanup
-        database.getCollection(originalCollectionName).tools().drop();
-        database.getCollection(anotherCollectionName).tools().drop();
     }
 
     @Test

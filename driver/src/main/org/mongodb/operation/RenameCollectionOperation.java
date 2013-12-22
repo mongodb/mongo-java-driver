@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static org.mongodb.MongoNamespace.asNamespaceString;
 /**
  * Executing this operation will rename the given collection to the new name.  If the new name is the same as an existing collection and
  * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
- * collection, a MongoServerException with error code 10027 will be thrown.
+ * collection, a MongoServerException will be thrown.
  */
 public class RenameCollectionOperation extends BaseOperation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -65,8 +65,8 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
      *
      * @return a CommandResult containing the success or failure of executing the rename.
      * @throws org.mongodb.MongoServerException
-     *          with code 10027 if you provide a newCollectionName that is the name of an existing collection and dropTarget is false, with
-     *          code 10026 if the oldCollectionName is the name of a collection that doesn't exist
+     *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
+     *          or if the oldCollectionName is the name of a collection that doesn't exist
      */
     @Override
     public CommandResult execute() {

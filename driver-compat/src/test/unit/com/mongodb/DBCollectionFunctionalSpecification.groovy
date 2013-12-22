@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,33 +191,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         collection.indexInfo.size() == 1
-    }
-
-    def 'should not be able to rename a collection to an existing collection name'() {
-        given:
-        BasicDBObject saveThisObjectToForceCollectionCreation = new BasicDBObject('some', 'value')
-
-        String originalCollectionName = 'originalCollectionToRename';
-        DBCollection originalCollection = database.getCollection(originalCollectionName);
-        originalCollection.save(saveThisObjectToForceCollectionCreation)
-
-        String anotherCollectionName = 'anExistingCollection';
-        DBCollection existingCollection = database.getCollection(anotherCollectionName);
-        existingCollection.save(saveThisObjectToForceCollectionCreation)
-
-        assert database.getCollectionNames().contains(anotherCollectionName)
-        assert database.getCollectionNames().contains(originalCollectionName)
-
-        when:
-        originalCollection.rename(anotherCollectionName);
-
-        then:
-        MongoException exception = thrown(MongoException)
-        exception.code == 10027
-
-        cleanup:
-        originalCollection.drop()
-        existingCollection.drop()
     }
 
     def 'should be able to rename a collection'() {
