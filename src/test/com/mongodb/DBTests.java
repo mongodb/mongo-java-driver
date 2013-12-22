@@ -92,20 +92,12 @@ public class DBTests extends TestCase {
         assertEquals(1, a.find().count());
         assertEquals(1, b.find().count());
 
-        try {
-            DBCollection b2 = a.rename(nameb);
-            assertTrue(false, "Rename to existing collection must fail");
-        } catch (MongoException e) {
-            assertEquals(e.getCode(), 10027);
-        }
-
         DBCollection b2 = a.rename(nameb, true);
         assertEquals(0, a.find().count());
         assertEquals(1, b.find().count());
         assertEquals(1, b2.find().count());
 
         assertEquals(b.getName(), b2.getName());
-
     }
 
 //    @Test
