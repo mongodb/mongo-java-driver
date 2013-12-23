@@ -18,10 +18,8 @@ package com.mongodb
 
 import org.mongodb.Document
 import org.mongodb.MongoCommandFailureException
-import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.command.Command
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoTimeoutException
@@ -72,11 +70,11 @@ class DBSpecification extends Specification {
         given:
         cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
-            throw new MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
+            throw new org.mongodb.MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
         }
 
         when:
-        database.executeCommand(new Command(new Document('isMaster', 1)));
+        database.executeCommand(new Document('isMaster', 1), org.mongodb.ReadPreference.primary());
 
         then:
         thrown(com.mongodb.MongoCursorNotFoundException)
