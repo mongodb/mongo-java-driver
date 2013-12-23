@@ -32,7 +32,6 @@ import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CountOperation;
@@ -1734,7 +1733,8 @@ public class DBCollection {
     }
 
     public CommandResult getStats() {
-        org.mongodb.CommandResult commandResult = getDB().executeCommand(new Command(new Document("collStats", getName())));
+        org.mongodb.CommandResult commandResult = getDB().executeCommand(new Document("collStats", getName()),
+                                                                         ReadPreference.primary().toNew());
         return new CommandResult(commandResult);
     }
 

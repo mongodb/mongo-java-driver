@@ -24,7 +24,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.command.Command;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
@@ -32,7 +31,6 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
@@ -49,11 +47,13 @@ import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient}
- * instance using code like:<br>
- * <code>
- * MongoClient mongoClient = new MongoClient();<br>
+ * instance using code like:<br/>
+ * <pre>
+ * {@code
+ * MongoClient mongoClient = new MongoClient();
  * DB db = mongoClient.getDB("<db name>");
- * </code>
+ * }
+ * </pre>
  *
  * @see MongoClient
  * @mongodb.driver.manual reference/glossary/#term-database database
@@ -381,10 +381,24 @@ public class DB {
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference) {
-        Command mongoCommand = new Command(toDocument(cmd))
-                                   .readPreference(readPreference.toNew())
-                                   .addFlags(QueryFlag.toSet(options));
-        return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
+        //TODO: options never used
+        org.mongodb.CommandResult result;
+        try {
+            result = new CommandOperation(getName(),
+                                          toDocument(cmd),
+                                          readPreference.toNew(),
+                                          commandCodec,
+                                          commandCodec,
+                                          getClusterDescription(),
+                                          getBufferPool(),
+                                          getSession(),
+                                          false).execute();
+        } catch (MongoCommandFailureException ex) {
+            result = ex.getCommandResult();
+        } catch (org.mongodb.MongoException ex) {
+            throw mapException(ex);
+        }
+        return new CommandResult(result);
     }
 
     /**
@@ -430,11 +444,25 @@ public class DB {
      */
     public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference,
                                  final DBEncoder encoder) {
-        Document document = toDocument(cmd, encoder, commandCodec);
-        Command mongoCommand = new Command(document)
-                                   .readPreference(readPreference.toNew())
-                                   .addFlags(QueryFlag.toSet(options));
-        return new CommandResult(executeCommandAndReturnCommandResultIfCommandFailureException(mongoCommand));
+        //TODO: options never used.  See JAVA-1063
+        Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
+        org.mongodb.CommandResult result;
+        try {
+            result = new CommandOperation(getName(),
+                                          document,
+                                          readPreference.toNew(),
+                                          commandCodec,
+                                          commandCodec,
+                                          getClusterDescription(),
+                                          getBufferPool(),
+                                          getSession(),
+                                          false).execute();
+        } catch (MongoCommandFailureException ex) {
+            result = ex.getCommandResult();
+        } catch (org.mongodb.MongoException ex) {
+            throw mapException(ex);
+        }
+        return new CommandResult(result);
     }
 
     /**
@@ -474,8 +502,8 @@ public class DB {
      * @throws MongoException
      */
     public CommandResult doEval(final String code, final Object... args) {
-        Command mongoCommand = new Command(new Document("$eval", code).append("args", args));
-        return new CommandResult(executeCommand(mongoCommand));
+        Document commandDocument = new Document("$eval", code).append("args", args);
+        return new CommandResult(executeCommand(commandDocument, getReadPreference().toNew()));
     }
 
     /**
@@ -502,8 +530,8 @@ public class DB {
      * @throws MongoException
      */
     public CommandResult getStats() {
-        Command mongoCommand = new Command(new Document("dbStats", 1).append("scale", 1));
-        return new CommandResult(executeCommand(mongoCommand));
+        Document commandDocument = new Document("dbStats", 1).append("scale", 1);
+        return new CommandResult(executeCommand(commandDocument, getReadPreference().toNew()));
     }
 
     /**
@@ -614,29 +642,12 @@ public class DB {
         return getMongo().getSession();
     }
 
-    org.mongodb.CommandResult executeCommand(final Command command) {
-        command.readPreferenceIfAbsent(getReadPreference().toNew());
-        return executeCommand(command.toDocument(), command.getReadPreference());
-    }
-
     org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
         try {
             return new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
                                         getClusterDescription(), getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
-        }
-    }
-
-    org.mongodb.CommandResult executeCommandAndReturnCommandResultIfCommandFailureException(final Command mongoCommand) {
-        mongoCommand.readPreferenceIfAbsent(getReadPreference().toNew());
-        try {
-            return new CommandOperation(getName(), mongoCommand.toDocument(), mongoCommand.getReadPreference(), commandCodec, commandCodec,
-                                        getClusterDescription(), getBufferPool(), getSession(), false).execute();
-        } catch (MongoCommandFailureException ex) {
-            return ex.getCommandResult();
-        } catch (org.mongodb.MongoException ex) {
-            throw mapException(ex);
         }
     }
 
