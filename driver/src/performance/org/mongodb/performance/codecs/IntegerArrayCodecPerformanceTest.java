@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.codecs.IntegerCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
+import static org.mongodb.performance.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
+import static org.mongodb.performance.codecs.PerfTestUtils.testCleanup;
 
 public class IntegerArrayCodecPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
     private static final int NUMBER_OF_TIMES_TO_RUN = 100000000;
 
     private StubBSONWriter bsonWriter;
-    private IntegerCodec integerCodec = new IntegerCodec();
-    private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
+    private final IntegerCodec integerCodec = new IntegerCodec();
+    private final PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
     @Before
     public void setUp() throws Exception {
@@ -38,7 +40,7 @@ public class IntegerArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForUsingIntegerCodecDirectly() throws Exception {
-        final int[] intArrayToEncode = {1, 2, 3};
+        int[] intArrayToEncode = {1, 2, 3};
         encodeArrayUsingIntegerCodecDirectly(intArrayToEncode, NUMBER_OF_TIMES_FOR_WARMUP);
 
         for (int i = 0; i < 3; i++) {
@@ -53,7 +55,7 @@ public class IntegerArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForEncodingViaPrimitiveCodecs() throws Exception {
-        final int[] intArrayToEncode = {1, 2, 3};
+        int[] intArrayToEncode = {1, 2, 3};
         encodeArrayUsingPrimitiveCodecs(intArrayToEncode, NUMBER_OF_TIMES_FOR_WARMUP);
 
         for (int i = 0; i < 3; i++) {
@@ -66,13 +68,15 @@ public class IntegerArrayCodecPerformanceTest {
         }
     }
 
+    //CHECKSTYLE:OFF
     private void outputResults(final long startTime, final long endTime) {
         System.out.println(format("Written: %d", bsonWriter.getNumberOfIntsWritten()));
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
         System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
         System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos)));
     }
+    //CHECKSTYLE:ON
 
     private double calculateOperationsPerSecond(final long timeTakenInNanos) {
         return (NUMBER_OF_NANO_SECONDS_IN_A_SECOND / timeTakenInNanos) * NUMBER_OF_TIMES_TO_RUN;

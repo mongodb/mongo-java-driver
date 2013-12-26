@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
 
 public class DocumentEncodingPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
@@ -44,7 +43,7 @@ public class DocumentEncodingPerformanceTest {
     @Test
     public void outputBaselinePerformanceForEmptyDocument() throws Exception {
         //177,327,917 ops per second
-        final Document document = new Document();
+        Document document = new Document();
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
 
         for (int i = 0; i < 3; i++) {
@@ -53,7 +52,7 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
@@ -62,7 +61,7 @@ public class DocumentEncodingPerformanceTest {
         //13,106,251 ops per second
         //for a single, primitive (int) field.  An order of magnitude slower than an empty doc
         //33,437,167 ops per second when encoding goes straight to Codecs.  3x is not bad
-        final Document document = new Document("anIntValue", 34);
+        Document document = new Document("anIntValue", 34);
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
 
         for (int i = 0; i < 3; i++) {
@@ -71,7 +70,7 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
@@ -80,7 +79,7 @@ public class DocumentEncodingPerformanceTest {
         //12,617,895 ops per second
         //for a single, String field.  An order of magnitude slower than an empty doc
         //32,443,547 ops per second when encoding delegated to codecs
-        final Document document = new Document("aString", "theValue");
+        Document document = new Document("aString", "theValue");
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
 
         for (int i = 0; i < 3; i++) {
@@ -89,7 +88,7 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
@@ -98,7 +97,7 @@ public class DocumentEncodingPerformanceTest {
         //1,500,839 ops per second, An order of magnitude slower than a primitive field
         //11,009,021 ops per second when you use the ArraysCodec
         //32,075,750 ops per second when you delegate directly to codecs with no instanceof
-        final Document document = new Document();
+        Document document = new Document();
         document.append("theArray", new int[]{1, 2, 3});
 
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
@@ -109,7 +108,7 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
@@ -118,7 +117,7 @@ public class DocumentEncodingPerformanceTest {
         //3,945,723 ops per second original version.  Ouch.  Only marginally better than a primitive array
         //6,375,324 ops per second when you use the IterableCodec.  Not a massive improvement
         //7,700,641 ops per second when all encoding is delegated to Codecs.
-        final Document document = new Document();
+        Document document = new Document();
         document.append("theArray", Arrays.asList(1, 2, 3));
 
         encodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, document);
@@ -129,7 +128,7 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
@@ -138,8 +137,8 @@ public class DocumentEncodingPerformanceTest {
         //7,789,176 ops per second initially - not much slower than a single primitive
         //10,171,206 ops per second when you use the MapsCodec - not much in it
         //10,186,710 ops per second with direct to Codecs encoding
-        final Document document = new Document();
-        final Map<String, String> map = new HashMap<String, String>();
+        Document document = new Document();
+        Map<String, String> map = new HashMap<String, String>();
         map.put("field1", "field 1 value");
         document.append("theMap", map);
 
@@ -151,20 +150,22 @@ public class DocumentEncodingPerformanceTest {
             long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
-            testCleanup();
+            PerfTestUtils.testCleanup();
         }
     }
 
+    //CHECKSTYLE:OFF
     private void outputResults(final long startTime, final long endTime) {
         System.out.println(format("Number of names encoded: %d", bsonWriter.getNumberOfNamesWritten()));
         System.out.println(format("Number of ints encoded: %d", bsonWriter.getNumberOfIntsWritten()));
         System.out.println(format("Number of Strings encoded: %d", bsonWriter.getNumberOfStringsEncoded()));
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
-        System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
-        System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
-                                                                                         NUMBER_OF_TIMES_TO_RUN)));
+        System.out.println(String.format("Test took: %,.3f seconds", timeTakenInNanos / PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
+        System.out.println(String.format("%,.0f ops per second%n", PerfTestUtils.calculateOperationsPerSecond(timeTakenInNanos,
+                                                                                                              NUMBER_OF_TIMES_TO_RUN)));
     }
+    //CHECKSTYLE:ON
 
     private void encodeDocument(final int numberOfTimesForWarmup, final Document document) {
         for (int i = 0; i < numberOfTimesForWarmup; i++) {

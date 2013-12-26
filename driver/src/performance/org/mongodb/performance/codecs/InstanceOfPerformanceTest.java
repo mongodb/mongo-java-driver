@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.junit.Test;
 
@@ -22,9 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
+import static org.mongodb.performance.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
+import static org.mongodb.performance.codecs.PerfTestUtils.calculateOperationsPerSecond;
+import static org.mongodb.performance.codecs.PerfTestUtils.testCleanup;
 
 public class InstanceOfPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
@@ -45,7 +45,7 @@ public class InstanceOfPerformanceTest {
 
     @Test
     public void outputPerformanceForArray() throws Exception {
-        final String[] stringArray = {"1", "2", "3"};
+        String[] stringArray = {"1", "2", "3"};
         doInstanceOf(NUMBER_OF_TIMES_FOR_WARMUP, stringArray);
 
         for (int i = 0; i < 3; i++) {
@@ -82,15 +82,17 @@ public class InstanceOfPerformanceTest {
         }
     }
 
+    //CHECKSTYLE:OFF
     @SuppressWarnings("ImplicitArrayToString")
     private void outputResults(final long startTime, final long endTime) {
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(RESULTS); // we need to do this so the compiler doesn't optimise away the whole test
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
         System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
         System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
                                                                                          NUMBER_OF_TIMES_TO_RUN)));
     }
+    //CHECKSTYLE:ON
 
     //The thing we're actually testing
     private boolean doInstanceOf(final Object object) {

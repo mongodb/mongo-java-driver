@@ -14,25 +14,29 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.bson.BSONWriter;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.codecs.ArrayCodec;
+import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.lang.reflect.Array;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
+import static org.mongodb.performance.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
+import static org.mongodb.performance.codecs.PerfTestUtils.calculateOperationsPerSecond;
+import static org.mongodb.performance.codecs.PerfTestUtils.testCleanup;
 
+//CHECKSTYLE:OFF
 public class ArrayCodecPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
     private static final int NUMBER_OF_TIMES_TO_RUN = 100000000;
 
     private ArrayCodecPerformanceTest.StubCodecs codecs;
-    private MyPrimitiveCodecs primitiveCodecs = new MyPrimitiveCodecs();
+    private final MyPrimitiveCodecs primitiveCodecs = new MyPrimitiveCodecs();
 
     @Before
     public void setUp() throws Exception {
@@ -41,7 +45,7 @@ public class ArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForIntArray() throws Exception {
-        final int[] intArrayToEncode = {1, 2, 3};
+        int[] intArrayToEncode = {1, 2, 3};
         encodeInts(NUMBER_OF_TIMES_FOR_WARMUP, intArrayToEncode);
 
         for (int i = 0; i < 3; i++) {
@@ -56,7 +60,7 @@ public class ArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForIntArrayUsingReflection() throws Exception {
-        final int[] intArrayToEncode = {1, 2, 3};
+        int[] intArrayToEncode = {1, 2, 3};
         encodeUsingReflection(NUMBER_OF_TIMES_FOR_WARMUP, intArrayToEncode);
 
         for (int i = 0; i < 3; i++) {
@@ -71,7 +75,7 @@ public class ArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForStringArray() throws Exception {
-        final String[] stringArrayToEncode = {"1", "2", "3"};
+        String[] stringArrayToEncode = {"1", "2", "3"};
         encodeStrings(NUMBER_OF_TIMES_FOR_WARMUP, stringArrayToEncode);
 
         for (int i = 0; i < 3; i++) {
@@ -86,7 +90,7 @@ public class ArrayCodecPerformanceTest {
 
     @Test
     public void outputPerformanceForStringArrayUsingReflection() throws Exception {
-        final String[] stringArrayToEncode = {"1", "2", "3"};
+        String[] stringArrayToEncode = {"1", "2", "3"};
         encodeUsingReflection(NUMBER_OF_TIMES_FOR_WARMUP, stringArrayToEncode);
 
         for (int i = 0; i < 3; i++) {
@@ -102,9 +106,9 @@ public class ArrayCodecPerformanceTest {
     @Test
     public void outputPerformanceForIntArrayOnRealArrayCodec() throws Exception {
         //80,639,243 ops per second
-        final int[] intArrayToEncode = {1, 2, 3};
-        final StubBSONWriter bsonWriter = new StubBSONWriter();
-        final ArrayCodec codec = new ArrayCodec(null);
+        int[] intArrayToEncode = {1, 2, 3};
+        StubBSONWriter bsonWriter = new StubBSONWriter();
+        ArrayCodec codec = new ArrayCodec(null);
 
         for (int i2 = NUMBER_OF_TIMES_FOR_WARMUP; i2 != 0; i2--) {
             codec.encode(bsonWriter, intArrayToEncode);
@@ -118,7 +122,7 @@ public class ArrayCodecPerformanceTest {
             long endTime = System.nanoTime();
 
             System.out.println(format("Objects encoded: %d", bsonWriter.getNumberOfStringsEncoded()));
-            final long timeTakenInNanos = endTime - startTime;
+            long timeTakenInNanos = endTime - startTime;
             System.out.println(format("Test took: %,d ns", timeTakenInNanos));
             System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
             System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
@@ -132,9 +136,9 @@ public class ArrayCodecPerformanceTest {
         //81,505,837 ops per second
         //no real difference when you have to do an instanceof
         //even if the instanceof is the last one in the chain
-        final Object intArrayToEncode = new int[]{1, 2, 3};
-        final StubBSONWriter bsonWriter = new StubBSONWriter();
-        final ArrayCodec codec = new ArrayCodec(null);
+        Object intArrayToEncode = new int[]{1, 2, 3};
+        StubBSONWriter bsonWriter = new StubBSONWriter();
+        ArrayCodec codec = new ArrayCodec(null);
 
         for (int i2 = NUMBER_OF_TIMES_FOR_WARMUP; i2 != 0; i2--) {
             codec.encode(bsonWriter, intArrayToEncode);
@@ -148,7 +152,7 @@ public class ArrayCodecPerformanceTest {
             long endTime = System.nanoTime();
 
             System.out.println(format("Objects encoded: %d", bsonWriter.getNumberOfStringsEncoded()));
-            final long timeTakenInNanos = endTime - startTime;
+            long timeTakenInNanos = endTime - startTime;
             System.out.println(format("Test took: %,d ns", timeTakenInNanos));
             System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
             System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
@@ -160,12 +164,13 @@ public class ArrayCodecPerformanceTest {
     private void outputResults(final long startTime, final long endTime) {
         System.out.println(format("Objects encoded: %d", codecs.objectsEncoded));
         System.out.println(format("Primitive Objects encoded: %d", primitiveCodecs.objectsEncoded));
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
         System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
         System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
                                                                                          NUMBER_OF_TIMES_TO_RUN)));
     }
+    //CHECKSTYLE:ON
 
     private void encodeStrings(final int numberOfIterations, final String[] itemToEncode) {
         for (int i = numberOfIterations; i != 0; i--) {
@@ -190,7 +195,7 @@ public class ArrayCodecPerformanceTest {
         private int objectsEncoded = 0;
 
         public StubCodecs() {
-            super(null);
+            super(null, null);
         }
 
         @Override
@@ -241,7 +246,7 @@ public class ArrayCodecPerformanceTest {
         //2,503,318 ops per second using reflection (for ints)
         //4,051,509 ops per second using reflection (for Strings)
         //two orders of magnitude slower using reflection
-        final int size = Array.getLength(value);
+        int size = Array.getLength(value);
         for (int i = 0; i < size; i++) {
             theCodecs.encode(null, Array.get(value, i));
         }

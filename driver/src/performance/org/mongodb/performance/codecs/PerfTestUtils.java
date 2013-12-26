@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 public final class PerfTestUtils {
     static final double NUMBER_OF_NANO_SECONDS_IN_A_SECOND = 1000000000;

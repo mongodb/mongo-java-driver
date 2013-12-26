@@ -1,4 +1,4 @@
-package org.mongodb.codecs.pojo;
+package org.mongodb.performance.codecs.pojo;
 
 public class StringWrapper {
     private String stringWrapperValue;

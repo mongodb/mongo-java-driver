@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.bson.BSONWriter;
 import org.bson.BSONWriterSettings;

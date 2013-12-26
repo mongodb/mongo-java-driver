@@ -1,4 +1,4 @@
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.junit.Test;
 
@@ -12,10 +12,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
+import static org.mongodb.performance.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
+import static org.mongodb.performance.codecs.PerfTestUtils.calculateOperationsPerSecond;
+import static org.mongodb.performance.codecs.PerfTestUtils.testCleanup;
 
+//CHECKSTYLE:OFF
 public class ReflectionPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
     private static final int NUMBER_OF_TIMES_TO_RUN = 100000000;
@@ -34,11 +35,11 @@ public class ReflectionPerformanceTest {
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 fields = this.getClass().getDeclaredFields();
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(Arrays.toString(fields));
@@ -56,11 +57,11 @@ public class ReflectionPerformanceTest {
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 field = this.getClass().getDeclaredField("listField");
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(field);
@@ -82,12 +83,12 @@ public class ReflectionPerformanceTest {
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 fields = this.getClass().getDeclaredFields();
                 field = this.getClass().getDeclaredField("listField");
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             //this prevents the call being optimised away
@@ -101,18 +102,18 @@ public class ReflectionPerformanceTest {
     public void outputPerformanceForGetType() throws NoSuchFieldException, InterruptedException {
         // 32,509,752,926 ops per second, and it eventually gets optimised away
 
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
         Class<?> classOfIterable = null;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             classOfIterable = fieldOnPojo.getType();
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 classOfIterable = fieldOnPojo.getType();
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(classOfIterable);
@@ -126,19 +127,19 @@ public class ReflectionPerformanceTest {
         // 40,569,038 ops per second 2nd and 3rd.  Huh??
         // So, slower than getType, quicker than getDeclaredField
 
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
-        final Class<?> classOfIterable = fieldOnPojo.getType();
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Class<?> classOfIterable = fieldOnPojo.getType();
         boolean isSomeSortOfSet = true;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             isSomeSortOfSet = Set.class.isAssignableFrom(classOfIterable);
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 isSomeSortOfSet = Set.class.isAssignableFrom(classOfIterable);
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(isSomeSortOfSet);
@@ -152,19 +153,19 @@ public class ReflectionPerformanceTest {
         // 649,557,327 ops per second 2nd and 3rd.  Huh??
         // So marginally faster if it is assignable
 
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
-        final Class<?> classOfIterable = fieldOnPojo.getType();
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Class<?> classOfIterable = fieldOnPojo.getType();
         boolean isSomeSortOfSet = true;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             isSomeSortOfSet = List.class.isAssignableFrom(classOfIterable);
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 isSomeSortOfSet = List.class.isAssignableFrom(classOfIterable);
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(isSomeSortOfSet);
@@ -177,18 +178,18 @@ public class ReflectionPerformanceTest {
         // 17,543,859,649 ops per second
         // and it eventually gets optimised away
 
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
         Type genericType = null;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             genericType = fieldOnPojo.getGenericType();
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 genericType = fieldOnPojo.getGenericType();
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(genericType);
@@ -201,18 +202,18 @@ public class ReflectionPerformanceTest {
         // 46,265,324 ops per second
         // 101,162,867 ops per second on 2nd and 3rd times
 
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
         Type[] actualTypeArguments = null;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 actualTypeArguments = ((ParameterizedType) fieldOnPojo.getGenericType()).getActualTypeArguments();
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(Arrays.toString(actualTypeArguments));
@@ -222,18 +223,18 @@ public class ReflectionPerformanceTest {
 
     @Test
     public void outputPerformanceForSetAccessible() throws NoSuchFieldException, InterruptedException {
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
         // 1,884,765,441 ops per second (same for false)
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             fieldOnPojo.setAccessible(true);
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 fieldOnPojo.setAccessible(true);
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             testCleanup();
@@ -243,7 +244,7 @@ public class ReflectionPerformanceTest {
 
     @Test
     public void outputPerformanceForGetValue() throws Exception {
-        final Field fieldOnPojo = this.getClass().getDeclaredField("listField");
+        Field fieldOnPojo = this.getClass().getDeclaredField("listField");
         // 239,823,682 ops per second
         Object fieldValue = null;
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
@@ -251,11 +252,11 @@ public class ReflectionPerformanceTest {
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 fieldValue = fieldOnPojo.get(this);
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(fieldValue);
@@ -265,23 +266,23 @@ public class ReflectionPerformanceTest {
 
     @Test
     public void outputMatcherResults() throws Exception {
-        final String fieldName = "theFieldName";
+        String fieldName = "theFieldName";
         // 1,158,292 ops per second using String matches
         // 1,045,351 ops per second using Pattern matches (new pattern every time)
         // 3,655,348 ops per second when you compile the pattern
         boolean validFieldName = false;
-        final Pattern pattern = Pattern.compile("([a-zA-Z_][\\w$]*)");
+        Pattern pattern = Pattern.compile("([a-zA-Z_][\\w$]*)");
 
         for (int i = 0; i < NUMBER_OF_TIMES_FOR_WARMUP; i++) {
             validFieldName = isValidFieldName(fieldName, pattern);
         }
 
         for (int i = 0; i < 3; i++) {
-            final long startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             for (int j = 0; j < NUMBER_OF_TIMES_TO_RUN; j++) {
                 validFieldName = isValidFieldName(fieldName, pattern);
             }
-            final long endTime = System.nanoTime();
+            long endTime = System.nanoTime();
 
             outputResults(startTime, endTime);
             System.out.println(validFieldName);
@@ -292,15 +293,15 @@ public class ReflectionPerformanceTest {
     private boolean isValidFieldName(final String fieldName, final Pattern pattern) {
         //We need to document that fields starting with a $ will be ignored
         //and we probably need to be able to either disable this validation or make it pluggable
-        final Matcher matcher = pattern.matcher(fieldName);
+        Matcher matcher = pattern.matcher(fieldName);
         return matcher.matches();
     }
 
-
     private void outputResults(final long startTime, final long endTime) {
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
         System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
         System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos, NUMBER_OF_TIMES_TO_RUN)));
     }
+    //CHECKSTYLE:ON
 }

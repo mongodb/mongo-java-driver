@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 def configDir = new File(rootDir, 'config')
 
 buildscript {
@@ -43,8 +41,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     group = 'org.mongodb'
     version = '3.0.0-SNAPSHOT'
-    sourceCompatibility = '1.6'
-    targetCompatibility = '1.6'
+    sourceCompatibility = JavaVersion.VERSION_1_6
+    targetCompatibility = JavaVersion.VERSION_1_6
 
     repositories {
         mavenCentral()
@@ -88,6 +86,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
        	        'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
                 'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword', 'changeit'),
                 'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword', 'changeit')
+            
         )
 
         if (project.buildingWith('ssl.enabled')) {
@@ -175,15 +174,14 @@ project(':driver') {
 
     sourceSets {
         test {
-            groovy { srcDirs = ['src/test/unit'] }
-            java { srcDirs = ['src/test/unit'] }
+            groovy { srcDirs = ['src/test/unit','src/test/functional'] }
+            //Note: no groovy/spock tests in acceptance, these are Java tests
+            java { srcDirs = ['src/test/unit','src/test/functional','src/test/acceptance','src/performance'] }
         }
-        functional {
-            java { srcDirs = ['src/test/functional'] }
-            groovy { srcDirs = ['src/test/functional'] }
-        }
-        //Note: no groovy/spock tests in acceptance, these are Java tests
-        acceptance { java.srcDirs = ['src/test/acceptance'] }
+    }
+
+    test{
+        exclude 'org/mongodb/performance/**'
     }
 
     dependencies {
@@ -194,23 +192,6 @@ project(':driver') {
         }
         testCompile 'cglib:cglib-nodep:2.2.2'
         testCompile 'org.objenesis:objenesis:1.3'
-        functionalCompile sourceSets.test.runtimeClasspath
-        acceptanceCompile sourceSets.functional.runtimeClasspath
-    }
-
-    task functionalTest(type: Test, dependsOn: test) {
-        testClassesDir = sourceSets.functional.output.classesDir
-        classpath = sourceSets.functional.runtimeClasspath
-    }
-
-    task functionalTestNoDependencies(type: Test) {
-        testClassesDir = sourceSets.functional.output.classesDir
-        classpath = sourceSets.functional.runtimeClasspath
-    }
-
-    task acceptanceTest(type: Test, dependsOn: functionalTest) {
-        testClassesDir = sourceSets.acceptance.output.classesDir
-        classpath = sourceSets.acceptance.runtimeClasspath
     }
 
     codenarc {
@@ -233,11 +214,12 @@ project(':driver-compat') {
     sourceSets {
         test {
             groovy.srcDirs = ['src/test/unit']
-            java.srcDirs = ['src/test/unit']
+            java.srcDirs = ['src/test/unit','src/test/legacy','src/examples']
         }
-        legacy {
-            java.srcDirs = ['src/test/legacy']
-        }
+    }
+
+    test{
+        exclude 'tour/**'
     }
 
     dependencies {
@@ -250,14 +232,6 @@ project(':driver-compat') {
         testCompile 'cglib:cglib-nodep:2.2.2'
         testCompile 'org.objenesis:objenesis:1.3'
         testCompile 'org.hamcrest:hamcrest-all:1.3'
-        legacyCompile sourceSets.test.runtimeClasspath
-
-    }
-
-
-    task legacyTest(type: Test, dependsOn: test) {
-        testClassesDir = sourceSets.legacy.output.classesDir
-        classpath = sourceSets.legacy.runtimeClasspath
     }
 
     clirr {
@@ -292,9 +266,9 @@ task wrapper(type: Wrapper) {
 
 gradle.buildFinished { BuildResult result ->
     if (result.failure && !JavaVersion.current().isJava7Compatible()) {
-        gradle.rootProject.logger.error("\n* Warning:\nJDK ${JavaVersion.VERSION_1_7} is minimal requirement for building the driver. You have ${JavaVersion.current()}.")
+        gradle.rootProject.logger.error("\n* Warning:\nJDK ${JavaVersion.VERSION_1_7} is minimal requirement for building the driver. " +
+                                        "You have ${JavaVersion.current()}.")
     }
 }
 
-apply from: 'gradle/ide-settings.gradle'
 apply from: 'gradle/release-process.gradle'

@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.mongodb.performance.codecs;
 
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriterSettings;
+import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.CodeWithScope;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.PrimitiveCodecs;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -33,9 +36,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.mongodb.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
-import static org.mongodb.codecs.PerfTestUtils.calculateOperationsPerSecond;
-import static org.mongodb.codecs.PerfTestUtils.testCleanup;
+import static org.mongodb.performance.codecs.PerfTestUtils.NUMBER_OF_NANO_SECONDS_IN_A_SECOND;
+import static org.mongodb.performance.codecs.PerfTestUtils.calculateOperationsPerSecond;
+import static org.mongodb.performance.codecs.PerfTestUtils.testCleanup;
 
 public class DocumentDecodingPerformanceTest {
     private static final int NUMBER_OF_TIMES_FOR_WARMUP = 10000;
@@ -51,8 +54,8 @@ public class DocumentDecodingPerformanceTest {
     public void outputBaselinePerformanceForEmptyDocument() throws Exception {
         // 9,223,774 ops per second - about the same scale as encoding when encoding uses the real reader (10,837,117 ops per second)
         // 23,595,719 ops per second baseline (no decode) - so the constant creation of readers doesn't hurt us
-        final Document documentToRead = new Document();
-        final byte[] emptyDocumentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        Document documentToRead = new Document();
+        byte[] emptyDocumentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
 
         //warmup
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, emptyDocumentAsByteArrayForReader);
@@ -72,8 +75,8 @@ public class DocumentDecodingPerformanceTest {
     public void outputPerformanceForADocumentWithASingleIntField() throws Exception {
         //3,321,071 ops per second ops per second
         //for a single, primitive (int) field.  Not quite an order of magnitude slower than empty doc
-        final Document documentToRead = new Document("anIntValue", 34);
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        Document documentToRead = new Document("anIntValue", 34);
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
 
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
@@ -91,8 +94,8 @@ public class DocumentDecodingPerformanceTest {
     public void outputPerformanceForADocumentWithASingleStringField() throws Exception {
         //2,714,063 ops per second ops per second
         //for a single, String field.  Nearly an order of magnitude slower than an empty doc, and slower than int
-        final Document documentToRead = new Document("aString", "theValue");
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        Document documentToRead = new Document("aString", "theValue");
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -109,9 +112,9 @@ public class DocumentDecodingPerformanceTest {
     public void outputPerformanceForIntArray() throws Exception {
         //1,929,484 ops per second
         //Same order of magnitude as a single field
-        final Document documentToRead = new Document("theArray", new int[]{1, 2, 3});
+        Document documentToRead = new Document("theArray", new int[]{1, 2, 3});
 
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -128,9 +131,9 @@ public class DocumentDecodingPerformanceTest {
     public void outputPerformanceForListOfPrimitives() throws Exception {
         // 1,907,792 ops per second
         // not surprisingly the same sort of number as an array
-        final Document documentToRead = new Document("theArray", Arrays.asList(1, 2, 3));
+        Document documentToRead = new Document("theArray", Arrays.asList(1, 2, 3));
 
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -146,12 +149,12 @@ public class DocumentDecodingPerformanceTest {
     @Test
     public void outputPerformanceForSimpleMap() throws Exception {
         //1,580,562 ops per second
-        final Document documentToRead = new Document();
-        final Map<String, String> map = new HashMap<String, String>();
+        Document documentToRead = new Document();
+        Map<String, String> map = new HashMap<String, String>();
         map.put("field1", "field 1 value");
         documentToRead.append("theMap", map);
 
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -168,11 +171,11 @@ public class DocumentDecodingPerformanceTest {
     public void outputPerformanceForNestedDocument() throws Exception {
         //1,552,114 ops per second
         //same sort of results as Map, not surprisingly
-        final Document documentToRead = new Document();
-        final Document subDocument = new Document("field1", "field 1 value");
+        Document documentToRead = new Document();
+        Document subDocument = new Document("field1", "field 1 value");
         documentToRead.append("theSubDocument", subDocument);
 
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -188,11 +191,11 @@ public class DocumentDecodingPerformanceTest {
     @Test
     public void outputPerformanceForCodeWithScope() throws Exception {
         //1,339,085 ops per second
-        final Document documentToRead = new Document();
-        final CodeWithScope codeWithScope = new CodeWithScope("the javascript", new Document("field1", "field 1 value"));
+        Document documentToRead = new Document();
+        CodeWithScope codeWithScope = new CodeWithScope("the javascript", new Document("field1", "field 1 value"));
         documentToRead.append("theCodeWithScope", codeWithScope);
 
-        final byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
+        byte[] documentAsByteArrayForReader = gatherTestData(documentToRead).toByteArray();
         decodeDocument(NUMBER_OF_TIMES_FOR_WARMUP, documentAsByteArrayForReader);
 
         for (int i = 0; i < 3; i++) {
@@ -218,17 +221,19 @@ public class DocumentDecodingPerformanceTest {
         }
     }
 
+    //CHECKSTYLE:OFF
     private void outputResults(final long startTime, final long endTime) {
-        final long timeTakenInNanos = endTime - startTime;
+        long timeTakenInNanos = endTime - startTime;
         System.out.println(format("Test took: %,d ns", timeTakenInNanos));
         System.out.println(format("Test took: %,.3f seconds", timeTakenInNanos / NUMBER_OF_NANO_SECONDS_IN_A_SECOND));
         System.out.println(format("%,.0f ops per second%n", calculateOperationsPerSecond(timeTakenInNanos,
                                                                                          NUMBER_OF_TIMES_TO_RUN)));
     }
+    //CHECKSTYLE:ON
 
     private void decodeDocument(final int timesToRun, final byte[] inputAsByteArray) {
         for (int i = 0; i < timesToRun; i++) {
-            final BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(ByteBuffer.wrap(inputAsByteArray)), true);
+            BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(inputAsByteArray))), true);
             try {
                 documentCodec.decode(reader);
             } finally {
