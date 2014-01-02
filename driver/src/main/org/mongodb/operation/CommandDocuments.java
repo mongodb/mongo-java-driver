@@ -21,6 +21,7 @@ import org.mongodb.Document;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
+import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
 final class CommandDocuments {
     private CommandDocuments() {
@@ -28,19 +29,19 @@ final class CommandDocuments {
 
     static Document createMapReduce(final String collectionName, final MapReduce mapReduce) {
 
-        Document commandDocument = new Document("mapReduce", collectionName)
+        Document commandDocument = new Document("mapreduce", collectionName)
                                    .append("map", mapReduce.getMapFunction())
                                    .append("reduce", mapReduce.getReduceFunction())
                                    .append("out", mapReduce.isInline() ? new Document("inline", 1)
                                                                        : outputAsDocument(mapReduce.getOutput()))
                                    .append("query", mapReduce.getFilter())
                                    .append("sort", mapReduce.getSortCriteria())
-                                   .append("limit", mapReduce.getLimit())
                                    .append("finalize", mapReduce.getFinalizeFunction())
                                    .append("scope", mapReduce.getScope())
-                                   .append("jsMode", mapReduce.isJsMode())
                                    .append("verbose", mapReduce.isVerbose());
+        putIfNotZero(commandDocument, "limit", mapReduce.getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", mapReduce.getMaxTime(MILLISECONDS));
+        putIfTrue(commandDocument, "jsMode", mapReduce.isJsMode());
         return commandDocument;
     }
 
