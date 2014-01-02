@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.QueryFlag.Exhaust;
@@ -58,6 +60,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustReadAllDocuments() {
+        assumeFalse(isSharded());
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                                            new Find().addFlags(EnumSet.of(Exhaust)),
                                                                            collection.getOptions().getDocumentCodec(),
@@ -76,6 +79,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
+        assumeFalse(isSharded());
         Server server = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()));
         Connection connection = server.getConnection();
         try {
