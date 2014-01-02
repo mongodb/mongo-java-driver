@@ -37,10 +37,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.clusterIsType;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.getPrimary;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
@@ -214,7 +217,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testOldAggregationWithOutOnSecondary() throws UnknownHostException {
+    public void testOldAggregationWithOutOnSecondary() throws UnknownHostException, InterruptedException {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
@@ -225,8 +228,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .hasNext());
         assertEquals(database.getCollection("aggCollection")
             .count(), 2);
-        assertEquals(new ServerAddress("localhost"), out.getCommandResult()
-            .getServerUsed());
+        assertEquals(getPrimary(), out.getCommandResult().getServerUsed().toNew());
     }
 
     @Test
@@ -250,6 +252,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTime() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");

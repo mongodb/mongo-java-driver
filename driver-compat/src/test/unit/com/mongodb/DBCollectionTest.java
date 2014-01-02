@@ -55,9 +55,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCollectionTest extends DatabaseTestCase {
@@ -340,6 +342,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndUpdateTimeout() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
@@ -353,6 +356,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndReplaceTimeout() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
@@ -366,6 +370,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndRemoveTimeout() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();

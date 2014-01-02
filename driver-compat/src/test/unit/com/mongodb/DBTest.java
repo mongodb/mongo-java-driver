@@ -49,6 +49,7 @@ import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 @SuppressWarnings("deprecation")
@@ -181,6 +182,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetStats() {
+        assumeFalse(isSharded());
         assertThat(database.getStats(), hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
 
@@ -192,6 +194,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         try {
@@ -204,6 +207,7 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
+        assumeFalse(isSharded());
         CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }

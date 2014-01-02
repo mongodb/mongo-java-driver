@@ -32,9 +32,11 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCursorTest extends DatabaseTestCase {
@@ -53,7 +55,9 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @After
     public void after() {
-        cursor.close();
+        if (cursor != null) {
+            cursor.close();
+        }
     }
 
     @Test
@@ -357,6 +361,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForIterable() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -373,6 +378,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForOne() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -389,6 +395,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForCount() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -405,6 +412,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForSize() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());

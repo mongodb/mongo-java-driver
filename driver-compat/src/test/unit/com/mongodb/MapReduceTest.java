@@ -41,9 +41,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class MapReduceTest extends DatabaseTestCase {
@@ -84,6 +86,7 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testMapReduceExecutionTimeout() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         try {

@@ -38,9 +38,11 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getExecutor;
+import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.operation.QueryFlag.Exhaust;
 
 @Category(Async.class)
@@ -102,6 +104,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaust() throws InterruptedException {
+        assumeFalse(isSharded());
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
@@ -117,6 +120,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
+        assumeFalse(isSharded());
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
@@ -132,6 +136,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
+        assumeFalse(isSharded());
         Session pinnedSession = new PinnedSession(getCluster(), getExecutor());
 
         try {

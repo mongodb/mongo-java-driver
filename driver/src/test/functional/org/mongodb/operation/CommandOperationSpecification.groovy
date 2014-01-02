@@ -28,15 +28,18 @@ import org.mongodb.ReadPreference
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
+import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.Fixture.session
 
 class CommandOperationSpecification extends FunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
 
         given:
@@ -57,8 +60,9 @@ class CommandOperationSpecification extends FunctionalSpecification {
     }
 
     def 'should throw execution timeout exception from executeAsync'() {
+        assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
-            assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,

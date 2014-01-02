@@ -33,6 +33,7 @@ import java.util.concurrent.Executor;
 import static java.util.Arrays.asList;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
+import static org.mongodb.connection.ClusterType.SHARDED;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
@@ -163,6 +164,11 @@ public final class Fixture {
                && mongoClient.getCluster().getDescription().getConnectionMode() == MULTIPLE;
     }
 
+    public static boolean isSharded() {
+        getMongoClient();
+        return mongoClient.getCluster().getDescription().getType() == SHARDED;
+    }
+
     public static boolean isAuthenticated() {
         return !getMongoClientURI().getCredentialList().isEmpty();
     }
@@ -174,7 +180,7 @@ public final class Fixture {
     }
 
     public static void disableMaxTimeFailPoint() {
-        if (serverVersionAtLeast(asList(2, 5, 3))) {
+        if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
             getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                                  .append("mode", "off"),
                                                                  ReadPreference.primary());
