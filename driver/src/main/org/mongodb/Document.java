@@ -133,6 +133,11 @@ public class Document implements Map<String, Object>, Serializable {
         return (Integer) get(key);
     }
 
+    public int getInteger(final Object key, final int defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Integer) value;
+    }
+
     public Long getLong(final Object key) {
         return (Long) get(key);
     }
@@ -147,6 +152,11 @@ public class Document implements Map<String, Object>, Serializable {
 
     public Boolean getBoolean(final Object key) {
         return (Boolean) get(key);
+    }
+
+    public boolean getBoolean(final Object key, final boolean defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Boolean) value;
     }
 
     public ObjectId getObjectId(final Object key) {
