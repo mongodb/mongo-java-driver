@@ -29,10 +29,10 @@ class CommandDocumentsHelperSpecification extends Specification {
         Document document = CommandDocuments.createMapReduce('foo', mapReduce);
         document.get('query') == query
         document.get('sort') == sort
-        document.get('limit') == limit
+        document.getInteger('limit', 0) == limit
         document.get('finalize') == finalize
         document.get('scope') == scope
-        document.get('jsMode') == jsMode
+        document.getBoolean('jsMode', false) == jsMode
         document.get('verbose') == verbose
 
         where:
