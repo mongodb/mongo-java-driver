@@ -254,75 +254,46 @@ public class DBApiLayer extends DB {
             _options = options;
             _host = res._host;
             _decoder = decoder;
-            init( res );
             // Only enable finalizer if cursor finalization is enabled and there is actually a cursor that needs killing
             _optionalFinalizer = coll.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && res.cursor() != 0 ?
                     new OptionalFinalizer() : null;
+            init( res );
         }
 
-        private void init( Response res ){
-            throwOnQueryFailure(res, _curResult == null ? 0 : _curResult._cursor);
-
-            _totalBytes += res._len;
-            _curResult = res;
-            _cur = res.iterator();
-            _sizes.add( res.size() );
-            _numFetched += res.size();
-
-            if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
-                // fetched all docs within limit, close cursor server-side
-                killCursor();
-            }
-        }
-
-        public DBObject next(){
-            if ( _cur.hasNext() ) {
-                return _cur.next();
+        public DBObject next() {
+            while (true) {
+                if (!(hasNext() && !_cur.hasNext())) {
+                    break;
+                }
             }
 
-            if ( ! _curResult.hasGetMore( _options ) )
-                throw new NoSuchElementException("no more");
+            if (!hasNext()) {
+                throw new NoSuchElementException("no more documents in query result iterator");
+            }
 
-            _advance();
-            return next();
+            return _cur.next();
         }
 
         public boolean hasNext(){
-            boolean hasNext = _cur.hasNext();
-            while ( !hasNext ) {
-                if ( ! _curResult.hasGetMore( _options ) )
-                    return false;
-
-                _advance();
-                hasNext = _cur.hasNext();
-                
-                if (!hasNext) {
-                    if ( ( _options & Bytes.QUERYOPTION_AWAITDATA ) == 0 ) {
-                        // dont block waiting for data if no await
-                        return false;
-                    } else {
-                        // if await, driver should block until data is available
-                        // if server does not support await, driver must sleep to avoid busy loop
-                        if ((_curResult._flags & Bytes.RESULTFLAG_AWAITCAPABLE) == 0) {
-                            try {
-                                Thread.sleep(500);
-                            } catch (InterruptedException e) {
-                                throw new MongoInterruptedException(e);
-                            }
-                        }
-                    }
-                }
+            if (_cur.hasNext()) {
+                return true;
             }
-            return hasNext;
+
+            if (!hasGetMore()) {
+                return false;
+            }
+
+            _advance();
+
+            return _cur.hasNext() || awaitResultsFromTailable();
         }
 
         private void _advance(){
+            if (_cursorId == 0) {
+                throw new MongoInternalException("can't advance when there is no cursor id");
+            }
 
-            if ( _curResult.cursor() <= 0 )
-                throw new RuntimeException( "can't advance a cursor <= 0" );
-
-            OutMessage m = OutMessage.getMore(_collection, _curResult.cursor(),
-                    chooseBatchSize(_batchSize, _limit, _numFetched));
+            OutMessage m = OutMessage.getMore(_collection, _cursorId, chooseBatchSize(_batchSize, _limit, _numFetched));
 
             Response res = _connector.call(_collection.getDB() , _collection , m , _host, _decoder );
             _numGetMores++;
@@ -330,29 +301,15 @@ public class DBApiLayer extends DB {
         }
 
         public void remove(){
-            throw new RuntimeException( "can't remove this way" );
-        }
-
-        public int getBatchSize(){
-            return _batchSize;
+            throw new UnsupportedOperationException("can't remove a document via a query result iterator");
         }
 
         public void setBatchSize(int size){
             _batchSize = size;
         }
 
-        public String toString(){
-            return "DBCursor";
-        }
-
-        public long totalBytes(){
-            return _totalBytes;
-        }
-
         public long getCursorId(){
-            if ( _curResult == null )
-                return 0;
-            return _curResult._cursor;
+            return _cursorId;
         }
 
         int numGetMores(){
@@ -364,31 +321,62 @@ public class DBApiLayer extends DB {
         }
 
         void close(){
-            // not perfectly thread safe here, may need to use an atomicBoolean
-            if (_curResult != null) {
+            if (!closed) {
+                closed = true;
                 killCursor();
-                _curResult = null;
-                _cur = null;
             }
         }
 
-        void killCursor() {
-            if (_curResult == null)
-                return;
-            long curId = _curResult.cursor();
-            if (curId == 0)
-                return;
+        private void init( Response res ){
+            throwOnQueryFailure(res, _cursorId);
 
-            List<Long> l = new ArrayList<Long>();
-            l.add(curId);
+            _cursorId = res.cursor();
+            _cur = res.iterator();
+            _curSize = res.size();
+            _sizes.add( res.size() );
+            _numFetched += res.size();
+
+            if (res._cursor != 0 && _limit > 0 && _limit - _numFetched <= 0) {
+                // fetched all docs within limit, close cursor server-side
+                killCursor();
+            }
+        }
+
+        public boolean hasGetMore() {
+            if (_cursorId == 0) {
+                return false;
+            }
+
+            if (_curSize > 0) {
+                return true;
+            }
+
+            if (!isTailable()) {
+                return false;
+            }
+
+            // have a tailable cursor, it is always possible to call get more
+            return true;
+        }
+
+        private boolean isTailable() {
+            return (_options & Bytes.QUERYOPTION_TAILABLE) != 0;
+        }
+
+        private boolean awaitResultsFromTailable() {
+            return isTailable() && (_options & Bytes.QUERYOPTION_AWAITDATA) != 0;
+        }
+
+        void killCursor() {
+            if (_cursorId == 0)
+                return;
 
             try {
-                killCursors(_host, l);
-            } catch (Throwable t) {
-                Bytes.LOGGER.log(Level.WARNING, "can't clean 1 cursor", t);
-                _deadCursorIds.add(new DeadCursor(curId, _host));
+                killCursors(_host, asList(_cursorId));
+                _cursorId = 0;
+            } catch (MongoException e) {
+                addDeadCursor(new DeadCursor(_cursorId, _host));
             }
-            _curResult._cursor = 0;
         }
 
         public ServerAddress getServerAddress() {
@@ -399,18 +387,21 @@ public class DBApiLayer extends DB {
             return _optionalFinalizer != null;
         }
 
-        Response _curResult;
-        Iterator<DBObject> _cur;
-        int _batchSize;
-        int _limit;
-        final DBDecoder _decoder;
-        final DBCollectionImpl _collection;
-        final int _options;
-        final ServerAddress _host; // host where first went.  all subsequent have to go there
+        private final DBDecoder _decoder;
+        private final DBCollectionImpl _collection;
+        private final int _options;
+        private final ServerAddress _host;
+        private final int _limit;
 
-        private long _totalBytes = 0;
+        private long _cursorId;
+        private Iterator<DBObject> _cur;
+        private int _curSize;
+        private int _batchSize;
+
+        private boolean closed;
+
+        private final List<Integer> _sizes = new ArrayList<Integer>();
         private int _numGetMores = 0;
-        private List<Integer> _sizes = new ArrayList<Integer>();
         private int _numFetched = 0;
 
         // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
@@ -418,19 +409,19 @@ public class DBApiLayer extends DB {
 
         private class OptionalFinalizer {
             @Override
-            protected void finalize() {
-                if (_curResult != null) {
-                    long curId = _curResult.cursor();
-                    _curResult = null;
-                    _cur = null;
-                    if (curId != 0) {
-                        _deadCursorIds.add(new DeadCursor(curId, _host));
-                    }
+            protected void finalize() throws Throwable {
+                if (!closed && _cursorId != 0) {
+                    addDeadCursor(new DeadCursor(_cursorId, _host));
                 }
+                super.finalize();
             }
         }
 
-    }  // class Result
+    }
+
+    void addDeadCursor(final DeadCursor deadCursor) {
+        _deadCursorIds.add(deadCursor);
+    }
 
     static class DeadCursor {
 

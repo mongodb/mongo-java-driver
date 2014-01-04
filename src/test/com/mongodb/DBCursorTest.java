@@ -24,13 +24,14 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -168,37 +169,36 @@ public class DBCursorTest extends TestCase {
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
                               .addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
-        Callable<Object> callable = new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-                try {
-                    // the following call will block on the last hasNext
-                    int i = 0;
-                    while (cur.hasNext()) {
-                        DBObject obj = cur.next();
-                        i++;
-                        if (i > 10) {
-                            return obj.get("x");
-                        }
-                    }
 
-                    return null;
-                } catch (Throwable e) {
-                    return e;
+        final CountDownLatch latch = new CountDownLatch(1);
+        Callable<Integer> callable = new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                // the following call will block on the last hasNext
+                int i = 0;
+                while (cur.hasNext()) {
+                    DBObject obj = cur.next();
+                    i++;
+                    if (i == 10) {
+                        latch.countDown();
+                    }
+                    else if (i > 10) {
+                        return (Integer) obj.get("x");
+                    }
                 }
+
+                return null;
             }
         };
 
         ExecutorService es = Executors.newSingleThreadExecutor();
-        Future<Object> future = es.submit(callable);
+        Future<Integer> future = es.submit(callable);
 
-        Thread.sleep(5000);
-        assertTrue(!future.isDone());
+        latch.await(5, SECONDS);
 
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
-        Object retVal = future.get(5, TimeUnit.SECONDS);
-        assertEquals(10, retVal);
+        assertEquals(10, (long) future.get(5, SECONDS));
     }
 
     @Test
@@ -511,7 +511,7 @@ public class DBCursorTest extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.maxTime(1, TimeUnit.SECONDS);
+        cursor.maxTime(1, SECONDS);
         try {
             cursor.hasNext();
             fail("Show have thrown");
@@ -528,7 +528,7 @@ public class DBCursorTest extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.maxTime(1, TimeUnit.SECONDS);
+        cursor.maxTime(1, SECONDS);
         try {
             cursor.iterator().hasNext();
             fail("Show have thrown");
@@ -545,7 +545,7 @@ public class DBCursorTest extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.maxTime(1, TimeUnit.SECONDS);
+        cursor.maxTime(1, SECONDS);
         try {
             cursor.one();
             fail("Show have thrown");
@@ -562,7 +562,7 @@ public class DBCursorTest extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.maxTime(1, TimeUnit.SECONDS);
+        cursor.maxTime(1, SECONDS);
         try {
             cursor.count();
             fail("Show have thrown");
@@ -579,7 +579,7 @@ public class DBCursorTest extends TestCase {
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
-        cursor.maxTime(1, TimeUnit.SECONDS);
+        cursor.maxTime(1, SECONDS);
         try {
             cursor.size();
             fail("Show have thrown");

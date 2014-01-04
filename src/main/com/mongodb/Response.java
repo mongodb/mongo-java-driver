@@ -101,25 +101,11 @@ class Response {
 	}
 
     public DBObject get( int i ){
-        return _objects.get( i );
+        return _objects.get(i);
     }
 
     public Iterator<DBObject> iterator(){
         return _objects.iterator();
-    }
-
-    public boolean hasGetMore( int queryOptions ){
-        if ( _cursor == 0 )
-            return false;
-
-        if ( _num > 0 )
-            return true;
-
-        if ( ( queryOptions & Bytes.QUERYOPTION_TAILABLE ) == 0 )
-            return false;
-
-        // have a tailable cursor, it is always possible to call get more
-        return true;
     }
 
     public long cursor(){
