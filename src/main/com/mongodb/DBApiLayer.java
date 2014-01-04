@@ -245,9 +245,13 @@ public class DBApiLayer extends DB {
         }
     }
 
-    class Result implements Iterator<DBObject> {
+    static class Result implements Iterator<DBObject> {
 
-        Result( DBCollectionImpl coll , Response res , int batchSize, int limit , int options, DBDecoder decoder ){
+        private DBApiLayer db;
+
+        Result(final DBApiLayer db, DBCollectionImpl coll, Response res, int batchSize, int limit,
+               int options, DBDecoder decoder){
+            this.db = db;
             _collection = coll;
             _batchSize = batchSize;
             _limit = limit;
@@ -295,7 +299,7 @@ public class DBApiLayer extends DB {
 
             OutMessage m = OutMessage.getMore(_collection, _cursorId, chooseBatchSize(_batchSize, _limit, _numFetched));
 
-            Response res = _connector.call(_collection.getDB() , _collection , m , _host, _decoder );
+            Response res = db._connector.call(_collection.getDB(), _collection, m, _host, _decoder);
             _numGetMores++;
             init( res );
         }
@@ -372,10 +376,10 @@ public class DBApiLayer extends DB {
                 return;
 
             try {
-                killCursors(_host, asList(_cursorId));
+                db.killCursors(_host, asList(_cursorId));
                 _cursorId = 0;
             } catch (MongoException e) {
-                addDeadCursor(new DeadCursor(_cursorId, _host));
+                db.addDeadCursor(new DeadCursor(_cursorId, _host));
             }
         }
 
@@ -411,7 +415,7 @@ public class DBApiLayer extends DB {
             @Override
             protected void finalize() throws Throwable {
                 if (!closed && _cursorId != 0) {
-                    addDeadCursor(new DeadCursor(_cursorId, _host));
+                    db.addDeadCursor(new DeadCursor(_cursorId, _host));
                 }
                 super.finalize();
             }
