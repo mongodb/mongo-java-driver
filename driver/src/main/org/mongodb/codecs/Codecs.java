@@ -73,7 +73,7 @@ public class Codecs implements Codec<Object> {
             arrayCodec.encode(bsonWriter, object);
         } else if (object instanceof Map) {
             encode(bsonWriter, (Map) object);
-        } else {
+        }  else {
             encoderRegistry.getDefaultEncoder().encode(bsonWriter, object);
         }
     }
@@ -130,9 +130,9 @@ public class Codecs implements Codec<Object> {
     }
 
     public boolean canDecode(final Class<?> theClass) {
-        return theClass.getClass().isArray()
+        return theClass.isArray()
                || primitiveCodecs.canDecode(theClass)
-               || iterableCodec.getEncoderClass().isInstance(theClass)
+               || iterableCodec.getEncoderClass().isAssignableFrom(theClass)
                || mapCodec.getEncoderClass().isAssignableFrom(theClass)
                || dbRefEncoder.getEncoderClass().isInstance(theClass)
                || codeWithScopeCodec.getEncoderClass().isInstance(theClass)
