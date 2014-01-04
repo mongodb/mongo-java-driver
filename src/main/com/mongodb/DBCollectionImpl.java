@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import static com.mongodb.WriteCommandResultHelper.getBulkWriteException;
 import static com.mongodb.WriteCommandResultHelper.getBulkWriteResult;
 import static com.mongodb.WriteCommandResultHelper.hasError;
+import static com.mongodb.QueryResultIterator.chooseBatchSize;
 import static com.mongodb.WriteRequest.Type.INSERT;
 import static com.mongodb.WriteRequest.Type.REMOVE;
 import static com.mongodb.WriteRequest.Type.REPLACE;
@@ -53,14 +54,14 @@ class DBCollectionImpl extends DBCollection {
     }
 
     @Override
-    Iterator<DBObject> __find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
-                              ReadPreference readPref, DBDecoder decoder) {
-        return __find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
+    QueryResultIterator find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
+                             ReadPreference readPref, DBDecoder decoder) {
+        return find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
     }
 
     @Override
-    Iterator<DBObject> __find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
-                              ReadPreference readPref, DBDecoder decoder, DBEncoder encoder) {
+    QueryResultIterator find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
+                             ReadPreference readPref, DBDecoder decoder, DBEncoder encoder) {
 
         if (ref == null) {
             ref = new BasicDBObject();
@@ -70,15 +71,36 @@ class DBCollectionImpl extends DBCollection {
             trace("find: " + namespace + " " + JSON.serialize(ref));
         }
 
-        OutMessage query = OutMessage.query(this, options, numToSkip, DBApiLayer.chooseBatchSize(batchSize, limit, 0), ref, fields,
-                                            readPref, encoder);
+        OutMessage query = OutMessage.query(this, options, numToSkip, chooseBatchSize(batchSize, limit, 0), ref, fields, readPref, encoder);
 
         Response res = db.getConnector().call(_db, this, query, null, 2, readPref, decoder);
 
-        DBApiLayer.throwOnQueryFailure(res, 0);
-
         return new QueryResultIterator(db, this, res, batchSize, limit, options, decoder);
     }
+
+    public MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
+                                 final ReadPreference readPreference) {
+
+        if(options == null) {
+            throw new IllegalArgumentException("options can not be null");
+        }
+        DBObject last = pipeline.get(pipeline.size() - 1);
+
+        DBObject command = prepareCommand(pipeline, options);
+
+        final CommandResult res = _db.command(command, getOptions(), readPreference);
+        res.throwOnError();
+
+        String outCollection = (String) last.get("$out");
+        if (outCollection != null) {
+            DBCollection collection = _db.getCollection(outCollection);
+            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary()));
+        } else {
+            Integer batchSize = options.getBatchSize();
+            return new QueryResultIterator(res, db, this, batchSize == null ? 0 : batchSize, getDecoder());
+        }
+    }
+
 
     @Override
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,

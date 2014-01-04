@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.BSONObject;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,29 +42,6 @@ public class DBApiLayer extends DB {
 
     DBTCPConnector getConnector() {
         return _connector;
-    }
-
-    static int chooseBatchSize(int batchSize, int limit, int fetched) {
-        int bs = Math.abs(batchSize);
-        int remaining = limit > 0 ? limit - fetched : 0;
-        int res;
-        if (bs == 0 && remaining > 0)
-            res = remaining;
-        else if (bs > 0 && remaining == 0)
-            res = bs;
-        else
-            res = Math.min(bs, remaining);
-
-        if (batchSize < 0) {
-            // force close
-            res = -res;
-        }
-
-        if (res == 1) {
-            // optimization: use negative batchsize to close cursor
-            res = -1;
-        }
-        return res;
     }
 
     /**
@@ -224,21 +199,6 @@ public class DBApiLayer extends DB {
 
     private boolean useUserCommands(final DBPort port) {
         return _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
-    }
-
-    static void throwOnQueryFailure(final Response res, final long cursor) {
-        if ((res._flags & Bytes.RESULTFLAG_ERRSET) > 0) {
-            BSONObject errorDocument = res.get(0);
-            if (ServerError.getCode(errorDocument) == 50) {
-                throw new MongoExecutionTimeoutException(ServerError.getCode(errorDocument),
-                                                         ServerError.getMsg(errorDocument, null));
-            } else {
-                throw new MongoException(ServerError.getCode(errorDocument), ServerError.getMsg(errorDocument, null));
-            }
-        }
-        else if ((res._flags & Bytes.RESULTFLAG_CURSORNOTFOUND) > 0) {
-            throw new MongoException.CursorNotFound(cursor, res.serverUsed());
-        }
     }
 
     void addDeadCursor(final DeadCursor deadCursor) {

@@ -305,10 +305,11 @@ public abstract class DBCollection {
     /**
      * Finds objects
      */
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options, ReadPreference readPref, DBDecoder decoder );
+    abstract QueryResultIterator find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
+                                      ReadPreference readPref, DBDecoder decoder);
 
-    abstract Iterator<DBObject> __find( DBObject ref , DBObject fields , int numToSkip , int batchSize , int limit, int options,
-                                        ReadPreference readPref, DBDecoder decoder, DBEncoder encoder );
+    abstract QueryResultIterator find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
+                                      ReadPreference readPref, DBDecoder decoder, DBEncoder encoder);
 
 
     /**
@@ -377,7 +378,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Query
      */
     public DBObject findOne( Object obj, DBObject fields ){
-        Iterator<DBObject> iterator = __find( new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder() );
+        Iterator<DBObject> iterator = find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder());
         return (iterator.hasNext() ? iterator.next() : null);
     }
 
@@ -864,7 +865,7 @@ public abstract class DBCollection {
             queryOpBuilder.addReadPreference(readPref);
         }
 
-        Iterator<DBObject> i = __find(queryOpBuilder.get(), fields , 0 , -1 , 0, getOptions(), readPref, getDecoder() );
+        Iterator<DBObject> i = find(queryOpBuilder.get(), fields, 0, -1, 0, getOptions(), readPref, getDecoder());
         
         DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
@@ -875,7 +876,7 @@ public abstract class DBCollection {
 
     // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
     // so that DBPort will use a cached decoder from the default factory.
-    private DBDecoder getDecoder() {
+    DBDecoder getDecoder() {
         return getDBDecoderFactory() != null ? getDBDecoderFactory().create() : null;
     }
 
@@ -1566,28 +1567,8 @@ public abstract class DBCollection {
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      */
-    public MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
-        final ReadPreference readPreference) {
-        
-        if(options == null) {
-            throw new IllegalArgumentException("options can not be null");
-        }
-        DBObject last = pipeline.get(pipeline.size() - 1);
-        
-        DBObject command = prepareCommand(pipeline, options);
-        
-        final CommandResult res = _db.command(command, getOptions(), readPreference);
-        res.throwOnError();
-
-        String outCollection = (String) last.get("$out");
-        if (outCollection != null) {
-            DBCollection collection = _db.getCollection(outCollection);
-            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary()));
-        } else {
-            Integer batchSize = options.getBatchSize();
-            return new ResultsCursor(res, this, batchSize == null ? 0 : batchSize);
-        }
-    }
+    public abstract MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
+                                          final ReadPreference readPreference);
 
     /**
      * Return the explain plan for the aggregation pipeline.
@@ -1643,7 +1624,7 @@ public abstract class DBCollection {
                                                        final WriteConcern writeConcern, final DBEncoder encoder);
 
     @SuppressWarnings("unchecked")
-    private DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
+    DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }

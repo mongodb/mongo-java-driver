@@ -20,6 +20,7 @@ import org.bson.util.annotations.NotThreadSafe;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -337,8 +338,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             n = 2;
 
         if ( _it != null ) {
-        	if (_it instanceof QueryResultIterator)
-        		((QueryResultIterator)_it).setBatchSize(n);
+            _it.setBatchSize(n);
         }
 
         _batchSize = n;
@@ -363,8 +363,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
-    	if ( _it instanceof QueryResultIterator)
-            return ((QueryResultIterator)_it).getCursorId();
+    	if (_it != null)
+            return _it.getCursorId();
 
     	return 0;
     }
@@ -373,8 +373,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * kills the current cursor on the server.
      */
     public void close() {
-    	if ( _it instanceof QueryResultIterator)
-            ((QueryResultIterator)_it).close();
+    	if (_it != null)
+            _it.close();
     }
 
     /**
@@ -450,8 +450,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             builder.addReadPreference(_readPref);
         }
 
-        _it = _collection.__find(builder.get(), _keysWanted, _skip, _batchSize, _limit,
-                _options, _readPref, getDecoder());
+        _it = _collection.find(builder.get(), _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
     }
 
     // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
@@ -522,11 +521,13 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * gets the number of times, so far, that the cursor retrieved a batch from the database
      * @return
      */
-    public int numGetMores(){
-        if ( _it instanceof QueryResultIterator)
-            return ((QueryResultIterator)_it).numGetMores();
-
-        throw new IllegalArgumentException("_it not a real result" );
+    public int numGetMores() {
+        if (_it != null) {
+            return _it.numGetMores();
+        }
+        else {
+            return 0;
+        }
     }
 
     /**
@@ -534,10 +535,12 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public List<Integer> getSizes(){
-        if ( _it instanceof QueryResultIterator)
-            return ((QueryResultIterator)_it).getSizes();
-
-        throw new IllegalArgumentException("_it not a real result" );
+        if (_it != null) {
+            return _it.getSizes();
+        }
+        else {
+            return Collections.emptyList();
+        }
     }
 
     private boolean _hasNext() {
@@ -663,11 +666,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @throws MongoException
      */
     public int count() {
-        if ( _collection == null )
-            throw new IllegalArgumentException( "why is _collection null" );
-        if ( _collection._db == null )
-            throw new IllegalArgumentException( "why is _collection._db null" );
-
         return (int)_collection.getCount(this._query, this._keysWanted, 0, 0, getReadPreference(), _maxTimeMS, MILLISECONDS);
     }
 
@@ -689,11 +687,6 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @throws MongoException
      */
     public int size() {
-        if ( _collection == null )
-            throw new IllegalArgumentException( "why is _collection null" );
-        if ( _collection._db == null )
-            throw new IllegalArgumentException( "why is _collection._db null" );
-
         return (int)_collection.getCount(this._query, this._keysWanted, this._limit, this._skip, getReadPreference(), _maxTimeMS,
                                          MILLISECONDS);
     }
@@ -729,8 +722,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (_it != null && _it instanceof QueryResultIterator)
-            return ((QueryResultIterator)_it).getServerAddress();
+        if (_it != null)
+            return _it.getServerAddress();
 
         return null;
     }
@@ -790,10 +783,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     boolean hasFinalizer() {
-        if (_it == null || ! (_it instanceof QueryResultIterator)) {
+        if (_it == null) {
             return false;
         }
-        return ((QueryResultIterator) _it).hasFinalizer();
+        return _it.hasFinalizer();
     }
 
     // ----  query setup ----
@@ -817,7 +810,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     private DBObject _specialFields;
 
     // ----  result info ----
-    private Iterator<DBObject> _it = null;
+    private QueryResultIterator _it = null;
 
     private CursorType _cursorType = null;
     private DBObject _cur = null;

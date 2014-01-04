@@ -313,16 +313,14 @@ public abstract class DB {
         ReadPreference effectiveReadPrefs = getCommandReadPreference(cmd, readPreference);
         cmd = wrapCommand(cmd, effectiveReadPrefs);
 
-        Iterator<DBObject> i =
-                getCollection("$cmd").__find(cmd, new BasicDBObject(), 0, -1, 0, options, effectiveReadPrefs ,
-                        DefaultDBDecoder.FACTORY.create(), encoder);
-        if ( i == null || ! i.hasNext() )
+        QueryResultIterator i = getCollection("$cmd").find(cmd, new BasicDBObject(), 0, -1, 0, options, effectiveReadPrefs,
+                                           DefaultDBDecoder.FACTORY.create(), encoder);
+        if (!i.hasNext()) {
             return null;
+        }
 
-        DBObject res = i.next();
-        ServerAddress sa = (i instanceof QueryResultIterator) ? ((QueryResultIterator) i).getServerAddress() : null;
-        CommandResult cr = new CommandResult(sa);
-        cr.putAll( res );
+        CommandResult cr = new CommandResult(i.getServerAddress());
+        cr.putAll(i.next());
         return cr;
     }
 
@@ -508,7 +506,7 @@ public abstract class DB {
         if (namespaces == null)
             throw new RuntimeException("this is impossible");
 
-        Iterator<DBObject> i = namespaces.__find(new BasicDBObject(), null, 0, 0, 0, getOptions(), getReadPreference(), null);
+        Iterator<DBObject> i = namespaces.find(new BasicDBObject(), null, 0, 0, 0, getOptions(), getReadPreference(), null);
         if (i == null)
             return new HashSet<String>();
 
