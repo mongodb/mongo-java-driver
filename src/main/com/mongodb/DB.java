@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.DBApiLayer.Result;
 import com.mongodb.util.Util;
 import org.bson.BSONObject;
 
@@ -321,7 +320,7 @@ public abstract class DB {
             return null;
 
         DBObject res = i.next();
-        ServerAddress sa = (i instanceof Result) ? ((Result) i).getServerAddress() : null;
+        ServerAddress sa = (i instanceof QueryResultIterator) ? ((QueryResultIterator) i).getServerAddress() : null;
         CommandResult cr = new CommandResult(sa);
         cr.putAll( res );
         return cr;

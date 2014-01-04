@@ -77,7 +77,7 @@ class DBCollectionImpl extends DBCollection {
 
         DBApiLayer.throwOnQueryFailure(res, 0);
 
-        return new DBApiLayer.Result(db, this, res, batchSize, limit, options, decoder);
+        return new QueryResultIterator(db, this, res, batchSize, limit, options, decoder);
     }
 
     @Override

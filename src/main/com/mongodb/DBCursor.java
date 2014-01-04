@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.DBApiLayer.Result;
 import org.bson.util.annotations.NotThreadSafe;
 
 import java.io.Closeable;
@@ -338,8 +337,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
             n = 2;
 
         if ( _it != null ) {
-        	if (_it instanceof DBApiLayer.Result)
-        		((DBApiLayer.Result)_it).setBatchSize(n);
+        	if (_it instanceof QueryResultIterator)
+        		((QueryResultIterator)_it).setBatchSize(n);
         }
 
         _batchSize = n;
@@ -364,8 +363,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
-    	if ( _it instanceof Result )
-            return ((Result)_it).getCursorId();
+    	if ( _it instanceof QueryResultIterator)
+            return ((QueryResultIterator)_it).getCursorId();
 
     	return 0;
     }
@@ -374,8 +373,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * kills the current cursor on the server.
      */
     public void close() {
-    	if ( _it instanceof Result )
-            ((Result)_it).close();
+    	if ( _it instanceof QueryResultIterator)
+            ((QueryResultIterator)_it).close();
     }
 
     /**
@@ -524,8 +523,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public int numGetMores(){
-        if ( _it instanceof DBApiLayer.Result )
-            return ((DBApiLayer.Result)_it).numGetMores();
+        if ( _it instanceof QueryResultIterator)
+            return ((QueryResultIterator)_it).numGetMores();
 
         throw new IllegalArgumentException("_it not a real result" );
     }
@@ -535,8 +534,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public List<Integer> getSizes(){
-        if ( _it instanceof DBApiLayer.Result )
-            return ((DBApiLayer.Result)_it).getSizes();
+        if ( _it instanceof QueryResultIterator)
+            return ((QueryResultIterator)_it).getSizes();
 
         throw new IllegalArgumentException("_it not a real result" );
     }
@@ -730,8 +729,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (_it != null && _it instanceof DBApiLayer.Result)
-            return ((DBApiLayer.Result)_it).getServerAddress();
+        if (_it != null && _it instanceof QueryResultIterator)
+            return ((QueryResultIterator)_it).getServerAddress();
 
         return null;
     }
@@ -791,10 +790,10 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     boolean hasFinalizer() {
-        if (_it == null || ! (_it instanceof Result)) {
+        if (_it == null || ! (_it instanceof QueryResultIterator)) {
             return false;
         }
-        return ((Result) _it).hasFinalizer();
+        return ((QueryResultIterator) _it).hasFinalizer();
     }
 
     // ----  query setup ----
