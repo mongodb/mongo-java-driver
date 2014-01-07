@@ -101,7 +101,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     /**
-     * Specifies a minimum exclusive upper limit for the index to use in a query.
+     * Specifies an <em>exclusive</em> upper limit for the index to use in a query.
      *
      * @mongodb.driver.manual reference/operator/meta/max/ $max
      * @since 2.12
@@ -112,7 +112,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
     }
 
     /**
-     * Specifies a minimum inclusive lower limit for the index to use in a query. 
+     * Specifies an <em>inclusive</em> lower limit for the index to use in a query. 
      *
      * @mongodb.driver.manual reference/operator/meta/min/ $min
      * @since 2.12
