@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-
 import org.bson.types.ObjectId;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -335,7 +334,7 @@ public class DBCollectionTest extends TestCase {
         } catch (MongoException e) {
             assertEquals(11000, e.getCode());
         }
-        assertEquals( c.count(), 2 );
+        assertEquals(c.count(), 2);
     }
 
     @Test( expectedExceptions = IllegalArgumentException.class )
@@ -348,17 +347,27 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test( expectedExceptions = IllegalArgumentException.class )
-    public void testNullKeysFail() {
-        DBCollection c = _db.getCollection("testnullkeysFail");
+    public void testNullCharacterInKeyFails() {
+        DBCollection c = _db.getCollection("testNullCharacterInKeyFails");
         c.drop();
 
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo\0bar","baz").get();
         c.insert(obj);
     }
 
+    @Test
+    public void testNullCharacterInValueSucceeds() {
+        DBCollection c = _db.getCollection("testNullCharacterInValueSucceeds");
+        c.drop();
+
+        DBObject obj = BasicDBObjectBuilder.start().add("x", "foo\0bar").add("nested", new BasicDBObject("y", "foo\0bar")).get();
+        c.insert(obj);
+        assertEquals(obj, c.findOne());
+    }
+
     @Test( expectedExceptions = IllegalArgumentException.class )
-    public void testNullKeysFailWhenNested() {
-        DBCollection c = _db.getCollection("testnullkeysFailWhenNested");
+    public void testNullCharacterInNestedKeyFails() {
+        DBCollection c = _db.getCollection("testNullCharacterInNestedKeyFails");
         c.drop();
 
         final BasicDBList list = new BasicDBList();

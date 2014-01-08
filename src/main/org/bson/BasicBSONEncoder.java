@@ -18,6 +18,30 @@
 
 package org.bson;
 
+import com.mongodb.DBRefBase;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.OutputBuffer;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWScope;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
+
+import java.lang.reflect.Array;
+import java.nio.Buffer;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
+
 import static org.bson.BSON.ARRAY;
 import static org.bson.BSON.BINARY;
 import static org.bson.BSON.BOOLEAN;
@@ -42,31 +66,6 @@ import static org.bson.BSON.SYMBOL;
 import static org.bson.BSON.TIMESTAMP;
 import static org.bson.BSON.UNDEFINED;
 import static org.bson.BSON.regexFlags;
-
-import java.lang.reflect.Array;
-import java.nio.Buffer;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Pattern;
-
-import org.bson.io.BasicOutputBuffer;
-import org.bson.io.OutputBuffer;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWScope;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
-
-import com.mongodb.DBRefBase;
 
 /**
  * this is meant to be pooled or cached
@@ -433,8 +432,8 @@ public class BasicBSONEncoder implements BSONEncoder {
     
     private void putPattern( String name, Pattern p ) {
         _put( REGEX , name );
-        _put( p.pattern() );
-        _put( regexFlags( p.flags() ) );
+        _put( p.pattern(), true );
+        _put( regexFlags( p.flags() ), true );
     }
 
     private void putMinKey( String name ) {
@@ -454,13 +453,13 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     protected void _put( byte type , String name ){
         _buf.write( type );
-        _put( name );
+        _put( name, true );
     }
 
     protected void _putValueString( String s ){
         int lenPos = _buf.getPosition();
         _buf.writeInt( 0 ); // making space for size
-        int strLen = _put( s );
+        int strLen = _put( s, false );
         _buf.writeInt( lenPos , strLen );
     }
     
@@ -473,6 +472,13 @@ public class BasicBSONEncoder implements BSONEncoder {
      * puts as utf-8 string
      */
     protected int _put( String str ){
+        return _put(str, false);
+    }
+
+    /**
+     * puts as utf-8 string
+     */
+    private int _put(String str, boolean checkForNullCharacters) {
 
         final int len = str.length();
         int total = 0;
@@ -480,7 +486,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         for ( int i=0; i<len; ){
             int c = Character.codePointAt( str , i );
 
-            if (c == 0x0) {
+            if (checkForNullCharacters && c == 0x0) {
                 throw new BSONException(
                         String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
             }
@@ -525,7 +531,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
     
     public void writeCString( String s ){
-        _put( s );
+        _put(s, true);
     }
 
     protected OutputBuffer _buf;
