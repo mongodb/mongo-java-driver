@@ -328,14 +328,21 @@ public class DBCollectionTest extends TestCase {
         collection.insert(obj);
     }
 
-    @Test( expected =  IllegalArgumentException.class )
-    public void testNullKeysFail() {
+    @Test( expected = IllegalArgumentException.class )
+    public void testNullCharacterInKeyFails() {
         DBObject obj = BasicDBObjectBuilder.start().add("x",1).add("y",2).add("foo\0bar","baz").get();
         collection.insert(obj);
     }
 
-    @Test( expected =  IllegalArgumentException.class )
-    public void testNullKeysFailWhenNested() {
+    @Test
+    public void testNullCharacterInValueSucceeds() {
+        DBObject obj = BasicDBObjectBuilder.start().add("x", "foo\0bar").add("nested", new BasicDBObject("y", "foo\0bar")).get();
+        collection.insert(obj);
+        assertEquals(obj, collection.findOne());
+    }
+
+    @Test( expected = IllegalArgumentException.class )
+    public void testNullCharacterInNestedKeyFails() {
         final BasicDBList list = new BasicDBList();
         list.add(new BasicDBObject("foo\0bar","baz"));
         DBObject obj = BasicDBObjectBuilder.start().add("x", list).get();

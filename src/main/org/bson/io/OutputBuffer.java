@@ -195,7 +195,7 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeString(final String str) {
         writeInt(0); // making space for size
-        final int strLen = writeCString(str);
+        final int strLen = writeCString(str, false);
         backpatchSize(strLen, 4);
     }
 
@@ -206,6 +206,11 @@ public abstract class OutputBuffer extends OutputStream {
      * @return number of bytes written
      */
     public int writeCString(final String str) {
+        return writeCString(str, true);
+
+    }
+
+    private int writeCString(final String str, final boolean checkForNullCharacters) {
 
         final int len = str.length();
         int total = 0;
@@ -213,7 +218,7 @@ public abstract class OutputBuffer extends OutputStream {
         for (int i = 0; i < len;/*i gets incremented*/) {
             final int c = Character.codePointAt(str, i);
 
-            if (c == 0x0) {
+            if (checkForNullCharacters && c == 0x0) {
                 throw new BSONException(
                         String.format("BSON cstring '%s' is not valid because it contains a null character at index %d", str, i));
             }

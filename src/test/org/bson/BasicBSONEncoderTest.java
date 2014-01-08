@@ -20,12 +20,35 @@ package org.bson;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Test;
 
-public class BasicBSONEncoderTest  {
+import java.util.regex.Pattern;
+
+public class BasicBSONEncoderTest {
 
     @Test(expected =  BSONException.class)
-    public void testNullCharacterInCString() {
+    public void nullCharacterInCStringShouldThrowException() {
         BasicBSONEncoder encoder = new BasicBSONEncoder();
         encoder.set(new BasicOutputBuffer());
         encoder.writeCString("hell\u0000world");
+    }
+
+    @Test(expected = BSONException.class)
+    public void nullCharacterInKeyShouldThrowException() {
+        BasicBSONEncoder encoder = new BasicBSONEncoder();
+        encoder.set(new BasicOutputBuffer());
+        encoder.putString("ke\u0000y", "helloWorld");
+    }
+
+    @Test(expected = BSONException.class)
+    public void nullCharacterInRegexStringShouldThrowException() {
+        BasicBSONEncoder encoder = new BasicBSONEncoder();
+        encoder.set(new BasicOutputBuffer());
+        encoder._putObjectField("key", Pattern.compile("hello\u0000World"));
+    }
+
+    @Test
+    public void nullCharacterInStringShouldNotThrowException() {
+        BasicBSONEncoder encoder = new BasicBSONEncoder();
+        encoder.set(new BasicOutputBuffer());
+        encoder.putString("key", "hell\u0000world");
     }
 }

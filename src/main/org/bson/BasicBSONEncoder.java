@@ -444,8 +444,8 @@ public class BasicBSONEncoder implements BSONEncoder {
     
     private void putPattern( String name, Pattern p ) {
         _put( REGEX , name );
-        _put( p.pattern() );
-        _put( regexFlags( p.flags() ) );
+        _buf.writeCString( p.pattern() );
+        _buf.writeCString( regexFlags( p.flags() ) );
     }
 
     private void putMinKey( String name ) {
@@ -468,7 +468,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     @Deprecated
     protected void _put(byte type, String name) {
         _buf.write(type);
-        _put(name);
+        _buf.writeCString(name);
     }
 
     /**
@@ -478,10 +478,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     @Deprecated
     protected void _putValueString( String s ){
-        int lenPos = _buf.getPosition();
-        _buf.writeInt( 0 ); // making space for size
-        int strLen = _put( s );
-        _buf.writeInt( lenPos , strLen );
+        _buf.writeString(s);
     }
     
     void _reset( Buffer b ){
