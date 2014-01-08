@@ -29,6 +29,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
@@ -653,6 +654,10 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testAuthenticate() throws UnknownHostException {
+        if (serverIsAtLeastVersion(2.5)) {
+            throw new SkipException("Authentication tests skipped for 2.5 and up");
+        }
+
         assertEquals( "26e3d12bd197368526409177b3e8aab6" , _db._hash( "e" , "j".toCharArray() ) );
 
         Mongo m = new MongoClient();
@@ -689,6 +694,10 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testAuthenticateCommand() throws UnknownHostException {
+        if (serverIsAtLeastVersion(2.5)) {
+            throw new SkipException("Authentication tests skipped for 2.5 and up");
+        }
+
         Mongo m = new MongoClient();
         DB db = m.getDB(cleanupDB);
         DBCollection usersCollections = db.getCollection( "system.users" );
@@ -753,6 +762,10 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testAuthenticateWithCredentialsInURI() throws UnknownHostException {
+        if (serverIsAtLeastVersion(2.5)) {
+            throw new SkipException("Authentication tests skipped for 2.5 and up");
+        }
+
         // First add the user
         Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
@@ -783,6 +796,10 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testAuthenticateCommandWithCredentialsInURI() throws UnknownHostException {
+        if (serverIsAtLeastVersion(2.5)) {
+            throw new SkipException("Authentication tests skipped for 2.5 and up");
+        }
+
         // First add the user
         Mongo m = new MongoClient(new MongoClientURI("mongodb://localhost"));
         DB db = m.getDB(cleanupDB);
