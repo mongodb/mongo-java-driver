@@ -34,6 +34,8 @@
         </rule-config>
         <!-- this check is failing '})' when it shouldn't -->
         <exclude name='SpaceAfterClosingBrace'/>
+        <exclude name='SpaceAroundMapEntryColon'/>
+        <exclude name='ClassJavadoc'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>

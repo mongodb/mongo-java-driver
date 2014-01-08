@@ -196,7 +196,7 @@ project(':driver') {
     }
 
     codenarc {
-        toolVersion = '0.18.1'
+        toolVersion = '0.20'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
@@ -246,7 +246,7 @@ project(':driver-compat') {
     }
 
     codenarc {
-        toolVersion = '0.18.1'
+        toolVersion = '0.20'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 

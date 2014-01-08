@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.codecs
 
 import org.bson.types.CodeWithScope
@@ -89,5 +87,6 @@ class EncoderRegistrySpecification extends Specification {
         encoder instanceof PojoCodec;
     }
 
+    @SuppressWarnings('EmptyClass')
     private class SomeObject { }
 }
