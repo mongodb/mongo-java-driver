@@ -175,20 +175,20 @@ project(':driver') {
 
     sourceSets {
         test {
-            groovy { srcDirs = ['src/test/unit','src/test/functional'] }
+            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
             //Note: no groovy/spock tests in acceptance, these are Java tests
-            java { srcDirs = ['src/test/unit','src/test/functional','src/test/acceptance','src/performance'] }
+            java { srcDirs = ['src/test/unit', 'src/test/functional', 'src/test/acceptance', 'src/performance'] }
         }
     }
 
-    test{
+    test {
         exclude 'org/mongodb/performance/**'
     }
 
     dependencies {
         compile project(':bson')
         testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile ('org.spockframework:spock-core:0.7-groovy-2.0') {
+        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
             exclude group: 'junit', module: 'junit-dep'
         }
         testCompile 'cglib:cglib-nodep:2.2.2'
@@ -215,11 +215,11 @@ project(':driver-compat') {
     sourceSets {
         test {
             groovy.srcDirs = ['src/test/unit']
-            java.srcDirs = ['src/test/unit','src/test/legacy','src/examples']
+            java.srcDirs = ['src/test/unit', 'src/test/legacy', 'src/examples']
         }
     }
 
-    test{
+    test {
         exclude 'tour/**'
     }
 
@@ -227,7 +227,7 @@ project(':driver-compat') {
         compile project(':driver')
         testCompile project(':driver').sourceSets.test.output
         testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile ('org.spockframework:spock-core:0.7-groovy-2.0') {
+        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
             exclude group: 'junit', module: 'junit-dep'
         }
         testCompile 'cglib:cglib-nodep:2.2.2'
@@ -262,7 +262,7 @@ project(':driver-compat') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
+    gradleVersion = '1.7'
 }
 
 gradle.buildFinished { BuildResult result ->
