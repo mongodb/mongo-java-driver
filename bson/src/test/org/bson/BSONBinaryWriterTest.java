@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,6 +200,18 @@ public class BSONBinaryWriterTest {
         writer.writeJavaScriptWithScope("js1", "var i = 1");
 
         writer.writeEndDocument();
+    }
+
+    @Test(expected = BSONException.class)
+    public void shouldThrowAnErrorIfKeyContainsNullCharacter() {
+        writer.writeStartDocument();
+        writer.writeBoolean("h\u0000i", true);
+    }
+
+    @Test
+    public void shouldNotThrowAnErrorIfValueContainsNullCharacter() {
+        writer.writeStartDocument();
+        writer.writeString("x", "h\u0000i");
     }
 
     @Test

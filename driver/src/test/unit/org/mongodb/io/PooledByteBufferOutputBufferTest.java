@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -81,9 +82,16 @@ public class PooledByteBufferOutputBufferTest {
     }
 
     @Test(expected = BSONSerializationException.class)
-    public void testNullCharacterInCString() {
+    public void nullCharacterInCStringShouldThrowSerializationException() {
         PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
         buf.writeCString("hell\u0000world");
+    }
+
+    @Test
+    public void nullCharacterInStringShouldNotThrowSerializationException() {
+        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new PowerOfTwoBufferPool(11));
+        buf.writeString("h\u0000i");
+        assertArrayEquals(new byte[] {4, 0, 0, 0, 'h', 0, 'i', 0}, buf.toByteArray());
     }
 
     private byte[] getRandomBytes(final int len) {

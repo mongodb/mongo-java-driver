@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,18 +117,22 @@ public abstract class OutputBuffer extends OutputStream {
 
     public void writeString(final String str) {
         writeInt(0); // making space for size
-        int strLen = writeCString(str);
+        int strLen = writeCharacters(str, false);
         backpatchSize(strLen, 4);
     }
 
     public int writeCString(final String str) {
+       return writeCharacters(str, true);
+    }
+
+    private int writeCharacters(final String str, final boolean checkForNullCharacters) {
         int len = str.length();
         int total = 0;
 
         for (int i = 0; i < len;/*i gets incremented*/) {
             int c = Character.codePointAt(str, i);
 
-            if (c == 0x0) {
+            if (checkForNullCharacters && c == 0x0) {
                 throw new BSONSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
                                                             + "at index %d", str, i));
             }
