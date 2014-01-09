@@ -133,21 +133,6 @@ public class QuickTour {
             System.out.println(o);
         }
 
-        // These features have been deprecated and removed
-        //        // See if the last operation had an error
-        //        System.out.println("Last error : " + db.getLastError());
-        //
-        //        // see if any previous operation had an error
-        //        System.out.println("Previous error : " + db.getPreviousError());
-        //
-        //        // force an error
-        //        db.forceError();
-        //
-        //        // See if the last operation had an error
-        //        System.out.println("Last error : " + db.getLastError());
-        //
-        //        db.resetError();
-
         // release resources
         mongoClient.close();
     }
