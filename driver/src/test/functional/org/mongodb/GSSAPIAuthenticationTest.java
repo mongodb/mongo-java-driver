@@ -29,6 +29,14 @@ public class GSSAPIAuthenticationTest extends DatabaseTestCase {
     @Test
     public void testSuccessfulAuthentication() {
         assumeTrue(!Fixture.getCredentialList().isEmpty() && Fixture.getCredentialList().get(0).getMechanism().equals(GSSAPI));
+
+        // Debugging for Jenkins
+        for (final String property : System.getProperties().stringPropertyNames()) {
+            if (property.startsWith("java.")) {
+                System.out.println(property + ": " + System.getProperty(property));
+            }
+        }
+
         collection.insert(new Document());
         assertEquals(1, collection.find().count());
     }
