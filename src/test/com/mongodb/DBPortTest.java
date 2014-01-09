@@ -18,6 +18,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -29,6 +30,10 @@ public class DBPortTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testAuthentication() throws IOException {
+        if (serverIsAtLeastVersion(2.5)) {
+            throw new SkipException("Authentication tests skipped for 2.5 and up");
+        }
+
         Mongo m = new MongoClient();
         DB db1 = m.getDB("DBPortTest1");
         DB db2 = m.getDB("DBPortTest2");
