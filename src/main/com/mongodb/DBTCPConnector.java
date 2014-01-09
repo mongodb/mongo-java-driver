@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterConnectionMode.Single;
@@ -38,6 +40,8 @@ import static org.bson.util.Assertions.isTrue;
  */
 @Deprecated
 public class DBTCPConnector implements DBConnector {
+
+    private static final AtomicInteger NEXT_CLUSTER_ID = new AtomicInteger(1);
 
     private volatile boolean _closed;
 
@@ -62,11 +66,15 @@ public class DBTCPConnector implements DBConnector {
         isTrue("open", !_closed);
 
         MongoOptions options = _mongo.getMongoOptions();
+
+        String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
         scheduledExecutorService = Executors.newScheduledThreadPool(options.heartbeatThreadCount > 0 ?
                                                                     options.heartbeatThreadCount :
-                                                                    _mongo.getAuthority().getServerAddresses().size());
+                                                                    _mongo.getAuthority().getServerAddresses().size(),
+                                                                    new DefaultThreadFactory(clusterId));
         cluster =
-        Clusters.create(ClusterSettings.builder()
+        Clusters.create(clusterId,
+                        ClusterSettings.builder()
                                        .hosts(_mongo.getAuthority().getServerAddresses())
                                        .mode(_mongo.getAuthority().getType() == Direct ? Single : Multiple)
                                        .build(),
@@ -637,5 +645,22 @@ public class DBTCPConnector implements DBConnector {
 
     private Server getServer(final ServerSelector serverSelector) {
         return cluster.getServer(serverSelector, getClusterWaitTimeMS(), MILLISECONDS);
+    }
+
+    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
+    // applications that neglect to close the MongoClient will not exit.
+    static class DefaultThreadFactory implements ThreadFactory {
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String clusterId;
+
+        DefaultThreadFactory(final String clusterId) {
+            this.clusterId = clusterId;
+        }
+
+        public Thread newThread(Runnable runnable) {
+            Thread t = new Thread(runnable, "cluster-" + clusterId + "-thread-" + threadNumber.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        }
     }
 }

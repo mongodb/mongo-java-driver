@@ -17,24 +17,19 @@
 package com.mongodb;
 
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A factory for cluster implementations.
  *
  */
 final class Clusters {
-    private static final AtomicInteger NEXT_CLUSTER_ID = new AtomicInteger(1);
-
     private Clusters() {
     }
 
-    public static Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
+    public static Cluster create(final String clusterId, final ClusterSettings settings, final ServerSettings serverSettings,
                                  final ScheduledExecutorService scheduledExecutorService,
                                  final ClusterListener clusterListener,
                                  final Mongo mongo) {
-        String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
-
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, serverSettings, scheduledExecutorService,
                                                                                      mongo);
 
