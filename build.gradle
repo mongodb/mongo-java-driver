@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 def configDir = new File(rootDir, 'config')
 
 buildscript {
@@ -197,6 +199,11 @@ project(':driver') {
     }
 
     task functionalTest(type: Test, dependsOn: test) {
+        testClassesDir = sourceSets.functional.output.classesDir
+        classpath = sourceSets.functional.runtimeClasspath
+    }
+
+    task functionalTestNoDependencies(type: Test) {
         testClassesDir = sourceSets.functional.output.classesDir
         classpath = sourceSets.functional.runtimeClasspath
     }
