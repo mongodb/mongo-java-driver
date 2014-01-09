@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud;
+package org.mongodb.acceptancetest.querying;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;

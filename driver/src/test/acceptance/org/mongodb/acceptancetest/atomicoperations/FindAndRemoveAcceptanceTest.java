@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud;
+package org.mongodb.acceptancetest.atomicoperations;
 
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;

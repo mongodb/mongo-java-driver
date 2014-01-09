@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.acceptancetest.querying;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
+import org.mongodb.Function;
+import org.mongodb.MongoIterable;
 
 import java.util.ArrayList;
 import java.util.Collections;
