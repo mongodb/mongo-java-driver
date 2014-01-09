@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,11 +81,11 @@ configure(subprojects.findAll { it.name != 'util' }) {
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
+
                 'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore', "${System.getProperty('user.home')}/.keystore"),
        	        'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
                 'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword', 'changeit'),
                 'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword', 'changeit')
-            
         )
 
         if (project.buildingWith('ssl.enabled')) {
@@ -96,6 +96,15 @@ configure(subprojects.findAll { it.name != 'util' }) {
                     'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
                     'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
                     'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
+            )
+        }
+
+        if (project.buildingWith('gssapi.enabled')) {
+            systemProperties(
+                    'javax.security.auth.useSubjectCredsOnly': "false",
+                    'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
+                    'java.security.krb5.realm': project.getProperty('krb5.realm'),
+                    'java.security.auth.login.config': project.getProperty('auth.login.config'),
             )
         }
 
