@@ -177,12 +177,8 @@ project(':driver') {
         test {
             groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
             //Note: no groovy/spock tests in acceptance, these are Java tests
-            java { srcDirs = ['src/test/unit', 'src/test/functional', 'src/test/acceptance', 'src/performance'] }
+            java { srcDirs = ['src/test/unit', 'src/test/functional', 'src/test/acceptance'] }
         }
-    }
-
-    test {
-        exclude 'org/mongodb/performance/**'
     }
 
     dependencies {
