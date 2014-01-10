@@ -20,17 +20,20 @@ import java.util.List;
 
 /**
  * All the commands that can be run without needing a specific database.
+ *
+ * @since 3.0
  */
 public interface ClientAdministration {
     /**
      * @return a non-null number if the server is reachable.
+     * @mongodb.driver.manual reference/commands/ping Ping
      */
     //TODO: it's not clear from the documentation what the return type should be
-    //http://docs.mongodb.org/manual/reference/command/ping/
     double ping();
 
     /**
      * @return a List of the names of all the databases on the server
+     * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */
     List<String> getDatabaseNames();
 }

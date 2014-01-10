@@ -21,12 +21,14 @@ import java.util.Set;
 /**
  * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these
  * methods.
+ *
+ * @since 3.0
  */
 public interface DatabaseAdministration {
     /**
      * Drops this database.
      *
-     * @see <a href="http://docs.mongodb.org/manual/reference/commands/#dropDatabase">Drop database</a>
+     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
      */
     void drop();
 
@@ -39,7 +41,7 @@ public interface DatabaseAdministration {
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create
-     * @see <a href="http://docs.mongodb.org/manual/reference/command/create/#dbcmd.create">Create Command</a>
+     * @mongodb.driver.manual reference/commands/create Create Command
      */
     void createCollection(String collectionName);
 
@@ -47,7 +49,7 @@ public interface DatabaseAdministration {
      * Create a new collection with the selected options
      *
      * @param createCollectionOptions various options for creating the collection
-     * @see <a href="http://docs.mongodb.org/manual/reference/command/create/#dbcmd.create">Create Command</a>
+     * @mongodb.driver.manual reference/commands/create Create Command
      */
     void createCollection(CreateCollectionOptions createCollectionOptions);
 
@@ -56,9 +58,9 @@ public interface DatabaseAdministration {
      *
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
-     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection,
-     * or if the oldCollectionName is the name of a collection that doesn't exist
-     * @see <a href="http://docs.mongodb.org/manual/reference/command/renameCollection/">Rename collection</a>
+     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection, or if the
+     *                              oldCollectionName is the name of a collection that doesn't exist
+     * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
     void renameCollection(String oldCollectionName, String newCollectionName);
 
@@ -68,10 +70,9 @@ public interface DatabaseAdministration {
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
      * @param dropTarget        setting this to true will drop any existing database with the name newCollectionName
-     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection and
-     *                              dropTarget is false, or if the oldCollectionName is the name of a collection that doesn't
-     *                              exist
-     * @see <a href="http://docs.mongodb.org/manual/reference/command/renameCollection/">Rename collection</a>
+     * @throws MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
+     *                              or if the oldCollectionName is the name of a collection that doesn't exist
+     * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
     void renameCollection(String oldCollectionName, String newCollectionName, boolean dropTarget);
 }
