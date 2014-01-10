@@ -19,22 +19,22 @@ package org.mongodb.acceptancetest.crud;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class InsertMongoDocumentAcceptanceTest extends DatabaseTestCase {
+public class InsertAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldInsertSimpleUntypedDocument() {
+
+        // When
         Document simpleDocument = new Document("name", "Billy");
         collection.insert(simpleDocument);
 
+        // Then
         assertThat(collection.find().count(), is(1L));
 
-        Document queryFilter = new Document("name", "Billy");
-        MongoCursor<Document> insertTestDocumentMongoCursor = collection.find(queryFilter).get();
-
-        assertThat((String) insertTestDocumentMongoCursor.next().get("name"), is("Billy"));
+        Document insertedDocument = collection.find(new Document("name", "Billy")).getOne();
+        assertThat(insertedDocument.getString("name"), is("Billy"));
     }
 }
