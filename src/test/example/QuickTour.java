@@ -1,18 +1,20 @@
-/**
- *      Copyright (C) 2008-2012 10gen Inc.
+/*
+ * Copyright (c) 2014 MongoDB, Inc.
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package example;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -20,14 +22,25 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import org.junit.Assert;
+import org.junit.Test;
 
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * The tutorial from http://www.mongodb.org/display/DOCS/Java+Tutorial.
+ */
 public class QuickTour {
-
-    public static void main(String[] args) throws Exception {
-
+    // CHECKSTYLE:OFF
+    /**
+     * Run this main method to see the output of this quick example.
+     *
+     * @param args takes no args
+     * @throws UnknownHostException if it cannot connect to a MongoDB instance at localhost:27017
+     */
+    public static void main(final String[] args) throws UnknownHostException {
         // connect to the local database server
         MongoClient mongoClient = new MongoClient();
 
@@ -39,7 +52,7 @@ public class QuickTour {
 
         // get a list of the collections in this database and print them out
         Set<String> collectionNames = db.getCollectionNames();
-        for (String s : collectionNames) {
+        for (final String s : collectionNames) {
             System.out.println(s);
         }
 
@@ -50,8 +63,9 @@ public class QuickTour {
         testCollection.drop();
 
         // make a document and insert it
-        BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database").append("count", 1)
-                .append("info", new BasicDBObject("x", 203).append("y", 102));
+        BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database")
+                                                                .append("count", 1)
+                                                                .append("info", new BasicDBObject("x", 203).append("y", 102));
 
         testCollection.insert(doc);
 
@@ -65,7 +79,7 @@ public class QuickTour {
         }
         System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection.getCount());
 
-        //  lets get all the documents in the collection and print them out
+        // lets get all the documents in the collection and print them out
         DBCursor cursor = testCollection.find();
         try {
             while (cursor.hasNext()) {
@@ -75,7 +89,7 @@ public class QuickTour {
             cursor.close();
         }
 
-        //  now use a query to get 1 document out
+        // now use a query to get 1 document out
         BasicDBObject query = new BasicDBObject("i", 71);
         cursor = testCollection.find(query);
 
@@ -87,7 +101,7 @@ public class QuickTour {
             cursor.close();
         }
 
-        //  now use a range query to get a larger subset
+        // now use a range query to get a larger subset
         query = new BasicDBObject("i", new BasicDBObject("$gt", 50));  // i.e. find all where i > 50
         cursor = testCollection.find(query);
 
@@ -114,10 +128,9 @@ public class QuickTour {
         // create an index on the "i" field
         testCollection.createIndex(new BasicDBObject("i", 1));  // create index on "i", ascending
 
-
-        //  list the indexes on the collection
+        // list the indexes on the collection
         List<DBObject> list = testCollection.getIndexInfo();
-        for (DBObject o : list) {
+        for (final DBObject o : list) {
             System.out.println(o);
         }
 
@@ -138,4 +151,5 @@ public class QuickTour {
         // release resources
         mongoClient.close();
     }
+    // CHECKSTYLE:ON
 }

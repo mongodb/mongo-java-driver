@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,9 +84,10 @@ class SingleServerClusterSpecification extends Specification {
     def 'should have no servers of the wrong type in the description'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                                              ClusterSettings.builder().mode(Single)
+                                              ClusterSettings.builder()
+                                                             .mode(Single)
                                                              .requiredClusterType(ClusterType.Sharded)
-                                                             .hosts(Arrays.asList(firstServer))
+                                                             .hosts([firstServer])
                                                              .build(),
                                               factory, CLUSTER_LISTENER)
 
@@ -103,7 +104,10 @@ class SingleServerClusterSpecification extends Specification {
     def 'should have server in description when replica set name does matches required one'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                                              ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                                              ClusterSettings.builder()
+                                                             .mode(Single)
+                                                             .requiredReplicaSetName('test1')
+                                                             .hosts([firstServer]).build(),
                                               factory, CLUSTER_LISTENER)
 
         when:
@@ -119,7 +123,10 @@ class SingleServerClusterSpecification extends Specification {
     def 'should have no replica set servers in description when replica set name does not match required one'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                                              ClusterSettings.builder().mode(Single).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
+                                              ClusterSettings.builder()
+                                                             .mode(Single)
+                                                             .requiredReplicaSetName('test1')
+                                                             .hosts([firstServer]).build(),
                                               factory, CLUSTER_LISTENER)
 
         when:
@@ -135,7 +142,9 @@ class SingleServerClusterSpecification extends Specification {
     def 'getServer should throw when cluster is incompatible'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                                              ClusterSettings.builder().mode(Single).hosts(Arrays.asList(firstServer)).build(),
+                                              ClusterSettings.builder()
+                                                             .mode(Single)
+                                                             .hosts([firstServer]).build(),
                                               factory, CLUSTER_LISTENER)
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 

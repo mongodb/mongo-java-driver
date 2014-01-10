@@ -1,0 +1,82 @@
+<!--
+  ~ Copyright (c) 2014 MongoDB, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ruleset xmlns="http://codenarc.org/ruleset/1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://codenarc.org/ruleset/1.0 http://codenarc.org/ruleset-schema.xsd"
+         xsi:noNamespaceSchemaLocation="http://codenarc.org/ruleset-schema.xsd">
+
+    <description>MongoDB Java driver rule set</description>
+
+    <ruleset-ref path='rulesets/imports.xml'>
+        <rule-config name='MisorderedStaticImports'>
+            <property name='comesBefore' value='false'/>
+        </rule-config>
+    </ruleset-ref>
+
+    <ruleset-ref path='rulesets/basic.xml'/>
+    <ruleset-ref path='rulesets/braces.xml'/>
+    <ruleset-ref path='rulesets/concurrency.xml'/>
+    <ruleset-ref path='rulesets/convention.xml'/>
+    <ruleset-ref path='rulesets/design.xml'>
+        <rule-config name='BuilderMethodWithSideEffects'>
+            <property name='methodNameRegex' value='create.*|build.*'/>
+        </rule-config>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/dry.xml'>
+        <rule-config name='DuplicateListLiteral'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
+        <exclude name="DuplicateNumberLiteral"/>
+        <exclude name="DuplicateStringLiteral"/>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/exceptions.xml'/>
+    <ruleset-ref path='rulesets/formatting.xml'>
+        <rule-config name='LineLength'>
+            <property name='length' value='140'/>
+        </rule-config>
+        <!-- this check is failing '})' when it shouldn't -->
+        <exclude name='SpaceAfterClosingBrace'/>
+        <exclude name='SpaceAroundMapEntryColon'/>
+        <exclude name='ClassJavadoc'/>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/generic.xml'/>
+    <ruleset-ref path='rulesets/groovyism.xml'>
+        <exclude name="ExplicitCallToCompareToMethod"/>
+     </ruleset-ref>
+    <ruleset-ref path='rulesets/junit.xml'/>
+    <ruleset-ref path='rulesets/logging.xml'/>
+    <ruleset-ref path='rulesets/naming.xml'>
+        <exclude name='MethodName'/>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/security.xml'/>
+    <ruleset-ref path='rulesets/serialization.xml'/>
+    <ruleset-ref path='rulesets/size.xml'>
+        <exclude name='CrapMetric'/>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/unnecessary.xml'>
+        <!-- these should be revisted later when we've developed a Groovy style -->
+        <exclude name='UnnecessaryGetter'/>
+        <exclude name='UnnecessarySemicolon'/>
+    </ruleset-ref>
+    <ruleset-ref path='rulesets/unused.xml'>
+        <rule-config name='UnusedObject'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
+    </ruleset-ref>
+
+</ruleset>
+

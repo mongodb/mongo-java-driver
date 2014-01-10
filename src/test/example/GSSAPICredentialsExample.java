@@ -1,18 +1,20 @@
-/**
- * Copyright (c) 2008 - 2012 10gen, Inc. <http://10gen.com>
- * <p/>
+/*
+ * Copyright (c) 2014 MongoDB, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package example;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -23,15 +25,13 @@ import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
 import java.security.Security;
-import java.util.Arrays;
+
+import static java.util.Arrays.asList;
 
 /**
- * Example usage of Kerberos (GSSAPI) credentials.
- * <p>
- * Usage:
- * </p>
+ * Example usage of Kerberos (GSSAPI) credentials. <p> Usage: </p>
  * <pre>
- *     java GSSAPICredentialsExample server userName databaseName
+ *     java example.GSSAPICredentialsExample server userName databaseName
  * </pre>
  */
 public class GSSAPICredentialsExample {
@@ -45,7 +45,7 @@ public class GSSAPICredentialsExample {
     // auth.login.defaultCallbackHandler=name of class that implements javax.security.auth.callback.CallbackHandler
     public static void main(String[] args) throws UnknownHostException, InterruptedException {
         // Set this property to avoid the default behavior where the program prompts on the command line for username/password
-//        Security.setProperty("auth.login.defaultCallbackHandler", "DefaultSecurityCallbackHandler");
+        //        Security.setProperty("auth.login.defaultCallbackHandler", "example.DefaultSecurityCallbackHandler");
 
         String server = args[0];
         String user = args[1];
@@ -68,8 +68,9 @@ public class GSSAPICredentialsExample {
         System.out.println();
 
         MongoClient mongoClient = new MongoClient(new ServerAddress(server),
-                        Arrays.asList(MongoCredential.createGSSAPICredential(user).withMechanismProperty("SERVICE_NAME", "mongodb")),
-                new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
+                                                  asList(MongoCredential.createGSSAPICredential(user)
+                                                                        .withMechanismProperty("SERVICE_NAME", "mongodb")),
+                                                  new MongoClientOptions.Builder().socketKeepAlive(true).socketTimeout(30000).build());
         DB testDB = mongoClient.getDB(databaseName);
 
         System.out.println("Insert result: " + testDB.getCollection("test").insert(new BasicDBObject()));

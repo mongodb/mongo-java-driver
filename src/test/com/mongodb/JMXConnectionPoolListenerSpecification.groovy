@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 
 package com.mongodb
 
@@ -34,19 +32,21 @@ class JMXConnectionPoolListenerSpecification extends Specification {
     private final JMXConnectionPoolListener jmxListener = new JMXConnectionPoolListener()
 
     private final openEvent = new ConnectionPoolOpenedEvent(CLUSTER_ID, SERVER_ADDRESS,
-                                                  ConnectionPoolSettings.builder().maxSize(5).maxWaitTime(1, SECONDS).build())
+                                                            ConnectionPoolSettings.builder().maxSize(5).maxWaitTime(1, SECONDS).build())
 
     def 'statistics should reflect values from the provider'() {
         given:
         def event = new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS)
 
         when:
-        jmxListener.connectionPoolOpened(openEvent);
-        jmxListener.connectionAdded(event)
-        jmxListener.connectionCheckedOut(event)
-        jmxListener.connectionAdded(event)
-        jmxListener.connectionCheckedOut(event)
-        jmxListener.connectionCheckedIn(event)
+        jmxListener.with {
+            connectionPoolOpened(openEvent);
+            connectionAdded(event)
+            connectionCheckedOut(event)
+            connectionAdded(event)
+            connectionCheckedOut(event)
+            connectionCheckedIn(event)
+        }
 
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(

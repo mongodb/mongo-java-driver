@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+
+
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
 apply plugin: 'clirr'
+apply plugin: 'codenarc'
+apply plugin: 'eclipse'
 
 sourceCompatibility = '1.5'
 targetCompatibility = '1.5'
@@ -39,11 +43,10 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
     testCompile 'junit:junit:4.11'
     testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-    testCompile ('org.spockframework:spock-core:0.7-groovy-2.0') {
+    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
         exclude group: 'junit', module: 'junit-dep'
     }
     compile files("${System.properties['java.home']}/../lib/tools.jar")
@@ -64,6 +67,9 @@ clirr {
     baseline 'org.mongodb:mongo-java-driver:2.11.3'
 }
 
+codenarc {
+    toolVersion = '0.20'
+}
 
 /* Compiling */
 tasks.withType(AbstractCompile) {
@@ -74,7 +80,6 @@ tasks.withType(AbstractCompile) {
     onlyIf { JavaVersion.current().isJava6Compatible() }
 }
 
-
 test {
     maxHeapSize = "512m"
 
@@ -84,6 +89,7 @@ test {
     beforeTest { descr ->
         logger.info("[Test ${descr.className} > ${descr.name}]")
     }
+    exclude 'example/**'
 }
 
 /*
@@ -107,7 +113,4 @@ gradle.taskGraph.whenReady { taskGraph ->
 task wrapper(type: Wrapper) {
     gradleVersion = '1.9'
 }
-
-apply from: 'gradle/ide-settings.gradle'
-
 
