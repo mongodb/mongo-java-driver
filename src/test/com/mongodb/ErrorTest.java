@@ -17,9 +17,11 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -47,7 +49,6 @@ public class ErrorTest extends TestCase {
         getDatabase().resetError();
         CommandResult cr = getDatabase().getLastError(WriteConcern.FSYNC_SAFE);
         assertNull(cr.get("err"));
-        assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
     }
 
     @Test

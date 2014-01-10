@@ -793,7 +793,7 @@ public class JavaClientTest extends TestCase {
         DBCollection c = collection;
 
         c.save( new BasicDBObject( "x" , 1 ) );
-        getDatabase().eval( "return db." + collection.getName() + ".insert( { x : 2 } );" );
+        getDatabase().eval("return db." + collection.getName() + ".insert( { x : 2 } );");
 
         List<DBObject> l = c.find().toArray();
         assertEquals( 2 , l.size() );
@@ -801,14 +801,14 @@ public class JavaClientTest extends TestCase {
         ObjectId a = (ObjectId)(l.get(0).get("_id"));
         ObjectId b = (ObjectId)(l.get(1).get("_id"));
 
-        assertTrue( Math.abs( a.getTime() - b.getTime() ) < 10000 );
+        assertTrue(Math.abs(a.getTime() - b.getTime()) < 10000);
     }
 
     @Test
     public void testObjectIdCompat2(){
         DBCollection c = collection;
 
-        c.save( new BasicDBObject( "x" , 1 ) );
+        c.save(new BasicDBObject("x", 1));
 
         String o = (String) getDatabase().eval( "return db." + collection.getName() + ".findOne()._id.toString()" );
         // printing on servers has changed in 2.1
@@ -851,7 +851,7 @@ public class JavaClientTest extends TestCase {
         catch ( MongoInternalException ie ) {
             assertEquals(-3, ie.getCode());
         }
-        assertEquals(0 , c.find().count() );
+        assertEquals(0, c.find().count());
     }
 
     @Test
@@ -874,12 +874,12 @@ public class JavaClientTest extends TestCase {
         DBCollection c = collection;
 
         c.insert( new BasicDBObject( "x" , 1 ) );
-        c.insert( new BasicDBObject( "x" , 2 ) );
+        c.insert(new BasicDBObject("x", 2));
         c.insert(new BasicDBObject("x", 3));
         c.insert(new BasicDBObject("x", 4));
 
         List<DBObject> a = c.find( new BasicDBObject( "x" , new BasicDBObject( "$in" , new Integer[]{ 2 , 3 } ) ) ).toArray();
-        assertEquals( 2 , a.size() );
+        assertEquals(2, a.size());
     }
 
     @Test
@@ -890,11 +890,11 @@ public class JavaClientTest extends TestCase {
         WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ),
                                     false, false, WriteConcern.UNACKNOWLEDGED);
         assertEquals( 1 , res.getN() );
-        assertTrue( res.isLazy() );
+        assertTrue(res.isLazy());
 
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
-        assertEquals( 1 , cr.getInt( "n" ) );
-        assertTrue(cr.containsField("fsyncFiles") || cr.containsField("waited"));
+        assertEquals(1, cr.getInt("n"));
+        
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
@@ -909,15 +909,15 @@ public class JavaClientTest extends TestCase {
         DBCollection c = collection;
 
         c.insert( new BasicDBObject( "_id" , 1 ) );
-        WriteResult res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ),
-                                    false, false, WriteConcern.UNACKNOWLEDGED);
+        WriteResult res = c.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)),
+                                   false, false, WriteConcern.UNACKNOWLEDGED);
         assertEquals( 1 , res.getN() );
         assertTrue( res.isLazy() );
 
         c.setWriteConcern( WriteConcern.SAFE);
         res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
-        assertEquals( 1 , res.getN() );
-        assertFalse( res.isLazy() );
+        assertEquals(1, res.getN());
+        assertFalse(res.isLazy());
     }
 
     @Test
