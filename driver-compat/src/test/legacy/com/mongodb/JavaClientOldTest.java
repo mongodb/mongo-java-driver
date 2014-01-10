@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,25 +146,19 @@ public class JavaClientOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testDollarOutOnSecondary() throws UnknownHostException {
+    public void testDollarOutOnSecondary() throws UnknownHostException, InterruptedException {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         assumeTrue(clusterIsType(REPLICA_SET));
-        ServerAddress primary = new ServerAddress("localhost");
-        Mongo mongo = new MongoClient(asList(primary, new ServerAddress("localhost", 27018), new ServerAddress("localhost", 27019)));
-
-        DB rsDatabase = mongo.getDB(database.getName());
-        DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
-        aggCollection.drop();
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOptions options = AggregationOptions.builder()
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build();
-        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
-        assertEquals(2, rsDatabase.getCollection("aggCollection")
+        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), collection);
+        assertEquals(2, database.getCollection("aggCollection")
             .count());
-        assertEquals(primary, cursor.getServerAddress());
+        assertEquals(Fixture.getPrimary(), cursor.getServerAddress());
     }
 
     @Test
