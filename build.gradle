@@ -19,7 +19,6 @@ apply plugin: 'groovy'
 apply plugin: 'jacoco'
 apply plugin: 'clirr'
 apply plugin: 'codenarc'
-apply plugin: 'license'
 apply plugin: 'eclipse'
 
 sourceCompatibility = '1.5'
@@ -34,7 +33,6 @@ buildscript {
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
     }
 }
 
@@ -69,11 +67,6 @@ clirr {
 
 codenarc {
     toolVersion = '0.20'
-}
-
-license {
-    header = new File("$configDir/LICENSE")
-    ignoreFailures = true;
 }
 
 /* Compiling */
