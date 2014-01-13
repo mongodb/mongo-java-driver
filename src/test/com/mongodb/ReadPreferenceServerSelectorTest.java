@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc., Inc. <http://mongodb.com>
+ * Copyright (c) 2008 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.mongodb;
 
 
-
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -26,7 +25,7 @@ import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ReadPreferenceServerSelectorTest {
     @Test
