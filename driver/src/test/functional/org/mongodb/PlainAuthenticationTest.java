@@ -23,18 +23,17 @@ import org.mongodb.connection.MongoSecurityException;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.AuthenticationMechanism.GSSAPI;
+import static org.mongodb.AuthenticationMechanism.PLAIN;
 import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getMongoClient;
 import static org.mongodb.Fixture.getMongoClientURI;
 import static org.mongodb.Fixture.getPrimary;
-import static org.mongodb.MongoCredential.createGSSAPICredential;
+import static org.mongodb.MongoCredential.createPlainCredential;
 
-public class GSSAPIAuthenticationTest {
-
+public class PlainAuthenticationTest {
     @Before
     public void setUp() {
-        assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getMechanism().equals(GSSAPI));
+        assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getMechanism().equals(PLAIN));
     }
 
     @Test(expected = MongoCommandFailureException.class)
@@ -56,7 +55,8 @@ public class GSSAPIAuthenticationTest {
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() throws InterruptedException {
-        MongoClient client = MongoClients.create(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
+        MongoClient client = MongoClients.create(getPrimary(), asList(createPlainCredential("wrongUserName", "$external",
+                                                                                            "wrongPassword".toCharArray())));
         MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
         try {
             collection.find().count();
