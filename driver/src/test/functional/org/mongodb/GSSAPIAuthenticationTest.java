@@ -16,29 +16,50 @@
 
 package org.mongodb;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.MongoSecurityException;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
+import static org.mongodb.Fixture.getCredentialList;
+import static org.mongodb.Fixture.getMongoClient;
+import static org.mongodb.Fixture.getMongoClientURI;
+import static org.mongodb.Fixture.getPrimary;
+import static org.mongodb.MongoCredential.createGSSAPICredential;
 
-public class GSSAPIAuthenticationTest extends DatabaseTestCase {
+public class GSSAPIAuthenticationTest {
+
+    @Before
+    public void setUp() {
+        assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getMechanism().equals(GSSAPI));
+    }
 
     @Test
     public void testSuccessfulAuthentication() {
-        assumeTrue(!Fixture.getCredentialList().isEmpty() && Fixture.getCredentialList().get(0).getMechanism().equals(GSSAPI));
-        collection.insert(new Document());
-        assertEquals(1, collection.find().count());
+        MongoCollection<Document> collection = getMongoClient().getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        assertTrue(collection.find().count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
+    }
+
+    @Test(expected = MongoCommandFailureException.class)
+    public void testUnsuccessfulAuthorization() throws InterruptedException {
+        MongoClient client = MongoClients.create(getPrimary());
+        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        try {
+            collection.find().count();
+        } finally {
+            client.close();
+        }
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() throws InterruptedException {
-        assumeTrue(!Fixture.getCredentialList().isEmpty() && Fixture.getCredentialList().get(0).getMechanism().equals(GSSAPI));
-        MongoClient client = MongoClients.create(Fixture.getPrimary(), asList(MongoCredential.createGSSAPICredential("wrongUserName")));
+        MongoClient client = MongoClients.create(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
+        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
         try {
-            client.getDatabase("test").getCollection("test").insert(new Document());
+            collection.find().count();
         } finally {
             client.close();
         }
