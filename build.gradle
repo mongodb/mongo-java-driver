@@ -24,7 +24,6 @@ buildscript {
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
         classpath 'me.trnl:github-release-gradle-plugin:0.1'
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.5.0'
     }
 }
 
@@ -38,7 +37,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
     apply plugin: 'eclipse'
-    apply plugin: 'license'
 
     evaluationDependsOn(':util')
 
@@ -122,11 +120,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
         }
 
         jacoco { enabled = false }
-
-        license {
-            header = new File("$configDir/LICENSE")
-            exclude '*.html'
-        }
 
         beforeTest { descr ->
             logger.info("[Test ${descr.className} > ${descr.name}]")
