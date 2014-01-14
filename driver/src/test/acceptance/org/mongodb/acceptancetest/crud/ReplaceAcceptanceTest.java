@@ -16,12 +16,14 @@
 
 package org.mongodb.acceptancetest.crud;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoView;
 import org.mongodb.MongoWriteException;
 
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -91,7 +93,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
             fail("Should have thrown an exception");
         } catch (MongoWriteException e) {
             // Then
-            assertThat(e.getErrorCode(), is(16837));
+            assertThat("Error code should match one of these error codes", e.getErrorCode(), anyOf(is(13596), is(16837)));
             assertThat(e.getErrorMessage(), containsString("_id field cannot be changed"));
         }
     }
