@@ -333,16 +333,33 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
+     * Executes a database command with the given query options.  The only option used by this method was "slave ok", therefore this method
+     * has been replaced with {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
      *
-     * @param cmd     {@code DBObject} representation the command to be executed
-     * @param options query options to use
-     * @return result of the command execution
+     * @param cmd     The {@code DBObject} representation the command to be executed
+     * @param options The query options to use
+     * @return The result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead
      */
-    public CommandResult command( DBObject cmd , int options ){
-    	return command(cmd, options, getReadPreference());
+    public CommandResult command(DBObject cmd, int options) {
+        return command(cmd, options, getReadPreference());
+    }
+
+    /**
+     * Executes the command against the database with the given read preference.  This method is the preferred way of setting read
+     * preference, use this instead of {@link DB#command(com.mongodb.DBObject, int) }
+     *
+     * @param cmd{@code      DBObject} representation the command to be executed
+     * @param readPreference where to execute the command
+     * @return the result of executing the command, success or failure
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @since 2.12
+     */
+    public CommandResult command(DBObject cmd, ReadPreference readPreference) {
+        return command(cmd, 0, readPreference);
     }
 
     /**

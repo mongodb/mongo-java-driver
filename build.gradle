@@ -41,15 +41,6 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testCompile 'junit:junit:4.11'
-    testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-        exclude group: 'junit', module: 'junit-dep'
-    }
-    compile files("${System.properties['java.home']}/../lib/tools.jar")
-}
-
 sourceSets {
     main {
         java { srcDirs = ['src/main'] }
@@ -58,6 +49,16 @@ sourceSets {
         groovy { srcDirs = ['src/test'] }
         java { srcDirs = ['src/test', 'src/examples'] }
     }
+    util.java { srcDirs = ['src/util'] }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.11'
+    testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
+    testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
+        exclude group: 'junit', module: 'junit-dep'
+    }
+    utilCompile files("${System.properties['java.home']}/../lib/tools.jar")
 }
 
 clirr {
@@ -90,15 +91,14 @@ test {
     exclude 'example/**'
 }
 
-/*
 javadoc {
+    dependsOn compileUtilJava //We need taglets to be compiled
     options.author = true
     options.version = true
     options.links 'http://docs.oracle.com/javase/7/docs/api/'
-    options.tagletPath project.sourceSets.main.output.classesDir
+    options.tagletPath project.sourceSets.util.output.classesDir
     options.taglets 'ManualTaglet'
 }
-*/
 
 task testAll(dependsOn: tasks.withType(Test))
 
