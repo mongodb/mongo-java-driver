@@ -16,7 +16,6 @@
 
 package org.mongodb.acceptancetest.crud;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
