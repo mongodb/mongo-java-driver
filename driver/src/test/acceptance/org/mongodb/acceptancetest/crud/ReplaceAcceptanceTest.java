@@ -23,7 +23,6 @@ import org.mongodb.MongoView;
 import org.mongodb.MongoWriteException;
 
 import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -93,7 +92,6 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         } catch (MongoWriteException e) {
             // Then
             assertThat("Error code should match one of these error codes", e.getErrorCode(), anyOf(is(13596), is(16837)));
-            assertThat(e.getErrorMessage(), containsString("_id field cannot be changed"));
         }
     }
 
