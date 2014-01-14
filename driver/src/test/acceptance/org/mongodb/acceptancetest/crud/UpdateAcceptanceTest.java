@@ -19,12 +19,15 @@ package org.mongodb.acceptancetest.crud;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoView;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+/**
+ * This acceptance test demonstrates the use and expected behaviour of the update() and updateOne() methods.
+ *
+ * @since 3.0
+ */
 public class UpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldSetANewFieldOnAnExistingDocument() {
