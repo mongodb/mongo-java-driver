@@ -324,7 +324,9 @@ public class MongoClientOptions {
          * @param autoConnectRetry auto connect retry
          * @return {@code this}
          * @see MongoClientOptions#isAutoConnectRetry()
+         * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
          */
+        @Deprecated
         public Builder autoConnectRetry(final boolean autoConnectRetry) {
             this.autoConnectRetry = autoConnectRetry;
             return this;
@@ -336,7 +338,9 @@ public class MongoClientOptions {
          * @param maxAutoConnectRetryTime the maximum auto connect retry time
          * @return {@code this}
          * @see MongoClientOptions#getMaxAutoConnectRetryTime()
+         * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
          */
+        @Deprecated
         public Builder maxAutoConnectRetryTime(final long maxAutoConnectRetryTime) {
             if (maxAutoConnectRetryTime < 0) {
                 throw new IllegalArgumentException("Minimum value is 0");
@@ -595,29 +599,27 @@ public class MongoClientOptions {
     }
 
     /**
-     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established.
-     * There is maximum amount of time to keep retrying, which is 15s by default.
-     * This can be useful to avoid some exceptions being thrown when a server is down temporarily by blocking the operations.
-     * It also can be useful to smooth the transition to a new master (so that a new master is elected within the retry time).
-     * Note that when using this flag:
-     * - for a replica set, the driver will trying to connect to the old master for that time, instead of failing over to the new one right away
-     * - this does not prevent exception from being thrown in read/write operations on the socket, which must be handled by application
-     * <p/>
-     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read operations.
-     * Default is false.
+     * If true, the driver will keep trying to connect to the server in case that the socket cannot be established within the {code
+     * connectTimeout} period. There is maximum amount of time to keep retrying, which is 15s by default. Note that use of this flag does
+     * not prevent exceptions from being thrown from read/write operations,  and they must be handled by the application. The default
+     * value is false.
      *
      * @return whether socket connect is retried
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public boolean isAutoConnectRetry() {
         return autoConnectRetry;
     }
 
     /**
-     * The maximum amount of time in MS to spend retrying to open connection to the same server.
-     * Default is 0, which means to use the default 15s if autoConnectRetry is on.
+     * The maximum amount of time in MS to spend trying to open connection to the same server. The default is 0,
+     * which means to use the default 15s if autoConnectRetry is on.
      *
      * @return the maximum socket connect retry time.
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public long getMaxAutoConnectRetryTime() {
         return maxAutoConnectRetryTime;
     }
