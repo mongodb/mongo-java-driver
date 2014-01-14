@@ -37,7 +37,9 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -507,6 +509,7 @@ public class DBPort implements Connection {
         public static final String GSSAPI_MECHANISM = MongoCredential.GSSAPI_MECHANISM;
         public static final String SERVICE_NAME_KEY = "SERVICE_NAME";
         public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
+        public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
 
         GSSAPIAuthenticator(final Mongo mongo, final MongoCredential credentials) {
             super(mongo, credentials);
@@ -524,17 +527,25 @@ public class DBPort implements Connection {
 
                 return Sasl.createSaslClient(new String[]{GSSAPI_MECHANISM}, credential.getUserName(),
                                              credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
-                                             serverAddress().getHost(), props, null);
+                                             getHostName(), props, null);
             } catch (SaslException e) {
                 throw new MongoException("Exception initializing SASL client", e);
             } catch (GSSException e) {
                 throw new MongoException("Exception initializing GSSAPI credentials", e);
+            } catch (UnknownHostException e) {
+                throw new MongoException("Unknown host " + serverAddress().getHost(), e);
             }
         }
 
         @Override
         public String getMechanismName() {
             return "GSSAPI";
+        }
+
+        private String getHostName() throws UnknownHostException {
+            return credential.getMechanismProperty(CANONICALIZE_HOST_NAME_KEY, false)
+                   ? InetAddress.getByName(serverAddress().getHost()).getCanonicalHostName()
+                   : serverAddress().getHost();
         }
 
         private GSSCredential getGSSCredential(String userName) throws GSSException {

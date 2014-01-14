@@ -95,7 +95,8 @@ public final class MongoCredential {
 
     /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"},
-     * add a mechanism property with the name {@code "SERVICE_NAME"}.
+     * add a mechanism property with the name {@code "SERVICE_NAME"}. To force canonicalization of the host name prior to authentication,
+     * add a mechanism property with the name {@code "CANONICALIZE_HOST_NAME"} with the value{@code true}.
      *
      * @param userName the user name
      * @return the credential
