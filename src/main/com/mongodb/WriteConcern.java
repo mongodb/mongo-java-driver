@@ -29,7 +29,6 @@ import java.util.Map;
  * <p>
  * <b>w</b>
  * <ul>
- *  <li>-1 = Don't even report network errors </li>
  *  <li> 0 = Don't wait for acknowledgement from the server </li>
  *  <li> 1 = Wait for acknowledgement, but don't wait for secondaries to replicate</li>
  *  <li> 2+= Wait for one or more secondaries to also acknowledge </li>
@@ -54,7 +53,13 @@ public class WriteConcern implements Serializable {
 
     /**
      * No exceptions are raised, even for network issues.
+     *
+     * @deprecated There is no replacement for this write concern.  The closest would be to use WriteConcern#UNACKNOWLEDGED,
+     * then catch and ignore any exceptions of type MongoSocketException.
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.MongoSocketException
      */
+    @Deprecated
     public final static WriteConcern ERRORS_IGNORED = new WriteConcern(-1);
 
     /**
@@ -93,6 +98,7 @@ public class WriteConcern implements Serializable {
      * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future release.
      * @see WriteConcern#ERRORS_IGNORED
      */
+    @Deprecated
     public final static WriteConcern NONE = new WriteConcern(-1);
 
     /**
@@ -194,7 +200,6 @@ public class WriteConcern implements Serializable {
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
      * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
      * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -213,7 +218,6 @@ public class WriteConcern implements Serializable {
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
      * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
      * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -233,7 +237,6 @@ public class WriteConcern implements Serializable {
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
      * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
      * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -258,7 +261,6 @@ public class WriteConcern implements Serializable {
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
      * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
      * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -278,7 +280,6 @@ public class WriteConcern implements Serializable {
      * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
      *	<p> w represents the number of servers:
      * 		<ul>
-     * 			<li>{@code w=-1} None, no checking is done</li>
      * 			<li>{@code w=0} None, network socket errors raised</li>
      * 			<li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      * 			<li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -391,9 +392,12 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Returns whether network error may be raised (w >= 0)
-     * @return
+     * Returns whether network error may be raised
+     * @return true if network errors should throw exceptions
+     * @deprecated There is no replacement for this method.
+     * @see com.mongodb.WriteConcern#ERRORS_IGNORED
      */
+    @Deprecated
     public boolean raiseNetworkErrors(){
         if (_w instanceof Integer)
             return (Integer) _w >= 0;
