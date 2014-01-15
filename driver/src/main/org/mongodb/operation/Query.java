@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,14 +44,6 @@ public abstract class Query {
     //CHECKSTYLE:OFF
     public Query readPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
-        return this;
-    }
-
-    //TODO: I hate this
-    public Query readPreferenceIfAbsent(final ReadPreference readPreference) {
-        if (this.readPreference == null) {
-            readPreference(readPreference);
-        }
         return this;
     }
 

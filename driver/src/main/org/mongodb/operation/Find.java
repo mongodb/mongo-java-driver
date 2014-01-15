@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,11 +133,6 @@ public class Find extends Query {
 
     public Find readPreference(final ReadPreference readPreference) {
         super.readPreference(readPreference);
-        return this;
-    }
-
-    public Find readPreferenceIfAbsent(final ReadPreference readPreference) {
-        super.readPreferenceIfAbsent(readPreference);
         return this;
     }
 
