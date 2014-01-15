@@ -259,8 +259,10 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a null readPrefs.
+     * Executes a database command. This method calls
+     * {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with the database default read
+     * preference.  The only option used by this method was "slave ok", therefore this method has been replaced with
+     * {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd     {@code DBObject} representation the command to be executed
      * @param options query options to use
@@ -268,14 +270,19 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead
      */
+    @Deprecated
     public CommandResult command( DBObject cmd , int options, DBEncoder encoder ){
         return command(cmd, options, getReadPreference(), encoder);
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.
+     * Executes a database command. This method calls
+     * {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.  The only
+     * option used by this method was "slave ok", therefore this method has been replaced
+     * with {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
      *
      * @param cmd       {@code DBObject} representation the command to be executed
      * @param options   query options to use
@@ -283,13 +290,17 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead
      */
+    @Deprecated
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs ){
         return command(cmd, options, readPrefs, DefaultDBEncoder.FACTORY.create());
     }
 
     /**
-     * Executes a database command.
+     * Executes a database command.  The only option used by this method was "slave ok", therefore this method
+     * has been replaced with {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd       {@code DBObject} representation the command to be executed
      * @param options   query options to use
@@ -298,7 +309,10 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead
      */
+    @Deprecated
     public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
         ReadPreference effectiveReadPrefs = getCommandReadPreference(cmd, readPrefs);
         cmd = wrapCommand(cmd, effectiveReadPrefs);
@@ -314,6 +328,20 @@ public abstract class DB {
         CommandResult cr = new CommandResult(sa);
         cr.putAll( res );
         return cr;
+    }
+
+    /**
+     * Executes a database command with the selected readPreference, and encodes the command using the given encoder.
+     *
+     * @param cmd       The {@code DBObject} representation the command to be executed
+     * @param readPrefs Where to execute the command - this will only be applied for a subset of commands
+     * @param encoder   The DBEncoder that knows how to serialise the cmd
+     * @return          The result of executing the command, success or failure
+     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @since 2.12
+     */
+    public CommandResult command( final DBObject cmd , final ReadPreference readPrefs, final DBEncoder encoder ){
+        return command(cmd, 0, readPrefs, encoder);
     }
 
     // Only append $readPreference meta-operator if connected to a mongos, read preference is not primary
@@ -352,13 +380,13 @@ public abstract class DB {
      * Executes the command against the database with the given read preference.  This method is the preferred way of setting read
      * preference, use this instead of {@link DB#command(com.mongodb.DBObject, int) }
      *
-     * @param cmd{@code      DBObject} representation the command to be executed
-     * @param readPreference where to execute the command
-     * @return the result of executing the command, success or failure
+     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param readPreference Where to execute the command
+     * @return               The result of executing the command, success or failure
      * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
      * @since 2.12
      */
-    public CommandResult command(DBObject cmd, ReadPreference readPreference) {
+    public CommandResult command(final DBObject cmd, final ReadPreference readPreference) {
         return command(cmd, 0, readPreference);
     }
 

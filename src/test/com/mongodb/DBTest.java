@@ -179,6 +179,7 @@ public class DBTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // this functionality needs testing, but the tests will be removed/replaced in 3.0
     public void shouldRunCommandAgainstSecondaryWhenSlaveOkOrReadPreferenceSecondaryOrBothAreBothSet() throws UnknownHostException {
         // Given
         assumeTrue(isReplicaSet(cleanupMongo));
@@ -216,6 +217,20 @@ public class DBTest extends TestCase {
 
         // When
         CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() throws UnknownHostException {
+        // Given
+        assumeTrue(isReplicaSet(cleanupMongo));
+        DB database = getReplicaSetDB();
+
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary(), DefaultDBEncoder.FACTORY.create());
 
         // Then
         assertThat(commandResult.ok(), is(true));
@@ -364,6 +379,7 @@ public class DBTest extends TestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void shouldDoEval() {
         assumeFalse(getDatabase().isAuthenticated());
         String code = "function(name, incAmount) {\n"
@@ -401,20 +417,6 @@ public class DBTest extends TestCase {
     public void shouldExecuteCommand() {
         CommandResult commandResult = getDatabase().command(new BasicDBObject("isMaster", 1));
         assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok", "serverUsed"}));
-    }
-
-    @Test
-    public void shouldExecuteCommandWithOptions() {
-        CommandResult isMaster = getDatabase().command(new BasicDBObject("isMaster", 1), Bytes.QUERYOPTION_SLAVEOK);
-        System.out.println(isMaster);
-
-        getDatabase().command(new BasicDBObject("isMaster", 1), Bytes.QUERYOPTION_SLAVEOK);
-    }
-
-    @Test
-    public void shouldExecuteCommandWithReadPreference() throws UnknownHostException {
-        CommandResult commandResult = getReplicaSetDB().command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, secondary());
-        assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
 
     @Test
