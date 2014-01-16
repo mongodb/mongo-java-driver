@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,14 @@
 package org.bson
 
 import com.mongodb.BasicDBObject
-import org.bson.types.*
+import org.bson.types.BSONTimestamp
+import org.bson.types.Binary
+import org.bson.types.Code
+import org.bson.types.CodeWScope
+import org.bson.types.MaxKey
+import org.bson.types.MinKey
+import org.bson.types.ObjectId
+import org.bson.types.Symbol
 import spock.lang.Specification
 import spock.lang.Unroll
 
