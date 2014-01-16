@@ -112,9 +112,7 @@ public class DBTest extends TestCase {
 
         Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
 
-        if (isStandalone(m)) {
-            return;
-        }
+        assumeFalse(isStandalone(cleanupMongo));
         try {
             DB db = m.getDB("com_mongodb_unittest_DBTest");
             db.requestStart();
@@ -217,6 +215,35 @@ public class DBTest extends TestCase {
 
         // When
         CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation") // this functionality needs testing, but the tests will be removed/replaced in 3.0
+    public void shouldRunStringCommandAgainstSecondaryWhenSlaveOkOptionSpecified() throws UnknownHostException {
+        // Given
+        assumeTrue(isReplicaSet(cleanupMongo));
+        DB database = getReplicaSetDB();
+
+        // When
+        CommandResult commandResult = database.command("dbstats", Bytes.QUERYOPTION_SLAVEOK);
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() throws UnknownHostException {
+        // Given
+        assumeTrue(isReplicaSet(cleanupMongo));
+        DB database = getReplicaSetDB();
+
+        // When
+        CommandResult commandResult = database.command("dbstats", secondary());
 
         // Then
         assertThat(commandResult.ok(), is(true));

@@ -238,6 +238,7 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( DBObject cmd ){
         return command( cmd, 0 );
@@ -253,6 +254,7 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( DBObject cmd, DBEncoder encoder ){
         return command( cmd, 0, encoder );
@@ -270,8 +272,8 @@ public abstract class DB {
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
-     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
     public CommandResult command( DBObject cmd , int options, DBEncoder encoder ){
@@ -284,37 +286,37 @@ public abstract class DB {
      * option used by this method was "slave ok", therefore this method has been replaced
      * with {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
      *
-     * @param cmd       {@code DBObject} representation the command to be executed
-     * @param options   query options to use
-     * @param readPrefs {@link ReadPreference} for this command (nodes selection is the biggest part of this)
+     * @param cmd            A {@code DBObject} representation the command to be executed
+     * @param options        The query options to use
+     * @param readPreference The {@link ReadPreference} for this command (nodes selection is the biggest part of this)
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
-     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs ){
-        return command(cmd, options, readPrefs, DefaultDBEncoder.FACTORY.create());
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPreference ){
+        return command(cmd, options, readPreference, DefaultDBEncoder.FACTORY.create());
     }
 
     /**
-     * Executes a database command.  The only option used by this method was "slave ok", therefore this method
-     * has been replaced with {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
+     * Executes a database command.  The only option used by this method was "slave ok", therefore this method has been replaced with {@link
+     * com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
      *
-     * @param cmd       {@code DBObject} representation the command to be executed
-     * @param options   query options to use
-     * @param readPrefs {@link ReadPreference} for this command (nodes selection is the biggest part of this)
-     * @param encoder   {@link DBEncoder} to be used for command encoding
+     * @param cmd            A {@code DBObject} representation the command to be executed
+     * @param options        The query options to use
+     * @param readPreference The {@link ReadPreference} for this command (nodes selection is the biggest part of this)
+     * @param encoder        A {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
-     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPrefs, DBEncoder encoder ){
-        ReadPreference effectiveReadPrefs = getCommandReadPreference(cmd, readPrefs);
+    public CommandResult command( DBObject cmd , int options, ReadPreference readPreference, DBEncoder encoder ){
+        ReadPreference effectiveReadPrefs = getCommandReadPreference(cmd, readPreference);
         cmd = wrapCommand(cmd, effectiveReadPrefs);
 
         Iterator<DBObject> i =
@@ -333,15 +335,15 @@ public abstract class DB {
     /**
      * Executes a database command with the selected readPreference, and encodes the command using the given encoder.
      *
-     * @param cmd       The {@code DBObject} representation the command to be executed
-     * @param readPrefs Where to execute the command - this will only be applied for a subset of commands
-     * @param encoder   The DBEncoder that knows how to serialise the cmd
-     * @return          The result of executing the command, success or failure
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @param encoder        The DBEncoder that knows how to serialise the cmd
+     * @return The result of executing the command, success or failure
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command( final DBObject cmd , final ReadPreference readPrefs, final DBEncoder encoder ){
-        return command(cmd, 0, readPrefs, encoder);
+    public CommandResult command( final DBObject cmd , final ReadPreference readPreference, final DBEncoder encoder ){
+        return command(cmd, 0, readPreference, encoder);
     }
 
     // Only append $readPreference meta-operator if connected to a mongos, read preference is not primary
@@ -350,12 +352,12 @@ public abstract class DB {
     // the encoder is not capable of encoding a BasicDBObject
     // Due to issues with compatibility between different versions of mongos, also wrap the command in a
     // $query field, so that the $readPreference is not rejected
-    private DBObject wrapCommand(DBObject cmd, final ReadPreference readPrefs) {
+    private DBObject wrapCommand(DBObject cmd, final ReadPreference readPreference) {
         if (getMongo().isMongosConnection() &&
-                !(ReadPreference.primary().equals(readPrefs) || ReadPreference.secondaryPreferred().equals(readPrefs)) &&
+                !(ReadPreference.primary().equals(readPreference) || ReadPreference.secondaryPreferred().equals(readPreference)) &&
                 cmd instanceof BasicDBObject) {
             cmd = new BasicDBObject("$query", cmd)
-                    .append(QueryOpBuilder.READ_PREFERENCE_META_OPERATOR, readPrefs.toDBObject());
+                    .append(QueryOpBuilder.READ_PREFERENCE_META_OPERATOR, readPreference.toDBObject());
         }
         return cmd;
     }
@@ -369,9 +371,10 @@ public abstract class DB {
      * @return The result of the command execution
      * @throws MongoException
      * @dochub commands
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
-     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
+    @Deprecated
     public CommandResult command(DBObject cmd, int options) {
         return command(cmd, options, getReadPreference());
     }
@@ -381,9 +384,9 @@ public abstract class DB {
      * preference, use this instead of {@link DB#command(com.mongodb.DBObject, int) }
      *
      * @param cmd            The {@code DBObject} representation the command to be executed
-     * @param readPreference Where to execute the command
-     * @return               The result of executing the command, success or failure
-     * @mongodb.driver.manual reference/method/db.runCommand/ runCommand
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @return The result of executing the command, success or failure
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
     public CommandResult command(final DBObject cmd, final ReadPreference readPreference) {
@@ -391,30 +394,49 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }
+     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }
      *
      * @param cmd name of the command to be executed
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( String cmd ){
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
     }
 
     /**
-     * Executes a database command.
-     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
      *
      * @param cmd     name of the command to be executed
      * @param options query options to use
      * @return result of the command execution
      * @throws MongoException
      * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @deprecated Use {@link com.mongodb.DB#command(String, ReadPreference)} instead.  This method will be removed in 3.0.
      */
+    @Deprecated
     public CommandResult command( String cmd, int options  ){
         return command( new BasicDBObject( cmd , Boolean.TRUE ), options );
+    }
+
+    /**
+     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int,
+     * com.mongodb.ReadPreference)  }. The only option used by this method was "slave ok", therefore this method has been replaced with
+     * {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
+     *
+     * @param cmd            The name of the command to be executed
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @return The result of the command execution
+     * @throws MongoException
+     * @dochub commands
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @since 2.12
+     */
+    public CommandResult command(final String cmd, final ReadPreference readPreference) {
+        return command(new BasicDBObject(cmd, Boolean.TRUE), 0, readPreference);
     }
 
     /**
