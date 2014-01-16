@@ -20,6 +20,7 @@ import com.mongodb.util.TestCase;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -223,6 +224,7 @@ public class DBTest extends TestCase {
 
     @Test
     @SuppressWarnings("deprecation") // this functionality needs testing, but the tests will be removed/replaced in 3.0
+    @Ignore("Intermittent, not sure this is doing what it thinks it is")
     public void shouldRunStringCommandAgainstSecondaryWhenSlaveOkOptionSpecified() throws UnknownHostException {
         // Given
         assumeTrue(isReplicaSet(cleanupMongo));
