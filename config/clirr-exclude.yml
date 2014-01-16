@@ -106,6 +106,10 @@ members:
   - getLastError(int,int,boolean)                 # JAVA-1046
   - getPreviousError()                            # JAVA-1046
   - forceError()                                  # JAVA-1046
+  - command(String,int)                           # JAVA-1063 Deprecate command methods that take options
+  - command(DBObject,int)                         # JAVA-1063 Deprecate command methods that take options
+  - command(DBObject,int,ReadPreference)          # JAVA-1063 Deprecate command methods that take options
+  - command(DBObject,int,DBEncoder)               # JAVA-1063 Deprecate command methods that take options
 
 
   com.mongodb.DBCollection:
