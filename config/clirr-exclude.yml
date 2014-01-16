@@ -96,20 +96,21 @@ members:
   - MINOR_VERSION
 
   com.mongodb.DB:
-  - authenticateCommand(java.lang.String,char[])  # JAVA-838: Deprecate DB.authenticate
-  - authenticate(java.lang.String,char[])         # JAVA-838
-  - isAuthenticated()                             # JAVA-838
-  - setReadOnly(java.lang.Boolean)                # JAVA-878 Deprecate DB.setReadOnly()
-  - _readOnly                                     # JAVA-878
-  - getLastError()                                # JAVA-1046 Deprecate getlasterror-related commands
-  - getLastError(com.mongodb.WriteConcern)        # JAVA-1046
-  - getLastError(int,int,boolean)                 # JAVA-1046
-  - getPreviousError()                            # JAVA-1046
-  - forceError()                                  # JAVA-1046
-  - command(String,int)                           # JAVA-1063 Deprecate command methods that take options
-  - command(DBObject,int)                         # JAVA-1063 Deprecate command methods that take options
-  - command(DBObject,int,ReadPreference)          # JAVA-1063 Deprecate command methods that take options
-  - command(DBObject,int,DBEncoder)               # JAVA-1063 Deprecate command methods that take options
+  - authenticateCommand(java.lang.String,char[])                 # JAVA-838: Deprecate DB.authenticate
+  - authenticate(java.lang.String,char[])                        # JAVA-838
+  - isAuthenticated()                                            # JAVA-838
+  - setReadOnly(java.lang.Boolean)                               # JAVA-878 Deprecate DB.setReadOnly()
+  - _readOnly                                                    # JAVA-878
+  - getLastError()                                               # JAVA-1046 Deprecate getlasterror-related commands
+  - getLastError(com.mongodb.WriteConcern)                       # JAVA-1046
+  - getLastError(int,int,boolean)                                # JAVA-1046
+  - getPreviousError()                                           # JAVA-1046
+  - forceError()                                                 # JAVA-1046
+  - command(java.lang.String,int)                                # JAVA-1063 Deprecate command methods that take options
+  - command(com.mongodb.DBObject,int)                            # JAVA-1063 Deprecate command methods that take options
+  - command(com.mongodb.DBObject,int,com.mongodb.ReadPreference) # JAVA-1063 Deprecate command methods that take options
+  - command(com.mongodb.DBObject,int,com.mongodb.DBEncoder)      # JAVA-1063 Deprecate command methods that take options
+  - command(com.mongodb.DBObject,int,com.mongodb.ReadPreference,com.mongodb.DBEncoder)      # JAVA-1063 Deprecate command methods that take options
 
 
   com.mongodb.DBCollection:
