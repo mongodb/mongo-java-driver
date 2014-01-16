@@ -71,16 +71,6 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDropItself() {
-        String databaseName = "drop-test-" + System.nanoTime();
-        DB db = getMongoClient().getDB(databaseName);
-        db.createCollection("tmp", new BasicDBObject());
-        assertThat(getClient().getDatabaseNames(), hasItem(databaseName));
-        db.dropDatabase();
-        assertThat(getClient().getDatabaseNames(), not(hasItem(databaseName)));
-    }
-
-    @Test
-    public void shouldDropItself2() {
         // given
         String databaseName = "drop-test-" + System.nanoTime();
         DB db = getMongoClient().getDB(databaseName);
@@ -295,18 +285,6 @@ public class DBTest extends DatabaseTestCase {
         database.requestDone();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @Ignore("This functionality still needs to be ported to 3.0")
-    public void shouldThrowAnExceptionWhenDBNameContainsSpaces() {
-        getMongoClient().getDB("foo bar");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Ignore("This functionality still needs to be ported to 3.0")
-    public void shouldThrowAnExceptionwhenDBNameIsEmpty() {
-        getMongoClient().getDB("");
-    }
-
     @Test
     @Category(ReplicaSet.class)
     public void shouldNotThrowAnErrorWhenEnsureConnectionCalledAfterRequestStart() throws UnknownHostException {
@@ -324,6 +302,18 @@ public class DBTest extends DatabaseTestCase {
         } finally {
             m.close();
         }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Ignore("This functionality still needs to be ported to 3.0")
+    public void shouldThrowAnExceptionWhenDBNameContainsSpaces() {
+        getMongoClient().getDB("foo bar");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Ignore("This functionality still needs to be ported to 3.0")
+    public void shouldThrowAnExceptionwhenDBNameIsEmpty() {
+        getMongoClient().getDB("");
     }
 
     @Test
@@ -421,7 +411,7 @@ public class DBTest extends DatabaseTestCase {
 
             // Then
             assertThat(commandResult.ok(), is(true));
-            assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
+            assertThat((String) commandResult.get("serverUsed"), containsString(":27018"));
         } finally {
             // Finally
             databaseWithSecondaryReadPreference.dropDatabase();
