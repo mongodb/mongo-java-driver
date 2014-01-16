@@ -320,7 +320,7 @@ public class DB {
 
     /**
      * Executes a database command. This method constructs a simple DBObject using cmd as the field name and {@code true} as its value, and
-     * calls {@link DB#command(com.mongodb.DBObject) }
+     * calls {@link DB#command(com.mongodb.DBObject, com.mongodb.ReadPreference) } with the default read preference for the database.
      *
      * @param cmd command to execute
      * @return result of command from the database
@@ -328,60 +328,77 @@ public class DB {
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final String cmd) {
-        return command(new BasicDBObject(cmd, Boolean.TRUE), 0, getReadPreference());
+        return command(new BasicDBObject(cmd, Boolean.TRUE), getReadPreference());
     }
 
     /**
-     * Executes a database command.
-     * This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference) } with the default read
+     * preference for the database.
      *
-     * @param cmd     name of the command to be executed
-     * @param options query options to use
+     * @param cmd {@code DBObject} representation of the command to be executed
      * @return result of the command execution
-     * @throws MongoException
-     * @mongodb.driver.manual tutorial/use-database-commands Commands
-     */
-    public CommandResult command(final String cmd, final int options) {
-        return command(new BasicDBObject(cmd, Boolean.TRUE), options, getReadPreference());
-    }
-
-    /**
-     * Executes a database command.
-     *
-     * @param cmd document representing the command to execute
-     * @return result of command from the database
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject cmd) {
-        return command(cmd, 0, getReadPreference());
+        return command(cmd, getReadPreference());
     }
 
     /**
-     * Executes a database command.
+     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference, DBEncoder) } with the default read
+     * preference for the database.
      *
-     * @param cmd     {@code DBObject} representation the command to be executed
-     * @param options query options to use
+     * @param cmd     {@code DBObject} representation of the command to be executed
+     * @param encoder {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command(final DBObject cmd, final int options) {
-        return command(cmd, options, getReadPreference());
+    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
+        return command(cmd, getReadPreference(), encoder);
     }
 
     /**
-     * Executes a database command.
+     * Executes a database command with the selected readPreference, and encodes the command using the given encoder.
      *
-     * @param cmd       dbobject representing the command to execute
-     * @param options   query options to use
-     * @param readPreference ReadPreferences for this command (nodes selection is the biggest part of this)
-     * @return result of command from the database
-     * @throws MongoException
+     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @param encoder        The DBEncoder that knows how to serialise the cmd
+     * @return The result of executing the command, success or failure
      * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @since 2.12
      */
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference) {
-        //TODO: options never used
+    public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
+        Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
+        org.mongodb.CommandResult result;
+        try {
+            result = new CommandOperation(getName(),
+                                          document,
+                                          readPreference.toNew(),
+                                          commandCodec,
+                                          commandCodec,
+                                          getClusterDescription(),
+                                          getBufferPool(),
+                                          getSession(),
+                                          false).execute();
+        } catch (MongoCommandFailureException ex) {
+            result = ex.getCommandResult();
+        } catch (org.mongodb.MongoException ex) {
+            throw mapException(ex);
+        }
+        return new CommandResult(result);
+    }
+
+    /**
+     * Executes the command against the database with the given read preference.
+     *
+     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @return The result of executing the command, success or failure
+     * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @since 2.12
+     */
+    public CommandResult command(final DBObject cmd, final ReadPreference readPreference) {
         org.mongodb.CommandResult result;
         try {
             result = new CommandOperation(getName(),
@@ -402,67 +419,18 @@ public class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.DBEncoder) } with 0 as query option.
+     * Executes a database command. This method constructs a simple {@link DBObject} and calls {@link DB#command(com.mongodb.DBObject,
+     * com.mongodb.ReadPreference)  }.
      *
-     * @param cmd     {@code DBObject} representation of the command to be executed
-     * @param encoder {@link DBEncoder} to be used for command encoding
-     * @return result of the command execution
+     * @param cmd            The name of the command to be executed
+     * @param readPreference Where to execute the command - this will only be applied for a subset of commands
+     * @return The result of the command execution
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
+     * @since 2.12
      */
-    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
-        return command(cmd, 0, getReadPreference(), encoder);
-    }
-
-    /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference,
-     * com.mongodb.DBEncoder) } with a null readPreference.
-     *
-     * @param cmd     {@code DBObject} representation the command to be executed
-     * @param options query options to use
-     * @param encoder {@link DBEncoder} to be used for command encoding
-     * @return result of the command execution
-     * @throws MongoException
-     * @mongodb.driver.manual tutorial/use-database-commands Commands
-     */
-    public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
-        return command(cmd, options, getReadPreference(), encoder);
-    }
-
-    /**
-     * Executes a database command.
-     *
-     * @param cmd       {@code DBObject} representation the command to be executed
-     * @param options   query options to use
-     * @param readPreference {@link ReadPreference} for this command (nodes selection is the biggest part of this)
-     * @param encoder   {@link DBEncoder} to be used for command encoding
-     * @return result of the command execution
-     * @throws MongoException
-     * @mongodb.driver.manual tutorial/use-database-commands Commands
-     */
-    public CommandResult command(final DBObject cmd, final int options, final ReadPreference readPreference,
-                                 final DBEncoder encoder) {
-        //TODO: options never used.  See JAVA-1063
-        Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
-        org.mongodb.CommandResult result;
-        try {
-            result = new CommandOperation(getName(),
-                                          document,
-                                          readPreference.toNew(),
-                                          commandCodec,
-                                          commandCodec,
-                                          getClusterDescription(),
-                                          getBufferPool(),
-                                          getSession(),
-                                          false).execute();
-        } catch (MongoCommandFailureException ex) {
-            result = ex.getCommandResult();
-        } catch (org.mongodb.MongoException ex) {
-            throw mapException(ex);
-        }
-        return new CommandResult(result);
+    public CommandResult command(final String cmd, final ReadPreference readPreference) {
+        return command(new BasicDBObject(cmd, Boolean.TRUE), readPreference);
     }
 
     /**

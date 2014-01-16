@@ -23,13 +23,17 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.operation.UserExistsOperation;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.Fixture.getOptions;
 import static com.mongodb.Fixture.getPrimary;
+import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -76,6 +80,22 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
+    public void shouldDropItself2() {
+        // given
+        String databaseName = "drop-test-" + System.nanoTime();
+        DB db = getMongoClient().getDB(databaseName);
+        // creates the database in a much faster way than inserting something into it
+        db.getStats();
+        assertThat(getMongoClient().getDatabaseNames(), hasItem(databaseName));
+
+        // when
+        db.dropDatabase();
+
+        // then
+        assertThat(getMongoClient().getDatabaseNames(), not(hasItem(databaseName)));
+    }
+
+    @Test
     public void shouldGetCollectionNames() {
         database.dropDatabase();
 
@@ -102,7 +122,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldCreateCollectionWithMax() {
+    public void shouldCreateCappedCollectionWithMaxNumberOfDocuments() {
         collection.drop();
         DBCollection cappedCollectionWithMax = database.createCollection(collectionName, new BasicDBObject("capped", true)
                                                                                              .append("size", 242880)
@@ -114,7 +134,6 @@ public class DBTest extends DatabaseTestCase {
             cappedCollectionWithMax.insert(new BasicDBObject("x", i));
         }
         assertThat(cappedCollectionWithMax.find().count(), is(10));
-
     }
 
     @Test
@@ -127,7 +146,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test(expected = CommandFailureException.class)
-    public void testCreateCollection() {
+    public void shouldThrowErrorIfCreatingACappedCollectionWithANegativeSize() {
         collection.drop();
         DBObject creationOptions = BasicDBObjectBuilder.start().add("capped", true)
                                                        .add("size", -20).get();
@@ -162,7 +181,6 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test(expected = MongoException.class)
-    @Ignore("Will be added as soon as error-handling mechanism settle down")
     public void shouldThrowErrorwhileDoingEval() {
         String code = "function(a, b) {\n"
                       + "var doc = db.myCollection.findOne( { name : b } );\n"
@@ -193,16 +211,9 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore("Will be added after 'options' implementation")
-    public void shouldExecuteCommandWithOptions() {
-        database.command(new BasicDBObject("isMaster", 1), Bytes.QUERYOPTION_SLAVEOK);
-        database.command(new BasicDBObject("isMaster", 1), Bytes.QUERYOPTION_SLAVEOK);
-    }
-
-    @Test
     @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
-        CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), 0, ReadPreference.secondary());
+        CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
 
@@ -250,7 +261,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void whenRequestStartCallsAreNestedThenTheConnectionShouldBeReleaseOnLastCallToRequestEnd()
+    public void shouldReleaseConnectionOnLastCallToRequestEndWhenRequestStartCallsAreNested()
         throws UnknownHostException, InterruptedException {
         Mongo m = new MongoClient(getPrimary(),
                                   MongoClientOptions.builder()
@@ -280,7 +291,140 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void whenRequestDoneIsCalledWithoutFirstCallingRequestStartNoExceptionIsThrown() throws UnknownHostException {
+    public void shouldNotThrowAnExceptionwhenRequestDoneIsCalledWithoutFirstCallingRequestStart() throws UnknownHostException {
         database.requestDone();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Ignore("This functionality still needs to be ported to 3.0")
+    public void shouldThrowAnExceptionWhenDBNameContainsSpaces() {
+        getMongoClient().getDB("foo bar");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Ignore("This functionality still needs to be ported to 3.0")
+    public void shouldThrowAnExceptionwhenDBNameIsEmpty() {
+        getMongoClient().getDB("");
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldNotThrowAnErrorWhenEnsureConnectionCalledAfterRequestStart() throws UnknownHostException {
+
+        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
+
+        try {
+            DB db = m.getDB("com_mongodb_unittest_DBTest");
+            db.requestStart();
+            try {
+                db.requestEnsureConnection();
+            } finally {
+                db.requestDone();
+            }
+        } finally {
+            m.close();
+        }
+    }
+
+    @Test
+    public void shouldIgnoreCaseWhenCheckingIfACollectionExists() {
+        // Given
+        database.getCollection("foo1").drop();
+        assertFalse(database.collectionExists("foo1"));
+
+        // When
+        database.createCollection("foo1", new BasicDBObject());
+
+        // Then
+        assertTrue(database.collectionExists("foo1"));
+        assertTrue(database.collectionExists("FOO1"));
+        assertTrue(database.collectionExists("fOo1"));
+
+        // Finally
+        database.getCollection("foo1").drop();
+    }
+
+    @Test
+    public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("NotRealCommandName", 1));
+
+        // Then
+        assertThat(commandResult.ok(), is(false));
+        assertThat(commandResult.getErrorMessage(), is("no such cmd: NotRealCommandName"));
+    }
+
+    @Test
+    public void shouldReturnOKWhenASimpleCommandExecutesSuccessfully() {
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((Boolean) commandResult.get("ismaster"), is(true));
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecified() throws UnknownHostException {
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() throws UnknownHostException {
+        // When
+        CommandResult commandResult = database.command("dbstats", secondary());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() throws UnknownHostException {
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary(), DefaultDBEncoder.FACTORY.create());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldRunCommandAgainstPrimaryWhenOnlyPrimaryReadPreferenceSpecified() throws UnknownHostException {
+        // When
+        CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), primary());
+
+        // Then
+        assertThat(commandResult.ok(), is(true));
+        assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
+    }
+
+    @Test
+    @Category(ReplicaSet.class)
+    public void shouldOverrideDefaultReadPreferenceWhenCommandReadPreferenceSpecified() throws UnknownHostException {
+        // Given
+        DB databaseWithSecondaryReadPreference = getMongoClient().getDB("DatabaseForReadPreferenceChange-" + System.nanoTime());
+        databaseWithSecondaryReadPreference.setReadPreference(secondary());
+
+        try {
+            // When
+            CommandResult commandResult = databaseWithSecondaryReadPreference.command(new BasicDBObject("dbstats", 1), primary());
+
+            // Then
+            assertThat(commandResult.ok(), is(true));
+            assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
+        } finally {
+            // Finally
+            databaseWithSecondaryReadPreference.dropDatabase();
+        }
     }
 }
