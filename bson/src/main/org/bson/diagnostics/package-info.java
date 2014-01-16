@@ -15,6 +15,6 @@
  */
 
 /**
- * Contains the base BSON classes.
+ * Contains the classes for visibility of the BSON layer, for example Logging.
  */
-package org.bson;
+package org.bson.diagnostics;

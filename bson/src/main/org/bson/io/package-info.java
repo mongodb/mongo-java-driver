@@ -15,8 +15,6 @@
  */
 
 /**
- * <body>
- * <p>Contains classes implementing I/O operations used by BSON objects.</p>
- * </body>
+ * Contains classes implementing I/O operations used by BSON objects.
  */
 package org.bson.io;

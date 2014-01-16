@@ -15,8 +15,6 @@
  */
 
 /**
- * <body>
- * <p>Contains classes implementing various BSON types.</p>
- * </body>
+ * Contains classes implementing various BSON types.
  */
 package org.bson.types;
