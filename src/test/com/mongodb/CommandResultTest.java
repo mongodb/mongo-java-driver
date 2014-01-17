@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -70,11 +71,34 @@ public class CommandResultTest extends TestCase {
         assertNull(commandResult.getException());
     }
 
-    @Test(expected =  MongoInternalException.class)
+    @Test(expected = MongoInternalException.class)
     public void okShouldThrowWhenOkFieldTypeIsNotBooleanOrNumber() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         commandResult.put("ok", "1");
         commandResult.ok();
+    }
+
+    @Test(expected = MongoException.DuplicateKey.class)
+    public void shouldThrowDuplicateKeyWhenResponseHasADuplicateKeyErrorCode() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress());
+        commandResult.put("ok", 1);
+        commandResult.put("err", "E11000 duplicate key error index 1");
+        commandResult.put("code", 11000);
+        commandResult.throwOnError();
+    }
+
+    @Test(expected = MongoException.DuplicateKey.class)
+    public void shouldThrowDuplicateKeyWhenErrObjectsHasADuplicateKeyErrorCode() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress());
+        commandResult.put("ok", 1);
+        commandResult.put("err", "E11000 duplicate key error index 1");
+        commandResult.put("errObjects", asList(new BasicDBObject("ok", 1)
+                                               .append("err", "E11000 duplicate key error index 1")
+                                               .append("code", 11000),
+                                               new BasicDBObject("ok", 1)
+                                               .append("err", "E11000 duplicate key error index 2")
+                                               .append("code", 11000)));
+        commandResult.throwOnError();
     }
 
     @Test

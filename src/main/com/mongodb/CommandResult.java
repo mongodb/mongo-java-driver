@@ -21,6 +21,8 @@
 package com.mongodb;
 
 
+import java.util.List;
+
 /**
  * A simple wrapper for the result of getLastError() calls and other commands
  */
@@ -76,26 +78,41 @@ public class CommandResult extends BasicDBObject {
             else {
                 return new CommandFailureException( this );
             }
-        } else if ( hasErr() ) { // check for errors reported by getlasterror command
-            if (getCode() == 11000 || getCode() == 11001 || getCode() == 12582) {
-                return new MongoException.DuplicateKey(this);
-            }
-            else {
-                return new WriteConcernException(this);
-            }
+        } else if (hasErr()) {
+            return getWriteException();
+        } else {
+            return null;
         }
+    }
 
-        return null;
+    private MongoException getWriteException() {
+        int code = getCode();
+        if (code == 11000 || code == 11001 || code == 12582) {
+            return new MongoException.DuplicateKey(this);
+        } else {
+            return new WriteConcernException(this);
+        }
     }
 
     /**
      * returns the "code" field, as an int
      * @return -1 if there is no code
      */
+    @SuppressWarnings("unchecked")
     int getCode() {
-        int code = -1;
-        if ( get( "code" ) instanceof Number )
-            code = ((Number)get("code")).intValue();
+        int code = getInt("code", -1);
+
+        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
+        // "err" field, so that it can be used to get the error code
+        if (code == -1 && get("errObjects") != null) {
+            for (BasicDBObject curErrorDocument : (List<BasicDBObject>) get("errObjects")) {
+                if (get("err").equals(curErrorDocument.get("err"))) {
+                    code = curErrorDocument.getInt("code", -1);
+                    break;
+                }
+            }
+        }
+
         return code;
     }
 
@@ -104,8 +121,8 @@ public class CommandResult extends BasicDBObject {
      * @return if it has it, and isn't null
      */
     boolean hasErr(){
-        Object o = get( "err" );
-        return (o != null && ( (String) o ).length() > 0 );
+        String err = getString("err");
+        return err != null && err.length() > 0;
     }
 
     /**
