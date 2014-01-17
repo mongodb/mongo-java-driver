@@ -19,11 +19,9 @@ package com.mongodb;
 import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.PoolOutputBuffer;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class OutMessage extends BasicBSONEncoder {
@@ -64,9 +62,9 @@ class OutMessage extends BasicBSONEncoder {
         return om;
     }
 
-    public static OutMessage remove(final DBCollection collection, final DBEncoder encoder, final DBObject query) {
+    public static OutMessage remove(final DBCollection collection, final DBEncoder encoder, final DBObject query, final boolean multi) {
         OutMessage om = new OutMessage(collection, OpCode.OP_DELETE, encoder, query);
-        om.writeRemove();
+        om.writeRemove(multi);
 
         return om;
     }
@@ -182,16 +180,11 @@ class OutMessage extends BasicBSONEncoder {
         putObject(o);
     }
 
-    private void writeRemove() {
+    private void writeRemove(final boolean multi) {
         writeInt(0); // reserved
         writeCString(_collection.getFullName());
 
-        Collection<String> keys = _query.keySet();
-
-        if ( keys.size() == 1 && keys.iterator().next().equals( "_id" ) && _query.get( keys.iterator().next() ) instanceof ObjectId)
-            writeInt( 1 );
-        else
-            writeInt( 0 );
+        writeInt(multi ? 0 : 1);
 
         putObject(_query);
     }

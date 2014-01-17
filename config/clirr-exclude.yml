@@ -10,3 +10,5 @@ members:
  com.mongodb.DBPortPool:
   - getStatistics()
   - memSize(com.mongodb.DBPort)
+ com.mongodb.DBApiLayer:
+  - doGetCollection(java.lang.String)

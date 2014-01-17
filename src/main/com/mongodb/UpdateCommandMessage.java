@@ -21,11 +21,11 @@ import org.bson.io.OutputBuffer;
 import java.util.List;
 
 class UpdateCommandMessage extends BaseWriteCommandMessage {
-    private final List<Update> updates;
+    private final List<ModifyRequest> updates;
     private final DBEncoder encoder;
 
     public UpdateCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern,
-                                final List<Update> updates, final DBEncoder commandEncoder, final DBEncoder encoder,
+                                final List<ModifyRequest> updates, final DBEncoder commandEncoder, final DBEncoder encoder,
                                 final MessageSettings settings) {
         super(writeNamespace, writeConcern, commandEncoder, settings);
         this.updates = updates;
@@ -39,13 +39,13 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
         writer.writeStartArray("updates");
         for (int i = 0; i < updates.size(); i++) {
             writer.mark();
-            Update update = updates.get(i);
+            ModifyRequest update = updates.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            writer.encodeDocument(getCommandEncoder(), update.getFilter());
+            writer.encodeDocument(getCommandEncoder(), update.getQuery());
             writer.writeName("u");
-            writer.encodeDocument(encoder, update.getUpdateOperations());
+            writer.encodeDocument(encoder, update.getUpdateDocument());
             writer.writeBoolean("multi", update.isMulti());
             writer.writeBoolean("upsert", update.isUpsert());
             writer.popMaxDocumentSize();
@@ -59,6 +59,11 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
         }
         writer.writeEndArray();
         return nextMessage;
+    }
+
+    @Override
+    public int getItemCount() {
+        return updates.size();
     }
 
     @Override

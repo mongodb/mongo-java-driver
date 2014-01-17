@@ -310,23 +310,60 @@ public class WriteConcern implements Serializable {
      * @return getlasterror command, even if <code>w <= 0</code>
      */
     public BasicDBObject getCommand() {
-        BasicDBObject _command = new BasicDBObject( "getlasterror" , 1 );
+        BasicDBObject command = new BasicDBObject("getlasterror", 1);
 
-        if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)){
-            _command.put( "w" , _w );
+        if (_w instanceof Integer && ((Integer) _w > 1) || (_w instanceof String)) {
+            command.put("w", _w);
         }
 
+        addWTimeout(command);
+        addFSync(command);
+        addJ(command);
+
+        return command;
+    }
+
+    /**
+     * Use the server default only if w == 1 and everything else is the default value.
+     * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
+     */
+    boolean useServerDefault() {
+        return _w.equals(1) && _wtimeout == 0 && !_fsync && !_j;
+    }
+
+    /**
+     * Gets the write concern as a document.
+     *
+     * @return the write concern as a document
+     */
+    BasicDBObject asDBObject() {
+        BasicDBObject document = new BasicDBObject();
+
+        document.put("w", _w);
+
+        addWTimeout(document);
+        addFSync(document);
+        addJ(document);
+
+        return document;
+    }
+
+    private void addJ(final BasicDBObject document) {
+        if (_j) {
+            document.put("j", true);
+        }
+    }
+
+    private void addFSync(final BasicDBObject document) {
+        if (_fsync) {
+            document.put("fsync", true);
+        }
+    }
+
+    private void addWTimeout(final BasicDBObject document) {
         if (_wtimeout > 0) {
-            _command.put( "wtimeout" , _wtimeout );
+            document.put("wtimeout", _wtimeout);
         }
-
-        if ( _fsync )
-            _command.put( "fsync" , true );
-
-        if ( _j )
-            _command.put( "j", true );
-
-        return _command;
     }
 
     /**

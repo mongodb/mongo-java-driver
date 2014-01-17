@@ -565,6 +565,7 @@ public class JavaClientTest extends TestCase {
 
         enableMaxTimeFailPoint();
         DBCollection c = collection;
+        c.insert(new BasicDBObject("x", 1));
         try {
             final MapReduceCommand command = new MapReduceCommand(c, map, reduce, null, MapReduceCommand.OutputType.INLINE,
                                                                   new BasicDBObject());
@@ -893,31 +894,52 @@ public class JavaClientTest extends TestCase {
         assertTrue(res.isLazy());
 
         CommandResult cr = res.getLastError( WriteConcern.FSYNC_SAFE );
-        assertEquals(1, cr.getInt("n"));
-        
+        assertEquals( 1 , cr.getInt( "n" ) );
 
         CommandResult cr2 = res.getLastError( WriteConcern.FSYNC_SAFE );
         assertTrue( cr == cr2 );
 
         CommandResult cr3 = res.getLastError( WriteConcern.NONE );
         assertTrue( cr3 == cr );
-
     }
 
     @Test
-    public void testWriteResult(){
-        DBCollection c = collection;
-
-        c.insert( new BasicDBObject( "_id" , 1 ) );
-        WriteResult res = c.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)),
+    public void testWriteResultOnUnacknowledgedUpdate(){
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)),
                                    false, false, WriteConcern.UNACKNOWLEDGED);
-        assertEquals( 1 , res.getN() );
-        assertTrue( res.isLazy() );
-
-        c.setWriteConcern( WriteConcern.SAFE);
-        res = c.update( new BasicDBObject( "_id" , 1 ) , new BasicDBObject( "$inc" , new BasicDBObject( "x" , 1 ) ) );
         assertEquals(1, res.getN());
+        assertTrue(res.isLazy());
+    }
+
+    @Test
+    public void testWriteResultOnUpdate(){
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)));
+        assertEquals(1, res.getN());
+        assertTrue(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
         assertFalse(res.isLazy());
+    }
+
+    @Test
+    public void testWriteResultOnUpsert(){
+        ObjectId id = new ObjectId();
+        collection.insert(new BasicDBObject("_id", 1));
+        WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$inc", new BasicDBObject("x", 1)), true, false);
+        assertEquals(1, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertEquals(id, res.getUpsertedId());
+    }
+
+    @Test
+    public void testWriteResultOnRemove() {
+        collection.insert(new BasicDBObject("_id", 1));
+        collection.insert(new BasicDBObject("_id", 2));
+        WriteResult res = collection.remove(new BasicDBObject());
+        assertEquals(2, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
     }
 
     @Test

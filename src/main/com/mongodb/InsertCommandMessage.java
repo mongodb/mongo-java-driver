@@ -55,5 +55,10 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
         writer.writeEndArray();
         return nextMessage;
     }
+
+    @Override
+    public int getItemCount() {
+        return documents.size();
+    }
 }
 

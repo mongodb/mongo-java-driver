@@ -132,7 +132,30 @@ public class WriteResult {
     public int getN(){
         return getLastError().getInt( "n" );
     }
-    
+
+    /**
+     * Gets the _id value of an upserted document that resulted from this write.  Note that for MongoDB servers prior to version 2.6,
+     * this method will return null unless the _id of the upserted document was of type ObjectId.
+     *
+     * @return the value of the _id of an upserted document
+     * @since 2.12
+     */
+    public Object getUpsertedId() {
+        return getLastError().get("upserted");
+    }
+
+
+    /**
+     * Returns true if this write resulted in an update of an existing document.
+     *
+     * @return whether the write resulted in an update of an existing document.
+     * @since 2.12
+     */
+    public boolean isUpdateOfExisting() {
+        return getLastError().getBoolean("updatedExisting");
+    }
+
+
     /**
      * Gets a field
      * @param name field name

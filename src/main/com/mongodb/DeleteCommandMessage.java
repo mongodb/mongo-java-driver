@@ -21,10 +21,10 @@ import org.bson.io.OutputBuffer;
 import java.util.List;
 
 class DeleteCommandMessage extends BaseWriteCommandMessage {
-    private final List<Remove> deletes;
+    private final List<RemoveRequest> deletes;
     private final DBEncoder queryEncoder;
 
-    public DeleteCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<Remove> deletes,
+    public DeleteCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<RemoveRequest> deletes,
                                 final DBEncoder commandEncoder, final DBEncoder queryEncoder, final MessageSettings settings) {
         super(namespace, writeConcern, commandEncoder, settings);
         this.deletes = deletes;
@@ -43,11 +43,11 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {
             writer.mark();
-            Remove remove = deletes.get(i);
+            RemoveRequest remove = deletes.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            writer.encodeDocument(getCommandEncoder(), remove.getFilter());
+            writer.encodeDocument(getCommandEncoder(), remove.getQuery());
             writer.writeInt32("limit", remove.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
@@ -60,5 +60,10 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
         }
         writer.writeEndArray();
         return nextMessage;
+    }
+
+    @Override
+    public int getItemCount() {
+        return deletes.size();
     }
 }

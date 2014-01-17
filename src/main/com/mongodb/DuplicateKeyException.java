@@ -18,8 +18,10 @@ package com.mongodb;
 
 /**
  * Subclass of {@link WriteConcernException} representing a duplicate key exception.
+ *
+ * @since 2.12
  */
-public class MongoDuplicateKeyException extends WriteConcernException {
+public class DuplicateKeyException extends WriteConcernException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
@@ -28,11 +30,11 @@ public class MongoDuplicateKeyException extends WriteConcernException {
      *
      * @param commandResult the command result
      */
-    MongoDuplicateKeyException(final CommandResult commandResult) {
+    DuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
     }
 
-    MongoDuplicateKeyException(final int code, final CommandResult commandResult) {
+    DuplicateKeyException(final int code, final CommandResult commandResult) {
         super(code, commandResult);
     }
 }

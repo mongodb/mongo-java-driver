@@ -92,15 +92,14 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         return buffer.getPosition() - commandStartPosition > getSettings().getMaxDocumentSize() + HEADROOM - 2;
     }
 
+    public abstract int getItemCount();
+
     private void writeCommandPrologue(final BSONBinaryWriter writer) {
         writer.writeString(getCommandName(), getWriteNamespace().getCollectionName());
         writer.writeBoolean("ordered", !getWriteConcern().getContinueOnError());
-        if (getWriteConcern().callGetLastError()) {
-            DBObject writeConcernDocument = getWriteConcern().getCommand();
-            writeConcernDocument.removeField("getlasterror");
+        if (!getWriteConcern().useServerDefault()) {
             writer.writeName("writeConcern");
-            writer.encodeDocument(getCommandEncoder(), writeConcernDocument);
+            writer.encodeDocument(getCommandEncoder(), getWriteConcern().asDBObject());
         }
     }
-
 }

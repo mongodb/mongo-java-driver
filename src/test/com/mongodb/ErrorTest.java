@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -49,17 +48,6 @@ public class ErrorTest extends TestCase {
         getDatabase().resetError();
         CommandResult cr = getDatabase().getLastError(WriteConcern.FSYNC_SAFE);
         assertNull(cr.get("err"));
-    }
-
-    @Test
-    public void testLastErrorWithConcernAndW()
-        throws MongoException {
-        if ( /* TODO: running with slaves */ false ){
-            getDatabase().resetError();
-            CommandResult cr = getDatabase().getLastError(WriteConcern.REPLICAS_SAFE);
-            assertNull(cr.get("err"));
-            assertTrue(cr.containsField("wtime"));
-        }
     }
 
     @Test

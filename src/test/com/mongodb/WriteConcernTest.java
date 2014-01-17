@@ -30,6 +30,8 @@ import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class WriteConcernTest extends TestCase {
 
@@ -83,23 +85,23 @@ public class WriteConcernTest extends TestCase {
 
     @Test
     public void testCheckLastError() {
-        Assert.assertFalse(WriteConcern.NONE.callGetLastError());
-        Assert.assertFalse(WriteConcern.NORMAL.callGetLastError());
-        Assert.assertFalse(WriteConcern.UNACKNOWLEDGED.callGetLastError());
-        Assert.assertTrue(WriteConcern.SAFE.callGetLastError());
-        Assert.assertTrue(WriteConcern.ACKNOWLEDGED.callGetLastError());
-        Assert.assertTrue(WriteConcern.FSYNC_SAFE.callGetLastError());
-        Assert.assertTrue(WriteConcern.JOURNAL_SAFE.callGetLastError());
-        Assert.assertFalse(WriteConcern.ERRORS_IGNORED.callGetLastError());
-        Assert.assertTrue(WriteConcern.JOURNALED.callGetLastError());
-        Assert.assertTrue(WriteConcern.FSYNCED.callGetLastError());
-        Assert.assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.callGetLastError());
-        Assert.assertTrue(WriteConcern.MAJORITY.callGetLastError());
-        Assert.assertTrue(WriteConcern.REPLICAS_SAFE.callGetLastError());
-        Assert.assertTrue(new WriteConcern("custom").callGetLastError());
-        Assert.assertFalse(new WriteConcern(0, 1000).callGetLastError());
-        Assert.assertFalse(new WriteConcern(0, 0, true, false).callGetLastError());
-        Assert.assertFalse(new WriteConcern(0, 0, false, true).callGetLastError());
+        assertFalse(WriteConcern.NONE.callGetLastError());
+        assertFalse(WriteConcern.NORMAL.callGetLastError());
+        assertFalse(WriteConcern.UNACKNOWLEDGED.callGetLastError());
+        assertTrue(WriteConcern.SAFE.callGetLastError());
+        assertTrue(WriteConcern.ACKNOWLEDGED.callGetLastError());
+        assertTrue(WriteConcern.FSYNC_SAFE.callGetLastError());
+        assertTrue(WriteConcern.JOURNAL_SAFE.callGetLastError());
+        assertFalse(WriteConcern.ERRORS_IGNORED.callGetLastError());
+        assertTrue(WriteConcern.JOURNALED.callGetLastError());
+        assertTrue(WriteConcern.FSYNCED.callGetLastError());
+        assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.callGetLastError());
+        assertTrue(WriteConcern.MAJORITY.callGetLastError());
+        assertTrue(WriteConcern.REPLICAS_SAFE.callGetLastError());
+        assertTrue(new WriteConcern("custom").callGetLastError());
+        assertFalse(new WriteConcern(0, 1000).callGetLastError());
+        assertFalse(new WriteConcern(0, 0, true, false).callGetLastError());
+        assertFalse(new WriteConcern(0, 0, false, true).callGetLastError());
     }
 
     @Test
@@ -122,20 +124,20 @@ public class WriteConcernTest extends TestCase {
 
     @Test
     public void testRaiseNetworkErrors() {
-        Assert.assertFalse(WriteConcern.NONE.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.NORMAL.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.UNACKNOWLEDGED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.SAFE.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.ACKNOWLEDGED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.FSYNC_SAFE.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.JOURNAL_SAFE.raiseNetworkErrors());
-        Assert.assertFalse(WriteConcern.ERRORS_IGNORED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.JOURNALED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.FSYNCED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.MAJORITY.raiseNetworkErrors());
-        Assert.assertTrue(WriteConcern.REPLICAS_SAFE.raiseNetworkErrors());
-        Assert.assertTrue(new WriteConcern("custom").raiseNetworkErrors());
+        assertFalse(WriteConcern.NONE.raiseNetworkErrors());
+        assertTrue(WriteConcern.NORMAL.raiseNetworkErrors());
+        assertTrue(WriteConcern.UNACKNOWLEDGED.raiseNetworkErrors());
+        assertTrue(WriteConcern.SAFE.raiseNetworkErrors());
+        assertTrue(WriteConcern.ACKNOWLEDGED.raiseNetworkErrors());
+        assertTrue(WriteConcern.FSYNC_SAFE.raiseNetworkErrors());
+        assertTrue(WriteConcern.JOURNAL_SAFE.raiseNetworkErrors());
+        assertFalse(WriteConcern.ERRORS_IGNORED.raiseNetworkErrors());
+        assertTrue(WriteConcern.JOURNALED.raiseNetworkErrors());
+        assertTrue(WriteConcern.FSYNCED.raiseNetworkErrors());
+        assertTrue(WriteConcern.REPLICA_ACKNOWLEDGED.raiseNetworkErrors());
+        assertTrue(WriteConcern.MAJORITY.raiseNetworkErrors());
+        assertTrue(WriteConcern.REPLICAS_SAFE.raiseNetworkErrors());
+        assertTrue(new WriteConcern("custom").raiseNetworkErrors());
     }
 
     @Test
@@ -148,6 +150,28 @@ public class WriteConcernTest extends TestCase {
         assertEquals(new BasicDBObject("getlasterror", 1).append("j", true), new WriteConcern(0, 0, false, true).getCommand());
     }
 
+    @Test
+    public void testAsDBObject() {
+        assertEquals(new BasicDBObject("w", 0), WriteConcern.UNACKNOWLEDGED.asDBObject());
+        assertEquals(new BasicDBObject("w", 1), WriteConcern.ACKNOWLEDGED.asDBObject());
+        assertEquals(new BasicDBObject("w", 1), new WriteConcern(1).asDBObject());
+        assertEquals(new BasicDBObject("w", 2).append("wtimeout", 1000), new WriteConcern(2, 1000).asDBObject());
+        assertEquals(new BasicDBObject("w", 1).append("fsync", true), new WriteConcern(1, 0, true, false).asDBObject());
+        assertEquals(new BasicDBObject("w", 1).append("j", true), new WriteConcern(1, 0, false, true).asDBObject());
+    }
+
+    @Test
+    public void shouldUseServerDefaultForSimpleAcknowledgedWriteConcern() {
+        assertTrue(WriteConcern.ACKNOWLEDGED.useServerDefault());
+    }
+
+    @Test
+    public void shouldNotUseServerDefaultForAnyOtherWriteConcern() {
+        assertFalse(WriteConcern.UNACKNOWLEDGED.useServerDefault());
+        assertFalse(new WriteConcern(2, 1000).useServerDefault());
+        assertFalse(new WriteConcern(1, 0, true, false).useServerDefault());
+        assertFalse(new WriteConcern(1, 0, false, true).useServerDefault());
+    }
 
     // integration test to ensure that server doesn't mind a getlasterror command with wtimeout but no w.
     @Test
@@ -158,7 +182,7 @@ public class WriteConcernTest extends TestCase {
         try {
             WriteConcern wc = new WriteConcern(0, 1000);
             WriteResult res = collection.insert(new BasicDBObject(), wc);
-            Assert.assertTrue(res.getLastError().ok());
+            assertTrue(res.getLastError().ok());
         } finally {
             db.dropDatabase();
             mc.close();

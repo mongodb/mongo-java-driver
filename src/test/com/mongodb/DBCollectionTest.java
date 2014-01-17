@@ -20,6 +20,8 @@ import com.mongodb.util.TestCase;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 public class DBCollectionTest extends TestCase {
 
@@ -412,6 +415,74 @@ public class DBCollectionTest extends TestCase {
             assertEquals(50, e.getCode());
         } finally {
             disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
+        assumeTrue(isReplicaSet(getMongoClient()));
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            localCollection.insert(new BasicDBObject(), new WriteConcern("majority", 1, false, false));
+            fail();
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(0, e.getCommandResult().get("n"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
+        assumeTrue(isReplicaSet(getMongoClient()));
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            localCollection.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                   true, false,
+                                   new WriteConcern("majority", 1, false, false));
+            fail();
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(1, e.getCommandResult().get("n"));
+            assertEquals(1, e.getCommandResult().get("upserted"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
+        assumeTrue(isReplicaSet(getMongoClient()));
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            localCollection.insert(new BasicDBObject());
+            localCollection.remove(new BasicDBObject(), new WriteConcern("majority", 1, false, false));
+            fail();
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getCommandResult().get("err"));
+            assertEquals(1, e.getCommandResult().get("n"));
+        } finally {
+            mongoClient.close();
+        }
+    }
+    @Test
+    public void testBulkWriteConcernException() throws UnknownHostException {
+        assumeTrue(isReplicaSet(getMongoClient()));
+        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        try {
+            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
+            BulkWriteOperation builder = localCollection.initializeUnorderedBulkOperation();
+            builder.insert(new BasicDBObject());
+            builder.execute(new WriteConcern("majority", 1, false, false));
+            fail();
+        } catch (BulkWriteException e) {
+            assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
+        } finally {
+            mongoClient.close();
         }
     }
 }

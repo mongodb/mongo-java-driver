@@ -1462,7 +1462,42 @@ public abstract class DBCollection {
         
         return res;
     }
-    
+
+    /**
+     * Creates a builder for an ordered bulk operation.  Write requests included in the bulk operations will be executed in order,
+     * and will halt on the first failure.
+     *
+     * @return the builder
+     *
+     * @since 2.12
+     */
+    public BulkWriteOperation initializeOrderedBulkOperation() {
+        return new BulkWriteOperation(true, this);
+    }
+
+    /**
+     * Creates a builder for an unordered bulk operation. Write requests included in the bulk operation will be executed in an undefined
+     * order, and all requests will be executed even if some fail.
+     *
+     * @return the builder
+     *
+     * @since 2.12
+     */
+    public BulkWriteOperation initializeUnorderedBulkOperation() {
+        return new BulkWriteOperation(false, this);
+    }
+
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests) {
+        return executeBulkWriteOperation(ordered, requests, getWriteConcern());
+    }
+
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests, final WriteConcern writeConcern) {
+        return executeBulkWriteOperation(ordered, requests, writeConcern, getDBEncoder());
+    }
+
+    abstract BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests,
+                                                       final WriteConcern writeConcern, final DBEncoder encoder);
+
     @SuppressWarnings("unchecked")
     private DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
         if (pipeline.isEmpty()) {
