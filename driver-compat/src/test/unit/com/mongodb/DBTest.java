@@ -305,14 +305,12 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Ignore("This functionality still needs to be ported to 3.0")
     public void shouldThrowAnExceptionWhenDBNameContainsSpaces() {
         getMongoClient().getDB("foo bar");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @Ignore("This functionality still needs to be ported to 3.0")
-    public void shouldThrowAnExceptionwhenDBNameIsEmpty() {
+    public void shouldThrowAnExceptionWhenDBNameIsEmpty() {
         getMongoClient().getDB("");
     }
 

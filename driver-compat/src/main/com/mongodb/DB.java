@@ -70,6 +70,9 @@ public class DB {
     private volatile WriteConcern writeConcern;
 
     DB(final Mongo mongo, final String name, final Codec<Document> documentCodec) {
+        if (!isValidName(name)) {
+            throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
+        }
         this.mongo = mongo;
         this.name = name;
         this.documentCodec = documentCodec;
@@ -81,7 +84,7 @@ public class DB {
      * Constructs a new instance of the {@code DB}.
      *
      * @param mongo the mongo instance
-     * @param name  the database name
+     * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
         this(mongo, name, new DocumentCodec(PrimitiveCodecs.createDefault()));
@@ -633,5 +636,9 @@ public class DB {
 
     BufferProvider getBufferPool() {
         return getMongo().getBufferProvider();
+    }
+
+    private boolean isValidName(final String databaseName){
+        return databaseName.length() != 0 && !databaseName.contains(" ");
     }
 }
