@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.MongoExceptions.mapException;
 import static java.util.Collections.unmodifiableList;
@@ -655,7 +657,6 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSocketFactory()),
-                                                  Executors.newScheduledThreadPool(3),  // TODO: allow configuration
                                                   createNewCredentialList(credentialsList),
                                                   new PowerOfTwoBufferPool(),
                                                   null, new JMXConnectionPoolListener(), null);
@@ -722,7 +723,7 @@ public class Mongo {
     }
 
     private ExecutorService createCursorCleaningService() {
-        ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
         newTimer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -824,6 +825,24 @@ public class Mongo {
 
         private SessionHolder(final Session session) {
             this.session = session;
+        }
+    }
+
+    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
+    // applications that neglect to close MongoClient will not exit.
+    static class DaemonThreadFactory implements ThreadFactory {
+        private static final AtomicInteger poolNumber = new AtomicInteger(1);
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String namePrefix;
+
+        DaemonThreadFactory() {
+            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(final Runnable runnable) {
+            Thread t = new Thread(runnable, namePrefix + threadNumber.getAndIncrement());
+            t.setDaemon(true);
+            return t;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
                                            ServerSettings.builder().build(),
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                            new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                           scheduledExecutorService, asList(user.credential), getBufferProvider(), null, null, null)
+                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings())
+                                           , asList(user.credential), getBufferProvider(), null, null, null)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 @ThreadSafe
 public final class MongoClients {
@@ -125,7 +124,6 @@ public final class MongoClients {
         return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
                                                   options.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
-                                                  Executors.newScheduledThreadPool(3),
                                                   credentialList, bufferProvider, null, new JMXConnectionPoolListener(), null);
     }
 }

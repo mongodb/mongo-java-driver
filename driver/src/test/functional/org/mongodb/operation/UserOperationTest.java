@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,6 @@ import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.session.ClusterSession;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -52,8 +49,6 @@ import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 // This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
 public class UserOperationTest extends DatabaseTestCase {
-
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private User readOnlyUser;
 
     @Before
@@ -64,7 +59,6 @@ public class UserOperationTest extends DatabaseTestCase {
 
     @After
     public void tearDown() {
-        scheduledExecutorService.shutdown();
         super.tearDown();
     }
 
@@ -182,7 +176,7 @@ public class UserOperationTest extends DatabaseTestCase {
                                                   ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                  scheduledExecutorService, asList(user.getCredential()), getBufferProvider(),
+                                                  asList(user.getCredential()), getBufferProvider(),
                                                   null, null, null);
     }
 
