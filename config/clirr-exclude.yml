@@ -191,9 +191,9 @@ members:
   - raiseNetworkErrors()
 
   com.mongodb.MapReduceOutput:
-  - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult)
-  - getRaw()
-  - getCommandResult()
+  - getCommandResult()                                          # JAVA-1042
+  - getRaw()                                                    # TODO
+  - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult) # TODO
 
   org.bson.io.OutputBuffer:                       # JAVA-880 Fix up org.bson.io.{OutputBuffer, BasicOutputBuffer}
   - asString()                                    # JAVA-880
