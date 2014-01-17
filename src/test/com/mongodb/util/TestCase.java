@@ -23,7 +23,6 @@ import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.ReadPreference;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -38,7 +37,7 @@ public class TestCase {
         cleanupMongo = staticMongoClient;
     }
 
-    private static String cleanupDB = "mongo-java-driver-test";
+    private static final String cleanupDB = "mongo-java-driver-test";
     public Mongo cleanupMongo = null;
     protected DBCollection collection;
 
@@ -60,10 +59,6 @@ public class TestCase {
     @Before
     public void testCaseBefore() {
         collection = getDatabase().getCollection(getClass().getName());
-    }
-
-    @After
-    public void testCaseAfter() {
         collection.drop();
     }
 
@@ -71,9 +66,7 @@ public class TestCase {
         @Override
         public void run() {
             if (staticMongoClient != null) {
-                if (cleanupDB != null) {
-                    staticMongoClient.dropDatabase(cleanupDB);
-                }
+                staticMongoClient.dropDatabase(cleanupDB);
                 staticMongoClient.close();
                 staticMongoClient = null;
             }
