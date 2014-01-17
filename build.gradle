@@ -98,6 +98,7 @@ javadoc {
     options.links 'http://docs.oracle.com/javase/7/docs/api/'
     options.tagletPath project.sourceSets.util.output.classesDir
     options.taglets 'ManualTaglet'
+    options.taglets 'DochubTaglet'
 }
 
 task testAll(dependsOn: tasks.withType(Test))

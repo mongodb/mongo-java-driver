@@ -979,19 +979,14 @@ public abstract class DB {
         return _options.get();
     }
 
-    /**
-     * Returns true if the database name is not empty and does not contain any spaces.
-     * @param dbname
-     * @return
-     */
     private boolean isValidName(String dbname){
         return dbname.length() != 0 && !dbname.contains(" ");
     }
 
     /**
      * Forcefully kills any cursors leaked by neglecting to call {@code DBCursor.close}
-     * @param force
      *
+     * @param force true if should clean regardless of number of dead cursors
      * @see com.mongodb.DBCursor#close()
      * @deprecated Clients should ensure that {@code DBCursor.close} is called.
      */

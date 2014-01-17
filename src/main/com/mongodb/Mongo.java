@@ -124,11 +124,11 @@ public class Mongo {
     }
 
     /**
-     * returns a database object
-     * @param addr the database address
-     * @return
-     * @throws MongoException
+     * Connect to the MongoDB instance at the given address, select and return the {@code DB} specified in the {@code DBAddress} parameter.
      *
+     * @param addr The details of the server and database to connect to
+     * @return the DB requested in the addr parameter.
+     * @throws MongoException
      * @deprecated Please use {@link MongoClient#getDB(String)} instead.
      */
     @Deprecated
@@ -249,8 +249,9 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @param left left side of the pair
      * @param right right side of the pair
-     * @param options
+     * @param options the optional settings for the Mongo instance
      * @throws MongoException
+     * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
     @Deprecated
     public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
@@ -309,12 +310,11 @@ public class Mongo {
      * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
      * If the URI contains database credentials, the database will be authenticated lazily on first use
      * with those credentials.
-     * @param uri
-     * @see MongoURI
-     * <p>examples:
+     * @param uri the URI to connect to.
+     * <p>examples:<ul>
      *   <li>mongodb://localhost</li>
      *   <li>mongodb://fred:foobar@localhost/</li>
-     *  </p>
+     * </ul></p>
      * @throws MongoException
      * @throws UnknownHostException
      * @dochub connections
@@ -353,9 +353,10 @@ public class Mongo {
     }
 
     /**
-     * gets a database object
-     * @param dbname the database name
-     * @return
+     * Gets a database object from this MongoDB instance.
+     *
+     * @param dbname the name of the database to retrieve
+     * @return a DB representing the specified database
      */
     public DB getDB( String dbname ){
 
@@ -371,17 +372,19 @@ public class Mongo {
     }
 
     /**
-     * gets a collection of DBs used by the driver since this Mongo instance was created.
-     * This may include DBs that exist in the client but not yet on the server.
-     * @return
+     * Returns the list of databases used by the driver since this Mongo instance was created. This may include DBs that exist in the client
+     * but not yet on the server.
+     *
+     * @return a collection of database objects
      */
     public Collection<DB> getUsedDatabases(){
         return _dbs.values();
     }
 
     /**
-     * gets a list of all database names present on the server
-     * @return
+     * Gets a list of the names of all databases on the connected server.
+     *
+     * @return list of database names
      * @throws MongoException
      */
     public List<String> getDatabaseNames(){
@@ -423,9 +426,9 @@ public class Mongo {
     }
 
     /**
-     * returns a string representing the hosts used in this Mongo instance
-     * @return
+     * Get a String for debug purposes.
      *
+     * @return a string representing the hosts used in this Mongo instance
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
@@ -434,8 +437,9 @@ public class Mongo {
     }
 
     /**
-     * Gets the current master's hostname
-     * @return
+     * Gets a {@code String} representation of current connection point, i.e. master.
+     *
+     * @return server address in a host:port form
      */
     public String getConnectPoint(){
         return _connector.getConnectPoint();
@@ -443,7 +447,8 @@ public class Mongo {
 
     /**
      * Gets the underlying TCP connector
-     * @return
+     *
+     * @return A DBTCPConnector representing the connection to MongoDB
      * @deprecated {@link DBTCPConnector} is NOT part of the public API. It will be dropped in 3.x releases.
      */
     @Deprecated
@@ -452,8 +457,9 @@ public class Mongo {
     }
 
     /**
-     * Gets the replica set status object
-     * @return
+     * Get the status of the replica set cluster.
+     *
+     * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
         return _connector.getReplicaSetStatus();
@@ -469,7 +475,9 @@ public class Mongo {
 
     /**
      * Gets a list of all server addresses used when this Mongo was created
-     * @return
+     *
+     * @return list of server addresses
+     * @throws MongoException
      */
     public List<ServerAddress> getAllAddress() {
         List<ServerAddress> result = _connector.getAllAddress();
@@ -480,9 +488,9 @@ public class Mongo {
     }
 
     /**
-     * Gets the list of server addresses currently seen by the connector.
-     * This includes addresses auto-discovered from a replica set.
-     * @return
+     * Gets the list of server addresses currently seen by this client. This includes addresses auto-discovered from a replica set.
+     *
+     * @return list of server addresses
      * @throws MongoException
      */
     public List<ServerAddress> getServerAddressList() {
@@ -490,7 +498,7 @@ public class Mongo {
     }
 
     /**
-     * closes the underlying connector, which in turn closes all open connections.
+     * Closes the underlying connector, which in turn closes all open connections.
      * Once called, this Mongo instance can no longer be used.
      */
     public void close(){
@@ -523,7 +531,8 @@ public class Mongo {
 
     /**
      * Gets the default write concern
-     * @return
+     *
+     * @return the default write concern
      */
     public WriteConcern getWriteConcern(){
         return _concern;
@@ -542,7 +551,8 @@ public class Mongo {
 
     /**
      * Gets the default read preference
-     * @return
+     *
+     * @return the default read preference
      */
     public ReadPreference getReadPreference(){
         return _readPref;
@@ -560,31 +570,34 @@ public class Mongo {
     }
 
     /**
-     * adds a default query option
-     * @param option
+     * Add a default query option keeping any previously added options.
+     *
+     * @param option value to be added to current options
      */
     public void addOption( int option ){
         _netOptions.add( option );
     }
 
     /**
-     * sets the default query options
-     * @param options
+     * Set the default query options.  Overrides any existing options.
+     *
+     * @param options value to be set
      */
     public void setOptions( int options ){
         _netOptions.set( options );
     }
 
     /**
-     * reset the default query options
+     * Reset the default query options
      */
     public void resetOptions(){
         _netOptions.reset();
     }
 
     /**
-     * gets the default query options
-     * @return
+     * Gets the default query options
+     *
+     * @return an int representing the options to be used by queries
      */
     public int getOptions(){
         return _netOptions.get();
@@ -610,6 +623,7 @@ public class Mongo {
      *
      * @deprecated Please use {@link MongoClient}
      *             and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
+     * @return A {@link com.mongodb.MongoOptions} containing the settings for this MongoDB instance.
      */
     @Deprecated
     public MongoOptions getMongoOptions() {
@@ -663,11 +677,13 @@ public class Mongo {
     };
 
     /**
-     * Forces the master server to fsync the RAM data to disk
-     * This is done automatically by the server at intervals, but can be forced for better reliability. 
+     * Forces the master server to fsync the RAM data to disk This is done automatically by the server at intervals, but can be forced for
+     * better reliability.
+     *
      * @param async if true, the fsync will be done asynchronously on the server.
-     * @return
+     * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsync(boolean async) {
         DBObject cmd = new BasicDBObject("fsync", 1);
@@ -678,10 +694,12 @@ public class Mongo {
     }
 
     /**
-     * Forces the master server to fsync the RAM data to disk, then lock all writes.
-     * The database will be read-only after this command returns.
-     * @return
+     * Forces the master server to fsync the RAM data to disk, then lock all writes. The database will be read-only after this command
+     * returns.
+     *
+     * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsyncAndLock() {
         DBObject cmd = new BasicDBObject("fsync", 1);
@@ -690,10 +708,12 @@ public class Mongo {
     }
 
     /**
-     * Unlocks the database, allowing the write operations to go through.
-     * This command may be asynchronous on the server, which means there may be a small delay before the database becomes writable.
-     * @return
+     * Unlocks the database, allowing the write operations to go through. This command may be asynchronous on the server, which means there
+     * may be a small delay before the database becomes writable.
+     *
+     * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
         DB db = getDB(ADMIN_DATABASE_NAME);
@@ -703,8 +723,10 @@ public class Mongo {
 
     /**
      * Returns true if the database is locked (read-only), false otherwise.
-     * @return
+     *
+     * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
         DB db = getDB(ADMIN_DATABASE_NAME);

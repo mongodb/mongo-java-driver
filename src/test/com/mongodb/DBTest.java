@@ -306,7 +306,7 @@ public class DBTest extends TestCase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowAnExceptionwhenDBNameIsEmpty() {
+    public void shouldThrowAnExceptionWhenDBNameIsEmpty() {
         cleanupMongo.getDB("");
     }
 
