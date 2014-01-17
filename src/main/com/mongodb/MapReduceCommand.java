@@ -23,40 +23,52 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * This class groups the argument for a map/reduce operation and can build the underlying command object
+ *
  * @dochub mapreduce
+ * @mongodb.driver.manual applications/map-reduce Map-Reduce
  */
 public class MapReduceCommand {
 
     /**
-     * INLINE - Return results inline, no result is written to the DB server
-     * REPLACE - Save the job output to a collection, replacing its previous content
-     * MERGE - Merge the job output with the existing contents of outputTarget collection
-     * REDUCE - Reduce the job output with the existing contents of outputTarget collection
+     * Represents the different options available for outputting the results of a map-reduce operation.
+     *
+     * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-out-cmd Output options
      */
     public static enum OutputType {
-        REPLACE, MERGE, REDUCE, INLINE
-    };
+        /**
+         * Save the job output to a collection, replacing its previous content
+         */
+        REPLACE,
+        /**
+         * Merge the job output with the existing contents of outputTarget collection
+         */
+        MERGE,
+        /**
+         * Reduce the job output with the existing contents of outputTarget collection
+         */
+        REDUCE,
+        /**
+         * Return results inline, no result is written to the DB server
+         */
+        INLINE
+    }
 
     /**
-     * Represents the command for a map reduce operation
-     * Runs the command in REPLACE output type to a named collection
-     * 
-     * @param inputCollection
-     *            the collection to read from
-     * @param map
-     *            map function in javascript code
-     * @param reduce
-     *            reduce function in javascript code
-     * @param outputCollection
-     *            optional - leave null if want to get the result inline
-     * @param type
-     *            the type of output
-     * @param query
-     *            the query to use on input
-     * @return
+     * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
+     *
+     * @param inputCollection  the collection to read from
+     * @param map              a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce           a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputCollection specifies the location of the result of the map-reduce operation (optional) - leave null if want to get the
+     *                         result inline
+     * @param type             specifies the type of job output
+     * @param query            specifies the selection criteria using query operators for determining the documents input to the map
+     *                         function.
      * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
-    public MapReduceCommand(DBCollection inputCollection , String map , String reduce , String outputCollection, OutputType type, DBObject query) {
+    public MapReduceCommand(DBCollection inputCollection, String map, String reduce, String outputCollection, OutputType type,
+                            DBObject query) {
         _input = inputCollection.getName();
         _map = map;
         _reduce = reduce;

@@ -32,13 +32,14 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-/** This class provides a skeleton implementation of a database collection.
- * <p>A typical invocation sequence is thus
+/**
+ * This class provides a skeleton implementation of a database collection. <p>A typical invocation sequence is thus
  * <blockquote><pre>
  *     MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
  *     DB db = mongo.getDB("mydb");
  *     DBCollection collection = db.getCollection("test");
  * </pre></blockquote>
+ *
  * @dochub collections
  */
 @SuppressWarnings("unchecked")
@@ -1260,90 +1261,86 @@ public abstract class DBCollection {
     }
 
     /**
-     * performs a map reduce operation
-     * Runs the command in REPLACE output mode (saves to named collection)
+     * Allows you to run map-reduce aggregation operations over a collection.  Runs the command in REPLACE output mode (saves to named
+     * collection).
      *
-     * @param map
-     *            map function in javascript code
-     * @param outputTarget
-     *            optional - leave null if want to use temp collection
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @param map            a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce         a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget   specifies the location of the result of the map-reduce operation (optional) - leave null if want to use temp
+     *                       collection
+     * @param query          specifies the selection criteria using query operators for determining the documents input to the map
+     *                       function.
+     * @return A MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/
      */
     public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , DBObject query ){
         return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , MapReduceCommand.OutputType.REPLACE, query ) );
     }
 
     /**
-     * Performs a map reduce operation
-     * Specify an outputType to control job execution
-     * * INLINE - Return results inline
-     * * REPLACE - Replace the output collection with the job output
-     * * MERGE - Merge the job output with the existing contents of outputTarget
-     * * REDUCE - Reduce the job output with the existing contents of
-     * outputTarget
+     * Allows you to run map-reduce aggregation operations over a collection and saves to a named collection.
+     * Specify an outputType to control job execution<ul>
+     * <li>INLINE - Return results inline</li>
+     * <li>REPLACE - Replace the output collection with the job output</li>
+     * <li>MERGE - Merge the job output with the existing contents of outputTarget</li>
+     * <li>REDUCE - Reduce the job output with the existing contents of outputTarget</li>
+     * </ul>
      *
-     * @param map
-     *            map function in javascript code
-     * @param outputTarget
-     *            optional - leave null if want to use temp collection
-     * @param outputType
-     *            set the type of job output
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget specifies the location of the result of the map-reduce operation (optional) - leave null if want to use temp
+     *                     collection
+     * @param outputType   specifies the type of job output
+     * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
+     * @return A MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
-    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query ){
+    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType,
+                                     DBObject query) {
         return mapReduce( new MapReduceCommand( this , map , reduce , outputTarget , outputType , query ) );
     }
 
     /**
-     * Performs a map reduce operation
-     * Specify an outputType to control job execution
-     * * INLINE - Return results inline
-     * * REPLACE - Replace the output collection with the job output
-     * * MERGE - Merge the job output with the existing contents of outputTarget
-     * * REDUCE - Reduce the job output with the existing contents of
-     * outputTarget
+     * Allows you to run map-reduce aggregation operations over a collection and saves to a named collection.
+     * Specify an outputType to control job execution<ul>
+     * <li>INLINE - Return results inline</li>
+     * <li>REPLACE - Replace the output collection with the job output</li>
+     * <li>MERGE - Merge the job output with the existing contents of outputTarget</li>
+     * <li>REDUCE - Reduce the job output with the existing contents of outputTarget</li>
+     * </ul>
      *
-     * @param map
-     *            map function in javascript code
-     * @param outputTarget
-     *            optional - leave null if want to use temp collection
-     * @param outputType
-     *            set the type of job output
-     * @param reduce
-     *            reduce function in javascript code
-     * @param query
-     *            to match
-     * @param readPrefs
-     *            ReadPreferences for this operation
-     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @param map            a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce         a JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param outputTarget   specifies the location of the result of the map-reduce operation (optional) - leave null if want to use temp
+     *                       collection
+     * @param outputType     specifies the type of job output
+     * @param query          specifies the selection criteria using query operators for determining the documents input to the map
+     *                       function.
+     * @param readPrefs the read preference specifying where to run the query.  Only applied for Inline output type
+     * @return A MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
      * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
-    public MapReduceOutput mapReduce( String map , String reduce , String outputTarget , MapReduceCommand.OutputType outputType , DBObject query, ReadPreference readPrefs ){
+    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query,
+                                     ReadPreference readPrefs) {
         MapReduceCommand command = new MapReduceCommand( this , map , reduce , outputTarget , outputType , query );
         command.setReadPreference(readPrefs);
         return mapReduce( command );
     }
 
     /**
-     * Performs a map reduce operation
+     * Allows you to run map-reduce aggregation operations over a collection and saves to a named collection.
      *
-     * @param command
-     *            object representing the parameters
-     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @param command object representing the parameters to the operation
+     * @return A MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
+     * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceOutput mapReduce( MapReduceCommand command ){
         DBObject cmd = command.toDBObject();
@@ -1354,13 +1351,14 @@ public abstract class DBCollection {
     }
 
     /**
-     * Performs a map reduce operation
+     * Allows you to run map-reduce aggregation operations over a collection
      *
-     * @param command
-     *            object representing the parameters
-     * @return a MapReduceOutput which contains the results of this map reduce operation
-     * @deprecated use {@code mapReduce (MapReduceCommand command)} instead
+     * @param command document representing the parameters to this operation.
+     * @return A MapReduceOutput which contains the results of this map reduce operation
      * @throws MongoException
+     * @dochub mapreduce
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
+     * @deprecated Use {@link com.mongodb.DBCollection#mapReduce(MapReduceCommand)} instead
      */
     @Deprecated
     public MapReduceOutput mapReduce( DBObject command ){
