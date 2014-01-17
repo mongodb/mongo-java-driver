@@ -1107,46 +1107,53 @@ public abstract class DBCollection {
     }
 
     /**
-     * calls {@link DBCollection#group(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, java.lang.String, java.lang.String)} with finalize=null
-     * @param key - { a : true }
-     * @param cond - optional condition on query
-     * @param reduce javascript reduce function
-     * @param initial initial value for first match on a key
-     * @return
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL. Calls {@link DBCollection#group(com.mongodb.DBObject,
+     * com.mongodb.DBObject, com.mongodb.DBObject, java.lang.String, java.lang.String)} with finalize=null
+     *
+     * @param key     specifies one or more document fields to group
+     * @param cond    specifies the selection criteria to determine which documents in the collection to process
+     * @param initial initializes the aggregation result document
+     * @param reduce  specifies an $reduce Javascript function, that operates on the documents during the grouping operation
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce ){
         return group( key , cond , initial , reduce , null );
-    }    
-    
+    }
+
     /**
-     * Applies a group operation
-     * @param key - { a : true }
-     * @param cond - optional condition on query
-     * @param reduce javascript reduce function
-     * @param initial initial value for first match on a key
-     * @param finalize An optional function that can operate on the result(s) of the reduce function.
-     * @return
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param key      specifies one or more document fields to group
+     * @param cond     specifies the selection criteria to determine which documents in the collection to process
+     * @param initial  initializes the aggregation result document
+     * @param reduce   specifies an $reduce Javascript function, that operates on the documents during the grouping operation
+     * @param finalize specifies a Javascript function that runs each item in the result set before final value will be returned
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize ){
         GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);
         return group( cmd );
     }
-    
+
     /**
-     * Applies a group operation
-     * @param key - { a : true }
-     * @param cond - optional condition on query
-     * @param reduce javascript reduce function
-     * @param initial initial value for first match on a key
-     * @param finalize An optional function that can operate on the result(s) of the reduce function.
-     * @param readPrefs ReadPreferences for this command
-     * @return
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param key       specifies one or more document fields to group
+     * @param cond      specifies the selection criteria to determine which documents in the collection to process
+     * @param initial   initializes the aggregation result document
+     * @param reduce    specifies an $reduce Javascript function, that operates on the documents during the grouping operation
+     * @param finalize  specifies a Javascript function that runs each item in the result set before final value will be returned
+     * @param readPrefs {@link ReadPreference} to be used for this operation
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce , String finalize, ReadPreference readPrefs ){
         GroupCommand cmd = new GroupCommand(this, key, cond, initial, reduce, finalize);
@@ -1154,23 +1161,27 @@ public abstract class DBCollection {
     }
 
     /**
-     * Applies a group operation
-     * @param cmd the group command
-     * @return
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param cmd the group command containing the details of how to perform the operation.
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( GroupCommand cmd ) {
         return group(cmd, getReadPreference());
     }
 
     /**
-     * Applies a group operation
-     * @param cmd the group command
-     * @param readPrefs ReadPreferences for this command
-     * @return
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
+     * @param cmd       the group command containing the details of how to perform the operation.
+     * @param readPrefs {@link ReadPreference} to be used for this operation
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( GroupCommand cmd, ReadPreference readPrefs ) {
         CommandResult res =  _db.command( cmd.toDBObject(), getOptions(), readPrefs );
@@ -1179,12 +1190,14 @@ public abstract class DBCollection {
     }
 
     /**
-     * @deprecated prefer the {@link DBCollection#group(com.mongodb.GroupCommand)} which is more standard
-     * Applies a group operation
+     * Group documents in a collection by the specified key and performs simple aggregation functions such as computing counts and sums.
+     * This is analogous to a {@code SELECT ... GROUP BY} statement in SQL.
+     *
      * @param args object representing the arguments to the group function
-     * @return
+     * @return a document with the grouped records as well as the command meta-data
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated use {@link DBCollection#group(com.mongodb.GroupCommand)} instead.  This method will be removed in 3.0
      */
     @Deprecated
     public DBObject group( DBObject args ){
