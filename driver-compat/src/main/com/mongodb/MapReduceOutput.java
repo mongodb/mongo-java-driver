@@ -25,8 +25,6 @@ import java.util.List;
 /**
  * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results()
  * method, or by interacting directly with the collection the results were input into.
- *
- * @since 2.0
  */
 public class MapReduceOutput {
 
@@ -70,7 +68,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * Returns a cursor to the results of the operation.
+     * Returns an iterator containing the results of the operation.
      *
      * @return the results in iterable form
      */

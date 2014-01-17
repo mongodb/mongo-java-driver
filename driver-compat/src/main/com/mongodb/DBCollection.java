@@ -1040,13 +1040,14 @@ public class DBCollection {
     }
 
     /**
-     * Perform mapReduce operation.
+     * Allows you to run map-reduce aggregation operations over a collection.
      *
      * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param outputTarget specifies the location of the result of the map-reduce operation.
      * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
-     * @return a mapReduce output
+     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final DBObject query) {
@@ -1055,14 +1056,15 @@ public class DBCollection {
     }
 
     /**
-     * Perform mapReduce operation.
+     * Allows you to run map-reduce aggregation operations over a collection and saves to a named collection.
      *
      * @param map          a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduce       a JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param outputTarget specifies the location of the result of the map-reduce operation.
      * @param outputType   specifies the type of job output
      * @param query        specifies the selection criteria using query operators for determining the documents input to the map function.
-     * @return a mapReduce output
+     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final MapReduceCommand.OutputType outputType, final DBObject query) {
@@ -1071,7 +1073,7 @@ public class DBCollection {
     }
 
     /**
-     * Perform mapReduce operation.
+     * Allows you to run map-reduce aggregation operations over a collection and saves to a named collection.
      *
      * @param map            a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduce         a JavaScript function that "reduces" to a single object all the values associated with a particular key.
@@ -1080,7 +1082,8 @@ public class DBCollection {
      * @param query          specifies the selection criteria using query operators for determining the documents input to the map
      *                       function.
      * @param readPreference the read preference specifying where to run the query.  Only applied for Inline output type
-     * @return a mapReduce output
+     * @return a MapReduceOutput which contains the results of this map reduce operation
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceOutput mapReduce(final String map, final String reduce, final String outputTarget,
                                      final MapReduceCommand.OutputType outputType, final DBObject query,
@@ -1091,10 +1094,11 @@ public class DBCollection {
     }
 
     /**
-     * Perform mapReduce operation.
+     * Allows you to run map-reduce aggregation operations over a collection.
      *
      * @param command specifies the details of the Map Reduce operation to perform
      * @return a MapReduceOutput containing the results of the map reduce operation
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         try {

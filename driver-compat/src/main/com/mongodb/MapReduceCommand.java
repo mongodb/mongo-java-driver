@@ -60,6 +60,7 @@ public class MapReduceCommand {
      * @param type             the type of output
      * @param query            specifies the selection criteria using query operators for determining the documents input to the map
      *                         function.
+     * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
     public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce, final String outputCollection,
                             final OutputType type, final DBObject query) {
@@ -347,18 +348,26 @@ public class MapReduceCommand {
     }
 
     /**
-     * Type of the output:
-     * <ul>
-     * <li>INLINE - Return results inline, no result is written to the DB server</li>
-     * <li>REPLACE - Save the job output to a collection, replacing its previous content</li>
-     * <li>MERGE - Merge the job output with the existing contents of outputCollection collection</li>
-     * <li>REDUCE - Reduce the job output with the existing contents of outputCollection collection</li>
-     * </ul>
+     * Represents the different options available for outputting the results of a map-reduce operation.
+     *
+     * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-out-cmd Output options
      */
     public enum OutputType {
+        /**
+         * Save the job output to a collection, replacing its previous content
+         */
         REPLACE,
+        /**
+         * Merge the job output with the existing contents of outputTarget collection
+         */
         MERGE,
+        /**
+         * Reduce the job output with the existing contents of outputTarget collection
+         */
         REDUCE,
+        /**
+         * Return results inline, no result is written to the DB server
+         */
         INLINE
     }
 

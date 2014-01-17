@@ -129,7 +129,17 @@ members:
   - cleanCursors(boolean)
   - resetError()
 
+
   com.mongodb.DBCollection:
+  - checkReadOnly(boolean)                              # JAVA-878
+  - _fullName                                           # JAVA-881 Fix up com.mongodb.DBCollection
+  - _hintFields                                         # JAVA-881
+  - _name                                               # JAVA-881
+  - _objectClass                                        # JAVA-881
+  - _checkObject(com.mongodb.DBObject,boolean,boolean)  # JAVA-881
+  - genIndexName(com.mongodb.DBObject)                  # JAVA-881
+  - group(com.mongodb.DBObject)                         # TODO
+  - mapReduce(com.mongodb.DBObject)                     # TODO
   - createIndex(com.mongodb.DBObject,com.mongodb.DBObject,com.mongodb.DBEncoder)
   - ensureIndex(java.lang.String)
   - ensureIndex(com.mongodb.DBObject)
@@ -137,15 +147,7 @@ members:
   - ensureIndex(com.mongodb.DBObject,java.lang.String,boolean)
   - ensureIndex(com.mongodb.DBObject,com.mongodb.DBObject)
   - genIndexName(com.mongodb.DBObject)                  # JAVA-881
-  - group(com.mongodb.DBObject)
-  - mapReduce(com.mongodb.DBObject)
   - resetIndexCache()
-  - checkReadOnly(boolean)                              # JAVA-878
-  - _checkObject(com.mongodb.DBObject,boolean,boolean)  # JAVA-881
-  - _fullName                                           # JAVA-881 Fix up com.mongodb.DBCollection
-  - _hintFields                                         # JAVA-881
-  - _name                                               # JAVA-881
-  - _objectClass                                        # JAVA-881
 
   com.mongodb.DBCursor:
   - getSizes()
