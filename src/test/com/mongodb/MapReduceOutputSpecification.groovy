@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import spock.lang.Subject
 
-@SuppressWarnings("deprecated")
+@SuppressWarnings('deprecated')
 class MapReduceOutputSpecification extends FunctionalSpecification {
     //example response:
 //    CommandResult{
@@ -44,14 +42,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the name of the collection the results are contained in'() throws Exception {
         given:
-        String expectedCollectionName = "collectionForResults";
-        DBObject result = new BasicDBObject("db", "databaseName")
-                .append("collection", expectedCollectionName);
+        String expectedCollectionName = 'collectionForResults';
+        DBObject result = new BasicDBObject('db', 'databaseName')
+                .append('collection', expectedCollectionName);
         CommandResult commandResult = new CommandResult(new ServerAddress());
-        commandResult.append("result", result);
+        commandResult.append('result', result);
 
-        @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
+        @Subject MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
 
         when:
         String collectionName = mapReduceOutput.getCollectionName();
@@ -64,14 +61,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the name of the datbase the results are contained in'() throws Exception {
         given:
-        String expectedDatabaseName = "databaseName"
-        DBObject result = new BasicDBObject("db", expectedDatabaseName)
-                .append("collection", "collectionForResults");
+        String expectedDatabaseName = 'databaseName'
+        DBObject result = new BasicDBObject('db', expectedDatabaseName)
+                .append('collection', 'collectionForResults');
         CommandResult commandResult = new CommandResult(new ServerAddress());
-        commandResult.append("result", result);
+        commandResult.append('result', result);
 
-        @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
+        @Subject MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
 
         when:
         String databaseName = mapReduceOutput.getDatabaseName();
@@ -85,11 +81,10 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         given:
         int expectedDuration = 2774
         CommandResult commandResult = new CommandResult(new ServerAddress());
-        commandResult.append("timeMillis", expectedDuration);
-        commandResult.append("result", "stubCollectionName");
+        commandResult.append('timeMillis', expectedDuration);
+        commandResult.append('result', 'stubCollectionName');
 
-        @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
+        @Subject MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
 
         when:
         int duration = mapReduceOutput.getDuration();
@@ -106,20 +101,18 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         int expectedEmitCount = 6
         CommandResult commandResult = new CommandResult(new ServerAddress());
         DBObject counts = new BasicDBObject();
-        counts.append("input", expectedInputCount)
-        counts.append("output", expectedOutputCount)
-        counts.append("emit", expectedEmitCount)
-        commandResult.append("counts", counts);
-        commandResult.append("result", "stubCollectionName");
+        counts.append('input', expectedInputCount)
+        counts.append('output', expectedOutputCount)
+        counts.append('emit', expectedEmitCount)
+        commandResult.append('counts', counts);
+        commandResult.append('result', 'stubCollectionName');
 
-        @Subject
-        MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
+        @Subject MapReduceOutput mapReduceOutput = new MapReduceOutput(this.collection, new BasicDBObject(), commandResult);
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount
         mapReduceOutput.getOutputCount() == expectedOutputCount
         mapReduceOutput.getEmitCount() == expectedEmitCount
-
     }
 
 }

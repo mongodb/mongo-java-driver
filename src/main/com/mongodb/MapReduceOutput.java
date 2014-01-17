@@ -22,16 +22,19 @@ package com.mongodb;
  * <p/>
  * There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
  * removed.
+ *
+ * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
  */
 public class MapReduceOutput {
 
     /**
-     * Creates a new MapReduceOutput
+     * Creates a new MapReduceOutput.
+     *
      * @param from the DBCollection the Map Reduce was run against
-     * @param cmd the original Map Reduce command as a DBObject
-     * @param raw the CommandResult containing the raw response from the server.
-     * @deprecated In the 3.0 version of the driver, this will be constructed only by the driver,
-     * and will therefore not have a public constructor.
+     * @param cmd  the original Map Reduce command as a DBObject
+     * @param raw  the CommandResult containing the raw response from the server.
+     * @deprecated In the 3.0 version of the driver, this will be constructed only by the driver, and will therefore not have a public
+     * constructor.
      */
     @SuppressWarnings("unchecked")
     @Deprecated
@@ -66,15 +69,17 @@ public class MapReduceOutput {
     }
 
     /**
-     * Returns a cursor to the results of the operation
-     * @return
+     * Returns an iterator containing the results of the operation.
+     *
+     * @return the results in iterable form
      */
     public Iterable<DBObject> results(){
         return _resultSet;
     }
 
     /**
-     * drops the collection that holds the results
+     * Drops the collection that holds the results.  Does nothing if the map-reduce returned the results inline.
+     *
      * @throws MongoException
      */
     public void drop(){
@@ -83,14 +88,23 @@ public class MapReduceOutput {
     }
 
     /**
-     * gets the collection that holds the results
-     * (Will return null if results are Inline)
-     * @return
+     * Gets the collection that holds the results (Will return null if results are Inline).
+     *
+     * @return the collection or null
      */
     public DBCollection getOutputCollection(){
         return _coll;
     }
 
+    /**
+     * Get the full document containing the raw results returned by the server.
+     *
+     * @return The result of the map-reduce operation as a document
+     * @deprecated It is not recommended to access the raw document returned by the server as the format can change between releases. This
+     * has been replaced with a series of specific getters for the values on the result (getCollectionName, getDatabaseName, getDuration,
+     * getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an {@code Iterable<DBObjects>},
+     * that should be used to obtain the results of the map-reduce.  This method will be removed in 3.0.
+     */
     @Deprecated
     public BasicDBObject getRaw(){
         return _commandResult;
@@ -99,10 +113,11 @@ public class MapReduceOutput {
     /**
      * The CommandResult should not be used directly at all, this will be removed.
      *
-     * @return a CommandResult representing the output of the Map Reduce in its raw form from the server.
-     * @deprecated This has been replaced with a series of specific getters for the values on the CommandResult (getCollectionName,
-     *             getDatabaseName, getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue
-     *             to return an {@code Iterable<DBObjects>}, that should be used to obtain the results of the Map Reduce.
+     * @return a CommandResult representing the output of the map-reduce in its raw form from the server.
+     * @deprecated It is not recommended to access the command result returned by the server as the format can change between releases. This
+     * has been replaced with a series of specific getters for the values on the CommandResult (getCollectionName, getDatabaseName,
+     * getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an {@code
+     * Iterable<DBObjects>}, that should be used to obtain the results of the map-reduce.  This method will be removed in 3.0.
      */
     @Deprecated
     public CommandResult getCommandResult() {
