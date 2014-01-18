@@ -446,9 +446,12 @@ public class DBCollectionTest extends TestCase {
                                                              true, false, new WriteConcern("majority", 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
+            System.out.println(e.getCommandResult());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(1, e.getCommandResult().get("n"));
-            assertEquals(1, e.getCommandResult().get("upserted"));
+            if(serverIsAtLeastVersion(2.5)){
+                assertEquals(1, e.getCommandResult().get("upserted"));
+            }
         } finally {
             database.dropDatabase();
         }
