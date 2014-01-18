@@ -63,6 +63,48 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
+/**
+ * A database connection with internal connection pooling. For most applications, you should have one Mongo instance
+ * for the entire JVM.
+ * <p>
+ * The following are equivalent, and all connect to the local database running on the default port:
+ * <pre>
+ * Mongo mongo1 = new Mongo();
+ * Mongo mongo1 = new Mongo("localhost");
+ * Mongo mongo2 = new Mongo("localhost", 27017);
+ * Mongo mongo4 = new Mongo(new ServerAddress("localhost"));
+ * </pre>
+ * <p>
+ * You can connect to a
+ * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing
+ * a ServerAddress list to the Mongo constructor. For example:
+ * <pre>
+ * Mongo mongo = new Mongo(Arrays.asList(
+ *   new ServerAddress("localhost", 27017),
+ *   new ServerAddress("localhost", 27018),
+ *   new ServerAddress("localhost", 27019)));
+ * </pre>
+ * You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are
+ * a list of replica set members or a list of mongos servers.
+ * <p>
+ * By default, all read and write operations will be made on the primary,
+ * but it's possible to read from secondaries by changing the read preference:
+ * <p>
+ * <pre>
+ * mongo.setReadPreference(ReadPreference.secondary());
+ * </pre>
+ * By default, write operations will not throw exceptions on failure, but that is easily changed too:
+ * <p>
+ * <pre>
+ * mongo.setWriteConcern(WriteConcern.SAFE);
+ * </pre>
+ *
+ * Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.
+ *
+ * @see MongoClient
+ * @see ReadPreference
+ * @see WriteConcern
+ */
 @ThreadSafe
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
@@ -132,7 +174,7 @@ public class Mongo {
     /**
      * Creates a Mongo instance based on a (single) mongodb node
      *
-     * @param host the database's host address
+     * @param host the host address of the database
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
@@ -395,7 +437,7 @@ public class Mongo {
      * Please be aware that since 3.0 changes to {@code MongoOptions} that are done after connection are not reflected.
      *
      * @return the mongo options
-     * @deprecated Please use {@link MongoClient} class to connect to server and corresponging {@link
+     * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link
      *             com.mongodb.MongoClient#getMongoClientOptions()}
      */
     @Deprecated
@@ -510,6 +552,11 @@ public class Mongo {
         optionHolder.add(option);
     }
 
+    /**
+     * Gets the default query options
+     *
+     * @return an int representing the options to be used by queries
+     */
     public int getOptions() {
         return optionHolder.get();
     }
@@ -521,6 +568,7 @@ public class Mongo {
      * @param async if true, the fsync will be done asynchronously on the server.
      * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsync(final boolean async) {
         DBObject command = new BasicDBObject("fsync", 1);
@@ -536,6 +584,7 @@ public class Mongo {
      *
      * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsyncAndLock() {
         DBObject command = new BasicDBObject("fsync", 1);
@@ -549,6 +598,7 @@ public class Mongo {
      *
      * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
         return getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.unlock").findOne();
@@ -559,6 +609,7 @@ public class Mongo {
      *
      * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
         DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");

@@ -48,7 +48,7 @@ import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient}
- * instance using code like:<br/>
+ * instance using code like:
  * <pre>
  * {@code
  * MongoClient mongoClient = new MongoClient();
@@ -341,7 +341,7 @@ public class DB {
      *
      * @param cmd {@code DBObject} representation of the command to be executed
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException§
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject cmd) {
@@ -511,9 +511,10 @@ public class DB {
      *
      * @param userName the user name
      * @param password the password
+     * @return the result of executing this operation
      * @throws MongoException
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password) {
@@ -526,9 +527,10 @@ public class DB {
      * @param userName the user name
      * @param password the password
      * @param readOnly if true, user will only be able to read
+     * @return the result of executing this operation
      * @throws MongoException
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
@@ -547,9 +549,10 @@ public class DB {
      * Removes the specified user from the database.
      *
      * @param userName user to be removed
+     * @return the result of executing this operation
      * @throws MongoException
-     * @deprecated Use {@code DB.command} to call the dropUser command
      * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @deprecated Use {@code DB.command} to call the dropUser command
      */
     @Deprecated
     public WriteResult removeUser(final String userName) {
@@ -569,7 +572,7 @@ public class DB {
     }
 
     /**
-     * Adds the given flag to the query options.
+     * Adds the given flag to the default query options.
      *
      * @param option value to be added
      */
