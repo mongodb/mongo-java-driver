@@ -33,16 +33,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An abstract class that represents a logical database on a server.
- * Thread-safe.
- * <p/>
- * DB instance can be achieved from {@link MongoClient} using code like:<br>
- * <code>
- * Mongo m = new Mongo();<br>
- * DB db = m.getDB("mydb");
- * </code>
+ * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
+ * using code like:
+ * <pre>
+ * {@code
+ * MongoClient mongoClient = new MongoClient();
+ * DB db = mongoClient.getDB("<db name>");
+ * }</pre>
  *
- * @dochub databases
+ * @mongodb.driver.manual reference/glossary/#term-database Database
+ * @see MongoClient
  */
 public abstract class DB {
     private static final Set<String> _obedientCommands = new HashSet<String>();
@@ -237,7 +237,6 @@ public abstract class DB {
      * @param cmd {@code DBObject} representation of the command to be executed
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( DBObject cmd ){
@@ -253,7 +252,6 @@ public abstract class DB {
      * @param encoder {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( DBObject cmd, DBEncoder encoder ){
@@ -271,7 +269,6 @@ public abstract class DB {
      * @param encoder {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
@@ -291,7 +288,6 @@ public abstract class DB {
      * @param readPreference The {@link ReadPreference} for this command (nodes selection is the biggest part of this)
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
@@ -310,7 +306,6 @@ public abstract class DB {
      * @param encoder        A {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
@@ -370,7 +365,6 @@ public abstract class DB {
      * @param options The query options to use
      * @return The result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
@@ -399,7 +393,6 @@ public abstract class DB {
      * @param cmd name of the command to be executed
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command( String cmd ){
@@ -413,7 +406,6 @@ public abstract class DB {
      * @param options query options to use
      * @return result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @deprecated Use {@link com.mongodb.DB#command(String, ReadPreference)} instead.  This method will be removed in 3.0.
      */
@@ -431,7 +423,6 @@ public abstract class DB {
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
      * @return The result of the command execution
      * @throws MongoException
-     * @dochub commands
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
@@ -586,24 +577,20 @@ public abstract class DB {
     }
 
     /**
-     * Returns the error status of the last operation on the current connection.
-     * <p/>
-     * The result of this command will look like:
-     * <p/>
-     * <code>
+     * Returns the error status of the last operation on the current connection. The result of this command will look like:
+     * <pre>
+     * {@code
      * { "err" :  errorMessage  , "ok" : 1.0 }
-     * </code>
-     * <p/>
+     * }</pre>
      * The value for errorMessage will be null if no error occurred, or a description otherwise.
-     * <p/>
-     * Important note: when calling this method directly, it is undefined which connection "getLastError" is called on.
-     * You may need to explicitly use a "consistent Request", see {@link DB#requestStart()}
-     * For most purposes it is better not to call this method directly but instead use {@link WriteConcern}
+     * <p> Important note: when calling this method directly, it is undefined which connection "getLastError" is called on. You may need
+     * to explicitly use a "consistent Request", see {@link DB#requestStart()} It is better not to call this method directly but instead
+     * use {@link WriteConcern} </p>
      *
      * @return {@code DBObject} with error and status information
      * @throws MongoException
-     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
      * @see WriteConcern#ACKNOWLEDGED
+     * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
      */
     @Deprecated
     public CommandResult getLastError(){
@@ -704,7 +691,7 @@ public abstract class DB {
      * @return {@code true} if authenticated, {@code false} otherwise
      * @dochub authenticate
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
-     *             will authentificate all connections to server
+     *             will authenticate all connections to server
      */
     @Deprecated
     public boolean isAuthenticated() {
@@ -723,11 +710,11 @@ public abstract class DB {
      * @param password password of user for this database
      * @return true if authenticated, false otherwise
      * @throws MongoException        if authentication failed due to invalid user/pass, or other exceptions like I/O
-     * @throws IllegalStateException if authentiation test has already succeeded with different credentials
+     * @throws IllegalStateException if authentication test has already succeeded with different credentials
      * @dochub authenticate
      * @see #authenticateCommand(String, char[])
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
-     *             will authentificate all connections to server
+     *             will authenticate all connections to server
      */
     @Deprecated
     public boolean authenticate(String username, char[] password) {
@@ -746,11 +733,11 @@ public abstract class DB {
      * @param password password of user for this database
      * @return the CommandResult from authenticate command
      * @throws MongoException        if authentication failed due to invalid user/pass, or other exceptions like I/O
-     * @throws IllegalStateException if authentiation test has already succeeded with different credentials
+     * @throws IllegalStateException if authentication test has already succeeded with different credentials
      * @dochub authenticate
      * @see #authenticate(String, char[])
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, java.util.List)} to create a client, which
-     *             will authentificate all connections to server
+     *             will authenticate all connections to server
      */
     @Deprecated
     public synchronized CommandResult authenticateCommand(String username, char[] password) {
@@ -798,13 +785,14 @@ public abstract class DB {
     abstract CommandResult doAuthenticate(MongoCredential credentials);
 
     /**
-     * Adds a new user for this db
+     * Adds or updates a user for this database
      *
-     * @param username
-     * @param passwd
+     * @param username the user name
+     * @param passwd   the password
+     * @return the result of executing this operation
      * @throws MongoException
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
     @Deprecated
     public WriteResult addUser( String username , char[] passwd ){
@@ -812,15 +800,15 @@ public abstract class DB {
     }
 
     /**
-     * Adds privilege documents to the {@code system.users} collection in a database,
-     * which creates database credentials in MongoDB.
+     * Adds or updates a user for this database
      *
-     * @param username
-     * @param passwd
+     * @param username the user name
+     * @param passwd the password
      * @param readOnly if true, user will only be able to read
+     * @return the result of executing this operation
      * @throws MongoException
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
     @Deprecated
     public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
@@ -834,12 +822,13 @@ public abstract class DB {
     }
 
     /**
-     * Removes the specified username from the database.
+     * Removes the specified user from the database.
      *
      * @param username user to be removed
+     * @return the result of executing this operation
      * @throws MongoException
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call the dropUser command
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
      */
     @Deprecated
     public WriteResult removeUser( String username ){
@@ -865,20 +854,16 @@ public abstract class DB {
     }
 
     /**
-     * Returns the last error that occurred since start of database or a call to {@link com.mongodb.DB#resetError()}
-     * <p/>
-     * The return object will look like:
-     * <p/>
-     * <code>
+     * Returns the last error that occurred since start of database or a call to {@link com.mongodb.DB#resetError()} The return object
+     * will look like:
+     * <pre>
+     * {@code
      * { err : errorMessage, nPrev : countOpsBack, ok : 1 }
-     * </code>
-     * <p/>
+     * }</pre>
      * The value for errorMessage will be null of no error has occurred, otherwise the error message.
      * The value of countOpsBack will be the number of operations since the error occurred.
-     * <p/>
-     * Care must be taken to ensure that calls to getPreviousError go to the same connection as that
-     * of the previous operation.
-     * See {@link DB#requestStart()} for more information.
+     * <p> Care must be taken to ensure that calls to getPreviousError go to the same connection as that
+     * of the previous operation. See {@link DB#requestStart()} for more information.</p>
      *
      * @return {@code DBObject} with error and status information
      * @throws MongoException
@@ -946,7 +931,7 @@ public abstract class DB {
     }
 
     /**
-     * Adds the given flag to the query options.
+     * Adds the given flag to the default query options.
      *
      * @param option value to be added
      */
@@ -955,7 +940,7 @@ public abstract class DB {
     }
 
     /**
-     * Sets the query options, overwriting previous value.
+     * Sets the default query options, overwriting previous value.
      *
      * @param options bit vector of query options
      */
@@ -971,7 +956,7 @@ public abstract class DB {
     }
 
     /**
-     * Gets the query options
+     * Gets the default query options
      *
      * @return bit vector of query options
      */
@@ -988,7 +973,7 @@ public abstract class DB {
      *
      * @param force true if should clean regardless of number of dead cursors
      * @see com.mongodb.DBCursor#close()
-     * @deprecated Clients should ensure that {@code DBCursor.close} is called.
+     * @deprecated Clients should ensure that {@link DBCursor#close()} is called.
      */
     @Deprecated
     public abstract void cleanCursors( boolean force );
