@@ -513,7 +513,7 @@ public class DB {
      * @param password the password
      * @return the result of executing this operation
      * @throws MongoException
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      */
     @Deprecated
@@ -529,7 +529,7 @@ public class DB {
      * @param readOnly if true, user will only be able to read
      * @return the result of executing this operation
      * @throws MongoException
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
      */
     @Deprecated
@@ -551,7 +551,7 @@ public class DB {
      * @param userName user to be removed
      * @return the result of executing this operation
      * @throws MongoException
-     * @mongodb.driver.manual reference/command/nav-user-role/  User manipulation commands
+     * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call the dropUser command
      */
     @Deprecated
