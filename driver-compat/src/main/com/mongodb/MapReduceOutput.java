@@ -68,7 +68,7 @@ public class MapReduceOutput {
     }
 
     /**
-     * Returns an iterator containing the results of the operation.
+     * Returns an iterable containing the results of the operation.
      *
      * @return the results in iterable form
      */
