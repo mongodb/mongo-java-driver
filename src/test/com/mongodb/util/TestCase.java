@@ -22,6 +22,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.ReadPreference;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -33,6 +34,10 @@ import static org.junit.Assume.assumeTrue;
 
 public class TestCase {
 
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static MongoClientURI mongoClientURI;
+
     public TestCase(){
         cleanupMongo = staticMongoClient;
     }
@@ -43,11 +48,20 @@ public class TestCase {
 
     private static MongoClient staticMongoClient;
 
+    public static synchronized MongoClientURI getMongoClientURI() {
+        if (mongoClientURI == null) {
+            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty() ? DEFAULT_URI : mongoURIProperty;
+            mongoClientURI = new MongoClientURI(mongoURIString);
+        }
+        return mongoClientURI;
+    }
+
     @BeforeClass
     public static void testCaseBeforeClass() {
         if (staticMongoClient == null) {
             try {
-                staticMongoClient = new MongoClient();
+                staticMongoClient = new MongoClient(getMongoClientURI());
                 staticMongoClient.dropDatabase(cleanupDB);
                 Runtime.getRuntime().addShutdownHook(new ShutdownHook());
             } catch (UnknownHostException e) {
