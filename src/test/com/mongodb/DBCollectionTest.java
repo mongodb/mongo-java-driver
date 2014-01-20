@@ -424,7 +424,7 @@ public class DBCollectionTest extends TestCase {
         MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern("majority", 1, false, false));
+            WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
@@ -444,7 +444,7 @@ public class DBCollectionTest extends TestCase {
             WriteResult writeResult = localCollection.update(new BasicDBObject("_id", id),
                                                              new BasicDBObject("$set", new BasicDBObject("x", 1)),
                                                              true, false,
-                                                             new WriteConcern("majority", 1, false, false));
+                                                             new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
@@ -462,7 +462,7 @@ public class DBCollectionTest extends TestCase {
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             localCollection.insert(new BasicDBObject());
-            WriteResult writeResult = localCollection.remove(new BasicDBObject(), new WriteConcern("majority", 1, false, false));
+            WriteResult writeResult = localCollection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
@@ -479,7 +479,7 @@ public class DBCollectionTest extends TestCase {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             BulkWriteOperation builder = localCollection.initializeUnorderedBulkOperation();
             builder.insert(new BasicDBObject());
-            builder.execute(new WriteConcern("majority", 1, false, false));
+            builder.execute(new WriteConcern(5, 1, false, false));
             fail();
         } catch (BulkWriteException e) {
             assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
