@@ -17,7 +17,6 @@
 package com.mongodb
 
 import org.bson.types.ObjectId
-import spock.lang.Ignore
 
 import static com.mongodb.WriteRequest.Type.INSERT
 import static com.mongodb.WriteRequest.Type.REMOVE
@@ -201,9 +200,9 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.findOne(new BasicDBObject('_id', 8)) == new BasicDBObject('_id', 8)
     }
 
-    @Ignore('This test is intermittently failing - if I put a pause in before all the findOne calls, it passes')
     def 'should handle multi-length runs of unacknowledged insert, update, replace, and remove'() {
         given:
+        collection.getDB().requestStart()
         collection.insert(getTestInserts())
 
         def builder = collection.initializeOrderedBulkOperation()
@@ -211,6 +210,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         when:
         def result = builder.execute(WriteConcern.UNACKNOWLEDGED)
+        collection.insert(new BasicDBObject('_id', 9))
 
         then:
         !result.isAcknowledged()
@@ -222,6 +222,9 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.findOne(new BasicDBObject('_id', 6)) == new BasicDBObject('_id', 6).append('x', 5)
         collection.findOne(new BasicDBObject('_id', 7)) == new BasicDBObject('_id', 7)
         collection.findOne(new BasicDBObject('_id', 8)) == new BasicDBObject('_id', 8)
+
+        cleanup:
+        collection.getDB().requestDone()
     }
 
     def 'error details should have correct index on ordered write failure'() {
