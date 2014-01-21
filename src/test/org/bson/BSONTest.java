@@ -280,7 +280,7 @@ public class BSONTest {
         
         assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
         
-        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L));
+        assertEquals(new BasicBSONObject("a", 100L), new BasicBSONObject("a", 100L));
     }
 
     private class TestDate {

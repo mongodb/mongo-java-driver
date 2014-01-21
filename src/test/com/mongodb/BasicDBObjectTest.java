@@ -20,11 +20,15 @@ package com.mongodb;
 
 import com.mongodb.util.JSON;
 import com.mongodb.util.TestCase;
+import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.Date;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 // Java
@@ -135,45 +139,40 @@ public class BasicDBObjectTest extends TestCase {
         Object x = b.get();
         Object y = JSON.parse( "{ 'x' : 1 , 'y' : { 'a' : 2 } , 'z' : { 'b' : 3 } }" );
 
-        assert( x.equals( y ) );
-    }
-
-    void _equal( BasicDBObject x , BasicDBObject y ){
-        assert( x.equals( y ) );
-        assert( y.equals( x ) );
-    }
-
-    void _notequal( BasicDBObject x , BasicDBObject y ){
-        assert( ! x.equals( y ) );
-        assert( ! y.equals( x ) );
+        assert( x.equals(y) );
     }
 
     @Test
-    public void testEquals(){
-        BasicDBObject a = new BasicDBObject();
-        BasicDBObject b = new BasicDBObject();
+    public void testEqualsAndHashCode(){
+        assertNotEquals(new BasicDBObject(), new Object());
 
+        assertEquality(new BasicDBObject(), new BasicDBObject());
 
-        _equal( a , b );
+        assertEquality(new BasicDBObject("x", 1), new BasicDBObject("x", 1));
 
-        a.put( "x" , 1 );
-        _notequal( a , b );
+        assertEquality(new BasicBSONObject("x", 1), new BasicDBObject("x", 1));
 
-        b.put( "x" , 1 );
-        _equal( a , b );
+        assertInequality(new BasicDBObject("x", 1), new BasicDBObject("x", 2));
 
-        a.removeField( "x" );
-        _notequal( a , b );
+        assertInequality(new BasicDBObject("x", 1), new BasicDBObject("y", 1));
 
-        b.removeField( "x" );
-        _equal( a , b );
+        assertEquals(new BasicDBObject("x", asList(1, 2, 3)), new BasicDBObject("x", new int[] {1, 2, 3}));
 
-        a.put( "x" , null );
-        b.put( "x" , 2 );
-        _notequal( a , b );
+        assertEquality(new BasicDBObject("x", 1).append("y", 2), new BasicDBObject("y", 2).append("x", 1));
 
-        a.put( "x" , 2 );
-        b.put( "x" , null );
-        _notequal( a , b );
+        assertEquality(new BasicDBObject("a", new BasicDBObject("y", 2).append("x", 1)),
+                       new BasicDBObject("a", new BasicDBObject("x", 1).append("y", 2)));
+   }
+
+    void assertEquality(BasicBSONObject x, BasicBSONObject y){
+        assertEquals(x, y);
+        assertEquals(y, x);
+        assertEquals(x.hashCode(), y.hashCode());
+    }
+
+    void assertInequality(BasicBSONObject x, BasicBSONObject y){
+        assertNotEquals(x, y);
+        assertNotEquals(y, x);
+        assertNotEquals(x.hashCode(), y.hashCode());
     }
 }

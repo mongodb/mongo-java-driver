@@ -460,7 +460,7 @@ public class BSONBinaryWriterTest extends TestCase {
         assertEquals(new BasicDBObject("b1", true)
                      .append("b2", false)
                      .append("a1", asList("danke", ""))
-                     .append("d1", new BasicDBObject("do", 60).append("i32", 40).append("i64", Long.MAX_VALUE))
+                     .append("d1", new BasicDBObject("do", 60.0).append("i32", 40).append("i64", Long.MAX_VALUE))
                      .append("js1", new CodeWScope("print x", new BasicDBObject("x", 1)))
                      .append("oid1", oid1),
                      decoder.decode(baos.toByteArray(), cleanupMongo.getDB("test").getCollection("testWriteRead")));
