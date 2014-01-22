@@ -299,7 +299,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         result.size() == 3
-        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
+        that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
     def 'should group by the x field and apply the provided count function using a GroupCommand'() {
@@ -317,7 +317,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         result.size() == 3
-        that result, contains(~['x': 'a', 'count': 3.0], ~['x': 'b', 'count': 4.0], ~['x': 'c', 'count': 1.0]);
+        that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
     def 'should group and count only those documents that fulfull the given condition'() {
@@ -332,7 +332,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         result.size() == 1;
-        that result, contains(~['x': 'b', 'count': 4.0]);
+        that result, contains(~['x': 'b', 'count': 4.0D]);
     }
 
     def 'should be able to set a value in the results'() {
@@ -378,7 +378,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         result.size() == 1;
-        that result, contains(~['a': 1.0]);
+        that result, contains(~['a': 1.0D]);
     }
 
     def 'finalize function should modify the result document'() {
@@ -394,7 +394,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         result.size() == 1;
-        that result, contains(~['x': 'b', 'valueFound': true, 'a': 1.0]);
+        that result, contains(~['x': 'b', 'valueFound': true, 'a': 1.0D]);
     }
 
     def 'should throw an Exception if no initial document provided'() {

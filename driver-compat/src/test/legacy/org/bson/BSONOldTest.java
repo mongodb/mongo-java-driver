@@ -294,7 +294,7 @@ public class BSONOldTest {
         assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
         assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
         assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
-        assertEquals(new BasicBSONObject("a", 100), new BasicBSONObject("a", 100L));
+        assertEquals(new BasicBSONObject("a", 100L), new BasicBSONObject("a", 100L));
     }
 
     private class TestDateTransformer implements Transformer {

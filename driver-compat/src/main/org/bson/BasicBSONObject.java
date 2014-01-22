@@ -17,13 +17,15 @@
 package org.bson;
 
 import com.mongodb.util.JSON;
+import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.TreeSet;
 
 /**
  * A simple implementation of {@code DBObject}. A {@code DBObject} can be created as follows, using this class: {@code DBObject obj = new
@@ -348,56 +350,53 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         return JSON.serialize(this);
     }
 
-    //CHECKSTYLE:OFF
-    public boolean equals(final Object o) {
-        if (!(o instanceof BSONObject)) {
+    /**
+     * Compares two documents according to their serialized form, ignoring the order of keys.
+     *
+     * @param o the document to compare to, which must be an instance of {@link org.bson.BSONObject}.
+     * @return true if the documents have the same serialized form, ignoring key order.
+     */
+    @Override
+    public boolean equals( Object o ) {
+        if (o == this) {
+            return true;
+        }
+
+        if (! (o instanceof BSONObject)) {
             return false;
         }
 
         BSONObject other = (BSONObject) o;
+
         if (!keySet().equals(other.keySet())) {
             return false;
         }
 
-        for (final String key : keySet()) {
-            Object a = get(key);
-            Object b = other.get(key);
-
-            if (a == null) {
-                if (b != null) {
-                    return false;
-                }
-            }
-            if (b == null) {
-                if (a != null) {
-                    return false;
-                }
-            } else if (a instanceof Number && b instanceof Number) {
-                Number aNumber = (Number) a;
-                Number bNumber = (Number) b;
-                if (aNumber instanceof Double || bNumber instanceof Double
-                    || aNumber instanceof Float || bNumber instanceof Float) {
-                    if (aNumber.doubleValue() != bNumber.doubleValue()) {
-                        return false;
-                    }
-                } else if (aNumber.longValue() != bNumber.longValue()) {
-                    return false;
-                }
-            } else if (a instanceof Pattern && b instanceof Pattern) {
-                Pattern p1 = (Pattern) a;
-                Pattern p2 = (Pattern) b;
-                if (!p1.pattern().equals(p2.pattern()) || p1.flags() != p2.flags()) {
-                    return false;
-                }
-            } else {
-                if (!a.equals(b)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return Arrays.equals(canonicalize(this).encode(), canonicalize(other).encode());
     }
-    //CHECKSTYLE:ON
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(canonicalize(this).encode());
+    }
+
+    private byte[] encode() {
+        return new BasicBSONEncoder().encode(this);
+    }
+
+    // create a copy of "from", but with keys ordered alphabetically
+    private static BasicBSONObject canonicalize(final BSONObject from) {
+        BasicBSONObject canonicalized = new BasicBSONObject();
+        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        for (String key : keysInOrder) {
+            Object val = from.get(key);
+            if (val instanceof BSONObject  && ! (val instanceof BasicBSONList)) {
+                val = canonicalize((BSONObject) val);
+            }
+            canonicalized.put(key, val);
+        }
+        return canonicalized;
+    }
 
     private int toInt(final Object o) {
         if (o instanceof Number) {
