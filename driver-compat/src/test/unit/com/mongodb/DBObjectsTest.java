@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,21 +83,6 @@ public class DBObjectsTest {
         expectedDocument.append("complexType", createNewTestObject());
 
         assertThat(actualDocument, is(expectedDocument));
-    }
-
-    @Test
-    public void shouldHandleComplexTypesWhenConvertingDocumentToDBObject() {
-        MyTestObject testObject = createNewTestObject();
-
-        Document document = createDocument();
-        document.append("complexType", testObject);
-
-        BasicDBObject actualDBObject = DBObjects.toDBObject(document);
-
-        BasicDBObject expectedDBObject = createBasicDBObject();
-        expectedDBObject.append("complexType", createNewTestObject());
-
-        assertThat(actualDBObject, is(expectedDBObject));
     }
 
     @Test
