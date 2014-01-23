@@ -393,10 +393,8 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public DBCursor addOption( int option ){
-        if ( option == Bytes.QUERYOPTION_EXHAUST )
-            throw new IllegalArgumentException("The exhaust option is not user settable.");
-        
-        _options |= option;
+        setOptions(_options |= option);
+
         return this;
     }
 
@@ -405,6 +403,15 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @param options
      */
     public DBCursor setOptions( int options ){
+        if ((options & Bytes.QUERYOPTION_EXHAUST) != 0) {
+            throw new IllegalArgumentException("The exhaust option is not user settable.");
+        }
+
+        // If tailable is set, await data should be as well
+        if ((options & Bytes.QUERYOPTION_TAILABLE) != 0) {
+            options |= Bytes.QUERYOPTION_AWAITDATA;
+        }
+
         _options = options;
         return this;
     }

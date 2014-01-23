@@ -101,45 +101,47 @@ class QueryResultIterator implements MongoCursor {
         return res;
     }
 
-
     public DBObject next() {
-        while (true) {
-            if (!(hasNext() && !_cur.hasNext())) {
-                break;
-            }
+        if (closed) {
+            throw new IllegalStateException("Iterator has been closed");
         }
 
         if (!hasNext()) {
-            throw new NoSuchElementException("no more documents in query result iterator");
+            throw new NoSuchElementException();
         }
 
         return _cur.next();
     }
 
-    public boolean hasNext(){
+    public boolean hasNext() {
+        if (closed) {
+           throw new IllegalStateException("Iterator has been closed");
+        }
+
         if (_cur.hasNext()) {
             return true;
         }
 
-        if (!hasGetMore()) {
-            return false;
+        while (_cursorId != 0) {
+            getMore();
+            if (_curSize > 0) {
+                return true;
+            }
         }
 
-        _advance();
-
-        return _cur.hasNext() || awaitResultsFromTailable();
+        return false;
     }
 
-    private void _advance(){
-        if (_cursorId == 0) {
-            throw new MongoInternalException("can't advance when there is no cursor id");
-        }
-
-        OutMessage m = OutMessage.getMore(_collection, _cursorId, chooseBatchSize(_batchSize, _limit, _numFetched));
-
-        Response res = _db._connector.call(_collection.getDB(), _collection, m, _host, _decoder);
+    private void getMore(){
+        Response res = _db._connector.call(_collection.getDB(), _collection,
+                                           OutMessage.getMore(_collection, _cursorId, getGetMoreBatchSize()),
+                                           _host, _decoder);
         _numGetMores++;
         init( res );
+    }
+
+    private int getGetMoreBatchSize() {
+        return chooseBatchSize(_batchSize, _limit, _numFetched);
     }
 
     public void remove(){
@@ -216,31 +218,6 @@ class QueryResultIterator implements MongoCursor {
         }
     }
 
-
-    private boolean hasGetMore() {
-        if (_cursorId == 0) {
-            return false;
-        }
-
-        if (_curSize > 0) {
-            return true;
-        }
-
-        if (!isTailable()) {
-            return false;
-        }
-
-        // have a tailable cursor, it is always possible to call get more
-        return true;
-    }
-
-    private boolean isTailable() {
-        return (_options & Bytes.QUERYOPTION_TAILABLE) != 0;
-    }
-
-    private boolean awaitResultsFromTailable() {
-        return isTailable() && (_options & Bytes.QUERYOPTION_AWAITDATA) != 0;
-    }
 
     void killCursor() {
         if (_cursorId == 0)

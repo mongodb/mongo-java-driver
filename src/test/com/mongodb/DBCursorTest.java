@@ -127,34 +127,11 @@ public class DBCursorTest extends TestCase {
 
         assertEquals(0, dbCursor.getOptions());
         dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
+        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA, dbCursor.getOptions());
         dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
+        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
         dbCursor.resetOptions();
         assertEquals(0, dbCursor.getOptions());
-    }
-
-    @Test
-    public void testTailable() {
-        DBCollection c = getDatabase().getCollection("tail1");
-        c.drop();
-        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
-        for (int i = 0; i < 10; i++) {
-            c.save(new BasicDBObject("x", i));
-        }
-
-        DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE);
-
-        while (cur.hasNext()) {
-            cur.next();
-            //do nothing...
-        }
-
-        assert (!cur.hasNext());
-        c.save(new BasicDBObject("x", 12));
-        assert (cur.hasNext());
-        assertNotNull(cur.next());
-        assert (!cur.hasNext());
     }
 
     @Test
@@ -168,7 +145,7 @@ public class DBCursorTest extends TestCase {
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
+                              .addOption(Bytes.QUERYOPTION_TAILABLE);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
