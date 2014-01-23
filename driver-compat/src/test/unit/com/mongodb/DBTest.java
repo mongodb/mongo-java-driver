@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 @SuppressWarnings("deprecation")
@@ -355,6 +356,8 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecified() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+
         // When
         CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary());
 
@@ -366,6 +369,8 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+
         // When
         CommandResult commandResult = database.command("dbstats", secondary());
 
@@ -377,6 +382,8 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+
         // When
         CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), secondary(), DefaultDBEncoder.FACTORY.create());
 
