@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,12 +357,12 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return true if the documents have the same serialized form, ignoring key order.
      */
     @Override
-    public boolean equals( Object o ) {
+    public boolean equals(final Object o) {
         if (o == this) {
             return true;
         }
 
-        if (! (o instanceof BSONObject)) {
+        if (!(o instanceof BSONObject)) {
             return false;
         }
 
@@ -390,7 +390,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
-            if (val instanceof BSONObject  && ! (val instanceof BasicBSONList)) {
+            if (val instanceof BSONObject && !(val instanceof BasicBSONList)) {
                 val = canonicalize((BSONObject) val);
             }
             canonicalized.put(key, val);
