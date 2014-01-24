@@ -22,7 +22,7 @@ import static com.mongodb.DBObjects.toDBObject;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
- * A simple wrapper for the result of getLastError() calls and other commands
+ * A simple wrapper to hold the result of a command.  All the fields from the response document have been added to this result.
  */
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
@@ -56,7 +56,7 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * gets the "errmsg" field which holds the error message
+     * Gets the error message associated with a failed command.
      *
      * @return The error message or null
      */
@@ -69,53 +69,16 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * utility method to create an exception with the command name
+     * Utility method to create an exception from a failed command.
      *
      * @return The mongo exception or null
      */
     public MongoException getException() {
         if (!ok()) {
             return new CommandFailureException(this);
-        } else if (hasErr()) { // getLastError check
-            return createException(getCode(), get("err").toString());
         }
 
-        //all good, should never get here.
         return null;
-    }
-
-    private MongoException createException(final int code, final String message) {
-        switch (code) {
-            case 11000:
-            case 11001:
-            case 12582:
-                return new MongoDuplicateKeyException(this);
-            default:
-                return new MongoException(code, message);
-        }
-    }
-
-    /**
-     * returns the "code" field, as an int
-     *
-     * @return -1 if there is no code
-     */
-    private int getCode() {
-        int code = -1;
-        if (get("code") instanceof Number) {
-            code = ((Number) get("code")).intValue();
-        }
-        return code;
-    }
-
-    /**
-     * check the "err" field
-     *
-     * @return if it has it, and isn't null
-     */
-    boolean hasErr() {
-        Object o = get("err");
-        return (o != null && ((String) o).length() > 0);
     }
 
     /**
@@ -124,11 +87,16 @@ public class CommandResult extends BasicDBObject {
      * @throws MongoException
      */
     public void throwOnError() {
-        if (!ok() || hasErr()) {
+        if (!ok()) {
             throw getException();
         }
     }
 
+    /**
+     * Gets the server that the command result came from.
+     *
+     * @return the server address
+     */
     public ServerAddress getServerUsed() {
         return host;
     }

@@ -76,15 +76,6 @@ public class CommandResultTest {
         assertFalse(commandResult.ok());
     }
 
-    @Test(expected = MongoDuplicateKeyException.class)
-    public void shouldThrowDuplicateKeyWhenResponseHasADuplicateKeyErrorCode() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress());
-        commandResult.put("ok", 1);
-        commandResult.put("err", "E11000 duplicate key error index 1");
-        commandResult.put("code", 11000);
-        commandResult.throwOnError();
-    }
-
     @Test
     public void testNullErrorCode() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
