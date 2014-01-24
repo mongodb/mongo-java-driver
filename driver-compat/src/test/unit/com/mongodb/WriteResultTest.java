@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -29,8 +30,8 @@ import static org.junit.Assert.fail;
 public class WriteResultTest {
     @Test
     public void testWithCommandResult() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BasicDBObject("ok", 1).append("n", 0).append("connectionId", 431),
-                                                        new ServerAddress("localhost", 27017));
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost", 27017));
+        commandResult.putAll((BSONObject) new BasicDBObject("ok", 1).append("n", 0).append("connectionId", 431));
         WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         WriteResult writeResult = new WriteResult(commandResult, writeConcern);
         assertEquals(commandResult, writeResult.getCachedLastError());

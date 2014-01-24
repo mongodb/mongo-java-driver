@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,27 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
+
 import static com.mongodb.DBObjects.toDBObject;
+import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * A simple wrapper for the result of getLastError() calls and other commands
  */
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
-    private final DBObject cmd;
     private final ServerAddress host;
 
-    CommandResult(final DBObject cmd, final ServerAddress srv) {
-        if (srv == null) {
-            throw new IllegalArgumentException("server address is null");
-        }
-        this.cmd = cmd;
-        host = srv;
-        //so it is shown in toString/debug
-        putAll(cmd);
-        put("serverUsed", srv.toString());
+    CommandResult(final org.mongodb.CommandResult commandResult) {
+        this(new ServerAddress(commandResult.getAddress()));
+        putAll((BSONObject) toDBObject(commandResult.getResponse()));
     }
 
-    CommandResult(final org.mongodb.CommandResult commandResult) {
-        this(toDBObject(commandResult.getResponse()), new ServerAddress(commandResult.getAddress()));
+    CommandResult(final ServerAddress serverAddress) {
+        host = notNull("serverAddress", serverAddress);
+        // so it is shown in toString/debug
+        put("serverUsed", serverAddress.toString());
     }
 
     /**
@@ -47,20 +45,14 @@ public class CommandResult extends BasicDBObject {
      * @return True if ok
      */
     public boolean ok() {
-        Object o = get("ok");
-        if (o == null) {
-            throw new IllegalArgumentException("'ok' should never be null...");
+        Object okValue = get("ok");
+        if (okValue instanceof Boolean) {
+            return (Boolean) okValue;
+        } else if (okValue instanceof Number) {
+            return ((Number) okValue).intValue() == 1;
+        } else {
+            return false;
         }
-
-        if (o instanceof Boolean) {
-            return (Boolean) o;
-        }
-
-        if (o instanceof Number) {
-            return ((Number) o).intValue() == 1;
-        }
-
-        throw new IllegalArgumentException("can't figure out what to do with: " + o.getClass().getName());
     }
 
     /**
@@ -83,20 +75,7 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            StringBuilder buf = new StringBuilder();
-
-            String cmdName;
-            if (cmd != null) {
-                //TODO this is not correct to get first element from set
-                cmdName = cmd.keySet().iterator().next();
-                buf.append("command failed [").append(cmdName).append("]: ");
-            } else {
-                buf.append("operation failed: ");
-            }
-
-            buf.append(toString());
-
-            return new CommandFailureException(this, buf.toString());
+            return new CommandFailureException(this);
         } else if (hasErr()) { // getLastError check
             return createException(getCode(), get("err").toString());
         }

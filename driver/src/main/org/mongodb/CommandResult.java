@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,20 @@ public class CommandResult {
         return response;
     }
 
+    /**
+     * Return true if the command completed successfully.
+     *
+     * @return true if the command completed successfully, false otherwise.
+     */
     public boolean isOk() {
-        return getResponse().get("ok").equals(1.0);
+        Object okValue = response.get("ok");
+        if (okValue instanceof Boolean) {
+            return (Boolean) okValue;
+        } else if (okValue instanceof Number) {
+            return ((Number) okValue).intValue() == 1;
+        } else {
+            return false;
+        }
     }
 
     public int getErrorCode() {
