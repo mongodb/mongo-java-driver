@@ -71,11 +71,11 @@ public class CommandResultTest extends TestCase {
         assertNull(commandResult.getException());
     }
 
-    @Test(expected = MongoInternalException.class)
+    @Test
     public void okShouldThrowWhenOkFieldTypeIsNotBooleanOrNumber() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
         commandResult.put("ok", "1");
-        commandResult.ok();
+        assertFalse(commandResult.ok());
     }
 
     @Test(expected = MongoException.DuplicateKey.class)

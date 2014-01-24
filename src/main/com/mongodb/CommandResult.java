@@ -28,13 +28,13 @@ import java.util.List;
  */
 public class CommandResult extends BasicDBObject {
 
-    CommandResult(ServerAddress srv) {
-        if (srv == null) {
+    CommandResult(ServerAddress serverAddress) {
+        if (serverAddress == null) {
             throw new IllegalArgumentException("server address is null");
         }
-        _host = srv;
+        _host = serverAddress;
         //so it is shown in toString/debug
-        put("serverUsed", srv.toString());
+        put("serverUsed", serverAddress.toString());
     }
 
     /**
@@ -42,17 +42,14 @@ public class CommandResult extends BasicDBObject {
      * @return True if ok
      */
     public boolean ok(){
-        Object okValue = get( "ok" );
-        if ( okValue == null )
-            return false;
-
-        if ( okValue instanceof Boolean )
+        Object okValue = get("ok");
+        if (okValue instanceof Boolean) {
             return (Boolean) okValue;
-
-        if ( okValue instanceof Number )
-            return ((Number)okValue).intValue() == 1;
-
-        throw new MongoInternalException("Unexpected value type for 'ok' field in command result: " + okValue.getClass().getSimpleName());
+        } else if (okValue instanceof Number) {
+            return ((Number) okValue).intValue() == 1;
+        } else {
+            return false;
+        }
     }
 
     /**
