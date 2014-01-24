@@ -20,6 +20,7 @@ package org.bson;
 
 // BSON
 
+import com.mongodb.util.JSONSerializers;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
@@ -313,7 +314,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
      * @return JSON serialization
      */
     public String toString(){
-        return com.mongodb.util.JSON.serialize( this );
+        return JSONSerializers.getStrict().serialize(this);
     }
 
     /**
@@ -348,6 +349,10 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     private byte[] encode() {
         return new BasicBSONEncoder().encode(this);
+    }
+
+    private BSONObject decode(final byte[] encodedBytes) {
+        return new BasicBSONDecoder().readObject(encodedBytes);
     }
 
     // create a copy of "from", but with keys ordered alphabetically
