@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import com.mongodb.util.JSON;
+import com.mongodb.util.JSONSerializers;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
@@ -347,7 +347,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      */
     @Override
     public String toString() {
-        return JSON.serialize(this);
+        return JSONSerializers.getStrict().serialize(this);
     }
 
     /**
