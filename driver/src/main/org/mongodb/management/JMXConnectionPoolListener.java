@@ -38,7 +38,12 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
         new ConcurrentHashMap<ClusterIdServerAddressPair, ConnectionPoolStatistics>();
 
     public String getMBeanObjectName(final String clusterId, final ServerAddress serverAddress) {
-        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", clusterId, serverAddress.getHost(),
+        // we could do a url encode, but since : is the only invalid character in an object name, then
+        // we'll simply do it.
+        String adjustedClusterId = clusterId.replace(":", "%3A");
+        String adjustedHost = serverAddress.getHost().replace(":", "%3A");
+
+        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
                       serverAddress.getPort());
     }
 
