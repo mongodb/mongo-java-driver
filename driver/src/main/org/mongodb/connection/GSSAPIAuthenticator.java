@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.mongodb.MongoException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
     public static final String SERVICE_NAME_KEY = "SERVICE_NAME";
     public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
+    public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
 
     GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection,
                         final BufferProvider bufferProvider) {
@@ -61,7 +64,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
                                                           credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
-                                                          getInternalConnection().getServerAddress().getHost(), props, null);
+                                                          getHostName(), props, null);
             if (saslClient == null) {
                 throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }
@@ -71,6 +74,9 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             throw new MongoSecurityException(credential, "Exception initializing SASL client", e);
         } catch (GSSException e) {
             throw new MongoSecurityException(credential, "Exception initializing GSSAPI credentials", e);
+        } catch (UnknownHostException e) {
+            throw new MongoSecurityException(credential, "Unable to canonicalize host name + "
+                                                         + getInternalConnection().getServerAddress());
         }
     }
 
@@ -79,5 +85,11 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         GSSManager manager = GSSManager.getInstance();
         GSSName name = manager.createName(userName, GSSName.NT_USER_NAME);
         return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME, krb5Mechanism, GSSCredential.INITIATE_ONLY);
+    }
+
+    private String getHostName() throws UnknownHostException {
+        return getCredential().getMechanismProperty(CANONICALIZE_HOST_NAME_KEY, false)
+               ? InetAddress.getByName(getInternalConnection().getServerAddress().getHost()).getCanonicalHostName()
+               : getInternalConnection().getServerAddress().getHost();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,10 +85,11 @@ public final class MongoCredential {
 
 
     /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  If it's necessary to change the service name from the default of
-     * {@code "mongodb"}, you can do it by adding a mechanism property with a key of {@code "SERVICE_NAME"}.
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"}, add a
+     * mechanism property with the name {@code "SERVICE_NAME"}. To force canonicalization of the host name prior to authentication, add a
+     * mechanism property with the name {@code "CANONICALIZE_HOST_NAME"} with the value{@code true}.
      *
-     * @param userName the user name
+     * @param userName the non-null user name
      * @return the credential
      * @see #withMechanismProperty(String, Object)
      */
