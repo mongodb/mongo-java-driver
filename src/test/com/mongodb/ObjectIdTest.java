@@ -28,6 +28,7 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class ObjectIdTest extends TestCase {
 
@@ -83,6 +84,8 @@ public class ObjectIdTest extends TestCase {
 
     @Test
     public void testStringOnServer(){
+        assumeFalse(isSharded(getMongoClient()));
+
         ObjectId oid = new ObjectId();
         DBObject res = getDatabase().command( new BasicDBObject( "driverOIDTest" , oid ) );
         assertEquals( oid.toString() , res.get( "str" ).toString() );

@@ -64,7 +64,7 @@ public class DBTest extends TestCase {
 
     @Test
     public void shouldReturnCorrectValueForReadPreferenceDependingUponTheCommand() throws UnknownHostException {
-        assumeFalse(isStandalone(cleanupMongo));
+        assumeTrue(isReplicaSet(getMongoClient()));
 
         Mongo mongo = new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
 
@@ -438,6 +438,7 @@ public class DBTest extends TestCase {
 
     @Test
     public void shouldGetStats() {
+        assumeFalse(isSharded(getMongoClient()));
         assertThat(getDatabase().getStats(), hasFields(new String[]{"collections", "avgObjSize",
                                                                     "indexes", "db", "indexSize", "storageSize"}));
     }

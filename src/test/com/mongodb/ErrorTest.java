@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeFalse;
 
 /**
  *
@@ -53,6 +54,8 @@ public class ErrorTest extends TestCase {
     @Test
     public void testPrevError()
         throws MongoException {
+
+        assumeFalse(isSharded(getMongoClient()));
 
         getDatabase().resetError();
 

@@ -123,7 +123,7 @@ public class TestCase {
     }
 
     protected static boolean isSharded(Mongo mongo) {
-        return runIsMaster(mongo).get("msg") == "isdbgrid";
+        return runIsMaster(mongo).get("msg").equals("isdbgrid");
     }
 
     @SuppressWarnings({"unchecked"})
