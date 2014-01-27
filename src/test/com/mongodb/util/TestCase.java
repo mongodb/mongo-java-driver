@@ -34,7 +34,7 @@ import static org.junit.Assume.assumeTrue;
 
 public class TestCase {
 
-    public static final String DEFAULT_URI = "mongodb://localhost:27017";
+    public static final String DEFAULT_URI = "mongodb://localhost:27018";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static MongoClientURI mongoClientURI;
 
@@ -115,11 +115,15 @@ public class TestCase {
      * @return true if connected to a standalone server
      */
     protected static boolean isStandalone(Mongo mongo) {
-        return runReplicaSetStatusCommand(mongo) == null;
+        return !isReplicaSet(mongo) && !isSharded(mongo);
     }
 
-    protected boolean isReplicaSet(Mongo mongo) {
-        return runReplicaSetStatusCommand(mongo) != null;
+    protected static boolean isReplicaSet(Mongo mongo) {
+        return runIsMaster(mongo).get("setName") != null;
+    }
+
+    protected static boolean isSharded(Mongo mongo) {
+        return runIsMaster(mongo).get("msg") == "isdbgrid";
     }
 
     @SuppressWarnings({"unchecked"})
@@ -193,5 +197,10 @@ public class TestCase {
         }
 
         return result;
+    }
+
+    protected static CommandResult runIsMaster(final Mongo pMongo) {
+        // Check to see if this is a replica set... if not, get out of here.
+        return pMongo.getDB("admin").command(new BasicDBObject("ismaster", 1));
     }
 }
