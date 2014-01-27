@@ -34,7 +34,7 @@ import static org.junit.Assume.assumeTrue;
 
 public class TestCase {
 
-    public static final String DEFAULT_URI = "mongodb://localhost:27018";
+    public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static MongoClientURI mongoClientURI;
 
