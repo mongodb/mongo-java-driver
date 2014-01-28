@@ -38,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 public class AggregationTest extends TestCase {
 
@@ -185,7 +186,7 @@ public class AggregationTest extends TestCase {
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException {
         checkServerVersion(2.5);
-        assumeFalse(isStandalone(cleanupMongo));
+        assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress("localhost");
         MongoClient rsClient = new MongoClient(asList(primary, new ServerAddress("localhost", 27018)));
@@ -207,9 +208,8 @@ public class AggregationTest extends TestCase {
     @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
         checkServerVersion(2.5);
-        if (isStandalone(cleanupMongo)) {
-            return;
-        }
+        assumeTrue(isReplicaSet(cleanupMongo));
+
         ServerAddress primary = new ServerAddress("localhost");
         ServerAddress secondary = new ServerAddress("localhost", 27018);
         MongoClient rsClient = new MongoClient(asList(primary, secondary));
