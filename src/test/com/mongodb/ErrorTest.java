@@ -24,12 +24,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeFalse;
 
 /**
- *
+ *  Skipping for sharded clusters, which don't properly support these commands
  */
 public class ErrorTest extends TestCase {
     @Test
-    public void testLastError()
-        throws MongoException {
+    public void testLastError() {
+        assumeFalse(isSharded(getMongoClient()));
 
         getDatabase().resetError();
         assertNull(getDatabase().getLastError().get("err"));
@@ -43,8 +43,8 @@ public class ErrorTest extends TestCase {
     }
 
     @Test
-    public void testLastErrorWithConcern()
-        throws MongoException {
+    public void testLastErrorWithConcern() {
+        assumeFalse(isSharded(getMongoClient()));
 
         getDatabase().resetError();
         CommandResult cr = getDatabase().getLastError(WriteConcern.FSYNC_SAFE);
@@ -52,9 +52,7 @@ public class ErrorTest extends TestCase {
     }
 
     @Test
-    public void testPrevError()
-        throws MongoException {
-
+    public void testPrevError() {
         assumeFalse(isSharded(getMongoClient()));
 
         getDatabase().resetError();
