@@ -366,7 +366,7 @@ class DBCollectionImpl extends DBCollection {
 
     private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
         return concern.callGetLastError() &&
-               db.getConnector().getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
+               db.getConnector().getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0;
     }
 
     private MessageSettings getMessageSettings(final ServerAddress address) {
