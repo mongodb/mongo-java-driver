@@ -363,10 +363,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
-    	if (_it != null)
-            return _it.getCursorId();
-
-    	return 0;
+    	return _it == null ? 0 : _it.getCursorId();
     }
 
     /**
@@ -522,25 +519,15 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public int numGetMores() {
-        if (_it != null) {
-            return _it.numGetMores();
-        }
-        else {
-            return 0;
-        }
+        return _it == null ? 0 : _it.numGetMores();
     }
 
     /**
      * gets a list containing the number of items received in each batch
      * @return
      */
-    public List<Integer> getSizes(){
-        if (_it != null) {
-            return _it.getSizes();
-        }
-        else {
-            return Collections.emptyList();
-        }
+    public List<Integer> getSizes() {
+        return _it == null ? Collections.<Integer>emptyList() : _it.getSizes();
     }
 
     private boolean _hasNext() {
@@ -568,7 +555,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @throws MongoException
      */
     public boolean hasNext() {
-        _checkType( CursorType.ITERATOR );
+        _checkType(CursorType.ITERATOR);
         return _hasNext();
     }
 
@@ -587,7 +574,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return the current element
      */
     public DBObject curr(){
-        _checkType( CursorType.ITERATOR );
+        _checkType(CursorType.ITERATOR);
         return _cur;
     }
 
@@ -722,10 +709,7 @@ public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closea
      * @return
      */
     public ServerAddress getServerAddress() {
-        if (_it != null)
-            return _it.getServerAddress();
-
-        return null;
+        return _it == null ? null : _it.getServerAddress();
     }
 
     /**
