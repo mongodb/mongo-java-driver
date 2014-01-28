@@ -481,9 +481,9 @@ public class DBCollectionTest extends TestCase {
         MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            BulkWriteOperation builder = localCollection.initializeUnorderedBulkOperation();
-            builder.insert(new BasicDBObject());
-            builder.execute(new WriteConcern(5, 1, false, false));
+            BulkWriteOperation bulkWriteOperation = localCollection.initializeUnorderedBulkOperation();
+            bulkWriteOperation.insert(new BasicDBObject());
+            bulkWriteOperation.execute(new WriteConcern(5, 1, false, false));
             fail();
         } catch (BulkWriteException e) {
             assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here

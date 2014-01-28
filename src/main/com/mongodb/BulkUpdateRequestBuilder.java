@@ -22,12 +22,12 @@ package com.mongodb;
  * @since 2.12
  */
 public class BulkUpdateRequestBuilder {
-    private final BulkWriteOperation operationBuilder;
+    private final BulkWriteOperation bulkWriteOperation;
     private final DBObject query;
     private final boolean upsert;
 
-    BulkUpdateRequestBuilder(final BulkWriteOperation operationBuilder, final DBObject query, final boolean upsert) {
-        this.operationBuilder = operationBuilder;
+    BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert) {
+        this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
     }
@@ -38,7 +38,7 @@ public class BulkUpdateRequestBuilder {
      * @param document the replacement document
      */
     public void replaceOne(final DBObject document) {
-        operationBuilder.addRequest(new ReplaceRequest(query, upsert, document));
+        bulkWriteOperation.addRequest(new ReplaceRequest(query, upsert, document));
     }
 
     /**
@@ -47,7 +47,7 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        operationBuilder.addRequest(new UpdateRequest(query, upsert, update, true));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, upsert, update, true));
     }
 
     /**
@@ -56,6 +56,6 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        operationBuilder.addRequest(new UpdateRequest(query, upsert, update, false));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, upsert, update, false));
     }
 }
