@@ -1554,7 +1554,7 @@ public abstract class DBCollection {
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      */
-    public MongoCursor aggregate(final List<DBObject> pipeline, AggregationOptions options) {
+    public Cursor aggregate(final List<DBObject> pipeline, AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
     }
 
@@ -1567,7 +1567,7 @@ public abstract class DBCollection {
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      */
-    public abstract MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
+    public abstract Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
                                           final ReadPreference readPreference);
 
     /**

@@ -78,8 +78,8 @@ class DBCollectionImpl extends DBCollection {
         return new QueryResultIterator(db, this, res, batchSize, limit, options, decoder);
     }
 
-    public MongoCursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
-                                 final ReadPreference readPreference) {
+    public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
+                            final ReadPreference readPreference) {
 
         if(options == null) {
             throw new IllegalArgumentException("options can not be null");
@@ -94,7 +94,7 @@ class DBCollectionImpl extends DBCollection {
         String outCollection = (String) last.get("$out");
         if (outCollection != null) {
             DBCollection collection = _db.getCollection(outCollection);
-            return new DBCursorAdapter(new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary()));
+            return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
         } else {
             Integer batchSize = options.getBatchSize();
             return new QueryResultIterator(res, db, this, batchSize == null ? 0 : batchSize, getDecoder());

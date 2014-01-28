@@ -199,7 +199,7 @@ public class AggregationTest extends TestCase {
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.CURSOR)
                 .build();
-        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertEquals(2, rsDatabase.getCollection("aggCollection").count());
         assertEquals(primary, cursor.getServerAddress());
     }
@@ -222,7 +222,7 @@ public class AggregationTest extends TestCase {
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.INLINE)
                 .build();
-        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertNotEquals(primary, cursor.getServerAddress());
     }
 
@@ -266,9 +266,9 @@ public class AggregationTest extends TestCase {
         verify(pipeline, options, readPreference, collection);
     }
 
-    private MongoCursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+    private Cursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
                                final DBCollection collection) {
-        final MongoCursor cursor = collection.aggregate(pipeline, options, readPreference);
+        final Cursor cursor = collection.aggregate(pipeline, options, readPreference);
 
         final Map<String, DBObject> results = new HashMap<String, DBObject>();
         while (cursor.hasNext()) {

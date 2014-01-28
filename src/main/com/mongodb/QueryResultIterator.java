@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
 import static com.mongodb.DBApiLayer.DeadCursor;
 import static java.util.Arrays.asList;
 
-class QueryResultIterator implements MongoCursor {
+class QueryResultIterator implements Cursor {
 
     private final DBApiLayer _db;
     private final DBDecoder _decoder;
@@ -61,7 +61,7 @@ class QueryResultIterator implements MongoCursor {
         _options = options;
         _host = res._host;
         _decoder = decoder;
-        init( res );
+        initFromQueryResponse(res);
         _optionalFinalizer = getOptionalFinalizer(collection);
     }
 
@@ -137,7 +137,7 @@ class QueryResultIterator implements MongoCursor {
                                            OutMessage.getMore(_collection, _cursorId, getGetMoreBatchSize()),
                                            _host, _decoder);
         _numGetMores++;
-        init( res );
+        initFromQueryResponse(res);
     }
 
     private int getGetMoreBatchSize() {
@@ -171,7 +171,7 @@ class QueryResultIterator implements MongoCursor {
         }
     }
 
-    private void init(final Response response) {
+    private void initFromQueryResponse(final Response response) {
         init(response._flags, response.cursor(), response.size(), response.iterator());
     }
 

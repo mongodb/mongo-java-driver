@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.util.annotations.NotThreadSafe;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -56,7 +55,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @dochub cursors
  */
 @NotThreadSafe
-public class DBCursor implements Iterator<DBObject> , Iterable<DBObject>, Closeable {
+public class DBCursor implements Cursor, Iterable<DBObject> {
 
     /**
      * Initializes a new database cursor
