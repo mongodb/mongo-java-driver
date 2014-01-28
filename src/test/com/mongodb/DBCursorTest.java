@@ -36,6 +36,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public class DBCursorTest extends TestCase {
 
@@ -506,6 +507,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testMaxTimeForIterator() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -522,6 +524,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testMaxTimeForIterable() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -538,6 +541,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testMaxTimeForOne() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -554,6 +558,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testMaxTimeForCount() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -570,6 +575,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testMaxTimeForSize() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
@@ -595,7 +601,7 @@ public class DBCursorTest extends TestCase {
     public void testMaxScan() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                         .addSpecial("$maxScan", 4), 4);
+                     .addSpecial("$maxScan", 4), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
     }
 
@@ -603,18 +609,18 @@ public class DBCursorTest extends TestCase {
     public void testMax() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                         .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+                     .addSpecial("$max", new BasicDBObject("x", 4)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                         .max(new BasicDBObject("x", 4)), 4);
+                     .max(new BasicDBObject("x", 4)), 4);
     }
 
     @Test
     public void testMin() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                         .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+                     .addSpecial("$min", new BasicDBObject("x", 4)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                         .min(new BasicDBObject("x", 4)), 6);
+                     .min(new BasicDBObject("x", 4)), 6);
     }
 
     @Test

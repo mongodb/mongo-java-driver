@@ -228,6 +228,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testMaxTime() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");

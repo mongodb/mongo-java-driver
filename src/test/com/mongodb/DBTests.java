@@ -26,6 +26,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+
 /**
  * Tests aspect of the DB - not really driver tests
  */
@@ -162,6 +164,7 @@ public class DBTests extends TestCase {
 
     @Test
     public void shouldTimeOutCommand() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
         try {

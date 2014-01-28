@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class DBCollectionTest extends TestCase {
@@ -373,6 +374,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testFindAndUpdateTimeout() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
@@ -389,6 +391,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testFindAndReplaceTimeout() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
@@ -405,6 +408,7 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testFindAndRemoveTimeout() {
+        assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
