@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DBApiLayerTest extends TestCase {
@@ -53,6 +54,9 @@ public class DBApiLayerTest extends TestCase {
         } catch (MongoException.CursorNotFound e) {
             assertEquals(cursor.getServerAddress(), e.getServerAddress());
             assertEquals(cursor.getCursorId(), e.getCursorId());
+        } catch (MongoException e) {
+            // older mongos implementations incorrectly set the query failure bit
+            assertTrue(isSharded(getMongoClient()) && !serverIsAtLeastVersion(2.5));
         }
     }
 

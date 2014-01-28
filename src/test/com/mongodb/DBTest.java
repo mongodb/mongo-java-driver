@@ -153,6 +153,9 @@ public class DBTest extends TestCase {
 
     @Test
     public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
+        // mongos 2.2 sets the query failure bit for unrecognized commands
+        assumeFalse(isSharded(getMongoClient()) && !serverIsAtLeastVersion(2.4));
+
         // Given
         DB database = getDatabase();
 
