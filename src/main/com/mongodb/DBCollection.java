@@ -572,7 +572,7 @@ public abstract class DBCollection {
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
-    public abstract void createIndex( DBObject keys , DBObject options, DBEncoder encoder );
+    public abstract void createIndex(DBObject keys, DBObject options, DBEncoder encoder);
 
     /**
      * Creates an ascending index on a field with default options, if one does not already exist.

@@ -296,17 +296,32 @@ class DBCollectionImpl extends DBCollection {
         }
     }
 
-    public void createIndex( final DBObject keys, final DBObject options, DBEncoder encoder ){
+    public void createIndex(final DBObject keys, final DBObject options, DBEncoder encoder) {
+        DBTCPConnector connector = db.getConnector();
+        DBPort port = db.getConnector().getPrimaryPort();
 
-        if (encoder == null)
-            encoder = DefaultDBEncoder.FACTORY.create();
+        try {
+            DBObject index = new BasicDBObject();
+            index.putAll(options);
+            index.put("key", keys);
 
-        DBObject full = new BasicDBObject();
-        for ( String k : options.keySet() )
-            full.put( k , options.get( k ) );
-        full.put( "key" , keys );
+            if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0) {
+                BasicDBObject createIndexes = new BasicDBObject("createIndexes", getName());
 
-        db.doGetCollection("system.indexes").insert(asList(full), false, WriteConcern.SAFE, encoder);
+                BasicDBList list = new BasicDBList();
+                list.add(index);
+                createIndexes.put("indexes", list);
+
+                port.runCommand(db, createIndexes).throwOnError();
+            } else {
+                db.doGetCollection("system.indexes").insertWithWriteProtocol(asList(index), WriteConcern.SAFE,
+                                                                             DefaultDBEncoder.FACTORY.create(), port);
+            }
+        } catch (IOException e) {
+            throw new MongoException.Network("Operation on server " + port.getAddress() + " failed", e);
+        } finally {
+            connector.releasePort(port);
+        }
     }
 
     private BulkWriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern,
@@ -456,7 +471,7 @@ class DBCollectionImpl extends DBCollection {
     private static final Level TRACE_LEVEL = Boolean.getBoolean( "DB.TRACE" ) ? Level.INFO : Level.FINEST;
 
     private boolean willTrace(){
-        return TRACE_LOGGER.isLoggable( TRACE_LEVEL );
+        return TRACE_LOGGER.isLoggable(TRACE_LEVEL);
     }
 
     private void trace( String s ){
