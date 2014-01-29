@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
 
 public class SecondaryReadTest extends TestCase {
@@ -239,7 +240,7 @@ public class SecondaryReadTest extends TestCase {
             } else {
                 deviation = (double)100 - (((double)queriesExecuted / (double)expectedPerSecondary) * (double)100);
             }
-            assertTrue(deviation < MAX_DEVIATION_PERCENT);
+            assertTrue(format("Deviated from equally balanced by %f percent", deviation), deviation < MAX_DEVIATION_PERCENT);
         }
     }
 
