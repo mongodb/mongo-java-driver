@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,8 @@ final class ProtocolHelper {
             throw new MongoCommandFailureException(commandResult);
         }
 
-        String errorMessage = commandResult.getResponse().getString("err");
-        if (errorMessage != null) {
-            if (DUPLICATE_KEY_ERROR_CODES.contains(commandResult.getErrorCode())) {
-                throw new MongoDuplicateKeyException(commandResult.getErrorCode(), errorMessage,
-                                                     commandResult);
-            } else {
-                throw new MongoWriteException(commandResult.getErrorCode(), errorMessage, commandResult);
-            }
+        if (hasWriteError(commandResult.getResponse())) {
+            throwWriteException(commandResult);
         }
 
         Boolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting");
@@ -104,6 +98,42 @@ final class ProtocolHelper {
             buffer.close();
             throw e;
         }
+    }
+
+    private static boolean hasWriteError(final Document response) {
+        String err = getWriteErrorMessage(response);
+        return err != null && err.length() > 0;
+    }
+
+    private static String getWriteErrorMessage(final Document response) {
+        return response.getString("err");
+    }
+
+    private static void throwWriteException(final CommandResult commandResult) {
+        int code = getCode(commandResult.getResponse());
+        if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
+            throw new MongoDuplicateKeyException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+        } else {
+            throw new MongoWriteException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static int getCode(final Document response) {
+        int code = response.getInteger("code", -1);
+
+        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
+        // "err" field, so that it can be used to get the error code
+        if (code == -1 && response.get("errObjects") != null) {
+            for (Document curErrorDocument : (List<Document>) response.get("errObjects")) {
+                if (getWriteErrorMessage(response).equals(getWriteErrorMessage(curErrorDocument))) {
+                    code = curErrorDocument.getInteger("code", -1);
+                    break;
+                }
+            }
+        }
+
+        return code;
     }
 
     private ProtocolHelper() {
