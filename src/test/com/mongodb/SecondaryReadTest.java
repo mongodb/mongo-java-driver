@@ -144,17 +144,7 @@ public class SecondaryReadTest extends TestCase {
 
     }
     */
-    
-    private void confirmSecondary(DB db, List<TestHost> pHosts) throws Exception{
-    	String server = db.getLastError().getString("serverUsed");
-    	String[] ipPort = server.split("[/:]");
-    	
-    	ServerAddress servAddress = new ServerAddress(ipPort[0], Integer.parseInt(ipPort[2]));
-    	
-    	assertTrue(serverIsSecondary(servAddress, pHosts));
-    	
-    }
-    
+
     private boolean serverIsSecondary(final ServerAddress pServerAddr, final List<TestHost> pHosts) {
         for (final TestHost h : pHosts) {
             if (!h.stateStr.equals("SECONDARY"))
@@ -198,7 +188,7 @@ public class SecondaryReadTest extends TestCase {
 
     private DBCollection loadCleanDbCollection(final Mongo pMongo) {
         getDatabase(pMongo).dropDatabase();
-        final DB db = getDatabase(pMongo);;
+        final DB db = getDatabase(pMongo);
         return db.getCollection("testBalance");
     }
     
@@ -209,7 +199,7 @@ public class SecondaryReadTest extends TestCase {
     private void insertTestData(final DBCollection pCol, WriteConcern writeConcern) throws Exception {
         // Insert some test data.
         for (int idx=0; idx < 1000; idx++) {
-            WriteConcern curWriteConcern = (idx < 999) ? WriteConcern.NONE : writeConcern;
+            WriteConcern curWriteConcern = (idx < 999) ? WriteConcern.UNACKNOWLEDGED : writeConcern;
             WriteResult writeResult = pCol.insert(new BasicDBObject(), curWriteConcern);
             writeResult.getLastError().throwOnError();
         }
@@ -246,7 +236,9 @@ public class SecondaryReadTest extends TestCase {
 
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
         for (final TestHost testHost : pHosts) {
-            final Mongo mongoHost = new MongoClient(new MongoClientURI("mongodb://"+testHost.hostnameAndPort+"/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
+            final Mongo mongoHost = new MongoClient(new MongoClientURI("mongodb://"+testHost.hostnameAndPort
+                                                                       + "/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;"
+                                                                       + "autoconnectretry=true"));
             mongoHost.setReadPreference(ReadPreference.nearest());
             try {
                 final CommandResult serverStatusResult
@@ -257,7 +249,9 @@ public class SecondaryReadTest extends TestCase {
                 if (pBefore) testHost.queriesBefore = opcounters.getLong("query");
                 else testHost.queriesAfter = opcounters.getLong("query");
 
-            } finally { if (mongoHost != null) mongoHost.close(); }
+            } finally {
+                mongoHost.close();
+            }
         }
     }
 
