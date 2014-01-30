@@ -580,7 +580,9 @@ public abstract class DBCollection {
      * @param name name of field to index on
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * @deprecated use {@link DBCollection#createIndex(DBObject)} instead
      */
+    @Deprecated
     public void ensureIndex( final String name ){
         ensureIndex( new BasicDBObject( name , 1 ) );
     }
@@ -590,7 +592,10 @@ public abstract class DBCollection {
      * @param keys an object with a key set of the fields desired for the index
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * 
+     * @deprecated use {@link DBCollection#createIndex(DBObject)} instead
      */
+    @Deprecated
     public void ensureIndex( final DBObject keys ){
         ensureIndex( keys , defaultOptions( keys ) );
     }
@@ -602,7 +607,9 @@ public abstract class DBCollection {
      * @param name an identifier for the index
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * @deprecated use {@link DBCollection#createIndex(DBObject, DBObject)} instead
      */
+    @Deprecated
     public void ensureIndex( DBObject keys , String name ){
         ensureIndex( keys , name , false );
     }
@@ -615,7 +622,9 @@ public abstract class DBCollection {
      * @param unique if the index should be unique
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * @deprecated use {@link DBCollection#createIndex(DBObject, DBObject)} instead
      */
+    @Deprecated
     public void ensureIndex( DBObject keys , String name , boolean unique ){
         DBObject options = defaultOptions( keys );
         if (name != null && name.length()>0)
@@ -632,7 +641,9 @@ public abstract class DBCollection {
      * @param optionsIN options for the index (name, unique, etc)
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * @deprecated use {@link DBCollection#createIndex(DBObject, DBObject)} instead
      */
+    @Deprecated
     public void ensureIndex( final DBObject keys , final DBObject optionsIN ){
 
         if ( checkReadOnly( false ) ) return;
@@ -652,7 +663,9 @@ public abstract class DBCollection {
 
     /**
      * Clears all indices that have not yet been applied to this collection.
+     * @deprecated This will be removed in 3.0
      */
+    @Deprecated
     public void resetIndexCache(){
         _createdIndexes.clear();
     }
@@ -2096,6 +2109,10 @@ public abstract class DBCollection {
     private Map<String,Class> _internalClass = Collections.synchronizedMap( new HashMap<String,Class>() );
     private ReflectionDBObject.JavaWrapper _wrapper = null;
 
+    /**
+     * @deprecated This will be removed in 3.0
+     */
+    @Deprecated
     final private Set<String> _createdIndexes = new HashSet<String>();
 
 }
