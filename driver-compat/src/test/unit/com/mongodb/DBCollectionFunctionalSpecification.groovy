@@ -94,7 +94,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         ]
 
         when:
-        collection.ensureIndex(~['y': 1], options);
+        collection.createIndex(~['y': 1], options);
 
         then:
         collection.getIndexInfo().size() == 2
@@ -131,7 +131,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'drop index should error if index does not exist'() {
         given:
-        collection.ensureIndex(new BasicDBObject('x', 1));
+        collection.createIndex(new BasicDBObject('x', 1));
 
         when:
         collection.dropIndex('y_1');
@@ -144,7 +144,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should throw Exception if dropping an index with an incorrect type'() {
         given:
         BasicDBObject index = new BasicDBObject('x', 1);
-        collection.ensureIndex(index);
+        collection.createIndex(index);
 
         when:
         collection.dropIndex(new BasicDBObject('x', '2d'));
@@ -158,7 +158,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         given:
         collection.save(new BasicDBObject('x', new BasicDBObject('y', 1)));
         BasicDBObject index = new BasicDBObject('x.y', 1);
-        collection.ensureIndex(index);
+        collection.createIndex(index);
         assert collection.indexInfo.size() == 2
 
         when:
@@ -170,8 +170,8 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop all indexes except the default index on _id'() {
         given:
-        collection.ensureIndex(new BasicDBObject('x', 1));
-        collection.ensureIndex(new BasicDBObject('x.y', 1));
+        collection.createIndex(new BasicDBObject('x', 1));
+        collection.createIndex(new BasicDBObject('x.y', 1));
         assert collection.indexInfo.size() == 3
 
         when:
@@ -184,7 +184,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should drop unique index'() {
         given:
         BasicDBObject index = new BasicDBObject('x', 1);
-        collection.ensureIndex(index, new BasicDBObject('unique', true));
+        collection.createIndex(index, new BasicDBObject('unique', true));
 
         when:
         collection.dropIndex(index);

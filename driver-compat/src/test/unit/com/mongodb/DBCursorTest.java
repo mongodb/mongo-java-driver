@@ -48,7 +48,7 @@ public class DBCursorTest extends DatabaseTestCase {
         for (int i = 0; i < 10; i++) {
             collection.insert(new BasicDBObject("_id", i).append("x", i));
         }
-        collection.ensureIndex("x");
+        collection.createIndex(new BasicDBObject("x", 1));
 
         cursor = collection.find();
     }

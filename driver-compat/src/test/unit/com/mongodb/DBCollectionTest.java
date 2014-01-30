@@ -100,7 +100,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testSaveDuplicateKeyException() {
-        collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
         collection.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         try {
             collection.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
@@ -187,21 +187,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.insert(objects, WriteConcern.ACKNOWLEDGED, null);
         assertEquals(MyEncoder.getConstantObject(), collection.findOne());
         collection.setDBEncoderFactory(null);
-    }
-
-    @Test
-    public void testCreateIndexWithDBEncoder() {
-        collection.createIndex(new BasicDBObject("a", 1),
-                               new BasicDBObject("unique", false),
-                               new MyIndexDBEncoder(collection.getFullName())
-                              );
-
-
-        DBObject document = new BasicDBObject("name", "z_1").append("ns", collection.getFullName())
-                                                            .append("key", new BasicDBObject("z", 1))
-                                                            .append("unique", true);
-
-        assertThat(collection.getIndexInfo(), hasItem(hasSubdocument(document)));
     }
 
     @Test(expected = UnsupportedOperationException.class)

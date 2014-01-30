@@ -239,7 +239,7 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test
     @Ignore("Not sure about the behavior of sort")
     public void testMapReduceWithSort() {
-        collection.ensureIndex(new BasicDBObject("s", 1));
+        collection.createIndex(new BasicDBObject("s", 1));
 
         MapReduceCommand command = new MapReduceCommand(collection,
                                                         DEFAULT_MAP,

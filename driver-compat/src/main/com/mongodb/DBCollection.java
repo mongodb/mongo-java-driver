@@ -1318,93 +1318,19 @@ public class DBCollection {
      *
      * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
      */
-    public void ensureIndex(final DBObject keys) {
-        ensureIndex(keys, (DBObject) null);
-    }
-
-    /**
-     * Creates an index on the field specified, if that index does not already exist.
-     *
-     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
-     * @param name specifies the name of the index
-     */
-    public void ensureIndex(final DBObject keys, final String name) {
-        BasicDBObject options = new BasicDBObject("name", name);
-        ensureIndex(keys, options);
-    }
-
-    /**
-     * Creates an index on the field specified, if that index does not already exist.
-     *
-     * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
-     * @param name   specifies the name of the index
-     * @param unique specify true to create a unique index so that the collection will not accept insertion of documents where the index key
-     *               or keys matches an existing value in the index
-     */
-    public void ensureIndex(final DBObject keys, final String name, final boolean unique) {
-        BasicDBObject options = new BasicDBObject("name", name);
-        options.append("unique", unique);
-        ensureIndex(keys, options);
-    }
-
-    /**
-     * Creates an index on the field specified, if that index does not already exist.
-     *
-     * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
-     * @param options a document that controls the creation of the index.
-     */
-    public void ensureIndex(final DBObject keys, final DBObject options) {
-        InsertRequest<Document> insertRequestIndexOperation
-        = new InsertRequest<Document>(toIndexDetailsDocument(keys, options));
-        insertIndex(insertRequestIndexOperation, documentCodec);
-    }
-
-    /**
-     * Creates an ascending index on the field specified with default options, if that index does not already exist.
-     *
-     * @param name specifies name of field to index on
-     */
-    public void ensureIndex(final String name) {
-        Index index = Index.builder().addKey(new Index.OrderedKey(name, OrderBy.ASC)).build();
-        Document indexDetails = index.toDocument();
-        indexDetails.append(NAMESPACE_KEY_NAME, getNamespace().getFullName());
-        InsertRequest<Document> insertRequestIndexOperation = new InsertRequest<Document>(indexDetails);
-        insertIndex(insertRequestIndexOperation, documentCodec);
-    }
-
-    /**
-     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
-     *
-     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
-     */
     public void createIndex(final DBObject keys) {
-        ensureIndex(keys);
+        createIndex(keys, null);
     }
 
     /**
-     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
+     * Creates an index on the field specified, if that index does not already exist.
      *
      * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
      * @param options a document that controls the creation of the index.
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        ensureIndex(keys, options);
-    }
-
-    /**
-     * Deprecated. The {@link #ensureIndex(DBObject)} method is the preferred way to create indexes on collections.
-     *
-     * @param keys      a document that contains pairs with the name of the field or fields to index and order of the index
-     * @param options   a document that controls the creation of the index.
-     * @param dbEncoder specifies the encoder that used during operation
-     */
-    public void createIndex(final DBObject keys, final DBObject options, final DBEncoder dbEncoder) {
-
-        Encoder<DBObject> encoder = toEncoder(dbEncoder);
-        Document indexDetails = toIndexDetailsDocument(keys, options);
-
-        InsertRequest<DBObject> insertRequestIndexOperation = new InsertRequest<DBObject>(toDBObject(indexDetails));
-        insertIndex(insertRequestIndexOperation, encoder);
+        InsertRequest<Document> insertRequestIndexOperation = new InsertRequest<Document>(toIndexDetailsDocument(keys, options));
+        insertIndex(insertRequestIndexOperation, documentCodec);
     }
 
     private <T> void insertIndex(final InsertRequest<T> insertRequestIndexOperation, final Encoder<T> encoder) {
@@ -1412,12 +1338,6 @@ public class DBCollection {
                                                      true, org.mongodb.WriteConcern.ACKNOWLEDGED,
                                                      asList(insertRequestIndexOperation), encoder,
                                                      getBufferPool(), getSession(), false), WriteConcern.ACKNOWLEDGED);
-    }
-
-    /**
-     * Clears all indices that have not yet been applied to this collection.
-     */
-    public void resetIndexCache() {
     }
 
     /**

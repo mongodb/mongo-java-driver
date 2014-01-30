@@ -270,7 +270,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
         String key = "loc";
         BasicDBObject geoSpatialIndex = new BasicDBObject();
         geoSpatialIndex.put(key, "2d");
-        collection.ensureIndex(geoSpatialIndex);
+        collection.createIndex(geoSpatialIndex);
 
         Double[] coordinates = {(double) 50, (double) 30};
         saveTestDocument(collection, key, coordinates);
@@ -338,7 +338,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
         database.getSisterDB("admin").command(enableTextCommand);
         DBCollection collection = database.getCollection("text-test");
         BasicDBObject textIndex = new BasicDBObject("comments", "text");
-        collection.ensureIndex(textIndex);
+        collection.createIndex(textIndex);
 
         BasicDBObject doc = new BasicDBObject("comments", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
                 .append("meaning", 42);

@@ -154,13 +154,13 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         c.save(new BasicDBObject("x", 1));
         assertEquals(1, c.getIndexInfo().size());
 
-        c.ensureIndex(new BasicDBObject("x", 1));
+        c.createIndex(new BasicDBObject("x", 1));
         assertEquals(2, c.getIndexInfo().size());
 
-        c.ensureIndex(new BasicDBObject("y", 1));
+        c.createIndex(new BasicDBObject("y", 1));
         assertEquals(3, c.getIndexInfo().size());
 
-        c.ensureIndex(new BasicDBObject("z", 1));
+        c.createIndex(new BasicDBObject("z", 1));
         assertEquals(4, c.getIndexInfo().size());
 
         c.dropIndex("y_1");
@@ -184,7 +184,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, c.getIndexInfo().size());
 
         BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
-        c.ensureIndex(indexFields);
+        c.createIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
         c.dropIndex(indexFields);
@@ -202,7 +202,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, c.getIndexInfo().size());
 
         BasicDBObject indexFields = new BasicDBObject("x", 1).append("y", 1);
-        c.ensureIndex(indexFields);
+        c.createIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
         c.dropIndex("x_1_y_1");
@@ -220,7 +220,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, c.getIndexInfo().size());
 
         BasicDBObject indexFields = new BasicDBObject("x", "2d").append("y", 1);
-        c.ensureIndex(indexFields);
+        c.createIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
         c.dropIndex("x_2d_y_1");
@@ -236,13 +236,13 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(1, c.getIndexInfo().size());
 
         BasicDBObject indexFields = new BasicDBObject("x", "2d");
-        c.ensureIndex(indexFields);
+        c.createIndex(indexFields);
         assertEquals(2, c.getIndexInfo().size());
 
-        c.ensureIndex(new BasicDBObject("y", "2d"));
+        c.createIndex(new BasicDBObject("y", "2d"));
         assertEquals(3, c.getIndexInfo().size());
 
-        c.ensureIndex(new BasicDBObject("z", "2d"));
+        c.createIndex(new BasicDBObject("z", "2d"));
         assertEquals(4, c.getIndexInfo().size());
 
         c.dropIndex("y_2d");
@@ -261,7 +261,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         collection.save(new BasicDBObject("x", 1));
         assertEquals(1, collection.getIndexInfo().size());
 
-        collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
         assertEquals(2, collection.getIndexInfo().size());
         assertEquals(Boolean.TRUE, collection.getIndexInfo().get(1).get("unique"));
     }
@@ -274,7 +274,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         c.save(newDoc);
 
         assertEquals(1, c.getIndexInfo().size());
-        c.ensureIndex(new BasicDBObject("x.y", 1), "nestedIdx1", false);
+        c.createIndex(new BasicDBObject("x.y", 1), new BasicDBObject("name", "nestedIdx1").append("unique", false));
         assertEquals(2, c.getIndexInfo().size());
     }
 
@@ -286,7 +286,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
         // when
         String indexAlias = "indexAlias";
-        collection.ensureIndex(new BasicDBObject("x", 1), indexAlias);
+        collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("name", indexAlias));
 
         // then
         assertEquals(2, collection.getIndexInfo().size());
@@ -300,12 +300,12 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         c.insert(new BasicDBObject("x", 1));
         c.insert(new BasicDBObject("x", 1));
 
-        c.ensureIndex(new BasicDBObject("y", 1));
-        c.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
+        c.createIndex(new BasicDBObject("y", 1));
+        c.createIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
 
         Exception failed = null;
         try {
-            c.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+            c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
         } catch (MongoDuplicateKeyException e) {
             failed = e;
         }

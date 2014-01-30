@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import category.Slow;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -171,7 +170,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(20, collection.find(q).limit(20).itcount());
         assertEquals(20, collection.find(q).limit(-20).itcount());
 
-        collection.ensureIndex(new BasicDBObject("x", 1));
+        collection.createIndex(new BasicDBObject("x", 1));
 
         assertEquals(49, collection.find(q).count());
         assertEquals(49, collection.find(q).toArray().size());
@@ -229,10 +228,9 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    @Ignore
     public void testSpecial() {
         insertTestData(collection, 3);
-        collection.ensureIndex("x");
+        collection.createIndex(new BasicDBObject("x", 1));
 
         for (final DBObject o : collection.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
             assertTrue(o.get("_id") == null);
