@@ -259,7 +259,7 @@ public class DBCollectionTest extends TestCase {
     }
 
 
-    @Test
+    @Test(expected = MongoException.DuplicateKey.class)
     public void testIndexExceptions(){
         collection.insert(new BasicDBObject("x", 1));
         collection.insert(new BasicDBObject("x", 1));
@@ -269,15 +269,7 @@ public class DBCollectionTest extends TestCase {
         collection.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
         collection.resetIndexCache();
 
-        Exception failed = null;
-        try {
-            collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
-        }
-        catch ( MongoException.DuplicateKey e ){
-            failed = e;
-        }
-        assertNotNull( failed );
-
+        collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
     }
 
     @Test

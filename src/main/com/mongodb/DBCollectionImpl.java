@@ -312,7 +312,16 @@ class DBCollectionImpl extends DBCollection {
                 list.add(index);
                 createIndexes.put("indexes", list);
 
-                port.runCommand(db, createIndexes).throwOnError();
+                CommandResult commandResult = port.runCommand(db, createIndexes);
+                try {
+                    commandResult.throwOnError();
+                } catch (CommandFailureException e) {
+                    if(e.getCode() == 11000) {
+                        throw new MongoException.DuplicateKey(commandResult);
+                    } else { 
+                        throw e;
+                    }
+                }
             } else {
                 db.doGetCollection("system.indexes").insertWithWriteProtocol(asList(index), WriteConcern.SAFE,
                                                                              DefaultDBEncoder.FACTORY.create(), port);
