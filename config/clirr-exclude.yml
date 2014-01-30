@@ -1,6 +1,7 @@
 ---
 differenceTypes:
 - 5001 # Removed class from the list of superclasses
+- 7013 # Added public abstract method to a public class
 
 classes:
 - com.mongodb.util.MyAsserts
