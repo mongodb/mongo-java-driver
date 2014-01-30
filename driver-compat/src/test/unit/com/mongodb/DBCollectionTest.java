@@ -29,6 +29,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -220,7 +221,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAsText() {
-        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
