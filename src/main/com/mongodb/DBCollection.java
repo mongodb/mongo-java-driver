@@ -572,6 +572,7 @@ public abstract class DBCollection {
      * @param encoder specifies the encoder that used during operation
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     * @deprecated use {@link #createIndex(DBObject, com.mongodb.DBObject)} the encoder is not used.
      */
     public abstract void createIndex(DBObject keys, DBObject options, DBEncoder encoder);
 
