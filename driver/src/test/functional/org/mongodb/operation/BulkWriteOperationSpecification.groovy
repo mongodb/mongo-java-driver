@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.bson.types.ObjectId
@@ -328,12 +330,13 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ex.writeErrors[1].code == 11000
     }
 
-    def 'should throw bulk write exception with a write concern error'() {
+    // using w = 5 to force a timeout
+    def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         assumeTrue(Fixture.isDiscoverableReplicaSet())
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
-                                             false, new WriteConcern(2, 1), new DocumentCodec(), getBufferProvider(), getSession(),
+                                             false, new WriteConcern(5, 1), new DocumentCodec(), getBufferProvider(), getSession(),
                                              true)
         when:
         op.execute()
