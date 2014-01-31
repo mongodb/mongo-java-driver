@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     @Category(Slow)
-    def 'test tailable await'() {
+    def 'test tailable'() {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
 
@@ -221,14 +221,13 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
                 .filter(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))))
                 .batchSize(2)
-                .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
+                .addFlags(EnumSet.of(QueryFlag.Tailable)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(), getBufferProvider(), getSession(), false);
 
         then:
         cursor.hasNext();
         cursor.next().get('_id') == 1;
-        cursor.hasNext();
 
         when:
         new Thread(new Runnable() {
@@ -243,23 +242,22 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
             }
         }).start();
 
-        // Note: this 'test is racy.
-        // There is no guarantee that we're testing what we're trying to, which is the loop in the next'() method.
+        // Note: this test is racy.
+        // The sleep above does not guarantee that we're testing what we're trying to, which is the loop in the hasNext() method.
         then:
+        cursor.hasNext()
         cursor.next().get('_id') == 2;
     }
 
     @Category(Slow)
-    def 'test tailable await interrupt'() throws InterruptedException {
+    def 'test tailable interrupt'() throws InterruptedException {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
 
         collection.insert(new Document('_id', 1));
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .batchSize(2)
-                .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2).addFlags(EnumSet.of(QueryFlag.Tailable)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(), getBufferProvider(), getSession(), false);
 

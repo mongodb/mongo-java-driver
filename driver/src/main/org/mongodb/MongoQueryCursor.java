@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,27 +119,23 @@ public class MongoQueryCursor<T> implements MongoCursor<T> {
             return false;
         }
 
-        if (currentResult.getCursor() == null) {
-            return false;
+        while (currentResult.getCursor() != null) {
+            getMore();
+            if (currentIterator.hasNext()) {
+                return true;
+            }
         }
 
-        if (isTailableAwait()) {
-            return true;
-        }
-
-        getMore();
-
-        return currentIterator.hasNext();
-    }
+        return false;    }
 
     @Override
     public T next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
+        if (closed) {
+            throw new IllegalStateException("Iterator has been closed");
         }
 
-        while (!currentIterator.hasNext() && isTailableAwait()) {
-            getMore();
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
 
         nextCount++;

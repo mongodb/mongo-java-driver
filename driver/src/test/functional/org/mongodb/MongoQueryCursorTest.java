@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
     @Test
     @Category(Slow.class)
-    public void testTailableAwait() {
+    public void testTailable() {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 1000));
 
@@ -253,7 +253,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 new Find().filter(new Document("ts", new Document("$gte", new BSONTimestamp(5, 0))))
                                                           .batchSize(2)
-                                                          .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
+                                                          .addFlags(EnumSet.of(QueryFlag.Tailable)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
                                                 getBufferProvider(),
@@ -261,7 +261,6 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
                                                 false);
         assertTrue(cursor.hasNext());
         assertEquals(1, cursor.next().get("_id"));
-        assertTrue(cursor.hasNext());
 
         new Thread(new Runnable() {
             @Override
@@ -276,12 +275,13 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
         }).start();
 
         // Note: this test is racy.  There is no guarantee that we're testing what we're trying to, which is the loop in the next() method.
+        assertTrue(cursor.hasNext());
         assertEquals(2, cursor.next().get("_id"));
     }
 
     @Test
     @Category(Slow.class)
-    public void testTailableAwaitInterrupt() throws InterruptedException {
+    public void testTailableInterrupt() throws InterruptedException {
         collection.tools().drop();
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 1000));
 
@@ -289,7 +289,7 @@ public class MongoQueryCursorTest extends DatabaseTestCase {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 new Find().batchSize(2)
-                                                          .addFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData)),
+                                                          .addFlags(EnumSet.of(QueryFlag.Tailable)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
                                                 getBufferProvider(),

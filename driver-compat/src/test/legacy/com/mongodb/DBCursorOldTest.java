@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -100,28 +99,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
 
     @Test
-    public void testTailable() {
-        database.getCollection("tail1").drop();
-        DBCollection c = database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
-        insertTestData(c, 10);
-
-        DBCursor cur = c.find().sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE);
-
-        while (cur.hasNext()) {
-            cur.next();
-            //do nothing...
-        }
-
-        assertFalse(cur.hasNext());
-        c.save(new BasicDBObject("x", 12));
-        assertTrue(cur.hasNext());
-        assertNotNull(cur.next());
-        assertFalse(cur.hasNext());
-    }
-
-    @Test
     @Category(Slow.class)
-    public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
+    public void testTailable() throws ExecutionException, TimeoutException, InterruptedException {
         database.getCollection("tail1").drop();
         DBCollection c = database.createCollection("tail1",
                                                    new BasicDBObject("capped", true).append("size", 10000)

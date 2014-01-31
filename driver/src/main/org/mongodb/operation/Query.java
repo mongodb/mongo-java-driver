@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,9 @@ public abstract class Query {
     public Query addFlags(final EnumSet<QueryFlag> flags) {
         if (flags == null) {
             throw new IllegalArgumentException();
+        }
+        if (flags.contains(QueryFlag.Tailable)) {
+            flags.add(QueryFlag.AwaitData);
         }
         this.options.addFlags(flags);
         return this;
