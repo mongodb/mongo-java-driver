@@ -203,7 +203,7 @@ public class DBCursorTest extends TestCase {
         assertEquals(numToInsert, c.find().limit(800).count());
         assertEquals(800, c.find().limit(800).toArray().size());
 
-        // negative limit works like negative batchsize, for legacy reason
+        // negative limit works like negative batch size, for legacy reason
         int x = c.find().limit(-800).toArray().size();
         assertTrue(x < 800);
 
@@ -249,7 +249,7 @@ public class DBCursorTest extends TestCase {
         assertEquals(20, c.find(q).limit(20).itcount());
         assertEquals(20, c.find(q).limit(-20).itcount());
 
-        c.ensureIndex(new BasicDBObject("x", 1));
+        c.createIndex(new BasicDBObject("x", 1));
 
         assertEquals(49, c.find(q).count());
         assertEquals(49, c.find(q).toArray().size());
@@ -328,7 +328,7 @@ public class DBCursorTest extends TestCase {
         c.insert(new BasicDBObject("x", 1));
         c.insert(new BasicDBObject("x", 2));
         c.insert(new BasicDBObject("x", 3));
-        c.ensureIndex("x");
+        c.createIndex(new BasicDBObject("x", 1));
 
         for (DBObject o : c.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
             assertTrue(o.get("_id") == null);
@@ -404,30 +404,30 @@ public class DBCursorTest extends TestCase {
 
         //x ascending
         DBCursor cur = c.find().sort(new BasicDBObject("x", 1));
-        int curmax = -100;
+        int max = -100;
         while (cur.hasNext()) {
             int val = (Integer) cur.next().get("x");
-            assertTrue(val > curmax);
-            curmax = val;
+            assertTrue(val > max);
+            max = val;
         }
 
         //x desc
         cur = c.find().sort(new BasicDBObject("x", -1));
-        curmax = 9999;
+        max = 9999;
         while (cur.hasNext()) {
             int val = (Integer) cur.next().get("x");
-            assertTrue(val < curmax);
-            curmax = val;
+            assertTrue(val < max);
+            max = val;
         }
 
         //query and sort
         cur = c.find(QueryBuilder.start("x").greaterThanEquals(500).get()).sort(new BasicDBObject("y", 1));
         assertEquals(500, cur.count());
-        curmax = -100;
+        max = -100;
         while (cur.hasNext()) {
             int val = (Integer) cur.next().get("y");
-            assertTrue(val > curmax);
-            curmax = val;
+            assertTrue(val > max);
+            max = val;
         }
     }
 
@@ -571,7 +571,7 @@ public class DBCursorTest extends TestCase {
         for (int i = 0; i < 10; i++) {
             collection.insert(new BasicDBObject("_id", i).append("x", i));
         }
-        collection.ensureIndex("x");
+        collection.createIndex(new BasicDBObject("x", 1));
     }
 
     @Test
@@ -655,7 +655,7 @@ public class DBCursorTest extends TestCase {
                               .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
-                DBObject next = cursor.next();
+                cursor.next();
             }
         } finally {
             cursor.close();
@@ -669,7 +669,7 @@ public class DBCursorTest extends TestCase {
                               .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
-                DBObject next = cursor.next();
+                cursor.next();
             }
         } finally {
             cursor.close();
