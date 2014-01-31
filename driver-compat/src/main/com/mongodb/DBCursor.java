@@ -19,6 +19,7 @@ package com.mongodb;
 
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoQueryCursor;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
@@ -28,7 +29,6 @@ import org.mongodb.operation.QueryOperation;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -67,7 +67,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private int numSeen;
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
-    private MongoQueryCursor<DBObject> cursor;
+    private MongoCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     private final OptionalFinalizer optionalFinalizer; // IDEs will say it can be converted to a local variable, resist the urge
 
@@ -442,24 +442,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         } else {
             return 0;
         }
-    }
-
-    /**
-     * Gets the number of times, so far, that the cursor retrieved a batch from the database
-     *
-     * @return the number of get more operations
-     */
-    public int numGetMores() {
-        return cursor != null ? cursor.getNumGetMores() : 0;
-    }
-
-    /**
-     * Gets a list containing the number of items received in each batch
-     *
-     * @return the size of each batch
-     */
-    public List<Integer> getSizes() {
-        return cursor != null ? cursor.getSizes() : Collections.<Integer>emptyList();
     }
 
     /**

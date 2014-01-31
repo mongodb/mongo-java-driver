@@ -20,8 +20,6 @@ import category.Slow;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -161,41 +159,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         assertEquals(20, collection.find(q).limit(20).explain().get("n"));
         assertEquals(20, collection.find(q).limit(-20).explain().get("n"));
-    }
-
-    @Test
-    public void testBatchWithActiveCursor() {
-
-        insertTestData(collection, 100);
-
-        try {
-            DBCursor cursor = collection.find().batchSize(2); // setting to 1, actually sets to 2 (why, oh why?)
-            assertEquals(0, cursor.numGetMores());
-            assertEquals(Collections.<Integer>emptyList(), cursor.getSizes());
-            cursor.next(); //creates real cursor on server.
-            cursor.next();
-            assertEquals(0, cursor.numGetMores());
-            assertEquals(Arrays.asList(2), cursor.getSizes());
-            cursor.next();
-            assertEquals(1, cursor.numGetMores());
-            assertEquals(Arrays.asList(2, 2), cursor.getSizes());
-            cursor.next();
-            cursor.next();
-            assertEquals(2, cursor.numGetMores());
-            assertEquals(Arrays.asList(2, 2, 2), cursor.getSizes());
-            cursor.next();
-            cursor.next();
-            assertEquals(3, cursor.numGetMores());
-            assertEquals(Arrays.asList(2, 2, 2, 2), cursor.getSizes());
-            cursor.batchSize(20);
-            cursor.next();
-            cursor.next();
-            cursor.next();
-            assertEquals(4, cursor.numGetMores());
-            assertEquals(Arrays.asList(2, 2, 2, 2, 20), cursor.getSizes());
-        } catch (IllegalStateException e) {
-            assertNotNull(e); // there must be a better way to detect this.
-        }
     }
 
     @Test
