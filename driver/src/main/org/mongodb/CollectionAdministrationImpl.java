@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void ensureIndex(final Index index) {
         Document indexDetails = index.toDocument();
         indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());

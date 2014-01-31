@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import static java.util.Arrays.asList;
 import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
+@SuppressWarnings("unchecked")
 public class MaxDocumentSizeTest {
     private PooledByteBufferOutputBuffer buffer;
     private InsertMessage<Document> message;

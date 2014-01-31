@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,6 +243,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
     }
 
     private class Run {
+        @SuppressWarnings("rawtypes")
         private final List runWrites = new ArrayList();
         private final WriteRequest.Type type;
         private final boolean ordered;
@@ -281,6 +282,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             return nextWriteResult;
         }
 
+        @SuppressWarnings("unchecked")
         BulkWriteResult executeReplaces(final List<ReplaceRequest<T>> replaceRequests, final ServerConnectionProvider provider,
                                         final Connection connection) {
             return new RunExecutor(provider) {
@@ -330,6 +332,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             }.execute();
         }
 
+        @SuppressWarnings("unchecked")
         BulkWriteResult executeInserts(final List<InsertRequest<T>> insertRequests, final ServerConnectionProvider provider,
                                        final Connection connection) {
             return new RunExecutor(provider) {

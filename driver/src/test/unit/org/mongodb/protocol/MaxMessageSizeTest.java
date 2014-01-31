@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
-import static java.util.Arrays.asList;
+import java.util.Arrays;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mongodb.Fixture.getBufferProvider;
@@ -38,11 +39,12 @@ public class MaxMessageSizeTest {
     private InsertMessage<Document> message;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() {
         message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
-                                              asList(new InsertRequest<Document>(new Document("bytes", new byte[2048])),
-                                                     new InsertRequest<Document>(new Document("bytes", new byte[2048])),
-                                                     new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
+                                              Arrays.asList(new InsertRequest<Document>(new Document("bytes", new byte[2048])),
+                                                            new InsertRequest<Document>(new Document("bytes", new byte[2048])),
+                                                            new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
                                               new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
         buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
     }

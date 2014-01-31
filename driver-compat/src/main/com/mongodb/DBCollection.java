@@ -337,6 +337,7 @@ public class DBCollection {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern writeConcern) {
         Document filter = new Document("_id", getObjectCodec().getId(obj));
 
@@ -1334,6 +1335,7 @@ public class DBCollection {
         insertIndex(insertRequestIndexOperation, documentCodec);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> void insertIndex(final InsertRequest<T> insertRequestIndexOperation, final Encoder<T> encoder) {
         executeWriteOperation(new InsertOperation<T>(new MongoNamespace(getDB().getName(), "system.indexes"),
                                                      true, org.mongodb.WriteConcern.ACKNOWLEDGED,

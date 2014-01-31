@@ -259,8 +259,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor max(final DBObject max) {
-        find.getOptions()
-            .max(new Document(max.toMap()));
+        find.getOptions().max(new Document(DBObjects.toDocument(max)));
         return this;
     }
     
@@ -271,8 +270,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor min(final DBObject min) {
-        find.getOptions()
-            .min(new Document(min.toMap()));
+        find.getOptions().min(new Document(DBObjects.toDocument(min)));
         return this;
     }
     

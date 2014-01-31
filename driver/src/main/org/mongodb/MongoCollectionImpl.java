@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,6 +308,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public WriteResult insert(final T document) {
             return new InsertOperation<T>(getNamespace(), true, writeConcern, asList(new InsertRequest<T>(document)), getCodec(),
                                           client.getBufferProvider(), client.getSession(), false).execute();
@@ -378,6 +378,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public WriteResult replace(final T replacement) {
             ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
             return new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest), getDocumentCodec(), getCodec(),
@@ -448,6 +449,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public MongoFuture<WriteResult> asyncReplace(final T replacement) {
             ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
             return new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
