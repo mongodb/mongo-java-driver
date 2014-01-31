@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,6 @@ public class InsertRequest<T> extends WriteRequest {
         this.document = document;
     }
 
-    public InsertRequest(final InsertRequest<T> insertRequest, final int startPos) {
-        throw new UnsupportedOperationException();
-
-//        documents = insert.getDocuments().subList(startPos, insert.getDocuments().size());
-    }
-
     public T getDocument() {
         return document;
     }
@@ -36,29 +30,6 @@ public class InsertRequest<T> extends WriteRequest {
     @Override
     public Type getType() {
         return Type.INSERT;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        final InsertRequest insertRequest = (InsertRequest) o;
-
-        if (document != null ? !document.equals(insertRequest.document) : insertRequest.document != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return document != null ? document.hashCode() : 0;
     }
 }
 
