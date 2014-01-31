@@ -53,6 +53,15 @@ public class QueryOptions {
         min = from.min;
         max = from.max;
         isolated = from.isolated;
+        comment = from.comment;
+        explain = from.explain;
+        if (from.hint != null) {
+            hint = new Document();
+            hint.putAll(from.hint);
+        }
+        returnKey = from.returnKey;
+        showDiskLoc = from.showDiskLoc;
+        snapshot = from.snapshot;
     }
 
     public EnumSet<QueryFlag> getFlags() {
@@ -122,12 +131,12 @@ public class QueryOptions {
         this.batchSize = batchSize;
         return this;
     }
-    
+
     public QueryOptions comment(final String comment) {
         this.comment = comment;
         return this;
     }
-    
+
     public QueryOptions explain() {
         explain = true;
         return this;
@@ -186,12 +195,12 @@ public class QueryOptions {
         returnKey = true;
         return this;
     }
-    
+
     public QueryOptions showDiskLoc() {
         showDiskLoc = true;
         return this;
     }
-    
+
     public QueryOptions snapshot() {
         snapshot = true;
         return this;
