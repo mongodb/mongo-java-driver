@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
 
 import java.util.List;
@@ -132,7 +133,7 @@ final class DBObjects {
         return dbList;
     }
 
-    public static BasicDBList toDBList(final org.mongodb.MongoCursor<?> source) {
+    public static BasicDBList toDBList(final MongoCursor<?> source) {
         BasicDBList dbList = new BasicDBList();
         while (source.hasNext()) {
             Object o = source.next();

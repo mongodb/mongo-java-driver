@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         AggregationOptions options = AggregationOptions.builder()
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build();
-        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), collection);
+        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), collection);
         assertEquals(2, database.getCollection("aggCollection")
             .count());
         assertEquals(Fixture.getPrimary(), cursor.getServerAddress());
@@ -182,7 +182,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .outputMode(AggregationOptions.OutputMode.INLINE)
             .build();
 
-        MongoCursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertNotEquals(primary, cursor.getServerAddress());
     }
 
@@ -274,9 +274,9 @@ public class JavaClientOldTest extends DatabaseTestCase {
         verify(pipeline, options, readPreference, collection);
     }
 
-    private MongoCursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+    private Cursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
         final DBCollection collection) {
-        MongoCursor cursor = collection.aggregate(pipeline, options, readPreference);
+        Cursor cursor = collection.aggregate(pipeline, options, readPreference);
 
         Map<String, DBObject> results = new HashMap<String, DBObject>();
         while (cursor.hasNext()) {

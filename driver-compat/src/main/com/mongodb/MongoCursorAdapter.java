@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package com.mongodb;
 
 
-import org.mongodb.ServerCursor;
+import org.mongodb.MongoCursor;
 
 
-class MongoCursorAdapter implements MongoCursor {
-    final org.mongodb.MongoCursor<DBObject> cursor;
+class MongoCursorAdapter implements Cursor {
+    private final MongoCursor<DBObject> cursor;
 
-    public MongoCursorAdapter(final org.mongodb.MongoCursor<DBObject> cursor) {
+    public MongoCursorAdapter(final MongoCursor<DBObject> cursor) {
         this.cursor = cursor;
     }
 
@@ -34,13 +34,7 @@ class MongoCursorAdapter implements MongoCursor {
 
     @Override
     public ServerAddress getServerAddress() {
-        org.mongodb.connection.ServerAddress address = cursor.getServerCursor()
-                                                             .getAddress();
-        return new ServerAddress(address.getHost(), address.getPort());
-    }
-
-    public ServerCursor getServerCursor() {
-        return cursor.getServerCursor();
+        return new ServerAddress(cursor.getServerAddress());
     }
 
     @Override

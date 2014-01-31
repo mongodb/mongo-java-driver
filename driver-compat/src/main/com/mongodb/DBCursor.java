@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.session.Session;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,7 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/read-operations Read Operations
  */
 @NotThreadSafe
-public class DBCursor implements Iterator<DBObject>, Iterable<DBObject>, Closeable {
+public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final Find find;
     private Decoder<DBObject> resultDecoder;

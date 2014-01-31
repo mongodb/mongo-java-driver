@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.mongodb.Function;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
@@ -651,8 +652,9 @@ public class DBCollection {
                               .maxTime(maxTime, maxTimeUnit);
 
         try {
-            org.mongodb.MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
-                                                                                    getBufferPool(), getSession(), false).execute();
+            MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
+                                                                        getBufferPool(), getSession(), false)
+                                           .execute();
 
             return cursor.hasNext() ? cursor.next() : null;
         } catch (org.mongodb.MongoException e) {
@@ -972,12 +974,12 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        org.mongodb.MongoCursor<Document> cursor = executeOperation(new GroupOperation(getNamespace(),
-                                                                                       cmd.toNew(),
-                                                                                       readPreference.toNew(),
-                                                                                       getBufferPool(),
-                                                                                       getSession(),
-                                                                                       false));
+        MongoCursor<Document> cursor = executeOperation(new GroupOperation(getNamespace(),
+                                                                           cmd.toNew(),
+                                                                           readPreference.toNew(),
+                                                                           getBufferPool(),
+                                                                           getSession(),
+                                                                           false));
         return toDBList(cursor);
     }
 
@@ -1024,8 +1026,7 @@ public class DBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(toDocument(query))
                               .readPreference(readPreference.toNew());
-        org.mongodb.MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getBufferPool(),
-                                                                       getSession(), false).execute();
+        MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getBufferPool(), getSession(), false).execute();
 
         List<String> results = new ArrayList<String>();
         while (result.hasNext()) {
@@ -1179,7 +1180,7 @@ public class DBCollection {
                                              coerceReadPreference(readPreference, stages.get(stages.size() - 1).getString("$out") != null)
                                              .toNew());
 
-            org.mongodb.MongoCursor<Document> cursor = operation.execute();
+            MongoCursor<Document> cursor = operation.execute();
 
             org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
             return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
@@ -1195,7 +1196,7 @@ public class DBCollection {
      * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
      */
-    public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
+    public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
     }
 
@@ -1207,7 +1208,7 @@ public class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
      */
-    public MongoCursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
+    public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
                                  final ReadPreference readPreference) {
         try {
             if (options == null) {
@@ -1218,16 +1219,16 @@ public class DBCollection {
             String outCollection = stages.get(stages.size() - 1).getString("$out");
             ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
 
-            org.mongodb.MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(),
-                                                                                        stages,
-                                                                                        getDocumentCodec(),
-                                                                                        options.toNew(),
-                                                                                        getBufferPool(),
-                                                                                        getSession(),
-                                                                                        false,
-                                                                                        activeReadPreference.toNew()).execute();
+            MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(),
+                                                                            stages,
+                                                                            getDocumentCodec(),
+                                                                            options.toNew(),
+                                                                            getBufferPool(),
+                                                                            getSession(),
+                                                                            false,
+                                                                            activeReadPreference.toNew()).execute();
             if (outCollection != null) {
-                return new DBCursorAdapter(new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary()));
+                return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
             } else {
                 return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
                     @Override
