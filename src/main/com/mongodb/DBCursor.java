@@ -522,16 +522,20 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     /**
      * gets the number of times, so far, that the cursor retrieved a batch from the database
-     * @return
+     * @return The number of times OP_GET_MORE has been called
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public int numGetMores() {
         return _it == null ? 0 : _it.numGetMores();
     }
 
     /**
      * gets a list containing the number of items received in each batch
-     * @return
+     * @return a list containing the number of items received in each batch
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public List<Integer> getSizes() {
         return _it == null ? Collections.<Integer>emptyList() : _it.getSizes();
     }
