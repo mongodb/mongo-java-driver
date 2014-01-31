@@ -20,7 +20,6 @@ package com.mongodb;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoQueryCursor;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
@@ -119,12 +118,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         if (cursor == null) {
             try {
-                cursor = new MongoQueryCursor<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                                                        getCollection().getBufferPool(), getSession(), true);
+                cursor = new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
+                                                      getCollection().getBufferPool(), getSession(), true)
+                         .execute();
             } catch (org.mongodb.MongoException e) {
                 throw mapException(e);
             }
-            //        sizes.add(results.size());
         }
 
         return cursor.hasNext();

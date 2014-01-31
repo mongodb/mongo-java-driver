@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
 import category.Slow;
 import org.bson.types.BSONTimestamp;
@@ -22,9 +22,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.QueryFlag;
+import org.mongodb.CreateCollectionOptions;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
+import org.mongodb.MongoCursorNotFoundException;
+import org.mongodb.MongoInterruptedException;
+import org.mongodb.QueryOptions;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;

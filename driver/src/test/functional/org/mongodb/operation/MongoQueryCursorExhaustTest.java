@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
 import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.DatabaseTestCase;
+import org.mongodb.Document;
+import org.mongodb.MongoFuture;
+import org.mongodb.ReadPreference;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;

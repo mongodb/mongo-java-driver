@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ package com.mongodb
 
 import org.mongodb.MongoNamespace
 import org.mongodb.MongoQueryFailureException
+import org.mongodb.codecs.ObjectIdGenerator
 import org.mongodb.codecs.PrimitiveCodecs
 import org.mongodb.session.Session
 import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.Fixture.getPrimary
-import static com.mongodb.ReadPreference.PRIMARY
 import static org.mongodb.Fixture.getBufferProvider
 
 class DBCursorSpecification extends Specification {
@@ -58,9 +58,13 @@ class DBCursorSpecification extends Specification {
         collection.getSession() >> { session }
         collection.getBufferPool() >> { getBufferProvider() }
         collection.getDB() >> { db }
+        collection.getObjectCodec() >> { new CollectibleDBObjectCodec(db,
+                                                                      PrimitiveCodecs.createDefault(),
+                                                                      new ObjectIdGenerator(),
+                                                                      new DBObjectFactory()); }
         db.getMongo() >> { mongo }
         mongo.getMongoClientOptions() >> { MongoClientOptions.builder().build() }
-        dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), PRIMARY);
+        dbCursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary());
     }
 
     def 'should wrap org.mongodb.MongoException with com.mongodb.MongoException for errors in explain'() {

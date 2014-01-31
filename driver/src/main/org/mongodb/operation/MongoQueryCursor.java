@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.operation;
 
+import org.mongodb.Decoder;
+import org.mongodb.Document;
+import org.mongodb.Encoder;
+import org.mongodb.MongoCursor;
+import org.mongodb.MongoNamespace;
+import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.ReadPreferenceServerSelector;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
@@ -42,12 +44,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * @param <T> the document type of the cursor
- * @since 3.0
- */
 @NotThreadSafe
-public class MongoQueryCursor<T> implements MongoCursor<T> {
+class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Find find;
     private final Session session;
     private final boolean closeSession;
