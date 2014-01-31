@@ -23,7 +23,6 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
-import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;
@@ -100,14 +99,17 @@ public class UserOperationTest extends DatabaseTestCase {
         Cluster cluster = createCluster(adminUser);
         try {
             // when
-            WriteResult result = new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                                               true, ACKNOWLEDGED,
-                                                               asList(new InsertRequest<Document>(new Document())),
-                                                               new DocumentCodec(),
-                                                               getBufferProvider(),
-                                                               new ClusterSession(cluster, getExecutor()), true).execute();
+            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
+                                          true, ACKNOWLEDGED,
+                                          asList(new InsertRequest<Document>(new Document())),
+                                          new DocumentCodec(),
+                                          getBufferProvider(),
+                                          new ClusterSession(cluster, getExecutor()), true).execute();
             // then
-            assertEquals(1, result.getCount());
+            assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
+                                                       new DocumentCodec(), getBufferProvider(), new ClusterSession(cluster, getExecutor()),
+                                                       true)
+                                    .execute());
         } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), new ClusterSession(cluster),
