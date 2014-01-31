@@ -29,7 +29,6 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
