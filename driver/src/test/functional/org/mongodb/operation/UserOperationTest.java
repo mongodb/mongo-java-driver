@@ -21,8 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoWriteException;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;
@@ -78,7 +78,7 @@ public class UserOperationTest extends DatabaseTestCase {
                                           getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()), true).execute();
             fail("should have thrown");
-        } catch (MongoWriteException e) {
+        } catch (MongoException e) {
             // all good
         } finally {
             // cleanup:
@@ -134,7 +134,7 @@ public class UserOperationTest extends DatabaseTestCase {
                                           getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()), true).execute();
             fail("Should have thrown");
-        } catch (MongoWriteException e) {
+        } catch (MongoException e) {
             // all good
         }
         finally {
