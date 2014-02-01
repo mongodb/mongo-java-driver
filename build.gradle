@@ -101,13 +101,13 @@ javadoc {
     options.taglets 'DochubTaglet'
 }
 
-task testAll(dependsOn: tasks.withType(Test))
-
 gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.hasTask(check)) {
+    if (taskGraph.hasTask(testCoverage)) {
         tasks.withType(Test) { jacoco { enabled = true } }
     }
 }
+
+task testCoverage(dependsOn: test)
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.9'
