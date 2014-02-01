@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -633,6 +633,7 @@ public class DBCollectionTest extends DatabaseTestCase {
                      collection.find().sort(new BasicDBObject("_id", 1)).toArray());
 
     }
+
     @Test(expected = BulkWriteException.class)
     public void testBulkWriteException() {
         // given
@@ -647,69 +648,53 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            WriteResult res = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
+            WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(0, e.getCommandResult().get("n"));
-        } finally {
-            mongoClient.close();
         }
     }
 
     @Test
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         ObjectId id = new ObjectId();
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            WriteResult res = localCollection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
-                                                     true, false, new WriteConcern(5, 1, false, false));
+            WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                                true, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(1, e.getCommandResult().get("n"));
             assertEquals(id, e.getCommandResult().get("upserted"));
-        } finally {
-            mongoClient.close();
         }
     }
 
     @Test
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            localCollection.insert(new BasicDBObject());
-            WriteResult res = localCollection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
+            collection.insert(new BasicDBObject());
+            WriteResult res = collection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(1, e.getCommandResult().get("n"));
-        } finally {
-            mongoClient.close();
         }
     }
 
     @Test
     public void testBulkWriteConcernException() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            BulkWriteOperation bulkWriteOperation = localCollection.initializeUnorderedBulkOperation();
+            BulkWriteOperation bulkWriteOperation = collection.initializeUnorderedBulkOperation();
             bulkWriteOperation.insert(new BasicDBObject());
             BulkWriteResult res = bulkWriteOperation.execute(new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (BulkWriteException e) {
             assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
-        } finally {
-            mongoClient.close();
         }
     }
 
@@ -785,34 +770,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public DBEncoder create() {
             return new MyEncoder();
-        }
-    }
-
-    public static class MyIndexDBEncoder implements DBEncoder {
-
-        private final String ns;
-
-        public MyIndexDBEncoder(final String ns) {
-            this.ns = ns;
-        }
-
-        @Override
-        public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
-            int start = outputBuffer.getPosition();
-            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
-            try {
-                bsonWriter.writeStartDocument();
-                bsonWriter.writeString("name", "z_1");
-                bsonWriter.writeStartDocument("key");
-                bsonWriter.writeInt32("z", 1);
-                bsonWriter.writeEndDocument();
-                bsonWriter.writeBoolean("unique", true);
-                bsonWriter.writeString("ns", ns);
-                bsonWriter.writeEndDocument();
-                return outputBuffer.getPosition() - start;
-            } finally {
-                bsonWriter.close();
-            }
         }
     }
 
