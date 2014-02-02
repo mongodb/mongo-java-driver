@@ -66,15 +66,16 @@ class QueryResultIterator implements Cursor {
     }
 
     // Constructor to use for aggregate queries
-    QueryResultIterator(CommandResult res, DBApiLayer db, DBCollectionImpl collection, int batchSize, DBDecoder decoder) {
+    QueryResultIterator(DBObject cursorDocument, DBApiLayer db, DBCollectionImpl collection, int batchSize, DBDecoder decoder,
+                        final ServerAddress serverAddress) {
         this._db = db;
         _collection = collection;
         _batchSize = batchSize;
-        _host = res.getServerUsed();
+        _host = serverAddress;
         _limit = 0;
         _options = 0;
         _decoder = decoder;
-        initFromAggregateResult(res);
+        initFromCursorDocument(cursorDocument);
         _optionalFinalizer = getOptionalFinalizer(collection);
     }
 
@@ -176,14 +177,14 @@ class QueryResultIterator implements Cursor {
     }
 
     @SuppressWarnings("unchecked")
-    private void initFromAggregateResult(final CommandResult res) {
-        Map cursor = (Map) res.get("cursor");
+    private void initFromCursorDocument(final DBObject cursorDocument) {
+        Map cursor = (Map) cursorDocument.get("cursor");
         if (cursor != null) {
             long cursorId = (Long) cursor.get("id");
             List<DBObject> firstBatch = (List<DBObject>) cursor.get("firstBatch");
             init(0, cursorId, firstBatch.size(), firstBatch.iterator());
         } else {
-            List<DBObject> result = (List<DBObject>) res.get("result");
+            List<DBObject> result = (List<DBObject>) cursorDocument.get("result");
             init(0, 0, result.size(), result.iterator());
         }
     }

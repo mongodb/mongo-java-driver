@@ -1602,6 +1602,20 @@ public abstract class DBCollection {
     }
 
     /**
+     * Return a list of cursors over the collection that can be used to scan it in parallel.
+     * <p>
+     *     Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos.
+     * </p>
+     *
+     * @param options the parallel scan options
+     * @return a list of cursors, whose size may be less than the number requested
+     * @since 2.12
+     *
+     * @mongodb.server.release 2.6
+     */
+    public abstract List<Cursor> parallelScan(final ParallelScanOptions options);
+
+    /**
      * Creates a builder for an ordered bulk operation.  Write requests included in the bulk operations will be executed in order,
      * and will halt on the first failure.
      *

@@ -97,8 +97,24 @@ class DBCollectionImpl extends DBCollection {
             return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
         } else {
             Integer batchSize = options.getBatchSize();
-            return new QueryResultIterator(res, db, this, batchSize == null ? 0 : batchSize, getDecoder());
+            return new QueryResultIterator(res, db, this, batchSize == null ? 0 : batchSize, getDecoder(), res.getServerUsed());
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Cursor> parallelScan(final ParallelScanOptions options) {
+        CommandResult res = _db.command(new BasicDBObject("parallelCollectionScan", getName())
+                                        .append("numCursors", options.getNumCursors()),
+                                        options.getReadPreference());
+        res.throwOnError();
+
+        List<Cursor> cursors = new ArrayList<Cursor>();
+        for (DBObject cursorDocument : (List<DBObject>) res.get("cursors")) {
+            cursors.add(new QueryResultIterator(cursorDocument, db, this, options.getBatchSize(), getDecoder(), res.getServerUsed()));
+        }
+
+        return cursors;
     }
 
 

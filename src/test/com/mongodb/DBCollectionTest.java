@@ -22,12 +22,15 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -50,17 +53,17 @@ public class DBCollectionTest extends TestCase {
     public void testCappedCollection() {
         String collectionName = "testCapped";
         int collectionSize = 1000;
-        
+
         DBCollection c = getDatabase().getCollection(collectionName);
         c.drop();
 
         DBObject options = new BasicDBObject("capped", true);
         options.put("size", collectionSize);
         c = getDatabase().createCollection(collectionName, options);
-        
+
         assertEquals(c.isCapped(), true);
     }
-    
+
     @Test
     public void testDuplicateKeyException() {
         DBCollection c = collection;
@@ -118,12 +121,12 @@ public class DBCollectionTest extends TestCase {
         assertEquals(obj.containsField("x"), false);
         assertEquals(obj.get("y"), 2);
     }
-    
+
     @Test
     public void testFindOneSort(){
-    	
+
     	DBCollection c = collection;
-    	
+
         DBObject obj = c.findOne();
         assertEquals(obj, null);
 
@@ -134,25 +137,25 @@ public class DBCollectionTest extends TestCase {
         c.insert(BasicDBObjectBuilder.start().add("_id", 5).add("x", -50).add("y", "zzz").get());  //max y
         c.insert(BasicDBObjectBuilder.start().add("_id", 6).add("x", 9).add("y", "aaa").get());  //min y
         c.insert(BasicDBObjectBuilder.start().add("_id", 7).add("x", 1).add("y", "bbb").get());
-      
+
         //only sort
         obj = c.findOne(new BasicDBObject(), null, new BasicDBObject("x", 1) );
         assertNotNull(obj);
         assertEquals(4, obj.get("_id"));
-        
+
         obj = c.findOne(new BasicDBObject(), null, new BasicDBObject("x", -1));
         assertNotNull(obj);
         assertEquals(obj.get("_id"), 2);
-        
+
         //query and sort
         obj = c.findOne(new BasicDBObject("x", 1), null, BasicDBObjectBuilder.start().add("x", 1).add("y", 1).get() );
         assertNotNull(obj);
         assertEquals(obj.get("_id"), 3);
-        
+
         obj = c.findOne( QueryBuilder.start("x").lessThan(2).get(), null, BasicDBObjectBuilder.start().add("y", -1).get() );
         assertNotNull(obj);
         assertEquals(obj.get("_id"), 5);
-        
+
     }
 
     /**
@@ -299,7 +302,7 @@ public class DBCollectionTest extends TestCase {
         if (!serverIsAtLeastVersion(2.0)) {
             return;
         }
-    
+
         DBObject obj = collection.findOne();
         assertEquals(obj, null);
 
@@ -343,20 +346,20 @@ public class DBCollectionTest extends TestCase {
         DBObject obj = BasicDBObjectBuilder.start().add("x", list).get();
         collection.insert(obj);
     }
-    
+
     @Test
     public void testLazyDocKeysPass() {
         DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x",1).add("y",2).add("foo.bar","baz").get();
-        
+
         //convert to a lazydbobject
         DefaultDBEncoder encoder = new DefaultDBEncoder();
         byte[] encodedBytes = encoder.encode(obj);
 
         LazyDBDecoder lazyDecoder = new LazyDBDecoder();
         DBObject lazyObj = lazyDecoder.decode(encodedBytes, collection);
-        
+
         collection.insert(lazyObj);
-        
+
         DBObject insertedObj = collection.findOne();
         assertEquals("lazydottest1", insertedObj.get("_id"));
         assertEquals(1, insertedObj.get("x"));
@@ -482,5 +485,30 @@ public class DBCollectionTest extends TestCase {
         } finally {
             mongoClient.close();
         }
+    }
+
+    @Test
+    public void testParallelScan() throws UnknownHostException {
+        assumeTrue(serverIsAtLeastVersion(2.5));
+        assumeFalse(isSharded(getMongoClient()));
+
+        Set<Integer> ids = new HashSet<Integer>();
+
+        for (int i = 0; i < 2000; i++) {
+            ids.add(i);
+            collection.insert(new BasicDBObject("_id", i));
+        }
+
+        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
+        assertEquals(3, cursors.size());
+
+        for (Cursor cursor : cursors) {
+            while (cursor.hasNext()) {
+                Integer id = (Integer) cursor.next().get("_id");
+                assertTrue(ids.remove(id));
+            }
+        }
+
+        assertTrue(ids.isEmpty());
     }
 }
