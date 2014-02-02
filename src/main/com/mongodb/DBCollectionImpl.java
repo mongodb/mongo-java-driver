@@ -327,7 +327,7 @@ class DBCollectionImpl extends DBCollection {
             index.putAll(options);
             index.put("key", keys);
 
-            if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 6))) >= 0) {
+            if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0) {
                 BasicDBObject createIndexes = new BasicDBObject("createIndexes", getName());
 
                 BasicDBList list = new BasicDBList();
