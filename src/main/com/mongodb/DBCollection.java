@@ -1644,8 +1644,8 @@ public abstract class DBCollection {
             command.put("maxTimeMS", options.getMaxTime(MILLISECONDS));
         }
 
-        if (options.getAllowDiskUsage() != null) {
-            command.put("allowDiskUsage", options.getAllowDiskUsage());
+        if (options.getAllowDiskUse() != null) {
+            command.put("allowDiskUse", options.getAllowDiskUse());
         }
 
         return command;

@@ -27,7 +27,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class AggregationOptions {
     private final Integer batchSize;
-    private final Boolean allowDiskUsage;
+    private final Boolean allowDiskUse;
     private final OutputMode outputMode;
     private final long maxTimeMS;
 
@@ -44,7 +44,7 @@ public class AggregationOptions {
 
     AggregationOptions(final Builder builder) {
         batchSize = builder.batchSize;
-        allowDiskUsage = builder.allowDiskUsage;
+        allowDiskUse = builder.allowDiskUse;
         outputMode = builder.outputMode;
         maxTimeMS = builder.maxTimeMS;
     }
@@ -53,8 +53,8 @@ public class AggregationOptions {
      * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of
      * RAM.
      */
-    public Boolean getAllowDiskUsage() {
-        return allowDiskUsage;
+    public Boolean getAllowDiskUse() {
+        return allowDiskUse;
     }
 
     /**
@@ -86,7 +86,7 @@ public class AggregationOptions {
     public String toString() {
         return "AggregationOptions{"
                + "batchSize=" + batchSize
-               + ", allowDiskUsage=" + allowDiskUsage
+               + ", allowDiskUse=" + allowDiskUse
                + ", outputMode=" + outputMode
                + ", maxTimeMS=" + maxTimeMS
                + '}';
@@ -99,7 +99,7 @@ public class AggregationOptions {
     public static class Builder {
 
         private Integer batchSize;
-        private Boolean allowDiskUsage;
+        private Boolean allowDiskUse;
         private OutputMode outputMode = OutputMode.INLINE;
         private long maxTimeMS;
 
@@ -111,8 +111,8 @@ public class AggregationOptions {
             return this;
         }
 
-        public Builder allowDiskUsage(final Boolean allow) {
-            allowDiskUsage = allow;
+        public Builder allowDiskUse(final Boolean allowDiskUse) {
+            this.allowDiskUse = allowDiskUse;
             return this;
         }
 

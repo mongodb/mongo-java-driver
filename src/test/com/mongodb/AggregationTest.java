@@ -74,7 +74,7 @@ public class AggregationTest extends TestCase {
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
-                .allowDiskUsage(true)
+                .allowDiskUse(true)
                 .outputMode(AggregationOptions.OutputMode.CURSOR)
                 .build());
         assertTrue(out.keySet().iterator().hasNext());
@@ -132,13 +132,13 @@ public class AggregationTest extends TestCase {
         verify(pipeline, AggregationOptions.builder()
                 .batchSize(1)
                 .outputMode(AggregationOptions.OutputMode.CURSOR)
-                .allowDiskUsage(true)
+                .allowDiskUse(true)
                 .build());
 
         verify(pipeline, AggregationOptions.builder()
                                            .batchSize(1)
                                            .outputMode(AggregationOptions.OutputMode.INLINE)
-                                           .allowDiskUsage(true)
+                                           .allowDiskUse(true)
                                            .build());
 
         verify(pipeline, AggregationOptions.builder()
