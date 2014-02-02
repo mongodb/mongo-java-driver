@@ -138,8 +138,8 @@ members:
   - _objectClass                                        # JAVA-881
   - _checkObject(com.mongodb.DBObject,boolean,boolean)  # JAVA-881
   - genIndexName(com.mongodb.DBObject)                  # JAVA-881
-  - group(com.mongodb.DBObject)                         # TODO
-  - mapReduce(com.mongodb.DBObject)                     # TODO
+  - group(com.mongodb.DBObject)                         # Deprecated back in 2011
+  - mapReduce(com.mongodb.DBObject)                     # JAVA-1104 removed in 3.x to aid support of operations.
   - createIndex(com.mongodb.DBObject,com.mongodb.DBObject,com.mongodb.DBEncoder)
   - ensureIndex(java.lang.String)
   - ensureIndex(com.mongodb.DBObject)
@@ -192,8 +192,8 @@ members:
 
   com.mongodb.MapReduceOutput:
   - getCommandResult()                                          # JAVA-1042
-  - getRaw()                                                    # TODO
-  - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult) # TODO
+  - getRaw()                                                    # JAVA-404 Deprecated when inline map-reduce introduced
+  - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult) # JAVA-1042
 
   org.bson.io.OutputBuffer:                       # JAVA-880 Fix up org.bson.io.{OutputBuffer, BasicOutputBuffer}
   - asString()                                    # JAVA-880
