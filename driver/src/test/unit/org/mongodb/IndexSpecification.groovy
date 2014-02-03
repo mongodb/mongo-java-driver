@@ -46,49 +46,49 @@ class IndexSpecification extends Specification {
     @Unroll
     def 'should support unique indexes'() {
         expect:
-        index.toDocument().getBoolean('unique') == isUnique
+        index.isUnique() == isUnique
 
         where:
         index                                                       | isUnique
-        Index.builder().addKey('x').build()                         | null
+        Index.builder().addKey('x').build()                         | false
         Index.builder().addKey('x').unique().build()                | true
-        Index.builder().addKey('x').unique().unique(false).build()  | null
+        Index.builder().addKey('x').unique().unique(false).build()  | false
     }
 
     @Unroll
     def 'should support ttl indexes'() {
         expect:
-        index.toDocument().getInteger('expireAfterSeconds') == seconds
+        index.getExpireAfterSeconds() == seconds
 
         where:
         index                                                           | seconds
-        Index.builder().addKey('x').build()                             | null
+        Index.builder().addKey('x').build()                             | -1
         Index.builder().addKey('x').expireAfterSeconds(1000).build()    | 1000
         Index.builder().addKey('x').expireAfterSeconds(1000)
-            .expireAfterSeconds(-1).build()                             | null
+            .expireAfterSeconds(-1).build()                             | -1
     }
     
     @Unroll
     def 'should support dropping duplicates'() {
         expect:
-        index.toDocument().getBoolean('dropDups') == dropDups
+        index.isDropDups() == dropDups
 
         where:
         index                                                           | dropDups
-        Index.builder().addKey('x').build()                             | null
+        Index.builder().addKey('x').build()                             | false
         Index.builder().addKey('x').dropDups().build()                  | true
-        Index.builder().addKey('x').dropDups(false).build()             | null
-        Index.builder().addKey('x').dropDups().dropDups(false).build()  | null
+        Index.builder().addKey('x').dropDups(false).build()             | false
+        Index.builder().addKey('x').dropDups().dropDups(false).build()  | false
     }
     
     @Unroll
     def 'should support unknown attributes'() {
         expect:
-        index.toDocument().get('extra') == extra
+        index.getExtra() == extra
 
         where:
         index                                                           | extra
-        Index.builder().addKey('x').build()                             | null
-        Index.builder().addKey('x').extra('extra', 'special').build()   | 'special'
+        Index.builder().addKey('x').build()                             | [:]
+        Index.builder().addKey('x').extra('extra', 'special').build()   | ['extra':'special']
     }
 }

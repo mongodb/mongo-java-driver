@@ -67,10 +67,8 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
     private void executeCollectionBasedProtocol() {
         MongoNamespace systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
         for (Index index : indexes) {
-            Document document = index.toDocument();
-            document.put("ns", namespace.toString());
             new InsertOperation<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                          asList(new InsertRequest<Document>(document)),
+                                          asList(new InsertRequest<Document>(toDocument(index))),
                                           new DocumentCodec(), getBufferProvider(), getSession(), false).execute();
         }
     }
@@ -80,14 +78,9 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
         Document command = new Document("createIndexes", namespace.getCollectionName());
         List<Document> list = new ArrayList<Document>();
         for (Index index : indexes) {
-            Document document = index.toDocument();
-            document.put("ns", namespace.toString());
-            list.add(document);
+            list.add(toDocument(index));
         }
         command.append("indexes", list);
-        //        new CommandOperation(namespace.getDatabaseName(), command, ReadPreference.primary(), new DocumentCodec(),
-        //                             new DocumentCodec(), clusterDescription, getBufferProvider(), getSession(), false)
-        //            .execute();
 
 
         CommandProtocol commandProtocol = new CommandProtocol(namespace.getDatabaseName(), command,
@@ -98,4 +91,30 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
         commandProtocol.execute();
 
     }
+    
+    public Document toDocument(final Index index) {
+        Document indexDetails = new Document();
+        indexDetails.append("name", index.getName());
+        indexDetails.append("key", index.getKeys());
+        if (index.isUnique()) {
+            indexDetails.append("unique", index.isUnique());
+        }
+        if (index.isSparse()) {
+            indexDetails.append("sparse", index.isSparse());
+        }
+        if (index.isDropDups()) {
+            indexDetails.append("dropDups", index.isDropDups());
+        }
+        if (index.isBackground()) {
+            indexDetails.append("background", index.isBackground());
+        }
+        if (index.getExpireAfterSeconds() != -1) {
+            indexDetails.append("expireAfterSeconds", index.getExpireAfterSeconds());
+        }
+        indexDetails.putAll(index.getExtra());
+        indexDetails.put("ns", namespace.toString());
+
+        return indexDetails;
+    }
+    
 }

@@ -26,7 +26,7 @@ import static org.mongodb.OrderBy.ASC;
 /**
  * Represents an index to create on the database.  Used as an argument in createIndexes
  */
-public final class Index implements ConvertibleToDocument {
+public final class Index {
     private final String name;
     /**
      * Ensures that the indexed key value is unique
@@ -78,29 +78,32 @@ public final class Index implements ConvertibleToDocument {
         return name;
     }
 
-    @Override
-    public Document toDocument() {
-        Document indexDetails = new Document();
-        indexDetails.append("name", name);
-        indexDetails.append("key", keys);
-        if (unique) {
-            indexDetails.append("unique", unique);
-        }
-        if (sparse) {
-            indexDetails.append("sparse", sparse);
-        }
-        if (dropDups) {
-            indexDetails.append("dropDups", dropDups);
-        }
-        if (background) {
-            indexDetails.append("background", background);
-        }
-        if (expireAfterSeconds != -1) {
-            indexDetails.append("expireAfterSeconds", expireAfterSeconds);
-        }
-        indexDetails.putAll(extra);
+    public boolean isUnique() {
+        return unique;
+    }
 
-        return indexDetails;
+    public boolean isDropDups() {
+        return dropDups;
+    }
+
+    public boolean isBackground() {
+        return background;
+    }
+
+    public boolean isSparse() {
+        return sparse;
+    }
+
+    public int getExpireAfterSeconds() {
+        return expireAfterSeconds;
+    }
+
+    public Document getKeys() {
+        return keys;
+    }
+
+    public Document getExtra() {
+        return extra;
     }
 
     /**
