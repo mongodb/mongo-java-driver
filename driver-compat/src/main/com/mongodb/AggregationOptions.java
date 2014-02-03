@@ -27,7 +27,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class AggregationOptions {
     private final Integer batchSize;
-    private final Boolean allowDiskUsage;
+    private final Boolean allowDiskUse;
     private final OutputMode outputMode;
     private final long maxTimeMS;
 
@@ -56,7 +56,7 @@ public class AggregationOptions {
 
     AggregationOptions(final Builder builder) {
         batchSize = builder.batchSize;
-        allowDiskUsage = builder.allowDiskUsage;
+        allowDiskUse = builder.allowDiskUse;
         outputMode = builder.outputMode;
         maxTimeMS = builder.maxTimeMS;
     }
@@ -65,8 +65,8 @@ public class AggregationOptions {
      * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of 
      * RAM.
      */
-    public Boolean getAllowDiskUsage() {
-        return allowDiskUsage;
+    public Boolean getAllowDiskUse() {
+        return allowDiskUse;
     }
 
     /**
@@ -97,7 +97,7 @@ public class AggregationOptions {
     public org.mongodb.AggregationOptions toNew() {
         return org.mongodb.AggregationOptions.builder()
                           .batchSize(getBatchSize())
-                          .allowDiskUsage(getAllowDiskUsage())
+                          .allowDiskUse(getAllowDiskUse())
                           .outputMode(getOutputMode().toNew())
                           .maxTime(maxTimeMS, MILLISECONDS)
                           .build();
@@ -106,8 +106,8 @@ public class AggregationOptions {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("AggregationOptions{");
-        sb.append("allowDiskUsage=")
-            .append(allowDiskUsage);
+        sb.append("allowDiskUse=")
+            .append(allowDiskUse);
         sb.append(", batchSize=")
             .append(batchSize);
         sb.append(", outputMode=")
@@ -125,7 +125,7 @@ public class AggregationOptions {
     public static class Builder {
 
         private Integer batchSize;
-        private Boolean allowDiskUsage;
+        private Boolean allowDiskUse;
         private OutputMode outputMode = OutputMode.INLINE;
         private long maxTimeMS;
 
@@ -137,8 +137,8 @@ public class AggregationOptions {
             return this;
         }
 
-        public Builder allowDiskUsage(final Boolean allow) {
-            allowDiskUsage = allow;
+        public Builder allowDiskUse(final Boolean allow) {
+            allowDiskUse = allow;
             return this;
         }
 

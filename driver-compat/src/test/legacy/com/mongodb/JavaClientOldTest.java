@@ -96,13 +96,13 @@ public class JavaClientOldTest extends DatabaseTestCase {
         verify(pipeline, AggregationOptions.builder()
             .batchSize(1)
             .outputMode(AggregationOptions.OutputMode.CURSOR)
-            .allowDiskUsage(true)
+            .allowDiskUse(true)
             .build());
 
         verify(pipeline, AggregationOptions.builder()
             .batchSize(1)
             .outputMode(AggregationOptions.OutputMode.INLINE)
-            .allowDiskUsage(true)
+            .allowDiskUse(true)
             .build());
 
         verify(pipeline, AggregationOptions.builder()
@@ -237,7 +237,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
-            .allowDiskUsage(true)
+            .allowDiskUse(true)
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build());
         assertTrue(out.keySet()

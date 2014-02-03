@@ -47,8 +47,8 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void createIndexes(final List<Index> indexes) {
-        new CreateIndexesOperation(indexes, collectionNamespace, client.getCluster().getDescription(),
-                                 client.getSession(), false, client.getBufferProvider()).execute();
+        new CreateIndexesOperation(indexes, collectionNamespace,
+                                   client.getBufferProvider(), client.getSession(), false).execute();
     }
 
     @Override

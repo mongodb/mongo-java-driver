@@ -93,8 +93,8 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
             }
             command.put("cursor", cursor);
         }
-        if (options.getAllowDiskUsage() != null) {
-            command.put("allowDiskUsage", options.getAllowDiskUsage());
+        if (options.getAllowDiskUse() != null) {
+            command.put("allowDiskUse", options.getAllowDiskUse());
         }
 
         if (LOGGER.isLoggable(Level.FINEST)) {

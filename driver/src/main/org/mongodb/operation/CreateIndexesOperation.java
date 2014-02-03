@@ -18,11 +18,12 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 import org.mongodb.Index;
+import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
@@ -35,20 +36,26 @@ import static java.util.Arrays.asList;
 public class CreateIndexesOperation extends BaseOperation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
-    private final ClusterDescription clusterDescription;
 
-    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace, final ClusterDescription clusterDescription,
-                                  final Session session, final boolean closeSession, final BufferProvider bufferProvider) {
+    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace, final BufferProvider bufferProvider,
+                                  final Session session, final boolean closeSession) {
         super(bufferProvider, session, closeSession);
         this.indexes = indexes;
         this.namespace = namespace;
-        this.clusterDescription = clusterDescription;
     }
 
     @Override
     public Void execute() {
         if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0) {
-            executeCommandBasedProtocol();
+            try {
+                executeCommandBasedProtocol();
+            } catch (MongoCommandFailureException e) {
+                if (e.getErrorCode() == 11000) {
+                    throw new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
+                } else {
+                    throw e;
+                }
+            }
         } else {
             executeCollectionBasedProtocol();
         }
@@ -78,17 +85,17 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
             list.add(document);
         }
         command.append("indexes", list);
-//        new CommandOperation(namespace.getDatabaseName(), command, ReadPreference.primary(), new DocumentCodec(),
-//                             new DocumentCodec(), clusterDescription, getBufferProvider(), getSession(), false)
-//            .execute();
-        
-        
+        //        new CommandOperation(namespace.getDatabaseName(), command, ReadPreference.primary(), new DocumentCodec(),
+        //                             new DocumentCodec(), clusterDescription, getBufferProvider(), getSession(), false)
+        //            .execute();
+
+
         CommandProtocol commandProtocol = new CommandProtocol(namespace.getDatabaseName(), command,
                                                               new DocumentCodec(),
                                                               new DocumentCodec(), getBufferProvider(),
                                                               getPrimaryServerConnectionProvider().getServerDescription(),
                                                               getPrimaryServerConnectionProvider().getConnection(), true);
         commandProtocol.execute();
-        
+
     }
 }

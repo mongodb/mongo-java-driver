@@ -26,7 +26,6 @@ import org.mongodb.Function;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
@@ -1337,22 +1336,11 @@ public class DBCollection {
      */
     public void createIndex(final DBObject keys, final DBObject options) {
         try {
-            new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), new MongoNamespace(getDB().getName(), getName()),
-                                       getDB().getClusterDescription(), getSession(), false, getBufferPool()).execute();
+            new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace(),
+                                       getBufferPool(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
-            try {
-                throw mapException(e);
-            } catch (CommandFailureException failure) {
-                if (failure.getCode() == 11000) {
-                    MongoCommandFailureException e1 = (MongoCommandFailureException) e;
-                    throw new MongoException.DuplicateKey(new CommandResult(e1.getCommandResult()));
-                } else {
-                    throw failure;
-                }
-            }
-
+            throw mapException(e);
         }
-
     }
 
     /**
