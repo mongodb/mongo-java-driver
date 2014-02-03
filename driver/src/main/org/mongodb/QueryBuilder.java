@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Creates a new query with a document key
      *
      * @param key MongoDB document key
-     * @return Returns a new QueryBuilder
+     * @return {@code this}
      */
     public static QueryBuilder query(final String key) {
         return (new QueryBuilder()).put(key);
@@ -58,7 +58,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Adds a new key to the query if not present yet. Sets this key as the current key.
      *
      * @param key MongoDB document key
-     * @return the current QueryBuilder with the key param set as the current key
+     * @return {@code this}
      */
     public QueryBuilder put(final String key) {
         currentKey = key;
@@ -73,7 +73,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
-     * @return the current QueryBuilder with the key param set as the current key
+     * @return {@code this}
      */
     public QueryBuilder and(final String key) {
         return put(key);
@@ -83,7 +83,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to the $gt operator
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "greater than" query
+     * @return {@code this}
      */
     public QueryBuilder greaterThan(final Object object) {
         addOperand(QueryOperators.GT, object);
@@ -94,7 +94,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to the $gte operator
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "greater than or equals" query
+     * @return {@code this}
      */
     public QueryBuilder greaterThanEquals(final Object object) {
         addOperand(QueryOperators.GTE, object);
@@ -105,7 +105,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to the $lt operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "less than" query
+     * @return {@code this}
      */
     public QueryBuilder lessThan(final Object object) {
         addOperand(QueryOperators.LT, object);
@@ -116,7 +116,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to the $lte operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "less than or equals" query
+     * @return {@code this}
      */
     public QueryBuilder lessThanEquals(final Object object) {
         addOperand(QueryOperators.LTE, object);
@@ -127,7 +127,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the find({key:value})
      *
      * @param value Value to query
-     * @return Returns the current QueryBuilder with an appended equality query
+     * @return {@code this}
      */
     public QueryBuilder is(final Object value) {
         addOperand(null, value);
@@ -138,7 +138,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the find({key:value})
      *
      * @param value value to query
-     * @return Returns the current QueryBuilder with an appended equality query
+     * @return {@code this}
      */
     public QueryBuilder is(final QueryBuilder value) {
         addOperand(null, value.toDocument());
@@ -149,7 +149,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $ne operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended inequality query
+     * @return {@code this}
      */
     public QueryBuilder notEquals(final Object object) {
         addOperand(QueryOperators.NE, object);
@@ -160,7 +160,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $in operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "in array" query
+     * @return {@code this}
      */
     public QueryBuilder in(final Object object) {
         addOperand(QueryOperators.IN, object);
@@ -171,7 +171,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $nin operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "not in array" query
+     * @return {@code this}
      */
     public QueryBuilder notIn(final Object object) {
         addOperand(QueryOperators.NIN, object);
@@ -182,7 +182,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $mod operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended modulo query
+     * @return {@code this}
      */
     public QueryBuilder mod(final Object object) {
         addOperand(QueryOperators.MOD, object);
@@ -193,7 +193,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $all operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "matches all array contents" query
+     * @return {@code this}
      */
     public QueryBuilder all(final Object object) {
         addOperand(QueryOperators.ALL, object);
@@ -204,7 +204,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $size operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended size operator
+     * @return {@code this}
      */
     public QueryBuilder size(final Object object) {
         addOperand(QueryOperators.SIZE, object);
@@ -215,7 +215,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $exists operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended exists operator
+     * @return {@code this}
      */
     public QueryBuilder exists(final Object object) {
         addOperand(QueryOperators.EXISTS, object);
@@ -226,7 +226,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Passes a regular expression for a query
      *
      * @param regex Regex pattern object
-     * @return Returns the current QueryBuilder with an appended regex query
+     * @return {@code this}
      */
     public QueryBuilder regex(final Pattern regex) {
         addOperand(null, regex);
@@ -237,7 +237,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to the $elemMatch operand
      *
      * @param match the object to match
-     * @return Returns the current QueryBuilder with an appended elemMatch operator
+     * @return {@code this}
      */
     public QueryBuilder elemMatch(final Document match) {
         addOperand(QueryOperators.ELEM_MATCH, match);
@@ -251,7 +251,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param x      x coordinate
      * @param y      y coordinate
      * @param radius radius
-     * @return the current QueryBuilder with the geo query params added
+     * @return {@code this}
      */
     public QueryBuilder withinCenter(final double x, final double y, final double radius) {
         addOperand(QueryOperators.WITHIN,
@@ -263,7 +263,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $near operand
      * @param x x coordinate
      * @param y y coordinate
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y){
         addOperand(QueryOperators.NEAR,
@@ -276,7 +276,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param x x coordinate
      * @param y y coordinate
      * @param maxDistance max distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance){
         addOperand(QueryOperators.NEAR,
@@ -291,7 +291,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent of the $nearSphere operand
      * @param longitude coordinate in decimal degrees
      * @param latitude coordinate in decimal degrees
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude){
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -304,7 +304,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param longitude coordinate in decimal degrees
      * @param latitude coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance){
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -320,7 +320,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param longitude   coordinate in decimal degrees
      * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return the current QueryBuilder with the geo query params added
+     * @return {@code this}
      */
     public QueryBuilder withinCenterSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.WITHIN,
@@ -336,7 +336,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * @param y  the y coordinate of the first box corner.
      * @param x2 the x coordinate of the second box corner.
      * @param y2 the y coordinate of the second box corner.
-     * @return the current QueryBuilder with the geo query params added
+     * @return {@code this}
      */
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
@@ -348,7 +348,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to a $within operand, based on a bounding polygon represented by an array of points
      *
      * @param points an array of Double[] defining the vertices of the search area
-     * @return the current QueryBuilder with the geo query params added
+     * @return {@code this}
      */
     public QueryBuilder withinPolygon(final List<Double[]> points) {
         if (points == null || points.isEmpty() || points.size() < 3) {
@@ -362,7 +362,7 @@ public class QueryBuilder implements ConvertibleToDocument {
     /**
      * Equivalent to a $text operand.
      * @param search the search terms to apply to the text index.
-     * @return this
+     * @return {@code this}
      */
     public QueryBuilder text(final String search) {
         return text(search, null);
@@ -372,7 +372,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to a $text operand.
      * @param search the search terms to apply to the text index.
      * @param language the language to use.
-     * @return this
+     * @return {@code this}
      */
     public QueryBuilder text(final String search, final String language) {
         if (currentKey != null) {
@@ -393,7 +393,7 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Equivalent to $not meta operator. Must be followed by an operand, not a value, e.g. {@code
      * QueryBuilder.start("val").not().mod(Arrays.asList(10, 1)) }
      *
-     * @return Returns the current QueryBuilder with an appended "not" meta operator
+     * @return {@code this}
      */
     public QueryBuilder not() {
         hasNot = true;

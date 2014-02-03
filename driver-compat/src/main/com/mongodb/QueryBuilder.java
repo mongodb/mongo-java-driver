@@ -50,7 +50,7 @@ public class QueryBuilder {
      * Creates a new query with a document key
      *
      * @param key MongoDB document key
-     * @return Returns a new QueryBuilder
+     * @return {@code this}
      */
     public static QueryBuilder start(final String key) {
         return (new QueryBuilder()).put(key);
@@ -60,7 +60,7 @@ public class QueryBuilder {
      * Adds a new key to the query if not present yet. Sets this key as the current key.
      *
      * @param key MongoDB document key
-     * @return this
+     * @return {@code this}
      */
     public QueryBuilder put(final String key) {
         _currentKey = key;
@@ -75,7 +75,7 @@ public class QueryBuilder {
      * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
-     * @return this
+     * @return {@code this}
      */
     public QueryBuilder and(final String key) {
         return put(key);
@@ -85,7 +85,7 @@ public class QueryBuilder {
      * Equivalent to the $gt operator
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "greater than" query
+     * @return {@code this}
      */
     public QueryBuilder greaterThan(final Object object) {
         addOperand(QueryOperators.GT, object);
@@ -96,7 +96,7 @@ public class QueryBuilder {
      * Equivalent to the $gte operator
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "greater than or equals" query
+     * @return {@code this}
      */
     public QueryBuilder greaterThanEquals(final Object object) {
         addOperand(QueryOperators.GTE, object);
@@ -107,7 +107,7 @@ public class QueryBuilder {
      * Equivalent to the $lt operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "less than" query
+     * @return {@code this}
      */
     public QueryBuilder lessThan(final Object object) {
         addOperand(QueryOperators.LT, object);
@@ -118,7 +118,7 @@ public class QueryBuilder {
      * Equivalent to the $lte operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "less than or equals" query
+     * @return {@code this}
      */
     public QueryBuilder lessThanEquals(final Object object) {
         addOperand(QueryOperators.LTE, object);
@@ -129,7 +129,7 @@ public class QueryBuilder {
      * Equivalent of the find({key:value})
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended equality query
+     * @return {@code this}
      */
     public QueryBuilder is(final Object object) {
         addOperand(null, object);
@@ -140,7 +140,7 @@ public class QueryBuilder {
      * Equivalent of the $ne operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended inequality query
+     * @return {@code this}
      */
     public QueryBuilder notEquals(final Object object) {
         addOperand(QueryOperators.NE, object);
@@ -151,7 +151,7 @@ public class QueryBuilder {
      * Equivalent of the $in operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "in array" query
+     * @return {@code this}
      */
     public QueryBuilder in(final Object object) {
         addOperand(QueryOperators.IN, object);
@@ -162,7 +162,7 @@ public class QueryBuilder {
      * Equivalent of the $nin operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "not in array" query
+     * @return {@code this}
      */
     public QueryBuilder notIn(final Object object) {
         addOperand(QueryOperators.NIN, object);
@@ -173,7 +173,7 @@ public class QueryBuilder {
      * Equivalent of the $mod operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended modulo query
+     * @return {@code this}
      */
     public QueryBuilder mod(final Object object) {
         addOperand(QueryOperators.MOD, object);
@@ -184,7 +184,7 @@ public class QueryBuilder {
      * Equivalent of the $all operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended "matches all array contents" query
+     * @return {@code this}
      */
     public QueryBuilder all(final Object object) {
         addOperand(QueryOperators.ALL, object);
@@ -195,7 +195,7 @@ public class QueryBuilder {
      * Equivalent of the $size operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended size operator
+     * @return {@code this}
      */
     public QueryBuilder size(final Object object) {
         addOperand(QueryOperators.SIZE, object);
@@ -206,7 +206,7 @@ public class QueryBuilder {
      * Equivalent of the $exists operand
      *
      * @param object Value to query
-     * @return Returns the current QueryBuilder with an appended exists operator
+     * @return {@code this}
      */
     public QueryBuilder exists(final Object object) {
         addOperand(QueryOperators.EXISTS, object);
@@ -217,7 +217,7 @@ public class QueryBuilder {
      * Passes a regular expression for a query
      *
      * @param regex Regex pattern object
-     * @return Returns the current QueryBuilder with an appended regex query
+     * @return {@code this}
      */
     public QueryBuilder regex(final Pattern regex) {
         addOperand(null, regex);
@@ -228,7 +228,7 @@ public class QueryBuilder {
      * Equivalent to the $elemMatch operand
      *
      * @param match the object to match
-     * @return Returns the current QueryBuilder with an appended elemMatch operator
+     * @return {@code this}
      */
     public QueryBuilder elemMatch(final DBObject match) {
         addOperand(QueryOperators.ELEM_MATCH, match);
@@ -254,7 +254,7 @@ public class QueryBuilder {
      * Equivalent of the $near operand
      * @param x x coordinate
      * @param y y coordinate
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y){
         addOperand(QueryOperators.NEAR,
@@ -267,7 +267,7 @@ public class QueryBuilder {
      * @param x x coordinate
      * @param y y coordinate
      * @param maxDistance max distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance){
         addOperand(QueryOperators.NEAR,
@@ -281,7 +281,7 @@ public class QueryBuilder {
      * Equivalent of the $nearSphere operand
      * @param longitude coordinate in decimal degrees
      * @param latitude coordinate in decimal degrees
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude){
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -294,7 +294,7 @@ public class QueryBuilder {
      * @param longitude coordinate in decimal degrees
      * @param latitude coordinate in decimal degrees
      * @param maxDistance max spherical distance
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance){
         addOperand(QueryOperators.NEAR_SPHERE,
@@ -352,7 +352,7 @@ public class QueryBuilder {
     /**
      * Equivalent to a $text operand.
      * @param search the search terms to apply to the text index.
-     * @return this
+     * @return {@code this}
      *
      * @mongodb.server.release 2.6
      */
@@ -364,7 +364,7 @@ public class QueryBuilder {
      * Equivalent to a $text operand.
      * @param search the search terms to apply to the text index.
      * @param language the language to use.
-     * @return this
+     * @return {@code this}
      *
      * @mongodb.server.release 2.6
      */
@@ -387,7 +387,7 @@ public class QueryBuilder {
      * Equivalent to $not meta operator. Must be followed by an operand, not a value, e.g. {@code
      * QueryBuilder.start("val").not().mod(Arrays.asList(10, 1)) }
      *
-     * @return Returns the current QueryBuilder with an appended "not" meta operator
+     * @return {@code this}
      */
     public QueryBuilder not() {
         _hasNot = true;
@@ -398,7 +398,7 @@ public class QueryBuilder {
      * Equivalent to an $or operand
      *
      * @param ors the list of conditions to or together
-     * @return Returns the current QueryBuilder with appended "or" operator
+     * @return {@code this}
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder or(final DBObject... ors) {
@@ -415,7 +415,7 @@ public class QueryBuilder {
      * Equivalent to an $and operand
      *
      * @param ands the list of conditions to and together
-     * @return Returns the current QueryBuilder with appended "and" operator
+     * @return {@code this}
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder and(final DBObject... ands) {
@@ -431,7 +431,7 @@ public class QueryBuilder {
     /**
      * Creates a {@code DBObject} query to be used for the driver's find operations
      *
-     * @return Returns a DBObject query instance
+     * @return {@code this}
      * @throws RuntimeException if a key does not have a matching operand
      */
     public DBObject get() {
