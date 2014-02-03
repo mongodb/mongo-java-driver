@@ -22,6 +22,7 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
+import static java.util.Arrays.asList
 import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 import static org.mongodb.OrderBy.ASC
@@ -43,7 +44,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
     def 'should return created indexes on Collection'() {
         given:
         def operation = new GetIndexesOperation(collection.getNamespace(), bufferProvider, session);
-        collection.tools().ensureIndex(Index.builder().addKey('theField', ASC).build());
+        collection.tools().createIndexes(asList(Index.builder().addKey('theField', ASC).build()));
 
         when:
         List<Document> indexes = operation.execute()

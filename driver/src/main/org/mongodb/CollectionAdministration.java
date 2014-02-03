@@ -27,10 +27,10 @@ import java.util.List;
 public interface CollectionAdministration {
     /**
      * @param index all the details of the index to add
-     * @mongodb.driver.manual reference/method/db.collection.ensureIndex/ Ensure Index
+     * @mongodb.driver.manual reference/method/db.collection.createIndex/ Ensure Index
      * @see Index
      */
-    void ensureIndex(Index index);
+    void createIndexes(List<Index> index);
 
     /**
      * @return a MongoCollection containing all the indexes on this collection

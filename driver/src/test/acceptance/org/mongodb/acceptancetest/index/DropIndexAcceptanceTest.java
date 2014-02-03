@@ -23,6 +23,7 @@ import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCommandFailureException;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -39,7 +40,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldDropSingleNamedIndex() {
         // Given
-        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
+        collection.tools().createIndexes(asList(Index.builder().addKey("theField").build()));
 
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
                    is(2));
@@ -54,8 +55,8 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldDropAllIndexesForCollection() {
         // Given
-        collection.tools().ensureIndex(Index.builder().addKey("theField").build());
-        collection.tools().ensureIndex(Index.builder().addKey("aSecondIndex").build());
+        collection.tools().createIndexes(asList(Index.builder().addKey("theField").build()));
+        collection.tools().createIndexes(asList(Index.builder().addKey("aSecondIndex").build()));
 
         assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
                    is(3));

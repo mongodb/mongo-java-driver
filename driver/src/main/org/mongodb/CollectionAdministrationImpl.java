@@ -16,58 +16,39 @@
 
 package org.mongodb;
 
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.GetIndexesOperation;
-import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.InsertRequest;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 /**
  * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class you can create
  * indexes and drop the collection.
  */
 class CollectionAdministrationImpl implements CollectionAdministration {
-    private static final String NAMESPACE_KEY_NAME = "ns";
 
     private final MongoClientImpl client;
     private final MongoDatabase database;
-    //TODO: need to do something about these default serialisers, they're created everywhere
-    private final DocumentCodec documentCodec;
-    private final MongoNamespace indexesNamespace;
     private final MongoNamespace collectionNamespace;
 
     private final Document collStatsCommand;
 
     CollectionAdministrationImpl(final MongoClientImpl client,
-                                 final PrimitiveCodecs primitiveCodecs,
                                  final MongoNamespace collectionNamespace,
                                  final MongoDatabase database) {
         this.client = client;
         this.database = database;
-        this.documentCodec = new DocumentCodec(primitiveCodecs);
-        indexesNamespace = new MongoNamespace(database.getName(), "system.indexes");
         this.collectionNamespace = collectionNamespace;
         collStatsCommand = new Document("collStats", collectionNamespace.getCollectionName());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void ensureIndex(final Index index) {
-        Document indexDetails = index.toDocument();
-        indexDetails.append(NAMESPACE_KEY_NAME, collectionNamespace.getFullName());
-
-        InsertRequest<Document> insertRequestIndexOperation = new InsertRequest<Document>(indexDetails);
-
-        new InsertOperation<Document>(indexesNamespace, true, ACKNOWLEDGED, asList(insertRequestIndexOperation), documentCodec,
-                                      client.getBufferProvider(), client.getSession(), false).execute();
+    public void createIndexes(final List<Index> indexes) {
+        new CreateIndexesOperation(indexes, collectionNamespace, client.getCluster().getDescription(),
+                                 client.getSession(), false, client.getBufferProvider()).execute();
     }
 
     @Override

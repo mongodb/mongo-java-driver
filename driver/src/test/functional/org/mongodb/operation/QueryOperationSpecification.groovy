@@ -104,7 +104,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         for (i in 1..100) {
             collection.insert(new Document('x', 'y').append('count', i))
         }
-        collection.tools().ensureIndex(Index.builder().addKey('count').build())
+        collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
         find.getOptions().max(new Document('count', 10))
@@ -125,7 +125,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         for (i in 1..100) {
             collection.insert(new Document('x', 'y').append('count', i))
         }
-        collection.tools().ensureIndex(Index.builder().addKey('count').build())
+        collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
         find.getOptions().min(new Document('count', 10))

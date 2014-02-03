@@ -293,7 +293,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(indexAlias, collection.getIndexInfo().get(1).get("name"));
     }
 
-    @Test
+    @Test(expected = MongoDuplicateKeyException.class)
     public void testIndexExceptions() {
         DBCollection c = collection;
 
@@ -303,13 +303,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         c.createIndex(new BasicDBObject("y", 1));
         c.createIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
 
-        Exception failed = null;
-        try {
-            c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
-        } catch (MongoDuplicateKeyException e) {
-            failed = e;
-        }
-        assertNotNull(failed);
+        c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
     }
 
     @Test

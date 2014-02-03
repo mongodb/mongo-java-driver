@@ -24,7 +24,7 @@ import static org.mongodb.OrderBy.ASC;
 
 
 /**
- * Represents an index to create on the database.  Used as an argument in ensureIndex
+ * Represents an index to create on the database.  Used as an argument in createIndexes
  */
 public final class Index implements ConvertibleToDocument {
     private final String name;
