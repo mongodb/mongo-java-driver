@@ -1,4 +1,3 @@
-import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
 
 import java.util.Map;
