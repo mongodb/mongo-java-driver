@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ClusterType.SHARDED;
@@ -73,11 +74,11 @@ public final class Fixture {
     }
 
     public static boolean clusterIsType(final ClusterType clusterType) {
-        return getCluster().getDescription().getType() == clusterType;
+        return getCluster().getDescription(10, SECONDS).getType() == clusterType;
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getCluster().getDescription().getAny().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        return getCluster().getDescription(10, SECONDS).getAny().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     static class ShutdownHook extends Thread {
@@ -146,10 +147,10 @@ public final class Fixture {
 
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription(10, SECONDS).getPrimaries();
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+            serverDescriptions = mongoClient.getCluster().getDescription(10, SECONDS).getPrimaries();
         }
         return serverDescriptions.get(0).getAddress();
     }
@@ -160,13 +161,13 @@ public final class Fixture {
 
     public static boolean isDiscoverableReplicaSet() {
         getMongoClient();
-        return mongoClient.getCluster().getDescription().getType() == REPLICA_SET
-               && mongoClient.getCluster().getDescription().getConnectionMode() == MULTIPLE;
+        return mongoClient.getCluster().getDescription(10, SECONDS).getType() == REPLICA_SET
+               && mongoClient.getCluster().getDescription(10, SECONDS).getConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
         getMongoClient();
-        return mongoClient.getCluster().getDescription().getType() == SHARDED;
+        return mongoClient.getCluster().getDescription(10, SECONDS).getType() == SHARDED;
     }
 
     public static boolean isAuthenticated() {

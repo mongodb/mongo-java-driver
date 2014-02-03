@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.mongodb.event.ClusterListener
 import org.mongodb.session.PrimaryServerSelector
 import spock.lang.Specification
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.connection.ClusterConnectionMode.SINGLE
 import static org.mongodb.connection.ServerConnectionState.CONNECTED
 import static org.mongodb.connection.ServerType.STANDALONE
@@ -47,9 +48,9 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.description.type == ClusterType.STANDALONE
-        cluster.description.connectionMode == SINGLE
-        cluster.description.all == getDescriptions()
+        cluster.getDescription(1, SECONDS).type == ClusterType.STANDALONE
+        cluster.getDescription(1, SECONDS).connectionMode == SINGLE
+        cluster.getDescription(1, SECONDS).all == getDescriptions()
     }
 
     def 'should get server when open'() {
@@ -88,8 +89,8 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY)
 
         then:
-        cluster.description.type == ClusterType.SHARDED
-        cluster.description.all == [] as Set
+        cluster.getDescription(1, SECONDS).type == ClusterType.SHARDED
+        cluster.getDescription(1, SECONDS).all == [] as Set
     }
 
     def 'should have server in description when replica set name does matches required one'() {
@@ -102,8 +103,8 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test1')
 
         then:
-        cluster.description.type == ClusterType.REPLICA_SET
-        cluster.description.all == getDescriptions()
+        cluster.getDescription(1, SECONDS).type == ClusterType.REPLICA_SET
+        cluster.getDescription(1, SECONDS).all == getDescriptions()
     }
 
     def 'should have no replica set servers in description when replica set name does not match required one'() {
@@ -116,8 +117,8 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test2')
 
         then:
-        cluster.description.type == ClusterType.REPLICA_SET
-        cluster.description.all == [] as Set
+        cluster.getDescription(1, SECONDS).type == ClusterType.REPLICA_SET
+        cluster.getDescription(1, SECONDS).all == [] as Set
     }
 
     def 'getServer should throw when cluster is incompatible'() {
@@ -128,7 +129,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.getServer(new PrimaryServerSelector())
+        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
 
         then:
         thrown(MongoIncompatibleDriverException)

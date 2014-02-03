@@ -36,6 +36,7 @@ import org.mongodb.session.Session;
 import java.util.EnumSet;
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getBufferProvider;
@@ -81,7 +82,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
         assumeFalse(isSharded());
-        Server server = getCluster().getServer(new ReadPreferenceServerSelector(ReadPreference.primary()));
+        Server server = getCluster().selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS);
         Connection connection = server.getConnection();
         try {
             SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);

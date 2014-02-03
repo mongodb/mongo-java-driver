@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,9 @@ class DBCollectionSpecification extends Specification {
         database.getSession() >> { session }
         database.getCluster() >> { cluster }
         database.getName() >> { 'TheDatabase' }
-        database.getClusterDescription() >> { cluster.getDescription() }
+        database.getClusterDescription() >> { cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) }
         database.getBufferPool() >> { getBufferProvider() }
-        cluster.getDescription() >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
+        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
     }
 
     def 'should throw com.mongodb.MongoException if rename fails'() {

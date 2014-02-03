@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.mongodb.session.Session;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
@@ -625,7 +626,7 @@ public class DB {
 
     ClusterDescription getClusterDescription() {
         try {
-            return getCluster().getDescription();
+            return getCluster().getDescription(10, TimeUnit.SECONDS);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

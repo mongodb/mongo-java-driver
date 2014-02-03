@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -63,17 +64,17 @@ public class SingleServerClusterTest {
 
     @Test
     public void shouldGetDescription() {
-        assertNotNull(cluster.getDescription());
+        assertNotNull(cluster.getDescription(10, TimeUnit.SECONDS));
     }
 
     @Test
     public void shouldGetServerWithOkDescription() throws InterruptedException {
-        Server server = cluster.getServer(new ServerSelector() {
+        Server server = cluster.selectServer(new ServerSelector() {
             @Override
             public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
                 return clusterDescription.getPrimaries();
             }
-        });
+        }, 1, TimeUnit.SECONDS);
         assertTrue(server.getDescription().isOk());
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getExecutor
 import static org.mongodb.Fixture.getPrimary
@@ -81,7 +82,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.getServer(new PrimaryServerSelector())
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
 
         then:
@@ -99,7 +100,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.getServer(new PrimaryServerSelector())
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         server.getConnection()
 
         then:
@@ -118,7 +119,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         def cluster = getCluster(newUser)
 
         when:
-        def server = cluster.getServer(new PrimaryServerSelector())
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
 
         then:

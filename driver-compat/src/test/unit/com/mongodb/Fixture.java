@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.mongodb.connection.ServerDescription;
 
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -86,10 +87,10 @@ public final class Fixture {
 
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription(10, TimeUnit.SECONDS).getPrimaries();
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
+            serverDescriptions = mongoClient.getCluster().getDescription(10, TimeUnit.SECONDS).getPrimaries();
         }
         return new ServerAddress(serverDescriptions.get(0).getAddress());
     }

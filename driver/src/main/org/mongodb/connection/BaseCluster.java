@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -66,15 +66,14 @@ public abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public Server getServer(final ServerSelector serverSelector) {
+    public Server selectServer(final ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit) {
         isTrue("open", !isClosed());
 
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
-            TimeUnit timeUnit = NANOSECONDS;
-            long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
+            long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (true) {
                 if (!curDescription.isCompatibleWithDriver()) {
                     throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of "
@@ -96,11 +95,11 @@ public abstract class BaseCluster implements Cluster {
                 long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                   serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                                   serverSelector, curDescription, MILLISECONDS.convert(timeout, NANOSECONDS)));
 
-                if (!currentPhase.await(timeout, timeUnit)) {
+                if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that satisfies the selector: %s "
-                                                           + "after  %d %s", serverSelector, timeout, timeUnit));
+                                                           + "after %d ms", serverSelector, MILLISECONDS.convert(timeout, NANOSECONDS)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -113,14 +112,13 @@ public abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public ClusterDescription getDescription() {
+    public ClusterDescription getDescription(final long maxWaitTime, final TimeUnit timeUnit) {
         isTrue("open", !isClosed());
 
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            TimeUnit timeUnit = NANOSECONDS;
-            long endTime = System.nanoTime() + timeUnit.convert(20, SECONDS); // TODO: configurable
+            long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (curDescription.getType() == ClusterType.UNKNOWN) {
 
                 if (!curDescription.isConnecting()) {
@@ -130,11 +128,11 @@ public abstract class BaseCluster implements Cluster {
                 long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                   TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+                                   MILLISECONDS.convert(timeout, NANOSECONDS)));
 
-                if (!currentPhase.await(timeout, timeUnit)) {
+                if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for the cluster description after waiting %d %s",
-                                                           timeout, timeUnit));
+                                                           timeout, NANOSECONDS));
                 }
                 currentPhase = phase.get();
                 curDescription = description;

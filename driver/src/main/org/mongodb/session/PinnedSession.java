@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.mongodb.operation.SingleResultFuture;
 
 import java.util.concurrent.Executor;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -103,7 +104,7 @@ public class PinnedSession implements Session {
                     if (connectionForReads != null) {
                         connectionForReads.close();
                     }
-                    serverForReads = cluster.getServer(options.getServerSelector());
+                    serverForReads = cluster.selectServer(options.getServerSelector(), options.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
                     connectionForReads = serverForReads.getConnection();
                 }
                 serverToUse = serverForReads;
@@ -115,7 +116,7 @@ public class PinnedSession implements Session {
                 }
             } else {
                 if (connectionForWrites == null) {
-                    serverForWrites = cluster.getServer(new PrimaryServerSelector());
+                    serverForWrites = cluster.selectServer(new PrimaryServerSelector(), options.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
                     connectionForWrites = serverForWrites.getConnection();
                 }
                 serverToUse = serverForWrites;

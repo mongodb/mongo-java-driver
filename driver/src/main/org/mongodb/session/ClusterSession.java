@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.mongodb.operation.SingleResultFuture;
 
 import java.util.concurrent.Executor;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -61,7 +62,7 @@ public class ClusterSession implements Session {
         notNull("serverSelector", options.getServerSelector());
         isTrue("open", !isClosed);
 
-        Server server = cluster.getServer(options.getServerSelector());
+        Server server = cluster.selectServer(options.getServerSelector(), options.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
         return new SimpleServerConnectionProvider(server, executor);
     }
 
@@ -83,7 +84,7 @@ public class ClusterSession implements Session {
             @Override
             public void run() {
                 try {
-                    Server server = cluster.getServer(options.getServerSelector());
+                    Server server = cluster.selectServer(options.getServerSelector(), options.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
                     retVal.init(new SimpleServerConnectionProvider(server, executor), null);
                 } catch (MongoException e) {
                     retVal.init(null, e);

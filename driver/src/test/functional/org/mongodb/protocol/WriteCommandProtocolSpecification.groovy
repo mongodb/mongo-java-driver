@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.mongodb.operation.UpdateRequest
 import org.mongodb.session.PrimaryServerSelector
 
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getCluster
@@ -48,7 +49,7 @@ import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
-    def server = getCluster().getServer(new PrimaryServerSelector())
+    def server = getCluster().selectServer(new PrimaryServerSelector(), 1, SECONDS)
     def connection = server.connection
 
     def setup() {

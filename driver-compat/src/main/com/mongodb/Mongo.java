@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.MongoExceptions.mapException;
@@ -368,7 +369,7 @@ public class Mongo {
 
     private ClusterDescription getClusterDescription() {
         try {
-            return cluster.getDescription();
+            return cluster.getDescription(10, TimeUnit.SECONDS);
         } catch (org.mongodb.MongoException e) {
             //TODO: test this
             throw mapException(e);

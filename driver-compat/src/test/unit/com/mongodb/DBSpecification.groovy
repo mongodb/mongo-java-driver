@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoException if createCollection fails'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new MongoCommandFailureException(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
                                                                                  new Document(), 15L))
@@ -68,7 +68,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should throw com.mongodb.MongoCursorNotFoundException if cursor not found'() {
         given:
-        cluster.getDescription() >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
+        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> { new ClusterDescription(SINGLE, UNKNOWN, Collections.<ServerDescription> emptyList()) }
         session.createServerConnectionProvider(_) >> {
             throw new org.mongodb.MongoCursorNotFoundException(new ServerCursor(1, new org.mongodb.connection.ServerAddress()))
         }
@@ -98,7 +98,7 @@ class DBSpecification extends Specification {
     @SuppressWarnings('UnnecessaryQualifiedReference')
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException for getClusterDescription'() {
         given:
-        cluster.getDescription() >> { throw new MongoTimeoutException('This Exception should not escape') }
+        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> { throw new MongoTimeoutException('This Exception should not escape') }
 
         when:
         database.getClusterDescription()

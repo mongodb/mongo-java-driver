@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.mongodb.operation.RenameCollectionOperation;
 import java.util.HashSet;
 import java.util.Set;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
  * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
@@ -45,7 +47,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec, client.getCluster().getDescription(),
+        new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec, client.getCluster().getDescription(10, SECONDS),
                              client.getBufferProvider(), client.getSession(), false).execute();
     }
 
@@ -75,7 +77,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         CommandResult commandResult = new CommandOperation(databaseName, createCollectionOptions.asDocument(), null, commandCodec,
-                                                           commandCodec, client.getCluster().getDescription(),
+                                                           commandCodec, client.getCluster().getDescription(10, SECONDS),
                                                            client.getBufferProvider(), client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }

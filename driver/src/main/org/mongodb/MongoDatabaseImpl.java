@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.operation.CommandOperation;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
@@ -75,9 +77,9 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
         ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
-        return new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec, client.getCluster().getDescription(),
-                                    client.getBufferProvider(), client.getSession(), false)
-                   .execute();
+        return new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec,
+                                    client.getCluster().getDescription(10, SECONDS), client.getBufferProvider(), client.getSession(), false)
+               .execute();
     }
 
     @Override

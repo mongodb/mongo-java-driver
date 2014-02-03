@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
@@ -43,9 +44,9 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public double ping() {
         CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
-                                                        client.getCluster().getDescription(), getBufferPool(), client.getSession(),
-                                                        false)
-                                       .execute();
+                                                        client.getCluster().getDescription(10, TimeUnit.SECONDS), getBufferPool(),
+                                                        client.getSession(), false)
+                                   .execute();
 
         return (Double) pingResult.getResponse().get("ok");
     }
