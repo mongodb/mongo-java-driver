@@ -186,6 +186,7 @@ public class MongoClientOptions {
          * @return {@code this}
          * @throws IllegalArgumentException if {@code minConnectionsPerHost < 0}
          * @see MongoClientOptions#getMinConnectionsPerHost()
+         * @since 2.12
          */
         public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
             if (minConnectionsPerHost < 0) {
@@ -250,7 +251,8 @@ public class MongoClientOptions {
          * @param maxConnectionIdleTime the maximum idle time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code maxConnectionIdleTime < 0}
-         * @see MongoClientOptions#getMaxConnectionIdleTime() ()
+         * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
+         * @since 2.12
          */
         public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
             if (maxConnectionIdleTime < 0) {
@@ -266,7 +268,8 @@ public class MongoClientOptions {
          * @param maxConnectionLifeTime the maximum life time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code maxConnectionIdleTime < 0}
-         * @see MongoClientOptions#getMaxConnectionIdleTime() ()
+         * @see MongoClientOptions#getMaxConnectionIdleTime()
+         * @since 2.12
          */
         public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
             if (maxConnectionLifeTime < 0) {
@@ -499,6 +502,7 @@ public class MongoClientOptions {
      * Default is 0.
      *
      * @return the minimum size of the connection pool per host
+     * @since 2.12
      */
     public int getMinConnectionsPerHost() {
         return minConnectionsPerHost;
@@ -548,6 +552,7 @@ public class MongoClientOptions {
      * exceeded its idle time will be closed and replaced when necessary by a new connection.
      *
      * @return the maximum idle time, in milliseconds
+     * @since 2.12
      */
     public int getMaxConnectionIdleTime() {
         return maxConnectionIdleTime;
@@ -558,6 +563,7 @@ public class MongoClientOptions {
      * exceeded its life time will be closed and replaced when necessary by a new connection.
      *
      * @return the maximum life time, in milliseconds
+     * @since 2.12
      */
     public int getMaxConnectionLifeTime() {
         return maxConnectionLifeTime;
