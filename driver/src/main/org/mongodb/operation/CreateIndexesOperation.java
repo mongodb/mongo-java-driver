@@ -92,7 +92,7 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
 
     }
     
-    public Document toDocument(final Index index) {
+    private Document toDocument(final Index index) {
         Document indexDetails = new Document();
         indexDetails.append("name", index.getName());
         indexDetails.append("key", index.getKeys());
