@@ -1507,7 +1507,7 @@ public abstract class DBCollection {
      * @deprecated Use {@link com.mongodb.DBCollection#aggregate(java.util.List)} instead
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      *
-     * @mongodb.server.release 2.6
+     * @mongodb.server.release 2.2
      */
     @Deprecated
     @SuppressWarnings("unchecked")
