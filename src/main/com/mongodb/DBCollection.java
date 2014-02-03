@@ -1506,6 +1506,8 @@ public abstract class DBCollection {
      * @return the aggregation operation's result set
      * @deprecated Use {@link com.mongodb.DBCollection#aggregate(java.util.List)} instead
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
+     *
+     * @mongodb.server.release 2.6
      */
     @Deprecated
     @SuppressWarnings("unchecked")
@@ -1522,6 +1524,8 @@ public abstract class DBCollection {
      * @param pipeline operations to be performed in the aggregation pipeline
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
+     *
+     * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline) {
         return aggregate(pipeline, getReadPreference());
@@ -1534,6 +1538,8 @@ public abstract class DBCollection {
      * @param readPreference the read preference specifying where to run the query
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
+     *
+     * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
         AggregationOptions options = AggregationOptions.builder()
@@ -1554,6 +1560,8 @@ public abstract class DBCollection {
      * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
+     *
+     * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
@@ -1567,6 +1575,8 @@ public abstract class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
+     *
+     * @mongodb.server.release 2.2
      */
     public abstract Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
                                           final ReadPreference readPreference);
@@ -1579,6 +1589,8 @@ public abstract class DBCollection {
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
+     *
+     * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(List<DBObject> pipeline, AggregationOptions options) {
         DBObject command = prepareCommand(pipeline, options);

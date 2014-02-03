@@ -33,22 +33,29 @@ import java.util.Map;
 public final class MongoCredential {
 
     /**
-     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
-     */
-    public static final String PLAIN_MECHANISM = "PLAIN";
-
-    /**
-     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
-     */
-    public static final String GSSAPI_MECHANISM = "GSSAPI";
-
-    /**
      * The MongoDB Challenge Response mechanism.
      */
     public static final String MONGODB_CR_MECHANISM = "MONGODB-CR";
 
     /**
+     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
+     *
+     * @mongodb.server.release 2.4
+     */
+    public static final String GSSAPI_MECHANISM = "GSSAPI";
+
+    /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     *
+     * @mongodb.server.release 2.6
+     */
+    public static final String PLAIN_MECHANISM = "PLAIN";
+
+
+    /**
      * The MongoDB X.509
+     *
+     * @mongodb.server.release 2.6
      */
     public static final String MONGODB_X509_MECHANISM = "MONGODB-X509";
 
@@ -71,10 +78,27 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"},
+     * add a mechanism property with the name {@code "SERVICE_NAME"}. To force canonicalization of the host name prior to authentication,
+     * add a mechanism property with the name {@code "CANONICALIZE_HOST_NAME"} with the value{@code true}.
+     *
+     * @param userName the user name
+     * @return the credential
+     * @see #withMechanismProperty(String, Object)
+     *
+     * @mongodb.server.release 2.4
+     */
+    public static MongoCredential createGSSAPICredential(String userName) {
+        return new MongoCredential(GSSAPI_MECHANISM, userName, "$external", null);
+    }
+
+    /**
      * Creates a MongoCredential instance for the MongoDB X.509 protocol.
      *
      * @param userName the user name
      * @return the credential
+     *
+     * @mongodb.server.release 2.6
      */
     public static MongoCredential createMongoX509Credential(String userName) {
         return new MongoCredential(MONGODB_X509_MECHANISM, userName, "$external", null);
@@ -87,24 +111,13 @@ public final class MongoCredential {
      * @param source the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
      * @param password the non-null user password
      * @return the credential
+     *
+     * @mongodb.server.release 2.6
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
         return new MongoCredential(PLAIN_MECHANISM, userName, source, password);
     }
 
-
-    /**
-     * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"},
-     * add a mechanism property with the name {@code "SERVICE_NAME"}. To force canonicalization of the host name prior to authentication,
-     * add a mechanism property with the name {@code "CANONICALIZE_HOST_NAME"} with the value{@code true}.
-     *
-     * @param userName the user name
-     * @return the credential
-     * @see #withMechanismProperty(String, Object)
-     */
-    public static MongoCredential createGSSAPICredential(String userName) {
-        return new MongoCredential(GSSAPI_MECHANISM, userName, "$external", null);
-    }
 
     /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.

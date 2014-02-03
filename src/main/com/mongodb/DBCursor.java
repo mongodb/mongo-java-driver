@@ -249,6 +249,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param timeUnit the time unit
      * @return same DBCursor for chaining operations
      * @since 2.12.0
+     *
+     * @mongodb.server.release 2.6
      */
     public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {
         _maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
