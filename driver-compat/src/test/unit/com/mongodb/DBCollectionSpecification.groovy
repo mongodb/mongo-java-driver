@@ -33,6 +33,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.Fixture.getBufferProvider
 
 //we want to explicitly state the namespaces of the exceptions that are thrown
@@ -49,9 +50,9 @@ class DBCollectionSpecification extends Specification {
         database.getSession() >> { session }
         database.getCluster() >> { cluster }
         database.getName() >> { 'TheDatabase' }
-        database.getClusterDescription() >> { cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) }
+        database.getClusterDescription() >> { cluster.getDescription(10, SECONDS) }
         database.getBufferPool() >> { getBufferProvider() }
-        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
+        cluster.getDescription(10, SECONDS) >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
     }
 
     def 'should throw com.mongodb.MongoException if rename fails'() {
