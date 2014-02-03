@@ -218,6 +218,7 @@
             <classpath refid="build.classpath"/>
             <taglet name="DochubTaglet" path="${build.util.dir}"/>
             <taglet name="ManualTaglet" path="${build.util.dir}"/>
+            <taglet name="ServerReleaseTaglet" path="${build.util.dir}"/>
         </javadoc>
 
         <javadoc

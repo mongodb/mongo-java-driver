@@ -28,25 +28,32 @@ public abstract class DocTaglet implements Taglet {
 
     public boolean isInlineTag()   { return false; }
 
-    public String toString( Tag[] tags ){
-        if ( tags.length == 0 )
+    public String toString(Tag[] tags) {
+        if (tags.length == 0) {
             return null;
-
-        StringBuilder buf = new StringBuilder( "\n<br><DT><B>MongoDB Doc Links</B><DD>" );
-        buf.append( "<ul>" );
-        for ( Tag t : tags ){
-            buf.append( "<li>" ).append( genLink( t.text() ) ).append( "</li>" );
         }
-        buf.append( "</ul>" );
-        buf.append( "</DD>\n" );
+
+        StringBuilder buf = new StringBuilder("\n");
+        buf.append("<dl><dt><span class=\"strong\">");
+        buf.append(getHeader());
+        buf.append("</span></dt>");
+        buf.append("\n");
+        for (Tag t : tags) {
+            buf.append("   <dd>").append(genLink(t.text())).append("</dd>");
+        }
+        buf.append("\n");
         return buf.toString();
     }
 
-    public String toString( Tag tag ){
+    public String toString(Tag tag) {
         return toString(new Tag[]{tag});
     }
 
-    protected String genLink( String text ){
+    protected String getHeader() {
+        return "MongoDB documentation";
+    }
+
+    protected String genLink(String text) {
         String relativePath = text;
         String display = text;
 
@@ -56,9 +63,7 @@ public abstract class DocTaglet implements Taglet {
             display = text.substring(firstSpace, text.length()).trim();
         }
 
-        return new StringBuilder()
-                .append( "<a href='" ).append(getBaseDocURI()).append(relativePath).append( "'>" ).append(display).append( "</a>" )
-                .toString();
+        return "<a href='" + getBaseDocURI() + relativePath + "'>" + display + "</a>";
     }
 
     protected abstract String getBaseDocURI();

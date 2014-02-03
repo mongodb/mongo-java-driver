@@ -85,6 +85,7 @@ test {
     useJUnit()
     jacoco { enabled = false }
 
+
     beforeTest { descr ->
         logger.info("[Test ${descr.className} > ${descr.name}]")
     }
@@ -99,6 +100,7 @@ javadoc {
     options.tagletPath project.sourceSets.util.output.classesDir
     options.taglets 'ManualTaglet'
     options.taglets 'DochubTaglet'
+    options.taglets 'ServerReleaseTaglet'
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
