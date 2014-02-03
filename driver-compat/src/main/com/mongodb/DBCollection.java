@@ -1335,12 +1335,8 @@ public class DBCollection {
      * @param options a document that controls the creation of the index.
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        try {
-            new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace(),
-                                       getBufferPool(), getSession(), false).execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        executeOperation(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace(),
+                                                    getBufferPool(), getSession(), false));
     }
 
     /**
