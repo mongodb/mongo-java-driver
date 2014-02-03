@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,6 +353,8 @@ public class QueryBuilder {
      * Equivalent to a $text operand.
      * @param search the search terms to apply to the text index.
      * @return this
+     *
+     * @mongodb.server.release 2.6
      */
     public QueryBuilder text(final String search) {
         return text(search, null);
@@ -363,6 +365,8 @@ public class QueryBuilder {
      * @param search the search terms to apply to the text index.
      * @param language the language to use.
      * @return this
+     *
+     * @mongodb.server.release 2.6
      */
     public QueryBuilder text(final String search, final String language) {
         if (_currentKey != null) {

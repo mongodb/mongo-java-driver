@@ -1140,6 +1140,8 @@ public class DBCollection {
      * @param additionalOps additional operations to be performed in the aggregation pipeline
      * @return the aggregation operation's result set
      * @deprecated @see aggregate(List<DBObject>) instead
+     *
+     * @mongodb.server.release 2.2
      */
     @Deprecated
     @SuppressWarnings("unchecked")
@@ -1155,6 +1157,8 @@ public class DBCollection {
      *
      * @param pipeline operations to be performed in the aggregation pipeline
      * @return the aggregation's result set
+     *
+     * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline) {
         return aggregate(pipeline, getReadPreference());
@@ -1166,6 +1170,8 @@ public class DBCollection {
      * @param pipeline       operations to be performed in the aggregation pipeline
      * @param readPreference the read preference specifying where to run the query
      * @return the aggregation's result set
+     *
+     * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
         try {
@@ -1200,6 +1206,8 @@ public class DBCollection {
      * @param pipeline operations to be performed in the aggregation pipeline
      * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
+     *
+     * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
@@ -1212,6 +1220,8 @@ public class DBCollection {
      * @param options        options to apply to the aggregation
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
+     *
+     * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
                             final ReadPreference readPreference) {
@@ -1253,6 +1263,8 @@ public class DBCollection {
      * @param pipeline the aggregation pipeline to explain
      * @param options  the options to apply to the aggregation
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
+     *
+     * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
         List<Document> stages = preparePipeline(pipeline);

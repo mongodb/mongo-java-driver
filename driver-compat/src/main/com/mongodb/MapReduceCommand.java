@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,6 +208,8 @@ public class MapReduceCommand {
      * @param timeUnit the time unit to return the value in.
      * @return the maximum execution time
      * @since 2.12.0
+     *
+     * @mongodb.server.release 2.6
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
@@ -219,6 +221,8 @@ public class MapReduceCommand {
      * @param maxTime  the maximum execution time. A non-zero value requires a server version >= 2.6
      * @param timeUnit the time unit that maxTime is specified in
      * @since 2.12.0
+     *
+     * @mongodb.server.release 2.6
      */
     public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);

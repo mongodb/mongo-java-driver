@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,28 @@ import org.mongodb.annotations.Immutable;
 public final class MongoCredential {
 
     /**
-     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
-     */
-    public static final String PLAIN_MECHANISM = "PLAIN";
-
-    /**
-     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
-     */
-    public static final String GSSAPI_MECHANISM = "GSSAPI";
-
-    /**
      * The MongoDB Challenge Response mechanism.
      */
     public static final String MONGODB_CR_MECHANISM = "MONGODB-CR";
 
     /**
+     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
+     *
+     * @mongodb.server.release 2.4
+     */
+    public static final String GSSAPI_MECHANISM = "GSSAPI";
+
+    /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     *
+     * @mongodb.server.release 2.6
+     */
+    public static final String PLAIN_MECHANISM = "PLAIN";
+
+    /**
      * The MongoDB X.509
+     *
+     * @mongodb.server.release 2.6
      */
     public static final String MONGODB_X509_MECHANISM = "MONGODB-X509";
 
@@ -66,6 +72,8 @@ public final class MongoCredential {
      *
      * @param userName the user name
      * @return the credential
+     *
+     * @mongodb.server.release 2.6
      */
     public static MongoCredential createMongoX509Credential(final String userName) {
         return new MongoCredential(org.mongodb.MongoCredential.createMongoX509Credential(userName));
@@ -78,6 +86,8 @@ public final class MongoCredential {
      * @param source   the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
      * @param password the non-null user password
      * @return the credential
+     *
+     * @mongodb.server.release 2.6
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
         return new MongoCredential(org.mongodb.MongoCredential.createPlainCredential(userName, source, password));
@@ -92,6 +102,8 @@ public final class MongoCredential {
      * @param userName the non-null user name
      * @return the credential
      * @see #withMechanismProperty(String, Object)
+     *
+     * @mongodb.server.release 2.4
      */
     public static MongoCredential createGSSAPICredential(final String userName) {
         return new MongoCredential(org.mongodb.MongoCredential.createGSSAPICredential(userName));

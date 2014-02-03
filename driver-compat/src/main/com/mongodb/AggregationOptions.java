@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
+ * The options to apply to an aggregate operation.
  *
+ * @mongodb.server.release 2.2
  * @since 2.12
  */
 public class AggregationOptions {
@@ -43,6 +45,8 @@ public class AggregationOptions {
         },
         /**
          * The output of the aggregate operation is returned using a cursor.
+         *
+         * @mongodb.server.release 2.6
          */
         CURSOR {
             @Override
@@ -62,8 +66,10 @@ public class AggregationOptions {
     }
 
     /**
-     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of 
+     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of
      * RAM.
+     *
+     * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
@@ -71,13 +77,16 @@ public class AggregationOptions {
 
     /**
      * The size of batches to use when iterating over results.
+     *
+     * @mongodb.server.release 2.6
      */
     public Integer getBatchSize() {
         return batchSize;
     }
 
     /**
-     * The mode of output for this configuration.  
+     * The mode of output for this configuration.
+     *
      * @see OutputMode
      */
     public OutputMode getOutputMode() {
@@ -89,6 +98,7 @@ public class AggregationOptions {
      *
      * @param timeUnit the time unit for the result
      * @return the max time
+     * @mongodb.server.release 2.6
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
@@ -132,16 +142,28 @@ public class AggregationOptions {
         protected Builder() {
         }
 
+        /**
+         * Sets the size of batches to use when iterating over results.
+         *
+         * @return this
+         * @mongodb.server.release 2.6
+         */
         public Builder batchSize(final Integer size) {
             batchSize = size;
             return this;
         }
 
-        public Builder allowDiskUse(final Boolean allow) {
-            allowDiskUse = allow;
+        public Builder allowDiskUse(final Boolean allowDiskUse) {
+            this.allowDiskUse = allowDiskUse;
             return this;
         }
 
+        /**
+         * The mode of output for this configuration.
+         *
+         * @return this
+         * @see OutputMode
+         */
         public Builder outputMode(final OutputMode mode) {
             outputMode = mode;
             return this;
@@ -150,15 +172,21 @@ public class AggregationOptions {
         /**
          * Sets the maximum execution time for the aggregation command.
          *
-         * @param maxTime the max time
+         * @param maxTime  the max time
          * @param timeUnit the time unit
          * @return this
+         * @mongodb.server.release 2.6
          */
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
             maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
             return this;
         }
 
+        /**
+         * Return the options based on this builder.
+         *
+         * @return the aggregation options
+         */
         public AggregationOptions build() {
             return new AggregationOptions(this);
         }
