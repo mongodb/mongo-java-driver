@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,15 +52,14 @@ public abstract class DocTaglet implements Taglet {
             return null;
         }
 
-        StringBuilder buf = new StringBuilder("\n<br><DT><B>MongoDB Doc Links</B><DD>");
-        buf.append("<ul>");
-        for (final Tag t : tags) {
-            buf.append("<li>").append(genLink(t.text())).append("</li>");
+        StringBuilder buf = new StringBuilder(String.format("\n<dl><dt><span class=\"strong\">%s</span></dt>\n", getHeader()));
+        for (Tag t : tags) {
+            buf.append("   <dd>").append(genLink(t.text())).append("</dd>\n");
         }
-        buf.append("</ul>");
-        buf.append("</DD>\n");
         return buf.toString();
     }
+
+    protected abstract String getHeader();
 
     public String toString(final Tag tag) {
         return toString(new Tag[]{tag});

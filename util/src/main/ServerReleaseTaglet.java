@@ -18,25 +18,25 @@ import com.sun.tools.doclets.Taglet;
 
 import java.util.Map;
 
-public class ManualTaglet extends DocTaglet {
+public class ServerReleaseTaglet extends DocTaglet {
 
     public static void register(final Map<String, Taglet> tagletMap) {
-        ManualTaglet t = new ManualTaglet();
+        Taglet t = new ServerReleaseTaglet();
         tagletMap.put(t.getName(), t);
     }
 
-    public String getName() {
-        return "mongodb.driver.manual";
-    }
-
     @Override
-    protected String getHeader() {
-        return "MongoDB documentation";
+    public String getName() {
+        return "mongodb.server.release";
     }
 
     @Override
     protected String getBaseDocURI() {
-        return "http://docs.mongodb.org/manual/";
+        return "http://docs.mongodb.org/manual/release-notes/";
     }
 
+    @Override
+    protected String getHeader() {
+        return "Since server release";
+    }
 }
