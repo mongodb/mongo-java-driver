@@ -85,7 +85,6 @@ test {
     useJUnit()
     jacoco { enabled = false }
 
-
     beforeTest { descr ->
         logger.info("[Test ${descr.className} > ${descr.name}]")
     }
