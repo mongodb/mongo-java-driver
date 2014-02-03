@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,7 @@ public class MongoClientOptions {
      * exceeded its idle time will be closed and replaced when necessary by a new connection.
      *
      * @return the maximum idle time, in milliseconds
+     * @since 2.12
      */
     public int getMaxConnectionIdleTime() {
         return proxied.getMaxConnectionIdleTime();
@@ -183,6 +184,7 @@ public class MongoClientOptions {
      * exceeded its life time will be closed and replaced when necessary by a new connection.
      *
      * @return the maximum life time, in milliseconds
+     * @since 2.12
      */
     public int getMaxConnectionLifeTime() {
         return proxied.getMaxConnectionLifeTime();
@@ -228,7 +230,7 @@ public class MongoClientOptions {
      * cluster. The default value is 5000 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
-     * @since 3.0
+     * @since 2.12
      */
     public int getHeartbeatFrequency() {
         return proxied.getHeartbeatFrequency();
@@ -239,7 +241,7 @@ public class MongoClientOptions {
      * cluster, after a previous failed attempt. The default value is 10 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
-     * @since 3.0
+     * @since 2.12
      */
     public int getHeartbeatConnectRetryFrequency() {
         return proxied.getHeartbeatConnectRetryFrequency();
@@ -249,7 +251,7 @@ public class MongoClientOptions {
      * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
      *
      * @return the heartbeat connect timeout, in milliseconds
-     * @since 3.0
+     * @since 2.12
      */
     public int getHeartbeatConnectTimeout() {
         return proxied.getHeartbeatConnectTimeout();
@@ -259,7 +261,7 @@ public class MongoClientOptions {
      * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
      *
      * @return the heartbeat socket timeout, in milliseconds
-     * @since 3.0
+     * @since 2.12
      */
     public int getHeartbeatSocketTimeout() {
         return proxied.getHeartbeatSocketTimeout();
@@ -272,6 +274,7 @@ public class MongoClientOptions {
      * the required name.j </p>
      *
      * @return the required replica set name since 3.0
+     * @since 3.0
      */
     public String getRequiredReplicaSetName() {
         return proxied.getRequiredReplicaSetName();
@@ -497,6 +500,7 @@ public class MongoClientOptions {
          * @return {@code this}
          * @throws IllegalArgumentException if {@code minConnectionsPerHost < 0}
          * @see MongoClientOptions#getMinConnectionsPerHost()
+         * @since 2.12
          */
         public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
             proxied.minConnectionPoolSize(minConnectionsPerHost);
@@ -551,7 +555,8 @@ public class MongoClientOptions {
          * @param maxConnectionIdleTime the maximum idle time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
+         * @since 2.12
          */
         public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
             proxied.maxConnectionIdleTime(maxConnectionIdleTime);
@@ -564,7 +569,8 @@ public class MongoClientOptions {
          * @param maxConnectionLifeTime the maximum life time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime() ()
+         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
+         * @since 2.12
          */
         public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
             proxied.maxConnectionLifeTime(maxConnectionLifeTime);
@@ -751,7 +757,7 @@ public class MongoClientOptions {
          * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatFrequency()
-         * @since 3.0
+         * @since 2.12
          */
         public Builder heartbeatFrequency(final int heartbeatFrequency) {
             proxied.heartbeatFrequency(heartbeatFrequency);
@@ -765,7 +771,7 @@ public class MongoClientOptions {
          * @param heartbeatConnectFrequency the heartbeat connect retry frequency for the cluster, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatFrequency()
-         * @since 3.0
+         * @since 2.12
          */
         public Builder heartbeatConnectRetryFrequency(final int heartbeatConnectFrequency) {
             proxied.heartbeatConnectRetryFrequency(heartbeatConnectFrequency);
@@ -778,7 +784,7 @@ public class MongoClientOptions {
          * @param connectTimeout the connection timeout
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatConnectTimeout()
-         * @since 3.0
+         * @since 2.12
          */
         public Builder heartbeatConnectTimeout(final int connectTimeout) {
             proxied.heartbeatConnectTimeout(connectTimeout);
@@ -791,7 +797,7 @@ public class MongoClientOptions {
          * @param socketTimeout the socket timeout
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatSocketTimeout()
-         * @since 3.0
+         * @since 2.12
          */
         public Builder heartbeatSocketTimeout(final int socketTimeout) {
             proxied.heartbeatSocketTimeout(socketTimeout);
@@ -804,6 +810,7 @@ public class MongoClientOptions {
          * @param requiredReplicaSetName the required replica set name for the replica set.
          * @return this
          * @see MongoClientOptions#getRequiredReplicaSetName()
+         * @since 3.0
          */
         public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
             proxied.requiredReplicaSetName(requiredReplicaSetName);
