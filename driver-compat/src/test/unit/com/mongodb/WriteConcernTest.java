@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,6 @@ public class WriteConcernTest {
 
     @Test
     public void testConstants() {
-        assertEquals(new WriteConcern(org.mongodb.WriteConcern.ERRORS_IGNORED), WriteConcern.ERRORS_IGNORED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED), WriteConcern.UNACKNOWLEDGED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED), WriteConcern.ACKNOWLEDGED);
         assertEquals(new WriteConcern(org.mongodb.WriteConcern.FSYNCED), WriteConcern.FSYNCED);
@@ -108,7 +107,6 @@ public class WriteConcernTest {
                      WriteConcern.REPLICA_ACKNOWLEDGED);
         assertEquals(new WriteConcern("majority"), WriteConcern.MAJORITY);
 
-        assertEquals(WriteConcern.ERRORS_IGNORED, WriteConcern.NONE);
         assertEquals(WriteConcern.UNACKNOWLEDGED, WriteConcern.NORMAL);
         assertEquals(WriteConcern.ACKNOWLEDGED, WriteConcern.SAFE);
         assertEquals(WriteConcern.FSYNCED, WriteConcern.FSYNC_SAFE);
@@ -121,18 +119,16 @@ public class WriteConcernTest {
         WriteConcern wc = new WriteConcern("dc1", 10, true, true, true);
         assertEquals(true, wc.fsync());
         assertEquals(true, wc.callGetLastError());
-        assertEquals(true, wc.raiseNetworkErrors());
         assertEquals("dc1", wc.getWObject());
         assertEquals(new BasicDBObject("getlasterror", 1).append("w", "dc1")
                                                          .append("wtimeout", 10)
                                                          .append("fsync", true)
                                                          .append("j", true), wc.getCommand());
 
-        wc = new WriteConcern(-1, 10, false, true, true);
+        wc = new WriteConcern(0, 10, false, true, true);
         assertEquals(false, wc.fsync());
         assertEquals(false, wc.callGetLastError());
-        assertEquals(false, wc.raiseNetworkErrors());
-        assertEquals(-1, wc.getWObject());
+        assertEquals(0, wc.getWObject());
     }
 
     @Test

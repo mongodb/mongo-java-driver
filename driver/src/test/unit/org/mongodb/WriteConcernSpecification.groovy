@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +60,12 @@ class WriteConcernSpecification extends Specification {
     def 'test getters'() {
         expect:
         wc.isAcknowledged() == getLastError;
-        wc.raiseNetworkErrors() == raiseNetworkErrors;
         wc.getWObject() == wObject;
 
         where:
-        wc                                      | getLastError | raiseNetworkErrors | wObject
-        new WriteConcern('dc1', 10, true, true) | true         | true               | 'dc1'
-        new WriteConcern(-1, 10, false, true)   | false        | false              | -1
+        wc                                      | getLastError  | wObject
+        new WriteConcern('dc1', 10, true, true) | true          | 'dc1'
+        new WriteConcern(0, 10, false, true)    | false         | 0
     }
 
     def 'test with methods'() {
@@ -116,7 +115,6 @@ class WriteConcernSpecification extends Specification {
 
         where:
         constructedWriteConcern             | constantWriteConcern
-        new WriteConcern(-1)                | WriteConcern.ERRORS_IGNORED
         new WriteConcern(1)                 | WriteConcern.ACKNOWLEDGED
         new WriteConcern(0)                 | WriteConcern.UNACKNOWLEDGED
         new WriteConcern(1, 0, true)        | WriteConcern.FSYNCED
@@ -142,5 +140,21 @@ class WriteConcernSpecification extends Specification {
         !new WriteConcern(2, 1000).serverDefault
         !new WriteConcern(1, 0, true, false).serverDefault
         !new WriteConcern(1, 0, false, true).serverDefault
+    }
+
+    def 'should throw when w is -1'() {
+        when:
+        new WriteConcern(-1)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should throw when w is null'() {
+        when:
+        new WriteConcern(null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class DBOldTest extends DatabaseTestCase {
             BasicDBObject query = new BasicDBObject();
             BasicDBObject update = new BasicDBObject("$inc", new BasicDBObject("radius", 1D));
             DBCollection circle = database.getCollection("circle");
-            circle.update(query, update, true, false, WriteConcern.NONE);
+            circle.update(query, update, true, false, WriteConcern.UNACKNOWLEDGED);
             assertEquals(1, circle.getCount());
         } finally {
             database.requestDone();

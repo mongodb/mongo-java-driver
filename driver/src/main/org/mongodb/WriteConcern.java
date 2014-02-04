@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.mongodb.assertions.Assertions.isTrueArgument;
+import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't even report network
@@ -49,11 +52,6 @@ public class WriteConcern implements Serializable {
     private final boolean fsync;
 
     private final boolean j;
-
-    /**
-     * No exceptions are raised, even for network issues.
-     */
-    public static final WriteConcern ERRORS_IGNORED = new WriteConcern(-1);
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
@@ -166,6 +164,7 @@ public class WriteConcern implements Serializable {
      * @param j               whether writes should wait for a journaling group commit
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
+        isTrueArgument("w >= 0", w >= 0);
         this.w = w;
         this.wtimeout = wtimeout;
         this.fsync = fsync;
@@ -184,11 +183,7 @@ public class WriteConcern implements Serializable {
      * @param j               whether writes should wait for a journaling group commit
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
-        if (w == null) {
-            throw new IllegalArgumentException("w can not be null");
-        }
-
-        this.w = w;
+        this.w = notNull("w", w);
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
@@ -338,18 +333,6 @@ public class WriteConcern implements Serializable {
     }
 
     //CHECKSTYLE:ON
-
-    /**
-     * Returns whether network error may be raised (w >= 0)
-     *
-     * @return true if set to raise network errors
-     */
-    public boolean raiseNetworkErrors() {
-        if (w instanceof Integer) {
-            return (Integer) w >= 0;
-        }
-        return w != null;
-    }
 
     /**
      * Returns whether write operations should be acknowledged

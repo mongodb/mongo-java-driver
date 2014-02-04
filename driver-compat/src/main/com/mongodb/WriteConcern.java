@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,6 @@ public class WriteConcern implements Serializable {
     private final boolean continueOnError;
 
     /**
-     * No exceptions are raised, even for network issues.
-     */
-    public static final WriteConcern ERRORS_IGNORED = new WriteConcern(org.mongodb.WriteConcern.ERRORS_IGNORED);
-
-    /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
      * raised for network issues, and server errors.
      *
@@ -85,15 +80,6 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(
                                                                                 org.mongodb.WriteConcern
                                                                                     .REPLICA_ACKNOWLEDGED);
-
-    /**
-     * No exceptions are raised, even for network issues.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.ERRORS_IGNORED}, and may be deprecated in a future release.
-     *
-     * @see WriteConcern#ERRORS_IGNORED
-     */
-    public static final WriteConcern NONE = ERRORS_IGNORED;
 
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
@@ -359,15 +345,6 @@ public class WriteConcern implements Serializable {
      */
     public boolean fsync() {
         return proxied.getFsync();
-    }
-
-    /**
-     * Returns whether network error may be raised (w >= 0)
-     *
-     * @return whether an exception will be thrown for IOException from the underlying socket
-     */
-    public boolean raiseNetworkErrors() {
-        return proxied.raiseNetworkErrors();
     }
 
     /**
