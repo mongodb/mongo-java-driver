@@ -20,10 +20,10 @@ package com.mongodb;
  *
  * @since 2.12.0
  */
-public class MongoServerSelectionFailureException extends MongoClientException {
+public class MongoServerSelectionException extends MongoClientException {
     private static final long serialVersionUID = -1497309903649297430L;
 
-    public MongoServerSelectionFailureException(final String message) {
+    public MongoServerSelectionException(final String message) {
          super(message);
     }
 }

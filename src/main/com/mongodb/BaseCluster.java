@@ -76,7 +76,7 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(
+                    throw new MongoServerSelectionException(
                                                                   format("Unable to connect to any server that satisfies the selector " +
                                                                          "%s", serverSelector));
                 }
@@ -111,7 +111,7 @@ abstract class BaseCluster implements Cluster {
             while (curDescription.getType() == ClusterType.Unknown) {
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("Unable to connect to any servers"));
+                    throw new MongoServerSelectionException(format("Unable to connect to any servers"));
                 }
 
                 final long timeout = endTime - System.nanoTime();
@@ -165,11 +165,6 @@ abstract class BaseCluster implements Cluster {
         description = newDescription;
         final CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
         current.countDown();
-    }
-
-    // this method is necessary so that subclasses can call fireChangeEvent with the old value of description.
-    protected ClusterDescription getDescriptionNoWaiting() {
-        return description;
     }
 
     protected void fireChangeEvent() {
