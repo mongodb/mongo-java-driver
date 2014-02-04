@@ -37,25 +37,14 @@ public class AggregationOptions {
         /**
          * The output of the aggregate operation is returned inline.
          */
-        INLINE {
-            @Override
-            org.mongodb.AggregationOptions.OutputMode toNew() {
-                return org.mongodb.AggregationOptions.OutputMode.INLINE;
-            }
-        },
+        INLINE,
+
         /**
          * The output of the aggregate operation is returned using a cursor.
          *
          * @mongodb.server.release 2.6
          */
-        CURSOR {
-            @Override
-            org.mongodb.AggregationOptions.OutputMode toNew() {
-                return org.mongodb.AggregationOptions.OutputMode.CURSOR;
-            }
-        };
-
-        abstract org.mongodb.AggregationOptions.OutputMode toNew();
+        CURSOR
     }
 
     AggregationOptions(final Builder builder) {
@@ -104,13 +93,24 @@ public class AggregationOptions {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
-    public org.mongodb.AggregationOptions toNew() {
+    org.mongodb.AggregationOptions toNew() {
         return org.mongodb.AggregationOptions.builder()
                           .batchSize(getBatchSize())
                           .allowDiskUse(getAllowDiskUse())
-                          .outputMode(getOutputMode().toNew())
+                          .outputMode(outputModeToNew())
                           .maxTime(maxTimeMS, MILLISECONDS)
                           .build();
+    }
+
+    private org.mongodb.AggregationOptions.OutputMode outputModeToNew() {
+        switch (getOutputMode()) {
+            case INLINE:
+                return org.mongodb.AggregationOptions.OutputMode.INLINE;
+            case CURSOR:
+                return org.mongodb.AggregationOptions.OutputMode.INLINE;
+            default:
+                throw new IllegalArgumentException("Unsupported output mode");
+        }
     }
 
     @Override
