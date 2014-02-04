@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ public class WriteResult {
     private final boolean updateOfExisting;
     private final Object upsertedId;
 
-    public WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId,
-                      final WriteConcern writeConcern) {
+    WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId, final WriteConcern writeConcern) {
         this.n = n;
         this.updateOfExisting = updateOfExisting;
         this.upsertedId = upsertedId;
