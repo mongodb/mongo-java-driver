@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,6 @@ class MongoClientURISpecification extends Specification {
         options.getMaxConnectionIdleTime() == 200
         options.getMaxConnectionLifeTime() == 300
         options.getSocketTimeout() == 5500;
-        options.isAutoConnectRetry();
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
         options.getReadPreference() == ReadPreference.secondaryPreferred();
         options.getRequiredReplicaSetName() == 'test'
@@ -114,17 +113,16 @@ class MongoClientURISpecification extends Specification {
         options <<
                 [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
-                                            + 'connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&'
+                                            + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                                             + 'slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
-                                            + 'autoConnectRetry=true;'
                                             + 'slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
-                                            + 'socketTimeoutMS=5500&autoConnectRetry=true;'
+                                            + 'socketTimeoutMS=5500&'
                                             + 'slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true').getOptions()]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
@@ -141,8 +139,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectTimeout() == 10000;
         options.getSocketTimeout() == 0;
         !options.isSocketKeepAlive();
-        !options.isAutoConnectRetry();
-        options.getMaxAutoConnectRetryTime() == 0;
         options.getDescription() == null;
         options.getReadPreference() == ReadPreference.primary();
         options.getRequiredReplicaSetName() == null

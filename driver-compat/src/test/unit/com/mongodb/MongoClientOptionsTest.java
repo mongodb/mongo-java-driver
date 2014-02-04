@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,9 @@ public class MongoClientOptionsTest {
         assertEquals(0, options.getMinConnectionsPerHost());
         assertEquals(100, options.getConnectionsPerHost());
         assertEquals(10000, options.getConnectTimeout());
-        assertEquals(0, options.getMaxAutoConnectRetryTime());
         assertEquals(ReadPreference.primary(), options.getReadPreference());
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertFalse(options.isSocketKeepAlive());
-        assertFalse(options.isAutoConnectRetry());
         assertFalse(options.isSSLEnabled());
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
@@ -80,12 +78,6 @@ public class MongoClientOptionsTest {
             // NOPMD all good
         }
         try {
-            builder.maxAutoConnectRetryTime(-1);
-            Assert.fail();
-        } catch (IllegalArgumentException e) {
-            // NOPMD all good
-        }
-        try {
             builder.threadsAllowedToBlockForConnectionMultiplier(0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
@@ -115,14 +107,12 @@ public class MongoClientOptionsTest {
         builder.description("test");
         builder.readPreference(ReadPreference.secondary());
         builder.writeConcern(WriteConcern.JOURNAL_SAFE);
-        builder.autoConnectRetry(true);
         builder.minConnectionsPerHost(30);
         builder.connectionsPerHost(500);
         builder.connectTimeout(100);
         builder.maxWaitTime(200);
         builder.maxConnectionIdleTime(300);
         builder.maxConnectionLifeTime(400);
-        builder.maxAutoConnectRetryTime(600);
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
@@ -141,14 +131,12 @@ public class MongoClientOptionsTest {
         assertEquals("test", options.getDescription());
         assertEquals(ReadPreference.secondary(), options.getReadPreference());
         assertEquals(WriteConcern.JOURNAL_SAFE, options.getWriteConcern());
-        assertTrue(options.isAutoConnectRetry());
         assertEquals(200, options.getMaxWaitTime());
         assertEquals(300, options.getMaxConnectionIdleTime());
         assertEquals(400, options.getMaxConnectionLifeTime());
         assertEquals(30, options.getMinConnectionsPerHost());
         assertEquals(500, options.getConnectionsPerHost());
         assertEquals(100, options.getConnectTimeout());
-        assertEquals(600, options.getMaxAutoConnectRetryTime());
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertTrue(options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());

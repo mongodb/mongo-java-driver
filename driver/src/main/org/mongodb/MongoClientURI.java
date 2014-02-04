@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,6 @@ public class MongoClientURI {
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
-        GENERAL_OPTIONS_KEYS.add("autoconnectretry");
         GENERAL_OPTIONS_KEYS.add("ssl");
         GENERAL_OPTIONS_KEYS.add("replicaset");
 
@@ -340,8 +339,6 @@ public class MongoClientURI {
                 builder.connectTimeout(Integer.parseInt(value));
             } else if (key.equals("sockettimeoutms")) {
                 builder.socketTimeout(Integer.parseInt(value));
-            } else if (key.equals("autoconnectretry")) {
-                builder.autoConnectRetry(parseBoolean(value));
             } else if (key.equals("ssl") && parseBoolean(value)) {
                 builder.SSLEnabled(true);
             } else if (key.equals("replicaset")) {

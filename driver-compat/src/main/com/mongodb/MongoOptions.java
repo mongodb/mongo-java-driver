@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,25 +74,6 @@ public class MongoOptions {
      * java.net.Socket#setKeepAlive(boolean)} Default is false.
      */
     public boolean socketKeepAlive;
-
-    /**
-     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established. There is maximum
-     * amount of time to keep retrying, which is 15s by default. This can be useful to avoid some exceptions being thrown when a server is
-     * down temporarily by blocking the operations. It also can be useful to smooth the transition to a new master (so that a new master is
-     * elected within the retry time). Note that when using this flag: - for a replica set, the driver will trying to connect to the old
-     * master for that time, instead of failing over to the new one right away - this does not prevent exception from being thrown in
-     * read/write operations on the socket, which must be handled by application
-     * <p/>
-     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read
-     * operations. Default is false.
-     */
-    public boolean autoConnectRetry;
-
-    /**
-     * The maximum amount of time in MS to spend retrying to open connection to the same server. Default is 0, which means to use the
-     * default 15s if autoConnectRetry is on.
-     */
-    public long maxAutoConnectRetryTime;
 
     /**
      * Specifies the read preference.
@@ -186,8 +167,6 @@ public class MongoOptions {
         socketFactory = options.getSocketFactory();
         socketTimeout = options.getSocketTimeout();
         socketKeepAlive = options.isSocketKeepAlive();
-        autoConnectRetry = options.isAutoConnectRetry();
-        maxAutoConnectRetryTime = options.getMaxAutoConnectRetryTime();
         readPreference = options.getReadPreference();
         dbDecoderFactory = options.getDbDecoderFactory();
         dbEncoderFactory = options.getDbEncoderFactory();
@@ -204,8 +183,6 @@ public class MongoOptions {
         socketFactory = SocketFactory.getDefault();
         socketTimeout = 0;
         socketKeepAlive = false;
-        autoConnectRetry = false;
-        maxAutoConnectRetryTime = 0;
         readPreference = null;
         writeConcern = null;
         safe = false;
@@ -229,8 +206,6 @@ public class MongoOptions {
         m.socketFactory = socketFactory;
         m.socketTimeout = socketTimeout;
         m.socketKeepAlive = socketKeepAlive;
-        m.autoConnectRetry = autoConnectRetry;
-        m.maxAutoConnectRetryTime = maxAutoConnectRetryTime;
         m.readPreference = readPreference;
         m.writeConcern = writeConcern;
         m.safe = safe;
@@ -248,13 +223,11 @@ public class MongoOptions {
 
     MongoClientOptions toClientOptions() {
         return MongoClientOptions.builder()
-                                 .autoConnectRetry(this.autoConnectRetry)
                                  .connectionsPerHost(this.connectionsPerHost)
                                  .connectTimeout(this.connectTimeout)
                                  .dbDecoderFactory(this.dbDecoderFactory)
                                  .dbEncoderFactory(this.dbEncoderFactory)
                                  .description(this.description)
-                                 .maxAutoConnectRetryTime(this.maxAutoConnectRetryTime)
                                  .maxWaitTime(this.maxWaitTime)
                                  .readPreference(this.readPreference)
                                  .socketFactory(this.socketFactory)
@@ -400,34 +373,6 @@ public class MongoOptions {
      */
     public synchronized void setSocketKeepAlive(final boolean keepAlive) {
         socketKeepAlive = keepAlive;
-    }
-
-    /**
-     * @return keep trying connection flag
-     */
-    public synchronized boolean isAutoConnectRetry() {
-        return autoConnectRetry;
-    }
-
-    /**
-     * @param retry sets keep trying connection flag
-     */
-    public synchronized void setAutoConnectRetry(final boolean retry) {
-        autoConnectRetry = retry;
-    }
-
-    /**
-     * @return max time in MS to retrying open connection
-     */
-    public synchronized long getMaxAutoConnectRetryTime() {
-        return maxAutoConnectRetryTime;
-    }
-
-    /**
-     * @param retryTimeMS set max time in MS to retrying open connection
-     */
-    public synchronized void setMaxAutoConnectRetryTime(final long retryTimeMS) {
-        maxAutoConnectRetryTime = retryTimeMS;
     }
 
     /**
@@ -589,9 +534,6 @@ public class MongoOptions {
         if (alwaysUseMBeans != options.alwaysUseMBeans) {
             return false;
         }
-        if (autoConnectRetry != options.autoConnectRetry) {
-            return false;
-        }
         if (connectTimeout != options.connectTimeout) {
             return false;
         }
@@ -605,9 +547,6 @@ public class MongoOptions {
             return false;
         }
         if (j != options.j) {
-            return false;
-        }
-        if (maxAutoConnectRetryTime != options.maxAutoConnectRetryTime) {
             return false;
         }
         if (maxWaitTime != options.maxWaitTime) {
@@ -662,8 +601,6 @@ public class MongoOptions {
         result = 31 * result + connectTimeout;
         result = 31 * result + socketTimeout;
         result = 31 * result + (socketKeepAlive ? 1 : 0);
-        result = 31 * result + (autoConnectRetry ? 1 : 0);
-        result = 31 * result + (int) (maxAutoConnectRetryTime ^ (maxAutoConnectRetryTime >>> 32));
         result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
@@ -689,8 +626,6 @@ public class MongoOptions {
                + ", connectTimeout=" + connectTimeout
                + ", socketTimeout=" + socketTimeout
                + ", socketKeepAlive=" + socketKeepAlive
-               + ", autoConnectRetry=" + autoConnectRetry
-               + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
                + ", readPreference=" + readPreference
                + ", dbDecoderFactory=" + dbDecoderFactory
                + ", dbEncoderFactory=" + dbEncoderFactory

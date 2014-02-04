@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.connectTimeout = 103;
         options.socketTimeout = 104;
         options.socketKeepAlive = true;
-        options.autoConnectRetry = true;
-        options.maxAutoConnectRetryTime = 105;
         options.safe = true;
         options.w = 106;
         options.wtimeout = 107;
@@ -61,8 +59,6 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.connectTimeout, copy.connectTimeout);
         assertEquals(options.socketTimeout, copy.socketTimeout);
         assertEquals(options.socketKeepAlive, copy.socketKeepAlive);
-        assertEquals(options.autoConnectRetry, copy.autoConnectRetry);
-        assertEquals(options.maxAutoConnectRetryTime, copy.maxAutoConnectRetryTime);
         assertEquals(options.safe, copy.safe);
         assertEquals(options.w, copy.w);
         assertEquals(options.wtimeout, copy.wtimeout);
@@ -88,8 +84,6 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.setConnectTimeout(103);
         options.setSocketTimeout(104);
         options.setSocketKeepAlive(true);
-        options.setAutoConnectRetry(true);
-        options.setMaxAutoConnectRetryTime(105);
         options.setSafe(true);
         options.setW(106);
         options.setWtimeout(107);
@@ -109,8 +103,6 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.getConnectTimeout(), 103);
         assertEquals(options.getSocketTimeout(), 104);
         assertEquals(options.isSocketKeepAlive(), true);
-        assertEquals(options.isAutoConnectRetry(), true);
-        assertEquals(options.getMaxAutoConnectRetryTime(), 105);
         assertEquals(options.isSafe(), true);
         assertEquals(options.getW(), 106);
         assertEquals(options.getWtimeout(), 107);

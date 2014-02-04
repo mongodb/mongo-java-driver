@@ -281,33 +281,6 @@ public class MongoClientOptions {
     }
 
     /**
-     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established. There is maximum
-     * amount of time to keep retrying, which is 15s by default. This can be useful to avoid some exceptions being thrown when a server is
-     * down temporarily by blocking the operations. It also can be useful to smooth the transition to a new master (so that a new master is
-     * elected within the retry time). Note that when using this flag: - for a replica set, the driver will trying to connect to the old
-     * master for that time, instead of failing over to the new one right away - this does not prevent exception from being thrown in
-     * read/write operations on the socket, which must be handled by application
-     * <p/>
-     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read
-     * operations. Default is false.
-     *
-     * @return whether socket connect is retried
-     */
-    public boolean isAutoConnectRetry() {
-        return proxied.isAutoConnectRetry();
-    }
-
-    /**
-     * The maximum amount of time in MS to spend retrying to open connection to the same server. Default is 0, which means to use the
-     * default 15s if autoConnectRetry is on.
-     *
-     * @return the maximum socket connect retry time.
-     */
-    public long getMaxAutoConnectRetryTime() {
-        return proxied.getMaxAutoConnectRetryTime();
-    }
-
-    /**
      * Whether to use SSL. The default is {@code false}.
      *
      * @return true if SSL should be used
@@ -611,30 +584,6 @@ public class MongoClientOptions {
          */
         public Builder socketKeepAlive(final boolean socketKeepAlive) {
             proxied.socketKeepAlive(socketKeepAlive);
-            return this;
-        }
-
-        /**
-         * Sets whether auto connect retry is enabled.
-         *
-         * @param autoConnectRetry auto connect retry
-         * @return {@code this}
-         * @see MongoClientOptions#isAutoConnectRetry()
-         */
-        public Builder autoConnectRetry(final boolean autoConnectRetry) {
-            proxied.autoConnectRetry(autoConnectRetry);
-            return this;
-        }
-
-        /**
-         * Sets the maximum auto connect retry time.
-         *
-         * @param maxAutoConnectRetryTime the maximum auto connect retry time
-         * @return {@code this}
-         * @see MongoClientOptions#getMaxAutoConnectRetryTime()
-         */
-        public Builder maxAutoConnectRetryTime(final long maxAutoConnectRetryTime) {
-            proxied.maxAutoConnectRetryTime(maxAutoConnectRetryTime);
             return this;
         }
 

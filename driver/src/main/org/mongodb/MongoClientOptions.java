@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ public final class MongoClientOptions {
     private final int connectTimeout;
     private final int socketTimeout;
     private final boolean socketKeepAlive;
-    private final boolean autoConnectRetry;
-    private final long maxAutoConnectRetryTime;
     private final boolean asyncEnabled;
     //CHECKSTYLE:OFF
     private final boolean SSLEnabled;
@@ -98,8 +96,6 @@ public final class MongoClientOptions {
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean socketKeepAlive = false;
-        private boolean autoConnectRetry = false;
-        private long maxAutoConnectRetryTime = 0;
         //CHECKSTYLE:OFF
         private boolean SSLEnabled = false;
         //CHECKSTYLE:ON
@@ -261,33 +257,6 @@ public final class MongoClientOptions {
          */
         public Builder socketKeepAlive(final boolean aSocketKeepAlive) {
             this.socketKeepAlive = aSocketKeepAlive;
-            return this;
-        }
-
-        /**
-         * Sets whether auto connect retry is enabled.
-         *
-         * @param anAutoConnectRetry auto connect retry
-         * @return {@code this}
-         * @see MongoClientOptions#isAutoConnectRetry()
-         */
-        public Builder autoConnectRetry(final boolean anAutoConnectRetry) {
-            this.autoConnectRetry = anAutoConnectRetry;
-            return this;
-        }
-
-        /**
-         * Sets the maximum auto connect retry time.
-         *
-         * @param aMaxAutoConnectRetryTime the maximum auto connect retry time
-         * @return {@code this}
-         * @see MongoClientOptions#getMaxAutoConnectRetryTime()
-         */
-        public Builder maxAutoConnectRetryTime(final long aMaxAutoConnectRetryTime) {
-            if (aMaxAutoConnectRetryTime < 0) {
-                throw new IllegalArgumentException("Minimum value is 0");
-            }
-            this.maxAutoConnectRetryTime = aMaxAutoConnectRetryTime;
             return this;
         }
 
@@ -580,33 +549,6 @@ public final class MongoClientOptions {
     }
 
     /**
-     * If true, the driver will keep trying to connect to the same server in case that the socket cannot be established. There is maximum
-     * amount of time to keep retrying, which is 15s by default. This can be useful to avoid some exceptions being thrown when a server is
-     * down temporarily by blocking the operations. It also can be useful to smooth the transition to a new master (so that a new master is
-     * elected within the retry time). Note that when using this flag: - for a replica set, the driver will trying to connect to the old
-     * master for that time, instead of failing over to the new one right away - this does not prevent exception from being thrown in
-     * read/write operations on the socket, which must be handled by application
-     * <p/>
-     * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read
-     * operations. Default is false.
-     *
-     * @return whether socket connect is retried
-     */
-    public boolean isAutoConnectRetry() {
-        return autoConnectRetry;
-    }
-
-    /**
-     * The maximum amount of time in MS to spend retrying to open connection to the same server. Default is 0, which means to use the
-     * default 15s if autoConnectRetry is on.
-     *
-     * @return the maximum socket connect retry time.
-     */
-    public long getMaxAutoConnectRetryTime() {
-        return maxAutoConnectRetryTime;
-    }
-
-    /**
      * The read preference to use for queries, map-reduce, aggregation, and count.
      * <p/>
      * Default is {@code ReadPreference.primary()}.
@@ -786,8 +728,6 @@ public final class MongoClientOptions {
                + ", connectTimeout=" + connectTimeout
                + ", socketTimeout=" + socketTimeout
                + ", socketKeepAlive=" + socketKeepAlive
-               + ", autoConnectRetry=" + autoConnectRetry
-               + ", maxAutoConnectRetryTime=" + maxAutoConnectRetryTime
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", primitiveCodecs=" + primitiveCodecs
@@ -812,9 +752,7 @@ public final class MongoClientOptions {
         maxConnectionLifeTime = builder.maxConnectionLifeTime;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
-        autoConnectRetry = builder.autoConnectRetry;
         socketKeepAlive = builder.socketKeepAlive;
-        maxAutoConnectRetryTime = builder.maxAutoConnectRetryTime;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         primitiveCodecs = builder.primitiveCodecs;
