@@ -30,7 +30,8 @@ final class SocketSettings {
     public static Builder builder() {
         return new Builder();
     }
-    public static class Builder {
+
+    static class Builder {
         private long connectTimeoutMS;
         private long readTimeoutMS;
         private SocketFactory socketFactory = SocketFactory.getDefault();

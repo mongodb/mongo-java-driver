@@ -41,7 +41,7 @@ final class ClusterSettings {
     /**
      * A builder for the cluster settings.
      */
-    public static final class Builder {
+    static final class Builder {
         private List<ServerAddress> hosts;
         private ClusterConnectionMode mode = ClusterConnectionMode.Multiple;
         private ClusterType requiredClusterType = ClusterType.Unknown;

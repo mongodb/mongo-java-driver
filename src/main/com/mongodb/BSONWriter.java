@@ -519,7 +519,7 @@ abstract class BSONWriter implements Closeable {
         closed = true;
     }
 
-    public enum State {
+    enum State {
         /**
          * The initial state.
          */
@@ -551,7 +551,7 @@ abstract class BSONWriter implements Closeable {
         CLOSED
     }
 
-    public class Context {
+    class Context {
         private final Context parentContext;
         private final BSONContextType contextType;
 
@@ -578,7 +578,7 @@ abstract class BSONWriter implements Closeable {
         }
     }
 
-    protected class Mark {
+    class Mark {
         private final Context markedContext;
         private final State markedState;
         private final String currentName;

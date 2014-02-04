@@ -70,7 +70,7 @@ class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
-    public static class Builder {
+    static class Builder {
         private ServerAddress address;
         private ServerType type = Unknown;
         private Set<String> hosts = Collections.emptySet();

@@ -30,7 +30,7 @@ final class MessageSettings {
         return new Builder();
     }
 
-    public static final class Builder {
+    static final class Builder {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
 

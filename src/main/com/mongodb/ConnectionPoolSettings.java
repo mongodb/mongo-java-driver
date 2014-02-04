@@ -36,7 +36,7 @@ class ConnectionPoolSettings {
         return new Builder();
     }
 
-    public static class Builder {
+    static class Builder {
         private int maxSize;
         private int minSize;
         private int maxWaitQueueSize;

@@ -29,7 +29,7 @@ class ServerSettings {
         return new Builder();
     }
 
-    public static class Builder {
+    static class Builder {
         private long heartbeatFrequencyMS = 5000;
         private long heartbeatConnectRetryFrequencyMS = 10;
         private SocketSettings heartbeatSocketSettings = SocketSettings.builder().build();

@@ -387,7 +387,7 @@ class BSONBinaryWriter extends BSONWriter {
         }
     }
 
-    public class Context extends BSONWriter.Context {
+    class Context extends BSONWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
 
@@ -413,7 +413,7 @@ class BSONBinaryWriter extends BSONWriter {
         }
     }
 
-    protected class Mark extends BSONWriter.Mark {
+    class Mark extends BSONWriter.Mark {
         private final int position;
 
         protected Mark() {
