@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.mongodb;
 /**
  * Subclass of {@link WriteConcernException} representing a duplicate key exception
  */
-public class MongoDuplicateKeyException extends WriteConcernException {
+public class DuplicateKeyException extends WriteConcernException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
@@ -30,7 +30,7 @@ public class MongoDuplicateKeyException extends WriteConcernException {
      *
      * @param e the exception from the new Java layer
      */
-    MongoDuplicateKeyException(final org.mongodb.MongoDuplicateKeyException e) {
+    DuplicateKeyException(final org.mongodb.MongoDuplicateKeyException e) {
         super(e);
     }
 
@@ -39,11 +39,11 @@ public class MongoDuplicateKeyException extends WriteConcernException {
      *
      * @param commandResult the command result
      */
-    MongoDuplicateKeyException(final CommandResult commandResult) {
+    DuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
     }
 
-    MongoDuplicateKeyException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
+    DuplicateKeyException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
         super(errorCode, errorMessage, serverAddress);
     }
 }

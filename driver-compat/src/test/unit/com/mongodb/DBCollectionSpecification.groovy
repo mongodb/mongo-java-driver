@@ -20,6 +20,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -88,7 +90,7 @@ class DBCollectionSpecification extends Specification {
         collection.insert(new BasicDBObject(), ACKNOWLEDGED);
 
         then:
-        thrown(com.mongodb.MongoDuplicateKeyException)
+        thrown(DuplicateKeyException)
     }
 
     def 'should wrap org.mongodb.MongoException as a com.mongodb.MongoException when insert fails'() {
@@ -113,7 +115,7 @@ class DBCollectionSpecification extends Specification {
         collection.createIndex(new BasicDBObject());
 
         then:
-        thrown(com.mongodb.MongoDuplicateKeyException)
+        thrown(DuplicateKeyException)
     }
 
     def 'should wrap org.mongodb.MongoException as com.mongodb.MongoException when createIndex fails'() {

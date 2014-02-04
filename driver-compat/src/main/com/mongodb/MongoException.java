@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,10 @@ public class MongoException extends RuntimeException {
     /**
      * Subclass of WriteConcernException representing a duplicate key error.
      *
-     * @deprecated This class will be dropped in 3.x versions. Please catch {@link MongoDuplicateKeyException} instead.
+     * @deprecated This class will be dropped in 3.x versions. Please catch {@link DuplicateKeyException} instead.
      */
     @Deprecated
-    public static class DuplicateKey extends MongoDuplicateKeyException {
+    public static class DuplicateKey extends DuplicateKeyException {
 
         private static final long serialVersionUID = 6557680785576001838L;
 

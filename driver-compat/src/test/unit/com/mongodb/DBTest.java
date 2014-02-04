@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class DBTest extends DatabaseTestCase {
         database.createCollection(collectionName, creationOptions);
     }
 
-    @Test(expected = MongoDuplicateKeyException.class)
+    @Test(expected = DuplicateKeyException.class)
     public void shouldGetDuplicateKeyException() {
         DBObject doc = new BasicDBObject("_id", 1);
         collection.insert(doc);

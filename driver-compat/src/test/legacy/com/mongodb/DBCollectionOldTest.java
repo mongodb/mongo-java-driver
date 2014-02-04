@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(true, c.isCapped());
     }
 
-    @Test(expected = MongoDuplicateKeyException.class)
+    @Test(expected = DuplicateKeyException.class)
     public void testDuplicateKeyException() {
         DBCollection c = collection;
 
@@ -293,7 +293,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         assertEquals(indexAlias, collection.getIndexInfo().get(1).get("name"));
     }
 
-    @Test(expected = MongoDuplicateKeyException.class)
+    @Test(expected = DuplicateKeyException.class)
     public void testIndexExceptions() {
         DBCollection c = collection;
 
