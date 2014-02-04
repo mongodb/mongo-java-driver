@@ -25,7 +25,7 @@ package com.mongodb;
  */
 public class WriteResult {
 
-    private final com.mongodb.WriteConcern writeConcern;
+    private final WriteConcern writeConcern;
     private final int n;
     private final boolean updateOfExisting;
     private final Object upsertedId;
