@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package org.mongodb.connection;
 
 import org.mongodb.MongoException;
 
-public class MongoServerSelectionFailureException extends MongoException {
+public class MongoServerSelectionException extends MongoException {
     private static final long serialVersionUID = 2290478532123033470L;
 
-    public MongoServerSelectionFailureException(final String message) {
+    public MongoServerSelectionException(final String message) {
         super(message);
     }
 }

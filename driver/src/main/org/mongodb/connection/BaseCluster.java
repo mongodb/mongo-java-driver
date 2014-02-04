@@ -88,7 +88,7 @@ public abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("Unable to connect to any server in cluster %s that satisfies "
+                    throw new MongoServerSelectionException(format("Unable to connect to any server in cluster %s that satisfies "
                                                                           + "the selector %s", curDescription, serverSelector));
                 }
 
@@ -122,7 +122,7 @@ public abstract class BaseCluster implements Cluster {
             while (curDescription.getType() == ClusterType.UNKNOWN) {
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionFailureException(format("Unable to connect to any servers"));
+                    throw new MongoServerSelectionException(format("Unable to connect to any servers"));
                 }
 
                 long timeout = endTime - System.nanoTime();
