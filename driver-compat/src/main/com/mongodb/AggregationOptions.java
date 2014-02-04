@@ -139,7 +139,7 @@ public class AggregationOptions {
         private OutputMode outputMode = OutputMode.INLINE;
         private long maxTimeMS;
 
-        protected Builder() {
+        private Builder() {
         }
 
         /**
