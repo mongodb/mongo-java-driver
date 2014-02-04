@@ -85,6 +85,20 @@ members:
 
   com.mongodb.MongoOptions:
   - slaveOk
+  - autoConnectRetry
+  - maxAutoConnectRetryTime
+  - getMaxAutoConnectRetryTime()
+  - isAutoConnectRetry()
+  - setAutoConnectRetry(boolean)
+  - setMaxAutoConnectRetryTime(long)
+
+  com.mongodb.MongoClientOptions:
+  - getMaxAutoConnectRetryTime()
+  - isAutoConnectRetry()
+
+  com.mongodb.MongoClientOptions$Builder:
+  - autoConnectRetry(boolean)
+  - maxAutoConnectRetryTime(long)
 
   com.mongodb.Mongo:
   - getMinorVersion()                              # JAVA-882
@@ -111,16 +125,30 @@ members:
   - command(com.mongodb.DBObject,int,com.mongodb.ReadPreference) # JAVA-1063 Deprecate command methods that take options
   - command(com.mongodb.DBObject,int,com.mongodb.DBEncoder)      # JAVA-1063 Deprecate command methods that take options
   - command(com.mongodb.DBObject,int,com.mongodb.ReadPreference,com.mongodb.DBEncoder)      # JAVA-1063 Deprecate command methods that take options
-
+  - cleanCursors(boolean)
+  - resetError()
 
   com.mongodb.DBCollection:
-  - checkReadOnly(boolean)                        # JAVA-878
+  - createIndex(com.mongodb.DBObject,com.mongodb.DBObject,com.mongodb.DBEncoder)
+  - ensureIndex(java.lang.String)
+  - ensureIndex(com.mongodb.DBObject)
+  - ensureIndex(com.mongodb.DBObject,java.lang.String)
+  - ensureIndex(com.mongodb.DBObject,java.lang.String,boolean)
+  - ensureIndex(com.mongodb.DBObject,com.mongodb.DBObject)
+  - genIndexName(com.mongodb.DBObject)                  # JAVA-881
+  - group(com.mongodb.DBObject)
+  - mapReduce(com.mongodb.DBObject)
+  - resetIndexCache()
+  - checkReadOnly(boolean)                              # JAVA-878
+  - _checkObject(com.mongodb.DBObject,boolean,boolean)  # JAVA-881
   - _fullName                                           # JAVA-881 Fix up com.mongodb.DBCollection
   - _hintFields                                         # JAVA-881
   - _name                                               # JAVA-881
   - _objectClass                                        # JAVA-881
-  - _checkObject(com.mongodb.DBObject,boolean,boolean)  # JAVA-881
-  - genIndexName(com.mongodb.DBObject)                  # JAVA-881
+
+  com.mongodb.DBCursor:
+  - getSizes()
+  - numGetMores()
 
   org.bson.types.ObjectId:                        # JAVA-839: Fix up ObjectId API
   - ObjectId(java.util.Date,int,int)              # JAVA-839
@@ -144,13 +172,25 @@ members:
   - _time()                                       # JAVA-839
 
   com.mongodb.WriteResult:
+  - getLastError()                                # JAVA-900
   - getLastError(com.mongodb.WriteConcern)        # JAVA-900
+  - getCachedLastError()
+  - getError()
+  - getField(java.lang.String)
+  - isLazy()
 
   com.mongodb.WriteConcern:                       # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
   - setWObject(java.lang.Object)                  # JAVA-893
   - continueOnErrorForInsert(boolean)             # JAVA-939
   - getContinueOnErrorForInsert()                 # JAVA-939
+  - ERRORS_IGNORED
+  - NONE
+  - raiseNetworkErrors()
 
+  com.mongodb.MapReduceOutput:
+  - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult)
+  - getRaw()
+  - getCommandResult()
 
   org.bson.io.OutputBuffer:                       # JAVA-880 Fix up org.bson.io.{OutputBuffer, BasicOutputBuffer}
   - asString()                                    # JAVA-880
@@ -163,6 +203,10 @@ members:
   - hex()                                         # JAVA-880
   - writeInt(int,int)                             # JAVA-880
   - writeIntBE(int)                               # JAVA-880
+  - backpatchSize(int)
+  - backpatchSize(int,int)
+  - getByteBuffers()
+  - truncateToPosition(int)
 
   org.bson.io.BasicOutputBuffer:
   - asString()                                    # JAVA-880
