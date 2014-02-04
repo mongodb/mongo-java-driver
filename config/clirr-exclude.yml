@@ -71,6 +71,7 @@ classes:
 - org.bson.LazyBSONObject$LazyBSONKeySet                            # JAVA-901
 - com.mongodb.util.MyAsserts$MyAssert
 - com.mongodb.util.SimplePool
+- com.mongodb.ConnectionPoolStatisticsMBean
 
 members:
   com.mongodb.gridfs.GridFS:
