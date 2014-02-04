@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ class MongoExceptionsSpecification extends Specification {
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
         new org.mongodb.MongoIncompatibleDriverException('', CLUSTER_DESCRIPTION)             | MongoIncompatibleDriverException | -3
+        new org.mongodb.connection.MongoServerSelectionException("timeout")                   | MongoServerSelectionException    | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {

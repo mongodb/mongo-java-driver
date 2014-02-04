@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ final class MongoExceptions {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
         } else if (e instanceof org.mongodb.BulkWriteException) {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e);
+        } else if (e instanceof org.mongodb.connection.MongoServerSelectionException) {
+            return new MongoServerSelectionException(e.getMessage());
         } else {
             return new MongoException(e.getMessage(), cause);
         }
