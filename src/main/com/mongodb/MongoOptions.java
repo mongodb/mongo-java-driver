@@ -347,13 +347,17 @@ public class MongoOptions {
      *
      * Even if this flag is false, the driver already has mechanisms to automatically recreate broken connections and retry the read operations.
      * Default is false.
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public boolean autoConnectRetry;
 
     /**
      * The maximum amount of time in MS to spend retrying to open connection to the same server.
      * Default is 0, which means to use the default 15s if autoConnectRetry is on.
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public long maxAutoConnectRetryTime;
 
     /**
@@ -581,7 +585,9 @@ public class MongoOptions {
     /**
      *
      * @return keep trying connection flag
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public synchronized boolean isAutoConnectRetry() {
         return autoConnectRetry;
     }
@@ -589,7 +595,9 @@ public class MongoOptions {
     /**
      *
      * @param retry sets keep trying connection flag
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public synchronized void setAutoConnectRetry(boolean retry) {
         autoConnectRetry = retry;
     }
@@ -597,7 +605,9 @@ public class MongoOptions {
     /**
      *
      * @return max time in MS to retrying open connection
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public synchronized long getMaxAutoConnectRetryTime() {
         return maxAutoConnectRetryTime;
     }
@@ -605,7 +615,9 @@ public class MongoOptions {
     /**
      *
      * @param retryTimeMS set max time in MS to retrying open connection
+     * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
      */
+    @Deprecated
     public synchronized void setMaxAutoConnectRetryTime(long retryTimeMS) {
         maxAutoConnectRetryTime = retryTimeMS;
     }
