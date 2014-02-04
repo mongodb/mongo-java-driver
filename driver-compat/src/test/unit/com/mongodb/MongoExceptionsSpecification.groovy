@@ -16,6 +16,8 @@
 
 
 
+
+
 package com.mongodb
 
 import org.mongodb.Document
@@ -70,7 +72,7 @@ class MongoExceptionsSpecification extends Specification {
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
         new org.mongodb.MongoIncompatibleDriverException('', CLUSTER_DESCRIPTION)             | MongoIncompatibleDriverException | -3
-        new org.mongodb.connection.MongoServerSelectionException("timeout")                   | MongoServerSelectionException    | -3
+        new org.mongodb.connection.MongoServerSelectionException('timeout')                   | MongoServerSelectionException    | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {
