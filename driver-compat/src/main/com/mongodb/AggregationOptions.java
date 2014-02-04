@@ -39,7 +39,7 @@ public class AggregationOptions {
          */
         INLINE {
             @Override
-            public org.mongodb.AggregationOptions.OutputMode toNew() {
+            org.mongodb.AggregationOptions.OutputMode toNew() {
                 return org.mongodb.AggregationOptions.OutputMode.INLINE;
             }
         },
@@ -50,12 +50,12 @@ public class AggregationOptions {
          */
         CURSOR {
             @Override
-            public org.mongodb.AggregationOptions.OutputMode toNew() {
+            org.mongodb.AggregationOptions.OutputMode toNew() {
                 return org.mongodb.AggregationOptions.OutputMode.CURSOR;
             }
         };
 
-        public abstract org.mongodb.AggregationOptions.OutputMode toNew();
+        abstract org.mongodb.AggregationOptions.OutputMode toNew();
     }
 
     AggregationOptions(final Builder builder) {
