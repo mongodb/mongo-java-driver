@@ -70,7 +70,9 @@ public class CommandResult extends BasicDBObject {
         if ( !ok() ) {   // check for command failure
             return new CommandFailureException( this );
         } else if ( hasErr() ) { // check for errors reported by getlasterror command
-            if (getCode() == 11000 || getCode() == 11001 || getCode() == 12582) {
+            String err = getErr();
+            if (getCode() == 11000 || getCode() == 11001 || getCode() == 12582 ||
+                    err.startsWith("E11000") || err.startsWith("E11001")) {
                 return new MongoException.DuplicateKey(this);
             }
             else {
@@ -92,13 +94,17 @@ public class CommandResult extends BasicDBObject {
         return code;
     }
 
+    String getErr() {
+        return (String) get("err");
+    }
+
     /**
      * check the "err" field
      * @return if it has it, and isn't null
      */
     boolean hasErr(){
-        Object o = get( "err" );
-        return (o != null && ( (String) o ).length() > 0 );
+        String o = getErr();
+        return (o != null && !o.isEmpty());
     }
 
     /**
