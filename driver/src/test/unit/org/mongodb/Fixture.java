@@ -175,12 +175,14 @@ public final class Fixture {
     }
 
     public static void enableMaxTimeFailPoint() {
+        org.junit.Assume.assumeFalse(isSharded());
         getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                              .append("mode", "alwaysOn"),
                                                              ReadPreference.primary());
     }
 
     public static void disableMaxTimeFailPoint() {
+        org.junit.Assume.assumeFalse(isSharded());
         if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
             getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                                  .append("mode", "off"),
