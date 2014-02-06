@@ -40,7 +40,9 @@ public class ServerAddress {
     }
 
     /**
-     * Creates a ServerAddress with default port
+     * Creates a ServerAddress with default port.
+     * If the host parameter contains a port, i.e. 127.0.0.1:3333
+     * it will use that port instead of the default one.
      * @param host hostname
      * @throws UnknownHostException
      */
