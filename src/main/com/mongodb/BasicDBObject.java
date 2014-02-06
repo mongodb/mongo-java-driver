@@ -83,12 +83,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         return JSON.serialize( this );
     }
 
-    @Override
-    public BasicDBObject append( String key , Object val ){
-        put( key , val );
-        return this;
-    }
-
     public Object copy() {
         // copy field values into new object
         BasicDBObject newobj = new BasicDBObject(this.toMap());
