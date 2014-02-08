@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
-
-
 
 package org.mongodb.connection
 
@@ -285,13 +279,17 @@ class MultiServerClusterSpecification extends Specification {
     def 'should fire cluster description changed event'() {
         given:
         def clusterListener = Mock(ClusterListener)
-        new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(), factory, clusterListener)
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(), factory,
+                                             clusterListener)
 
         when:
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
 
         then:
         1 * clusterListener.clusterDescriptionChanged(_)
+
+        cleanup:
+        cluster.close()
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
