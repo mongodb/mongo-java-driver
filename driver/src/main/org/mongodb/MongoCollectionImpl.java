@@ -274,9 +274,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             MongoCursor<T> cursor = get();
             try {
                 while (cursor.hasNext()) {
-                    if (!block.run(cursor.next())) {
-                        break;
-                    }
+                    block.apply(cursor.next());
                 }
             } finally {
                 cursor.close();
@@ -288,9 +286,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public <A extends Collection<? super T>> A into(final A target) {
             forEach(new Block<T>() {
                 @Override
-                public boolean run(final T t) {
+                public void apply(final T t) {
                     target.add(t);
-                    return true;
                 }
             });
             return target;
@@ -487,9 +484,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                               }
 
                                               @Override
-                                              public boolean run(final T t) {
+                                              public void apply(final T t) {
                                                   retVal.init(t, null);
-                                                  return false;
                                               }
                                           });
                                       }
@@ -545,9 +541,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
 
                 @Override
-                public boolean run(final T t) {
+                public void apply(final T t) {
                     target.add(t);
-                    return true;
                 }
             });
         }
@@ -641,9 +636,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             MongoCursor<T> cursor = iterator();
             try {
                 while (cursor.hasNext()) {
-                    if (!block.run(cursor.next())) {
-                        break;
-                    }
+                    block.apply(cursor.next());
                 }
             } finally {
                 cursor.close();
@@ -654,9 +647,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public <A extends Collection<? super T>> A into(final A target) {
             forEach(new Block<T>() {
                 @Override
-                public boolean run(final T t) {
+                public void apply(final T t) {
                     target.add(t);
-                    return true;
                 }
             });
             return target;

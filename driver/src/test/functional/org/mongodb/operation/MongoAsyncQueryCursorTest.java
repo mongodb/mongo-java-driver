@@ -198,10 +198,9 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         @Override
-        public boolean run(final Document document) {
+        public void apply(final Document document) {
             iterations++;
             documentResultList.add(document);
-            return iterations < count;
         }
     }
 }

@@ -43,9 +43,7 @@ class MapReduceResultsIterable<T> implements MongoIterable<T> {
     public void forEach(final Block<? super T> block) {
         MongoCursor<T> cursor = iterator();
         while (cursor.hasNext()) {
-            if (!block.run(cursor.next())) {
-                break;
-            }
+            block.apply(cursor.next());
         }
     }
 
@@ -53,9 +51,8 @@ class MapReduceResultsIterable<T> implements MongoIterable<T> {
     public <A extends Collection<? super T>> A into(final A target) {
         forEach(new Block<T>() {
             @Override
-            public boolean run(final T t) {
+            public void apply(final T t) {
                 target.add(t);
-                return true;
             }
         });
         return target;

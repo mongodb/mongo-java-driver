@@ -146,11 +146,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                     breakEarly = true;
                     break;
                 }
-
-                if (!block.run(cur)) {
-                    breakEarly = true;
-                    break;
-                }
+                block.apply(cur);
             }
 
             if (result.getCursor() == null || breakEarly) {

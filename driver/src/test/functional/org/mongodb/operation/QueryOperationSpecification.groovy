@@ -85,7 +85,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
             }
 
             @Override
-            boolean run(final Document t) {
+            void apply(final Document t) {
                 runCalled = true
             }
         })

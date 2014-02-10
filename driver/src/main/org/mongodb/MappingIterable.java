@@ -41,8 +41,8 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     public void forEach(final Block<? super V> block) {
         iterable.forEach(new Block<U>() {
             @Override
-            public boolean run(final U document) {
-                return block.run(mapper.apply(document));
+            public void apply(final U document) {
+                block.apply(mapper.apply(document));
             }
         });
     }
@@ -51,9 +51,8 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     public <A extends Collection<? super V>> A into(final A target) {
         forEach(new Block<V>() {
             @Override
-            public boolean run(final V v) {
+            public void apply(final V v) {
                 target.add(v);
-                return true;
             }
         });
         return target;
@@ -73,8 +72,8 @@ class MappingIterable<U, V> implements MongoIterable<V> {
             }
 
             @Override
-            public boolean run(final U u) {
-                return block.run(mapper.apply(u));
+            public void apply(final U u) {
+                block.apply(mapper.apply(u));
             }
         });
     }
@@ -94,9 +93,8 @@ class MappingIterable<U, V> implements MongoIterable<V> {
             }
 
             @Override
-            public boolean run(final V v) {
+            public void apply(final V v) {
                 target.add(v);
-                return true;
             }
         });
     }

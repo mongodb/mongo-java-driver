@@ -236,7 +236,7 @@ project(':driver-compat') {
     clirr {
         ignoreFailures = true
         excludeFilter = new File("$configDir/clirr-exclude.yml")
-        baseline 'org.mongodb:mongo-java-driver:2.11.3'
+        baseline 'org.mongodb:mongo-java-driver:2.11.4'
     }
 
     checkstyle {

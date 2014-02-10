@@ -72,9 +72,8 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
         final List<Document> iteratedDocuments = new ArrayList<Document>();
         collection.pipe().forEach(new Block<Document>() {
             @Override
-            public boolean run(final Document document) {
+            public void apply(final Document document) {
                 iteratedDocuments.add(document);
-                return true;
             }
         });
         assertEquals(3, iteratedDocuments.size());

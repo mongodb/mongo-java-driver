@@ -104,9 +104,8 @@ public class MongoAsyncReadTest extends DatabaseTestCase {
             }
 
             @Override
-            public boolean run(final Document document) {
+            public void apply(final Document document) {
                 documentResultList.add(document);
-                return true;
             }
         });
 

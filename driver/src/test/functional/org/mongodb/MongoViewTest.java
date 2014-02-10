@@ -84,24 +84,21 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find().forEach(new Block<Document>() {
             @Override
-            public boolean run(final Document e) {
+            public void apply(final Document e) {
                 System.out.println(e);
-                return true;
             }
         });
 
         collection.find().forEach(new Block<Document>() {
             @Override
-            public boolean run(final Document t) {
+            public void apply(final Document t) {
                 System.out.println(t);
-                return true;
             }
         });
 
         collection.find().forEach(new Block<Document>() {
-            public boolean run(final Document document) {
+            public void apply(final Document document) {
                 System.out.println(document);
-                return true;
             }
         });
 
@@ -130,9 +127,8 @@ public class MongoViewTest extends DatabaseTestCase {
 
         collection.find().forEach(new Block<Document>() {
             @Override
-            public boolean run(final Document t) {
+            public void apply(final Document t) {
                 System.out.println(t);
-                return true;
             }
         });
 

@@ -17,5 +17,5 @@
 package org.mongodb;
 
 public interface Block<T> {
-    boolean run(T t);
+    void apply(T t);
 }
