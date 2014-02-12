@@ -27,6 +27,7 @@ import org.mongodb.ServerCursor;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.diagnostics.Loggers;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
@@ -36,9 +37,14 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
+    private static final Logger LOGGER = Loggers.getLogger("operation");
+
     private final MongoNamespace namespace;
     private final Find find;
     private final Encoder<Document> queryEncoder;
@@ -140,15 +146,21 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
             boolean breakEarly = false;
 
-            for (final T cur : result.getResults()) {
-                numFetchedSoFar++;
-                if (find.getLimit() > 0 && numFetchedSoFar > find.getLimit()) {
-                    breakEarly = true;
-                    break;
-                }
-                block.apply(cur);
-            }
+            try {
+                for (final T cur : result.getResults()) {
+                    numFetchedSoFar++;
+                    if (find.getLimit() > 0 && numFetchedSoFar > find.getLimit()) {
+                        breakEarly = true;
+                        break;
+                    }
+                    block.apply(cur);
 
+                }
+            } catch (Exception e1) {
+                breakEarly = true;
+                LOGGER.log(Level.SEVERE, e1.getMessage(), e1);
+            }
+            
             if (result.getCursor() == null || breakEarly) {
                 close(result.getRequestId());
             } else {
