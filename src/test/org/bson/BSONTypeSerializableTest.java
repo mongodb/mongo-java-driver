@@ -17,6 +17,8 @@
 // BSONTypeSerializableTest.java
 package org.bson;
 
+import com.mongodb.DBRef;
+import com.mongodb.util.TestCase;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -35,7 +37,7 @@ import java.io.ObjectOutputStream;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class BSONTypeSerializableTest {
+public class BSONTypeSerializableTest extends TestCase {
 
     @Test
     public void testSerializeMinKey() throws Exception {
@@ -163,5 +165,21 @@ public class BSONTypeSerializableTest {
         ObjectId object2 = (ObjectId) objectInputStream.readObject();
 
         assertEquals(object.toString(), object2.toString());
+    }
+
+    @Test
+    public void testSerializeDBRef() throws Exception {
+        DBRef dbRef = new DBRef(getDatabase(), "col", 42);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+        objectOutputStream.writeObject(dbRef);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        DBRef dbRef2 = (DBRef) objectInputStream.readObject();
+
+        assertEquals(dbRef, dbRef2);
     }
 }
