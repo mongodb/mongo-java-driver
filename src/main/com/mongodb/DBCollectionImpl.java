@@ -324,7 +324,7 @@ class DBCollectionImpl extends DBCollection {
         } else if (type == REMOVE) {
            commandResult.put("n", bulkWriteResult.getRemovedCount());
         } else if (type == UPDATE || type == REPLACE) {
-            commandResult.put("n", bulkWriteResult.getUpdatedCount() + bulkWriteResult.getUpserts().size());
+            commandResult.put("n", bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size());
             if (bulkWriteResult.getUpserts().isEmpty()) {
                 commandResult.put("updatedExisting", true);
             } else {
