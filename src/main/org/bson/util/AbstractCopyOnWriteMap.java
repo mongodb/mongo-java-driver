@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 Atlassian Pty Ltd
+ * Copyright (c) 2008 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
