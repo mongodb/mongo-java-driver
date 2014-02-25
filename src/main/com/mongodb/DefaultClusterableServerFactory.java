@@ -49,7 +49,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                               .build();
         return new DefaultServer(serverAddress, settings,
                                  new PooledConnectionProvider(clusterId, serverAddress, new DBPortFactory(options), connectionPoolSettings,
-                                                              new JMXConnectionPoolListener()),
+                                                              new JMXConnectionPoolListener(mongo.getMongoOptions().getDescription())),
                                  scheduledExecutorService, mongo);
     }
 

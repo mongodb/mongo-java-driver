@@ -18,17 +18,19 @@ package com.mongodb.util.management.jmx;
 
 import com.mongodb.util.management.MBeanServer;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.lang.String.format;
+
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
  *
- * @deprecated This class will be removed in 3.x versions of the driver,
- *             so please remove it from your compile time dependencies.
+ * @deprecated This class will be removed in 3.x versions of the driver, so please remove it from your compile time dependencies.
  */
 @Deprecated
 public class JMXMBeanServer implements MBeanServer {
@@ -57,6 +59,8 @@ public class JMXMBeanServer implements MBeanServer {
     public void registerMBean(Object mBean, String mBeanName) {
         try {
             server.registerMBean(mBean, createObjectName(mBeanName));
+        } catch (InstanceAlreadyExistsException e) {
+            LOGGER.log(Level.INFO, format("A JMX MBean with the name '%s' already exists", mBeanName));
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
         }

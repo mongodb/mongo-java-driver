@@ -18,7 +18,6 @@ package com.mongodb;
 
 import com.mongodb.util.management.MBeanServerFactory;
 
-import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,6 +29,11 @@ import static java.lang.String.format;
 class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ClusterIdServerAddressPair, ConnectionPoolStatistics> map =
     new ConcurrentHashMap<ClusterIdServerAddressPair, ConnectionPoolStatistics>();
+    private final String clusterDescription;
+
+    public JMXConnectionPoolListener(final String clusterDescription) {
+        this.clusterDescription = clusterDescription;
+    }
 
     public String getMBeanObjectName(final String clusterId, final ServerAddress serverAddress) {
         // we could do a url encode, but since : is the only invalid character in an object name, then
@@ -37,8 +41,14 @@ class JMXConnectionPoolListener implements ConnectionPoolListener {
         String adjustedClusterId = clusterId.replace(":", "%3A");
         String adjustedHost = serverAddress.getHost().replace(":", "%3A");
 
-        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
-                      serverAddress.getPort());
+        String objectName = format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
+                               serverAddress.getPort());
+        if (clusterDescription != null) {
+            String adjustedClusterDescription = clusterDescription.replace(":", "%3A");
+            objectName = objectName + format(",description=%s", adjustedClusterDescription);
+        }
+
+        return objectName;
     }
 
     public ConnectionPoolStatisticsMBean getMBean(final String clusterId, final ServerAddress serverAddress) {
