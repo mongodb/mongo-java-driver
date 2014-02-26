@@ -287,6 +287,94 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ex.writeErrors[1].code == 11000
     }
 
+    def 'execute should throw IllegalStateException when already executed'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject('_id', 1))
+        builder.execute()
+
+        when:
+        builder.execute()
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def 'execute with write concern should throw IllegalStateException when already executed'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject('_id', 1))
+        builder.execute()
+
+        when:
+        builder.execute(WriteConcern.ACKNOWLEDGED)
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def 'insert should throw IllegalStateException when already executed'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject('_id', 1))
+        builder.execute()
+
+        when:
+        builder.insert(new BasicDBObject())
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def 'find should throw IllegalStateException when already executed'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject('_id', 1))
+        builder.execute()
+
+        when:
+        builder.find(new BasicDBObject());
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    // just need to check one case here, since the others are checked above
+    def 'should throw IllegalStateException when already executed with write concern'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject('_id', 1))
+        builder.execute(WriteConcern.ACKNOWLEDGED)
+
+        when:
+        builder.execute()
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def 'should throw IllegalStateException when executing an empty bulk operation'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+
+        when:
+        builder.execute()
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    def 'should throw IllegalStateException when executing an empty bulk operation with a write concern'() {
+        given:
+        def builder = collection.initializeOrderedBulkOperation();
+
+        when:
+        builder.execute(WriteConcern.ACKNOWLEDGED)
+
+        then:
+        thrown(IllegalStateException)
+    }
+
     private static void addWritesToBuilder(BulkWriteOperation builder) {
         builder.find(new BasicDBObject('_id', 1)).updateOne(new BasicDBObject('$set', new BasicDBObject('x', 2)))
         builder.find(new BasicDBObject('_id', 2)).updateOne(new BasicDBObject('$set', new BasicDBObject('x', 3)))
@@ -307,4 +395,5 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
          new BasicDBObject('_id', 6)
         ]
     }
+
 }

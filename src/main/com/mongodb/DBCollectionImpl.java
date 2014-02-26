@@ -42,6 +42,7 @@ import static com.mongodb.WriteRequest.Type.REPLACE;
 import static com.mongodb.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.bson.util.Assertions.isTrue;
 
 class DBCollectionImpl extends DBCollection {
     private final DBApiLayer db;
@@ -121,6 +122,8 @@ class DBCollectionImpl extends DBCollection {
     @Override
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
                                               final WriteConcern writeConcern, DBEncoder encoder) {
+        isTrue("no operations", !writeRequests.isEmpty());
+
         if (writeConcern == null) {
             throw new IllegalArgumentException("Write concern can not be null");
         }

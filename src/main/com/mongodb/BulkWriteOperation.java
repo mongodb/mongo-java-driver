@@ -19,6 +19,8 @@ package com.mongodb;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.bson.util.Assertions.isTrue;
+
 /**
  * A bulk write operation.
  *
@@ -28,6 +30,7 @@ public class BulkWriteOperation {
     private final boolean ordered;
     private final DBCollection collection;
     private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
+    private boolean closed;
 
     BulkWriteOperation(final boolean ordered, final DBCollection collection) {
         this.ordered = ordered;
@@ -52,6 +55,7 @@ public class BulkWriteOperation {
      * @param document the document to insert
      */
     public void insert(final DBObject document) {
+        isTrue("already executed", !closed);
         addRequest(new InsertRequest(document));
     }
 
@@ -62,6 +66,7 @@ public class BulkWriteOperation {
      * @return a builder for a single write request
      */
     public BulkWriteRequestBuilder find(final DBObject query) {
+        isTrue("already executed", !closed);
         return new BulkWriteRequestBuilder(this, query);
     }
 
@@ -73,7 +78,13 @@ public class BulkWriteOperation {
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute() {
-        return collection.executeBulkWriteOperation(ordered, requests);
+        isTrue("already executed", !closed);
+
+        try {
+            return collection.executeBulkWriteOperation(ordered, requests);
+        } finally {
+            closed = true;
+        }
     }
 
     /**
@@ -86,10 +97,17 @@ public class BulkWriteOperation {
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {
-        return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
+        isTrue("already executed", !closed);
+
+        try {
+            return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
+        } finally {
+            closed = true;
+        }
     }
 
     void addRequest(final WriteRequest request) {
+        isTrue("already executed", !closed);
         requests.add(request);
     }
 
