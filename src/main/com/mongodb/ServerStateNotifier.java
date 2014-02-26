@@ -140,6 +140,8 @@ class ServerStateNotifier implements Runnable {
                                 .primary(commandResult.getString("primary"))
                                 .maxDocumentSize(commandResult.getInt("maxBsonObjectSize", ServerDescription.getDefaultMaxDocumentSize()))
                                 .maxMessageSize(commandResult.getInt("maxMessageSizeBytes", ServerDescription.getDefaultMaxMessageSize()))
+                                .maxWriteBatchSize(commandResult.getInt("maxWriteBatchSize",
+                                                                        ServerDescription.getDefaultMaxWriteBatchSize()))
                                 .tags(getTagsFromDocument((DBObject) commandResult.get("tags")))
                                 .setName(commandResult.getString("setName"))
                                 .setVersion((Integer) commandResult.get("setVersion"))

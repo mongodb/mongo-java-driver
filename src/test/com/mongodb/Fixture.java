@@ -52,6 +52,16 @@ public final class Fixture {
         return defaultDatabase;
     }
 
+    /**
+     *
+     * @param version  must be a major version, e.g. 1.8, 2,0, 2.2
+     * @return true if server is at least specified version
+     */
+    public static boolean serverIsAtLeastVersion(double version) {
+        String serverVersion = (String) getMongoClient().getDB("admin").command("serverStatus").get("version");
+        return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {

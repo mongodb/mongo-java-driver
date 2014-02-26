@@ -132,7 +132,7 @@ class DBCollectionImpl extends DBCollection {
         DBPort port = db.getConnector().getPrimaryPort();
         try {
             BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(port.getAddress(), writeConcern);
-            for (Run run : getRunGenerator(ordered, writeRequests, writeConcern, encoder)) {
+            for (Run run : getRunGenerator(ordered, writeRequests, writeConcern, encoder, port)) {
                 try {
                     BulkWriteResult result = run.execute(port);
                     if (result.isAcknowledged()) {
@@ -506,11 +506,11 @@ class DBCollectionImpl extends DBCollection {
     }
 
     private Iterable<Run> getRunGenerator(final boolean ordered, final List<WriteRequest> writeRequests,
-                                          final WriteConcern writeConcern, final DBEncoder encoder) {
+                                          final WriteConcern writeConcern, final DBEncoder encoder, final DBPort port) {
         if (ordered) {
-            return new OrderedRunGenerator(writeRequests, writeConcern, encoder);
+            return new OrderedRunGenerator(writeRequests, writeConcern, encoder, port);
         } else {
-            return new UnorderedRunGenerator(writeRequests, writeConcern, encoder);
+            return new UnorderedRunGenerator(writeRequests, writeConcern, encoder, port);
         }
     }
 
@@ -529,15 +529,16 @@ class DBCollectionImpl extends DBCollection {
         return TRACE_LOGGER;
     }
 
-    private static final int MAX_COUNT = 1000;
-
     private class OrderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
+        private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
 
-        public OrderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern, final DBEncoder encoder) {
+        public OrderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern, final DBEncoder encoder,
+                                   final DBPort port) {
             this.writeRequests = writeRequests;
+            this.port = port;
             this.writeConcern = writeConcern.continueOnError(false);
             this.encoder = encoder;
         }
@@ -566,7 +567,8 @@ class DBCollectionImpl extends DBCollection {
                 private int getStartIndexOfNextRun() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == MAX_COUNT || writeRequests.get(i).getType() != type) {
+                        if (i == db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()
+                            || writeRequests.get(i).getType() != type) {
                             return i;
                         }
                     }
@@ -584,12 +586,14 @@ class DBCollectionImpl extends DBCollection {
 
     private class UnorderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
+        private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
 
         public UnorderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern,
-                                     final DBEncoder encoder) {
+                                     final DBEncoder encoder, final DBPort port) {
             this.writeRequests = writeRequests;
+            this.port = port;
             this.writeConcern = writeConcern.continueOnError(true);
             this.encoder = encoder;
         }
@@ -622,7 +626,7 @@ class DBCollectionImpl extends DBCollection {
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() > MAX_COUNT) {
+                        if (run.size() > db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()) {
                             return runs.remove(run.type);
                         }
                     }

@@ -49,6 +49,8 @@ class ServerDescription {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
 
+    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
+
     private final ServerAddress address;
 
     private final ServerType type;
@@ -57,6 +59,7 @@ class ServerDescription {
     private final Set<String> arbiters;
     private final String primary;
     private final int maxDocumentSize;
+    private final int maxWriteBatchSize;
 
     private final int maxMessageSize;
     private final Tags tags;
@@ -79,6 +82,7 @@ class ServerDescription {
         private String primary;
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+        private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
         private Integer setVersion;
@@ -127,6 +131,11 @@ class ServerDescription {
 
         public Builder maxMessageSize(final int maxMessageSize) {
             this.maxMessageSize = maxMessageSize;
+            return this;
+        }
+
+        public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
+            this.maxWriteBatchSize = maxWriteBatchSize;
             return this;
         }
 
@@ -220,6 +229,10 @@ class ServerDescription {
         return 0;
     }
 
+    public static int getDefaultMaxWriteBatchSize() {
+        return DEFAULT_MAX_WRITE_BATCH_SIZE;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -272,6 +285,10 @@ class ServerDescription {
         return maxMessageSize;
     }
 
+    public int getMaxWriteBatchSize() {
+        return maxWriteBatchSize;
+    }
+
     public Tags getTags() {
         return tags;
     }
@@ -285,8 +302,8 @@ class ServerDescription {
     }
 
     /**
-     * Returns true if the server has the given tags.  A server of either type @code{ServerType.StandAlone} or
-     * @code{ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
+     * Returns true if the server has the given tags.  A server of either type {@code ServerType.StandAlone} or
+     * {@code ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
      * those types.
      *
      * @param desiredTags the tags
@@ -365,6 +382,9 @@ class ServerDescription {
         if (maxMessageSize != that.maxMessageSize) {
             return false;
         }
+        if (maxWriteBatchSize != that.maxWriteBatchSize) {
+            return false;
+        }
         if (ok != that.ok) {
             return false;
         }
@@ -422,6 +442,7 @@ class ServerDescription {
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
+        result = 31 * result + maxWriteBatchSize;
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
@@ -444,6 +465,7 @@ class ServerDescription {
                + ", primary='" + primary + '\''
                + ", maxDocumentSize=" + maxDocumentSize
                + ", maxMessageSize=" + maxMessageSize
+               + ", maxWriteBatchSize=" + maxWriteBatchSize
                + ", tags=" + tags
                + ", setName='" + setName + '\''
                + ", setVersion='" + setVersion + '\''
@@ -477,6 +499,7 @@ class ServerDescription {
         primary = builder.primary;
         maxDocumentSize = builder.maxDocumentSize;
         maxMessageSize = builder.maxMessageSize;
+        maxWriteBatchSize = builder.maxWriteBatchSize;
         tags = builder.tags;
         setName = builder.setName;
         setVersion = builder.setVersion;
