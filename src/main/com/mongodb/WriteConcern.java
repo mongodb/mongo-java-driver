@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>WriteConcern control the acknowledgment of write operations with various options.
+ * <p>Controls the acknowledgment of write operations with various options.
  * <p>
  * <b>w</b>
  * <ul>
@@ -42,10 +42,16 @@ import java.util.Map;
  * <p>
  * Other options:
  * <ul>
- *   <li><b>j</b>: wait for group commit to journal</li>
- *   <li><b>fsync</b>: force fsync to disk</li>
+ *   <li><b>j</b>: If true block until write operations have been committed to the journal. Cannot be used in combination with
+ *   {@code fsync}. Prior to MongoDB 2.6 this option was ignored if the server was running without journaling.  Starting with MongoDB 2.6
+ *   write operations will fail with an exception if this option is used when the server is running without journaling.</li>
+ *   <li><b>fsync</b>: If true and the server is running without journaling, blocks until the server has synced all data files to disk.
+ *   If the server is running with journaling, this acts the same as the {@code j} option, blocking until write operations have been
+ *   committed to the journal. Cannot be used in combination with {@code j}. In almost all cases the  {@code j} flag should be used in
+ *   preference to this one.</li>
  * </ul>
- * @dochub databases
+ *
+ * @mongodb.driver.manual core/write-concern Write Concern
  */
 public class WriteConcern implements Serializable {
 
