@@ -66,10 +66,13 @@ import java.util.logging.Logger;
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code minPoolSize=n}: The minimum number of connections in the connection pool.</li>
  * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
  * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
  * exception right away.</li>
@@ -262,10 +265,13 @@ public class MongoClientURI {
     static Set<String> allKeys = new HashSet<String>();
 
     static {
+        generalOptionsKeys.add("minpoolsize");
         generalOptionsKeys.add("maxpoolsize");
         generalOptionsKeys.add("waitqueuemultiple");
         generalOptionsKeys.add("waitqueuetimeoutms");
         generalOptionsKeys.add("connecttimeoutms");
+        generalOptionsKeys.add("maxidletimems");
+        generalOptionsKeys.add("maxlifetimems");
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("autoconnectretry");
@@ -309,6 +315,12 @@ public class MongoClientURI {
 
             if (key.equals("maxpoolsize")) {
                 builder.connectionsPerHost(Integer.parseInt(value));
+            } else if (key.equals("minpoolsize")) {
+                builder.minConnectionsPerHost(Integer.parseInt(value));
+            } else if (key.equals("maxidletimems")) {
+                builder.maxConnectionIdleTime(Integer.parseInt(value));
+            } else if (key.equals("maxlifetimems")) {
+                builder.maxConnectionLifeTime(Integer.parseInt(value));
             } else if (key.equals("waitqueuemultiple")) {
                 builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
             } else if (key.equals("waitqueuetimeoutms")) {

@@ -201,18 +201,21 @@ public class MongoClientURITest {
     public void testOptions() {
         MongoClientURI uAmp = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&" +
+                "minPoolSize=7&maxIdleTimeMS=1000&maxLifeTimeMS=2000&" +
                 "replicaSet=test&" +
                 "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&" +
                 "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
         assertOnOptions(uAmp.getOptions());
         MongoClientURI uSemi = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;" +
                 "replicaSet=test;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
                 "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uSemi.getOptions());
         MongoClientURI uMixed = new MongoClientURI("mongodb://localhost/test?" +
                 "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "minPoolSize=7&maxIdleTimeMS=1000;maxLifeTimeMS=2000&" +
                 "replicaSet=test;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500&autoConnectRetry=true;" +
                 "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
@@ -307,6 +310,9 @@ public class MongoClientURITest {
     @SuppressWarnings("deprecation")
     private void assertOnOptions(MongoClientOptions options) {
         assertEquals(10, options.getConnectionsPerHost(), 10);
+        assertEquals(7, options.getMinConnectionsPerHost());
+        assertEquals(1000, options.getMaxConnectionIdleTime());
+        assertEquals(2000, options.getMaxConnectionLifeTime());
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertEquals(150, options.getMaxWaitTime());
         assertEquals(5500, options.getSocketTimeout());
