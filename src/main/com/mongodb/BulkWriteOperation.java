@@ -80,11 +80,8 @@ public class BulkWriteOperation {
     public BulkWriteResult execute() {
         isTrue("already executed", !closed);
 
-        try {
-            return collection.executeBulkWriteOperation(ordered, requests);
-        } finally {
-            closed = true;
-        }
+        closed = true;
+        return collection.executeBulkWriteOperation(ordered, requests);
     }
 
     /**
@@ -99,11 +96,8 @@ public class BulkWriteOperation {
     public BulkWriteResult execute(final WriteConcern writeConcern) {
         isTrue("already executed", !closed);
 
-        try {
-            return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
-        } finally {
-            closed = true;
-        }
+        closed = true;
+        return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
     }
 
     void addRequest(final WriteRequest request) {
