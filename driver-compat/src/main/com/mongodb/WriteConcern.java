@@ -62,7 +62,7 @@ public class WriteConcern implements Serializable {
     private static final long serialVersionUID = 1884671104750417011L;
 
     // map of the constants from above for use by fromString
-    private static final Map<String, WriteConcern> _namedConcerns;
+    private static final Map<String, WriteConcern> NAMED_CONCERNS;
 
     private final org.mongodb.WriteConcern proxied;
     private final boolean continueOnError;
@@ -380,7 +380,7 @@ public class WriteConcern implements Serializable {
      * @return the {@code WriteConcern instance}
      */
     public static WriteConcern valueOf(final String name) {
-        return _namedConcerns.get(name.toLowerCase());
+        return NAMED_CONCERNS.get(name.toLowerCase());
     }
 
     @Override
@@ -476,12 +476,12 @@ public class WriteConcern implements Serializable {
     }
 
     static {
-        _namedConcerns = new HashMap<String, WriteConcern>();
+        NAMED_CONCERNS = new HashMap<String, WriteConcern>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
                 String key = f.getName().toLowerCase();
                 try {
-                    _namedConcerns.put(key, (WriteConcern) f.get(null));
+                    NAMED_CONCERNS.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
