@@ -61,6 +61,7 @@ public class MongoOptionsTest extends TestCase {
         options.minConnectionsPerHost = 5;
         options.maxConnectionIdleTime = 50000;
         options.maxConnectionLifeTime = 500000;
+        options.requiredReplicaSetName = "set1";
 
         final MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -86,6 +87,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.minConnectionsPerHost, copy.minConnectionsPerHost);
         assertEquals(options.maxConnectionIdleTime, copy.maxConnectionIdleTime);
         assertEquals(options.maxConnectionLifeTime, copy.maxConnectionLifeTime);
+        assertEquals(options.requiredReplicaSetName, copy.requiredReplicaSetName);
     }
 
     @Test
@@ -114,6 +116,7 @@ public class MongoOptionsTest extends TestCase {
         options.setReadPreference(ReadPreference.secondary());
         options.setCursorFinalizerEnabled(true);
         options.setAlwaysUseMBeans(true);
+        options.requiredReplicaSetName = "set1";
 
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 101);
@@ -135,6 +138,7 @@ public class MongoOptionsTest extends TestCase {
         assertEquals(options.getReadPreference(), ReadPreference.secondary());
         assertEquals(options.isCursorFinalizerEnabled(), true);
         assertEquals(options.isAlwaysUseMBeans(), true);
+        assertEquals(options.getRequiredReplicaSetName(), "set1");
     }
 
     @Test

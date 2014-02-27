@@ -26,6 +26,7 @@ import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class MongoClientOptionsTest {
@@ -60,6 +61,7 @@ public class MongoClientOptionsTest {
         assertEquals(getProperty("com.mongodb.slaveAcceptableLatencyMS") != null
                      ? parseInt(getProperty("com.mongodb.slaveAcceptableLatencyMS")) : 15,
                      options.getAcceptableLatencyDifference());
+        assertNull(options.getRequiredReplicaSetName());
     }
 
     @Test
@@ -225,6 +227,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectTimeout(53);
         builder.heartbeatSocketTimeout(54);
         builder.heartbeatThreadCount(4);
+        builder.requiredReplicaSetName("test");
 
         SocketFactory socketFactory = SSLSocketFactory.getDefault();
         builder.socketFactory(socketFactory);
@@ -269,6 +272,7 @@ public class MongoClientOptionsTest {
         assertEquals(socketFactory, options.getSocketFactory());
         assertEquals(encoderFactory, options.getDbEncoderFactory());
         assertEquals(decoderFactory, options.getDbDecoderFactory());
+        assertEquals("test", options.getRequiredReplicaSetName());
     }
 
     @Test

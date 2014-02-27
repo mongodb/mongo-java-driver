@@ -68,6 +68,7 @@ public class MongoOptions {
         heartbeatReadTimeoutMS = options.getHeartbeatSocketTimeout();
         heartbeatThreadCount = options.getHeartbeatThreadCount();
         acceptableLatencyDifferenceMS = options.getAcceptableLatencyDifference();
+        requiredReplicaSetName = options.getRequiredReplicaSetName();
     }
 
     public void reset(){
@@ -102,6 +103,7 @@ public class MongoOptions {
         heartbeatReadTimeoutMS = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
         heartbeatThreadCount = 0;
         acceptableLatencyDifferenceMS = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+        requiredReplicaSetName = null;
     }
 
     public MongoOptions copy() {
@@ -137,6 +139,7 @@ public class MongoOptions {
         m.heartbeatReadTimeoutMS = heartbeatReadTimeoutMS;
         m.heartbeatThreadCount = heartbeatThreadCount;
         m.acceptableLatencyDifferenceMS = acceptableLatencyDifferenceMS;
+        m.requiredReplicaSetName = requiredReplicaSetName;
         return m;
     }
 
@@ -250,6 +253,10 @@ public class MongoOptions {
         if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null) {
             return false;
         }
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(options.requiredReplicaSetName)
+                                           : options.requiredReplicaSetName != null) {
+            return false;
+        }
 
         return true;
     }
@@ -284,6 +291,7 @@ public class MongoOptions {
         result = 31 * result + heartbeatReadTimeoutMS;
         result = 31 * result + acceptableLatencyDifferenceMS;
         result = 31 * result + heartbeatThreadCount;
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
 
@@ -468,6 +476,8 @@ public class MongoOptions {
     int heartbeatReadTimeoutMS;
     int acceptableLatencyDifferenceMS;
     int heartbeatThreadCount;
+
+    String requiredReplicaSetName;
 
     /**
      * @return The description for <code>MongoClient</code> instances created with these options
@@ -808,6 +818,16 @@ public class MongoOptions {
         this.alwaysUseMBeans = alwaysUseMBeans;
     }
 
+    /**
+     * Gets the required replica set name that this client should be connecting to.
+     *
+     * @return the required replica set name, or null if none is required
+     * @since 2.12
+     */
+    public String getRequiredReplicaSetName() {
+        return requiredReplicaSetName;
+    }
+
     @Override
     public String toString() {
         return "MongoOptions{" +
@@ -833,6 +853,7 @@ public class MongoOptions {
                 ", cursorFinalizerEnabled=" + cursorFinalizerEnabled +
                 ", writeConcern=" + writeConcern +
                 ", alwaysUseMBeans=" + alwaysUseMBeans +
+                ", requiredReplicaSetName=" + requiredReplicaSetName +
                 '}';
     }
 }
