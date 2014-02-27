@@ -296,16 +296,23 @@ public class GridFS {
 
     /**
      * removes all files matching the given query
+     *
      * @param query
-     * @throws MongoException 
+     * @throws MongoException
      */
-    public void remove( DBObject query ){
-    	if(query == null) {
-              throw new IllegalArgumentException("query can not be null");
-          }
-        for ( GridFSDBFile f : find( query ) ){
-            f.remove();
+    public void remove(DBObject query) {
+        if (query == null) {
+            throw new IllegalArgumentException("query can not be null");
         }
+        // can't remove chunks without files_id thus keep them
+        List<ObjectId> filesIds = new ArrayList<ObjectId>();
+        for (GridFSDBFile f : find(query)) {
+            filesIds.add((ObjectId) f.getId());
+        }
+        // remove files from bucket
+        getFilesCollection().remove(query);
+        // then remove chunks
+        getChunksCollection().remove(new BasicDBObject("files_id", new BasicDBObject("$in", filesIds)));
     }
 
 
