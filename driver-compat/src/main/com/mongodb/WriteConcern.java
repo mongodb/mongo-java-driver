@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>WriteConcern control the acknowledgment of write operations with various options. <p> <b>w</b> <ul> <li>-1 = Don't even report network
- * errors </li> <li> 0 = Don't wait for acknowledgement from the server </li> <li> 1 = Wait for acknowledgement, but don't wait for
- * secondaries to replicate</li> <li> 2+= Wait for one or more secondaries to also acknowledge </li> </ul> <b>wtimeout</b> how long to wait
- * for slaves before failing <ul> <li>0: indefinite </li> <li>greater than 0: ms to wait </li> </ul> </p>
- * <p/>
- * Other options: <ul> <li><b>j</b>: wait for group commit to journal</li> <li><b>fsync</b>: force fsync to disk</li> </ul>
+ * <p>Controls the acknowledgment of write operations with various options.
+ * <p>
+ * <b>w</b>
+ * <ul>
+ *  <li> 0 = Don't wait for acknowledgement from the server </li>
+ *  <li> 1 = Wait for acknowledgement, but don't wait for secondaries to replicate</li>
+ *  <li> 2+= Wait for one or more secondaries to also acknowledge </li>
+ * </ul>
+ * <b>wtimeout</b> how long to wait for slaves before failing
+ * <ul>
+ *   <li>0: indefinite </li>
+ *   <li>greater than 0: ms to wait </li>
+ * </ul>
+ * </p>
+ * <p>
+ * Other options:
+ * <ul>
+ *   <li><b>j</b>: If true block until write operations have been committed to the journal. Cannot be used in combination with
+ *   {@code fsync}. Prior to MongoDB 2.6 this option was ignored if the server was running without journaling.  Starting with MongoDB 2.6
+ *   write operations will fail with an exception if this option is used when the server is running without journaling.</li>
+ *   <li><b>fsync</b>: If true and the server is running without journaling, blocks until the server has synced all data files to disk.
+ *   If the server is running with journaling, this acts the same as the {@code j} option, blocking until write operations have been
+ *   committed to the journal. Cannot be used in combination with {@code j}. In almost all cases the  {@code j} flag should be used in
+ *   preference to this one.</li>
+ * </ul>
  *
  * @mongodb.driver.manual core/write-concern/ Write Concern
  */
@@ -77,9 +96,7 @@ public class WriteConcern implements Serializable {
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      */
-    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(
-                                                                                org.mongodb.WriteConcern
-                                                                                    .REPLICA_ACKNOWLEDGED);
+    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED);
 
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
