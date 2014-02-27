@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,7 +274,7 @@ public class MongoClientOptions {
      * the required name.j </p>
      *
      * @return the required replica set name since 3.0
-     * @since 3.0
+     * @since 2.12
      */
     public String getRequiredReplicaSetName() {
         return proxied.getRequiredReplicaSetName();
@@ -759,7 +759,7 @@ public class MongoClientOptions {
          * @param requiredReplicaSetName the required replica set name for the replica set.
          * @return this
          * @see MongoClientOptions#getRequiredReplicaSetName()
-         * @since 3.0
+         * @since 2.12
          */
         public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
             proxied.requiredReplicaSetName(requiredReplicaSetName);
