@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Various settings to control the behavior of a {@code MongoClient}.
  *
  * @see MongoClient
- * @since 3.0.0
+ * @since 3.0
  */
 @Immutable
 public final class MongoClientOptions {
@@ -77,8 +77,6 @@ public final class MongoClientOptions {
 
     /**
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
-     *
-     * @since 3.0.0
      */
     public static class Builder {
 
@@ -352,7 +350,6 @@ public final class MongoClientOptions {
          * @param aHeartbeatFrequency the heartbeat frequency for the cluster, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatFrequency()
-         * @since 3.0
          */
         public Builder heartbeatFrequency(final int aHeartbeatFrequency) {
             if (aHeartbeatFrequency < 1) {
@@ -369,7 +366,6 @@ public final class MongoClientOptions {
          * @param aHeartbeatConnectFrequency the heartbeat connect retry frequency for the cluster, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatFrequency()
-         * @since 3.0
          */
         public Builder heartbeatConnectRetryFrequency(final int aHeartbeatConnectFrequency) {
             if (aHeartbeatConnectFrequency < 1) {
@@ -385,7 +381,6 @@ public final class MongoClientOptions {
          * @param aConnectTimeout the connection timeout
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatConnectTimeout()
-         * @since 3.0
          */
         public Builder heartbeatConnectTimeout(final int aConnectTimeout) {
             if (aConnectTimeout < 0) {
@@ -401,7 +396,6 @@ public final class MongoClientOptions {
          * @param aSocketTimeout the socket timeout
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatSocketTimeout()
-         * @since 3.0
          */
         public Builder heartbeatSocketTimeout(final int aSocketTimeout) {
             if (aSocketTimeout < 0) {
@@ -611,7 +605,6 @@ public final class MongoClientOptions {
      * cluster. The default value is 5000 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
-     * @since 3.0
      */
     public int getHeartbeatFrequency() {
         return heartbeatFrequency;
@@ -622,7 +615,6 @@ public final class MongoClientOptions {
      * cluster, after a previous failed attempt. The default value is 10 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
-     * @since 3.0
      */
     public int getHeartbeatConnectRetryFrequency() {
         return heartbeatConnectRetryFrequency;
@@ -632,7 +624,6 @@ public final class MongoClientOptions {
      * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
      *
      * @return the heartbeat connect timeout, in milliseconds
-     * @since 3.0
      */
     public int getHeartbeatConnectTimeout() {
         return heartbeatConnectTimeout;
@@ -642,7 +633,6 @@ public final class MongoClientOptions {
      * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
      *
      * @return the heartbeat socket timeout, in milliseconds
-     * @since 3.0
      */
     public int getHeartbeatSocketTimeout() {
         return heartbeatSocketTimeout;
@@ -704,12 +694,15 @@ public final class MongoClientOptions {
     }
 
     /**
-     * Gets the required replica set name.  With this option set, the MongoClient instance will <p/> <p> 1. Connect in replica set mode, and
-     * discover all members of the set based on the given servers </p> <p> 2. Make sure that the set name reported by all members matches
-     * the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with
-     * the required name.j </p>
+     * Gets the required replica set name.  With this option set, the MongoClient instance will
+     * <p> 1. Connect in replica set mode, and discover all members of the set based on the given servers
+     * </p>
+     * <p> 2. Make sure that the set name reported by all members matches the required set name.
+     * </p>
+     * <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.
+     * </p>
      *
-     * @return the required replica set name since 3.0
+     * @return the required replica set name
      */
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
