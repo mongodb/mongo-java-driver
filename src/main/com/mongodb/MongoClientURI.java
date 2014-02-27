@@ -270,6 +270,7 @@ public class MongoClientURI {
         generalOptionsKeys.add("sockettimeoutms");
         generalOptionsKeys.add("autoconnectretry");
         generalOptionsKeys.add("ssl");
+        generalOptionsKeys.add("replicaset");
 
         readPreferenceKeys.add("slaveok");
         readPreferenceKeys.add("readpreference");
@@ -318,6 +319,8 @@ public class MongoClientURI {
                 builder.socketTimeout(Integer.parseInt(value));
             } else if (key.equals("autoconnectretry")) {
                 builder.autoConnectRetry(_parseBoolean(value));
+            } else if (key.equals("replicaset")) {
+                builder.requiredReplicaSetName(value);
             } else if (key.equals("ssl")) {
                 if (_parseBoolean(value)) {
                     builder.socketFactory(SSLSocketFactory.getDefault());

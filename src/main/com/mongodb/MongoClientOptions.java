@@ -64,6 +64,7 @@ public class MongoClientOptions {
         private int heartbeatSocketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
         private int heartbeatThreadCount;
         private int acceptableLatencyDifference = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+        private String requiredReplicaSetName;
 
         /**
          * Sets the heartbeat frequency.
@@ -453,6 +454,20 @@ public class MongoClientOptions {
             return this;
         }
 
+
+        /**
+         * Sets the required replica set name for the cluster.
+         *
+         * @param requiredReplicaSetName the required replica set name for the replica set.
+         * @return this
+         * @see MongoClientOptions#getRequiredReplicaSetName()
+         * @since 2.12
+         */
+        public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
+            this.requiredReplicaSetName = requiredReplicaSetName;
+            return this;
+        }
+
         /**
          * Sets defaults to be what they are in {@code MongoOptions}.
          *
@@ -473,7 +488,7 @@ public class MongoClientOptions {
         public MongoClientOptions build() {
             return new MongoClientOptions(this);
         }
-    }
+  }
 
     /**
      * Create a new Builder instance.  This is a convenience method, equivalent to {@code new MongoClientOptions.Builder()}.
@@ -801,6 +816,22 @@ public class MongoClientOptions {
         return acceptableLatencyDifference;
     }
 
+    /**
+     * Gets the required replica set name.  With this option set, the MongoClient instance will
+     * <p> 1. Connect in replica set mode, and discover all members of the set based on the given servers
+     * </p>
+     * <p> 2. Make sure that the set name reported by all members matches the required set name.
+     * </p>
+     * <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.
+     * </p>
+     *
+     * @return the required replica set name
+     * @since 2.12
+     */
+    public String getRequiredReplicaSetName() {
+        return requiredReplicaSetName;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -887,6 +918,10 @@ public class MongoClientOptions {
         if (!writeConcern.equals(that.writeConcern)) {
             return false;
         }
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
+                                           : that.requiredReplicaSetName != null) {
+            return false;
+        }
 
         return true;
     }
@@ -918,6 +953,7 @@ public class MongoClientOptions {
         result = 31 * result + heartbeatSocketTimeout;
         result = 31 * result + heartbeatThreadCount;
         result = 31 * result + acceptableLatencyDifference;
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
 
@@ -946,6 +982,7 @@ public class MongoClientOptions {
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
                + ", heartbeatThreadCount=" + heartbeatThreadCount
                + ", acceptableLatencyDifference=" + acceptableLatencyDifference
+               + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
 
@@ -975,6 +1012,7 @@ public class MongoClientOptions {
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
         heartbeatThreadCount = builder.heartbeatThreadCount;
         acceptableLatencyDifference = builder.acceptableLatencyDifference;
+        requiredReplicaSetName = builder.requiredReplicaSetName;
     }
 
 
@@ -1003,4 +1041,5 @@ public class MongoClientOptions {
     private final int heartbeatSocketTimeout;
     private final int heartbeatThreadCount;
     private final int acceptableLatencyDifference;
+    private final String requiredReplicaSetName;
 }

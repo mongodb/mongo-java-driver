@@ -201,16 +201,19 @@ public class MongoClientURITest {
     public void testOptions() {
         MongoClientURI uAmp = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&" +
+                "replicaSet=test&" +
                 "connectTimeoutMS=2500&socketTimeoutMS=5500&autoConnectRetry=true&" +
                 "slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true");
         assertOnOptions(uAmp.getOptions());
         MongoClientURI uSemi = new MongoClientURI("mongodb://localhost/?" +
                 "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "replicaSet=test;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
                 "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uSemi.getOptions());
         MongoClientURI uMixed = new MongoClientURI("mongodb://localhost/test?" +
                 "maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+                "replicaSet=test;" +
                 "connectTimeoutMS=2500;socketTimeoutMS=5500&autoConnectRetry=true;" +
                 "slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true");
         assertOnOptions(uMixed.getOptions());
@@ -310,5 +313,6 @@ public class MongoClientURITest {
         assertTrue(options.isAutoConnectRetry());
         assertEquals(new WriteConcern(1, 2500, true), options.getWriteConcern());
         assertEquals(ReadPreference.secondaryPreferred(), options.getReadPreference());
+        assertEquals("test", options.getRequiredReplicaSetName());
     }
 }

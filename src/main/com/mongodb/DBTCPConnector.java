@@ -31,7 +31,7 @@ import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterConnectionMode.Single;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ClusterType.Sharded;
-import static com.mongodb.MongoAuthority.Type.Direct;
+import static com.mongodb.MongoAuthority.Type.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
 
@@ -76,7 +76,9 @@ public class DBTCPConnector implements DBConnector {
         Clusters.create(clusterId,
                         ClusterSettings.builder()
                                        .hosts(_mongo.getAuthority().getServerAddresses())
-                                       .mode(_mongo.getAuthority().getType() == Direct ? Single : Multiple)
+                                       .mode(_mongo.getAuthority().getType() == Set || options.getRequiredReplicaSetName() != null ?
+                                             Multiple : Single)
+                                       .requiredReplicaSetName(_mongo.getMongoOptions().getRequiredReplicaSetName())
                                        .build(),
                         ServerSettings.builder()
                                       .heartbeatFrequency(options.heartbeatFrequencyMS, MILLISECONDS)
