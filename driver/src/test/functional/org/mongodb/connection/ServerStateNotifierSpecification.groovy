@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -27,7 +29,7 @@ import static org.mongodb.Fixture.getCredentialList
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 
-class DefaultServerStateNotifierSpecification extends FunctionalSpecification {
+class ServerStateNotifierSpecification extends FunctionalSpecification {
     ServerDescription newDescription
     ServerStateNotifier serverStateNotifier
 
