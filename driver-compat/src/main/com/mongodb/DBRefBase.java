@@ -20,12 +20,19 @@ package com.mongodb;
 
 import org.mongodb.DBRef;
 
-/**
- * represents a database reference, which points to an object stored in the database
- */
-public class DBRefBase {
+import java.io.Serializable;
 
-    private final DB db;
+/**
+ * Represents a database reference, which points to an object stored in the database.
+ * <p>
+ * While instances of this class are {@code Serializable}, deserialized instances can not be fetched,
+ * as the {@code db} property is transient.
+ */
+public class DBRefBase implements Serializable {
+
+    private static final long serialVersionUID = 3031885741395465814L;
+
+    private final transient DB db;
     private final org.mongodb.DBRef proxied;
 
     /**
@@ -41,6 +48,14 @@ public class DBRefBase {
     }
 
     /**
+     * For use only with serialization framework.
+     */
+    protected DBRefBase() {
+        proxied = null;
+        db = null;
+    }
+
+    /**
      * Gets the object's id
      *
      * @return the id of the referenced document
@@ -52,16 +67,17 @@ public class DBRefBase {
     /**
      * Gets the document's collection name.
      *
-     * @return the name of the collection that the reference document is in
+     * @return the name of the collection in which the reference is stored
      */
     public String getRef() {
         return proxied.getRef();
     }
 
     /**
-     * Gets the database
+     * Gets the database, which may be null, in which case the reference can not be fetched.
      *
      * @return the database
+     * @see #fetch()
      */
     public DB getDB() {
         return db;
@@ -76,7 +92,7 @@ public class DBRefBase {
      */
     public DBObject fetch() {
         if (db == null) {
-            throw new RuntimeException("no db");
+            throw new MongoInternalException("no db");
         }
 
         return db.getCollectionFromString(proxied.getRef()).findOne(proxied.getId());
@@ -93,9 +109,6 @@ public class DBRefBase {
 
         DBRefBase dbRefBase = (DBRefBase) o;
 
-        if (db != null ? !db.equals(dbRefBase.db) : dbRefBase.db != null) {
-            return false;
-        }
         if (proxied != null ? !proxied.equals(dbRefBase.proxied) : dbRefBase.proxied != null) {
             return false;
         }
@@ -105,9 +118,7 @@ public class DBRefBase {
 
     @Override
     public int hashCode() {
-        int result = db.hashCode();
-        result = 31 * result + proxied.hashCode();
-        return result;
+        return proxied.hashCode();
     }
 
     @Override

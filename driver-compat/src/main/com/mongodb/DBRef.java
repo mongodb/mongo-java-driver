@@ -21,11 +21,17 @@ package com.mongodb;
 import org.bson.BSONObject;
 
 /**
- * overrides DBRefBase to understand a BSONObject representation of a reference.
+ * Extends DBRefBase to understand a BSONObject representation of a reference.
+ * <p>
+ * While instances of this class are {@code Serializable}, deserialized instances can not be fetched,
+ * as the {@code db} property is transient.
  *
  * @mongodb.driver.manual applications/database-references Database References
  */
 public class DBRef extends DBRefBase {
+
+    private static final long serialVersionUID = -849581217713362618L;
+
     /**
      * Creates a DBRef.
      *
@@ -47,12 +53,16 @@ public class DBRef extends DBRefBase {
         super(db, ns, id);
     }
 
+    // Required for serialization framework
+    private DBRef() {
+        super();
+    }
+
     /**
-     * Fetches a referenced object from the database.
-     *
-     * @param db  the database
+     * fetches a referenced object from the database
+     * @param db the database
      * @param ref the reference
-     * @return the document fetched
+     * @return the referenced document
      * @throws MongoException
      */
     public static DBObject fetch(final DB db, final DBObject ref) {

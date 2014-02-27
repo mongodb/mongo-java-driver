@@ -16,9 +16,21 @@
 
 package org.mongodb;
 
+import java.io.Serializable;
+
 // TODO: change name to DocumentReference
 // TODO: support database as well as collection
-public class DBRef {
+
+/**
+ * A reference by _id to a document in a particular collection.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual applications/database-references Database References
+ */
+public class DBRef implements Serializable {
+
+    private static final long serialVersionUID = 3437976873151865299L;
+
     private final Object id;
     private final String ref;
 

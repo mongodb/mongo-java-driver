@@ -23,6 +23,10 @@ import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +40,7 @@ public class DBRefOldTest extends DatabaseTestCase {
     @Test
     public void testEqualsAndHashCode() {
         DBRef referenceA = new DBRef(database, "foo.bar", 4);
-        DBRef referenceB = new DBRef(database, "foo.bar", 4);
+        DBRef referenceB = new DBRef(null, "foo.bar", 4);
         assertEquals(referenceA, referenceA);
         assertEquals(referenceA, referenceB);
         assertEquals(referenceA.hashCode(), referenceB.hashCode());
@@ -198,5 +202,21 @@ public class DBRefOldTest extends DatabaseTestCase {
         DBObject fetchedRefs = (DBObject) fetched.get("refs");
         assertFalse(fetchedRefs.keySet().contains("$id"));
         assertEquals(fetched, entity);
+    }
+
+    @Test
+    public void testSerialization() throws Exception {
+        DBRef dbRef = new DBRef(database, "col", 42);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+        objectOutputStream.writeObject(dbRef);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        DBRef dbRef2 = (DBRef) objectInputStream.readObject();
+
+        assertEquals(dbRef, dbRef2);
     }
 }

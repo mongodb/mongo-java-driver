@@ -18,7 +18,13 @@ package org.mongodb;
 
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class DBRefTest {
@@ -32,4 +38,19 @@ public class DBRefTest {
         assertThat(dbRef, is(dbRefToCompare));
     }
 
+    @Test
+    public void testSerialization() throws Exception {
+        DBRef dbRef = new DBRef(42, "col");
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+        objectOutputStream.writeObject(dbRef);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        DBRef dbRef2 = (DBRef) objectInputStream.readObject();
+
+        assertEquals(dbRef, dbRef2);
+    }
 }
