@@ -100,14 +100,18 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
         .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
             @Override
             public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                MongoFuture<WriteResult> protocolFuture;
-                //                    if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(pair.getServerDescription())) {
-                //                        protocolFuture = getCommandProtocol(pair.getServerDescription(),
-                // pair.getConnection()).executeAsync();
-                //                    } else {
-                protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
-                //                    }
-                protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
+                if (e != null ) {
+                    retVal.init(null, e);
+                } else {
+                    MongoFuture<WriteResult> protocolFuture;
+                    //                    if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(pair.getServerDescription())) {
+                    //                        protocolFuture = getCommandProtocol(pair.getServerDescription(),
+                    // pair.getConnection()).executeAsync();
+                    //                    } else {
+                    protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
+                    //                    }
+                    protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
+                }
             }
         });
         return retVal;
