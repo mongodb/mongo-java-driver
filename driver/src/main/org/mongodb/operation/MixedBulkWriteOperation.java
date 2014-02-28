@@ -146,9 +146,9 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
     private Iterable<Run> getRunGenerator(final ServerDescription serverDescription) {
         if (ordered) {
-            return new OrderedRunGenerator(serverDescription.getMaxWriteBatchSize());
+            return new OrderedRunGenerator(serverDescription);
         } else {
-            return new UnorderedRunGenerator(serverDescription.getMaxWriteBatchSize());
+            return new UnorderedRunGenerator(serverDescription);
         }
     }
 
@@ -156,8 +156,8 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
         private final int maxWriteBatchSize;
 
-        public OrderedRunGenerator(final int maxWriteBatchSize) {
-            this.maxWriteBatchSize = maxWriteBatchSize;
+        public OrderedRunGenerator(final ServerDescription serverDescription) {
+            this.maxWriteBatchSize = serverDescription.getMaxWriteBatchSize();
         }
 
         @Override
@@ -203,8 +203,8 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
     private class UnorderedRunGenerator implements Iterable<Run> {
         private final int maxWriteBatchSize;
 
-        public UnorderedRunGenerator(final int maxWriteBatchSize) {
-            this.maxWriteBatchSize = maxWriteBatchSize;
+        public UnorderedRunGenerator(final ServerDescription serverDescription) {
+            this.maxWriteBatchSize = serverDescription.getMaxWriteBatchSize();
         }
 
         @Override
@@ -229,7 +229,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() > maxWriteBatchSize) {
+                        if (run.size() == maxWriteBatchSize) {
                             runs.remove(run);
                             return run;
                         }
