@@ -184,7 +184,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
                 private int getNextIndex() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == maxWriteBatchSize || writeRequests.get(i).getType() != type) {
+                        if (i == curIndex + maxWriteBatchSize || writeRequests.get(i).getType() != type) {
                             return i;
                         }
                     }

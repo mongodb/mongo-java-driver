@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 
 
 
@@ -298,6 +300,37 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.find(new Document('_id', 6)).one == new Document('_id', 6).append('x', 5)
         collection.find(new Document('_id', 7)).one == new Document('_id', 7)
         collection.find(new Document('_id', 8)).one == new Document('_id', 8)
+    }
+
+    def 'should split ordered when the number of writes is larger than the match write batch size'() {
+        given:
+        def writes = []
+        (0..2000).each {
+            writes.add(new InsertRequest(new Document()))
+        }
+
+        when:
+        new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(),
+                                    true).execute()
+
+        then:
+        collection.find().count() == 2001
+    }
+
+    def 'should split unordered when the number of writes is larger than the match write batch size'() {
+        given:
+        def writes = []
+        (0..2000).each {
+            writes.add(new InsertRequest(new Document()))
+        }
+
+        when:
+        new MixedBulkWriteOperation(getNamespace(), writes, false, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(),
+                                    true).execute()
+
+        then:
+        collection.find().count() == 2001
+
     }
 
     def 'error details should have correct index on unordered write failure'() {
