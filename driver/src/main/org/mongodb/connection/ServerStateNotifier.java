@@ -152,6 +152,8 @@ class ServerStateNotifier implements Runnable {
                                                             getDefaultMaxDocumentSize()))
                                 .maxMessageSize(getInteger(commandResult.getResponse().getInteger("maxMessageSizeBytes"),
                                                            getDefaultMaxMessageSize()))
+                                .maxWriteBatchSize(getInteger(commandResult.getResponse().getInteger("maxWriteBatchSize"),
+                                                              ServerDescription.getDefaultMaxWriteBatchSize()))
                                 .tags(getTagsFromDocument((Document) commandResult.getResponse().get("tags")))
                                 .setName(commandResult.getResponse().getString("setName"))
                                 .setVersion(commandResult.getResponse().getInteger("setVersion"))

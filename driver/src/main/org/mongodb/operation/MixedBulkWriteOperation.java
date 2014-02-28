@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.AcknowledgedBulkWriteResult;
 import org.mongodb.protocol.BulkWriteBatchCombiner;
@@ -69,7 +70,6 @@ import static org.mongodb.operation.WriteRequest.Type.UPDATE;
  * @since 3.0
  */
 public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
-    private static final int MAX_COUNT = 1000;   // TODO: configurable?
     private final MongoNamespace namespace;
     private final List<WriteRequest> writeRequests;
     private final WriteConcern writeConcern;
@@ -114,7 +114,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
         try {
             BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
                                                                                        ordered, writeConcern);
-            for (Run run : getRunGenerator()) {
+            for (Run run : getRunGenerator(provider.getServerDescription())) {
                 try {
                     BulkWriteResult result = run.execute(provider, connection);
                     if (result.isAcknowledged()) {
@@ -144,15 +144,22 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
         return provider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
     }
 
-    private Iterable<Run> getRunGenerator() {
+    private Iterable<Run> getRunGenerator(final ServerDescription serverDescription) {
         if (ordered) {
-            return new OrderedRunGenerator();
+            return new OrderedRunGenerator(serverDescription.getMaxWriteBatchSize());
         } else {
-            return new UnorderedRunGenerator();
+            return new UnorderedRunGenerator(serverDescription.getMaxWriteBatchSize());
         }
     }
 
     private class OrderedRunGenerator implements Iterable<Run> {
+
+        private final int maxWriteBatchSize;
+
+        public OrderedRunGenerator(final int maxWriteBatchSize) {
+            this.maxWriteBatchSize = maxWriteBatchSize;
+        }
+
         @Override
         public Iterator<Run> iterator() {
             return new Iterator<Run>() {
@@ -177,7 +184,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
                 private int getNextIndex() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == MAX_COUNT || writeRequests.get(i).getType() != type) {
+                        if (i == maxWriteBatchSize || writeRequests.get(i).getType() != type) {
                             return i;
                         }
                     }
@@ -194,6 +201,12 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
 
     private class UnorderedRunGenerator implements Iterable<Run> {
+        private final int maxWriteBatchSize;
+
+        public UnorderedRunGenerator(final int maxWriteBatchSize) {
+            this.maxWriteBatchSize = maxWriteBatchSize;
+        }
+
         @Override
         public Iterator<Run> iterator() {
             return new Iterator<Run>() {
@@ -216,7 +229,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() > MAX_COUNT) {
+                        if (run.size() > maxWriteBatchSize) {
                             runs.remove(run);
                             return run;
                         }

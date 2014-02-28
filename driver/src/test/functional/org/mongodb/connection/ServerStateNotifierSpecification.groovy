@@ -18,16 +18,23 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.ReadPreference
 
+import static java.util.Arrays.asList
+import static org.junit.Assume.assumeFalse
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getCredentialList
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
+import static org.mongodb.Fixture.serverVersionAtLeast
 
 class ServerStateNotifierSpecification extends FunctionalSpecification {
     ServerDescription newDescription
@@ -69,4 +76,29 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         cleanup:
         serverStateNotifier.close()
     }
+
+    def 'should set max wire batch size when provided by server'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)))
+
+        given:
+        CommandResult commandResult = database.executeCommand(new Document('ismaster', 1), ReadPreference.primary())
+        def expected = commandResult.response.getInteger('maxWriteBatchSize')
+
+        when:
+        serverStateNotifier.run()
+
+        then:
+        newDescription.maxWriteBatchSize == expected
+    }
+
+    def 'should set default max wire batch size when not provided by server'() {
+        assumeFalse(serverVersionAtLeast(asList(2, 5, 5)))
+
+        when:
+        serverStateNotifier.run()
+
+        then:
+        newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()
+    }
+
 }
