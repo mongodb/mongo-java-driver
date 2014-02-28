@@ -632,7 +632,7 @@ class DBCollectionImpl extends DBCollection {
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() > maxBatchWriteSize) {
+                        if (run.size() == maxBatchWriteSize) {
                             return runs.remove(run.type);
                         }
                     }
