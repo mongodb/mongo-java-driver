@@ -266,6 +266,34 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.findOne(new BasicDBObject('_id', 8)) == new BasicDBObject('_id', 8)
     }
 
+    def 'should split ordered when the number of writes is larger than the match write batch size'() {
+        given:
+        def op = collection.initializeOrderedBulkOperation()
+        (0..2000).each {
+            op.insert(new BasicDBObject())
+        }
+
+        when:
+        op.execute()
+
+        then:
+        collection.find().count() == 2001
+    }
+
+    def 'should split unordered when the number of writes is larger than the match write batch size'() {
+        given:
+        def op = collection.initializeUnorderedBulkOperation()
+        (0..2000).each {
+            op.insert(new BasicDBObject())
+        }
+
+        when:
+        op.execute()
+
+        then:
+        collection.find().count() == 2001
+
+    }
     def 'error details should have correct index on unordered write failure'() {
         given:
         collection.insert(getTestInserts())

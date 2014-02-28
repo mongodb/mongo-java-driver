@@ -570,7 +570,7 @@ class DBCollectionImpl extends DBCollection {
                 private int getStartIndexOfNextRun() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()
+                        if (i == curIndex + db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()
                             || writeRequests.get(i).getType() != type) {
                             return i;
                         }
