@@ -100,7 +100,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
         .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
             @Override
             public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                if (e != null ) {
+                if (e != null) {
                     retVal.init(null, e);
                 } else {
                     MongoFuture<WriteResult> protocolFuture;
