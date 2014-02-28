@@ -537,6 +537,7 @@ class DBCollectionImpl extends DBCollection {
         private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
+        private final int maxBatchWriteSize;
 
         public OrderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern, final DBEncoder encoder,
                                    final DBPort port) {
@@ -544,6 +545,7 @@ class DBCollectionImpl extends DBCollection {
             this.port = port;
             this.writeConcern = writeConcern.continueOnError(false);
             this.encoder = encoder;
+            this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
         }
 
         @Override
@@ -570,8 +572,7 @@ class DBCollectionImpl extends DBCollection {
                 private int getStartIndexOfNextRun() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == curIndex + db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()
-                            || writeRequests.get(i).getType() != type) {
+                        if (i == curIndex + maxBatchWriteSize || writeRequests.get(i).getType() != type) {
                             return i;
                         }
                     }
@@ -592,6 +593,7 @@ class DBCollectionImpl extends DBCollection {
         private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
+        private final int maxBatchWriteSize;
 
         public UnorderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern,
                                      final DBEncoder encoder, final DBPort port) {
@@ -599,6 +601,7 @@ class DBCollectionImpl extends DBCollection {
             this.port = port;
             this.writeConcern = writeConcern.continueOnError(true);
             this.encoder = encoder;
+            this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
         }
 
         @Override
@@ -629,7 +632,7 @@ class DBCollectionImpl extends DBCollection {
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() > db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize()) {
+                        if (run.size() > maxBatchWriteSize) {
                             return runs.remove(run.type);
                         }
                     }
