@@ -56,6 +56,7 @@ import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.MixedBulkWriteOperation;
+import org.mongodb.operation.ParallelScanOperation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
@@ -1300,6 +1301,31 @@ public class DBCollection {
         return stages;
     }
 
+    /**
+     * Return a list of cursors over the collection that can be used to scan it in parallel.
+     * <p>
+     *     Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos.
+     * </p>
+     *
+     * @param options the parallel scan options
+     * @return a list of cursors, whose size may be less than the number requested
+     * @since 2.12
+     *
+     * @mongodb.server.release 2.6
+     */
+    public List<Cursor> parallelScan(final ParallelScanOptions options) {
+        List<Cursor> cursors = new ArrayList<Cursor>();
+
+        List<MongoCursor<DBObject>> mongoCursors = execute(new ParallelScanOperation<DBObject>(getNamespace(), options.toNew(),
+                                                                                               objectCodec),
+                                                           options.getReadPreference() != null
+                                                           ? options.getReadPreference() : getReadPreference());
+
+        for (MongoCursor<DBObject> mongoCursor : mongoCursors) {
+            cursors.add(new MongoCursorAdapter(mongoCursor));
+        }
+        return cursors;
+    }
     /**
      * Get the name of a collection.
      *

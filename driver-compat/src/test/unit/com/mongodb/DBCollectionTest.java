@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -731,6 +733,30 @@ public class DBCollectionTest extends DatabaseTestCase {
         } catch (BulkWriteException e) {
             assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
         }
+    }
+
+    @Test
+    public void testParallelScan() throws UnknownHostException {
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
+        assumeFalse(isSharded());
+
+        Set<Integer> ids = new HashSet<Integer>();
+
+        for (int i = 0; i < 2000; i++) {
+            ids.add(i);
+            collection.insert(new BasicDBObject("_id", i));
+        }
+
+        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
+        assertTrue(cursors.size() <= 3);
+        for (Cursor cursor : cursors) {
+            while (cursor.hasNext()) {
+                Integer id = (Integer) cursor.next().get("_id");
+                assertTrue(ids.remove(id));
+            }
+        }
+
+        assertTrue(ids.isEmpty());
     }
 
     public static class MyDBObject extends BasicDBObject {

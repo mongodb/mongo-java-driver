@@ -306,6 +306,14 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, connection);
     }
 
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                 final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                                 final Connection connection, final ReadPreference readPreference,
+                                                                 final Function<CommandResult, T> transformer) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, encoder, decoder, readPreference, connection,
+                                                  transformer);
+    }
+
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
                                                                          final Connection connection) {
         return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(), connection);
