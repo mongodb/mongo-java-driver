@@ -173,29 +173,18 @@ class DBCollectionImpl extends DBCollection {
             }
         }
 
-        if ( shouldApply ){
-            for (DBObject o : list) {
-                apply(o);
-                _checkObject(o, false, false);
-                Object id = o.get("_id");
-                if (id instanceof ObjectId) {
-                    ((ObjectId) id).notNew();
-                }
-            }
-        }
-
         DBPort port = db.getConnector().getPrimaryPort();
         try {
             if (useWriteCommands(concern, port)) {
                 try {
-                    return translateBulkWriteResult(insertWithCommandProtocol(list, concern, encoder, port), INSERT, concern,
+                    return translateBulkWriteResult(insertWithCommandProtocol(list, concern, encoder, port, shouldApply), INSERT, concern,
                                                     port.getAddress());
                 } catch (BulkWriteException e) {
                     throw translateBulkWriteException(e, INSERT);
                 }
             }
             else {
-                return insertWithWriteProtocol(list, concern, encoder, port);
+                return insertWithWriteProtocol(list, concern, encoder, port, shouldApply);
             }
         } finally {
             db.getConnector().releasePort(port);
@@ -365,7 +354,7 @@ class DBCollectionImpl extends DBCollection {
                 }
             } else {
                 db.doGetCollection("system.indexes").insertWithWriteProtocol(asList(index), WriteConcern.SAFE,
-                                                                             DefaultDBEncoder.FACTORY.create(), port);
+                                                                             DefaultDBEncoder.FACTORY.create(), port, false);
             }
         } catch (IOException e) {
             throw new MongoException.Network("Operation on server " + port.getAddress() + " failed", e);
@@ -376,15 +365,26 @@ class DBCollectionImpl extends DBCollection {
 
     private BulkWriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern,
                                                       final DBEncoder encoder,
-                                                      final DBPort port) {
-        for (DBObject o : list) {
-            _checkObject(o, false, false);
+                                                      final DBPort port, final boolean shouldApply) {
+        if ( shouldApply ){
+            applyRulesForInsert(list);
         }
 
         BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern, list,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
                                                                    getMessageSettings(port.getAddress()));
         return writeWithCommandProtocol(port, INSERT, message, writeConcern);
+    }
+
+    private void applyRulesForInsert(final List<DBObject> list) {
+        for (DBObject o : list) {
+            _checkObject(o, false, false);
+            apply(o);
+            Object id = o.get("_id");
+            if (id instanceof ObjectId) {
+                ((ObjectId) id).notNew();
+            }
+        }
     }
 
     private BulkWriteResult removeWithCommandProtocol(final List<RemoveRequest> removeList,
@@ -486,9 +486,9 @@ class DBCollectionImpl extends DBCollection {
 
 
     private WriteResult insertWithWriteProtocol(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder,
-                                                final DBPort port) {
-        for (DBObject o : list) {
-            _checkObject(o, false, false);
+                                                final DBPort port, final boolean shouldApply) {
+        if ( shouldApply ){
+            applyRulesForInsert(list);
         }
 
         WriteResult last = null;
@@ -792,7 +792,7 @@ class DBCollectionImpl extends DBCollection {
                     for (InsertRequest cur : insertRequests) {
                         documents.add(cur.getDocument());
                     }
-                    return insertWithCommandProtocol(documents, writeConcern, encoder, port);
+                    return insertWithCommandProtocol(documents, writeConcern, encoder, port, true);
                 }
 
                 @Override
