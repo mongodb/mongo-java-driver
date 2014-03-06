@@ -44,26 +44,56 @@ public class ServerAddress {
         return org.mongodb.connection.ServerAddress.getDefaultPort();
     }
 
+    /**
+     * Creates a ServerAddress with default host and port
+     * @throws UnknownHostException
+     */
     public ServerAddress() throws UnknownHostException {
         proxied = new org.mongodb.connection.ServerAddress();
     }
 
+    /**
+     * Creates a ServerAddress with default port.
+     * If the host parameter contains a port, i.e. 127.0.0.1:3333
+     * it will use that port instead of the default one.
+     * @param host hostname
+     * @throws UnknownHostException
+     */
     public ServerAddress(final String host) throws UnknownHostException {
         proxied = new org.mongodb.connection.ServerAddress(host);
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param host hostname
+     * @param port mongod port
+     * @throws UnknownHostException
+     */
     public ServerAddress(final String host, final int port) {
         proxied = new org.mongodb.connection.ServerAddress(host, port);
     }
 
+    /**
+     * Creates a ServerAddress with default port
+     * @param addr host address
+     */
     public ServerAddress(final InetAddress inetAddress) {
         this(inetAddress.getHostName(), defaultPort());
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param addr host address
+     * @param port mongod port
+     */
     public ServerAddress(final InetAddress inetAddress, final int port) {
         this(inetAddress.getHostName(), port);
     }
 
+    /**
+     * Creates a ServerAddress
+     * @param addr inet socket address containing hostname and port
+     */
     public ServerAddress(final InetSocketAddress inetSocketAddress) {
         this(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
     }
