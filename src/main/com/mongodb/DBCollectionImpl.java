@@ -44,6 +44,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.bson.util.Assertions.isTrue;
 
+@SuppressWarnings("deprecation")
 class DBCollectionImpl extends DBCollection {
     private final DBApiLayer db;
     private final String namespace;
@@ -165,7 +166,6 @@ class DBCollectionImpl extends DBCollection {
 
         if (encoder == null)
             encoder = DefaultDBEncoder.FACTORY.create();
-
 
         if ( willTrace() ) {
             for (DBObject o : list) {
@@ -377,6 +377,10 @@ class DBCollectionImpl extends DBCollection {
     private BulkWriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern,
                                                       final DBEncoder encoder,
                                                       final DBPort port) {
+        for (DBObject o : list) {
+            _checkObject(o, false, false);
+        }
+
         BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern, list,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
                                                                    getMessageSettings(port.getAddress()));
@@ -483,6 +487,10 @@ class DBCollectionImpl extends DBCollection {
 
     private WriteResult insertWithWriteProtocol(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder,
                                                 final DBPort port) {
+        for (DBObject o : list) {
+            _checkObject(o, false, false);
+        }
+
         WriteResult last = null;
 
         int cur = 0;
@@ -534,7 +542,6 @@ class DBCollectionImpl extends DBCollection {
 
     private class OrderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
-        private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
         private final int maxBatchWriteSize;
@@ -542,7 +549,6 @@ class DBCollectionImpl extends DBCollection {
         public OrderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern, final DBEncoder encoder,
                                    final DBPort port) {
             this.writeRequests = writeRequests;
-            this.port = port;
             this.writeConcern = writeConcern.continueOnError(false);
             this.encoder = encoder;
             this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
@@ -590,7 +596,6 @@ class DBCollectionImpl extends DBCollection {
 
     private class UnorderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
-        private final DBPort port;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
         private final int maxBatchWriteSize;
@@ -598,7 +603,6 @@ class DBCollectionImpl extends DBCollection {
         public UnorderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern,
                                      final DBEncoder encoder, final DBPort port) {
             this.writeRequests = writeRequests;
-            this.port = port;
             this.writeConcern = writeConcern.continueOnError(true);
             this.encoder = encoder;
             this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
@@ -707,6 +711,14 @@ class DBCollectionImpl extends DBCollection {
         }
 
         BulkWriteResult executeUpdates(final List<ModifyRequest> updateRequests, final DBPort port) {
+            for (ModifyRequest request : updateRequests) {
+                for (String key : request.getUpdateDocument().keySet()) {
+                    if (!key.startsWith("$")) {
+                        throw new IllegalArgumentException("Update document keys must start with $: " + key);
+                    }
+                }
+            }
+
             return new RunExecutor(port) {
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
@@ -728,6 +740,10 @@ class DBCollectionImpl extends DBCollection {
         }
 
         BulkWriteResult executeReplaces(final List<ModifyRequest> replaceRequests, final DBPort port) {
+            for (ModifyRequest request : replaceRequests) {
+                _checkObject(request.getUpdateDocument(), false, false);
+            }
+
             return new RunExecutor(port) {
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
