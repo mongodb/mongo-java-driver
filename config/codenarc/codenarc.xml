@@ -56,7 +56,7 @@
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
         <exclude name="ExplicitCallToCompareToMethod"/>
-     </ruleset-ref>
+    </ruleset-ref>
     <ruleset-ref path='rulesets/junit.xml'/>
     <ruleset-ref path='rulesets/logging.xml'/>
     <ruleset-ref path='rulesets/naming.xml'>
@@ -65,10 +65,13 @@
     <ruleset-ref path='rulesets/security.xml'/>
     <ruleset-ref path='rulesets/serialization.xml'/>
     <ruleset-ref path='rulesets/size.xml'>
+        <rule-config name='MethodCount'>
+            <property name='maxMethods' value='50'/>
+        </rule-config>
         <exclude name='CrapMetric'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unnecessary.xml'>
-        <!-- these should be revisted later when we've developed a Groovy style -->
+        <!-- these should be revisited later when we've developed a Groovy style -->
         <exclude name='UnnecessaryGetter'/>
         <exclude name='UnnecessarySemicolon'/>
     </ruleset-ref>
