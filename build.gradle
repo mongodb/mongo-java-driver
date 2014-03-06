@@ -26,7 +26,7 @@ buildscript {
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
-        classpath 'com.antwerkz.github:github-release-gradle-plugin:1.1.0'
+//        classpath 'com.antwerkz.github:github-release-gradle-plugin:1.1.0'
     }
 }
 
@@ -271,4 +271,6 @@ gradle.buildFinished { BuildResult result ->
     }
 }
 
-apply from: 'gradle/release-process.gradle'
+apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/osgi-compatibility.gradle'
+//apply from: 'gradle/release-process.gradle'
