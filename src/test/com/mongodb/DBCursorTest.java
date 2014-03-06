@@ -500,6 +500,32 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
+    public void testMaxTimeDuringGetMore() {
+        assumeFalse(isSharded(getMongoClient()));
+        checkServerVersion(2.5);
+        for (int i=0; i < 20; i++) {
+            collection.insert(new BasicDBObject("x", 1));
+        }
+
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.batchSize(10);
+        cursor.maxTime(1, SECONDS);
+        cursor.next();
+
+        enableMaxTimeFailPoint();
+        try {
+            while(cursor.hasNext()) {
+                cursor.next();
+            }
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
     public void testMaxTimeForIterable() {
         assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
