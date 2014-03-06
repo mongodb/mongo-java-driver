@@ -62,6 +62,25 @@ public final class Fixture {
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 
+    public static boolean isStandalone() {
+        return !isReplicaSet() && !isSharded();
+    }
+
+    public static boolean isSharded() {
+        CommandResult isMasterResult = runIsMaster();
+        Object msg = isMasterResult.get("msg");
+        return msg != null && msg.equals("isdbgrid");
+    }
+
+    public static boolean isReplicaSet() {
+        return runIsMaster().get("setName") != null;
+    }
+
+    private static CommandResult runIsMaster() {
+        // Check to see if this is a replica set... if not, get out of here.
+        return getMongoClient().getDB("admin").command(new BasicDBObject("ismaster", 1));
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
