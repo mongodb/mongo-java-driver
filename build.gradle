@@ -261,7 +261,7 @@ project(':driver-compat') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.10'
+    gradleVersion = '1.11'
 }
 
 gradle.buildFinished { BuildResult result ->
