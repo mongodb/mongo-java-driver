@@ -181,6 +181,12 @@ public class DBCollectionTest extends TestCase {
         c.dropIndexes();
         assertEquals( 1 , c.getIndexInfo().size() );
 
+        c.createIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+
+        c.dropIndexes();
+        assertEquals( 1 , c.getIndexInfo().size() );
+
         c.ensureIndex( new BasicDBObject( "x" , 1 ) );
         assertEquals( 2 , c.getIndexInfo().size() );
 
@@ -190,6 +196,18 @@ public class DBCollectionTest extends TestCase {
         c.dropIndex( new BasicDBObject( "x" , 1 ) );
         assertEquals( 2 , c.getIndexInfo().size() );
 
+        c.dropIndexes();
+        assertEquals( 1 , c.getIndexInfo().size() );
+
+        c.createIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+
+        c.createIndex( new BasicDBObject( "y" , 1 ) );
+        assertEquals( 3 , c.getIndexInfo().size() );
+
+        c.dropIndex( new BasicDBObject( "x" , 1 ) );
+        assertEquals( 2 , c.getIndexInfo().size() );
+        c.dropIndexes();
     }
 
     @Test
@@ -246,7 +264,15 @@ public class DBCollectionTest extends TestCase {
 
         c.ensureIndex( new BasicDBObject( "x" , 1 ) , new BasicDBObject( "unique" , true ) );
         assertEquals( 2 , c.getIndexInfo().size() );
-        assertEquals( Boolean.TRUE , c.getIndexInfo().get(1).get( "unique" ) );
+        DBObject indexInfo = c.getIndexInfo().get(1);
+        assertEquals("x_1", indexInfo.get("name"));
+
+        c.drop();
+
+        c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        indexInfo = c.getIndexInfo().get(1);
+        assertEquals( Boolean.TRUE , indexInfo.get("unique") );
+        assertEquals("x_1", indexInfo.get("name"));
     }
 
     @Test
@@ -259,20 +285,45 @@ public class DBCollectionTest extends TestCase {
         assertEquals( 1 , c.getIndexInfo().size() );
         c.ensureIndex( new BasicDBObject("x.y", 1), "nestedIdx1", false);
         assertEquals( 2 , c.getIndexInfo().size() );
+        assertEquals( "nestedIdx1" , c.getIndexInfo().get(1).get("name") );
+        
+        c.drop();
+        c.createIndex(new BasicDBObject("x.y", 1), new BasicDBObject("name", "nestedIdx1").append("unique", false));
+        assertEquals(2, c.getIndexInfo().size());
+        assertEquals( "nestedIdx1" , c.getIndexInfo().get(1).get("name") );
     }
 
 
-    @Test(expected = MongoException.DuplicateKey.class)
-    public void testIndexExceptions(){
+    @Test(expected = DuplicateKeyException.class)
+    public void testEnsureIndexExceptions(){
         collection.insert(new BasicDBObject("x", 1));
         collection.insert(new BasicDBObject("x", 1));
 
         collection.ensureIndex(new BasicDBObject("y", 1));
         collection.resetIndexCache();
-        collection.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
+        try {
+            collection.ensureIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
+        } catch (Exception e) {
+            fail("Trying to create an existing index should not fail.");            
+        }
         collection.resetIndexCache();
 
         collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+    }
+
+    @Test(expected = DuplicateKeyException.class)
+    public void testCreateIndexExceptions(){
+        collection.insert(new BasicDBObject("x", 1));
+        collection.insert(new BasicDBObject("x", 1));
+
+        collection.createIndex(new BasicDBObject("y", 1));
+        try {
+            collection.createIndex(new BasicDBObject("y", 1)); // make sure this doesn't throw
+        } catch (Exception e) {
+            fail("Trying to create an existing index should not fail.");
+        }
+
+        collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
     }
 
     @Test

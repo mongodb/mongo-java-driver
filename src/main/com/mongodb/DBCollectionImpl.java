@@ -342,7 +342,7 @@ class DBCollectionImpl extends DBCollection {
         DBPort port = db.getConnector().getPrimaryPort();
 
         try {
-            DBObject index = new BasicDBObject();
+            DBObject index = defaultOptions(keys);
             index.putAll(options);
             index.put("key", keys);
 
