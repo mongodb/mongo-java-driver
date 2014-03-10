@@ -550,8 +550,9 @@ public class DBCollectionTest extends TestCase {
             collection.insert(new BasicDBObject("_id", i));
         }
 
-        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
-        assertEquals(3, cursors.size());
+        int numCursors = 10;
+        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(numCursors).batchSize(1000).build());
+        assertTrue(cursors.size() <= numCursors);
 
         for (Cursor cursor : cursors) {
             while (cursor.hasNext()) {
