@@ -175,14 +175,14 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, 1, [])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
         collection.find(new BasicDBObject('y', 1), new BasicDBObject('x', 1).append('_id', 0)).toArray() == [new BasicDBObject('x', true)]
 
         where:
         ordered << [true, false]
     }
 
-    def 'when documents match the query, an update should update all of them'() {
+     def 'when documents match the query, an update should update all of them'() {
         given:
         collection.insert(new BasicDBObject('x', true))
         collection.insert(new BasicDBObject('x', true))
@@ -195,7 +195,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, 2, [])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
         collection.count(new BasicDBObject('y', 1)) == 2
 
         where:
@@ -212,7 +212,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, [new BulkWriteUpsert(0, id)])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
         collection.findOne() == new BasicDBObject('_id', id).append('x', 2)
 
         where:
@@ -229,7 +229,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, [new BulkWriteUpsert(0, id)])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
         collection.findOne() == new BasicDBObject('_id', id).append('x', 2)
 
         where:
@@ -249,7 +249,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, 2, [])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
         collection.count(new BasicDBObject('y', 1)) == 2
 
         where:
@@ -284,7 +284,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, [new BulkWriteUpsert(0, id)])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
         collection.findOne() == new BasicDBObject('_id', id).append('x', 2)
 
         where:
@@ -304,7 +304,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, 1, [])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
         collection.find(new BasicDBObject('x', false), new BasicDBObject('_id', 0)).toArray() == [replacement]
 
         where:
@@ -322,7 +322,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, 1, [])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
         collection.findOne() == new BasicDBObject('_id', id).append('x', 2)
 
         where:
@@ -340,7 +340,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(REPLACE, 1, 1, [])
+        result == new AcknowledgedBulkWriteResult(REPLACE, 1, expectedModifiedCount(1), [])
         collection.findOne() == new BasicDBObject('_id', 1).append('x', 2)
 
         where:
@@ -359,7 +359,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(REPLACE, 1, 1, [])
+        result == new AcknowledgedBulkWriteResult(REPLACE, 1, expectedModifiedCount(1), [])
         collection.count() == 1
     }
 
@@ -374,7 +374,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(2, 4, 2, 4, [])
+        result == new AcknowledgedBulkWriteResult(2, 4, 2, expectedModifiedCount(4), [])
 
         collection.findOne(new BasicDBObject('_id', 1)) == new BasicDBObject('_id', 1).append('x', 2)
         collection.findOne(new BasicDBObject('_id', 2)) == new BasicDBObject('_id', 2).append('x', 3)
@@ -446,7 +446,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def result = operation.execute()
 
         then:
-        result == new AcknowledgedBulkWriteResult(2, 4, 2, 4, [])
+        result == new AcknowledgedBulkWriteResult(2, 4, 2, expectedModifiedCount(4), [])
 
         collection.findOne(new BasicDBObject('_id', 1)) == new BasicDBObject('_id', 1).append('x', 2)
         collection.findOne(new BasicDBObject('_id', 2)) == new BasicDBObject('_id', 2).append('x', 3)
@@ -711,5 +711,9 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
     private BulkWriteOperation initializeBulkOperation(boolean ordered) {
         ordered ? collection.initializeOrderedBulkOperation() : collection.initializeUnorderedBulkOperation()
+    }
+
+    private static Integer expectedModifiedCount(final int expectedCountForServersThatSupportIt) {
+        (serverIsAtLeastVersion(2.5)) ? expectedCountForServersThatSupportIt : null
     }
 }

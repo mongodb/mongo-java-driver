@@ -48,6 +48,18 @@ class BulkWriteBatchCombinerSpecification extends Specification {
         result == new AcknowledgedBulkWriteResult(INSERT, 1, 0, [])
     }
 
+    def 'should handle null modifiedCount'() {
+        def runResults = new BulkWriteBatchCombiner(new ServerAddress(), ACKNOWLEDGED)
+        runResults.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, null, []), new IndexMap.RangeBased().add(0, 0))
+        runResults.addResult(new AcknowledgedBulkWriteResult(INSERT, 1, 0, []), new IndexMap.RangeBased().add(0, 0))
+
+        when:
+        def result = runResults.getResult()
+
+        then:
+        result == new AcknowledgedBulkWriteResult(1, 1, 0, null, [])
+    }
+
     def 'should sort upserts'() {
         given:
         def runResults = new BulkWriteBatchCombiner(new ServerAddress(), ACKNOWLEDGED)
