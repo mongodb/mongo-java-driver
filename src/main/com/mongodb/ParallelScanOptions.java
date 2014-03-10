@@ -35,12 +35,16 @@ public class ParallelScanOptions {
 
         /**
          * Set the requested number of cursors to iterate in parallel.
+         * <p>
+         *     Note: this is the maximum number of cursors the server will return, it may return fewer cursors.
+         * </p>
          *
-         * @param numCursors the number of cursors requested, which must be >= 1
+         * @param numCursors the number of cursors requested, which must be >= 1 and <= 10000
          * @return this
          */
         public Builder numCursors(final int numCursors) {
             isTrue("numCursors >= 1", numCursors >= 1);
+            isTrue("numCursors <= 10000", numCursors <= 10000);
 
             this.numCursors = numCursors;
             return this;
