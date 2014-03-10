@@ -33,7 +33,7 @@ class BulkWriteBatchCombiner {
     private int insertedCount;
     private int matchedCount;
     private int removedCount;
-    private int modifiedCount;
+    private Integer modifiedCount = 0;
     private final Set<BulkWriteUpsert> writeUpserts = new TreeSet<BulkWriteUpsert>(new Comparator<BulkWriteUpsert>() {
         @Override
         public int compare(final BulkWriteUpsert o1, final BulkWriteUpsert o2) {
@@ -58,7 +58,11 @@ class BulkWriteBatchCombiner {
         insertedCount += result.getInsertedCount();
         matchedCount += result.getMatchedCount();
         removedCount += result.getRemovedCount();
-        modifiedCount += result.getModifiedCount();
+        if (result.isModifiedCountAvailable() && modifiedCount != null) {
+            modifiedCount += result.getModifiedCount();
+        } else {
+            modifiedCount = null;
+        }
         mergeUpserts(result.getUpserts(), indexMap);
     }
 

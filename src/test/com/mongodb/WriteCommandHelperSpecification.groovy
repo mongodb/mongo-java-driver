@@ -22,6 +22,8 @@ import static com.mongodb.WriteCommandResultHelper.getBulkWriteException
 import static com.mongodb.WriteCommandResultHelper.getBulkWriteResult
 import static com.mongodb.WriteCommandResultHelper.hasError
 import static com.mongodb.WriteRequest.Type.INSERT
+import static com.mongodb.WriteRequest.Type.REMOVE
+import static com.mongodb.WriteRequest.Type.REPLACE
 import static com.mongodb.WriteRequest.Type.UPDATE
 
 class WriteCommandHelperSpecification extends Specification {
@@ -39,6 +41,26 @@ class WriteCommandHelperSpecification extends Specification {
                                                             .append('upserted', [new BasicDBObject('index', 0).append('_id', 'id1'),
                                                                                  new BasicDBObject('index', 2).append('_id', 'id2')])))
                 .getUpserts()
+    }
+
+    def 'should not have modified count for update with no nModified field in the result'() {
+        expect:
+        !getBulkWriteResult(UPDATE, getCommandResult(new BasicDBObject('n', 1))).isModifiedCountAvailable()
+    }
+
+    def 'should not have modified count for replace with no nModified field in the result'() {
+        expect:
+        !getBulkWriteResult(REPLACE, getCommandResult(new BasicDBObject('n', 1))).isModifiedCountAvailable()
+    }
+
+    def 'should have modified count of 0 for insert with no nModified field in the result'() {
+        expect:
+        0 == getBulkWriteResult(INSERT, getCommandResult(new BasicDBObject('n', 1))).getModifiedCount()
+    }
+
+    def 'should have modified count of 0 for remove with no nModified field in the result'() {
+        expect:
+        0 == getBulkWriteResult(REMOVE, getCommandResult(new BasicDBObject('n', 1))).getModifiedCount()
     }
 
     def 'should not have error if writeErrors is empty and writeConcernError is missing'() {

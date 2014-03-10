@@ -25,11 +25,11 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private int insertedCount;
     private int matchedCount;
     private int removedCount;
-    private int modifiedCount;
+    private Integer modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
     AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,
-                                final int modifiedCount, final List<BulkWriteUpsert> upserts) {
+                                final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
         this.matchedCount = matchedCount;
         this.removedCount = removedCount;
@@ -41,7 +41,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         this(type, count, 0, upserts);
     }
 
-    AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final int modifiedCount,
+    AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final Integer modifiedCount,
                                 final List<BulkWriteUpsert> upserts) {
         this(type == WriteRequest.Type.INSERT ? count : 0,
              (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE)  ? count : 0,
@@ -70,8 +70,19 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
+    public boolean isModifiedCountAvailable() {
+        return modifiedCount != null;
+    }
+
+    @Override
     public int getModifiedCount() {
+        if (modifiedCount == null) {
+            throw new UnsupportedOperationException("The modifiedCount is not available because at least one of the servers that was " +
+                                                    "updated was not able to provide this information (the server is must be at least " +
+                                                    "version 2.6");
+        }
         return modifiedCount;
+
     }
 
     @Override
@@ -93,13 +104,13 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         if (insertedCount != that.insertedCount) {
             return false;
         }
-        if (modifiedCount != that.modifiedCount) {
+        if (matchedCount != that.matchedCount) {
             return false;
         }
         if (removedCount != that.removedCount) {
             return false;
         }
-        if (matchedCount != that.matchedCount) {
+        if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
             return false;
         }
         if (!upserts.equals(that.upserts)) {
@@ -111,11 +122,11 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
 
     @Override
     public int hashCode() {
-        int result = upserts.hashCode();
-        result = 31 * result + insertedCount;
+        int result = insertedCount;
         result = 31 * result + matchedCount;
         result = 31 * result + removedCount;
-        result = 31 * result + modifiedCount;
+        result = 31 * result + (modifiedCount != null ? modifiedCount.hashCode() : 0);
+        result = 31 * result + upserts.hashCode();
         return result;
     }
 

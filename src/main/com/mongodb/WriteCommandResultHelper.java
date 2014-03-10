@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.WriteRequest.Type.REPLACE;
+import static com.mongodb.WriteRequest.Type.UPDATE;
+
 final class WriteCommandResultHelper {
 
     static boolean hasError(final CommandResult commandResult) {
@@ -29,7 +32,7 @@ final class WriteCommandResultHelper {
     static BulkWriteResult getBulkWriteResult(final WriteRequest.Type type, final CommandResult commandResult) {
         int count = getCount(commandResult);
         List<BulkWriteUpsert> upsertedItems = getUpsertedItems(commandResult);
-        return new AcknowledgedBulkWriteResult(type, count - upsertedItems.size(), getModifiedCount(commandResult), upsertedItems);
+        return new AcknowledgedBulkWriteResult(type, count - upsertedItems.size(), getModifiedCount(type, commandResult), upsertedItems);
     }
 
     static BulkWriteException getBulkWriteException(final WriteRequest.Type type, final CommandResult commandResult) {
@@ -84,8 +87,12 @@ final class WriteCommandResultHelper {
         return commandResult.getInt("n");
     }
 
-    private static Integer getModifiedCount(final CommandResult commandResult) {
-        return commandResult.getInt("nModified", 0);
+    private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult commandResult) {
+        Integer modifiedCount =  (Integer) commandResult.get("nModified");
+        if (modifiedCount == null && !(type == UPDATE || type == REPLACE)) {
+            modifiedCount = 0;
+        }
+        return modifiedCount;
     }
 
     private static DBObject getErrInfo(final DBObject response) {
