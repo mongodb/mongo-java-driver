@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -37,6 +38,8 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -460,6 +463,100 @@ public class DBTest extends TestCase {
         CommandResult commandResult = getDatabase().command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
         assertThat(commandResult, hasFields(new String[]{"serverUsed", "ok", "errmsg"}));
     }
+
+    @Test
+    public void shouldAddReadOnlyUser() {
+        String userName = "newUser";
+        String pwd = "pwd";
+        getDatabase().addUser(userName, pwd.toCharArray(), true);
+        try {
+            assertCorrectUserExists(userName, pwd, true, getDatabase());
+        } finally {
+            getDatabase().removeUser(userName);
+        }
+    }
+
+    @Test
+    public void shouldAddReadOnlyAdminUser() {
+        String userName = "newUser";
+        String pwd = "pwd";
+        DB adminDB = getDatabase().getSisterDB("admin");
+        adminDB.addUser(userName, pwd.toCharArray(), true);
+        try {
+            assertCorrectUserExists(userName, pwd, true, adminDB);
+        } finally {
+            adminDB.removeUser(userName);
+        }
+    }
+
+    @Test
+    public void shouldAddReadWriteUser() {
+        String userName = "newUser";
+        String pwd = "pwd";
+        getDatabase().addUser(userName, pwd.toCharArray(), false);
+        try {
+            assertCorrectUserExists(userName, pwd, false, getDatabase());
+        } finally {
+            getDatabase().removeUser(userName);
+        }
+    }
+
+    @Test
+    public void shouldAddReadWriteAdminUser() {
+        String userName = "newUser";
+        String pwd = "pwd";
+        DB adminDB = getDatabase().getSisterDB("admin");
+        adminDB.addUser(userName, pwd.toCharArray(), false);
+        try {
+            assertCorrectUserExists(userName, pwd, false, adminDB);
+        } finally {
+            adminDB.removeUser(userName);
+        }
+    }
+
+    @Test
+    public void shouldRemoveUser() {
+        String userName = "newUser";
+        getDatabase().addUser(userName, "pwd".toCharArray(), true);
+        getDatabase().removeUser(userName);
+        assertThatUserIsRemoved(userName, getDatabase());
+    }
+
+    private void assertThatUserIsRemoved(final String userName, final DB database) {
+        if (serverIsAtLeastVersion(2.6)) {
+            CommandResult usersInfo = database.command(new BasicDBObject("usersInfo", userName));
+            assertEquals(0, ((List) usersInfo.get("users")).size());
+        }
+        else {
+            assertNull(database.getCollection("system.users").findOne(new BasicDBObject("user", userName)));
+        }
+    }
+
+
+    private void assertCorrectUserExists(final String userName, final String password, final boolean isReadOnly, final DB database) {
+        if (serverIsAtLeastVersion(2.6)) {
+            CommandResult usersInfo = database.command(new BasicDBObject("usersInfo", userName));
+            DBObject user = (DBObject) ((List) usersInfo.get("users")).get(0);
+            assertEquals(userName, user.get("user"));
+            assertEquals(database.getName(), user.get("db"));
+            assertEquals(getExpectedRole(isReadOnly, database), ((DBObject) ((List) user.get("roles")).get(0)).get("role"));
+        }
+        else {
+            assertEquals(new BasicDBObject("user", userName).append("readOnly", isReadOnly)
+                                                            .append("pwd", getDatabase()._hash(userName, password.toCharArray())),
+                         database.getCollection("system.users").findOne(new BasicDBObject("user", userName),
+                                                                             new BasicDBObject("_id", 0)));
+        }
+    }
+
+    private String getExpectedRole(final boolean isReadOnly, final DB database) {
+        if (database.getName().equals("admin")) {
+           return isReadOnly ? "readAnyDatabase" : "root";
+        } else {
+           return isReadOnly ? "read" : "dbOwner";
+        }
+    }
+
 
     private DB getReplicaSetDB() throws UnknownHostException {
         Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
