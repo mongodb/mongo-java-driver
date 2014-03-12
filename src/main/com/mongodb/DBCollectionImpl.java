@@ -845,10 +845,16 @@ class DBCollectionImpl extends DBCollection {
                         WriteResult writeResult = executeWriteProtocol(i);
                         if (writeConcern.callGetLastError()) {
                             bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
+                            // When a journaled write is requested but journaling is disabled, it's not thrown as an exception.
+                            if (isWriteConcernError(writeResult.getLastError()))  {
+                                bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeResult.getLastError()));
+                            }
                         }
                     } catch (WriteConcernException writeException) {
-                        if (isWriteConcernError(writeException))  {
-                            bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
+                        if (isWriteConcernError(writeException.getCommandResult()))  {
+                            bulkWriteBatchCombiner.addResult(getResult(new WriteResult(writeException.getCommandResult(), writeConcern)),
+                                                             indexMap);
+                            bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException.getCommandResult()));
                         } else {
                             bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
                         }
@@ -865,10 +871,6 @@ class DBCollectionImpl extends DBCollection {
                 return getType() == INSERT ? 1 : writeResult.getN();
             }
 
-            private boolean isWriteConcernError(final WriteConcernException writeException) {
-                return writeException.getCommandResult().get("wtimeout") != null;
-            }
-
             List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult) {
                 return writeResult.getUpsertedId() == null
                        ? Collections.<BulkWriteUpsert>emptyList()
@@ -882,9 +884,26 @@ class DBCollectionImpl extends DBCollection {
                                           0);
             }
 
-            private WriteConcernError getWriteConcernError(final WriteConcernException writeException) {
-                return new WriteConcernError(writeException.getCode(), writeException.getCommandResult().getString("err"),
-                                             getErrorResponseDetails(writeException.getCommandResult()));
+            // Accommodating GLE representation of write concern errors
+            private boolean isWriteConcernError(final CommandResult commandResult) {
+                return commandResult.get("wtimeout") != null || commandResult.get("wnote") != null || commandResult.get("jnote") != null;
+            }
+
+            private WriteConcernError getWriteConcernError(final CommandResult commandResult) {
+                return new WriteConcernError(commandResult.getCode(), getWriteConcernErrorMessage(commandResult),
+                                             getErrorResponseDetails(commandResult));
+            }
+
+            // GLE uses jnote and wnote as alternative ways or reporting write concern errors
+            private String getWriteConcernErrorMessage(final CommandResult commandResult) {
+                String errorMessage = commandResult.getString("jnote");
+                if (errorMessage == null) {
+                    errorMessage = commandResult.getString("wnote");
+                }
+                if (errorMessage == null) {
+                    errorMessage = commandResult.getString("err");
+                }
+                return errorMessage;
             }
 
             private DBObject getErrorResponseDetails(final DBObject response) {
