@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * Helper class for the acceptance tests.
@@ -74,6 +75,20 @@ public final class Fixture {
 
     public static boolean isReplicaSet() {
         return runIsMaster().get("setName") != null;
+    }
+
+    public static boolean isServerStartedWithJournalingDisabled() {
+        return serverStartedWithBooleanOption("--nojournal", "nojournal");
+    }
+
+    private static boolean serverStartedWithBooleanOption(final String commandLineOption, final String configOption) {
+        CommandResult res = getMongoClient().getDB("admin").command(new BasicDBObject("getCmdLineOpts", 1));
+        res.throwOnError();
+        if (res.containsField("parsed") && ((DBObject) res.get("parsed")).containsField(configOption)) {
+            return (Boolean) ((DBObject) res.get("parsed")).get(configOption);
+        } else {
+            return ((List) res.get("argv")).contains(commandLineOption);
+        }
     }
 
     private static CommandResult runIsMaster() {
