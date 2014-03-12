@@ -562,21 +562,21 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.insert(getTestInserts())
 
         def operation = initializeBulkOperation(ordered)
-        operation.insert(new BasicDBObject('_id', 1)) // duplicate key
         operation.insert(new BasicDBObject('_id', 7))
+        operation.insert(new BasicDBObject('_id', 1)) // duplicate key
 
         when:
-        operation.execute(new WriteConcern(3, 1))
+        operation.execute(new WriteConcern(4, 1))  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
 
         then:
         def ex = thrown(BulkWriteException)
         ex.writeErrors.size() == 1
-        ex.writeErrors[0].index == 0
+        ex.writeErrors[0].index == 1
         ex.writeErrors[0].code == 11000
-        ex.writeConcernError.code == 64
+        ex.writeConcernError != null
 
         where:
-        ordered << [true, false]
+        ordered << [false]
     }
 
     def 'execute should throw IllegalStateException when already executed'() {
