@@ -579,6 +579,65 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [false]
     }
 
+    def 'when w > 1 write concern is used on a standalone server with write commands, CommandFailureException is thrown'() {
+        assumeTrue(isStandalone() && serverIsAtLeastVersion(2.6))
+
+        given:
+        def operation = collection.initializeUnorderedBulkOperation()
+        operation.insert(new BasicDBObject('_id', 1))
+
+        when:
+        operation.execute(new WriteConcern(2, 1))
+
+        then:
+        thrown(CommandFailureException)
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'when w > 1 write concern is used on a standalone server without write commands, BulkWriteException is thrown'() {
+        assumeTrue(isStandalone() && !serverIsAtLeastVersion(2.6))
+
+        given:
+        def operation = collection.initializeUnorderedBulkOperation()
+        operation.insert(new BasicDBObject('_id', 1))
+        operation.insert(new BasicDBObject('_id', 2))
+
+        when:
+        operation.execute(new WriteConcern(2, 1))
+
+        then:
+        def e = thrown(BulkWriteException)
+        e.writeResult == new AcknowledgedBulkWriteResult(INSERT, 2, [])
+        e.writeConcernError != null
+        e.writeConcernError.getDetails().containsField('wnote')
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'when j write concern is used on a server without journaling or write commands, BulkWriteException is thrown'() {
+        assumeTrue(!isSharded() && isServerStartedWithJournalingDisabled() && !serverIsAtLeastVersion(2.6))
+
+        given:
+        def operation = collection.initializeUnorderedBulkOperation()
+        operation.insert(new BasicDBObject('_id', 1))
+        operation.insert(new BasicDBObject('_id', 2))
+
+        when:
+        operation.execute(WriteConcern.JOURNALED)
+
+        then:
+        def e = thrown(BulkWriteException)
+        e.writeResult == new AcknowledgedBulkWriteResult(INSERT, 2, [])
+        e.writeConcernError != null
+        e.writeConcernError.getDetails().containsField('jnote')
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'execute should throw IllegalStateException when already executed'() {
         given:
         def operation = initializeBulkOperation(ordered)
