@@ -101,7 +101,11 @@ public class TestCase {
      * @return true if server is at least specified version
      */
     protected boolean serverIsAtLeastVersion(double version) {
-        String serverVersion = (String) cleanupMongo.getDB("admin").command("serverStatus").get("version");
+        return serverIsAtLeastVersion(version, cleanupMongo);
+    }
+
+    protected boolean serverIsAtLeastVersion(double version, Mongo mongo) {
+        String serverVersion = (String) mongo.getDB("admin").command("serverStatus").get("version");
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 

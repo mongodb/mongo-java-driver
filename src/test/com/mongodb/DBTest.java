@@ -38,7 +38,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -477,19 +476,6 @@ public class DBTest extends TestCase {
     }
 
     @Test
-    public void shouldAddReadOnlyAdminUser() {
-        String userName = "newUser";
-        String pwd = "pwd";
-        DB adminDB = getDatabase().getSisterDB("admin");
-        adminDB.addUser(userName, pwd.toCharArray(), true);
-        try {
-            assertCorrectUserExists(userName, pwd, true, adminDB);
-        } finally {
-            adminDB.removeUser(userName);
-        }
-    }
-
-    @Test
     public void shouldAddReadWriteUser() {
         String userName = "newUser";
         String pwd = "pwd";
@@ -502,15 +488,38 @@ public class DBTest extends TestCase {
     }
 
     @Test
-    public void shouldAddReadWriteAdminUser() {
+    public void shouldAddReadWriteAdminUser() throws UnknownHostException {
         String userName = "newUser";
         String pwd = "pwd";
-        DB adminDB = getDatabase().getSisterDB("admin");
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
+        DB adminDB = mongoClient.getDB("admin");
         adminDB.addUser(userName, pwd.toCharArray(), false);
         try {
+            assertTrue(adminDB.authenticate(userName, pwd.toCharArray()));
             assertCorrectUserExists(userName, pwd, false, adminDB);
         } finally {
             adminDB.removeUser(userName);
+            mongoClient.close();
+        }
+    }
+
+
+    @Test
+    public void shouldAddReadOnlyAdminUser() throws UnknownHostException {
+        String readWriteUserName = "newUserReadWrite";
+        String readOnlyUserName = "newUser";
+        String pwd = "pwd";
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
+        DB adminDB = mongoClient.getDB("admin");
+        adminDB.addUser(readWriteUserName, pwd.toCharArray(), false);
+        adminDB.authenticate(readWriteUserName, pwd.toCharArray());
+        adminDB.addUser(readOnlyUserName, pwd.toCharArray(), true);
+        try {
+            assertCorrectUserExists(readOnlyUserName, pwd, true, adminDB);
+        } finally {
+            adminDB.removeUser(readOnlyUserName);
+            adminDB.removeUser(readWriteUserName);
+            mongoClient.close();
         }
     }
 
@@ -534,7 +543,7 @@ public class DBTest extends TestCase {
 
 
     private void assertCorrectUserExists(final String userName, final String password, final boolean isReadOnly, final DB database) {
-        if (serverIsAtLeastVersion(2.6)) {
+        if (serverIsAtLeastVersion(2.6, database.getMongo())) {
             CommandResult usersInfo = database.command(new BasicDBObject("usersInfo", userName));
             DBObject user = (DBObject) ((List) usersInfo.get("users")).get(0);
             assertEquals(userName, user.get("user"));
