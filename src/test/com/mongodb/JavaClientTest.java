@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -491,7 +492,7 @@ public class JavaClientTest extends TestCase {
             return;
         }
 
-        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
+        Mongo mongo = new MongoClient(asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
                 MongoClientOptions.builder().writeConcern(WriteConcern.UNACKNOWLEDGED).build());
 
         int size = getReplicaSetSize(mongo);
@@ -915,6 +916,24 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testWriteResultOnInsert(){
+        WriteResult res = collection.insert(new BasicDBObject());
+        assertEquals(0, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
+        assertFalse(res.isLazy());
+    }
+
+    @Test
+    public void testWriteResultOnInsertList(){
+        WriteResult res = collection.insert(Arrays.<DBObject>asList(new BasicDBObject(), new BasicDBObject()));
+        assertEquals(0, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
+        assertFalse(res.isLazy());
+    }
+
+    @Test
     public void testWriteResultOnUpdate(){
         collection.insert(new BasicDBObject("_id", 1));
         WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)));
@@ -1101,7 +1120,7 @@ public class JavaClientTest extends TestCase {
         } catch (IllegalArgumentException e) {}
 
         try {
-            final List<BasicDBObject> list = Arrays.asList(new BasicDBObject("$a", 1));
+            final List<BasicDBObject> list = asList(new BasicDBObject("$a", 1));
             c.save(new BasicDBObject("a", list));
             fail("Bad key was accepted");
         } catch (IllegalArgumentException e) {}
