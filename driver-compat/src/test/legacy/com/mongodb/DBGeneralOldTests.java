@@ -20,12 +20,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -130,7 +129,7 @@ public class DBGeneralOldTests extends DatabaseTestCase {
         String errorMsg = result.getErrorMessage();
 
         if (errorMsg != null && errorMsg.contains("--replSet")) {
-            LOGGER.log(Level.WARNING, "SecondaryReadTest: This is not a replica set - not testing secondary reads");
+            LOGGER.warn("SecondaryReadTest: This is not a replica set - not testing secondary reads");
             return null;
         }
 

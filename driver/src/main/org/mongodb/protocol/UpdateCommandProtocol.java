@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.UpdateCommandMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -38,7 +37,7 @@ import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class UpdateCommandProtocol extends WriteCommandProtocol {
 
-    private static final Logger LOGGER = Loggers.getLogger("protocol.update");
+    private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
     private final Encoder<Document> queryEncoder;
@@ -54,10 +53,10 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public BulkWriteResult execute() {
-        LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                           getConnection().getServerAddress()));
+        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
+                            getConnection().getServerAddress()));
         BulkWriteResult writeResult = super.execute();
-        LOGGER.fine("Update completed");
+        LOGGER.debug("Update completed");
         return writeResult;
     }
 
@@ -73,7 +72,7 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected Logger getLogger() {
+    protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 

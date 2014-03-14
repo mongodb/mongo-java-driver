@@ -29,12 +29,11 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.ReplyMessage;
-
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
@@ -69,11 +68,11 @@ public class CommandProtocol implements Protocol<CommandResult> {
 
     public CommandResult execute() {
         try {
-            LOGGER.fine(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
-                               command.keySet().iterator().next(), command.values().iterator().next(),
-                               namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
+            LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
+                                command.keySet().iterator().next(), command.values().iterator().next(),
+                                namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
             CommandResult commandResult = receiveMessage(sendMessage().getId());
-            LOGGER.fine("Command execution complete");
+            LOGGER.debug("Command execution complete");
             return commandResult;
         } finally {
             if (closeConnection) {

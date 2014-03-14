@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterListener;
 
 import java.util.ArrayList;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -46,7 +46,7 @@ final class MultiServerCluster extends BaseCluster {
     private String replicaSetName;
     private int latestSetVersion = Integer.MIN_VALUE;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
-        new ConcurrentHashMap<ServerAddress, ServerTuple>();
+    new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -150,7 +150,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
-            LOGGER.severe(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.error(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
                                  newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return;
@@ -161,7 +161,7 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (replicaSetName != null && !replicaSetName.equals(newDescription.getSetName())) {
-            LOGGER.severe(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
+            LOGGER.error(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
                                  + "Removing %s from client view of cluster.",
                                  replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
@@ -183,7 +183,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void handleShardRouterChanged(final ServerDescription newDescription) {
         if (newDescription.getClusterType() != SHARDED) {
-            LOGGER.severe(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
                                  SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
@@ -191,7 +191,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private void handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
-            LOGGER.severe(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
+            LOGGER.error(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
                                  STANDALONE, newDescription.getAddress()));
             clusterType = UNKNOWN;
             removeServer(newDescription.getAddress());

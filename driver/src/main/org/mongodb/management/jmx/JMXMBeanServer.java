@@ -17,12 +17,11 @@
 package org.mongodb.management.jmx;
 
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.management.MBeanServer;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
@@ -35,7 +34,7 @@ public class JMXMBeanServer implements MBeanServer {
         try {
             server.registerMBean(mBean, new ObjectName(mBeanName));
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Unable to register MBean " + mBeanName, e);
+            LOGGER.warn("Unable to register MBean " + mBeanName, e);
         }
     }
 
@@ -47,7 +46,7 @@ public class JMXMBeanServer implements MBeanServer {
                 server.unregisterMBean(objectName);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Unable to unregister MBean " + mBeanName, e);
+            LOGGER.warn("Unable to unregister MBean " + mBeanName, e);
         }
     }
 

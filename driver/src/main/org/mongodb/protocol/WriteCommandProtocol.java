@@ -38,7 +38,6 @@ import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
@@ -86,7 +85,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
                 CommandResult commandResult = receiveMessage(message);
 
                 if (nextMessage != null || batchNum > 1) {
-                    getLogger().fine(format("Received response for batch %d", batchNum));
+                    getLogger().debug(format("Received response for batch %d", batchNum));
                 }
 
                 if (hasError(commandResult)) {
@@ -120,7 +119,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {
-                getLogger().fine(format("Sending batch %d", batchNum));
+                getLogger().debug(format("Sending batch %d", batchNum));
             }
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return nextMessage;
@@ -164,7 +163,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     protected abstract List<WriteRequest> getRequests();
 
-    protected abstract Logger getLogger();
+    protected abstract org.mongodb.diagnostics.logging.Logger getLogger();
 
     protected boolean isOrdered() {
         return ordered;

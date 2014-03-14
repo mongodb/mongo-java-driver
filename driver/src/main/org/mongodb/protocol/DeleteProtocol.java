@@ -25,13 +25,13 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.protocol.message.DeleteMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
@@ -52,10 +52,10 @@ public class DeleteProtocol extends WriteProtocol {
 
     @Override
     public WriteResult execute() {
-        LOGGER.fine(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                           getConnection().getId(), getConnection().getServerAddress()));
+        LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                            getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
-        LOGGER.fine("Delete completed");
+        LOGGER.debug("Delete completed");
         return writeResult;
     }
 

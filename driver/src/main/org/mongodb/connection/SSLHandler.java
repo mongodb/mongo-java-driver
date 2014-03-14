@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -37,8 +38,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class SSLHandler {
     private static final Logger LOGGER = Loggers.getLogger("connection");
@@ -150,7 +149,7 @@ public class SSLHandler {
             buffer.put(array);
             read = array.length;
         } catch (BufferUnderflowException e) {
-            LOGGER.log(Level.WARNING, "Error reading SSL message", e);
+            LOGGER.warn("Error reading SSL message", e);
         }
         return read;
     }

@@ -28,13 +28,12 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.QueryMessage;
 import org.mongodb.protocol.message.ReplyMessage;
-
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
@@ -70,10 +69,10 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     @Override
     public QueryResult<T> execute() {
         try {
-            LOGGER.fine(format("Sending query to namespace %s on connection [%s] to server %s", namespace, connection.getId(),
-                               connection.getServerAddress()));
+            LOGGER.debug(format("Sending query to namespace %s on connection [%s] to server %s", namespace, connection.getId(),
+                                connection.getServerAddress()));
             QueryResult<T> queryResult = receiveMessage(sendMessage());
-            LOGGER.fine("Query completed");
+            LOGGER.debug("Query completed");
             return queryResult;
         } finally {
             if (closeConnection) {

@@ -25,18 +25,18 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 import org.mongodb.protocol.message.UpdateMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
 public class UpdateProtocol extends WriteProtocol {
-    private static final Logger LOGGER = Loggers.getLogger("protocol.update");
+    private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
     private final Encoder<Document> queryEncoder;
@@ -52,10 +52,10 @@ public class UpdateProtocol extends WriteProtocol {
 
     @Override
     public WriteResult execute() {
-        LOGGER.fine(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                           getConnection().getServerAddress()));
+        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
+                            getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
-        LOGGER.fine("Update completed");
+        LOGGER.debug("Update completed");
         return writeResult;
     }
 

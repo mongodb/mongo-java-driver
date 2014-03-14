@@ -17,11 +17,11 @@
 package org.mongodb.connection;
 
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterListener;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;

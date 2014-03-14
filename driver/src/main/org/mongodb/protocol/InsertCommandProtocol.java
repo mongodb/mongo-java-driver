@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.InsertCommandMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
@@ -53,10 +53,10 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     @Override
     public BulkWriteResult execute() {
-        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
-                           getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
+        LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
+                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
         BulkWriteResult writeResult = super.execute();
-        LOGGER.fine("Insert completed");
+        LOGGER.debug("Insert completed");
         return writeResult;
     }
 
@@ -72,7 +72,7 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected Logger getLogger() {
+    protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 

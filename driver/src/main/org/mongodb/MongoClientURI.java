@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.connection.Tags;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -30,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
@@ -311,7 +311,7 @@ public class MongoClientURI {
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
-                LOGGER.warning(format("Unsupported option '%s' on URI '%s'.", key, uri));
+                LOGGER.warn(format("Unsupported option '%s' on URI '%s'.", key, uri));
             }
         }
     }

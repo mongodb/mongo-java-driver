@@ -24,8 +24,6 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
-import java.util.logging.Logger;
-
 class GenericWriteProtocol extends WriteProtocol {
     private final RequestMessage requestMessage;
 
@@ -42,7 +40,7 @@ class GenericWriteProtocol extends WriteProtocol {
     }
 
     @Override
-    protected Logger getLogger() {
+    protected org.mongodb.diagnostics.logging.Logger getLogger() {
         throw new UnsupportedOperationException();
     }
 }

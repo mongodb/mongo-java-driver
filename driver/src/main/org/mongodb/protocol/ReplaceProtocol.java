@@ -25,18 +25,18 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplaceMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
 public class ReplaceProtocol<T> extends WriteProtocol {
-    private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
+    private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.replace");
 
     private final List<ReplaceRequest<T>> replaceRequests;
     private final Encoder<Document> queryEncoder;
@@ -54,10 +54,10 @@ public class ReplaceProtocol<T> extends WriteProtocol {
 
     @Override
     public WriteResult execute() {
-        LOGGER.fine(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                           getConnection().getServerAddress()));
+        LOGGER.debug(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
+                            getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
-        LOGGER.fine("Replace completed");
+        LOGGER.debug("Replace completed");
         return writeResult;
     }
 

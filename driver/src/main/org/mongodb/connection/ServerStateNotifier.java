@@ -21,14 +21,13 @@ import org.mongodb.Document;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -86,7 +85,7 @@ class ServerStateNotifier implements Runnable {
                 internalConnection = internalConnectionFactory.create(serverAddress);
             }
             try {
-                LOGGER.fine(format("Checking status of %s", serverAddress));
+                LOGGER.debug(format("Checking status of %s", serverAddress));
                 CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
                                                               internalConnection, bufferProvider);
                 count++;
@@ -115,7 +114,7 @@ class ServerStateNotifier implements Runnable {
                 // so this will not spam the logs too hard.
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
-                        LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
+                        LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress),
                                    throwable);
                     } else {
                         LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
@@ -123,7 +122,7 @@ class ServerStateNotifier implements Runnable {
                 }
                 serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
             } catch (Throwable t) {
-                LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
+                LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
             }
         }
     }

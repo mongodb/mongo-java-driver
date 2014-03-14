@@ -30,14 +30,13 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -97,8 +96,8 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
             command.put("allowDiskUse", options.getAllowDiskUse());
         }
 
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.finest(command.toString());
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(command.toString());
         }
         return new CommandProtocol(namespace.getDatabaseName(),
                                    command,

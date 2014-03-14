@@ -24,13 +24,13 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
@@ -52,10 +52,10 @@ public class InsertProtocol<T> extends WriteProtocol {
 
     @Override
     public WriteResult execute() {
-        LOGGER.fine(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequestList.size(),
-                           getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
+        LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequestList.size(),
+                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
         WriteResult writeResult = super.execute();
-        LOGGER.fine("Insert completed");
+        LOGGER.debug("Insert completed");
         return writeResult;
     }
 
@@ -64,7 +64,7 @@ public class InsertProtocol<T> extends WriteProtocol {
     }
 
     @Override
-    protected Logger getLogger() {
+    protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 }

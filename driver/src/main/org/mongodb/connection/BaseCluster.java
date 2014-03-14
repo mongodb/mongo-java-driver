@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.mongodb.connection;
 import org.mongodb.MongoIncompatibleDriverException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterDescriptionChangedEvent;
 import org.mongodb.event.ClusterEvent;
 import org.mongodb.event.ClusterListener;
@@ -29,7 +30,6 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -171,7 +171,7 @@ public abstract class BaseCluster implements Cluster {
     protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
-        LOGGER.fine(format("Updating cluster description to  %s", newDescription.getShortDescription()));
+        LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));
 
         description = newDescription;
         CountDownLatch current = phase.getAndSet(new CountDownLatch(1));

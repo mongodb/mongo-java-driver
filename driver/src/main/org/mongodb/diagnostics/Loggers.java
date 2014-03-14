@@ -16,7 +16,9 @@
 
 package org.mongodb.diagnostics;
 
-import java.util.logging.Logger;
+import org.mongodb.diagnostics.logging.JULLogger;
+import org.mongodb.diagnostics.logging.Logger;
+import org.mongodb.diagnostics.logging.SLF4JLogger;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -31,10 +33,12 @@ public final class Loggers {
      */
     public static final String PREFIX = "org.mongodb.driver";
 
+    private static final boolean USE_SLF4J = shouldUseSLF4J();
+
     /**
      * Gets a logger with the given suffix appended on to {@code PREFIX}, separated by a '.'.
      *
-     * @param suffix the sufix for the logger
+     * @param suffix the suffix for the logger
      * @return the logger
      * @see Loggers#PREFIX
      */
@@ -43,9 +47,27 @@ public final class Loggers {
         if (suffix.startsWith(".") || suffix.endsWith(".")) {
             throw new IllegalArgumentException("The suffix can not start or end with a '.'");
         }
-        return Logger.getLogger(PREFIX + ":" + suffix);
+
+        String name = PREFIX + "." + suffix;
+
+        if (USE_SLF4J) {
+            return new SLF4JLogger(name);
+        } else {
+            return new JULLogger(name);
+        }
     }
 
     private Loggers() {
+    }
+
+    private static boolean shouldUseSLF4J() {
+        try {
+            Class.forName("org.slf4j.LoggerFactory");
+            // Don't use SLF4J unless a logging implementation has been configured for it
+            Class.forName("org.slf4j.impl.StaticLoggerBinder");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

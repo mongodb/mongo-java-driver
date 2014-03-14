@@ -28,13 +28,12 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
-
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
@@ -122,12 +121,12 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             RequestMessage nextMessage = lastMessage.encode(buffer);
             int batchNum = 1;
             if (nextMessage != null) {
-                getLogger().fine(format("Sending batch %d", batchNum));
+                getLogger().debug(format("Sending batch %d", batchNum));
             }
 
             while (nextMessage != null) {
                 batchNum++;
-                getLogger().fine(format("Sending batch %d", batchNum));
+                getLogger().debug(format("Sending batch %d", batchNum));
                 lastMessage = nextMessage;
                 nextMessage = nextMessage.encode(buffer);
             }

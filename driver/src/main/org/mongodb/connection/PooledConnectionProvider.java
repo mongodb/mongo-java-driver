@@ -20,6 +20,7 @@ import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionPoolEvent;
 import org.mongodb.event.ConnectionPoolListener;
@@ -32,7 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
@@ -89,6 +89,7 @@ class PooledConnectionProvider implements ConnectionProvider {
                 internalConnection = pool.get(timeout, timeUnit);
             }
             connectionPoolListener.connectionCheckedOut(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
+            LOGGER.trace(format("Checked out connection [%s] to server %s", internalConnection.getId(), serverAddress));
             return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
@@ -124,11 +125,11 @@ class PooledConnectionProvider implements ConnectionProvider {
                 @Override
                 public synchronized void run() {
                     if (shouldPrune()) {
-                        LOGGER.fine(format("Pruning pooled connections to %s", serverAddress));
+                        LOGGER.debug(format("Pruning pooled connections to %s", serverAddress));
                         pool.prune();
                     }
                     if (shouldEnsureMinSize()) {
-                        LOGGER.fine(format("Ensuring minimum pooled connections to %s", serverAddress));
+                        LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverAddress));
                         pool.ensureMinSize(settings.getMinSize());
                     }
                 }
@@ -185,8 +186,8 @@ class PooledConnectionProvider implements ConnectionProvider {
      */
     private void incrementGenerationOnSocketException(final Connection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
-            LOGGER.warning(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                                  connection.getId(), serverAddress, serverAddress));
+            LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
+                               connection.getId(), serverAddress, serverAddress));
             generation.incrementAndGet();
         }
     }
@@ -203,6 +204,7 @@ class PooledConnectionProvider implements ConnectionProvider {
             if (wrapped != null) {
                 if (!closed) {
                     connectionPoolListener.connectionCheckedIn(new ConnectionEvent(clusterId, wrapped.getServerAddress(), wrapped.getId()));
+                    LOGGER.trace(format("Checked in connection [%s] to server %s", getId(), serverAddress));
                 }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;

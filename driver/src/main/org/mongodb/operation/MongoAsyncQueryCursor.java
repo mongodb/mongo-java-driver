@@ -28,6 +28,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
@@ -36,9 +37,6 @@ import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
@@ -158,7 +156,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 }
             } catch (Exception e1) {
                 breakEarly = true;
-                LOGGER.log(Level.SEVERE, e1.getMessage(), e1);
+                LOGGER.error(e1.getMessage(), e1);
             }
             
             if (result.getCursor() == null || breakEarly) {

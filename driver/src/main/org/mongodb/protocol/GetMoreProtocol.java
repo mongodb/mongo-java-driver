@@ -29,13 +29,12 @@ import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.GetMore;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.GetMoreMessage;
 import org.mongodb.protocol.message.ReplyMessage;
-
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
@@ -69,10 +68,10 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     @Override
     public QueryResult<T> execute() {
         try {
-            LOGGER.fine(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
-                               getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
+            LOGGER.debug(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
+                                getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
             QueryResult<T> queryResult = receiveMessage(sendMessage());
-            LOGGER.fine("Get-more completed");
+            LOGGER.debug("Get-more completed");
             return queryResult;
         } finally {
             if (closeConnection) {
