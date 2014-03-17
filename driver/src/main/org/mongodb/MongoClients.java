@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
@@ -27,6 +26,7 @@ import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
+import org.mongodb.connection.netty.NettyStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 
 import java.net.UnknownHostException;
@@ -111,15 +111,8 @@ public final class MongoClients {
             streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
             heartbeatStreamFactory = streamFactory;
         } else {
-            if (options.getSslSettings().isEnabled()) {
-                streamFactory = new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
-                heartbeatStreamFactory = streamFactory;
-            } else {
-                streamFactory = new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(),
-                                                                           options.getSslSettings());
-                heartbeatStreamFactory = new AsynchronousSocketChannelStreamFactory(options.getHeartbeatSocketSettings(),
-                                                                                    options.getSslSettings());
-            }
+            streamFactory = new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings());
+            heartbeatStreamFactory = new NettyStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings());
         }
         return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
                                                   options.getConnectionPoolSettings(), streamFactory,
