@@ -121,7 +121,7 @@ class DefaultServer implements ClusterableServer {
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
         @Override
-        public synchronized void stateChanged(final ChangeEvent<ServerDescription> event) {
+        public void stateChanged(final ChangeEvent<ServerDescription> event) {
             description = event.getNewValue();
             for (final ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
