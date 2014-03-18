@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
+        connection?.close()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         cluster?.close()
     }
@@ -126,6 +127,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
+        connection?.close()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
         cluster?.close()
     }

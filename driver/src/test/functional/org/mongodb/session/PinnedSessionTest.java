@@ -17,6 +17,7 @@
 package org.mongodb.session;
 
 import category.ReplicaSet;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -37,6 +38,11 @@ public class PinnedSessionTest extends DatabaseTestCase {
     public void setUp() {
         super.setUp();
         session = new PinnedSession(getCluster());
+    }
+
+    @After
+    public void tearDown() {
+        session.close();
     }
 
     @Test

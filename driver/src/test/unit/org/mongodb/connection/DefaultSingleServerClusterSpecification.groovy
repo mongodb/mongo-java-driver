@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.event.ClusterListener
@@ -36,13 +38,17 @@ class DefaultSingleServerClusterSpecification extends Specification {
     def 'should fire change event on cluster change'() {
         given:
         def listener = Mock(ClusterListener)
-        new SingleServerCluster('1',
-                ClusterSettings.builder().mode(ClusterConnectionMode.SINGLE).hosts([SERVER_ADDRESS]).build(), factory, listener)
+        def cluster = new SingleServerCluster('1',
+                                              ClusterSettings.builder().mode(ClusterConnectionMode.SINGLE).hosts([SERVER_ADDRESS]).build(),
+                                              factory, listener)
 
         when:
         factory.getServer(SERVER_ADDRESS).sendNotification(CONNECTED_DESCRIPTION_BUILDER.build())
 
         then:
         1 * listener.clusterDescriptionChanged(_)
+
+        cleanup:
+        cluster?.close()
     }
 }

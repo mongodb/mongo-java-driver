@@ -95,8 +95,12 @@ public class MongoConstructorsTest {
     @Test
     public void shouldSaveDefaultReadPreference() throws UnknownHostException {
         Mongo mongo = new MongoClient();
-        mongo.setReadPreference(ReadPreference.nearest());
-        assertEquals(ReadPreference.nearest(), mongo.getReadPreference());
+        try {
+            mongo.setReadPreference(ReadPreference.nearest());
+            assertEquals(ReadPreference.nearest(), mongo.getReadPreference());
+        } finally {
+            mongo.close();
+        }
     }
 
     @Test
