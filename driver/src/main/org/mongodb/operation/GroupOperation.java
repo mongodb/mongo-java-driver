@@ -70,7 +70,7 @@ public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
         ServerConnectionProvider provider = getConnectionProvider(readPreference);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), commandDocument,
                                                           new DocumentCodec(), new DocumentCodec(), getBufferProvider(),
-                                                          provider.getServerDescription(), provider.getConnection(), isCloseSession())
+                                                          provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
 
         InlineMongoCursor<Document> cursor = new InlineMongoCursor<Document>(commandResult,

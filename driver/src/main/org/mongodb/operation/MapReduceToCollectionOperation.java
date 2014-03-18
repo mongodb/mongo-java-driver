@@ -78,7 +78,7 @@ public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStati
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
                                                           getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
-                                                          isCloseSession())
+                                                          true)
                                           .execute();
         serverUsed = commandResult.getAddress();
         return new MapReduceIntoCollectionStatistics(commandResult);

@@ -72,7 +72,7 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
     public CommandResult execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         return new CommandProtocol("admin", createCommand(), commandCodec, commandCodec,
-                                   getBufferProvider(), provider.getServerDescription(), provider.getConnection(), false)
+                                   getBufferProvider(), provider.getServerDescription(), provider.getConnection(), true)
                    .execute();
     }
 

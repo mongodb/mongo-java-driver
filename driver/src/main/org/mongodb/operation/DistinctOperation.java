@@ -71,7 +71,7 @@ public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getCommandDocument(),
                                                           new DocumentCodec(), new DocumentCodec(), getBufferProvider(),
-                                                          provider.getServerDescription(), provider.getConnection(), isCloseSession())
+                                                          provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
 
         InlineMongoCursor<String> cursor = new InlineMongoCursor<String>(commandResult,

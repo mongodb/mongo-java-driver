@@ -106,7 +106,7 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
                                    getBufferProvider(),
                                    connectionProvider.getServerDescription(),
                                    connectionProvider.getConnection(),
-                                   false).execute();
+                                   true).execute();
     }
 
     private QueryResult<T> receiveMessage(final CommandResult result) {

@@ -87,7 +87,7 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
         ServerConnectionProvider provider = getSession().createServerConnectionProvider(getServerConnectionProviderOptions());
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, mapReduceResultDecoder,
                                                           getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
-                                                          isCloseSession())
+                                                          true)
                                           .execute();
 
         return new MapReduceInlineResultsCursor<T>(commandResult);
