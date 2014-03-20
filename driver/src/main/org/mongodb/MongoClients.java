@@ -22,10 +22,10 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.DefaultClusterFactory;
-import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
+import org.mongodb.connection.netty.NettyBufferProvider;
 import org.mongodb.connection.netty.NettyStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 
@@ -102,7 +102,7 @@ public final class MongoClients {
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
                                          final MongoClientOptions options) {
-        BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+        BufferProvider bufferProvider = new NettyBufferProvider();
 
         StreamFactory streamFactory;
         StreamFactory heartbeatStreamFactory;
