@@ -54,17 +54,13 @@ public class ReplyMessage<T> {
 
         if (replyHeader.getNumberReturned() > 0) {
             InputBuffer inputBuffer = new BasicInputBuffer(responseBuffers.getBodyByteBuffer());
-            try {
-                while (documents.size() < replyHeader.getNumberReturned()) {
-                    BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
-                    try {
-                        documents.add(decoder.decode(reader));
-                    } finally {
-                        reader.close();
-                    }
+            while (documents.size() < replyHeader.getNumberReturned()) {
+                BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
+                try {
+                    documents.add(decoder.decode(reader));
+                } finally {
+                    reader.close();
                 }
-            } finally {
-                inputBuffer.close();
             }
         }
     }
