@@ -20,11 +20,13 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoInternalException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplyMessage;
 
+import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 final class CommandHelper {
@@ -51,6 +53,9 @@ final class CommandHelper {
     private static CommandResult receiveMessage(final Codec<Document> codec, final InternalConnection internalConnection,
                                                 final CommandMessage message) {
         ResponseBuffers responseBuffers = internalConnection.receiveMessage();
+        if (responseBuffers == null) {
+            throw new MongoInternalException(format("Response buffers received from %s should not be null", internalConnection));
+        }
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, codec, message.getId());
             return createCommandResult(replyMessage, internalConnection.getServerAddress());
