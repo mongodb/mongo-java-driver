@@ -16,13 +16,15 @@
 
 package org.mongodb;
 
-import io.netty.buffer.PooledByteBufAllocator;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.DefaultClusterFactory;
+import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.netty.NettyStreamFactory;
@@ -33,6 +35,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static org.mongodb.AsyncDetector.StreamType.NETTY;
+import static org.mongodb.AsyncDetector.StreamType.NIO2;
+import static org.mongodb.AsyncDetector.getAsyncStreamType;
 
 @ThreadSafe
 public final class MongoClients {
@@ -56,7 +62,8 @@ public final class MongoClients {
                                                                          .hosts(Arrays.asList(serverAddress))
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
-                                                          credentialList, options, streamFactory), streamFactory.getBufferProvider());
+                                                          credentialList, options, streamFactory
+                                                         ), streamFactory.getBufferProvider());
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -69,8 +76,10 @@ public final class MongoClients {
                                                                          .hosts(seedList)
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
-                                                          Collections.<MongoCredential>emptyList(), options, streamFactory),
-                                   streamFactory.getBufferProvider());
+                                                          Collections.<MongoCredential>emptyList(), options, streamFactory
+                                                         ),
+                                   streamFactory.getBufferProvider()
+        );
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -86,8 +95,10 @@ public final class MongoClients {
                                                                                                                             .get(0))))
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, streamFactory),
-                                       streamFactory.getBufferProvider());
+                                                              mongoURI.getCredentialList(), options, streamFactory
+                                                             ),
+                                       streamFactory.getBufferProvider()
+            );
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (final String cur : mongoURI.getHosts()) {
@@ -97,8 +108,10 @@ public final class MongoClients {
                                                                              .hosts(seedList)
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, streamFactory),
-                                       streamFactory.getBufferProvider());
+                                                              mongoURI.getCredentialList(), options, streamFactory
+                                                             ),
+                                       streamFactory.getBufferProvider()
+            );
         }
     }
 
@@ -107,29 +120,36 @@ public final class MongoClients {
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
                                          final MongoClientOptions options, final StreamFactory streamFactory) {
-        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(options, streamFactory);
+        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(options);
         return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
                                                   options.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
                                                   credentialList, null, new JMXConnectionPoolListener(), null);
     }
 
-    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions options, final StreamFactory streamFactory) {
-        if (!options.isAsyncEnabled()) {
-            return streamFactory;
-        } else {
-//           return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
-           return new NettyStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings(),
-                                                            PooledByteBufAllocator.DEFAULT);
-        }
+    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions options) {
+        return getStreamFactory(options.isAsyncEnabled(), options.getHeartbeatSocketSettings(), options.getSslSettings());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientOptions options) {
-        if (!options.isAsyncEnabled()) {
-            return new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
+        return getStreamFactory(options.isAsyncEnabled(), options.getSocketSettings(), options.getSslSettings());
+    }
+
+    private static StreamFactory getStreamFactory(final boolean isAsyncEnabled,
+                                                  final SocketSettings socketSettings,
+                                                  final SSLSettings sslSettings) {
+        if (!isAsyncEnabled) {
+            return new SocketStreamFactory(socketSettings, sslSettings);
+        } else if (getAsyncStreamType() == NETTY) {
+            return new NettyStreamFactory(socketSettings, sslSettings);
+        } else if (getAsyncStreamType() == NIO2) {
+            if (sslSettings.isEnabled()) {
+                return new SocketStreamFactory(socketSettings, sslSettings);
+            } else {
+                return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+            }
         } else {
-//            return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
-            return new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings(), PooledByteBufAllocator.DEFAULT);
+            throw new IllegalArgumentException("Unsupported stream type " + getAsyncStreamType());
         }
     }
 }

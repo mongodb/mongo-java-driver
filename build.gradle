@@ -91,6 +91,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
+                'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
 
                 'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore', "${System.getProperty('user.home')}/.keystore"),
        	        'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
@@ -176,6 +177,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
 // Project specific behavior            //
 //////////////////////////////////////////
 
+def nettyVersion = '4.0.17.Final'
+
 project(':bson') {}
 
 project(':driver') {
@@ -190,12 +193,14 @@ project(':driver') {
         }
     }
 
+
     dependencies {
         compile project(':bson')
 
-        compile 'io.netty:netty-all:4.0.17.Final'
-
+        provided "io.netty:netty-all:$nettyVersion"
         provided 'org.slf4j:slf4j-api:1.7.6'
+
+        testCompile "io.netty:netty-all:$nettyVersion"
         testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
         testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
             exclude group: 'junit', module: 'junit-dep'
@@ -236,7 +241,10 @@ project(':driver-compat') {
 
     dependencies {
         compile project(':driver')
+
         testCompile project(':driver').sourceSets.test.output
+
+        testCompile "io.netty:netty-all:$nettyVersion"
         testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
         testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
             exclude group: 'junit', module: 'junit-dep'

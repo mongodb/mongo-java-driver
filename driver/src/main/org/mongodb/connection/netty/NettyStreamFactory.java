@@ -17,6 +17,7 @@
 package org.mongodb.connection.netty;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.mongodb.connection.BufferProvider;
@@ -40,8 +41,8 @@ public class NettyStreamFactory implements StreamFactory {
     private final BufferProvider bufferProvider;
     private final ByteBufAllocator allocator;
 
-    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings, final ByteBufAllocator allocator) {
-        this.allocator = allocator;
+    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
+        this.allocator = PooledByteBufAllocator.DEFAULT;
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = new NioEventLoopGroup();
