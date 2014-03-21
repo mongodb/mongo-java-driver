@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.isSharded;
@@ -224,7 +225,7 @@ public class DBTest extends DatabaseTestCase {
         char[] password = "123".toCharArray();
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
-        assertTrue(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName, getBufferProvider(), getSession(), true).execute());
     }
 
     @Test
@@ -239,7 +240,7 @@ public class DBTest extends DatabaseTestCase {
         boolean newReadOnly = false;
         database.addUser(userName, newPassword, newReadOnly);
 
-        assertTrue(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName, getBufferProvider(), getSession(), true).execute());
     }
 
     @Test
@@ -252,7 +253,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertFalse(new UserExistsOperation(database.getName(), userName, database.getBufferPool(), getSession(), true).execute());
+        assertFalse(new UserExistsOperation(database.getName(), userName, getBufferProvider(), getSession(), true).execute());
     }
 
     @Test

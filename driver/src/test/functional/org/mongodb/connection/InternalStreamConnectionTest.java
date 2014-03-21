@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
@@ -51,6 +50,7 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 public class InternalStreamConnectionTest {
     private static final String CLUSTER_ID = "1";
     private Stream stream;
+    private BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     @After
     public void tearDown() {
@@ -63,8 +63,8 @@ public class InternalStreamConnectionTest {
         TestConnectionListener listener = new TestConnectionListener();
         stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           getBufferProvider(), listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+                                                                           bufferProvider, listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())),
                                                         MessageSettings.builder().build());
         message.encode(buffer);
@@ -90,8 +90,8 @@ public class InternalStreamConnectionTest {
         TestConnectionListener listener = new TestConnectionListener();
         stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           getBufferProvider(), listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+                                                                           bufferProvider, listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
                                                     new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);

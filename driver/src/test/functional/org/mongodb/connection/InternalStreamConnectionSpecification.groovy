@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.Document
@@ -29,7 +31,6 @@ import org.mongodb.protocol.message.KillCursorsMessage
 import org.mongodb.protocol.message.MessageSettings
 import spock.lang.Specification
 
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
@@ -37,6 +38,7 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 class InternalStreamConnectionSpecification extends Specification {
     private static final String CLUSTER_ID = '1'
     def stream = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary())
+    def bufferProvider = new PowerOfTwoBufferPool();
 
     def cleanup() {
         stream.close();
@@ -47,7 +49,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def listener = Mock(ConnectionListener)
 
         when:
-        new InternalStreamConnection(CLUSTER_ID, stream, [], getBufferProvider(), listener)
+        new InternalStreamConnection(CLUSTER_ID, stream, [], bufferProvider, listener)
 
         then:
         1 * listener.connectionOpened(_)
@@ -56,7 +58,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire connection closed event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], getBufferProvider(), listener)
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], bufferProvider, listener)
 
         when:
         connection.close()
@@ -68,7 +70,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire messages sent event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], getBufferProvider(), listener)
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], bufferProvider, listener)
         def buffer = new PooledByteBufferOutputBuffer(bufferProvider);
         def message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())), MessageSettings.builder().build());
         message.encode(buffer);
@@ -83,7 +85,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire message received event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], getBufferProvider(), listener)
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], bufferProvider, listener)
         def buffer = new PooledByteBufferOutputBuffer(bufferProvider)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
                                          new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build());

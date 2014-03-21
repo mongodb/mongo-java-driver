@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -27,14 +29,12 @@ import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.ConnectionPoolSettings
 import org.mongodb.connection.DefaultClusterFactory
 import org.mongodb.connection.MongoSecurityException
+import org.mongodb.connection.PowerOfTwoBufferPool
 import org.mongodb.connection.ServerSettings
 import org.mongodb.connection.SocketSettings
 import org.mongodb.connection.SocketStreamFactory
 import org.mongodb.session.ClusterSession
 import org.mongodb.session.PrimaryServerSelector
-
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -47,18 +47,12 @@ import static org.mongodb.MongoCredential.createMongoCRCredential
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class UserOperationsSpecification extends FunctionalSpecification {
-    private ScheduledExecutorService scheduledExecutorService
     private User readOnlyUser
     private User readWriteUser
 
     def setup() {
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         readOnlyUser = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)
         readWriteUser = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), false)
-    }
-
-    def cleanup() {
-        scheduledExecutorService.shutdown()
     }
 
     def 'an added user should be found'() {
@@ -177,6 +171,6 @@ class UserOperationsSpecification extends FunctionalSpecification {
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                            new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                            new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings())
-                                           , asList(user.credential), getBufferProvider(), null, null, null)
+                                           , asList(user.credential), new PowerOfTwoBufferPool(), null, null, null)
     }
 }

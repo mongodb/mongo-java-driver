@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,8 @@ public final class Fixture {
     }
 
     public static BufferProvider getBufferProvider() {
-        return POWER_OF_TWO_BUFFER_POOL;
+        getMongoClient();
+        return mongoClient.getBufferProvider();
     }
 
     public static SSLSettings getSSLSettings() {

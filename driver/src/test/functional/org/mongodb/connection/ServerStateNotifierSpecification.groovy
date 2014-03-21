@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -52,7 +54,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
                                                                                           new SocketStreamFactory(SocketSettings.builder()
                                                                                                                                 .build(),
                                                                                                                   getSSLSettings()),
-                                                                                          getBufferProvider(),
+                                                                                          new PowerOfTwoBufferPool(),
                                                                                           getCredentialList(),
                                                                                           new NoOpConnectionListener()),
                                                       getBufferProvider())

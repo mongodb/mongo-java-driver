@@ -17,6 +17,7 @@
 package org.mongodb.connection.netty;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -98,17 +99,19 @@ final class NettyStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler handler) {
-        io.netty.buffer.ByteBuf nettyBuffer = PooledByteBufAllocator.DEFAULT.directBuffer();
+        final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
-            nettyBuffer.writeBytes(cur.asNIO());
+            io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
+            composite.addComponent(byteBuf.retain());
+            composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
         }
-        socketChannel.writeAndFlush(nettyBuffer).addListener(new GenericFutureListener<ChannelFuture>() {
+        socketChannel.writeAndFlush(composite).addListener(new GenericFutureListener<ChannelFuture>() {
             @Override
             public void operationComplete(final ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    handler.completed();
-                } else {
+                if (!future.isSuccess()) {
                     handler.failed(future.cause());
+                } else {
+                    handler.completed();
                 }
             }
         });
@@ -116,6 +119,7 @@ final class NettyStream implements Stream {
 
     @Override
     public synchronized void readAsync(final ByteBuf buffer, final AsyncCompletionHandler handler) {
+        io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) buffer).asByteBuf();
         while (buffer.hasRemaining()) {
             if (pendingException != null) {
                 handler.failed(pendingException);
@@ -129,9 +133,7 @@ final class NettyStream implements Stream {
             io.netty.buffer.ByteBuf next = pendingInboundBuffers.removeFirst();
 
             int bytesToRead = Math.min(next.readableBytes(), buffer.remaining());
-            for (int i = 0; i < bytesToRead; i++) {
-                buffer.put(next.readByte());
-            }
+            byteBuf.writeBytes(next, bytesToRead);
             if (next.isReadable()) {
                 pendingInboundBuffers.addFirst(next);
             } else {

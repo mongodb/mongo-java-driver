@@ -35,6 +35,10 @@ final class NettyByteBuf implements ByteBuf {
         this.isWriting = isWriting;
     }
 
+    io.netty.buffer.ByteBuf asByteBuf() {
+        return proxied;
+    }
+
     @Override
     public int capacity() {
         return proxied.capacity();

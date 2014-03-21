@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
@@ -51,7 +50,7 @@ public class SingleServerClusterTest {
                                                                                                       getSSLSettings()),
                                                                               Executors.newScheduledThreadPool(1),
                                                                               getCredentialList(),
-                                                                              getBufferProvider(),
+                                                                              new PowerOfTwoBufferPool(),
                                                                               new NoOpConnectionListener(),
                                                                               new NoOpConnectionPoolListener()),
                                           new NoOpClusterListener());
