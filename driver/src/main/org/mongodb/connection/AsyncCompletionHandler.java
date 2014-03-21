@@ -21,11 +21,11 @@ package org.mongodb.connection;
  *
  * @since 3.0
  */
-public interface AsyncCompletionHandler {
+public interface AsyncCompletionHandler<T> {
     /**
      * Invoked when an operation has completed.
      */
-    void completed();
+    void completed(T t);
 
     /**
      * Invoked when an operation fails.

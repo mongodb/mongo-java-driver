@@ -126,9 +126,9 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         isTrue("open", !isClosed());
-        stream.writeAsync(byteBuffers, new AsyncCompletionHandler() {
+        stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed() {
+            public void completed(final Void t) {
                 eventPublisher.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(), getId(), lastRequestId,
                                                                             getTotalRemaining(byteBuffers)));
                 callback.onResult(null, null);
@@ -150,13 +150,13 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(bufferProvider.get(REPLY_HEADER_LENGTH), new ResponseHeaderCallback(System.nanoTime(), callback));
+        fillAndFlipBuffer(REPLY_HEADER_LENGTH, new ResponseHeaderCallback(System.nanoTime(), callback));
     }
 
-    private void fillAndFlipBuffer(final ByteBuf buffer, final SingleResultCallback<ByteBuf> callback) {
-        stream.readAsync(buffer, new AsyncCompletionHandler() {
+    private void fillAndFlipBuffer(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
+        stream.readAsync(numBytes, new AsyncCompletionHandler<ByteBuf>() {
             @Override
-            public void completed() {
+            public void completed(final ByteBuf buffer) {
                 callback.onResult(buffer, null);
             }
 
@@ -185,10 +185,8 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private ResponseBuffers receiveMessage(final long start) throws IOException {
-        ByteBuf headerByteBuffer = bufferProvider.get(REPLY_HEADER_LENGTH);
-
+        ByteBuf headerByteBuffer = stream.read(REPLY_HEADER_LENGTH);
         ReplyHeader replyHeader;
-        stream.read(headerByteBuffer);
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
         try {
             replyHeader = new ReplyHeader(headerInputBuffer);
@@ -199,8 +197,7 @@ class InternalStreamConnection implements InternalConnection {
         ByteBuf bodyByteBuffer = null;
 
         if (replyHeader.getNumberReturned() > 0) {
-            bodyByteBuffer = bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
-            stream.read(bodyByteBuffer);
+            bodyByteBuffer = stream.read(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
         }
 
         return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
@@ -273,7 +270,7 @@ class InternalStreamConnection implements InternalConnection {
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     onSuccess(new ResponseBuffers(replyHeader, null, System.nanoTime() - start));
                 } else {
-                    fillAndFlipBuffer(bufferProvider.get(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH),
+                    fillAndFlipBuffer(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
                                       new ResponseBodyCallback(replyHeader));
                 }
             }

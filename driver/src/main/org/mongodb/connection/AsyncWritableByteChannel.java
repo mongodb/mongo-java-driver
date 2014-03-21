@@ -69,5 +69,5 @@ interface AsyncWritableByteChannel {
      *          If the channel is associated with a {@link java.nio.channels.AsynchronousChannelGroup
      *          group} that has terminated
      */
-    void write(ByteBuffer src, AsyncCompletionHandler handler);
+    void write(ByteBuffer src, AsyncCompletionHandler<Void> handler);
 }

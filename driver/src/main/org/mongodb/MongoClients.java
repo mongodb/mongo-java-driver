@@ -118,7 +118,8 @@ public final class MongoClients {
         if (!options.isAsyncEnabled()) {
             return streamFactory;
         } else {
-            return new NettyStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings(),
+//           return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
+           return new NettyStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings(),
                                                             PooledByteBufAllocator.DEFAULT);
         }
     }
@@ -127,6 +128,7 @@ public final class MongoClients {
         if (!options.isAsyncEnabled()) {
             return new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
         } else {
+//            return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
             return new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings(), PooledByteBufAllocator.DEFAULT);
         }
     }

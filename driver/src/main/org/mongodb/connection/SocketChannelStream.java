@@ -29,11 +29,13 @@ class SocketChannelStream implements Stream {
     private final SocketChannel socketChannel;
     private final ServerAddress address;
     private final SocketSettings settings;
+    private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
 
-    public SocketChannelStream(final ServerAddress address, final SocketSettings settings) {
+    public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final BufferProvider bufferProvider) {
         this.address = address;
         this.settings = settings;
+        this.bufferProvider = bufferProvider;
         try {
             socketChannel = SocketChannel.open();
             SocketStreamHelper.initialize(socketChannel.socket(), address, settings);
@@ -60,7 +62,9 @@ class SocketChannelStream implements Stream {
         }
     }
 
-    public void read(final ByteBuf buffer) throws IOException {
+    @Override
+    public ByteBuf read(final int numBytes) throws IOException {
+        ByteBuf buffer = bufferProvider.get(numBytes);
         isTrue("open", !isClosed());
 
         int totalBytesRead = 0;
@@ -71,17 +75,17 @@ class SocketChannelStream implements Stream {
             }
             totalBytesRead += bytesRead;
         }
-        buffer.flip();
+        return buffer.flip();
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler handler) {
-        throw new UnsupportedOperationException();
+    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override
-    public void readAsync(final ByteBuf buffer, final AsyncCompletionHandler handler) {
-        throw new UnsupportedOperationException();
+    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override

@@ -20,16 +20,16 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.operation.SingleResultFuture;
 
-class FutureAsyncCompletionHandler implements AsyncCompletionHandler {
-    private final SingleResultFuture<Void> future;   // TODO: Move Future classes to org.mongodb
+class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
+    private final SingleResultFuture<T> future;   // TODO: Move Future classes to org.mongodb
 
-    public FutureAsyncCompletionHandler(final SingleResultFuture<Void> future) {
+    public FutureAsyncCompletionHandler(final SingleResultFuture<T> future) {
         this.future = future;
     }
 
     @Override
-    public void completed() {
-        future.init(null, null);
+    public void completed(final T t) {
+        future.init(t, null);
     }
 
     @Override

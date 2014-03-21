@@ -37,7 +37,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
             throw new UnsupportedOperationException("No SSL support here.");
         }
 
-        return new AsynchronousSocketChannelStream(serverAddress);
+        return new AsynchronousSocketChannelStream(serverAddress, bufferProvider);
     }
 
     @Override

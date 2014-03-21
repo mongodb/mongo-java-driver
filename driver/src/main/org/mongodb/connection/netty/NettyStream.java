@@ -17,6 +17,7 @@
 package org.mongodb.connection.netty;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -41,6 +42,7 @@ import org.mongodb.connection.Stream;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -50,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
  */
 final class NettyStream implements Stream {
     private final ServerAddress address;
+    private final ByteBufAllocator allocator;
     private SocketChannel socketChannel;
     private volatile boolean isClosed;
 
@@ -58,8 +61,9 @@ final class NettyStream implements Stream {
     private Throwable pendingException;
 
     public NettyStream(final ServerAddress address, final SocketSettings settings, final SSLSettings sslSettings,
-                       final EventLoopGroup workerGroup) {
+                       final EventLoopGroup workerGroup, final ByteBufAllocator allocator) {
         this.address = address;
+        this.allocator = allocator;
         Bootstrap b = new Bootstrap();
         b.group(workerGroup);
         b.channel(NioSocketChannel.class);
@@ -68,7 +72,7 @@ final class NettyStream implements Stream {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
                 socketChannel = ch;
-                ch.config().setAllocator(PooledByteBufAllocator.DEFAULT);
+                ch.config().setAllocator(allocator);
                 if (sslSettings.isEnabled()) {
                     SSLEngine engine = SSLContext.getDefault().createSSLEngine();
                     engine.setUseClientMode(true);
@@ -85,20 +89,20 @@ final class NettyStream implements Stream {
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler future = new FutureAsyncCompletionHandler();
+        FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<Void>();
         writeAsync(buffers, future);
         future.get();
     }
 
     @Override
-    public void read(final ByteBuf buffer) throws IOException {
-        FutureAsyncCompletionHandler future = new FutureAsyncCompletionHandler();
-        readAsync(buffer, future);
-        future.get();
+    public ByteBuf read(final int numBytes) throws IOException {
+        FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
+        readAsync(numBytes, future);
+        return future.get();
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
         final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
             io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
@@ -111,37 +115,52 @@ final class NettyStream implements Stream {
                 if (!future.isSuccess()) {
                     handler.failed(future.cause());
                 } else {
-                    handler.completed();
+                    handler.completed(null);
                 }
             }
         });
     }
 
     @Override
-    public synchronized void readAsync(final ByteBuf buffer, final AsyncCompletionHandler handler) {
-        io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) buffer).asByteBuf();
-        while (buffer.hasRemaining()) {
-            if (pendingException != null) {
-                handler.failed(pendingException);
-                return;
+    public synchronized void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+        if (pendingException != null) {
+            handler.failed(pendingException);
+        } else if (!hasBytesAvailable(numBytes)) {
+            pendingReader = new PendingReader(numBytes, handler);
+        } else {
+            CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
+            int bytesNeeded = numBytes;
+            for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
+                io.netty.buffer.ByteBuf next = iter.next();
+                int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
+                if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
+                    composite.addComponent(next);
+                    iter.remove();
+                } else {
+                    next.retain();
+                    composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+                }
+                composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
+                bytesNeeded -= bytesNeededFromCurrentBuffer;
+                if (bytesNeeded == 0) {
+                    break;
+                }
             }
+            NettyByteBuf buffer = new NettyByteBuf(composite);
 
-            if (pendingInboundBuffers.isEmpty()) {
-                pendingReader = new PendingReader(buffer, handler);
-                return;
-            }
-            io.netty.buffer.ByteBuf next = pendingInboundBuffers.removeFirst();
+            handler.completed(buffer.flip());
+        }
+    }
 
-            int bytesToRead = Math.min(next.readableBytes(), buffer.remaining());
-            byteBuf.writeBytes(next, bytesToRead);
-            if (next.isReadable()) {
-                pendingInboundBuffers.addFirst(next);
-            } else {
-                next.release();
+    private boolean hasBytesAvailable(final int numBytes) {
+        int bytesAvailable = 0;
+        for (io.netty.buffer.ByteBuf cur : pendingInboundBuffers) {
+            bytesAvailable += cur.readableBytes();
+            if (bytesAvailable >= numBytes) {
+                return true;
             }
         }
-        buffer.flip();
-        handler.completed();
+        return false;
     }
 
     private synchronized void handledInboundBuffer(final io.netty.buffer.ByteBuf buffer) {
@@ -158,7 +177,7 @@ final class NettyStream implements Stream {
         if (pendingReader != null) {
             PendingReader localPendingReader = pendingReader;
             pendingReader = null;
-            readAsync(localPendingReader.buffer, localPendingReader.handler);
+            readAsync(localPendingReader.numBytes, localPendingReader.handler);
         }
     }
 
@@ -197,43 +216,46 @@ final class NettyStream implements Stream {
     }
 
     private static final class PendingReader {
-        private final ByteBuf buffer;
-        private final AsyncCompletionHandler handler;
+        private final int numBytes;
+        private final AsyncCompletionHandler<ByteBuf> handler;
 
-        private PendingReader(final ByteBuf buffer, final AsyncCompletionHandler handler) {
-            this.buffer = buffer;
+        private PendingReader(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+            this.numBytes = numBytes;
             this.handler = handler;
         }
     }
 
-    private static final class FutureAsyncCompletionHandler implements AsyncCompletionHandler {
+    private static final class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
         private final CountDownLatch latch = new CountDownLatch(1);
-        private Throwable t;
+        private volatile T t;
+        private volatile Throwable throwable;
 
         public FutureAsyncCompletionHandler() {
         }
 
         @Override
-        public void completed() {
+        public void completed(final T t) {
+            this.t = t;
             latch.countDown();
         }
 
         @Override
         public void failed(final Throwable t) {
-            this.t = t;
+            this.throwable = t;
             latch.countDown();
         }
 
-        public void get() throws IOException {
+        public T get() throws IOException {
             try {
                 latch.await();
-                if (t != null) {
-                    if (t instanceof IOException) {
-                        throw (IOException) t;
+                if (throwable != null) {
+                    if (throwable instanceof IOException) {
+                        throw (IOException) throwable;
                     } else {
-                        throw new MongoInternalException("Exception thrown from Netty Stream", t);
+                        throw new MongoInternalException("Exception thrown from Netty Stream", throwable);
                     }
                 }
+                return t;
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted", e);
             }

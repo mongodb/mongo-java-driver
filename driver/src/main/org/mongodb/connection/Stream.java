@@ -37,12 +37,13 @@ public interface Stream {
     void write(final List<ByteBuf> buffers) throws IOException;
 
     /**
-     * Read from the stream into the given buffer, blocking until it is full.
+     * Read from the stream, blocking until the requested number of bytes have been read.
      *
-     * @param buffer the buffer to read into
+     * @param numBytes The number of bytes to read into the returned byte buffer
+     * @return a byte buffer filled with number of bytes requested
      * @throws IOException
      */
-    void read(final ByteBuf buffer) throws IOException;
+    ByteBuf read(final int numBytes) throws IOException;
 
     /**
      * Write each buffer in the list to the stream in order, asynchronously.  This method should return immediately, and invoke the given
@@ -51,16 +52,16 @@ public interface Stream {
      * @param buffers the buffers to write
      * @param handler invoked when the read operation has completed
      */
-    void writeAsync(final List<ByteBuf> buffers, AsyncCompletionHandler handler);
+    void writeAsync(final List<ByteBuf> buffers, AsyncCompletionHandler<Void> handler);
 
     /**
-     * Read from the stream into the given buffer, asynchronously.  This method should return immediately, and invoke the given callback on
-     * completion
+     * Read from the stream, asynchronously.  This method should return immediately, and invoke the given callback when the number of
+     * requested bytes have been read.
      *
-     * @param buffer  the buffer to read into
+     * @param numBytes the number of bytes
      * @param handler invoked when the read operation has completed
      */
-    void readAsync(final ByteBuf buffer, AsyncCompletionHandler handler);
+    void readAsync(final int numBytes, AsyncCompletionHandler<ByteBuf> handler);
 
     /**
      * The address that this stream is connected to.

@@ -27,11 +27,14 @@ class SocketStream implements Stream {
     private final Socket socket;
     private final ServerAddress address;
     private final SocketSettings settings;
+    private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
 
-    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory) {
+    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory,
+                        final BufferProvider bufferProvider) {
         this.address = address;
         this.settings = settings;
+        this.bufferProvider = bufferProvider;
         try {
             socket = socketFactory.createSocket();
             SocketStreamHelper.initialize(socket, address, settings);
@@ -48,7 +51,9 @@ class SocketStream implements Stream {
         }
     }
 
-    public void read(final ByteBuf buffer) throws IOException {
+    @Override
+    public ByteBuf read(final int numBytes) throws IOException {
+        ByteBuf buffer = bufferProvider.get(numBytes);
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {
@@ -58,16 +63,17 @@ class SocketStream implements Stream {
             }
             totalBytesRead += bytesRead;
         }
+        return buffer;
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler handler) {
-        throw new UnsupportedOperationException();
+    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override
-    public void readAsync(final ByteBuf buffer, final AsyncCompletionHandler handler) {
-        throw new UnsupportedOperationException();
+    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override

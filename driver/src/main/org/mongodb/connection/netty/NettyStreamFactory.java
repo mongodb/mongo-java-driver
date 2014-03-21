@@ -38,8 +38,10 @@ public class NettyStreamFactory implements StreamFactory {
     private final SSLSettings sslSettings;
     private final EventLoopGroup eventLoopGroup;
     private final BufferProvider bufferProvider;
+    private final ByteBufAllocator allocator;
 
     public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings, final ByteBufAllocator allocator) {
+        this.allocator = allocator;
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = new NioEventLoopGroup();
@@ -48,7 +50,7 @@ public class NettyStreamFactory implements StreamFactory {
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup);
+        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, allocator);
     }
 
     @Override

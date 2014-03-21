@@ -29,38 +29,40 @@ import java.util.List;
 
 final class AsynchronousSocketChannelStream implements Stream {
     private final ServerAddress serverAddress;
+    private final BufferProvider bufferProvider;
     private volatile AsynchronousSocketChannel channel;
     private volatile boolean isClosed;
 
-    AsynchronousSocketChannelStream(final ServerAddress serverAddress) {
+    AsynchronousSocketChannelStream(final ServerAddress serverAddress, final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
+        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        writeAsync(buffers, new FutureAsyncCompletionHandler(future));
+        writeAsync(buffers, new FutureAsyncCompletionHandler<Void>(future));
         future.get();
     }
 
     @Override
-    public void read(final ByteBuf buffer) throws IOException {
-        SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        readAsync(buffer, new FutureAsyncCompletionHandler(future));
-        future.get();
+    public ByteBuf read(final int numBytes) throws IOException {
+        SingleResultFuture<ByteBuf> future = new SingleResultFuture<ByteBuf>();
+        readAsync(numBytes, new FutureAsyncCompletionHandler<ByteBuf>(future));
+        return future.get();
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
         final AsyncWritableByteChannel byteChannel = new AsyncWritableByteChannelAdapter();
         final Iterator<ByteBuf> iter = buffers.iterator();
-        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler() {
+        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed() {
+            public void completed(final Void t) {
                 if (iter.hasNext()) {
                     pipeOneBuffer(byteChannel, iter.next(), this);
                 } else {
-                    handler.completed();
+                    handler.completed(null);
                 }
             }
 
@@ -72,7 +74,8 @@ final class AsynchronousSocketChannelStream implements Stream {
     }
 
     @Override
-    public void readAsync(final ByteBuf buffer, final AsyncCompletionHandler handler) {
+    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+        ByteBuf buffer = bufferProvider.get(numBytes);
         channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, handler));
     }
 
@@ -103,17 +106,17 @@ final class AsynchronousSocketChannelStream implements Stream {
         return isClosed;
     }
 
-    void ensureOpen(final AsyncCompletionHandler handler) {
+    void ensureOpen(final AsyncCompletionHandler<Void> handler) {
         try {
             if (channel != null) {
-                handler.completed();
+                handler.completed(null);
             } else {
                 channel = AsynchronousSocketChannel.open();
                 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
                     @Override
                     public void completed(final Void result, final Object attachment) {
-                        handler.completed();
+                        handler.completed(null);
                     }
 
                     @Override
@@ -128,14 +131,14 @@ final class AsynchronousSocketChannelStream implements Stream {
     }
 
     private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler outerHandler) {
-        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler() {
+                               final AsyncCompletionHandler<Void> outerHandler) {
+        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed() {
+            public void completed(final Void t) {
                 if (byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), this);
                 } else {
-                    outerHandler.completed();
+                    outerHandler.completed(null);
                 }
             }
 
@@ -148,14 +151,14 @@ final class AsynchronousSocketChannelStream implements Stream {
 
     private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
         @Override
-        public void write(final ByteBuffer src, final AsyncCompletionHandler handler) {
-            ensureOpen(new AsyncCompletionHandler() {
+        public void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
+            ensureOpen(new AsyncCompletionHandler<Void>() {
                 @Override
-                public void completed() {
+                public void completed(final Void t) {
                     channel.write(src, null, new CompletionHandler<Integer, Object>() {
                         @Override
                         public void completed(final Integer result, final Object attachment) {
-                            handler.completed();
+                            handler.completed(null);
                         }
 
                         @Override
@@ -175,9 +178,9 @@ final class AsynchronousSocketChannelStream implements Stream {
 
     private final class BasicCompletionHandler implements CompletionHandler<Integer, Void> {
         private final ByteBuf dst;
-        private final AsyncCompletionHandler handler;
+        private final AsyncCompletionHandler<ByteBuf> handler;
 
-        private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler handler) {
+        private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler<ByteBuf> handler) {
             this.dst = dst;
             this.handler = handler;
         }
@@ -186,7 +189,7 @@ final class AsynchronousSocketChannelStream implements Stream {
         public void completed(final Integer result, final Void attachment) {
             if (!dst.hasRemaining()) {
                 dst.flip();
-                handler.completed();
+                handler.completed(dst);
             } else {
                 channel.read(dst.asNIO(), null, new BasicCompletionHandler(dst, handler));
             }
