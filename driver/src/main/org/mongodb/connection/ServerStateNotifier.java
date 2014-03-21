@@ -55,7 +55,6 @@ class ServerStateNotifier implements Runnable {
     private final ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
-    private final BufferProvider bufferProvider;
     private InternalConnection internalConnection;
     private int count;
     private long elapsedNanosSum;
@@ -63,12 +62,11 @@ class ServerStateNotifier implements Runnable {
     private volatile boolean isClosed;
 
     ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                        final InternalConnectionFactory internalConnectionFactory, final BufferProvider bufferProvider) {
+                        final InternalConnectionFactory internalConnectionFactory) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         serverDescription = getConnectingServerDescription();
-        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -87,12 +85,12 @@ class ServerStateNotifier implements Runnable {
             try {
                 LOGGER.debug(format("Checking status of %s", serverAddress));
                 CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                                                              internalConnection, bufferProvider);
+                                                              internalConnection, internalConnectionFactory.getBufferProvider());
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
                 CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
-                                                               internalConnection, bufferProvider);
+                                                               internalConnection, internalConnectionFactory.getBufferProvider());
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {

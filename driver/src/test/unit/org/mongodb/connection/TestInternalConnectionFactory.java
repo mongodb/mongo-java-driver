@@ -31,6 +31,16 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         return connection;
     }
 
+    @Override
+    public BufferProvider getBufferProvider() {
+        return new BufferProvider() {
+            @Override
+            public ByteBuf get(final int size) {
+                throw new UnsupportedOperationException("Should never be called");
+            }
+        };
+    }
+
     List<TestInternalConnection> getCreatedConnections() {
         return createdConnections;
     }

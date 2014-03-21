@@ -710,7 +710,6 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSocketFactory()),
                                                   createNewCredentialList(credentialsList),
-                                                  new PowerOfTwoBufferPool(),
                                                   null, new JMXConnectionPoolListener(), null);
     }
 

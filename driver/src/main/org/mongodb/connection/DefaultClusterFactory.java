@@ -43,7 +43,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
                           final StreamFactory heartbeatStreamFactory,
-                          final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                          final List<MongoCredential> credentialList,
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
         String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
@@ -56,7 +56,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                                                                      heartbeatStreamFactory,
                                                                                      scheduledExecutorService,
                                                                                      credentialList,
-                                                                                     bufferProvider,
                                                                                      connectionListener != null ? connectionListener
                                                                                                              : new NoOpConnectionListener(),
                                                                                      connectionPoolListener != null

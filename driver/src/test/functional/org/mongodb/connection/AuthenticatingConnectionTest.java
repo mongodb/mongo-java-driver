@@ -26,7 +26,6 @@ import org.mongodb.MongoCredential;
 import java.util.Collections;
 
 import static java.util.Arrays.asList;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 
@@ -47,7 +46,6 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory("1",
                                                 new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                getBufferProvider(),
                                                 Collections.<MongoCredential>emptyList(),
                                                 new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
@@ -64,7 +62,6 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory("1",
                                                 new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                getBufferProvider(),
                                                 asList(MongoCredential.createMongoCRCredential(userName, source,
                                                                                                password.toCharArray())),
                                                 new NoOpConnectionListener());
@@ -77,7 +74,6 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory("1",
                                                 new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                getBufferProvider(),
                                                 asList(MongoCredential.createPlainCredential(userName, source,
                                                                                              password.toCharArray())),
                                                 new NoOpConnectionListener());
@@ -90,7 +86,6 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory("1",
                                                 new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                getBufferProvider(),
                                                 asList(MongoCredential.createGSSAPICredential(userName)),
                                                 new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(serverAddress);
@@ -103,7 +98,6 @@ public class AuthenticatingConnectionTest {
             new InternalStreamConnectionFactory("1",
                                                 new SocketStreamFactory(SocketSettings.builder().build(),
                                                                         getSSLSettings()),
-                                                getBufferProvider(),
                                                 asList(MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,"
                                                                                                  + "O=10Gen,L=New York City,"
                                                                                                  + "ST=New York,C=US")),

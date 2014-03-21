@@ -24,7 +24,7 @@ import org.mongodb.MongoCredential;
 
 import java.util.Collections;
 
-import static org.mongodb.Fixture.getBufferProvider;
+import static org.mongodb.Fixture.getSSLSettings;
 
 @Ignore
 public class PlainAuthenticatorTest {
@@ -32,6 +32,7 @@ public class PlainAuthenticatorTest {
     private String userName;
     private String source;
     private String password;
+    private StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings());
 
     @Before
     public void setUp() throws Exception {
@@ -39,13 +40,9 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnection(
-                                                             "1",
-                                                             new SocketChannelStream(new ServerAddress(host),
-                                                                                     SocketSettings.builder().build()),
-                                                             Collections.<MongoCredential>emptyList(),
-                                                             new PowerOfTwoBufferPool(),
-                                                             new NoOpConnectionListener());
+        internalConnection = new InternalStreamConnection("1", streamFactory.create(new ServerAddress(host)),
+                                                          Collections.<MongoCredential>emptyList(), streamFactory.getBufferProvider(),
+                                                          new NoOpConnectionListener());
     }
 
     @After
@@ -55,23 +52,21 @@ public class PlainAuthenticatorTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(
-                                                                     MongoCredential.createPlainCredential(userName,
-                                                                                                           source,
-                                                                                                           password.toCharArray()),
-                                                                     internalConnection,
-                                                                     getBufferProvider());
+        PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
+                                                                                                        password.toCharArray()),
+                                                                  internalConnection,
+                                                                  streamFactory.getBufferProvider()
+        );
         authenticator.authenticate();
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(
-                                                                     MongoCredential.createPlainCredential(userName,
-                                                                                                           source,
-                                                                                                           "wrong".toCharArray()),
-                                                                     internalConnection,
-                                                                     getBufferProvider());
+        PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
+                                                                                                        "wrong".toCharArray()),
+                                                                  internalConnection,
+                                                                  streamFactory.getBufferProvider()
+        );
         authenticator.authenticate();
     }
 }

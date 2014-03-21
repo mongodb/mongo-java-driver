@@ -31,7 +31,6 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionProviderFactory connectionProviderFactory;
     private final StreamFactory heartbeatStreamFactory;
     private final ScheduledExecutorService scheduledExecutorService;
-    private final BufferProvider bufferProvider;
 
     public DefaultClusterableServerFactory(final String clusterId, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
@@ -39,7 +38,6 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final StreamFactory heartbeatStreamFactory,
                                            final ScheduledExecutorService scheduledExecutorService,
                                            final List<MongoCredential> credentialList,
-                                           final BufferProvider bufferProvider,
                                            final ConnectionListener connectionListener,
                                            final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = clusterId;
@@ -49,20 +47,18 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                              connectionPoolSettings,
                                                                              streamFactory,
                                                                              credentialList,
-                                                                             bufferProvider,
                                                                              connectionListener,
                                                                              connectionPoolListener);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.scheduledExecutorService = scheduledExecutorService;
-        this.bufferProvider = bufferProvider;
     }
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
         return new DefaultServer(serverAddress, settings, connectionProviderFactory.create(serverAddress),
-                                 new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory, bufferProvider,
+                                 new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory,
                                                                      Collections.<MongoCredential>emptyList(), connectionListener),
-                                 scheduledExecutorService, bufferProvider);
+                                 scheduledExecutorService);
     }
 
     @Override

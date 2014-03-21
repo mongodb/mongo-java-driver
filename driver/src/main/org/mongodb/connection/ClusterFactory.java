@@ -42,7 +42,6 @@ public interface ClusterFactory {
      * @param streamFactory            the stream factory
      * @param heartbeatStreamFactory   the heartbeat stream factory
      * @param credentialList           the credential list
-     * @param bufferProvider           the buffer provider
      * @param clusterListener          an optional listener for cluster-related events
      * @param connectionPoolListener   an optional listener for connection pool-related events
      * @param connectionListener       an optional listener for connection-related events
@@ -54,7 +53,6 @@ public interface ClusterFactory {
                    StreamFactory streamFactory,
                    StreamFactory heartbeatStreamFactory,
                    List<MongoCredential> credentialList,
-                   BufferProvider bufferProvider,
                    ClusterListener clusterListener,
                    ConnectionPoolListener connectionPoolListener,
                    ConnectionListener connectionListener);

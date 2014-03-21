@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ public class UserOperationTest extends DatabaseTestCase {
                                                   ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                  asList(user.getCredential()), getBufferProvider(),
+                                                  asList(user.getCredential()),
                                                   null, null, null);
     }
 

@@ -42,4 +42,9 @@ public class SSLNIOStreamFactory implements StreamFactory {
     public Stream create(final ServerAddress serverAddress) {
         return new SSLNIOStream(serverAddress, bufferProvider, executor);
     }
+
+    @Override
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
+    }
 }

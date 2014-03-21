@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -29,7 +31,6 @@ import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.ConnectionPoolSettings
 import org.mongodb.connection.DefaultClusterFactory
 import org.mongodb.connection.MongoSecurityException
-import org.mongodb.connection.PowerOfTwoBufferPool
 import org.mongodb.connection.ServerSettings
 import org.mongodb.connection.SocketSettings
 import org.mongodb.connection.SocketStreamFactory
@@ -166,11 +167,11 @@ class UserOperationsSpecification extends FunctionalSpecification {
     }
 
     def getCluster(User user) {
+        def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings())
         new DefaultClusterFactory().create(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                                            ServerSettings.builder().build(),
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                           new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings())
-                                           , asList(user.credential), new PowerOfTwoBufferPool(), null, null, null)
+                                           streamFactory, streamFactory
+                                           , asList(user.credential), null, null, null)
     }
 }

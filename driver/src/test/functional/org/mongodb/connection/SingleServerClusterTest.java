@@ -36,6 +36,8 @@ public class SingleServerClusterTest {
 
     @Before
     public void setUp() throws Exception {
+        SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
+                                                                    getSSLSettings());
         cluster = new SingleServerCluster("1",
                                           ClusterSettings.builder()
                                                          .mode(ClusterConnectionMode.SINGLE)
@@ -44,13 +46,10 @@ public class SingleServerClusterTest {
                                           new DefaultClusterableServerFactory("1",
                                                                               ServerSettings.builder().build(),
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
-                                                                              new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                                                      getSSLSettings()),
-                                                                              new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                                                      getSSLSettings()),
+                                                                              streamFactory,
+                                                                              streamFactory,
                                                                               Executors.newScheduledThreadPool(1),
                                                                               getCredentialList(),
-                                                                              new PowerOfTwoBufferPool(),
                                                                               new NoOpConnectionListener(),
                                                                               new NoOpConnectionPoolListener()),
                                           new NoOpClusterListener());

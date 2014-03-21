@@ -19,7 +19,6 @@ package org.mongodb;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterType;
-import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
@@ -46,7 +45,6 @@ public final class Fixture {
 
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
-    private static final BufferProvider POWER_OF_TWO_BUFFER_POOL = new PowerOfTwoBufferPool();
     private static MongoDatabase defaultDatabase;
 
     private Fixture() {

@@ -25,6 +25,7 @@ public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SSLSettings sslSettings;
     private final SocketFactory socketFactory;
+    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     public SocketStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
         this.settings = notNull("settings", settings);
@@ -52,5 +53,10 @@ public class SocketStreamFactory implements StreamFactory {
         }
 
         return stream;
+    }
+
+    @Override
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 }

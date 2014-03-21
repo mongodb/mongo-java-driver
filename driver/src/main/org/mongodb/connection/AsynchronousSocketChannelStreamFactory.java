@@ -24,6 +24,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SSLSettings sslSettings;
+    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
         this.settings = notNull("settings", settings);
@@ -33,9 +34,14 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     @Override
     public Stream create(final ServerAddress serverAddress) {
         if (sslSettings.isEnabled()) {
-            throw new UnsupportedOperationException("No SSL support her.");
+            throw new UnsupportedOperationException("No SSL support here.");
         }
 
         return new AsynchronousSocketChannelStream(serverAddress);
+    }
+
+    @Override
+    public BufferProvider getBufferProvider() {
+        return bufferProvider;
     }
 }

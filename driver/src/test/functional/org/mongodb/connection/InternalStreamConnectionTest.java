@@ -19,6 +19,7 @@ package org.mongodb.connection;
 import category.Async;
 import org.bson.io.OutputBuffer;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.Document;
@@ -49,9 +50,14 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 @Category(Async.class)
 public class InternalStreamConnectionTest {
     private static final String CLUSTER_ID = "1";
+    private AsynchronousSocketChannelStreamFactory factory = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(),
+                                                                                                        getSSLSettings());
     private Stream stream;
-    private BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
+    @Before
+    public void setUp() throws InterruptedException {
+        stream = factory.create(getPrimary());
+    }
     @After
     public void tearDown() {
         stream.close();
@@ -61,10 +67,9 @@ public class InternalStreamConnectionTest {
     public void shouldFireMessagesSentEventAsync() throws InterruptedException {
         // given
         TestConnectionListener listener = new TestConnectionListener();
-        stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           bufferProvider, listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+                                                                           factory.getBufferProvider(), listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(factory.getBufferProvider());
         RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())),
                                                         MessageSettings.builder().build());
         message.encode(buffer);
@@ -88,10 +93,9 @@ public class InternalStreamConnectionTest {
     public void shouldFireMessageReceiveEventAsync() throws InterruptedException {
         // given
         TestConnectionListener listener = new TestConnectionListener();
-        stream = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSSLSettings()).create(getPrimary());
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           bufferProvider, listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+                                                                           factory.getBufferProvider(), listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(factory.getBufferProvider());
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
                                                     new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);

@@ -18,14 +18,14 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import spock.lang.Specification
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-
-import static org.mongodb.Fixture.getBufferProvider
 
 class DefaultServerSpecification extends Specification {
 
@@ -42,7 +42,7 @@ class DefaultServerSpecification extends Specification {
 
     def setup() {
         server = new DefaultServer(new ServerAddress(), ServerSettings.builder().build(), new TestConnectionProvider(),
-                                   new TestInternalConnectionFactory(), scheduledExecutorService, getBufferProvider())
+                                   new TestInternalConnectionFactory(), scheduledExecutorService)
     }
 
     def cleanup() {

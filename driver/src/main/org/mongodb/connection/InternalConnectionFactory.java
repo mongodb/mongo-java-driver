@@ -18,4 +18,6 @@ package org.mongodb.connection;
 
 interface InternalConnectionFactory {
     InternalConnection create(final ServerAddress serverAddress);
+
+    BufferProvider getBufferProvider();
 }

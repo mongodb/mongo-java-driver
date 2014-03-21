@@ -27,19 +27,17 @@ class PooledConnectionProviderFactory implements ConnectionProviderFactory {
     private final ConnectionPoolSettings settings;
     private final StreamFactory streamFactory;
     private final List<MongoCredential> credentialList;
-    private final BufferProvider bufferProvider;
     private final ConnectionListener connectionListener;
     private final ConnectionPoolListener connectionPoolListener;
 
     public PooledConnectionProviderFactory(final String clusterId, final ConnectionPoolSettings settings, final StreamFactory streamFactory,
-                                           final List<MongoCredential> credentialList, final BufferProvider bufferProvider,
+                                           final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener,
                                            final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = clusterId;
         this.settings = settings;
         this.streamFactory = streamFactory;
         this.credentialList = credentialList;
-        this.bufferProvider = bufferProvider;
         this.connectionListener = connectionListener;
         this.connectionPoolListener = connectionPoolListener;
     }
@@ -49,7 +47,6 @@ class PooledConnectionProviderFactory implements ConnectionProviderFactory {
         return new PooledConnectionProvider(clusterId, serverAddress,
                                             new InternalStreamConnectionFactory(clusterId,
                                                                                 streamFactory,
-                                                                                bufferProvider,
                                                                                 credentialList,
                                                                                 connectionListener),
                                             settings,

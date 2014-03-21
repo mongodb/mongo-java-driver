@@ -49,20 +49,17 @@ class DefaultServer implements ClusterableServer {
                          final ServerSettings settings,
                          final ConnectionProvider connectionProvider,
                          final InternalConnectionFactory heartbeatStreamConnectionFactory,
-                         final ScheduledExecutorService scheduledExecutorService,
-                         final BufferProvider bufferProvider) {
+                         final ScheduledExecutorService scheduledExecutorService) {
         this.settings = notNull("settings", settings);
         notNull("connectionProvider", connectionProvider);
         notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
-        notNull("bufferProvider", bufferProvider);
 
         this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionProvider = connectionProvider;
         this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener, heartbeatStreamConnectionFactory,
-                                                     bufferProvider);
+        this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener, heartbeatStreamConnectionFactory);
         this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier,
                                                                             0,
                                                                             settings.getHeartbeatFrequency(MILLISECONDS),

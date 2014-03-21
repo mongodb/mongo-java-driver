@@ -16,12 +16,6 @@
 
 
 
-
-
-
-
-
-
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -32,7 +26,6 @@ import org.mongodb.ReadPreference
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getCredentialList
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
@@ -54,10 +47,9 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
                                                                                           new SocketStreamFactory(SocketSettings.builder()
                                                                                                                                 .build(),
                                                                                                                   getSSLSettings()),
-                                                                                          new PowerOfTwoBufferPool(),
                                                                                           getCredentialList(),
-                                                                                          new NoOpConnectionListener()),
-                                                      getBufferProvider())
+                                                                                          new NoOpConnectionListener())
+        )
     }
 
     def cleanup() {
