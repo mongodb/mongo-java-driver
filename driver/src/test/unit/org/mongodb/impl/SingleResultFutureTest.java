@@ -46,7 +46,7 @@ public class SingleResultFutureTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testInitFailure() {
         SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         future.init(1, null);

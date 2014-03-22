@@ -57,7 +57,12 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
         }
 
         if (isDone()) {
-            throw new IllegalArgumentException("already initialized");
+            if (newException != null) {
+                throw new IllegalStateException("Illegal re-initialization of future with exception.  Already initialized with " + result,
+                                                newException);
+            } else {
+                throw new IllegalStateException("Illegal re-initialization of future with result: " + newResult);
+            }
         }
 
         if (newResult != null && newException != null) {
