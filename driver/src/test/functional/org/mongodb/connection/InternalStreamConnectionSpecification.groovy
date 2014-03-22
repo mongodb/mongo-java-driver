@@ -16,10 +16,6 @@
 
 
 
-
-
-
-
 package org.mongodb.connection
 
 import org.mongodb.Document
@@ -51,7 +47,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def listener = Mock(ConnectionListener)
 
         when:
-        new InternalStreamConnection(CLUSTER_ID, stream, [], streamFactory.bufferProvider, listener)
+        new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
 
         then:
         1 * listener.connectionOpened(_)
@@ -60,7 +56,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire connection closed event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], streamFactory.bufferProvider, listener)
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
 
         when:
         connection.close()
@@ -72,8 +68,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire messages sent event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], streamFactory.bufferProvider, listener)
-        def buffer = new PooledByteBufferOutputBuffer(streamFactory.bufferProvider);
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
+        def buffer = new PooledByteBufferOutputBuffer(connection);
         def message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())), MessageSettings.builder().build());
         message.encode(buffer);
 
@@ -87,8 +83,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire message received event'() {
         given:
         def listener = Mock(ConnectionListener)
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], streamFactory.bufferProvider, listener)
-        def buffer = new PooledByteBufferOutputBuffer(streamFactory.bufferProvider)
+        def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
+        def buffer = new PooledByteBufferOutputBuffer(connection)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
                                          new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);

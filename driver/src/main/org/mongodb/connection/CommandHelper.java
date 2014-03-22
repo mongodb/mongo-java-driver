@@ -32,13 +32,13 @@ import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 final class CommandHelper {
 
     static CommandResult executeCommand(final String database, final Document command, final Codec<Document> codec,
-                                        final InternalConnection internalConnection, final BufferProvider bufferProvider) {
-        return receiveMessage(codec, internalConnection, sendMessage(database, command, codec, internalConnection, bufferProvider));
+                                        final InternalConnection internalConnection) {
+        return receiveMessage(codec, internalConnection, sendMessage(database, command, codec, internalConnection));
     }
 
     private static CommandMessage sendMessage(final String database, final Document command, final Codec<Document> codec,
-                                              final InternalConnection internalConnection, final BufferProvider bufferProvider) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+                                              final InternalConnection internalConnection) {
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                         command, codec, MessageSettings.builder().build());

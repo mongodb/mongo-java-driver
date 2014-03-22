@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -32,9 +31,8 @@ public class DropIndexOperation extends BaseOperation<CommandResult> {
     private final MongoNamespace namespace;
     private final Document dropIndexesCommand;
 
-    public DropIndexOperation(final MongoNamespace namespace, final String indexName, final BufferProvider bufferProvider,
-                              final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public DropIndexOperation(final MongoNamespace namespace, final String indexName, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         this.dropIndexesCommand = new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
     }
@@ -43,7 +41,7 @@ public class DropIndexOperation extends BaseOperation<CommandResult> {
     public CommandResult execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         try {
-            return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, getBufferProvider(),
+            return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec,
                                        provider.getServerDescription(), provider.getConnection(), true).execute();
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptions(e);

@@ -21,7 +21,6 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -38,9 +37,8 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
     private final CommandWithPayloadEncoder<T> commandEncoder;
 
     public FindAndReplaceOperation(final MongoNamespace namespace, final FindAndReplace<T> findAndReplace, final Decoder<T> payloadDecoder,
-                                   final Encoder<T> payloadEncoder, final BufferProvider bufferProvider, final Session session,
-                                   final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                                   final Encoder<T> payloadEncoder, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         this.findAndReplace = findAndReplace;
         resultDecoder = new CommandResultWithPayloadDecoder<T>(payloadDecoder);
@@ -52,7 +50,7 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
     public T execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndReplaceDocument(),
-                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
         return (T) commandResult.getResponse().get("value");

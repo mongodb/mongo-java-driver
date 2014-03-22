@@ -21,12 +21,10 @@ import org.mongodb.MongoCredential;
 abstract class Authenticator {
     private final MongoCredential credential;
     private final InternalConnection internalConnection;
-    private final BufferProvider bufferProvider;
 
-    Authenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
+    Authenticator(final MongoCredential credential, final InternalConnection internalConnection) {
         this.credential = credential;
         this.internalConnection = internalConnection;
-        this.bufferProvider = bufferProvider;
     }
 
     MongoCredential getCredential() {
@@ -35,10 +33,6 @@ abstract class Authenticator {
 
     InternalConnection getInternalConnection() {
         return internalConnection;
-    }
-
-    BufferProvider getBufferProvider() {
-        return bufferProvider;
     }
 
     abstract void authenticate();

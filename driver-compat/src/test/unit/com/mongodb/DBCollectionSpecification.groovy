@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 
 
 package com.mongodb
-
 import org.mongodb.Document
+import org.mongodb.SimpleBufferProvider
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterConnectionMode
@@ -36,8 +36,6 @@ import spock.lang.Subject
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.Fixture.getBufferProvider
-
 //we want to explicitly state the namespaces of the exceptions that are thrown
 @SuppressWarnings('UnnecessaryQualifiedReference')
 class DBCollectionSpecification extends Specification {
@@ -53,7 +51,7 @@ class DBCollectionSpecification extends Specification {
         database.getCluster() >> { cluster }
         database.getName() >> { 'TheDatabase' }
         database.getClusterDescription() >> { cluster.getDescription(10, SECONDS) }
-        database.getBufferPool() >> { getBufferProvider() }
+        database.getBufferPool() >> { new SimpleBufferProvider() }
         cluster.getDescription(10, SECONDS) >> { new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.UNKNOWN, []) }
     }
 

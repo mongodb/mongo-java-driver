@@ -40,11 +40,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {
         return new InternalStreamConnection(clusterId, streamFactory.create(serverAddress), credentialList,
-                                            streamFactory.getBufferProvider(), connectionListener);
+                                            connectionListener);
     }
 
-    @Override
-    public BufferProvider getBufferProvider() {
-        return streamFactory.getBufferProvider();
-    }
 }

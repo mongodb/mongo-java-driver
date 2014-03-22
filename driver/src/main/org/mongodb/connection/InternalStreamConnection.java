@@ -51,18 +51,16 @@ class InternalStreamConnection implements InternalConnection {
     private final Stream stream;
     private final ConnectionListener eventPublisher;
     private final List<MongoCredential> credentialList;
-    private final BufferProvider bufferProvider;
     private volatile boolean isClosed;
     private String id;
 
     InternalStreamConnection(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
-                             final BufferProvider bufferProvider, final ConnectionListener connectionListener) {
+                             final ConnectionListener connectionListener) {
         this.clusterId = notNull("clusterId", clusterId);
         this.stream = notNull("stream", stream);
         this.eventPublisher = notNull("connectionListener", connectionListener);
         notNull("credentialList", credentialList);
         this.credentialList = new ArrayList<MongoCredential>(credentialList);
-        this.bufferProvider = notNull("bufferProvider", bufferProvider);
         initialize();
         connectionListener.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
     }
@@ -86,6 +84,11 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public ByteBuf getBuffer(final int size) {
+        return stream.getBuffer(size);
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
@@ -215,7 +218,7 @@ class InternalStreamConnection implements InternalConnection {
     private void initializeConnectionId() {
         CommandResult result;
         try {
-            result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this, bufferProvider);
+            result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this);
 
         } catch (MongoCommandFailureException e) {
             result = e.getCommandResult();
@@ -233,13 +236,13 @@ class InternalStreamConnection implements InternalConnection {
     private Authenticator createAuthenticator(final MongoCredential credential) {
         switch (credential.getMechanism()) {
             case MONGODB_CR:
-                return new NativeAuthenticator(credential, this, bufferProvider);
+                return new NativeAuthenticator(credential, this);
             case GSSAPI:
-                return new GSSAPIAuthenticator(credential, this, bufferProvider);
+                return new GSSAPIAuthenticator(credential, this);
             case PLAIN:
-                return new PlainAuthenticator(credential, this, bufferProvider);
+                return new PlainAuthenticator(credential, this);
             case MONGODB_X509:
-                return new X509Authenticator(credential, this, bufferProvider);
+                return new X509Authenticator(credential, this);
             default:
                 throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }

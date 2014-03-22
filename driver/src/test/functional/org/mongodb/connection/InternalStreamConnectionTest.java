@@ -68,8 +68,8 @@ public class InternalStreamConnectionTest {
         // given
         TestConnectionListener listener = new TestConnectionListener();
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           factory.getBufferProvider(), listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(factory.getBufferProvider());
+                                                                           listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())),
                                                         MessageSettings.builder().build());
         message.encode(buffer);
@@ -94,8 +94,8 @@ public class InternalStreamConnectionTest {
         // given
         TestConnectionListener listener = new TestConnectionListener();
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
-                                                                           factory.getBufferProvider(), listener);
-        OutputBuffer buffer = new PooledByteBufferOutputBuffer(factory.getBufferProvider());
+                                                                           listener);
+        OutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
                                                     new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);

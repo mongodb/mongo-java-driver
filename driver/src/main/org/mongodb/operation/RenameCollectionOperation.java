@@ -20,7 +20,6 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -41,19 +40,16 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
 
     /**
      * The constructor of this abstract class takes the fields that are required by all basic operations.
-     *
-     * @param bufferProvider         the BufferProvider to use when reading or writing to the network
-     * @param session                the current Session, which will give access to a connection to the MongoDB instance
+     *  @param session                the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession           true if the session should be closed at the end of the execute method
      * @param databaseName           the name of the database containing the collection to rename
      * @param originalCollectionName the name of the collection to rename
      * @param newCollectionName      the desired new name for the collection
      * @param dropTarget             set to true if you want any existing database with newCollectionName to be dropped during the rename
      */
-    public RenameCollectionOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession,
-                                     final String databaseName, final String originalCollectionName, final String newCollectionName,
-                                     final boolean dropTarget) {
-        super(bufferProvider, session, closeSession);
+    public RenameCollectionOperation(final Session session, final boolean closeSession, final String databaseName,
+                                     final String originalCollectionName, final String newCollectionName, final boolean dropTarget) {
+        super(session, closeSession);
         this.originalCollectionName = originalCollectionName;
         this.newCollectionName = newCollectionName;
         this.dropTarget = dropTarget;
@@ -72,7 +68,7 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
     public CommandResult execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         return new CommandProtocol("admin", createCommand(), commandCodec, commandCodec,
-                                   getBufferProvider(), provider.getServerDescription(), provider.getConnection(), true)
+                                   provider.getServerDescription(), provider.getConnection(), true)
                    .execute();
     }
 

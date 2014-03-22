@@ -21,7 +21,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -44,9 +43,9 @@ public class ReplaceProtocol<T> extends WriteProtocol {
 
     public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<ReplaceRequest<T>> replaceRequests,
-                           final Encoder<Document> queryEncoder, final Encoder<T> encoder, final BufferProvider bufferProvider,
-                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
+                           final Encoder<Document> queryEncoder, final Encoder<T> encoder, final ServerDescription serverDescription,
+                           final Connection connection, final boolean closeConnection) {
+        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.replaceRequests = replaceRequests;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.mongodb.session.PrimaryServerSelector
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getCluster
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSession
@@ -65,16 +64,16 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         def document = new Document('_id', 1)
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest, new DocumentCodec(),
-                                                 getBufferProvider(), server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest, new DocumentCodec()
+                                                 , server.description, connection, false)
         when:
         def result = protocol.execute()
 
         then:
         result.insertedCount == 1
         result.upserts == []
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(document), new DocumentCodec(), new DocumentCodec(),
-                                            getBufferProvider(), server.description, connection, false).execute()
+        QueryResult res = new QueryProtocol(getNamespace(), new Find(document), new DocumentCodec(), new DocumentCodec()
+                                            , server.description, connection, false).execute()
         res.results.get(0) == document
     }
 
@@ -82,13 +81,13 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         def requests = [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))]
         given:
         def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, requests,
-                                                 new DocumentCodec(), getBufferProvider(), server.description, connection, false)
+                                                 new DocumentCodec(), server.description, connection, false)
         when:
         protocol.execute()
 
         then:
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec(),
-                                            getBufferProvider(), server.description, connection, false).execute()
+        QueryResult res = new QueryProtocol(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec()
+                                            , server.description, connection, false).execute()
         res.results.size() == 2
     }
 
@@ -96,7 +95,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         given:
         def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED,
                                                  [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))],
-                                                 new DocumentCodec(), getBufferProvider(), server.description, connection, false)
+                                                 new DocumentCodec(), server.description, connection, false)
         protocol.execute()
 
         when:
@@ -136,16 +135,16 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         for (Document cur : documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec(),
-                                                 getBufferProvider(), server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec()
+                                                 , server.description, connection, false)
 
         when:
         def result = protocol.execute()
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(),
-                                               getBufferProvider(), getSession(), false).execute()
+        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()
+                                               , getSession(), false).execute()
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
@@ -166,10 +165,10 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         // Force a duplicate key error in the second insert request
         new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new Document('_id', 2))],
-                                  new DocumentCodec(), getBufferProvider(), server.description, connection, false).execute()
+                                  new DocumentCodec(), server.description, connection, false).execute()
 
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec(),
-                                                 getBufferProvider(), server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec()
+                                                 , server.description, connection, false)
 
         when:
         protocol.execute()
@@ -196,7 +195,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
             insertList.add(new InsertRequest<Document>(cur));
         }
         new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                  new DocumentCodec(), getBufferProvider(), server.description, connection, false).execute()
+                                  new DocumentCodec(), server.description, connection, false).execute()
 
         // add a large byte array to each document to force a split after each
         for (def document : documents) {
@@ -205,7 +204,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         documents[1].put('_id', 5)  // Make the second document a new one
 
         def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                                 new DocumentCodec(), getBufferProvider(), server.description, connection, false)
+                                                 new DocumentCodec(), server.description, connection, false)
         when:
         protocol.execute()
 
@@ -225,7 +224,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
                                                           .upsert(true),
                                                   new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 2)))
                                                           .upsert(true)],
-                                                 new DocumentCodec(), getBufferProvider(), server.description, connection, false);
+                                                 new DocumentCodec(), server.description, connection, false);
 
         when:
         def result = protocol.execute();

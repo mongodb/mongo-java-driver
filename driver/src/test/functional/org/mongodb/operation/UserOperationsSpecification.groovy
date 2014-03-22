@@ -22,6 +22,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -39,7 +41,6 @@ import org.mongodb.session.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getExecutor
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
@@ -58,22 +59,22 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should be found'() {
         given:
-        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getSession(), true).execute()
 
         when:
-        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true)
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName, getSession(), true)
                 .execute()
 
         then:
         found
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getSession(), true).execute()
     }
 
     def 'an added user should authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getSession(), true).execute()
         def cluster = getCluster()
 
         when:
@@ -85,14 +86,14 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getSession(), true).execute()
         cluster?.close()
     }
 
     def 'a removed user should not authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getSession(), true).execute()
         def cluster = getCluster()
 
         when:
@@ -108,10 +109,10 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readOnlyUser, getSession(), true).execute()
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
                                                        '234'.toCharArray()), true)
-        new UpdateUserOperation(newUser, getBufferProvider(), getSession(), true).execute()
+        new UpdateUserOperation(newUser, getSession(), true).execute()
         def cluster = getCluster(newUser)
 
         when:
@@ -123,25 +124,25 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getSession(), true).execute()
         cluster?.close()
     }
 
     def 'a read write user should be able to write'() {
         given:
-        new CreateUserOperation(readWriteUser, getBufferProvider(), getSession(), true).execute()
+        new CreateUserOperation(readWriteUser, getSession(), true).execute()
         def cluster = getCluster()
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                                    asList(new InsertRequest<Document>(new Document())),
-                                                   new DocumentCodec(), getBufferProvider(), new ClusterSession(cluster, getExecutor()),
+                                                   new DocumentCodec(), new ClusterSession(cluster, getExecutor()),
                                                    true).execute()
         then:
         result.getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName, getSession(), true).execute()
         cluster?.close()
     }
 

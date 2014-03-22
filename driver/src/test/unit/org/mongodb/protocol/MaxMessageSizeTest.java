@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.SimpleBufferProvider;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.operation.InsertRequest;
@@ -31,7 +32,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 public class MaxMessageSizeTest {
@@ -46,7 +46,7 @@ public class MaxMessageSizeTest {
                                                             new InsertRequest<Document>(new Document("bytes", new byte[2048])),
                                                             new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
                                               new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
-        buffer = new PooledByteBufferOutputBuffer(getBufferProvider());
+        buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
     }
 
     @After

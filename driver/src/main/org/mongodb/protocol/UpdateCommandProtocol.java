@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -44,9 +43,8 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
 
     public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                  final List<UpdateRequest> updates, final Encoder<Document> queryEncoder,
-                                 final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                 final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, bufferProvider, serverDescription, connection, closeConnection);
+                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.updates = notNull("update", updates);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }

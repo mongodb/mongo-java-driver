@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -30,7 +32,6 @@ import org.mongodb.codecs.DocumentCodec
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
 import static org.mongodb.Fixture.isSharded
@@ -45,7 +46,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
                                                     new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(), bufferProvider,
+                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(),
                                                     session, true)
         enableMaxTimeFailPoint()
 
@@ -67,7 +68,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
                                                     new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(), bufferProvider,
+                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(),
                                                     session, true)
         enableMaxTimeFailPoint()
 

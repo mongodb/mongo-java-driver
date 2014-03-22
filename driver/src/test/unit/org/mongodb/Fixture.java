@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.SSLSettings;
@@ -129,11 +128,6 @@ public final class Fixture {
     public static Executor getExecutor() {
         getMongoClient();
         return mongoClient.getExecutor();
-    }
-
-    public static BufferProvider getBufferProvider() {
-        getMongoClient();
-        return mongoClient.getBufferProvider();
     }
 
     public static SSLSettings getSSLSettings() {

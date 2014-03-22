@@ -88,6 +88,11 @@ final class NettyStream implements Stream {
     }
 
     @Override
+    public ByteBuf getBuffer(final int size) {
+        return new NettyByteBuf(allocator.buffer(size, size));
+    }
+
+    @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<Void>();
         writeAsync(buffers, future);

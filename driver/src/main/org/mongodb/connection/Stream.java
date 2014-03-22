@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @since 3.0
  */
-public interface Stream {
+public interface Stream extends BufferProvider{
 
     /**
      * Write each buffer in the list to the stream in order, blocking until all are completely written.

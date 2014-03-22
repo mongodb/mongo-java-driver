@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -35,9 +34,8 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements 
     private final MongoNamespace namespace;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                          final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
-                          final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                          final Decoder<T> resultDecoder, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = notNull("namespace", namespace);
         this.find = notNull("find", find);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
@@ -46,7 +44,7 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements 
 
     @Override
     public MongoCursor<T> execute() {
-        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getBufferProvider(), getSession(), isCloseSession());
+        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getSession(), isCloseSession());
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync() {
@@ -54,7 +52,6 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements 
                                                                                         find,
                                                                                         queryEncoder,
                                                                                         resultDecoder,
-                                                                                        getBufferProvider(),
                                                                                         getSession(),
                                                                                         isCloseSession()), null);
     }

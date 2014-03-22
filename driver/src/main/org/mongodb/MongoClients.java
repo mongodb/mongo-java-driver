@@ -56,14 +56,12 @@ public final class MongoClients {
 
     public static MongoClient create(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
                                      final MongoClientOptions options) {
-        StreamFactory streamFactory = getStreamFactory(options);
         return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                          .mode(ClusterConnectionMode.SINGLE)
                                                                          .hosts(Arrays.asList(serverAddress))
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
-                                                          credentialList, options, streamFactory
-                                                         ), streamFactory.getBufferProvider());
+                                                          credentialList, options, getStreamFactory(options)));
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -71,15 +69,11 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final List<ServerAddress> seedList, final MongoClientOptions options) {
-        StreamFactory streamFactory = getStreamFactory(options);
         return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                          .hosts(seedList)
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
-                                                          Collections.<MongoCredential>emptyList(), options, streamFactory
-                                                         ),
-                                   streamFactory.getBufferProvider()
-        );
+                                                          Collections.<MongoCredential>emptyList(), options, getStreamFactory(options)));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -87,7 +81,6 @@ public final class MongoClients {
     }
 
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
-        StreamFactory streamFactory = getStreamFactory(options);
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                              .mode(ClusterConnectionMode.SINGLE)
@@ -95,10 +88,7 @@ public final class MongoClients {
                                                                                                                             .get(0))))
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, streamFactory
-                                                             ),
-                                       streamFactory.getBufferProvider()
-            );
+                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)));
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (final String cur : mongoURI.getHosts()) {
@@ -108,10 +98,7 @@ public final class MongoClients {
                                                                              .hosts(seedList)
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, streamFactory
-                                                             ),
-                                       streamFactory.getBufferProvider()
-            );
+                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)));
         }
     }
 

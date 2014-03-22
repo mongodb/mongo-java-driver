@@ -41,9 +41,8 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
     public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
 
-    GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection,
-                        final BufferProvider bufferProvider) {
-        super(credential, internalConnection, bufferProvider);
+    GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
+        super(credential, internalConnection);
 
         if (getCredential().getMechanism() != GSSAPI) {
             throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());

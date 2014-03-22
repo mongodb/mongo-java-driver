@@ -223,6 +223,11 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
+        public ByteBuf getBuffer(final int capacity) {
+            return wrapped.getBuffer(capacity);
+        }
+
+        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", wrapped != null);
             try {

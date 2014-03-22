@@ -144,6 +144,12 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
+        public ByteBuf getBuffer(final int capacity) {
+            isTrue("open", !isClosed());
+            return wrapped.getBuffer(capacity);
+        }
+
+        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", !isClosed());
             try {

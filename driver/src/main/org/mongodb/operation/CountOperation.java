@@ -23,7 +23,6 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
@@ -38,16 +37,14 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     private final boolean closeSession;
     private final DocumentCodec commandEncoder = new DocumentCodec();
     private final Codec<Document> codec;
-    private final BufferProvider bufferProvider;
     private final MongoNamespace namespace;
     private final Find find;
 
-    public CountOperation(final MongoNamespace namespace, final Find find, final Codec<Document> codec,
-                          final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
+    public CountOperation(final MongoNamespace namespace, final Find find, final Codec<Document> codec, final Session session,
+                          final boolean closeSession) {
         this.namespace = namespace;
         this.find = find;
         this.codec = codec;
-        this.bufferProvider = bufferProvider;
         this.session = session;
         this.closeSession = closeSession;
     }
@@ -60,7 +57,7 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
                 session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
 
             return getCount(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder,
-                                                codec, bufferProvider, serverConnectionProvider.getServerDescription(),
+                                                codec, serverConnectionProvider.getServerDescription(),
                                                 serverConnectionProvider.getConnection(), true).execute());
         } finally {
             if (closeSession) {
@@ -72,7 +69,7 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     @Override
     public MongoFuture<Long> executeAsync() {
         final SingleResultFuture<Long> retVal = new SingleResultFuture<Long>();
-        new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder, bufferProvider,
+        new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder,
                              session, closeSession).executeAsync().register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult commandResult, final MongoException e) {

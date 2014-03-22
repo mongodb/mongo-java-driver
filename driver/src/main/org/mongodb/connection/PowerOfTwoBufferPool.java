@@ -58,7 +58,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     @Override
-    public ByteBuf get(final int size) {
+    public ByteBuf getBuffer(final int size) {
         Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 

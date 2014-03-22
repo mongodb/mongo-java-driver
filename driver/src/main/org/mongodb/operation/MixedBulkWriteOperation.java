@@ -28,7 +28,6 @@ import org.mongodb.WriteConcern;
 import org.mongodb.WriteConcernError;
 import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
@@ -78,20 +77,17 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
     /**
      * Construct a new instance.
-     *
-     * @param namespace      the namespace to write to
+     *  @param namespace      the namespace to write to
      * @param writeRequests  the list of runWrites to execute
      * @param ordered        whether the runWrites must be executed in order.
      * @param encoder        the encoder
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,
-                                   final WriteConcern writeConcern,
-                                   final Encoder<T> encoder, final BufferProvider bufferProvider, final Session session,
+                                   final WriteConcern writeConcern, final Encoder<T> encoder, final Session session,
                                    final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+        super(session, closeSession);
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
@@ -305,7 +301,6 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
                                                   asList(replaceRequests.get(index)),
                                                   new DocumentCodec(),
                                                   encoder,
-                                                  getBufferProvider(),
                                                   provider.getServerDescription(),
                                                   connection,
                                                   false);
@@ -313,7 +308,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
                 WriteCommandProtocol getWriteCommandProtocol() {
                     return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder,
-                                                         getBufferProvider(), provider.getServerDescription(), connection, false);
+                                                         provider.getServerDescription(), connection, false);
                 }
 
                 @Override
@@ -329,12 +324,12 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             return new RunExecutor(provider) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index)), new DocumentCodec(),
-                                              getBufferProvider(), provider.getServerDescription(), connection, false);
+                                              provider.getServerDescription(), connection, false);
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
                     return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests, new DocumentCodec(),
-                                                     getBufferProvider(), provider.getServerDescription(), connection, false);
+                                                     provider.getServerDescription(), connection, false);
                 }
 
                 @Override
@@ -351,11 +346,11 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             return new RunExecutor(provider) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder,
-                                                 getBufferProvider(), provider.getServerDescription(), connection, false);
+                                                 provider.getServerDescription(), connection, false);
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests, encoder, getBufferProvider(),
+                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests, encoder,
                                                         provider.getServerDescription(), connection, false);
                 }
 
@@ -377,11 +372,11 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             return new RunExecutor(provider) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec(),
-                                              getBufferProvider(), provider.getServerDescription(), connection, false);
+                                              provider.getServerDescription(), connection, false);
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec(), getBufferProvider(),
+                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec(),
                                                      provider.getServerDescription(), connection, false);
                 }
 

@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.DeleteCommandProtocol;
@@ -39,24 +38,23 @@ public class RemoveOperation extends BaseWriteOperation {
     private final Encoder<Document> queryEncoder;
 
     public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<RemoveRequest> removeRequests,
-                           final Encoder<Document> queryEncoder, final BufferProvider bufferProvider, final Session session,
+                           final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder, final Session session,
                            final boolean closeSession) {
-        super(namespace, ordered, writeConcern, bufferProvider, session, closeSession);
+        super(namespace, ordered, writeConcern, session, closeSession);
         this.removeRequests = notNull("removes", removeRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder, getBufferProvider(),
+        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder,
                                   serverDescription, connection, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(),
-                                         removeRequests, queryEncoder, getBufferProvider(), serverDescription,
+                                         removeRequests, queryEncoder, serverDescription,
                                          connection, true);
     }
 

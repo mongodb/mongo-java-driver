@@ -28,8 +28,8 @@ import static org.mongodb.connection.CommandHelper.executeCommand;
 
 abstract class SaslAuthenticator extends Authenticator {
 
-    SaslAuthenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
-        super(credential, internalConnection, bufferProvider);
+    SaslAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
+        super(credential, internalConnection);
     }
 
     public void authenticate() {
@@ -64,12 +64,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private CommandResult sendSaslStart(final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), new DocumentCodec(),
-                              getInternalConnection(), getBufferProvider());
+                              getInternalConnection());
     }
 
     private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), new DocumentCodec(),
-                              getInternalConnection(), getBufferProvider());
+                              getInternalConnection());
     }
 
     private Document createSaslStartCommandDocument(final byte[] outToken) {

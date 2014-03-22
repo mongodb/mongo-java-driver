@@ -26,9 +26,8 @@ import static org.mongodb.connection.CommandHelper.executeCommand;
 import static org.mongodb.connection.NativeAuthenticationHelper.getAuthCommand;
 
 class NativeAuthenticator extends Authenticator {
-    public NativeAuthenticator(final MongoCredential credential, final InternalConnection internalConnection,
-                               final BufferProvider bufferProvider) {
-        super(credential, internalConnection, bufferProvider);
+    public NativeAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
+        super(credential, internalConnection);
     }
 
     @Override
@@ -36,12 +35,12 @@ class NativeAuthenticator extends Authenticator {
         try {
             CommandResult nonceResponse = executeCommand(getCredential().getSource(),
                                                          NativeAuthenticationHelper.getNonceCommand(), new DocumentCodec(),
-                                                         getInternalConnection(), getBufferProvider());
+                                                         getInternalConnection());
 
             Document authCommand = getAuthCommand(getCredential().getUserName(),
                                                   getCredential().getPassword(),
                                                   nonceResponse.getResponse().getString("nonce"));
-            executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection(), getBufferProvider());
+            executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

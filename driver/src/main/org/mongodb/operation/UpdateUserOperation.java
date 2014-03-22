@@ -20,7 +20,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.ReplaceProtocol;
@@ -40,8 +39,8 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
 public class UpdateUserOperation extends BaseOperation<Void> {
     private final User user;
 
-    public UpdateUserOperation(final User user, final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public UpdateUserOperation(final User user, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.user = user;
     }
 
@@ -60,7 +59,7 @@ public class UpdateUserOperation extends BaseOperation<Void> {
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "updateUser"),
                                                               new DocumentCodec(),
-                                                              new DocumentCodec(), getBufferProvider(),
+                                                              new DocumentCodec(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true);
         commandProtocol.execute();
@@ -75,7 +74,6 @@ public class UpdateUserOperation extends BaseOperation<Void> {
                                                                    asCollectionDocument(user))),
                                       new DocumentCodec(),
                                       new DocumentCodec(),
-                                      getBufferProvider(),
                                       serverConnectionProvider.getServerDescription(),
                                       serverConnectionProvider.getConnection(),
                                       true).execute();

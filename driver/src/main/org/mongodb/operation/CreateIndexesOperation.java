@@ -23,7 +23,6 @@ import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
@@ -37,9 +36,9 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
 
-    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace, final BufferProvider bufferProvider,
-                                  final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace, final Session session,
+                                  final boolean closeSession) {
+        super(session, closeSession);
         this.indexes = indexes;
         this.namespace = namespace;
     }
@@ -69,7 +68,7 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
         for (Index index : indexes) {
             new InsertOperation<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(toDocument(index))),
-                                          new DocumentCodec(), getBufferProvider(), getSession(), false).execute();
+                                          new DocumentCodec(), getSession(), false).execute();
         }
     }
 
@@ -85,7 +84,7 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
 
         CommandProtocol commandProtocol = new CommandProtocol(namespace.getDatabaseName(), command,
                                                               new DocumentCodec(),
-                                                              new DocumentCodec(), getBufferProvider(),
+                                                              new DocumentCodec(),
                                                               getPrimaryServerConnectionProvider().getServerDescription(),
                                                               getPrimaryServerConnectionProvider().getConnection(), true);
         commandProtocol.execute();

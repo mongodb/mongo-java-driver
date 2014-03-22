@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
@@ -33,13 +32,11 @@ class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
     private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
-    private final BufferProvider bufferProvider;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster, final BufferProvider bufferProvider) {
+    MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
         this.clientOptions = clientOptions;
         this.cluster = cluster;
-        this.bufferProvider = bufferProvider;
     }
 
     @Override
@@ -103,10 +100,6 @@ class MongoClientImpl implements MongoClient {
 
     public Executor getExecutor() {
         return executorService;
-    }
-
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
     }
 
     private void pinSession() {

@@ -24,7 +24,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.SingleResultFuture;
@@ -35,7 +34,6 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultFuture<WriteResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
-    private final BufferProvider bufferProvider;
     private boolean ordered;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
@@ -46,8 +44,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
     public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<Document> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
-                               final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                               final Connection connection, final boolean closeConnection) {
+                               final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         // CHECKSTYLE:ON
         super(decoder, requestId, connection, closeConnection);
         this.future = future;
@@ -55,7 +52,6 @@ class WriteResultCallback extends CommandResultBaseCallback {
         this.nextMessage = nextMessage;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
-        this.bufferProvider = bufferProvider;
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.closeConnection = closeConnection;
@@ -71,7 +67,6 @@ class WriteResultCallback extends CommandResultBaseCallback {
                 WriteResult writeResult = ProtocolHelper.getWriteResult(commandResult);
                 if (nextMessage != null) {
                     MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
-                                                                                  bufferProvider,
                                                                                   nextMessage,
                                                                                   ordered,
                                                                                   writeConcern,

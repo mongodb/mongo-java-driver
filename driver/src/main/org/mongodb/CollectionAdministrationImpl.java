@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,12 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void createIndexes(final List<Index> indexes) {
-        new CreateIndexesOperation(indexes, collectionNamespace,
-                                   client.getBufferProvider(), client.getSession(), false).execute();
+        new CreateIndexesOperation(indexes, collectionNamespace, client.getSession(), false).execute();
     }
 
     @Override
     public List<Document> getIndexes() {
-        return new GetIndexesOperation(collectionNamespace, client.getBufferProvider(), client.getSession()).execute();
+        return new GetIndexesOperation(collectionNamespace, client.getSession()).execute();
     }
 
     @Override
@@ -74,16 +73,16 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void drop() {
-        new DropCollectionOperation(collectionNamespace, client.getBufferProvider(), client.getSession(), false).execute();
+        new DropCollectionOperation(collectionNamespace, client.getSession(), false).execute();
     }
 
     @Override
     public void dropIndex(final Index index) {
-        new DropIndexOperation(collectionNamespace, index.getName(), client.getBufferProvider(), client.getSession(), false).execute();
+        new DropIndexOperation(collectionNamespace, index.getName(), client.getSession(), false).execute();
     }
 
     @Override
     public void dropIndexes() {
-        new DropIndexOperation(collectionNamespace, "*", client.getBufferProvider(), client.getSession(), false).execute();
+        new DropIndexOperation(collectionNamespace, "*", client.getSession(), false).execute();
     }
 }

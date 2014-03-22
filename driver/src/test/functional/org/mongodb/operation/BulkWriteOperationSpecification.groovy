@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.bson.types.ObjectId
@@ -32,7 +34,6 @@ import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
@@ -45,7 +46,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
 
         def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(new Document('_id', 1))], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -61,7 +62,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def document = new Document('_id', 1)
         collection.insert(document)
         def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(document)], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         op.execute()
@@ -77,7 +78,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.insert(new Document('x', true))
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new Document('x', true)).multi(false)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -93,7 +94,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new Document('x', true))],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -109,7 +110,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('_id', 1),
                                                                 new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -127,7 +128,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('x', true),
                                                                 new Document('$set', new Document('y', 1))).multi(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -143,7 +144,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -161,7 +162,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
                                                       .upsert(true)
                                              ],
                                              true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -179,7 +180,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('_id', id),
                                                                 new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -195,7 +196,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new Document('_id', 1), new Document('_id', 1).append('x', 2))
                                                       .upsert(true)], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -211,11 +212,11 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getBufferProvider(), getSession(),
+                                      new DocumentCodec(), getSession(),
                                       true).execute()
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -237,11 +238,11 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getBufferProvider(), getSession(),
+                                      new DocumentCodec(), getSession(),
                                       true).execute()
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), true,
-                                             UNACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             UNACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -265,7 +266,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
                                               new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 3))),
                                               new InsertRequest<Document>(new Document('_id', 1))   // this should fail with index 2
                                              ],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
         when:
         op.execute()
 
@@ -281,11 +282,11 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getBufferProvider(), getSession(),
+                                      new DocumentCodec(), getSession(),
                                       true).execute()
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), false,
-                                             ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute()
@@ -310,7 +311,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         }
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(),
+        new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, new DocumentCodec(), getSession(),
                                     true).execute()
 
         then:
@@ -325,7 +326,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         }
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, false, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(),
+        new MixedBulkWriteOperation(getNamespace(), writes, false, ACKNOWLEDGED, new DocumentCodec(), getSession(),
                                     true).execute()
 
         then:
@@ -337,14 +338,14 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getBufferProvider(), getSession(),
+                                      new DocumentCodec(), getSession(),
                                       true).execute()
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1)),
                                               new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 3))),
                                               new InsertRequest<Document>(new Document('_id', 3))   // this should fail with index 2
                                              ],
-                                             false, ACKNOWLEDGED, new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                             false, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
         when:
         op.execute()
 
@@ -363,7 +364,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
-                                             false, new WriteConcern(5, 1), new DocumentCodec(), getBufferProvider(), getSession(),
+                                             false, new WriteConcern(5, 1), new DocumentCodec(), getSession(),
                                              true)
         when:
         op.execute()

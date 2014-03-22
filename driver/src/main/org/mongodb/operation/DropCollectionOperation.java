@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -38,15 +37,12 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
 
     /**
      * Create the Operation to drop a Collection from MongoDB.
-     *
-     * @param namespace      the database/collection namespace for the collection to be dropped
-     * @param bufferProvider the BufferProvider to use
+     *  @param namespace      the database/collection namespace for the collection to be dropped
      * @param session        the Session to use
      * @param closeSession   true of you want this operation to close the session after completion
      */
-    public DropCollectionOperation(final MongoNamespace namespace, final BufferProvider bufferProvider, final Session session,
-                                   final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public DropCollectionOperation(final MongoNamespace namespace, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         dropCollectionCommand = new Document("drop", namespace.getCollectionName());
     }
@@ -55,7 +51,7 @@ public class DropCollectionOperation extends BaseOperation<CommandResult> {
     public CommandResult execute() {
         try {
             ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
-            return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec, getBufferProvider(),
+            return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec,
                                        provider.getServerDescription(), provider.getConnection(), true).execute();
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptionsWhenDroppingACollection(e);

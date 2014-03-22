@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -35,9 +34,8 @@ public class GetIndexesOperation extends BaseOperation<List<Document>> {
     private final MongoNamespace indexesNamespace;
     private final Find queryForCollectionNamespace;
 
-    public GetIndexesOperation(final MongoNamespace collectionNamespace,
-                               final BufferProvider bufferProvider, final Session session) {
-        super(bufferProvider, session, false);
+    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Session session) {
+        super(session, false);
         notNull("collectionNamespace", collectionNamespace);
         this.indexesNamespace = new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
         this.queryForCollectionNamespace = new Find(new Document("ns", collectionNamespace.getFullName())).readPreference(primary());
@@ -47,7 +45,7 @@ public class GetIndexesOperation extends BaseOperation<List<Document>> {
     public List<Document> execute() {
         List<Document> retVal = new ArrayList<Document>();
         MongoCursor<Document> cursor = new MongoQueryCursor<Document>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
-                                                                      new DocumentCodec(), getBufferProvider(), getSession(),
+                                                                      new DocumentCodec(), getSession(),
                                                                       isCloseSession());
         while (cursor.hasNext()) {
             retVal.add(cursor.next());

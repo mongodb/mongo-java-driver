@@ -34,8 +34,8 @@ import static org.mongodb.assertions.Assertions.isTrue;
 class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";
 
-    PlainAuthenticator(final MongoCredential credential, final InternalConnection internalConnection, final BufferProvider bufferProvider) {
-        super(credential, internalConnection, bufferProvider);
+    PlainAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
+        super(credential, internalConnection);
     }
 
     @Override

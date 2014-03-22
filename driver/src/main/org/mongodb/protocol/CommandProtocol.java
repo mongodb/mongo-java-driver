@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -48,19 +47,17 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final Document command;
     private final Decoder<Document> commandResultDecoder;
     private final Encoder<Document> commandEncoder;
-    private final BufferProvider bufferProvider;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
     public CommandProtocol(final String database, final Document command, final Encoder<Document> commandEncoder,
-                           final Decoder<Document> commandResultDecoder, final BufferProvider bufferProvider,
-                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                           final Decoder<Document> commandResultDecoder, final ServerDescription serverDescription,
+                           final Connection connection, final boolean closeConnection) {
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
         this.commandEncoder = commandEncoder;
-        this.bufferProvider = bufferProvider;
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.closeConnection = closeConnection;
@@ -82,7 +79,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     }
 
     private CommandMessage sendMessage() {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
                                                         getMessageSettings(serverDescription));
@@ -107,7 +104,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     public MongoFuture<CommandResult> executeAsync() {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
                                                     getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);

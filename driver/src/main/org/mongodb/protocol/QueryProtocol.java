@@ -22,7 +22,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -51,13 +50,11 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Connection connection;
     private final boolean closeConnection;
     private final MongoNamespace namespace;
-    private final BufferProvider bufferProvider;
 
     public QueryProtocol(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                         final Decoder<T> resultDecoder, final BufferProvider bufferProvider,
-                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                         final Decoder<T> resultDecoder, final ServerDescription serverDescription, final Connection connection,
+                         final boolean closeConnection) {
         this.namespace = namespace;
-        this.bufferProvider = bufferProvider;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
@@ -84,7 +81,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     public MongoFuture<QueryResult<T>> executeAsync() {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
                                                 getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
@@ -102,7 +99,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryMessage sendMessage() {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder, getMessageSettings(serverDescription));
             message.encode(buffer);

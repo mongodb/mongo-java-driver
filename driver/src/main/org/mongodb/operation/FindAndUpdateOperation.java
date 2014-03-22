@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -40,8 +39,8 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
 
     public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate<T> findAndUpdate, final Decoder<T> resultDecoder,
-                                  final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                                  final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         this.findAndUpdate = findAndUpdate;
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
@@ -53,7 +52,7 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
-                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true).execute();
         return (T) commandResult.getResponse().get("value");
     }

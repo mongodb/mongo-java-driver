@@ -55,8 +55,4 @@ public class SocketStreamFactory implements StreamFactory {
         return stream;
     }
 
-    @Override
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
-    }
 }

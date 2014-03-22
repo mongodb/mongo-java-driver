@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
@@ -50,16 +49,14 @@ public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStati
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
-     *
-     * @param namespace      the database and collection to perform the map reduce on
+     *  @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce, final BufferProvider bufferProvider,
-                                          final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce, final Session session,
+                                          final boolean closeSession) {
+        super(session, closeSession);
         if (mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with map reduce operations that put the results into a "
                                                + "collection.  Invalid MapReduce: " + mapReduce);
@@ -77,7 +74,7 @@ public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStati
     public MapReduceStatistics execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
-                                                          getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
+                                                          provider.getServerDescription(), provider.getConnection(),
                                                           true)
                                           .execute();
         serverUsed = commandResult.getAddress();

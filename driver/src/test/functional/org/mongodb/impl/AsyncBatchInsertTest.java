@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.getSession;
@@ -69,7 +68,6 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
         new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                       insertRequestList,
                                       new DocumentCodec(),
-                                      getBufferProvider(),
                                       getSession(), true)
         .executeAsync().get();
         assertEquals(insertRequestList.size(), collection.find().count());
@@ -83,10 +81,9 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
             InsertOperation<Document> insertOperation = new InsertOperation<Document>(collection.getNamespace(), true, UNACKNOWLEDGED,
                                                                                       insertRequestList,
                                                                                       new DocumentCodec(),
-                                                                                      getBufferProvider(),
                                                                                       session, false);
             insertOperation.executeAsync().get();
-            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getBufferProvider(), session, false)
+            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), session, false)
                          .execute();
             assertEquals(insertRequestList.size(), count);
         } finally {

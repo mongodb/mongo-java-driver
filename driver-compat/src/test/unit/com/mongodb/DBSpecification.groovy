@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 
 package com.mongodb
-
 import org.mongodb.Document
 import org.mongodb.MongoCommandFailureException
 import org.mongodb.ServerCursor
+import org.mongodb.SimpleBufferProvider
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
@@ -30,7 +30,6 @@ import spock.lang.Subject
 
 import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.connection.ClusterConnectionMode.SINGLE
 import static org.mongodb.connection.ClusterType.UNKNOWN
 
@@ -45,7 +44,7 @@ class DBSpecification extends Specification {
     def setup() {
         mongo.getCluster() >> { cluster }
         mongo.getSession() >> { session }
-        mongo.getBufferProvider() >> { getBufferProvider() }
+        mongo.getBufferProvider() >> { new SimpleBufferProvider() }
         //TODO: this shouldn't be required.  I think.
         database.setReadPreference(primary())
     }

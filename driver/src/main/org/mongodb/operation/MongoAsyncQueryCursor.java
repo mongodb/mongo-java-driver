@@ -24,7 +24,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
@@ -47,7 +46,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
-    private final BufferProvider bufferProvider;
     private final Session session;
     private ServerConnectionProvider serverConnectionProvider;
     private final boolean closeSession;
@@ -57,13 +55,11 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private AsyncBlock<? super T> block;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final BufferProvider bufferProvider,
-                                 final Session session, final boolean closeSession) {
+                                 final Decoder<T> decoder, final Session session, final boolean closeSession) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
-        this.bufferProvider = bufferProvider;
         this.session = session;
         this.closeSession = closeSession;
     }
@@ -90,7 +86,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                                        if (isExhaust()) {
                                            exhaustConnection = connection;
                                        }
-                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder, bufferProvider,
+                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder,
                                                             provider.getServerDescription(), connection, !isExhaust())
                                            .executeAsync()
                                            .register(new QueryResultSingleResultCallback());
@@ -176,7 +172,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                                                        new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
                                                                    numFetchedSoFar),
                                                        decoder,
-                                                       bufferProvider,
                                                        serverConnectionProvider.getServerDescription(),
                                                        connection,
                                                        true)

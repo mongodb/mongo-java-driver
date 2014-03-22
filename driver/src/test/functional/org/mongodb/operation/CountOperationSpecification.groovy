@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Fixture
@@ -28,7 +30,6 @@ import org.mongodb.codecs.DocumentCodec
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
 import static org.mongodb.Fixture.serverVersionAtLeast
@@ -40,7 +41,7 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), bufferProvider, session, true)
+        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), session, true)
         enableMaxTimeFailPoint()
 
         when:
@@ -59,7 +60,7 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), bufferProvider, session, true)
+        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), session, true)
         enableMaxTimeFailPoint()
 
         when:

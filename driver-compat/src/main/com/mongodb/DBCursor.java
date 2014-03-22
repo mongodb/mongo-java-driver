@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if (cursor == null) {
             try {
                 cursor = new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                                                      getCollection().getBufferPool(), getSession(), true)
+                                                      getSession(), true)
                          .execute();
             } catch (org.mongodb.MongoException e) {
                 throw mapException(e);
@@ -367,7 +367,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
         try {
             return new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
-                                                getCollection().getBufferPool(), getSession(), true).execute().next();
+                                                getSession(), true).execute().next();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

@@ -24,22 +24,20 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 public class PooledByteBufferOutputBuffer extends OutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     public static final int MAX_BUFFER_SIZE = 1 << 24;
 
-
-    private final BufferProvider pool;
+    private final BufferProvider bufferProvider;
     private final List<ByteBuf> bufferList = new ArrayList<ByteBuf>();
     private int curBufferIndex = 0;
     private int position = 0;
 
-    public PooledByteBufferOutputBuffer(final BufferProvider pool) {
-        if (pool == null) {
-            throw new IllegalArgumentException("pool can not be null");
-        }
-        this.pool = pool;
+    public PooledByteBufferOutputBuffer(final BufferProvider bufferProvider) {
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 
     @Override
@@ -74,7 +72,7 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
 
     private ByteBuf getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(pool.get(Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE)));
+            bufferList.add(bufferProvider.getBuffer(Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE)));
         }
         return bufferList.get(index);
     }

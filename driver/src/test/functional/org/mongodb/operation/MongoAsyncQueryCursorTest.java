@@ -39,7 +39,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeFalse;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.isSharded;
@@ -80,7 +79,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            getBufferProvider(),
                                             session,
                                             true).start(new TestBlock());
         latch.await();
@@ -93,7 +91,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).limit(100).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            getBufferProvider(),
                                             session,
                                             true)
             .start(new TestBlock());
@@ -109,7 +106,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            getBufferProvider(),
                                             session,
                                             true)
             .start(new TestBlock());
@@ -125,7 +121,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            getBufferProvider(),
                                             session,
                                             true)
             .start(new TestBlock());
@@ -148,7 +143,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                           .order(new Document("_id", 1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                getBufferProvider(),
                                                 pinnedSession,
                                                 false)
                 .start(block);
@@ -163,7 +157,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                 new Find().limit(1).order(new Document("_id", -1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                getBufferProvider(),
                                                 pinnedSession,
                                                 false)
                 .start(new TestBlock(1, nextLatch));
@@ -188,7 +181,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                           .order(new Document("_id", 1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                getBufferProvider(),
                                                 pinnedSession,
                                                 false)
                 .start(block);

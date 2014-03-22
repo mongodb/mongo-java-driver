@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
@@ -44,7 +43,7 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public double ping() {
         CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
-                                                        client.getCluster().getDescription(10, TimeUnit.SECONDS), getBufferPool(),
+                                                        client.getCluster().getDescription(10, TimeUnit.SECONDS),
                                                         client.getSession(), false)
                                    .execute();
 
@@ -53,10 +52,6 @@ class ClientAdministrationImpl implements ClientAdministration {
 
     @Override
     public List<String> getDatabaseNames() {
-        return new GetDatabaseNamesOperation(client.getBufferProvider(), client.getSession(), false).execute();
-    }
-
-    public BufferProvider getBufferPool() {
-        return client.getBufferProvider();
+        return new GetDatabaseNamesOperation(client.getSession(), false).execute();
     }
 }

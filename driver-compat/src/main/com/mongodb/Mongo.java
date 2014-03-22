@@ -463,7 +463,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        return new GetDatabaseNamesOperation(getBufferProvider(), getSession(), false).execute();
+        return new GetDatabaseNamesOperation(getSession(), false).execute();
     }
 
     /**
@@ -792,7 +792,7 @@ public class Mongo {
                 ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false,
                                                                                               new ServerAddressSelector(cur.getAddress()));
                 ServerConnectionProvider provider = session.createServerConnectionProvider(options);
-                new KillCursorProtocol(new KillCursor(cur), getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
+                new KillCursorProtocol(new KillCursor(cur), provider.getServerDescription(), provider.getConnection(),
                                        true).execute();
 
             }

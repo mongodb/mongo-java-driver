@@ -36,30 +36,30 @@ public class PowerOfTwoBufferPoolTest {
 
     @Test
     public void testNormalRequest() {
-        ByteBuf buf = pool.get((int) Math.pow(2, 10));
+        ByteBuf buf = pool.getBuffer((int) Math.pow(2, 10));
         assertEquals((int) Math.pow(2, 10), buf.capacity());
         assertEquals((int) Math.pow(2, 10), buf.limit());
 
-        buf = pool.get((int) Math.pow(2, 10) - 1);
+        buf = pool.getBuffer((int) Math.pow(2, 10) - 1);
         assertEquals((int) Math.pow(2, 10), buf.capacity());
         assertEquals((int) Math.pow(2, 10) - 1, buf.limit());
     }
 
     @Test
     public void testReuse() {
-        ByteBuf buf = pool.get((int) Math.pow(2, 10));
+        ByteBuf buf = pool.getBuffer((int) Math.pow(2, 10));
         ByteBuffer byteBuffer = buf.asNIO();
         buf.close();
-        assertSame(byteBuffer, pool.get((int) Math.pow(2, 10)).asNIO());
+        assertSame(byteBuffer, pool.getBuffer((int) Math.pow(2, 10)).asNIO());
     }
 
     @Test
     public void testHugeBufferRequest() {
-        ByteBuf buf = pool.get((int) Math.pow(2, 10) + 1);
+        ByteBuf buf = pool.getBuffer((int) Math.pow(2, 10) + 1);
         assertEquals((int) Math.pow(2, 10) + 1, buf.capacity());
         assertEquals((int) Math.pow(2, 10) + 1, buf.limit());
 
         buf.close();
-        assertNotSame(buf, pool.get((int) Math.pow(2, 10) + 1));
+        assertNotSame(buf, pool.getBuffer((int) Math.pow(2, 10) + 1));
     }
 }

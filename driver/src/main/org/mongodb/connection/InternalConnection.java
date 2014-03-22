@@ -28,7 +28,7 @@ import java.util.List;
  * @since 3.0
  */
 @NotThreadSafe
-interface InternalConnection {
+interface InternalConnection extends BufferProvider {
 
     /**
      * Gets the server address of this connection

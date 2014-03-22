@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.ReplaceCommandProtocol;
@@ -41,9 +40,8 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
 
     public ReplaceOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                             final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
-                            final Encoder<T> encoder, final BufferProvider bufferProvider, final Session session,
-                            final boolean closeSession) {
-        super(namespace, ordered, writeConcern, bufferProvider, session, closeSession);
+                            final Encoder<T> encoder, final Session session, final boolean closeSession) {
+        super(namespace, ordered, writeConcern, session, closeSession);
         this.replaceRequests = notNull("replace", replaceRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
@@ -52,13 +50,13 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new ReplaceProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder,
-                                      getBufferProvider(), serverDescription, connection, true);
+                                      serverDescription, connection, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new ReplaceCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder,
-                                             getBufferProvider(), serverDescription, connection, true);
+                                             serverDescription, connection, true);
     }
 
     @Override

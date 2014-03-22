@@ -40,8 +40,4 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
         return new AsynchronousSocketChannelStream(serverAddress, bufferProvider);
     }
 
-    @Override
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
-    }
 }

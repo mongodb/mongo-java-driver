@@ -55,6 +55,12 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
+    public ByteBuf getBuffer(final int size) {
+        isTrue("open", !isClosed());
+        return wrapped.getBuffer(size);
+    }
+
+    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         isTrue("open", !isClosed());
         wrapped.sendMessage(byteBuffers, lastRequestId);

@@ -20,7 +20,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -43,9 +42,9 @@ public class InsertProtocol<T> extends WriteProtocol {
 
     public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                           final List<InsertRequest<T>> insertRequestList,
-                          final Encoder<T> encoder, final BufferProvider bufferProvider, final ServerDescription serverDescription,
+                          final Encoder<T> encoder, final ServerDescription serverDescription,
                           final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
+        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }

@@ -21,7 +21,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -42,10 +41,9 @@ public class DeleteProtocol extends WriteProtocol {
     private final Encoder<Document> queryEncoder;
 
     public DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<RemoveRequest> deletes,
-                          final Encoder<Document> queryEncoder, final BufferProvider bufferProvider,
+                          final List<RemoveRequest> deletes, final Encoder<Document> queryEncoder,
                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, bufferProvider, ordered, writeConcern, serverDescription, connection, closeConnection);
+        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
         this.deletes = deletes;
         this.queryEncoder = queryEncoder;
     }

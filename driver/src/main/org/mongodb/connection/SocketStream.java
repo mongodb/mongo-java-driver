@@ -45,6 +45,11 @@ class SocketStream implements Stream {
     }
 
     @Override
+    public ByteBuf getBuffer(final int size) {
+        return bufferProvider.getBuffer(size);
+    }
+
+    @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         for (final ByteBuf cur : buffers) {
             socket.getOutputStream().write(cur.array(), 0, cur.limit());
@@ -53,7 +58,7 @@ class SocketStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
-        ByteBuf buffer = bufferProvider.get(numBytes);
+        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {

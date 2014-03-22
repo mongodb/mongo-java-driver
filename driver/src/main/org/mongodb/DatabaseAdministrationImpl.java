@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,14 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
         new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec, client.getCluster().getDescription(10, SECONDS),
-                             client.getBufferProvider(), client.getSession(), false).execute();
+                             client.getSession(), false).execute();
     }
 
     @Override
     public Set<String> getCollectionNames() {
         MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
         MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec, commandCodec,
-                                                                    client.getBufferProvider(), client.getSession(), false).execute();
+                                                                    client.getSession(), false).execute();
 
         HashSet<String> collections = new HashSet<String>();
         int lengthOfDatabaseName = databaseName.length();
@@ -78,20 +78,20 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
         CommandResult commandResult = new CommandOperation(databaseName, createCollectionOptions.asDocument(), null, commandCodec,
                                                            commandCodec, client.getCluster().getDescription(10, SECONDS),
-                                                           client.getBufferProvider(), client.getSession(), false).execute();
+                                                           client.getSession(), false).execute();
         ErrorHandling.handleErrors(commandResult);
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        new RenameCollectionOperation(client.getBufferProvider(), client.getSession(), false,
+        new RenameCollectionOperation(client.getSession(), false,
                                       databaseName, oldCollectionName, newCollectionName, false)
             .execute();
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        new RenameCollectionOperation(client.getBufferProvider(), client.getSession(), false,
+        new RenameCollectionOperation(client.getSession(), false,
                                       databaseName, oldCollectionName, newCollectionName, dropTarget)
             .execute();
     }

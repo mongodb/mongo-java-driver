@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
@@ -31,7 +32,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionName in database.tools().collectionNames
 
         when:
-        new DropCollectionOperation(getNamespace(), bufferProvider, session, false).execute()
+        new DropCollectionOperation(getNamespace(), session, false).execute()
 
         then:
         !(collectionName in database.tools().collectionNames)

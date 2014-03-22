@@ -27,6 +27,11 @@ public class TestConnectionProvider implements ConnectionProvider {
     public Connection get() {
         return new Connection() {
             @Override
+            public ByteBuf getBuffer(final int capacity) {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            @Override
             public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }

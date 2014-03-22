@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoException
 
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 import static org.mongodb.MongoCredential.createMongoCRCredential
 
@@ -27,10 +28,10 @@ class DropUserOperationSpecification extends FunctionalSpecification {
     def 'should delete user without error'() {
         given:
         User jeff = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)
-        new CreateUserOperation(jeff, bufferProvider, session, true).execute()
+        new CreateUserOperation(jeff, session, true).execute()
 
         when:
-        DropUserOperation operation = new DropUserOperation(databaseName, 'jeff', bufferProvider, session, true)
+        DropUserOperation operation = new DropUserOperation(databaseName, 'jeff', session, true)
         operation.execute()
 
         then:

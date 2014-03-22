@@ -20,7 +20,6 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -38,13 +37,11 @@ public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
 
     /**
      * Set up the Operation with all the basic information required to get the database names from MongoDB
-     *
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
+     *  @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public GetDatabaseNamesOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public GetDatabaseNamesOperation(final Session session, final boolean closeSession) {
+        super(session, closeSession);
     }
 
     /**
@@ -56,7 +53,7 @@ public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
     public List<String> execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult listDatabasesResult = new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
-                                                                getBufferProvider(), provider.getServerDescription(),
+                                                                provider.getServerDescription(),
                                                                 provider.getConnection(), true).execute();
 
         @SuppressWarnings("unchecked")

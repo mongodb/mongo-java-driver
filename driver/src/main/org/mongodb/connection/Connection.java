@@ -29,7 +29,7 @@ import java.util.List;
  * @since 3.0
  */
 @ThreadSafe
-public interface Connection {
+public interface Connection extends BufferProvider {
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message. <p> This method

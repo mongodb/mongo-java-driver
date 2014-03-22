@@ -20,7 +20,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryProtocol;
@@ -42,9 +41,8 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
     private final String database;
     private final String userName;
 
-    public UserExistsOperation(final String source, final String userName, final BufferProvider bufferProvider,
-                               final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public UserExistsOperation(final String source, final String userName, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
@@ -61,7 +59,7 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
 
     private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandResult commandResult = new CommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
-                                                              new DocumentCodec(), getBufferProvider(),
+                                                              new DocumentCodec(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true)
                                           .execute();
@@ -75,7 +73,6 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
                                                                    new Find(new Document("user", userName)),
                                                                    codec,
                                                                    codec,
-                                                                   getBufferProvider(),
                                                                    serverConnectionProvider.getServerDescription(),
                                                                    serverConnectionProvider.getConnection(),
                                                                    true)

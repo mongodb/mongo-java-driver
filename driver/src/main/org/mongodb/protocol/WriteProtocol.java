@@ -23,7 +23,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -43,18 +42,15 @@ import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 public abstract class WriteProtocol implements Protocol<WriteResult> {
 
     private final MongoNamespace namespace;
-    private final BufferProvider bufferProvider;
     private final boolean ordered;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
-    public WriteProtocol(final MongoNamespace namespace, final BufferProvider bufferProvider, final boolean ordered,
-                         final WriteConcern writeConcern, final ServerDescription serverDescription, final Connection connection,
-                         final boolean closeConnection) {
+    public WriteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                         final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
-        this.bufferProvider = bufferProvider;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
@@ -75,7 +71,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     public MongoFuture<WriteResult> executeAsync() {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         RequestMessage requestMessage = createRequestMessage(getMessageSettings(serverDescription));
         RequestMessage nextMessage = encodeMessageToBuffer(requestMessage, buffer);
         if (writeConcern.isAcknowledged()) {
@@ -94,7 +90,6 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                                                      ordered,
                                                                                                      writeConcern,
                                                                                                      getLastErrorMessage.getId(),
-                                                                                                     bufferProvider,
                                                                                                      serverDescription,
                                                                                                      connection,
                                                                                                      closeConnection)));
@@ -105,7 +100,6 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                               nextMessage,
                                                                               ordered,
                                                                               buffer,
-                                                                              bufferProvider,
                                                                               serverDescription,
                                                                               connection,
                                                                               closeConnection));
@@ -115,7 +109,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
 
 
     private CommandMessage sendMessage() {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             RequestMessage lastMessage = createRequestMessage(getMessageSettings(serverDescription));
             RequestMessage nextMessage = lastMessage.encode(buffer);

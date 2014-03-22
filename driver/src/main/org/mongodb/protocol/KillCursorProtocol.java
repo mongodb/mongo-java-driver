@@ -18,7 +18,6 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerDescription;
@@ -33,12 +32,9 @@ public class KillCursorProtocol implements Protocol<Void> {
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
-    private final BufferProvider bufferProvider;
 
-    public KillCursorProtocol(final KillCursor killCursor, final BufferProvider bufferProvider,
-                              final ServerDescription serverDescription, final Connection connection,
+    public KillCursorProtocol(final KillCursor killCursor, final ServerDescription serverDescription, final Connection connection,
                               final boolean closeConnection) {
-        this.bufferProvider = bufferProvider;
         this.killCursor = killCursor;
         this.serverDescription = serverDescription;
         this.connection = connection;
@@ -47,7 +43,7 @@ public class KillCursorProtocol implements Protocol<Void> {
 
     @Override
     public Void execute() {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
@@ -64,7 +60,7 @@ public class KillCursorProtocol implements Protocol<Void> {
     @Override
     public MongoFuture<Void> executeAsync() {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
         message.encode(buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {

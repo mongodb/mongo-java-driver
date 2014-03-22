@@ -41,7 +41,7 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnection("1", streamFactory.create(new ServerAddress(host)),
-                                                          Collections.<MongoCredential>emptyList(), streamFactory.getBufferProvider(),
+                                                          Collections.<MongoCredential>emptyList(),
                                                           new NoOpConnectionListener());
     }
 
@@ -54,8 +54,7 @@ public class PlainAuthenticatorTest {
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
                                                                                                         password.toCharArray()),
-                                                                  internalConnection,
-                                                                  streamFactory.getBufferProvider()
+                                                                  internalConnection
         );
         authenticator.authenticate();
     }
@@ -64,8 +63,7 @@ public class PlainAuthenticatorTest {
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
                                                                                                         "wrong".toCharArray()),
-                                                                  internalConnection,
-                                                                  streamFactory.getBufferProvider()
+                                                                  internalConnection
         );
         authenticator.authenticate();
     }

@@ -16,9 +16,10 @@
 
 
 
-package org.mongodb.connection.netty
 
-import org.mongodb.connection.PowerOfTwoBufferPool
+
+package org.mongodb.connection.netty
+import org.mongodb.SimpleBufferProvider
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -26,7 +27,7 @@ import spock.lang.Unroll
 class NettyByteBufSpecification extends Specification {
     def 'should put a byte'() {
         given:
-        def buffer = provider.get(1024)
+        def buffer = provider.getBuffer(1024)
 
         when:
         buffer.put((byte) 42)
@@ -36,12 +37,12 @@ class NettyByteBufSpecification extends Specification {
         buffer.get() == 42
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'should put several bytes'() {
         given:
-        def buffer = provider.get(1024)
+        def buffer = provider.getBuffer(1024)
 
         when:
         buffer.with {
@@ -58,12 +59,12 @@ class NettyByteBufSpecification extends Specification {
             get() == 44
         }
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'should put bytes at index'() {
         given:
-        def buffer = provider.get(1024)
+        def buffer = provider.getBuffer(1024)
 
         when:
         buffer.with {
@@ -91,12 +92,12 @@ class NettyByteBufSpecification extends Specification {
         }
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'when writing, remaining should be the number of bytes that can be written'() {
         when:
-        def buffer = provider.get(1024)
+        def buffer = provider.getBuffer(1024)
 
         then:
         buffer.remaining() == 1024
@@ -108,12 +109,12 @@ class NettyByteBufSpecification extends Specification {
         buffer.remaining() == 1023
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'when writing, hasRemaining should be true if there is still room to write'() {
         when:
-        def buffer = provider.get(2)
+        def buffer = provider.getBuffer(2)
 
         then:
         buffer.hasRemaining()
@@ -131,12 +132,12 @@ class NettyByteBufSpecification extends Specification {
         !buffer.hasRemaining()
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'should return NIO buffer with the same capacity and limit'() {
         given:
-        def buffer = provider.get(36)
+        def buffer = provider.getBuffer(36)
 
         when:
         def nioBuffer = buffer.asNIO()
@@ -147,12 +148,12 @@ class NettyByteBufSpecification extends Specification {
         nioBuffer.remaining() == 36
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 
     def 'should return NIO buffer with the same contents'() {
         given:
-        def buffer = provider.get(1024)
+        def buffer = provider.getBuffer(1024)
 
         buffer.with {
             put((byte) 42)
@@ -182,6 +183,6 @@ class NettyByteBufSpecification extends Specification {
         }
 
         where:
-        provider << [new NettyBufferProvider(), new PowerOfTwoBufferPool()]
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
@@ -52,7 +51,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Connection exhaustConnection;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
-    private final BufferProvider bufferProvider;
     private final ServerConnectionProvider provider;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
@@ -61,19 +59,17 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final BufferProvider bufferProvider, final Session session,
-                            final boolean closeSession) {
+                            final Decoder<T> decoder, final Session session, final boolean closeSession) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        this.bufferProvider = bufferProvider;
         this.session = session;
         this.closeSession = closeSession;
         ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
         provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
         Connection connection = provider.getConnection();
         exhaustConnection = isExhaust() ? connection : null;
-        QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder, this.bufferProvider,
+        QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder,
                                                           provider.getServerDescription(), connection, !isExhaust());
         currentResult = operation.execute();
         currentIterator = currentResult.getResults().iterator();
@@ -90,7 +86,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         if (isExhaust()) {
             discardRemainingGetMoreResponses();
         } else if (currentResult.getCursor() != null && !limitReached()) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider,
+            new KillCursorProtocol(new KillCursor(currentResult.getCursor()),
                                    provider.getServerDescription(), getConnection(), !isExhaust()).execute();
         }
         if (exhaustConnection != null) {
@@ -194,7 +190,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
             currentResult = new GetMoreProtocol<T>(namespace,
                                                    new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
                                                    decoder,
-                                                   bufferProvider,
                                                    provider.getServerDescription(),
                                                    getConnection(),
                                                    true)
@@ -221,7 +216,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), bufferProvider, provider.getServerDescription(),
+            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), provider.getServerDescription(),
                                    provider.getConnection(), !isExhaust()).execute();
         }
     }

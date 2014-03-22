@@ -22,7 +22,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -38,8 +37,8 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
 
     public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder,
-                                  final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                                  final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         this.findAndRemove = findAndRemove;
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
@@ -50,7 +49,7 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
     public T execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                                          commandEncoder, resultDecoder, getBufferProvider(),
+                                                          commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
         return (T) commandResult.getResponse().get("value");

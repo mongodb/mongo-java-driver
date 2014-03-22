@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -23,7 +25,6 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
@@ -41,7 +42,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove findAndRemove = new FindAndRemove().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(collection.namespace, findAndRemove,
-                                                                                          documentDecoder, bufferProvider,
+                                                                                          documentDecoder,
                                                                                           session, false)
         Document returnedDocument = operation.execute()
 
@@ -64,7 +65,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(collection.namespace, findAndRemove,
-                                                                                      new WorkerCodec(), bufferProvider, session,
+                                                                                      new WorkerCodec(), session,
                                                                                       false)
         Worker returnedDocument = operation.execute()
 

@@ -23,7 +23,6 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.ReadPreference;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
@@ -47,9 +46,9 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
 
     public CommandOperation(final String database, final Document command, final ReadPreference readPreference,
                             final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder,
-                            final ClusterDescription clusterDescription, final BufferProvider bufferProvider, final Session session,
+                            final ClusterDescription clusterDescription, final Session session,
                             final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+        super(session, closeSession);
         this.database = database;
         this.clusterDescription = clusterDescription;
         this.commandEncoder = commandEncoder;
@@ -60,8 +59,8 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
 
     CommandOperation(final String database, final Document command, final ReadPreference readPreference,
                      final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder,
-                     final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        this(database, command, readPreference, commandDecoder, commandEncoder, null, bufferProvider, session, closeSession);
+                     final Session session, final boolean closeSession) {
+        this(database, command, readPreference, commandDecoder, commandEncoder, null, session, closeSession);
     }
 
     @Override
@@ -69,7 +68,7 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
         try {
             ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
             ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
-            return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
+            return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
                                        provider.getServerDescription(), provider.getConnection(), true)
                        .execute();
         } finally {
@@ -86,7 +85,7 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
             .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
                 @Override
                 public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                    new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder, getBufferProvider(),
+                    new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
                                         pair.getServerDescription(), pair.getConnection(), true)
                         .executeAsync()
                         .register(new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));

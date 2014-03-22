@@ -20,7 +20,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.DeleteProtocol;
@@ -40,9 +39,8 @@ public class DropUserOperation extends BaseOperation<Void> {
     private final String database;
     private final String userName;
 
-    public DropUserOperation(final String source, final String userName, final BufferProvider bufferProvider,
-                             final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+    public DropUserOperation(final String source, final String userName, final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
@@ -62,7 +60,7 @@ public class DropUserOperation extends BaseOperation<Void> {
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(database, asCommandDocument(),
                                                               new DocumentCodec(),
-                                                              new DocumentCodec(), getBufferProvider(),
+                                                              new DocumentCodec(),
                                                               serverConnectionProvider.getServerDescription(),
                                                               serverConnectionProvider.getConnection(), true);
         commandProtocol.execute();
@@ -79,7 +77,6 @@ public class DropUserOperation extends BaseOperation<Void> {
                            true, WriteConcern.ACKNOWLEDGED,
                            Arrays.asList(new RemoveRequest(new Document("user", userName))),
                            codec,
-                           getBufferProvider(),
                            serverConnectionProvider.getServerDescription(),
                            serverConnectionProvider.getConnection(),
                            true).execute();

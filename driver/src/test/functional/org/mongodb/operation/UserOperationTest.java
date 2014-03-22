@@ -37,7 +37,6 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
@@ -67,7 +66,7 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
 
         // given:
-        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute();
+        new CreateUserOperation(readOnlyUser, getSession(), true).execute();
         Cluster cluster = createCluster(readOnlyUser);
 
         // when:
@@ -75,14 +74,13 @@ public class UserOperationTest extends DatabaseTestCase {
             new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec(),
-                                          getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()), true).execute();
             fail("should have thrown");
         } catch (MongoException e) {
             // all good
         } finally {
             // cleanup:
-            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getBufferProvider(), getSession(),
+            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getSession(),
                                   true).execute();
             cluster.close();
         }
@@ -94,7 +92,7 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-rw-admin", "admin", "123".toCharArray()), false);
-        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+        new CreateUserOperation(adminUser, getSession(), true).execute();
 
         Cluster cluster = createCluster(adminUser);
         try {
@@ -103,16 +101,15 @@ public class UserOperationTest extends DatabaseTestCase {
                                           true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec(),
-                                          getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()), true).execute();
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
-                                                       new DocumentCodec(), getBufferProvider(), new ClusterSession(cluster, getExecutor()),
+                                                       new DocumentCodec(), new ClusterSession(cluster, getExecutor()),
                                                        true)
                                     .execute());
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), new ClusterSession(cluster),
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), new ClusterSession(cluster),
                                   true).execute();
             cluster.close();
         }
@@ -123,7 +120,7 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+        new CreateUserOperation(adminUser, getSession(), true).execute();
 
         Cluster cluster = createCluster(adminUser);
         try {
@@ -131,7 +128,6 @@ public class UserOperationTest extends DatabaseTestCase {
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec(),
-                                          getBufferProvider(),
                                           new ClusterSession(cluster, getExecutor()), true).execute();
             fail("Should have thrown");
         } catch (MongoException e) {
@@ -139,7 +135,7 @@ public class UserOperationTest extends DatabaseTestCase {
         }
         finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getSession(), true).execute();
             cluster.close();
         }
     }
@@ -150,7 +146,7 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser, getBufferProvider(), getSession(), true).execute();
+        new CreateUserOperation(adminUser, getSession(), true).execute();
 
         Cluster cluster = createCluster(adminUser);
         try {
@@ -158,14 +154,13 @@ public class UserOperationTest extends DatabaseTestCase {
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                              new Find(),
                                              new DocumentCodec(),
-                                             getBufferProvider(),
                                              new ClusterSession(cluster, getExecutor()),
                                              true).execute();
             // then
             assertEquals(0, result);
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getBufferProvider(), getSession(), true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getSession(), true).execute();
             cluster.close();
         }
     }

@@ -25,7 +25,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
@@ -53,19 +52,17 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
-     *
-     * @param namespace      the database and collection to perform the map reduce on
+     *  @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
      * @param decoder        the decoder to use for decoding the documents in the results of the map-reduce operation
      * @param readPreference the read preference suggesting which server to run the command on
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder, final ReadPreference readPreference,
-                                               final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                                               final Session session, final boolean closeSession) {
+        super(session, closeSession);
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
@@ -86,7 +83,7 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
     public MapReduceCursor<T> execute() {
         ServerConnectionProvider provider = getSession().createServerConnectionProvider(getServerConnectionProviderOptions());
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, mapReduceResultDecoder,
-                                                          getBufferProvider(), provider.getServerDescription(), provider.getConnection(),
+                                                          provider.getServerDescription(), provider.getConnection(),
                                                           true)
                                           .execute();
 

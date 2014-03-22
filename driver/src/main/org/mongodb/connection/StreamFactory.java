@@ -29,6 +29,4 @@ public interface StreamFactory {
      * @return the stream
      */
     Stream create(ServerAddress serverAddress);
-
-    BufferProvider getBufferProvider();
 }

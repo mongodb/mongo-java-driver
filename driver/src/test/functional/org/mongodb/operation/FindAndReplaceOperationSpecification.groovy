@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -22,7 +24,6 @@ import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
@@ -47,8 +48,8 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
                                                                           .returnNew(false);
 
         FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(workerCollection.namespace, findAndReplace,
-                                                                                        new WorkerCodec(), new WorkerCodec(),
-                                                                                        bufferProvider, session, false)
+                                                                                        new WorkerCodec(), new WorkerCodec()
+                                                                                        , session, false)
         Worker returnedValue = operation.execute()
 
         then:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB Inc. <http://mongodb.com>
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
-import static org.mongodb.Fixture.getBufferProvider
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -32,11 +31,11 @@ class UpdateOperationSpecification extends FunctionalSpecification {
     def 'should return correct result for update'() {
         given:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest<Document>(new Document('_id', 1))),
-                                      new DocumentCodec(), getBufferProvider(), getSession(), true).execute()
+                                      new DocumentCodec(), getSession(), true).execute()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(new UpdateRequest(new Document('_id', 1),
-                                                                                                     new Document('$set',
-                                                                                                                  new Document('x', 1)))),
-                                     new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                                                                                  new Document('$set',
+                                                                                                               new Document('x', 1)))),
+                                     new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute();
@@ -53,8 +52,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new Document('_id', id),
-                                                              new Document('$set', new Document('x', 1))). upsert(true)),
-                                     new DocumentCodec(), getBufferProvider(), getSession(), true)
+                                                              new Document('$set', new Document('x', 1))).upsert(true)),
+                                     new DocumentCodec(), getSession(), true)
 
         when:
         def result = op.execute();

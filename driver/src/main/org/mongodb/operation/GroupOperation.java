@@ -22,7 +22,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -43,17 +42,15 @@ public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
 
     /**
      * Create an operation that will perform a Group on a given collection.
-     *
-     * @param namespace      the database and collection to run the operation against
+     *  @param namespace      the database and collection to run the operation against
      * @param group          contains all the arguments for this group command
      * @param readPreference the ReadPreference for the group command. If null, primary will be used.
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
      * @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
     public GroupOperation(final MongoNamespace namespace, final Group group, final ReadPreference readPreference,
-                          final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                          final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.namespace = namespace;
         this.commandDocument = createCommandDocument(namespace, group);
         this.readPreference = readPreference;
@@ -69,7 +66,7 @@ public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
     public MongoCursor<Document> execute() {
         ServerConnectionProvider provider = getConnectionProvider(readPreference);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), commandDocument,
-                                                          new DocumentCodec(), new DocumentCodec(), getBufferProvider(),
+                                                          new DocumentCodec(), new DocumentCodec(),
                                                           provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.util.List;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
-import static org.mongodb.Fixture.getBufferProvider;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isSharded;
@@ -67,7 +66,6 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                            new Find().addFlags(EnumSet.of(Exhaust)),
                                                                            collection.getOptions().getDocumentCodec(),
                                                                            collection.getCodec(),
-                                                                           getBufferProvider(),
                                                                            getSession(),
                                                                            false);
 
@@ -91,7 +89,6 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                                new Find().addFlags(EnumSet.of(Exhaust)),
                                                                                collection.getOptions().getDocumentCodec(),
                                                                                collection.getCodec(),
-                                                                               getBufferProvider(),
                                                                                singleConnectionSession,
                                                                                false);
 
@@ -102,7 +99,6 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
                                                     collection.getOptions().getDocumentCodec(),
                                                     collection.getCodec(),
-                                                    getBufferProvider(),
                                                     singleConnectionSession,
                                                     false);
             assertEquals(new Document("_id", 999), cursor.next());
@@ -174,6 +170,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         public ServerAddress getServerAddress() {
             isTrue("open", !isClosed());
             return wrapped.getServerAddress();
+        }
+
+        @Override
+        public ByteBuf getBuffer(final int capacity) {
+            isTrue("open", !isClosed());
+            return wrapped.getBuffer(capacity);
         }
 
         @Override

@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -23,14 +25,13 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
 import static java.util.Arrays.asList
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 import static org.mongodb.OrderBy.ASC
 
 class GetIndexesOperationSpecification extends FunctionalSpecification {
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(collection.getNamespace(), bufferProvider, session);
+        def operation = new GetIndexesOperation(collection.getNamespace(), session);
         collection.insert(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -43,7 +44,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(collection.getNamespace(), bufferProvider, session);
+        def operation = new GetIndexesOperation(collection.getNamespace(), session);
         collection.tools().createIndexes(asList(Index.builder().addKey('theField', ASC).build()));
 
         when:

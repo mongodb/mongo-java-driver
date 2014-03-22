@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.mongodb.ReadPreference;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
@@ -31,31 +30,17 @@ import static org.mongodb.assertions.Assertions.notNull;
  * @param <T> the return type for the execute method
  */
 public abstract class BaseOperation<T> implements Operation<T> {
-    private final BufferProvider bufferProvider;
     private final Session session;
     private final boolean closeSession;
 
     /**
      * The constructor of this abstract class takes the fields that are required by all basic operations.
-     *
-     * @param bufferProvider the BufferProvider to use when reading or writing to the network
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
+     *  @param session        the current Session, which will give access to a connection to the MongoDB instance
      * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public BaseOperation(final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        this.bufferProvider = notNull("bufferProvider", bufferProvider);
+    public BaseOperation(final Session session, final boolean closeSession) {
         this.session = notNull("session", session);
         this.closeSession = closeSession;
-    }
-
-    /**
-     * Getter is largely used inside the execute method of subclasses.  This is a public method so that users can implement their own
-     * Operations that inherit from this abstract class.
-     *
-     * @return the bufferProvider injected via the constructor
-     */
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
     }
 
     /**

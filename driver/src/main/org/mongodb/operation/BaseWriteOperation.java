@@ -28,7 +28,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
@@ -58,8 +57,8 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
     private final boolean ordered;
 
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                              final BufferProvider bufferProvider, final Session session, final boolean closeSession) {
-        super(bufferProvider, session, closeSession);
+                              final Session session, final boolean closeSession) {
+        super(session, closeSession);
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);

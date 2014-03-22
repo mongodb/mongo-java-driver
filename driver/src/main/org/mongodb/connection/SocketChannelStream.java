@@ -46,6 +46,11 @@ class SocketChannelStream implements Stream {
     }
 
     @Override
+    public ByteBuf getBuffer(final int size) {
+        return bufferProvider.getBuffer(size);
+    }
+
+    @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         isTrue("open", !isClosed());
 
@@ -64,7 +69,7 @@ class SocketChannelStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
-        ByteBuf buffer = bufferProvider.get(numBytes);
+        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
         isTrue("open", !isClosed());
 
         int totalBytesRead = 0;

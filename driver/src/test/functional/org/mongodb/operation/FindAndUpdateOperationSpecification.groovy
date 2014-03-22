@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -22,7 +24,6 @@ import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.bufferProvider
 import static org.mongodb.Fixture.session
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
@@ -47,7 +48,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
                                                                  .returnNew(true);
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(workerCollection.namespace, findAndUpdate,
-                                                                                      new WorkerCodec(), bufferProvider, session,
+                                                                                      new WorkerCodec(), session,
                                                                                       false)
         Worker returnedValue = operation.execute()
 

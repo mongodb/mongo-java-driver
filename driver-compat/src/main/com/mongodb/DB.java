@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +237,7 @@ public class DB {
         Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         try {
             MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec,
-                                                                        getBufferPool(), getSession(), false).execute();
+                                                                        getSession(), false).execute();
 
             HashSet<String> collections = new HashSet<String>();
             int lengthOfDatabaseName = getName().length();
@@ -382,7 +382,6 @@ public class DB {
                                           commandCodec,
                                           commandCodec,
                                           getClusterDescription(),
-                                          getBufferPool(),
                                           getSession(),
                                           false).execute();
         } catch (MongoCommandFailureException ex) {
@@ -411,7 +410,6 @@ public class DB {
                                           commandCodec,
                                           commandCodec,
                                           getClusterDescription(),
-                                          getBufferPool(),
                                           getSession(),
                                           false).execute();
         } catch (MongoCommandFailureException ex) {
@@ -535,12 +533,12 @@ public class DB {
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
-        if (new UserExistsOperation(getName(), userName, getBufferPool(), getSession(), true).execute()) {
-            new UpdateUserOperation(user, getBufferPool(), getSession(), true).execute();
+        if (new UserExistsOperation(getName(), userName, getSession(), true).execute()) {
+            new UpdateUserOperation(user, getSession(), true).execute();
             return new WriteResult(1, false, null, getWriteConcern());
 
         } else {
-            new CreateUserOperation(user, getBufferPool(), getSession(), true).execute();
+            new CreateUserOperation(user, getSession(), true).execute();
             return new WriteResult(1, true, null, getWriteConcern());
         }
     }
@@ -556,7 +554,7 @@ public class DB {
      */
     @Deprecated
     public WriteResult removeUser(final String userName) {
-        new DropUserOperation(getName(), userName, getBufferPool(), getSession(), true).execute();
+        new DropUserOperation(getName(), userName, getSession(), true).execute();
         return new WriteResult(1, true, null, getWriteConcern());
     }
 
@@ -621,7 +619,7 @@ public class DB {
     org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
         try {
             return new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
-                                        getClusterDescription(), getBufferPool(), getSession(), false).execute();
+                                        getClusterDescription(), getSession(), false).execute();
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
         }

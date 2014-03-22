@@ -85,12 +85,12 @@ class ServerStateNotifier implements Runnable {
             try {
                 LOGGER.debug(format("Checking status of %s", serverAddress));
                 CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                                                              internalConnection, internalConnectionFactory.getBufferProvider());
+                                                              internalConnection);
                 count++;
                 elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
                 CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
-                                                               internalConnection, internalConnectionFactory.getBufferProvider());
+                                                               internalConnection);
                 serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
             } catch (MongoSocketException e) {
                 if (!isClosed) {

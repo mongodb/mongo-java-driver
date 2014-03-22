@@ -22,7 +22,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -35,7 +34,6 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
-    private final BufferProvider bufferProvider;
     private final boolean ordered;
     private final ServerDescription serverDescription;
     private final Connection connection;
@@ -43,7 +41,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
-                                      final boolean ordered, final OutputBuffer writtenBuffer, final BufferProvider bufferProvider,
+                                      final boolean ordered, final OutputBuffer writtenBuffer,
                                       final ServerDescription serverDescription, final Connection connection,
                                       final boolean closeConnection) {
         this.future = future;
@@ -53,7 +51,6 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.writtenBuffer = writtenBuffer;
-        this.bufferProvider = bufferProvider;
         this.closeConnection = closeConnection;
     }
 
@@ -64,7 +61,6 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
             future.init(null, e);
         } else if (nextMessage != null) {
             MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
-                                                                          bufferProvider,
                                                                           nextMessage,
                                                                           ordered,
                                                                           WriteConcern.UNACKNOWLEDGED,

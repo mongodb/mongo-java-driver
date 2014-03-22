@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection.netty;
+package org.mongodb;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
 import org.mongodb.connection.BufferProvider;
 
-final class NettyBufferProvider implements BufferProvider {
+import java.nio.ByteBuffer;
 
-    private final ByteBufAllocator allocator;
-
-    public NettyBufferProvider() {
-        allocator = PooledByteBufAllocator.DEFAULT;
-    }
-
-    public NettyBufferProvider(final ByteBufAllocator allocator) {
-        this.allocator = allocator;
-    }
-
+public class SimpleBufferProvider implements BufferProvider {
     @Override
     public ByteBuf getBuffer(final int size) {
-        return new NettyByteBuf(allocator.directBuffer(size, size));
+        return new ByteBufNIO(ByteBuffer.allocate(size));
     }
 }

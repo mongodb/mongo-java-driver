@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +288,7 @@ public class DBCollection {
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern) {
         return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                                   insertRequestList, encoder, getBufferPool(), getSession(), false),
+                                                                   insertRequestList, encoder, getSession(), false),
                                      writeConcern);
     }
 
@@ -357,7 +357,7 @@ public class DBCollection {
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
                                                                     writeConcern.toNew(), asList(replaceRequest), getDocumentCodec(),
-                                                                    getObjectCodec(), getBufferPool(), getSession(), false),
+                                                                    getObjectCodec(), getSession(), false),
                                      writeConcern);
     }
 
@@ -425,7 +425,7 @@ public class DBCollection {
 
     private WriteResult updateInternal(final UpdateRequest update, final WriteConcern writeConcern) {
         return executeWriteOperation(new UpdateOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(update), documentCodec, getBufferPool(), getSession(), false),
+                                                         asList(update), documentCodec, getSession(), false),
                                      writeConcern);
     }
 
@@ -492,7 +492,7 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
                                                          asList(new RemoveRequest(toDocument(query))),
-                                                         documentCodec, getBufferPool(), getSession(), false),
+                                                         documentCodec, getSession(), false),
                                      writeConcern);
     }
 
@@ -511,7 +511,7 @@ public class DBCollection {
         RemoveRequest removeRequest = new RemoveRequest(filter);
 
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(removeRequest), getDocumentCodec(), getBufferPool(), getSession(), false),
+                                                         asList(removeRequest), getDocumentCodec(), getSession(), false),
                                      writeConcern);
     }
 
@@ -689,7 +689,7 @@ public class DBCollection {
 
         try {
             MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
-                                                                        getBufferPool(), getSession(), false)
+                                                                        getSession(), false)
                                                .execute();
 
             return cursor.hasNext() ? cursor.next() : null;
@@ -923,7 +923,7 @@ public class DBCollection {
                                                .readPreference(readPreference.toNew())
                                                .maxTime(maxTime, maxTimeUnit);
 
-        return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getBufferPool(), getSession(), false));
+        return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getSession(), false));
     }
 
     /**
@@ -947,7 +947,7 @@ public class DBCollection {
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {
-            new RenameCollectionOperation(getBufferPool(), getSession(), false, getNamespace().getDatabaseName(), getName(), newName,
+            new RenameCollectionOperation(getSession(), false, getNamespace().getDatabaseName(), getName(), newName,
                                           dropTarget)
                 .execute();
         } catch (org.mongodb.MongoException e) {
@@ -1032,7 +1032,6 @@ public class DBCollection {
         MongoCursor<Document> cursor = executeOperation(new GroupOperation(getNamespace(),
                                                                            cmd.toNew(),
                                                                            readPreference.toNew(),
-                                                                           getBufferPool(),
                                                                            getSession(),
                                                                            false));
         return toDBList(cursor);
@@ -1085,7 +1084,7 @@ public class DBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(toDocument(query))
                               .readPreference(readPreference.toNew());
-        MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getBufferPool(), getSession(), false).execute();
+        MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getSession(), false).execute();
 
         List<String> results = new ArrayList<String>();
         while (result.hasNext()) {
@@ -1166,13 +1165,12 @@ public class DBCollection {
                                                                                                               mapReduce,
                                                                                                               objectCodec,
                                                                                                               readPreference,
-                                                                                                              getBufferPool(),
                                                                                                               getSession(),
                                                                                                               false).execute();
                 return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
             } else {
                 MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce,
-                                                                                                       getBufferPool(), getSession(),
+                                                                                                       getSession(),
                                                                                                        false);
                 MapReduceStatistics mapReduceStatistics = mapReduceOperation.execute();
                 DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
@@ -1247,7 +1245,6 @@ public class DBCollection {
                                                  preparePipeline(pipeline),
                                                  getDocumentCodec(),
                                                  options.toNew(),
-                                                 getBufferPool(),
                                                  getSession(),
                                                  false,
                                                  coerceReadPreference(readPreference,
@@ -1303,7 +1300,6 @@ public class DBCollection {
                                                                             stages,
                                                                             getDocumentCodec(),
                                                                             options.toNew(),
-                                                                            getBufferPool(),
                                                                             getSession(),
                                                                             false,
                                                                             activeReadPreference.toNew()).execute();
@@ -1341,7 +1337,6 @@ public class DBCollection {
                                                                   stages,
                                                                   getDocumentCodec(),
                                                                   options.toNew(),
-                                                                  getBufferPool(),
                                                                   getSession(),
                                                                   false,
                                                                   getReadPreference().toNew()).explain());
@@ -1418,7 +1413,7 @@ public class DBCollection {
      */
     public void createIndex(final DBObject keys, final DBObject options) {
         executeOperation(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace(),
-                                                    getBufferPool(), getSession(), false));
+                                                    getSession(), false));
     }
 
     /**
@@ -1532,7 +1527,7 @@ public class DBCollection {
                                                                                  .sortBy(toNullableDocument(sort))
                                                                                  .returnNew(returnNew)
                                                                                  .maxTime(maxTime, maxTimeUnit);
-            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder, getBufferPool(),
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder,
                                                              getSession(), false);
         } else {
             if (update == null) {
@@ -1548,7 +1543,7 @@ public class DBCollection {
                                                             .updateWith(toUpdateOperationsDocument(update))
                                                             .upsert(upsert)
                                                             .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder, getBufferPool(),
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder,
                                                                  getSession(), false);
             } else {
                 FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
@@ -1559,7 +1554,7 @@ public class DBCollection {
                                                               .upsert(upsert)
                                                               .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
-                                                                  getBufferPool(), getSession(), false);
+                                                                  getSession(), false);
             }
         }
 
@@ -1669,7 +1664,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop() {
-        executeOperation(new DropCollectionOperation(getNamespace(), getBufferPool(), getSession(), false));
+        executeOperation(new DropCollectionOperation(getNamespace(), getSession(), false));
     }
 
     /**
@@ -1729,7 +1724,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        List<Document> indexDocumentList = executeOperation(new GetIndexesOperation(getNamespace(), getBufferPool(), getSession()));
+        List<Document> indexDocumentList = executeOperation(new GetIndexesOperation(getNamespace(), getSession()));
         List<DBObject> indexDBObjectList = new ArrayList<DBObject>(indexDocumentList.size());
         for (Document cur : indexDocumentList) {
             indexDBObjectList.add(toDBObject(cur));
@@ -1757,7 +1752,7 @@ public class DBCollection {
      * @throws MongoException if the index does not exist
      */
     public void dropIndex(final String indexName) {
-        executeOperation(new DropIndexOperation(getNamespace(), indexName, getBufferPool(), getSession(), false));
+        executeOperation(new DropIndexOperation(getNamespace(), indexName, getSession(), false));
     }
 
     /**
@@ -1885,7 +1880,7 @@ public class DBCollection {
         return translateBulkWriteResult(executeOperation(new MixedBulkWriteOperation<DBObject>(getNamespace(),
                                                                                                translateWriteRequestsToNew(writeRequests),
                                                                                                ordered, writeConcern.toNew(),
-                                                                                               getObjectCodec(), getBufferPool(),
+                                                                                               getObjectCodec(),
                                                                                                getSession(), true)));
     }
 

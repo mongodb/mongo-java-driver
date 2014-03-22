@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
         ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
         return new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec,
-                                    client.getCluster().getDescription(10, SECONDS), client.getBufferProvider(), client.getSession(), false)
+                                    client.getCluster().getDescription(10, SECONDS), client.getSession(), false)
                .execute();
     }
 

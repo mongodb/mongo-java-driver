@@ -27,7 +27,6 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.EncoderRegistry;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
@@ -48,18 +47,15 @@ import static org.mongodb.protocol.WriteCommandResultHelper.hasError;
 public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
-    private final BufferProvider bufferProvider;
     private final WriteConcern writeConcern;
     private final ServerDescription serverDescription;
     private final Connection connection;
     private final boolean closeConnection;
 
     public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final BufferProvider bufferProvider, final ServerDescription serverDescription,
-                                final Connection connection, final boolean closeConnection) {
+                                final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
         this.namespace = namespace;
         this.ordered = ordered;
-        this.bufferProvider = bufferProvider;
         this.writeConcern = writeConcern;
         this.serverDescription = serverDescription;
         this.connection = connection;
@@ -115,7 +111,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     protected abstract BaseWriteCommandMessage createRequestMessage();
 
     private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(bufferProvider);
+        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {
@@ -147,10 +143,6 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     public MongoNamespace getNamespace() {
         return namespace;
-    }
-
-    public BufferProvider getBufferProvider() {
-        return bufferProvider;
     }
 
     public ServerDescription getServerDescription() {

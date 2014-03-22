@@ -39,6 +39,11 @@ final class AsynchronousSocketChannelStream implements Stream {
     }
 
     @Override
+    public ByteBuf getBuffer(final int size) {
+        return bufferProvider.getBuffer(size);
+    }
+
+    @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         writeAsync(buffers, new FutureAsyncCompletionHandler<Void>(future));
@@ -75,7 +80,7 @@ final class AsynchronousSocketChannelStream implements Stream {
 
     @Override
     public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        ByteBuf buffer = bufferProvider.get(numBytes);
+        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
         channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, handler));
     }
 

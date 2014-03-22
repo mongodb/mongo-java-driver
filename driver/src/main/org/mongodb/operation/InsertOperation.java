@@ -20,7 +20,6 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.InsertCommandProtocol;
@@ -38,24 +37,23 @@ public class InsertOperation<T> extends BaseWriteOperation {
     private final Encoder<T> encoder;
 
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest<T>> insertRequestList,
-                           final Encoder<T> encoder, final BufferProvider bufferProvider, final Session session,
+                           final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder, final Session session,
                            final boolean closeSession) {
-        super(namespace, ordered, writeConcern, bufferProvider, session, closeSession);
+        super(namespace, ordered, writeConcern, session, closeSession);
         this.insertRequestList = notNull("insertList", insertRequestList);
         this.encoder = notNull("encoder", encoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder, getBufferProvider(),
+        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder,
                                      serverDescription, connection, true);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
         return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(),
-                                            insertRequestList, encoder, getBufferProvider(), serverDescription,
+                                            insertRequestList, encoder, serverDescription,
                                             connection, true);
     }
 

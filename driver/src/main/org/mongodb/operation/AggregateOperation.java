@@ -27,7 +27,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
@@ -53,9 +52,9 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
     private final ServerConnectionProvider connectionProvider;
 
     public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
-                              final AggregationOptions options, final BufferProvider bufferProvider, final Session session,
-                              final boolean closeSession, final ReadPreference readPreference) {
-        super(bufferProvider, session, closeSession);
+                              final AggregationOptions options, final Session session, final boolean closeSession,
+                              final ReadPreference readPreference) {
+        super(session, closeSession);
 
         this.namespace = namespace;
         this.decoder = decoder;
@@ -74,7 +73,7 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
             return new InlineMongoCursor<T>(result, (List<T>) result.getResponse()
                                                                     .get("result"));
         } else {
-            return new AggregationCursor<T>(options, namespace, decoder, getBufferProvider(), getSession(), isCloseSession(),
+            return new AggregationCursor<T>(options, namespace, decoder, getSession(), isCloseSession(),
                                             connectionProvider, receiveMessage(result));
         }
     }
@@ -103,7 +102,6 @@ public class AggregateOperation<T> extends BaseOperation<MongoCursor<T>> {
                                    command,
                                    commandEncoder,
                                    new CommandResultWithPayloadDecoder<T>(decoder),
-                                   getBufferProvider(),
                                    connectionProvider.getServerDescription(),
                                    connectionProvider.getConnection(),
                                    true).execute();
