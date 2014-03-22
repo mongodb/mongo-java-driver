@@ -68,7 +68,7 @@ import static org.mongodb.operation.WriteRequest.Type.UPDATE;
  * @param <T> The type of document stored in the given namespace
  * @since 3.0
  */
-public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
+public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final List<WriteRequest> writeRequests;
     private final WriteConcern writeConcern;
@@ -77,17 +77,13 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
 
     /**
      * Construct a new instance.
-     *  @param namespace      the namespace to write to
+     * @param namespace      the namespace to write to
      * @param writeRequests  the list of runWrites to execute
      * @param ordered        whether the runWrites must be executed in order.
      * @param encoder        the encoder
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,
-                                   final WriteConcern writeConcern, final Encoder<T> encoder, final Session session,
-                                   final boolean closeSession) {
-        super(session, closeSession);
+                                   final WriteConcern writeConcern, final Encoder<T> encoder) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
@@ -102,10 +98,11 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
      * @return the bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws org.mongodb.MongoException     for general failures
+     * @param session
      */
     @Override
-    public BulkWriteResult execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public BulkWriteResult execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         Connection connection = provider.getConnection();
         try {
             BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
@@ -126,9 +123,6 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
             return bulkWriteBatchCombiner.getResult();
         } finally {
             connection.close();
-            if (isCloseSession()) {
-                getSession().close();
-            }
         }
     }
 

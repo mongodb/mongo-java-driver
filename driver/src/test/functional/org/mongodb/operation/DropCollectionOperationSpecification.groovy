@@ -16,12 +16,14 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
 
@@ -32,7 +34,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionName in database.tools().collectionNames
 
         when:
-        new DropCollectionOperation(getNamespace(), session, false).execute()
+        new DropCollectionOperation(getNamespace()).execute(getSession())
 
         then:
         !(collectionName in database.tools().collectionNames)

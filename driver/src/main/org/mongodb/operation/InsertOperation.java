@@ -26,7 +26,6 @@ import org.mongodb.protocol.InsertCommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.Session;
 
 import java.util.List;
 
@@ -37,9 +36,8 @@ public class InsertOperation<T> extends BaseWriteOperation {
     private final Encoder<T> encoder;
 
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder, final Session session,
-                           final boolean closeSession) {
-        super(namespace, ordered, writeConcern, session, closeSession);
+                           final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.insertRequestList = notNull("insertList", insertRequestList);
         this.encoder = notNull("encoder", encoder);
     }

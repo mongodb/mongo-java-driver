@@ -46,8 +46,6 @@ import java.util.NoSuchElementException;
 @NotThreadSafe
 class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Find find;
-    private final Session session;
-    private final boolean closeSession;
     private final Connection exhaustConnection;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -59,12 +57,10 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final Session session, final boolean closeSession) {
+                            final Decoder<T> decoder, final Session session) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        this.session = session;
-        this.closeSession = closeSession;
         ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
         provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
         Connection connection = provider.getConnection();
@@ -91,9 +87,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         }
         if (exhaustConnection != null) {
             exhaustConnection.close();
-        }
-        if (closeSession) {
-            session.close();
         }
         currentResult = null;
         currentIterator = null;

@@ -30,15 +30,14 @@ import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
-public class FindAndReplaceOperation<T> extends BaseOperation<T> {
+public class FindAndReplaceOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndReplace<T> findAndReplace;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
     private final CommandWithPayloadEncoder<T> commandEncoder;
 
     public FindAndReplaceOperation(final MongoNamespace namespace, final FindAndReplace<T> findAndReplace, final Decoder<T> payloadDecoder,
-                                   final Encoder<T> payloadEncoder, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+                                   final Encoder<T> payloadEncoder) {
         this.namespace = namespace;
         this.findAndReplace = findAndReplace;
         resultDecoder = new CommandResultWithPayloadDecoder<T>(payloadDecoder);
@@ -47,8 +46,8 @@ public class FindAndReplaceOperation<T> extends BaseOperation<T> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public T execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public T execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndReplaceDocument(),
                                                           commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true)

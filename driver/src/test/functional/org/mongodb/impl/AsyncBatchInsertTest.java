@@ -48,7 +48,7 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
-        byte[] hugeByteArray = new byte[1024 * 1024 * 15];
+        byte[] hugeByteArray = new byte[1024 * 100];
 
         insertRequestList = new ArrayList<InsertRequest<Document>>();
         insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
@@ -67,9 +67,8 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
     public void testBatchInsert() throws ExecutionException, InterruptedException {
         new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                       insertRequestList,
-                                      new DocumentCodec(),
-                                      getSession(), true)
-        .executeAsync().get();
+                                      new DocumentCodec())
+        .executeAsync(getSession()).get();
         assertEquals(insertRequestList.size(), collection.find().count());
     }
 
@@ -80,11 +79,11 @@ public class AsyncBatchInsertTest extends DatabaseTestCase {
         try {
             InsertOperation<Document> insertOperation = new InsertOperation<Document>(collection.getNamespace(), true, UNACKNOWLEDGED,
                                                                                       insertRequestList,
-                                                                                      new DocumentCodec(),
-                                                                                      session, false);
-            insertOperation.executeAsync().get();
-            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), session, false)
-                         .execute();
+                                                                                      new DocumentCodec()
+            );
+            insertOperation.executeAsync(session).get();
+            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec())
+                         .execute(session);
             assertEquals(insertRequestList.size(), count);
         } finally {
             session.close();

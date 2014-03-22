@@ -31,13 +31,11 @@ import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.ServerSettings;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.SocketStreamFactory;
-import org.mongodb.session.ClusterSession;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.Fixture.getSession;
@@ -66,22 +64,22 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
 
         // given:
-        new CreateUserOperation(readOnlyUser, getSession(), true).execute();
+        new CreateUserOperation(readOnlyUser).execute(getSession());
         Cluster cluster = createCluster(readOnlyUser);
 
         // when:
         try {
             new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec(),
-                                          new ClusterSession(cluster, getExecutor()), true).execute();
+                                          new DocumentCodec()
+            ).execute(getSession());
             fail("should have thrown");
         } catch (MongoException e) {
             // all good
         } finally {
             // cleanup:
-            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName(), getSession(),
-                                  true).execute();
+            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName()
+            ).execute(getSession());
             cluster.close();
         }
     }
@@ -92,7 +90,7 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-rw-admin", "admin", "123".toCharArray()), false);
-        new CreateUserOperation(adminUser, getSession(), true).execute();
+        new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
         try {
@@ -100,17 +98,16 @@ public class UserOperationTest extends DatabaseTestCase {
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                           true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec(),
-                                          new ClusterSession(cluster, getExecutor()), true).execute();
+                                          new DocumentCodec()
+            ).execute(getSession());
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
-                                                       new DocumentCodec(), new ClusterSession(cluster, getExecutor()),
-                                                       true)
-                                    .execute());
+                                                       new DocumentCodec()
+            )
+                                    .execute(getSession()));
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), new ClusterSession(cluster),
-                                  true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
             cluster.close();
         }
     }
@@ -120,22 +117,21 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser, getSession(), true).execute();
+        new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec(),
-                                          new ClusterSession(cluster, getExecutor()), true).execute();
+                                          new DocumentCodec()).execute(getSession());
             fail("Should have thrown");
         } catch (MongoException e) {
             // all good
         }
         finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getSession(), true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
             cluster.close();
         }
     }
@@ -146,21 +142,20 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser, getSession(), true).execute();
+        new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
         try {
             // when
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                              new Find(),
-                                             new DocumentCodec(),
-                                             new ClusterSession(cluster, getExecutor()),
-                                             true).execute();
+                                             new DocumentCodec()
+            ).execute(getSession());
             // then
             assertEquals(0, result);
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName(), getSession(), true).execute();
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
             cluster.close();
         }
     }

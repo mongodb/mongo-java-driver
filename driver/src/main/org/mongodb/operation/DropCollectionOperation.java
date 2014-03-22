@@ -30,27 +30,25 @@ import org.mongodb.session.Session;
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
  */
-public class DropCollectionOperation extends BaseOperation<CommandResult> {
+public class DropCollectionOperation implements Operation<CommandResult> {
     private final MongoNamespace namespace;
     private final Document dropCollectionCommand;
     private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
      * Create the Operation to drop a Collection from MongoDB.
-     *  @param namespace      the database/collection namespace for the collection to be dropped
-     * @param session        the Session to use
-     * @param closeSession   true of you want this operation to close the session after completion
+     * @param namespace      the database/collection namespace for the collection to be dropped
+     *
      */
-    public DropCollectionOperation(final MongoNamespace namespace, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public DropCollectionOperation(final MongoNamespace namespace) {
         this.namespace = namespace;
         dropCollectionCommand = new Document("drop", namespace.getCollectionName());
     }
 
     @Override
-    public CommandResult execute() {
+    public CommandResult execute(final Session session) {
         try {
-            ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+            ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
             return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec,
                                        provider.getServerDescription(), provider.getConnection(), true).execute();
         } catch (MongoCommandFailureException e) {

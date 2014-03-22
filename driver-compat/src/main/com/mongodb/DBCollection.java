@@ -83,7 +83,6 @@ import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
-import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -288,12 +287,13 @@ public class DBCollection {
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern) {
         return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                                   insertRequestList, encoder, getSession(), false),
-                                     writeConcern);
+                                                                   insertRequestList, encoder),
+                                     writeConcern
+                                    );
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation, final WriteConcern writeConcern) {
-        return translateWriteResult(executeOperation(operation), writeConcern);
+        return translateWriteResult(execute(operation), writeConcern);
     }
 
     private WriteResult translateWriteResult(final org.mongodb.WriteResult writeResult, final WriteConcern writeConcern) {
@@ -337,15 +337,11 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        try {
-            Object id = getObjectCodec().getId(document);
-            if (id == null) {
-                return insert(document, writeConcern);
-            } else {
-                return replaceOrInsert(document, writeConcern);
-            }
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
+        Object id = getObjectCodec().getId(document);
+        if (id == null) {
+            return insert(document, writeConcern);
+        } else {
+            return replaceOrInsert(document, writeConcern);
         }
     }
 
@@ -357,8 +353,9 @@ public class DBCollection {
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
                                                                     writeConcern.toNew(), asList(replaceRequest), getDocumentCodec(),
-                                                                    getObjectCodec(), getSession(), false),
-                                     writeConcern);
+                                                                    getObjectCodec()),
+                                     writeConcern
+                                    );
     }
 
     /**
@@ -385,8 +382,8 @@ public class DBCollection {
         }
 
         UpdateRequest mongoUpdate = new UpdateRequest(toDocument(query), toDocument(update))
-                                        .upsert(upsert)
-                                        .multi(multi);
+                                    .upsert(upsert)
+                                    .multi(multi);
 
         return updateInternal(mongoUpdate, aWriteConcern);
     }
@@ -425,8 +422,9 @@ public class DBCollection {
 
     private WriteResult updateInternal(final UpdateRequest update, final WriteConcern writeConcern) {
         return executeWriteOperation(new UpdateOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(update), documentCodec, getSession(), false),
-                                     writeConcern);
+                                                         asList(update), documentCodec),
+                                     writeConcern
+                                    );
     }
 
     /**
@@ -492,8 +490,9 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
                                                          asList(new RemoveRequest(toDocument(query))),
-                                                         documentCodec, getSession(), false),
-                                     writeConcern);
+                                                         documentCodec),
+                                     writeConcern
+                                    );
     }
 
     /**
@@ -511,8 +510,9 @@ public class DBCollection {
         RemoveRequest removeRequest = new RemoveRequest(filter);
 
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(removeRequest), getDocumentCodec(), getSession(), false),
-                                     writeConcern);
+                                                         asList(removeRequest), getDocumentCodec()),
+                                     writeConcern
+                                    );
     }
 
     /**
@@ -687,15 +687,10 @@ public class DBCollection {
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
-        try {
-            MongoCursor<DBObject> cursor = new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec,
-                                                                        getSession(), false)
-                                               .execute();
+        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec
+        ));
 
-            return cursor.hasNext() ? cursor.next() : null;
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return cursor.hasNext() ? cursor.next() : null;
     }
 
     /**
@@ -722,8 +717,8 @@ public class DBCollection {
     }
 
     /**
-     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields
-     * before saving object to collection.
+     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
+     * saving object to collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @return '_id' of the document
@@ -733,8 +728,8 @@ public class DBCollection {
     }
 
     /**
-     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields
-     * before saving object to collection.
+     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
+     * saving object to collection.
      *
      * @param document document to be passed to {@code doapply()}
      * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
@@ -923,7 +918,7 @@ public class DBCollection {
                                                .readPreference(readPreference.toNew())
                                                .maxTime(maxTime, maxTimeUnit);
 
-        return executeOperation(new CountOperation(getNamespace(), find, getDocumentCodec(), getSession(), false));
+        return execute(new CountOperation(getNamespace(), find, getDocumentCodec()));
     }
 
     /**
@@ -946,13 +941,7 @@ public class DBCollection {
      * @throws MongoException if target is the name of an existing collection and {@code dropTarget=false}.
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
-        try {
-            new RenameCollectionOperation(getSession(), false, getNamespace().getDatabaseName(), getName(), newName,
-                                          dropTarget)
-                .execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        execute(new RenameCollectionOperation(getNamespace().getDatabaseName(), getName(), newName, dropTarget));
         return getDB().getCollection(newName);
     }
 
@@ -1029,11 +1018,10 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        MongoCursor<Document> cursor = executeOperation(new GroupOperation(getNamespace(),
-                                                                           cmd.toNew(),
-                                                                           readPreference.toNew(),
-                                                                           getSession(),
-                                                                           false));
+        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(),
+                                                                  cmd.toNew(),
+                                                                  readPreference.toNew()
+        ));
         return toDBList(cursor);
     }
 
@@ -1084,7 +1072,7 @@ public class DBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(toDocument(query))
                               .readPreference(readPreference.toNew());
-        MongoCursor<String> result = new DistinctOperation(getNamespace(), fieldName, find, getSession(), false).execute();
+        MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find));
 
         List<String> results = new ArrayList<String>();
         while (result.hasNext()) {
@@ -1156,30 +1144,24 @@ public class DBCollection {
      * @mongodb.driver.manual core/map-reduce/ Map-Reduce
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
-        try {
-            org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
-                                                                                            : command.getReadPreference().toNew();
-            MapReduce mapReduce = command.getMapReduce();
-            if (mapReduce.isInline()) {
-                MapReduceCursor<DBObject> executionResult = new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
-                                                                                                              mapReduce,
-                                                                                                              objectCodec,
-                                                                                                              readPreference,
-                                                                                                              getSession(),
-                                                                                                              false).execute();
-                return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
-            } else {
-                MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce,
-                                                                                                       getSession(),
-                                                                                                       false);
-                MapReduceStatistics mapReduceStatistics = mapReduceOperation.execute();
-                DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
-                DBCursor executionResult = mapReduceOutputCollection.find();
-                return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection,
-                                           mapReduceOperation.getServerUsed());
-            }
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
+        org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
+                                                                                        : command.getReadPreference().toNew();
+        MapReduce mapReduce = command.getMapReduce();
+        if (mapReduce.isInline()) {
+            MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
+                                                                                                                  mapReduce,
+                                                                                                                  objectCodec,
+                                                                                                                  readPreference
+            ));
+            return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
+        } else {
+            MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce
+            );
+            MapReduceStatistics mapReduceStatistics = execute(mapReduceOperation);
+            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
+            DBCursor executionResult = mapReduceOutputCollection.find();
+            return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection,
+                                       mapReduceOperation.getServerUsed());
         }
     }
 
@@ -1197,10 +1179,9 @@ public class DBCollection {
      * @param firstOp       requisite first operation to be performed in the aggregation pipeline
      * @param additionalOps additional operations to be performed in the aggregation pipeline
      * @return the aggregation operation's result set
-     * @deprecated Use {@link com.mongodb.DBCollection#aggregate(java.util.List)} instead
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
+     * @deprecated Use {@link com.mongodb.DBCollection#aggregate(java.util.List)} instead
      */
     @Deprecated
     @SuppressWarnings("unchecked")
@@ -1217,7 +1198,6 @@ public class DBCollection {
      * @param pipeline operations to be performed in the aggregation pipeline
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline) {
@@ -1231,33 +1211,27 @@ public class DBCollection {
      * @param readPreference the read preference specifying where to run the query
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
-        try {
-            AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
+        AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
 
-            List<Document> stages = preparePipeline(pipeline);
+        List<Document> stages = preparePipeline(pipeline);
 
-            AggregateOperation<Document> operation =
-                new AggregateOperation<Document>(getNamespace(),
-                                                 preparePipeline(pipeline),
-                                                 getDocumentCodec(),
-                                                 options.toNew(),
-                                                 getSession(),
-                                                 false,
-                                                 coerceReadPreference(readPreference,
-                                                                      stages.get(stages.size() - 1).getString("$out") != null)
-                                                     .toNew());
+        AggregateOperation<Document> operation =
+        new AggregateOperation<Document>(getNamespace(),
+                                         preparePipeline(pipeline),
+                                         getDocumentCodec(),
+                                         options.toNew(),
+                                         coerceReadPreference(readPreference,
+                                                              stages.get(stages.size() - 1).getString("$out") != null)
+                                         .toNew()
+        );
 
-            MongoCursor<Document> cursor = operation.execute();
+        MongoCursor<Document> cursor = execute(operation);
 
-            org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
-            return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
+        return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
     }
 
     /**
@@ -1267,7 +1241,6 @@ public class DBCollection {
      * @param options  options to apply to the aggregation
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
@@ -1282,39 +1255,32 @@ public class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
                             final ReadPreference readPreference) {
-        try {
-            if (options == null) {
-                throw new IllegalArgumentException("options can not be null");
-            }
-            List<Document> stages = preparePipeline(pipeline);
+        if (options == null) {
+            throw new IllegalArgumentException("options can not be null");
+        }
+        List<Document> stages = preparePipeline(pipeline);
 
-            String outCollection = stages.get(stages.size() - 1).getString("$out");
-            ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
+        String outCollection = stages.get(stages.size() - 1).getString("$out");
+        ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
 
-            MongoCursor<Document> cursor = new AggregateOperation<Document>(getNamespace(),
-                                                                            stages,
-                                                                            getDocumentCodec(),
-                                                                            options.toNew(),
-                                                                            getSession(),
-                                                                            false,
-                                                                            activeReadPreference.toNew()).execute();
-            if (outCollection != null) {
-                return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
-            } else {
-                return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
-                    @Override
-                    public DBObject apply(final Document document) {
-                        return toDBObject(document);
-                    }
-                }));
-            }
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
+        MongoCursor<Document> cursor = execute(new AggregateOperation<Document>(getNamespace(),
+                                                                                stages,
+                                                                                getDocumentCodec(),
+                                                                                options.toNew(),
+                                                                                activeReadPreference.toNew()));
+        if (outCollection != null) {
+            return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
+        } else {
+            return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
+                @Override
+                public DBObject apply(final Document document) {
+                    return toDBObject(document);
+                }
+            }));
         }
     }
 
@@ -1322,12 +1288,10 @@ public class DBCollection {
      * Return the explain plan for the aggregation pipeline.
      *
      * @param pipeline the aggregation pipeline to explain
-     * @param options the options to apply to the aggregation
-     * @return the command result.  The explain output may change from release to
-     *         release, so best to simply log this.
+     * @param options  the options to apply to the aggregation
+     * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
-     *
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
@@ -1337,9 +1301,7 @@ public class DBCollection {
                                                                   stages,
                                                                   getDocumentCodec(),
                                                                   options.toNew(),
-                                                                  getSession(),
-                                                                  false,
-                                                                  getReadPreference().toNew()).explain());
+                                                                  getReadPreference().toNew()).explain(getSession())); // TODO: proxy this
     }
 
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
@@ -1412,8 +1374,8 @@ public class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        executeOperation(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace(),
-                                                    getSession(), false));
+        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()
+        ));
     }
 
     /**
@@ -1527,8 +1489,8 @@ public class DBCollection {
                                                                                  .sortBy(toNullableDocument(sort))
                                                                                  .returnNew(returnNew)
                                                                                  .maxTime(maxTime, maxTimeUnit);
-            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder,
-                                                             getSession(), false);
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder
+            );
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
@@ -1536,29 +1498,29 @@ public class DBCollection {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
                 FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
-                                                            .where(toNullableDocument(query))
-                                                            .sortBy(toNullableDocument(sort))
-                                                            .returnNew(returnNew)
-                                                            .select(toFieldSelectorDocument(fields))
-                                                            .updateWith(toUpdateOperationsDocument(update))
-                                                            .upsert(upsert)
-                                                            .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder,
-                                                                 getSession(), false);
+                                                        .where(toNullableDocument(query))
+                                                        .sortBy(toNullableDocument(sort))
+                                                        .returnNew(returnNew)
+                                                        .select(toFieldSelectorDocument(fields))
+                                                        .updateWith(toUpdateOperationsDocument(update))
+                                                        .upsert(upsert)
+                                                        .maxTime(maxTime, maxTimeUnit);
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder
+                );
             } else {
                 FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
-                                                              .where(toNullableDocument(query))
-                                                              .sortBy(toNullableDocument(sort))
-                                                              .select(toFieldSelectorDocument(fields))
-                                                              .returnNew(returnNew)
-                                                              .upsert(upsert)
-                                                              .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec,
-                                                                  getSession(), false);
+                                                          .where(toNullableDocument(query))
+                                                          .sortBy(toNullableDocument(sort))
+                                                          .select(toFieldSelectorDocument(fields))
+                                                          .returnNew(returnNew)
+                                                          .upsert(upsert)
+                                                          .maxTime(maxTime, maxTimeUnit);
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec
+                );
             }
         }
 
-        return executeOperation(operation);
+        return execute(operation);
     }
 
     /**
@@ -1664,7 +1626,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public void drop() {
-        executeOperation(new DropCollectionOperation(getNamespace(), getSession(), false));
+        execute(new DropCollectionOperation(getNamespace()));
     }
 
     /**
@@ -1724,7 +1686,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        List<Document> indexDocumentList = executeOperation(new GetIndexesOperation(getNamespace(), getSession()));
+        List<Document> indexDocumentList = execute(new GetIndexesOperation(getNamespace()));
         List<DBObject> indexDBObjectList = new ArrayList<DBObject>(indexDocumentList.size());
         for (Document cur : indexDocumentList) {
             indexDBObjectList.add(toDBObject(cur));
@@ -1752,7 +1714,7 @@ public class DBCollection {
      * @throws MongoException if the index does not exist
      */
     public void dropIndex(final String indexName) {
-        executeOperation(new DropIndexOperation(getNamespace(), indexName, getSession(), false));
+        execute(new DropIndexOperation(getNamespace(), indexName));
     }
 
     /**
@@ -1877,11 +1839,15 @@ public class DBCollection {
 
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
                                               final WriteConcern writeConcern) {
-        return translateBulkWriteResult(executeOperation(new MixedBulkWriteOperation<DBObject>(getNamespace(),
-                                                                                               translateWriteRequestsToNew(writeRequests),
-                                                                                               ordered, writeConcern.toNew(),
-                                                                                               getObjectCodec(),
-                                                                                               getSession(), true)));
+        return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
+                                                                                      translateWriteRequestsToNew(writeRequests),
+                                                                                      ordered, writeConcern.toNew(),
+                                                                                      getObjectCodec()
+        )));
+    }
+
+    <T> T execute(final Operation<T> operation) {
+        return getDB().getMongo().execute(operation);
     }
 
     private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
@@ -1969,13 +1935,5 @@ public class DBCollection {
 
     BufferProvider getBufferPool() {
         return getDB().getBufferPool();
-    }
-
-    private <T> T executeOperation(final Operation<T> operation) {
-        try {
-            return operation.execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
     }
 }

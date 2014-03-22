@@ -31,6 +31,7 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
+import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
@@ -235,10 +236,10 @@ public class DB {
     public Set<String> getCollectionNames() {
         MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
-        try {
-            MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec,
-                                                                        getSession(), false).execute();
+        // TODO: Should use an operation
+        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec));
 
+        try {
             HashSet<String> collections = new HashSet<String>();
             int lengthOfDatabaseName = getName().length();
             while (cursor.hasNext()) {
@@ -381,10 +382,8 @@ public class DB {
                                           readPreference.toNew(),
                                           commandCodec,
                                           commandCodec,
-                                          getClusterDescription(),
-                                          getSession(),
-                                          false).execute();
-        } catch (MongoCommandFailureException ex) {
+                                          getClusterDescription()).execute(getMongo().getSession());
+        } catch (MongoCommandFailureException ex) {  // TODO: Rather not catch this here.
             result = ex.getCommandResult();
         } catch (org.mongodb.MongoException ex) {
             throw mapException(ex);
@@ -402,22 +401,7 @@ public class DB {
      * @since 2.12
      */
     public CommandResult command(final DBObject cmd, final ReadPreference readPreference) {
-        org.mongodb.CommandResult result;
-        try {
-            result = new CommandOperation(getName(),
-                                          toDocument(cmd),
-                                          readPreference.toNew(),
-                                          commandCodec,
-                                          commandCodec,
-                                          getClusterDescription(),
-                                          getSession(),
-                                          false).execute();
-        } catch (MongoCommandFailureException ex) {
-            result = ex.getCommandResult();
-        } catch (org.mongodb.MongoException ex) {
-            throw mapException(ex);
-        }
-        return new CommandResult(result);
+        return command(cmd, readPreference, null);
     }
 
     /**
@@ -533,12 +517,12 @@ public class DB {
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
-        if (new UserExistsOperation(getName(), userName, getSession(), true).execute()) {
-            new UpdateUserOperation(user, getSession(), true).execute();
+        if (execute(new UserExistsOperation(getName(), userName))) {
+            execute(new UpdateUserOperation(user));
             return new WriteResult(1, false, null, getWriteConcern());
 
         } else {
-            new CreateUserOperation(user, getSession(), true).execute();
+            execute(new CreateUserOperation(user));
             return new WriteResult(1, true, null, getWriteConcern());
         }
     }
@@ -554,7 +538,7 @@ public class DB {
      */
     @Deprecated
     public WriteResult removeUser(final String userName) {
-        new DropUserOperation(getName(), userName, getSession(), true).execute();
+        execute(new DropUserOperation(getName(), userName));
         return new WriteResult(1, true, null, getWriteConcern());
     }
 
@@ -617,12 +601,8 @@ public class DB {
     }
 
     org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
-        try {
-            return new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
-                                        getClusterDescription(), getSession(), false).execute();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return getMongo().execute(new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
+                                                       getClusterDescription()));
     }
 
     ClusterDescription getClusterDescription() {
@@ -643,5 +623,9 @@ public class DB {
 
     private boolean isValidName(final String databaseName){
         return databaseName.length() != 0 && !databaseName.contains(" ");
+    }
+
+    private <T> T execute(final Operation<T> operation) {
+        return getMongo().execute(operation);
     }
 }

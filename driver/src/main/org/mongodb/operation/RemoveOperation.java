@@ -27,7 +27,6 @@ import org.mongodb.protocol.DeleteCommandProtocol;
 import org.mongodb.protocol.DeleteProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.Session;
 
 import java.util.List;
 
@@ -38,9 +37,8 @@ public class RemoveOperation extends BaseWriteOperation {
     private final Encoder<Document> queryEncoder;
 
     public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder, final Session session,
-                           final boolean closeSession) {
-        super(namespace, ordered, writeConcern, session, closeSession);
+                           final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder) {
+        super(namespace, ordered, writeConcern);
         this.removeRequests = notNull("removes", removeRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }

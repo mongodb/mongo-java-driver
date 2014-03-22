@@ -31,7 +31,7 @@ import static org.mongodb.MongoNamespace.asNamespaceString;
  * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
  * collection, a MongoServerException will be thrown.
  */
-public class RenameCollectionOperation extends BaseOperation<CommandResult> {
+public class RenameCollectionOperation implements Operation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
     private final String originalCollectionName;
     private final String newCollectionName;
@@ -40,16 +40,14 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
 
     /**
      * The constructor of this abstract class takes the fields that are required by all basic operations.
-     *  @param session                the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession           true if the session should be closed at the end of the execute method
      * @param databaseName           the name of the database containing the collection to rename
      * @param originalCollectionName the name of the collection to rename
      * @param newCollectionName      the desired new name for the collection
      * @param dropTarget             set to true if you want any existing database with newCollectionName to be dropped during the rename
      */
-    public RenameCollectionOperation(final Session session, final boolean closeSession, final String databaseName,
-                                     final String originalCollectionName, final String newCollectionName, final boolean dropTarget) {
-        super(session, closeSession);
+    public RenameCollectionOperation(final String databaseName, final String originalCollectionName, final String newCollectionName,
+                                     final boolean dropTarget) {
+        super();
         this.originalCollectionName = originalCollectionName;
         this.newCollectionName = newCollectionName;
         this.dropTarget = dropTarget;
@@ -63,10 +61,11 @@ public class RenameCollectionOperation extends BaseOperation<CommandResult> {
      * @throws org.mongodb.MongoServerException
      *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
      *          or if the oldCollectionName is the name of a collection that doesn't exist
+     * @param session
      */
     @Override
-    public CommandResult execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public CommandResult execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         return new CommandProtocol("admin", createCommand(), commandCodec, commandCodec,
                                    provider.getServerDescription(), provider.getConnection(), true)
                    .execute();

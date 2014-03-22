@@ -32,15 +32,13 @@ import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
-public class FindAndUpdateOperation<T> extends BaseOperation<T> {
+public class FindAndUpdateOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndUpdate<T> findAndUpdate;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate<T> findAndUpdate, final Decoder<T> resultDecoder,
-                                  final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate<T> findAndUpdate, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndUpdate = findAndUpdate;
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
@@ -48,9 +46,9 @@ public class FindAndUpdateOperation<T> extends BaseOperation<T> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public T execute() {
+    public T execute(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
                                                           commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true).execute();

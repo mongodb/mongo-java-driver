@@ -16,23 +16,25 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoException
 
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.MongoCredential.createMongoCRCredential
 
 class DropUserOperationSpecification extends FunctionalSpecification {
     def 'should delete user without error'() {
         given:
         User jeff = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)
-        new CreateUserOperation(jeff, session, true).execute()
+        new CreateUserOperation(jeff).execute(getSession())
 
         when:
-        DropUserOperation operation = new DropUserOperation(databaseName, 'jeff', session, true)
-        operation.execute()
+        DropUserOperation operation = new DropUserOperation(databaseName, 'jeff')
+        operation.execute(getSession())
 
         then:
         notThrown(MongoException)

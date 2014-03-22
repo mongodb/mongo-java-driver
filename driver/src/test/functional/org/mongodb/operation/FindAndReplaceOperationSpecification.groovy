@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -24,7 +26,7 @@ import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
     private MongoCollection<Worker> workerCollection
@@ -48,9 +50,8 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
                                                                           .returnNew(false);
 
         FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(workerCollection.namespace, findAndReplace,
-                                                                                        new WorkerCodec(), new WorkerCodec()
-                                                                                        , session, false)
-        Worker returnedValue = operation.execute()
+                                                                                        new WorkerCodec(), new WorkerCodec())
+        Worker returnedValue = operation.execute(getSession())
 
         then:
         returnedValue == pete

@@ -26,20 +26,19 @@ import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
-public class DropIndexOperation extends BaseOperation<CommandResult> {
+public class DropIndexOperation implements Operation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoNamespace namespace;
     private final Document dropIndexesCommand;
 
-    public DropIndexOperation(final MongoNamespace namespace, final String indexName, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
         this.namespace = namespace;
         this.dropIndexesCommand = new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
     }
 
     @Override
-    public CommandResult execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public CommandResult execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         try {
             return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec,
                                        provider.getServerDescription(), provider.getConnection(), true).execute();

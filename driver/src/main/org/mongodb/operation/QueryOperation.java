@@ -27,15 +27,14 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements AsyncOperation<MongoAsyncCursor<T>> {
+public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, Operation<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                          final Decoder<T> resultDecoder, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+                          final Decoder<T> resultDecoder) {
         this.namespace = notNull("namespace", namespace);
         this.find = notNull("find", find);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
@@ -43,16 +42,14 @@ public class QueryOperation<T> extends BaseOperation<MongoCursor<T>> implements 
     }
 
     @Override
-    public MongoCursor<T> execute() {
-        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, getSession(), isCloseSession());
+    public MongoCursor<T> execute(final Session session) {
+        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, session);
     }
 
-    public MongoFuture<MongoAsyncCursor<T>> executeAsync() {
+    public MongoFuture<MongoAsyncCursor<T>> executeAsync(final Session session) {
         return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace,
                                                                                         find,
                                                                                         queryEncoder,
                                                                                         resultDecoder,
-                                                                                        getSession(),
-                                                                                        isCloseSession()), null);
-    }
+                                                                                        session), null); }
 }

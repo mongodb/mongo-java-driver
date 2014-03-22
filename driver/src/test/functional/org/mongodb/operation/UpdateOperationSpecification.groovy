@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.bson.types.ObjectId
@@ -31,14 +33,14 @@ class UpdateOperationSpecification extends FunctionalSpecification {
     def 'should return correct result for update'() {
         given:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest<Document>(new Document('_id', 1))),
-                                      new DocumentCodec(), getSession(), true).execute()
+                                      new DocumentCodec()).execute(session)
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(new UpdateRequest(new Document('_id', 1),
                                                                                                   new Document('$set',
                                                                                                                new Document('x', 1)))),
-                                     new DocumentCodec(), getSession(), true)
+                                     new DocumentCodec())
 
         when:
-        def result = op.execute();
+        def result = op.execute(getSession());
 
         then:
         result.wasAcknowledged()
@@ -53,10 +55,10 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new Document('_id', id),
                                                               new Document('$set', new Document('x', 1))).upsert(true)),
-                                     new DocumentCodec(), getSession(), true)
+                                     new DocumentCodec())
 
         when:
-        def result = op.execute();
+        def result = op.execute(getSession());
 
         then:
         result.wasAcknowledged()

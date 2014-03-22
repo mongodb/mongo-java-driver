@@ -47,12 +47,12 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void createIndexes(final List<Index> indexes) {
-        new CreateIndexesOperation(indexes, collectionNamespace, client.getSession(), false).execute();
+        client.execute(new CreateIndexesOperation(indexes, collectionNamespace));
     }
 
     @Override
     public List<Document> getIndexes() {
-        return new GetIndexesOperation(collectionNamespace, client.getSession()).execute();
+        return client.execute(new GetIndexesOperation(collectionNamespace));
     }
 
     @Override
@@ -73,16 +73,16 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public void drop() {
-        new DropCollectionOperation(collectionNamespace, client.getSession(), false).execute();
+        client.execute(new DropCollectionOperation(collectionNamespace));
     }
 
     @Override
     public void dropIndex(final Index index) {
-        new DropIndexOperation(collectionNamespace, index.getName(), client.getSession(), false).execute();
+        client.execute(new DropIndexOperation(collectionNamespace, index.getName()));
     }
 
     @Override
     public void dropIndexes() {
-        new DropIndexOperation(collectionNamespace, "*", client.getSession(), false).execute();
+        client.execute(new DropIndexOperation(collectionNamespace, "*"));
     }
 }

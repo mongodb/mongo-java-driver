@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
-import static com.mongodb.MongoExceptions.mapException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -82,11 +81,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         this(collection,
              new Find()
-                 .where(toDocument(query))
-                 .select(DBObjects.toFieldSelectorDocument(fields))
-                 .readPreference(readPreference.toNew())
-                 .hintIndex(toNullableDocument(lookupSuitableHints(query, collection.getHintFields())))
-                 .addFlags(QueryFlag.toSet(collection.getOptions())));
+             .where(toDocument(query))
+             .select(DBObjects.toFieldSelectorDocument(fields))
+             .readPreference(readPreference.toNew())
+             .hintIndex(toNullableDocument(lookupSuitableHints(query, collection.getHintFields())))
+             .addFlags(QueryFlag.toSet(collection.getOptions()))
+            );
     }
 
     private DBCursor(final DBCollection collection, final Find find) {
@@ -117,13 +117,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         if (cursor == null) {
-            try {
-                cursor = new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(), resultDecoder,
-                                                      getSession(), true)
-                         .execute();
-            } catch (org.mongodb.MongoException e) {
-                throw mapException(e);
-            }
+            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(),
+                                                                     resultDecoder));
         }
 
         return cursor.hasNext();
@@ -197,7 +192,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * adds a special operator like $maxScan or $returnKey e.g. addSpecial( "$returnKey" , 1 ) e.g. addSpecial( "$maxScan" , 100 )
      *
      * @param name the name of the special query operator
-     * @param o the value of the special query operator
+     * @param o    the value of the special query operator
      * @return this
      * @mongodb.driver.manual reference/operator Special Operators
      */
@@ -228,7 +223,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     /**
      * Adds a comment to the query to identify queries in the database profiler output.
-     * 
+     *
      * @mongodb.driver.manual reference/operator/meta/comment/ $comment
      * @since 2.12
      */
@@ -240,9 +235,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     /**
      * Limits the number of documents a cursor will return for a query.
-     * 
+     *
      * @mongodb.driver.manual reference/operator/meta/maxScan/ $maxScan
-     * @see #limit(int) 
+     * @see #limit(int)
      * @since 2.12
      */
     public DBCursor maxScan(final int max) {
@@ -261,9 +256,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         find.getOptions().max(new Document(DBObjects.toDocument(max)));
         return this;
     }
-    
+
     /**
-     * Specifies an <em>inclusive</em> lower limit for the index to use in a query. 
+     * Specifies an <em>inclusive</em> lower limit for the index to use in a query.
      *
      * @mongodb.driver.manual reference/operator/meta/min/ $min
      * @since 2.12
@@ -272,9 +267,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         find.getOptions().min(new Document(DBObjects.toDocument(min)));
         return this;
     }
-    
+
     /**
      * Forces the cursor to only return fields included in the index.
+     *
      * @mongodb.driver.manual reference/operator/meta/returnKey/ $returnKey
      * @since 2.12
      */
@@ -285,8 +281,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Modifies the documents returned to include references to the on-disk location of each document.  The location will be returned
-     * in a property named {@code $diskLoc}
+     * Modifies the documents returned to include references to the on-disk location of each document.  The location will be returned in a
+     * property named {@code $diskLoc}
+     *
      * @mongodb.driver.manual reference/operator/meta/showDiskLoc/ $showDiskLoc
      * @since 2.12
      */
@@ -321,13 +318,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Set the maximum execution time for operations on this cursor.
      *
-     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value
-     *                 requires a server version >= 2.6
+     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value requires
+     *                 a server version >= 2.6
      * @param timeUnit the time unit
      * @return same DBCursor for chaining operations
-     * @since 2.12.0
-     *
      * @mongodb.server.release 2.6
+     * @since 2.12.0
      */
     public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {
         find.maxTime(maxTime, timeUnit);
@@ -365,12 +361,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        try {
-            return new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(), new DBObjectCodec(),
-                                                getSession(), true).execute().next();
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
+                                                               new DBObjectCodec())).next();
     }
 
     /**

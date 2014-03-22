@@ -48,20 +48,18 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Decoder<T> decoder;
     private final Session session;
     private ServerConnectionProvider serverConnectionProvider;
-    private final boolean closeSession;
     private Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
     private AsyncBlock<? super T> block;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final Session session, final boolean closeSession) {
+                                 final Decoder<T> decoder, final Session session) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
         this.session = session;
-        this.closeSession = closeSession;
     }
 
     @Override
@@ -103,9 +101,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
             handleExhaustCleanup(responseTo);
         } else {
-            if (closeSession) {
-                session.close();
-            }
             block.done();
         }
     }
@@ -120,9 +115,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             .register(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final MongoException e) {
-                    if (closeSession) {
-                        session.close();
-                    }
                     block.done();
                 }
             });

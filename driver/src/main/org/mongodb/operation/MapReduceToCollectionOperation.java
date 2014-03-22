@@ -40,7 +40,7 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements Operation<MapReduceStatistics> {
     private final Document command;
     private final MongoNamespace namespace;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -49,14 +49,11 @@ public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStati
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
-     *  @param namespace      the database and collection to perform the map reduce on
+     * @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce, final Session session,
-                                          final boolean closeSession) {
-        super(session, closeSession);
+    public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce) {
+        super();
         if (mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with map reduce operations that put the results into a "
                                                + "collection.  Invalid MapReduce: " + mapReduce);
@@ -69,10 +66,11 @@ public class MapReduceToCollectionOperation extends BaseOperation<MapReduceStati
      * Executing this will return a cursor with your results in.
      *
      * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
+     * @param session
      */
     @Override
-    public MapReduceStatistics execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public MapReduceStatistics execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
                                                           provider.getServerDescription(), provider.getConnection(),
                                                           true)

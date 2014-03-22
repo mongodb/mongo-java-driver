@@ -42,16 +42,15 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        CommandResult pingResult = new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
-                                                        client.getCluster().getDescription(10, TimeUnit.SECONDS),
-                                                        client.getSession(), false)
-                                   .execute();
+        CommandResult pingResult = client.execute(new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
+                                                                       client.getCluster().getDescription(10, TimeUnit.SECONDS)
+        ));
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public List<String> getDatabaseNames() {
-        return new GetDatabaseNamesOperation(client.getSession(), false).execute();
+        return client.execute(new GetDatabaseNamesOperation());
     }
 }

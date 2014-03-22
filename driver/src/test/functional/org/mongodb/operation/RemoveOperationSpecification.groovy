@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -32,17 +34,13 @@ class RemoveOperationSpecification extends FunctionalSpecification {
     def 'should remove a document'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec(),
-                                      getSession(), true).execute()
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(session)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
                                      [new RemoveRequest(new Document('_id', 1))],
-                                     new DocumentCodec()
-                                     ,
-                                     getSession(),
-                                     true)
+                                     new DocumentCodec())
 
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         collection.find().count() == 0
@@ -52,17 +50,13 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert),
-                                      new DocumentCodec()
-                                      ,
-                                      getSession(),
-                                      true).execute()
+                                      new DocumentCodec())
+                .execute(session)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new Document('_id', 1))], new DocumentCodec()
-                                     , getSession(),
-                                     true)
+                                     [new RemoveRequest(new Document('_id', 1))], new DocumentCodec())
 
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         collection.find().count() == 0

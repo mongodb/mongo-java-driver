@@ -27,7 +27,6 @@ import org.mongodb.protocol.ReplaceCommandProtocol;
 import org.mongodb.protocol.ReplaceProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.Session;
 
 import java.util.List;
 
@@ -40,8 +39,8 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
 
     public ReplaceOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                             final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
-                            final Encoder<T> encoder, final Session session, final boolean closeSession) {
-        super(namespace, ordered, writeConcern, session, closeSession);
+                            final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replace", replaceRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);

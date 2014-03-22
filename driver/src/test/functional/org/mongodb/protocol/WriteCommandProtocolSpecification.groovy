@@ -16,14 +16,6 @@
 
 
 
-
-
-
-
-
-
-
-
 package org.mongodb.protocol
 
 import org.mongodb.BulkWriteException
@@ -143,8 +135,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()
-                                               , getSession(), false).execute()
+        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()).execute(getSession())
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {

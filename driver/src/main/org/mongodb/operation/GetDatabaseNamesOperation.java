@@ -32,26 +32,18 @@ import static java.util.Collections.unmodifiableList;
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
  */
-public class GetDatabaseNamesOperation extends BaseOperation<List<String>> {
+public class GetDatabaseNamesOperation implements Operation<List<String>> {
     private final Codec<Document> commandCodec = new DocumentCodec();
-
-    /**
-     * Set up the Operation with all the basic information required to get the database names from MongoDB
-     *  @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
-     */
-    public GetDatabaseNamesOperation(final Session session, final boolean closeSession) {
-        super(session, closeSession);
-    }
 
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
      * @return a List of Strings of the names of all the databases in the MongoDB instance
+     * @param session
      */
     @Override
-    public List<String> execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public List<String> execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult listDatabasesResult = new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
                                                                 provider.getServerDescription(),
                                                                 provider.getConnection(), true).execute();

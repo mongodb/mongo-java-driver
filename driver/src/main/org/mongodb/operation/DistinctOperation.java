@@ -36,22 +36,18 @@ import java.util.List;
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
-public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
+public class DistinctOperation implements Operation<MongoCursor<String>> {
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Find find;
 
     /**
      * This operation will return the results of the query with no duplicate entries for the selected field.
-     *  @param namespace      the database and collection to run the query against
+     * @param namespace      the database and collection to run the query against
      * @param fieldName      the field that needs to be distinct
      * @param find           the query criteria
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Find find, final Session session,
-                             final boolean closeSession) {
-        super(session, closeSession);
+    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Find find) {
         this.namespace = namespace;
         this.fieldName = fieldName;
         this.find = find;
@@ -61,19 +57,18 @@ public class DistinctOperation extends BaseOperation<MongoCursor<String>> {
      * Returns all the values for the field without duplicates
      *
      * @return a cursor of Strings
+     * @param session
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<String> execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public MongoCursor<String> execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getCommandDocument(),
                                                           new DocumentCodec(), new DocumentCodec(),
                                                           provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
 
-        InlineMongoCursor<String> cursor = new InlineMongoCursor<String>(commandResult,
-                                                                         (List<String>) commandResult.getResponse().get("values"));
-        return cursor;
+        return new InlineMongoCursor<String>(commandResult, (List<String>) commandResult.getResponse().get("values"));
     }
 
     private Document getCommandDocument() {

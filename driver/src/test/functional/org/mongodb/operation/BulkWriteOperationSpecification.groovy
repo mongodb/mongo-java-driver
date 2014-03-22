@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.bson.types.ObjectId
@@ -46,10 +48,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
 
         def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(new Document('_id', 1))], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result.insertedCount == 1
@@ -62,10 +64,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def document = new Document('_id', 1)
         collection.insert(document)
         def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(document)], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         def ex = thrown(BulkWriteException)
@@ -78,10 +80,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         collection.insert(new Document('x', true))
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new Document('x', true)).multi(false)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(REMOVE, 1, [])
@@ -94,10 +96,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new Document('x', true))],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(REMOVE, 2, [])
@@ -110,10 +112,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('_id', 1),
                                                                 new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 1, 1, [])
@@ -128,10 +130,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('x', true),
                                                                 new Document('$set', new Document('y', 1))).multi(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 2, 2, [])
@@ -144,10 +146,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 0, [new BulkWriteUpsert(0, id)])
@@ -162,10 +164,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
                                                       .upsert(true)
                                              ],
                                              true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 0, [new BulkWriteUpsert(0, id)])
@@ -180,10 +182,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new Document('_id', id),
                                                                 new Document('$set', new Document('x', 2))).upsert(true)],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 1, 1, [])
@@ -196,10 +198,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new Document('_id', 1), new Document('_id', 1).append('x', 2))
                                                       .upsert(true)], true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result.updatedCount == 1
@@ -212,14 +214,13 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getSession(),
-                                      true).execute()
+                                      new DocumentCodec()).execute(getSession())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), true,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(2, 4, 2, 4, [])
@@ -238,14 +239,13 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getSession(),
-                                      true).execute()
+                                      new DocumentCodec()).execute(getSession())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), true,
-                                             UNACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             UNACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         !result.acknowledged
@@ -266,9 +266,9 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
                                               new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 3))),
                                               new InsertRequest<Document>(new Document('_id', 1))   // this should fail with index 2
                                              ],
-                                             true, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             true, ACKNOWLEDGED, new DocumentCodec())
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         def ex = thrown(BulkWriteException)
@@ -282,14 +282,13 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getSession(),
-                                      true).execute()
+                                      new DocumentCodec()).execute(getSession())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              getTestWrites(), false,
-                                             ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             ACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute()
+        def result = op.execute(getSession())
 
         then:
         result == new AcknowledgedBulkWriteResult(2, 4, 2, 4, [])
@@ -311,8 +310,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         }
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, new DocumentCodec(), getSession(),
-                                    true).execute()
+        new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, new DocumentCodec()).execute(getSession())
 
         then:
         collection.find().count() == 2001
@@ -326,8 +324,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         }
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, false, ACKNOWLEDGED, new DocumentCodec(), getSession(),
-                                    true).execute()
+        new MixedBulkWriteOperation(getNamespace(), writes, false, ACKNOWLEDGED, new DocumentCodec()).execute(getSession())
 
         then:
         collection.find().count() == 2001
@@ -338,16 +335,15 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                                       getTestInserts(),
-                                      new DocumentCodec(), getSession(),
-                                      true).execute()
+                                      new DocumentCodec()).execute(getSession())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1)),
                                               new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 3))),
                                               new InsertRequest<Document>(new Document('_id', 3))   // this should fail with index 2
                                              ],
-                                             false, ACKNOWLEDGED, new DocumentCodec(), getSession(), true)
+                                             false, ACKNOWLEDGED, new DocumentCodec())
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         def ex = thrown(BulkWriteException)
@@ -364,10 +360,10 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
-                                             false, new WriteConcern(5, 1), new DocumentCodec(), getSession(),
-                                             true)
+                                             false, new WriteConcern(5, 1), new DocumentCodec()
+        )
         when:
-        op.execute()
+        op.execute(getSession())
 
         then:
         def ex = thrown(BulkWriteException)

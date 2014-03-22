@@ -43,7 +43,7 @@ import static org.mongodb.operation.CommandDocuments.createMapReduce;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapReduceCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements Operation<MapReduceCursor<T>> {
     private final Document command;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
@@ -52,17 +52,14 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
-     *  @param namespace      the database and collection to perform the map reduce on
+     * @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
      * @param decoder        the decoder to use for decoding the documents in the results of the map-reduce operation
      * @param readPreference the read preference suggesting which server to run the command on
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
-                                               final Decoder<T> decoder, final ReadPreference readPreference,
-                                               final Session session, final boolean closeSession) {
-        super(session, closeSession);
+                                               final Decoder<T> decoder, final ReadPreference readPreference) {
+        super();
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
@@ -77,11 +74,12 @@ public class MapReduceWithInlineResultsOperation<T> extends BaseOperation<MapRed
      * Executing this will return a cursor with your results and the statistics in.
      *
      * @return a MapReduceCursor that can be iterated over to find all the results of the Map Reduce operation.
+     * @param session
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MapReduceCursor<T> execute() {
-        ServerConnectionProvider provider = getSession().createServerConnectionProvider(getServerConnectionProviderOptions());
+    public MapReduceCursor<T> execute(final Session session) {
+        ServerConnectionProvider provider = session.createServerConnectionProvider(getServerConnectionProviderOptions());
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, mapReduceResultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(),
                                                           true)

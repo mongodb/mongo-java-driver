@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.session.Session;
+
 /**
  * An Operation is something that can be run against a MongoDB instance.  This includes CRUD operations and Commands.
  *
@@ -26,6 +28,7 @@ public interface Operation<T> {
      * General execute which can return anything of type T
      *
      * @return T, the results of the execution
+     * @param session
      */
-    T execute();
+    T execute(final Session session);
 }

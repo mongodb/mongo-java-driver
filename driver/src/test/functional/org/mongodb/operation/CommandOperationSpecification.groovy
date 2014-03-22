@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -34,9 +36,9 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.Fixture.session
 
 class CommandOperationSpecification extends FunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
@@ -46,12 +48,11 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
                                                     new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(),
-                                                    session, true)
+                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.execute()
+        commandOperation.execute(getSession())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -68,12 +69,11 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
                                                     new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec(),
-                                                    session, true)
+                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.executeAsync().get()
+        commandOperation.executeAsync(getSession()).get()
 
         then:
         thrown(MongoExecutionTimeoutException)

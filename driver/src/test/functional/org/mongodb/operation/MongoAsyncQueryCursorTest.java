@@ -79,8 +79,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            session,
-                                            true).start(new TestBlock());
+                                            session
+        ).start(new TestBlock());
         latch.await();
         assertEquals(documentList, documentResultList);
     }
@@ -91,8 +91,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).limit(100).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            session,
-                                            true)
+                                            session
+        )
             .start(new TestBlock());
 
         latch.await();
@@ -106,8 +106,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            session,
-                                            true)
+                                            session
+        )
             .start(new TestBlock());
 
         latch.await();
@@ -121,8 +121,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                             new Find().batchSize(2).limit(5).addFlags(EnumSet.of(Exhaust)).order(new Document("_id", 1)),
                                             collection.getOptions().getDocumentCodec(),
                                             collection.getCodec(),
-                                            session,
-                                            true)
+                                            session
+        )
             .start(new TestBlock());
 
         latch.await();
@@ -143,8 +143,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                           .order(new Document("_id", 1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                pinnedSession,
-                                                false)
+                                                pinnedSession
+            )
                 .start(block);
 
             latch.await();
@@ -157,8 +157,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                 new Find().limit(1).order(new Document("_id", -1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                pinnedSession,
-                                                false)
+                                                pinnedSession
+            )
                 .start(new TestBlock(1, nextLatch));
             nextLatch.await();
             assertEquals(Arrays.asList(new Document("_id", 999)), documentResultList);
@@ -181,8 +181,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                           .order(new Document("_id", 1)),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(),
-                                                pinnedSession,
-                                                false)
+                                                pinnedSession
+            )
                 .start(block);
 
             latch.await();

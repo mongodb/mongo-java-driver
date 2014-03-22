@@ -33,6 +33,7 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
+import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.RemoveRequest;
@@ -144,6 +145,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new MongoNamespace(getDatabase().getName(), getName());
     }
 
+    <V> V execute(final Operation<V> operation) {
+        return client.execute(operation);
+    }
+
     private final class MongoCollectionView implements MongoView<T> {
         private final Find findOp;
         private WriteConcern writeConcern;
@@ -227,22 +232,21 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> get() {
-            return new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(),
-                                         client.getSession(), false).execute();
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()
+            ));
         }
 
         @Override
         public T getOne() {
-            MongoCursor<T> cursor = new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                                                          client.getSession(), false).execute();
+            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()
+            ));
 
             return cursor.hasNext() ? cursor.next() : null;
         }
 
         @Override
         public long count() {
-            return new CountOperation(getNamespace(), findOp, getDocumentCodec(), client.getSession(), false)
-                       .execute();
+            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()));
         }
 
         @Override
@@ -252,18 +256,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                 .limit(findOp.getLimit());
 
             if (mapReduce.isInline()) {
-                MapReduceWithInlineResultsOperation<Document> operation = new MapReduceWithInlineResultsOperation<Document>(getNamespace(),
-                                                                                                  mapReduce,
-                                                                                                  new DocumentCodec(),
-                                                                                                  options.getReadPreference(),
-                                                                                                  client.getSession(),
-                                                                                                  false);
-                return new MapReduceResultsIterable<Document>(operation);
+                MapReduceWithInlineResultsOperation<Document> operation =
+                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec(),
+                                                                  options.getReadPreference());
+                return new MapReduceResultsIterable<T, Document>(operation, MongoCollectionImpl.this);
             } else {
-                new MapReduceToCollectionOperation(getNamespace(), mapReduce, client.getSession(), false)
-                    .execute();
-                return client.getDatabase(mapReduce.getOutput().getDatabaseName())
-                             .getCollection(mapReduce.getOutput().getCollectionName())
+                execute(new MapReduceToCollectionOperation(getNamespace(), mapReduce));
+                return client.getDatabase(mapReduce.getOutput().getDatabaseName()).getCollection(mapReduce.getOutput().getCollectionName())
                              .find();
             }
         }
@@ -306,8 +305,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public WriteResult insert(final T document) {
-            return new InsertOperation<T>(getNamespace(), true, writeConcern, asList(new InsertRequest<T>(document)), getCodec(),
-                                          client.getSession(), false).execute();
+            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, asList(new InsertRequest<T>(document)), getCodec()
+            ));
         }
 
         @Override
@@ -316,8 +315,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             for (T cur : documents) {
                 insertRequestList.add(new InsertRequest<T>(cur));
             }
-            return new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec(),
-                                          client.getSession(), false).execute();
+            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()
+            ));
         }
 
         @Override
@@ -333,26 +332,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult remove() {
             RemoveRequest removeRequest = new RemoveRequest(findOp.getFilter()).multi(getMultiFromLimit());
-            return new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
-                                       getDocumentCodec(), client.getSession(), false)
-                   .execute();
+            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
+                                               getDocumentCodec()));
         }
 
         @Override
         public WriteResult removeOne() {
             RemoveRequest removeRequest = new RemoveRequest(findOp.getFilter()).multi(false);
-            return new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
-                                       getDocumentCodec(), client.getSession(), false)
-                   .execute();
+            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
+                                               getDocumentCodec()));
         }
 
         @Override
         public WriteResult update(final Document updateOperations) {
             UpdateRequest update = new UpdateRequest(findOp.getFilter(), updateOperations).upsert(upsert)
                                                                                           .multi(getMultiFromLimit());
-            return new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
-                                       getDocumentCodec(), client.getSession(), false)
-                   .execute();
+            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
+                                               getDocumentCodec()));
         }
 
         @Override
@@ -363,9 +359,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult updateOne(final Document updateOperations) {
             UpdateRequest update = new UpdateRequest(findOp.getFilter(), updateOperations).upsert(upsert).multi(false);
-            return new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
-                                       getDocumentCodec(), client.getSession(), false)
-                   .execute();
+            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
+                                       getDocumentCodec()));
         }
 
         @Override
@@ -377,9 +372,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @SuppressWarnings("unchecked")
         public WriteResult replace(final T replacement) {
             ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
-            return new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest), getDocumentCodec(), getCodec(),
-                                           client.getSession(), false)
-                   .execute();
+            return execute(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest), getDocumentCodec(),
+                                                   getCodec()));
         }
 
         @Override
@@ -420,8 +414,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                    .sortBy(findOp.getOrder())
                                                                    .upsert(upsert);
 
-            return new FindAndUpdateOperation<T>(getNamespace(), findAndUpdate, getCodec(), client.getSession(),
-                                                 false).execute();
+            return execute(new FindAndUpdateOperation<T>(getNamespace(), findAndUpdate, getCodec()
+            ));
         }
 
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
@@ -430,8 +424,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                  .select(findOp.getFields())
                                                                                  .sortBy(findOp.getOrder())
                                                                                  .upsert(upsert);
-            return new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec(), getCodec(),
-                                                  client.getSession(), false).execute();
+            return execute(new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec(), getCodec()
+            ));
         }
 
         @Override
@@ -440,8 +434,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                    .select(findOp.getFields())
                                                                    .sortBy(findOp.getOrder());
 
-            return new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec(), client.getSession(),
-                                                 false).execute();
+            return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec()));
         }
 
         @Override
@@ -449,8 +442,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> asyncReplace(final T replacement) {
             ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
             return new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
-                                           getDocumentCodec(), getCodec(), client.getSession(), false)
-                   .executeAsync();
+                                           getDocumentCodec(), getCodec())
+                   .executeAsync(client.getSession());
         }
 
         boolean asBoolean(final Get get) {
@@ -460,43 +453,43 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<T> asyncOne() {
             final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec(),
-                                  client.getSession(), false)
-                .executeAsync()
-                .register(new
-                              SingleResultCallback<MongoAsyncCursor<T>>() {
-                                  @Override
-                                  public void onResult(
-                                                          final
-                                                          MongoAsyncCursor<T> cursor,
-                                                          final
-                                                          MongoException e) {
-                                      if (e != null) {
-                                          retVal.init(null, e);
-                                      } else {
-                                          cursor.start(new AsyncBlock<T>() {
-                                              @Override
-                                              public void done() {
-                                                  if (!retVal.isDone()) {
-                                                      retVal.init(null, null); // TODO: deal with errors
-                                                  }
-                                              }
-
-                                              @Override
-                                              public void apply(final T t) {
-                                                  retVal.init(t, null);
-                                              }
-                                          });
+            new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()
+            )
+            .executeAsync(client.getSession())
+            .register(new
+                      SingleResultCallback<MongoAsyncCursor<T>>() {
+                          @Override
+                          public void onResult(
+                                              final
+                                              MongoAsyncCursor<T> cursor,
+                                              final
+                                              MongoException e) {
+                              if (e != null) {
+                                  retVal.init(null, e);
+                              } else {
+                                  cursor.start(new AsyncBlock<T>() {
+                                      @Override
+                                      public void done() {
+                                          if (!retVal.isDone()) {
+                                              retVal.init(null, null); // TODO: deal with errors
+                                          }
                                       }
-                                  }
-                              });
+
+                                      @Override
+                                      public void apply(final T t) {
+                                          retVal.init(t, null);
+                                      }
+                                  });
+                              }
+                          }
+                      });
             return retVal;
         }
 
         @Override
         public MongoFuture<Long> asyncCount() {
-            return new CountOperation(getNamespace(), findOp, getDocumentCodec(), client.getSession(), false)
-                       .executeAsync();
+            return new CountOperation(getNamespace(), findOp, getDocumentCodec())
+                   .executeAsync(client.getSession());
         }
 
         private boolean getMultiFromLimit() {
@@ -515,8 +508,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public void asyncForEach(final AsyncBlock<? super T> block) {
-            new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec(),
-                                  client.getSession(), false).executeAsync().register(new SingleResultCallback<MongoAsyncCursor<T>>() {
+            new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()
+            ).executeAsync(client.getSession()).register(new SingleResultCallback<MongoAsyncCursor<T>>() {
                 @Override
                 public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
                     cursor.start(block);  // TODO: deal with exceptions

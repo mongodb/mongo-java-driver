@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.connection.Cluster;
+import org.mongodb.operation.Operation;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.Session;
@@ -113,5 +114,9 @@ class MongoClientImpl implements MongoClient {
         Session sessionToUnpin = this.pinnedSession.get();
         this.pinnedSession.remove();
         sessionToUnpin.close();
+    }
+
+    <V> V execute(final Operation<V> operation) {
+        return operation.execute(getSession());
     }
 }

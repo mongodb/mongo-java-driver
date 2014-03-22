@@ -32,45 +32,33 @@ import org.mongodb.session.Session;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
-
-    private final Session session;
-    private final boolean closeSession;
     private final DocumentCodec commandEncoder = new DocumentCodec();
     private final Codec<Document> codec;
     private final MongoNamespace namespace;
     private final Find find;
 
-    public CountOperation(final MongoNamespace namespace, final Find find, final Codec<Document> codec, final Session session,
-                          final boolean closeSession) {
+    public CountOperation(final MongoNamespace namespace, final Find find, final Codec<Document> codec) {
         this.namespace = namespace;
         this.find = find;
         this.codec = codec;
-        this.session = session;
-        this.closeSession = closeSession;
     }
 
-    public Long execute() {
-        try {
-            ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
+    public Long execute(final Session session) {
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
 
-            ServerConnectionProvider serverConnectionProvider =
-                session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
+        ServerConnectionProvider serverConnectionProvider =
+        session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
 
-            return getCount(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder,
-                                                codec, serverConnectionProvider.getServerDescription(),
-                                                serverConnectionProvider.getConnection(), true).execute());
-        } finally {
-            if (closeSession) {
-                session.close();
-            }
-        }
+        return getCount(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder,
+                                            codec, serverConnectionProvider.getServerDescription(),
+                                            serverConnectionProvider.getConnection(), true).execute());
     }
 
     @Override
-    public MongoFuture<Long> executeAsync() {
+    public MongoFuture<Long> executeAsync(final Session session) {
         final SingleResultFuture<Long> retVal = new SingleResultFuture<Long>();
-        new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder,
-                             session, closeSession).executeAsync().register(new SingleResultCallback<CommandResult>() {
+        new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder)
+        .executeAsync(session).register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult commandResult, final MongoException e) {
                 if (e != null) {

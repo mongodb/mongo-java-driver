@@ -25,29 +25,29 @@ import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.CommandProtocol;
+import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.operation.OperationHelper.getPrimaryServerConnectionProvider;
 
-public class CreateIndexesOperation extends BaseOperation<Void> {
+public class CreateIndexesOperation implements Operation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
 
-    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace, final Session session,
-                                  final boolean closeSession) {
-        super(session, closeSession);
+    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace) {
         this.indexes = indexes;
         this.namespace = namespace;
     }
 
     @Override
-    public Void execute() {
-        if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
+    public Void execute(final Session session) {
+        if (getPrimaryServerConnectionProvider(session).getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
-                executeCommandBasedProtocol();
+                executeCommandBasedProtocol(session);
             } catch (MongoCommandFailureException e) {
                 if (e.getErrorCode() == 11000) {
                     throw new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
@@ -56,24 +56,27 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
                 }
             }
         } else {
-            executeCollectionBasedProtocol();
+            executeCollectionBasedProtocol(session);
         }
         return null;
 
     }
 
     @SuppressWarnings("unchecked")
-    private void executeCollectionBasedProtocol() {
+    private void executeCollectionBasedProtocol(final Session session) {
         MongoNamespace systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
         for (Index index : indexes) {
-            new InsertOperation<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
+            new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(toDocument(index))),
-                                          new DocumentCodec(), getSession(), false).execute();
+                                          new DocumentCodec(),
+                                          getPrimaryServerConnectionProvider(session).getServerDescription(),
+                                          getPrimaryServerConnectionProvider(session).getConnection(), true)
+            .execute();
         }
     }
 
 
-    private void executeCommandBasedProtocol() {
+    private void executeCommandBasedProtocol(final Session session) {
         Document command = new Document("createIndexes", namespace.getCollectionName());
         List<Document> list = new ArrayList<Document>();
         for (Index index : indexes) {
@@ -85,8 +88,8 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
         CommandProtocol commandProtocol = new CommandProtocol(namespace.getDatabaseName(), command,
                                                               new DocumentCodec(),
                                                               new DocumentCodec(),
-                                                              getPrimaryServerConnectionProvider().getServerDescription(),
-                                                              getPrimaryServerConnectionProvider().getConnection(), true);
+                                                              getPrimaryServerConnectionProvider(session).getServerDescription(),
+                                                              getPrimaryServerConnectionProvider(session).getConnection(), true);
         commandProtocol.execute();
 
     }

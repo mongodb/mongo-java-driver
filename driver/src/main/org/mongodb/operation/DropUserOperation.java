@@ -35,20 +35,19 @@ import static org.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class DropUserOperation extends BaseOperation<Void> {
+public class DropUserOperation implements Operation<Void> {
     private final String database;
     private final String userName;
 
-    public DropUserOperation(final String source, final String userName, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public DropUserOperation(final String source, final String userName) {
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
 
     @Override
-    public Void execute() {
+    public Void execute(final Session session) {
         ServerConnectionProvider serverConnectionProvider =
-        getPrimaryServerConnectionProvider();
+        OperationHelper.getPrimaryServerConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {

@@ -18,24 +18,16 @@ package org.mongodb.operation;
 
 import org.mongodb.MongoException;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.session.Session;
 
 class SessionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultFuture<T> retVal;
-    private final Session session;
-    private final boolean closeSession;
 
-    public SessionClosingSingleResultCallback(final SingleResultFuture<T> retVal, final Session session, final boolean closeSession) {
+    public SessionClosingSingleResultCallback(final SingleResultFuture<T> retVal) {
         this.retVal = retVal;
-        this.session = session;
-        this.closeSession = closeSession;
     }
 
     @Override
     public void onResult(final T result, final MongoException e) {
-        if (closeSession) {
-            session.close();
-        }
         retVal.init(result, e);
     }
 }

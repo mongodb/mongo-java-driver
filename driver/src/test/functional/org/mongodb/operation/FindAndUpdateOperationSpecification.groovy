@@ -16,15 +16,16 @@
 
 
 
-package org.mongodb.operation
 
+
+package org.mongodb.operation
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCollection
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
     private MongoCollection<Worker> workerCollection
@@ -48,9 +49,9 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
                                                                  .returnNew(true);
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(workerCollection.namespace, findAndUpdate,
-                                                                                      new WorkerCodec(), session,
-                                                                                      false)
-        Worker returnedValue = operation.execute()
+                                                                                      new WorkerCodec()
+        )
+        Worker returnedValue = operation.execute(getSession())
 
         then:
         Worker updatedPete = new Worker(pete.id, pete.name, pete.jobTitle, pete.dateStarted, 4)

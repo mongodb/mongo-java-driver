@@ -36,7 +36,7 @@ import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPr
 import static org.mongodb.operation.CommandReadPreferenceHelper.isQuery;
 import static org.mongodb.operation.OperationHelper.getConnectionAsync;
 
-public class CommandOperation extends BaseOperation<CommandResult> implements AsyncOperation<CommandResult> {
+public class CommandOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
     private final Encoder<Document> commandEncoder;
     private final Decoder<Document> commandDecoder;
     private final String database;
@@ -46,9 +46,8 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
 
     public CommandOperation(final String database, final Document command, final ReadPreference readPreference,
                             final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder,
-                            final ClusterDescription clusterDescription, final Session session,
-                            final boolean closeSession) {
-        super(session, closeSession);
+                            final ClusterDescription clusterDescription) {
+        super();
         this.database = database;
         this.clusterDescription = clusterDescription;
         this.commandEncoder = commandEncoder;
@@ -58,39 +57,31 @@ public class CommandOperation extends BaseOperation<CommandResult> implements As
     }
 
     CommandOperation(final String database, final Document command, final ReadPreference readPreference,
-                     final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder,
-                     final Session session, final boolean closeSession) {
-        this(database, command, readPreference, commandDecoder, commandEncoder, null, session, closeSession);
+                     final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder) {
+        this(database, command, readPreference, commandDecoder, commandEncoder, null);
     }
 
     @Override
-    public CommandResult execute() {
-        try {
-            ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
-            ServerConnectionProvider provider = getSession().createServerConnectionProvider(options);
-            return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
-                                       provider.getServerDescription(), provider.getConnection(), true)
-                       .execute();
-        } finally {
-            if (isCloseSession()) {
-                getSession().close();
-            }
-        }
+    public CommandResult execute(final Session session) {
+        ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
+        ServerConnectionProvider provider = session.createServerConnectionProvider(options);
+        return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
+                                   provider.getServerDescription(), provider.getConnection(), true).execute();
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync() {
+    public MongoFuture<CommandResult> executeAsync(final Session session) {
         final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
-        getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
-            .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
-                @Override
-                public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                    new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
-                                        pair.getServerDescription(), pair.getConnection(), true)
-                        .executeAsync()
-                        .register(new SessionClosingSingleResultCallback<CommandResult>(retVal, getSession(), isCloseSession()));
-                }
-            });
+        getConnectionAsync(session, new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
+        .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
+            @Override
+            public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
+                new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
+                                    pair.getServerDescription(), pair.getConnection(), true)
+                .executeAsync()
+                .register(new SessionClosingSingleResultCallback<CommandResult>(retVal));
+            }
+        });
         return retVal;
     }
 

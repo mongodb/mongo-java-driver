@@ -224,7 +224,7 @@ public class DBTest extends DatabaseTestCase {
         char[] password = "123".toCharArray();
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
-        assertTrue(new UserExistsOperation(database.getName(), userName, getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getSession()));
     }
 
     @Test
@@ -239,7 +239,7 @@ public class DBTest extends DatabaseTestCase {
         boolean newReadOnly = false;
         database.addUser(userName, newPassword, newReadOnly);
 
-        assertTrue(new UserExistsOperation(database.getName(), userName, getSession(), true).execute());
+        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getSession()));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertFalse(new UserExistsOperation(database.getName(), userName, getSession(), true).execute());
+        assertFalse(new UserExistsOperation(database.getName(), userName).execute(getSession()));
     }
 
     @Test

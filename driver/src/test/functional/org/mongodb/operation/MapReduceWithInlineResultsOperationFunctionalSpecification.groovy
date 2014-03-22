@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.bson.types.Code
@@ -27,7 +29,7 @@ import org.mongodb.codecs.PrimitiveCodecs
 
 import static org.hamcrest.CoreMatchers.not
 import static org.hamcrest.Matchers.hasKey
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.ReadPreference.primary
 import static spock.util.matcher.HamcrestSupport.that
 
@@ -45,11 +47,10 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
                       new Code('function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary()
-                                                                                                , session, false)
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary())
 
         when:
-        MongoCursor<Document> results = operation.execute()
+        MongoCursor<Document> results = operation.execute(getSession())
 
         then:
         that results.commandResult.getResponse(), not(hasKey('timing'))
@@ -63,12 +64,11 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         mapReduce.verbose();
 
         def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary()
-                                                                                                , session, false)
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary())
 
 
         when:
-        MongoCursor<Document> results = operation.execute()
+        MongoCursor<Document> results = operation.execute(getSession())
 
         then:
         that results.commandResult.getResponse(), hasKey('timing')

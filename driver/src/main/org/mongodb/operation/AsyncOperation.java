@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.MongoFuture;
+import org.mongodb.session.Session;
 
 /**
  * An operation that can be executed asynchronously.
@@ -28,6 +29,7 @@ public interface AsyncOperation<T> {
      * Executes the operation asynchronously.
      *
      * @return a future of the operation result.
+     * @param session
      */
-    MongoFuture<T> executeAsync();
+    MongoFuture<T> executeAsync(final Session session);
 }

@@ -35,22 +35,18 @@ import java.util.List;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
+public class GroupOperation implements Operation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
     private final Document commandDocument;
     private final ReadPreference readPreference;
 
     /**
      * Create an operation that will perform a Group on a given collection.
-     *  @param namespace      the database and collection to run the operation against
+     * @param namespace      the database and collection to run the operation against
      * @param group          contains all the arguments for this group command
      * @param readPreference the ReadPreference for the group command. If null, primary will be used.
-     * @param session        the current Session, which will give access to a connection to the MongoDB instance
-     * @param closeSession   true if the session should be closed at the end of the execute method
      */
-    public GroupOperation(final MongoNamespace namespace, final Group group, final ReadPreference readPreference,
-                          final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public GroupOperation(final MongoNamespace namespace, final Group group, final ReadPreference readPreference) {
         this.namespace = namespace;
         this.commandDocument = createCommandDocument(namespace, group);
         this.readPreference = readPreference;
@@ -60,19 +56,18 @@ public class GroupOperation extends BaseOperation<MongoCursor<Document>> {
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
+     * @param session
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<Document> execute() {
-        ServerConnectionProvider provider = getConnectionProvider(readPreference);
+    public MongoCursor<Document> execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getConnectionProvider(readPreference, session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), commandDocument,
                                                           new DocumentCodec(), new DocumentCodec(),
                                                           provider.getServerDescription(), provider.getConnection(), true)
                                           .execute();
 
-        InlineMongoCursor<Document> cursor = new InlineMongoCursor<Document>(commandResult,
-                                                                             (List<Document>) commandResult.getResponse().get("retval"));
-        return cursor;
+        return new InlineMongoCursor<Document>(commandResult, (List<Document>) commandResult.getResponse().get("retval"));
     }
 
     private Document createCommandDocument(final MongoNamespace namespace, final Group commandDocument) {

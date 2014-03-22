@@ -36,18 +36,16 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class CreateUserOperation extends BaseOperation<Void> {
+public class CreateUserOperation implements Operation<Void> {
     private final User user;
 
-    public CreateUserOperation(final User user, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public CreateUserOperation(final User user) {
         this.user = notNull("user", user);
     }
 
     @Override
-    public Void execute() {
-        ServerConnectionProvider serverConnectionProvider =
-            getPrimaryServerConnectionProvider();
+    public Void execute(final Session session) {
+        ServerConnectionProvider serverConnectionProvider = OperationHelper.getPrimaryServerConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {

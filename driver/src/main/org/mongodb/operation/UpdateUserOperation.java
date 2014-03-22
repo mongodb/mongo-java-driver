@@ -36,18 +36,17 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class UpdateUserOperation extends BaseOperation<Void> {
+public class UpdateUserOperation implements Operation<Void> {
     private final User user;
 
-    public UpdateUserOperation(final User user, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public UpdateUserOperation(final User user) {
         this.user = user;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Void execute() {
-        ServerConnectionProvider serverConnectionProvider = getPrimaryServerConnectionProvider();
+    public Void execute(final Session session) {
+        ServerConnectionProvider serverConnectionProvider = OperationHelper.getPrimaryServerConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {

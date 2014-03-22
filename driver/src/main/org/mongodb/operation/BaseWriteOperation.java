@@ -50,15 +50,13 @@ import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
 import static org.mongodb.operation.WriteRequest.Type.UPDATE;
 
-public abstract class BaseWriteOperation extends BaseOperation<WriteResult> implements AsyncOperation<WriteResult> {
+public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>, Operation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
 
-    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                              final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
@@ -73,8 +71,8 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
     }
 
     @Override
-    public WriteResult execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public WriteResult execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         Connection connection = provider.getConnection();
         try {
             if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider.getServerDescription())) {
@@ -86,16 +84,13 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
             throw convertBulkWriteException(e);
         } finally {
             connection.close();
-            if (isCloseSession()) {
-                getSession().close();
-            }
         }
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync() {
+    public MongoFuture<WriteResult> executeAsync(final Session session) {
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-        getConnectionAsync(getSession(), new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
+        getConnectionAsync(session, new ServerConnectionProviderOptions(false, new PrimaryServerSelector()))
         .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
             @Override
             public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
@@ -109,7 +104,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
                     //                    } else {
                     protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
                     //                    }
-                    protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal, getSession(), isCloseSession()));
+                    protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal));
                 }
             }
         });

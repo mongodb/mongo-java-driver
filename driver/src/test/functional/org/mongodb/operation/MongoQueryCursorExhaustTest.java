@@ -66,8 +66,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                            new Find().addFlags(EnumSet.of(Exhaust)),
                                                                            collection.getOptions().getDocumentCodec(),
                                                                            collection.getCodec(),
-                                                                           getSession(),
-                                                                           false);
+                                                                           getSession()
+        );
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -89,8 +89,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                                new Find().addFlags(EnumSet.of(Exhaust)),
                                                                                collection.getOptions().getDocumentCodec(),
                                                                                collection.getCodec(),
-                                                                               singleConnectionSession,
-                                                                               false);
+                                                                               singleConnectionSession
+            );
 
             cursor.next();
             cursor.close();
@@ -99,8 +99,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
                                                     collection.getOptions().getDocumentCodec(),
                                                     collection.getCodec(),
-                                                    singleConnectionSession,
-                                                    false);
+                                                    singleConnectionSession
+            );
             assertEquals(new Document("_id", 999), cursor.next());
 
             singleConnectionSession.connection.close();

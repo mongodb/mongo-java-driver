@@ -47,15 +47,15 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec, client.getCluster().getDescription(10, SECONDS),
-                             client.getSession(), false).execute();
+        client.execute(new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec,
+                                            client.getCluster().getDescription(10, SECONDS)));
     }
 
     @Override
     public Set<String> getCollectionNames() {
         MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        MongoCursor<Document> cursor = new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec, commandCodec,
-                                                                    client.getSession(), false).execute();
+        MongoCursor<Document> cursor = client.execute(new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec,
+                                                                                   commandCodec));
 
         HashSet<String> collections = new HashSet<String>();
         int lengthOfDatabaseName = databaseName.length();
@@ -76,24 +76,23 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        CommandResult commandResult = new CommandOperation(databaseName, createCollectionOptions.asDocument(), null, commandCodec,
-                                                           commandCodec, client.getCluster().getDescription(10, SECONDS),
-                                                           client.getSession(), false).execute();
+        CommandResult commandResult = client.execute(new CommandOperation(databaseName, createCollectionOptions.asDocument(), null,
+                                                                          commandCodec, commandCodec,
+                                                                          client.getCluster().getDescription(10, SECONDS)
+        ));
         ErrorHandling.handleErrors(commandResult);
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        new RenameCollectionOperation(client.getSession(), false,
-                                      databaseName, oldCollectionName, newCollectionName, false)
-            .execute();
+        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName,
+                                                     false));
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        new RenameCollectionOperation(client.getSession(), false,
-                                      databaseName, oldCollectionName, newCollectionName, dropTarget)
-            .execute();
+        client.execute(new RenameCollectionOperation(
+                                                    databaseName, oldCollectionName, newCollectionName, dropTarget));
     }
 
 }

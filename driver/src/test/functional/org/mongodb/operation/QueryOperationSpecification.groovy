@@ -20,6 +20,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.AsyncBlock
@@ -36,9 +38,9 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.Fixture.session
 
 class QueryOperationSpecification extends FunctionalSpecification {
 
@@ -53,12 +55,11 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.execute()
+        queryOperation.execute(session)
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -74,13 +75,12 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         def runCalled = false
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.executeAsync().get().start(new AsyncBlock<Document>() {
+        queryOperation.executeAsync(session).get().start(new AsyncBlock<Document>() {
             @Override
             void done() {
             }
@@ -109,10 +109,9 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def count = 0;
         def find = new Find()
         find.getOptions().max(new Document('count', 10))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute().each {
+        queryOperation.execute(session).each {
             count++ 
         }
         
@@ -130,10 +129,9 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def count = 0;
         def find = new Find()
         find.getOptions().min(new Document('count', 10))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute().each {
+        queryOperation.execute(session).each {
             count++ 
         }
         
@@ -149,10 +147,9 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def count = 0;
         def find = new Find()
         find.getOptions().maxScan(34)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute().each {
+        queryOperation.execute(session).each {
             count++ 
         }
         
@@ -168,10 +165,9 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def idFound = false;
         def find = new Find()
         find.getOptions().returnKey()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute().each {
+        queryOperation.execute(getSession()).each {
             idFound |= it['_id'] != null
         }
         
@@ -186,10 +182,9 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def found = true;
         def find = new Find()
         find.getOptions().showDiskLoc()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec()
-                                                          , session, true)
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute().each {
+        queryOperation.execute(getSession()).each {
             found &= it['$diskLoc'] != null
         }
         

@@ -27,7 +27,6 @@ import org.mongodb.protocol.UpdateCommandProtocol;
 import org.mongodb.protocol.UpdateProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.Session;
 
 import java.util.List;
 
@@ -38,9 +37,8 @@ public class UpdateOperation extends BaseWriteOperation {
     private final Encoder<Document> queryEncoder;
 
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates, final Encoder<Document> queryEncoder, final Session session,
-                           final boolean closeSession) {
-        super(namespace, ordered, writeConcern, session, closeSession);
+                           final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
+        super(namespace, ordered, writeConcern);
         this.updates = notNull("update", updates);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }

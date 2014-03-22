@@ -36,20 +36,19 @@ import static org.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class UserExistsOperation extends BaseOperation<Boolean> {
+public class UserExistsOperation implements Operation<Boolean> {
 
     private final String database;
     private final String userName;
 
-    public UserExistsOperation(final String source, final String userName, final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public UserExistsOperation(final String source, final String userName) {
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
 
     @Override
-    public Boolean execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public Boolean execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             return executeCommandBasedProtocol(provider);
         } else {

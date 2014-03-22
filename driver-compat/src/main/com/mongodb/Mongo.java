@@ -33,6 +33,7 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
+import org.mongodb.operation.Operation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.session.ClusterSession;
@@ -463,7 +464,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        return new GetDatabaseNamesOperation(getSession(), false).execute();
+        return execute(new GetDatabaseNamesOperation());
     }
 
     /**
@@ -698,7 +699,8 @@ public class Mongo {
                                             .hosts(Arrays.asList(serverAddress.toNew()))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .build(),
-                             credentialsList, options);
+                             credentialsList, options
+                            );
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
@@ -771,6 +773,14 @@ public class Mongo {
 
     void addOrphanedCursor(final ServerCursor serverCursor) {
         orphanedCursors.add(serverCursor);
+    }
+
+    <V> V execute(final Operation<V> operation) {
+        try {
+            return operation.execute(getSession());
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        }
     }
 
     private ExecutorService createCursorCleaningService() {

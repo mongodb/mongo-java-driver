@@ -30,15 +30,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 
-public class FindAndRemoveOperation<T> extends BaseOperation<T> {
+public class FindAndRemoveOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndRemove<T> findAndRemove;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-    public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder,
-                                  final Session session, final boolean closeSession) {
-        super(session, closeSession);
+    public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndRemove = findAndRemove;
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
@@ -46,8 +44,8 @@ public class FindAndRemoveOperation<T> extends BaseOperation<T> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public T execute() {
-        ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
+    public T execute(final Session session) {
+        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                                           commandEncoder, resultDecoder,
                                                           provider.getServerDescription(), provider.getConnection(), true)

@@ -26,6 +26,10 @@
 
 
 
+
+
+
+
 package org.mongodb.operation
 
 import org.junit.Test
@@ -43,12 +47,10 @@ class InsertOperationSpecification extends FunctionalSpecification {
     def 'should return correct result'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()
-                                               ,
-                                               getSession(), true);
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec());
 
         when:
-        def result = op.execute();
+        def result = op.execute(getSession());
 
         then:
         result.wasAcknowledged()
@@ -60,12 +62,10 @@ class InsertOperationSpecification extends FunctionalSpecification {
     def 'should insert a single document'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()
-                                               ,
-                                               getSession(), true);
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec());
 
         when:
-        op.execute();
+        op.execute(getSession());
 
         then:
         asList(insert.getDocument()) == collection.find().into([])
@@ -78,11 +78,10 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 new Document('_id', 2)
         ]
 
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec()
-                                               , getSession(), true);
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec());
 
         when:
-        op.execute();
+        op.execute(getSession());
 
         then:
         documents == collection.find().sort(new Document('_id', 1)).into([])
@@ -91,12 +90,10 @@ class InsertOperationSpecification extends FunctionalSpecification {
     def 'should return null CommandResult with unacknowledged WriteConcern'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec()
-                                               ,
-                                               getSession(), true);
+        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec());
 
         when:
-        def result = op.execute();
+        def result = op.execute(getSession());
 
         then:
         !result.wasAcknowledged()
@@ -115,14 +112,13 @@ class InsertOperationSpecification extends FunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec()
-                                      , getSession(), false)
-                .execute();
+        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec())
+                .execute(getSession());
 
         then:
         documents.size() ==
-        new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getSession(), false)
-                .execute()
+        new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec())
+                .execute(getSession())
     }
 
     @Test
@@ -138,13 +134,13 @@ class InsertOperationSpecification extends FunctionalSpecification {
         when:
         new InsertOperation<Document>(collection.getNamespace(), false, ACKNOWLEDGED,
                                       documentsToInserts(documents),
-                                      new DocumentCodec(), getSession(), false)
-                .execute()
+                                      new DocumentCodec())
+                .execute(getSession())
 
         then:
         thrown(MongoDuplicateKeyException)
-        2 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getSession(), false)
-                .execute()
+        2 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec())
+                .execute(getSession())
     }
 
     @Test
@@ -158,14 +154,13 @@ class InsertOperationSpecification extends FunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec()
-                                      , getSession(), false)
-                .execute()
+        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED, documentsToInserts(documents), new DocumentCodec())
+                .execute(getSession())
 
         then:
         thrown(MongoDuplicateKeyException)
-        1 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec(), getSession(), false)
-                .execute()
+        1 == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec())
+                .execute(getSession())
     }
 
     def documentsToInserts(List<Document> documents) {

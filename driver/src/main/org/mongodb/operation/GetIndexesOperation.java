@@ -29,24 +29,22 @@ import java.util.List;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class GetIndexesOperation extends BaseOperation<List<Document>> {
+public class GetIndexesOperation implements Operation<List<Document>> {
     private final Encoder<Document> simpleDocumentEncoder = new DocumentCodec();
     private final MongoNamespace indexesNamespace;
     private final Find queryForCollectionNamespace;
 
-    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Session session) {
-        super(session, false);
+    public GetIndexesOperation(final MongoNamespace collectionNamespace) {
         notNull("collectionNamespace", collectionNamespace);
         this.indexesNamespace = new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
         this.queryForCollectionNamespace = new Find(new Document("ns", collectionNamespace.getFullName())).readPreference(primary());
     }
 
     @Override
-    public List<Document> execute() {
+    public List<Document> execute(final Session session) {
         List<Document> retVal = new ArrayList<Document>();
         MongoCursor<Document> cursor = new MongoQueryCursor<Document>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
-                                                                      new DocumentCodec(), getSession(),
-                                                                      isCloseSession());
+                                                                      new DocumentCodec(), session);
         while (cursor.hasNext()) {
             retVal.add(cursor.next());
         }

@@ -20,6 +20,10 @@
 
 
 
+
+
+
+
 package org.mongodb.operation
 
 import org.mongodb.Fixture
@@ -32,8 +36,8 @@ import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.Fixture.session
 
 class CountOperationSpecification extends FunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
@@ -41,11 +45,11 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), session, true)
+        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.execute()
+        countOperation.execute(getSession())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -60,11 +64,11 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec(), session, true)
+        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.executeAsync().get()
+        countOperation.executeAsync(getSession()).get()
 
         then:
         thrown(MongoExecutionTimeoutException)

@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -25,7 +27,7 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.session
+import static org.mongodb.Fixture.getSession
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
     private final DocumentCodec documentDecoder = new DocumentCodec()
@@ -42,9 +44,9 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove findAndRemove = new FindAndRemove().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(collection.namespace, findAndRemove,
-                                                                                          documentDecoder,
-                                                                                          session, false)
-        Document returnedDocument = operation.execute()
+                                                                                          documentDecoder
+        )
+        Document returnedDocument = operation.execute(getSession())
 
         then:
         collection.find().count() == 1;
@@ -65,9 +67,9 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new Document('name', 'Pete'));
 
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(collection.namespace, findAndRemove,
-                                                                                      new WorkerCodec(), session,
-                                                                                      false)
-        Worker returnedDocument = operation.execute()
+                                                                                      new WorkerCodec()
+        )
+        Worker returnedDocument = operation.execute(getSession())
 
         then:
         workerCollection.find().count() == 1;

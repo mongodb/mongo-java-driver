@@ -23,35 +23,36 @@ import java.util.Collection;
 /**
  * MongoIterable implementation that aids iteration over the results of results of an inline map-reduce operation.
  *
- * @param <T> the return type of the map reduce
+ * @param <V> the return type of the map reduce
  * @since 3.0
  */
-class MapReduceResultsIterable<T> implements MongoIterable<T> {
-    private final MapReduceWithInlineResultsOperation<T> operation;
+class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
+    private final MapReduceWithInlineResultsOperation<V> operation;
+    private final MongoCollectionImpl<T> collection;
 
-    MapReduceResultsIterable(final MapReduceWithInlineResultsOperation<T> operation) {
+    MapReduceResultsIterable(final MapReduceWithInlineResultsOperation<V> operation, final MongoCollectionImpl<T> collection) {
         this.operation = operation;
+        this.collection = collection;
     }
 
     @Override
-    public MongoCursor<T> iterator() {
-        return operation.execute();
-
+    public MongoCursor<V> iterator() {
+        return collection.execute(operation);
     }
 
     @Override
-    public void forEach(final Block<? super T> block) {
-        MongoCursor<T> cursor = iterator();
+    public void forEach(final Block<? super V> block) {
+        MongoCursor<V> cursor = iterator();
         while (cursor.hasNext()) {
             block.apply(cursor.next());
         }
     }
 
     @Override
-    public <A extends Collection<? super T>> A into(final A target) {
-        forEach(new Block<T>() {
+    public <A extends Collection<? super V>> A into(final A target) {
+        forEach(new Block<V>() {
             @Override
-            public void apply(final T t) {
+            public void apply(final V t) {
                 target.add(t);
             }
         });
@@ -59,17 +60,17 @@ class MapReduceResultsIterable<T> implements MongoIterable<T> {
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MappingIterable<T, U>(this, mapper);
+    public <U> MongoIterable<U> map(final Function<V, U> mapper) {
+        return new MappingIterable<V, U>(this, mapper);
     }
 
     @Override
-    public void asyncForEach(final AsyncBlock<? super T> block) {
+    public void asyncForEach(final AsyncBlock<? super V> block) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
+    public <A extends Collection<? super V>> MongoFuture<A> asyncInto(final A target) {
         throw new UnsupportedOperationException();
     }
 }

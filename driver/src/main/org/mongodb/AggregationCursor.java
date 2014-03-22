@@ -27,7 +27,6 @@ import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -38,8 +37,6 @@ import java.util.NoSuchElementException;
  */
 @NotThreadSafe
 public class AggregationCursor<T> implements MongoCursor<T> {
-    private final Session session;
-    private final boolean closeSession;
     private final AggregationOptions aggregationOptions;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -50,13 +47,10 @@ public class AggregationCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public AggregationCursor(final AggregationOptions aggregationOptions, final MongoNamespace namespace, final Decoder<T> decoder,
-                             final Session session, final boolean closeSession, final ServerConnectionProvider provider,
-                             final QueryResult<T> batch) {
+                             final ServerConnectionProvider provider, final QueryResult<T> batch) {
         this.aggregationOptions = aggregationOptions;
         this.namespace = namespace;
         this.decoder = decoder;
-        this.session = session;
-        this.closeSession = closeSession;
         this.provider = provider;
         currentResult = batch;
         currentIterator = currentResult.getResults().iterator();
@@ -71,9 +65,6 @@ public class AggregationCursor<T> implements MongoCursor<T> {
         if (currentResult != null) {
             new KillCursorProtocol(new KillCursor(currentResult.getCursor()), provider.getServerDescription(),
                                    getConnection(), false).execute();
-        }
-        if (closeSession) {
-            session.close();
         }
         currentResult = null;
     }
