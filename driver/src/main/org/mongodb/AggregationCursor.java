@@ -63,8 +63,12 @@ public class AggregationCursor<T> implements MongoCursor<T> {
         }
         closed = true;
         if (currentResult != null) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), provider.getServerDescription(),
-                                   getConnection(), false).execute();
+            Connection connection = getConnection();
+            try {
+                new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection, provider.getServerDescription());
+            } finally {
+                connection.close();
+            }
         }
         currentResult = null;
     }
@@ -117,8 +121,13 @@ public class AggregationCursor<T> implements MongoCursor<T> {
     }
 
     private void getMore() {
-        currentResult = new GetMoreProtocol<T>(namespace, new AggregationGetMore(), decoder,
-                                               provider.getServerDescription(), getConnection(), true).execute();
+        Connection connection = getConnection();
+        try {
+            currentResult = new GetMoreProtocol<T>(namespace, new AggregationGetMore(), decoder)
+                            .execute(connection, provider.getServerDescription());
+        } finally {
+            connection.close();
+        }
         currentIterator = currentResult.getResults().iterator();
     }
 

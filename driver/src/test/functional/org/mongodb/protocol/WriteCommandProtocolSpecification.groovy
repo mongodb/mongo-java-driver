@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.protocol
 
 import org.mongodb.BulkWriteException
@@ -56,16 +58,15 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         def document = new Document('_id', 1)
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest, new DocumentCodec()
-                                                 , server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest, new DocumentCodec())
         when:
-        def result = protocol.execute()
+        def result = protocol.execute(connection, server.description)
 
         then:
         result.insertedCount == 1
         result.upserts == []
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(document), new DocumentCodec(), new DocumentCodec()
-                                            , server.description, connection, false).execute()
+        QueryResult res = new QueryProtocol(getNamespace(), new Find(document), new DocumentCodec(), new DocumentCodec())
+                .execute(connection, server.description)
         res.results.get(0) == document
     }
 
@@ -73,13 +74,13 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         def requests = [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))]
         given:
         def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, requests,
-                                                 new DocumentCodec(), server.description, connection, false)
+                                                 new DocumentCodec())
         when:
-        protocol.execute()
+        protocol.execute(connection, server.description)
 
         then:
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec()
-                                            , server.description, connection, false).execute()
+        QueryResult res = new QueryProtocol(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec())
+                .execute(connection, server.description)
         res.results.size() == 2
     }
 
@@ -87,11 +88,11 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         given:
         def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED,
                                                  [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))],
-                                                 new DocumentCodec(), server.description, connection, false)
-        protocol.execute()
+                                                 new DocumentCodec())
+        protocol.execute(connection, server.description)
 
         when:
-        protocol.execute()  // now do it again
+        protocol.execute(connection, server.description)  // now do it again
 
         then:
         def e = thrown(BulkWriteException)
@@ -127,11 +128,10 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         for (Document cur : documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec()
-                                                 , server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
 
         when:
-        def result = protocol.execute()
+        def result = protocol.execute(connection, server.description)
 
         then:
         result.insertedCount == 4
@@ -156,13 +156,12 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         // Force a duplicate key error in the second insert request
         new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new Document('_id', 2))],
-                                  new DocumentCodec(), server.description, connection, false).execute()
+                                  new DocumentCodec()).execute(connection, server.description)
 
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec()
-                                                 , server.description, connection, false)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
 
         when:
-        protocol.execute()
+        protocol.execute(connection, server.description)
 
         then:
         def e = thrown(BulkWriteException)
@@ -186,7 +185,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
             insertList.add(new InsertRequest<Document>(cur));
         }
         new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                  new DocumentCodec(), server.description, connection, false).execute()
+                                  new DocumentCodec()).execute(connection, server.description)
 
         // add a large byte array to each document to force a split after each
         for (def document : documents) {
@@ -195,9 +194,9 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         documents[1].put('_id', 5)  // Make the second document a new one
 
         def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                                 new DocumentCodec(), server.description, connection, false)
+                                                 new DocumentCodec())
         when:
-        protocol.execute()
+        protocol.execute(connection, server.description)
 
         then:
         def e = thrown(BulkWriteException)
@@ -215,10 +214,10 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
                                                           .upsert(true),
                                                   new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 2)))
                                                           .upsert(true)],
-                                                 new DocumentCodec(), server.description, connection, false);
+                                                 new DocumentCodec());
 
         when:
-        def result = protocol.execute();
+        def result = protocol.execute(connection, server.description);
 
         then:
         result.updatedCount == 0;

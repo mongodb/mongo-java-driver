@@ -31,12 +31,13 @@ import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.getConnectionProvider;
 
 public class AggregateOperation<T> implements Operation<MongoCursor<T>> {
     private static final Logger LOGGER = Loggers.getLogger("operation");
@@ -62,21 +63,21 @@ public class AggregateOperation<T> implements Operation<MongoCursor<T>> {
     @SuppressWarnings("unchecked")
     @Override
     public MongoCursor<T> execute(final Session session) {
-        CommandResult result = sendMessage(session);
+        CommandResult result = sendAndReceiveMessage(session);
         if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
             return new InlineMongoCursor<T>(result, (List<T>) result.getResponse().get("result"));
         } else {
-            return new AggregationCursor<T>(options, namespace, decoder, OperationHelper.getConnectionProvider(readPreference, session),
+            return new AggregationCursor<T>(options, namespace, decoder, getConnectionProvider(readPreference, session),
                                             receiveMessage(result));
         }
     }
 
     public CommandResult explain(final Session session) {
         command.put("explain", true);
-        return sendMessage(session);
+        return sendAndReceiveMessage(session);
     }
 
-    private CommandResult sendMessage(final Session session) {
+    private CommandResult sendAndReceiveMessage(final Session session) {
         if (options.getOutputMode() == AggregationOptions.OutputMode.CURSOR) {
             Document cursor = new Document();
             if (options.getBatchSize() != null) {
@@ -92,15 +93,9 @@ public class AggregateOperation<T> implements Operation<MongoCursor<T>> {
             LOGGER.trace(command.toString());
         }
 
-        ServerConnectionProvider provider = OperationHelper.getConnectionProvider(readPreference, session);
-
-        return new CommandProtocol(namespace.getDatabaseName(),
-                                   command,
-                                   commandEncoder,
-                                   new CommandResultWithPayloadDecoder<T>(decoder),
-                                   provider.getServerDescription(),
-                                   provider.getConnection(),
-                                   true).execute();
+        return executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command, commandEncoder,
+                                                   new CommandResultWithPayloadDecoder<T>(decoder)),
+                               getConnectionProvider(readPreference, session));
     }
 
     private QueryResult<T> receiveMessage(final CommandResult result) {

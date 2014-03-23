@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.getPrimaryServerConnectionProvider;
 
 public class CreateIndexesOperation implements Operation<Void> {
@@ -66,12 +67,10 @@ public class CreateIndexesOperation implements Operation<Void> {
     private void executeCollectionBasedProtocol(final Session session) {
         MongoNamespace systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
         for (Index index : indexes) {
-            new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                          asList(new InsertRequest<Document>(toDocument(index))),
-                                          new DocumentCodec(),
-                                          getPrimaryServerConnectionProvider(session).getServerDescription(),
-                                          getPrimaryServerConnectionProvider(session).getConnection(), true)
-            .execute();
+            executeProtocol(new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
+                                                         asList(new InsertRequest<Document>(toDocument(index))),
+                                                         new DocumentCodec()),
+                            getPrimaryServerConnectionProvider(session));
         }
     }
 
@@ -85,15 +84,12 @@ public class CreateIndexesOperation implements Operation<Void> {
         command.append("indexes", list);
 
 
-        CommandProtocol commandProtocol = new CommandProtocol(namespace.getDatabaseName(), command,
-                                                              new DocumentCodec(),
-                                                              new DocumentCodec(),
-                                                              getPrimaryServerConnectionProvider(session).getServerDescription(),
-                                                              getPrimaryServerConnectionProvider(session).getConnection(), true);
-        commandProtocol.execute();
-
+        executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command,
+                                            new DocumentCodec(),
+                                            new DocumentCodec()),
+                        getPrimaryServerConnectionProvider(session));
     }
-    
+
     private Document toDocument(final Index index) {
         Document indexDetails = new Document();
         indexDetails.append("name", index.getName());
@@ -118,5 +114,5 @@ public class CreateIndexesOperation implements Operation<Void> {
 
         return indexDetails;
     }
-    
+
 }

@@ -20,7 +20,6 @@ import org.bson.io.OutputBuffer;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -28,6 +27,8 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
+
+import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final SingleResultFuture<WriteResult> future;
@@ -37,13 +38,11 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final boolean ordered;
     private final ServerDescription serverDescription;
     private final Connection connection;
-    private final boolean closeConnection;
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final boolean ordered, final OutputBuffer writtenBuffer,
-                                      final ServerDescription serverDescription, final Connection connection,
-                                      final boolean closeConnection) {
+                                      final Connection connection, final ServerDescription serverDescription) {
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
@@ -51,7 +50,6 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
         this.serverDescription = serverDescription;
         this.connection = connection;
         this.writtenBuffer = writtenBuffer;
-        this.closeConnection = closeConnection;
     }
 
     @Override
@@ -60,14 +58,8 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
         if (e != null) {
             future.init(null, e);
         } else if (nextMessage != null) {
-            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
-                                                                          nextMessage,
-                                                                          ordered,
-                                                                          WriteConcern.UNACKNOWLEDGED,
-                                                                          serverDescription,
-                                                                          connection,
-                                                                          closeConnection)
-                                                     .executeAsync();
+            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED)
+                                                 .executeAsync(connection, serverDescription);
             newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
         } else {
             future.init(null, null);

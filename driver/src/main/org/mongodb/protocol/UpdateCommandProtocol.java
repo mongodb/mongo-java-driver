@@ -42,18 +42,17 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     private final Encoder<Document> queryEncoder;
 
     public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<UpdateRequest> updates, final Encoder<Document> queryEncoder,
-                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                                 final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
+        super(namespace, ordered, writeConcern);
         this.updates = notNull("update", updates);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
-    public BulkWriteResult execute() {
-        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                            getConnection().getServerAddress()));
-        BulkWriteResult writeResult = super.execute();
+    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
+                            connection.getServerAddress()));
+        BulkWriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Update completed");
         return writeResult;
     }
@@ -64,20 +63,14 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected UpdateCommandMessage createRequestMessage() {
+    protected UpdateCommandMessage createRequestMessage(final ServerDescription serverDescription) {
         return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates,
-                                        new CommandCodec<Document>(queryEncoder), getMessageSettings(getServerDescription()));
+                                        new CommandCodec<Document>(queryEncoder), getMessageSettings(serverDescription));
     }
 
     @Override
     protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    protected List<WriteRequest> getRequests() {
-        return (List) updates;
     }
 
 }

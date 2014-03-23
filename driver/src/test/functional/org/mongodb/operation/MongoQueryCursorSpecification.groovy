@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import category.Slow
@@ -396,9 +398,8 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
                                                 collection.getOptions().getDocumentCodec(),
                                                 collection.getCodec(), getSession());
-        new KillCursorProtocol(new KillCursor(cursor.getServerCursor()),
-                               cursor.serverConnectionProvider.serverDescription, cursor.serverConnectionProvider.getConnection(), true)
-                .execute();
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor()))
+                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription);
         cursor.next();
         cursor.next();
         then:
@@ -415,10 +416,8 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         new GetMoreProtocol<Document>(collection.getNamespace(),
                                       new GetMore(serverCursor, 1, 1, 1),
                                       collection.getOptions().getDocumentCodec()
-                                      ,
-                                      cursor.serverConnectionProvider.serverDescription,
-                                      cursor.serverConnectionProvider.getConnection(), true)
-                .execute();
+        )
+                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription);
     }
 
 }

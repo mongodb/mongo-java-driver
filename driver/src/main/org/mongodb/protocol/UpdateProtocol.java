@@ -41,18 +41,17 @@ public class UpdateProtocol extends WriteProtocol {
     private final Encoder<Document> queryEncoder;
 
     public UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<UpdateRequest> updates, final Encoder<Document> queryEncoder,
-                          final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                          final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
+        super(namespace, ordered, writeConcern);
         this.updates = updates;
         this.queryEncoder = queryEncoder;
     }
 
     @Override
-    public WriteResult execute() {
-        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                            getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+    public WriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
+                            connection.getServerAddress()));
+        WriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Update completed");
         return writeResult;
     }

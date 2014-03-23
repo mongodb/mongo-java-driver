@@ -25,11 +25,10 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     private final DocumentCodec commandEncoder = new DocumentCodec();
@@ -44,14 +43,8 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     }
 
     public Long execute(final Session session) {
-        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
-
-        ServerConnectionProvider serverConnectionProvider =
-        session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
-
-        return getCount(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder,
-                                            codec, serverConnectionProvider.getServerDescription(),
-                                            serverConnectionProvider.getConnection(), true).execute());
+        return getCount(executeProtocol(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder, codec),
+                                        find.getReadPreference(), session));
     }
 
     @Override

@@ -29,20 +29,13 @@ import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class KillCursorProtocol implements Protocol<Void> {
     private final KillCursor killCursor;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
 
-    public KillCursorProtocol(final KillCursor killCursor, final ServerDescription serverDescription, final Connection connection,
-                              final boolean closeConnection) {
+    public KillCursorProtocol(final KillCursor killCursor) {
         this.killCursor = killCursor;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
     }
 
     @Override
-    public Void execute() {
+    public Void execute(final Connection connection, final ServerDescription serverDescription) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
@@ -51,14 +44,11 @@ public class KillCursorProtocol implements Protocol<Void> {
             return null;
         } finally {
             buffer.close();
-            if (closeConnection) {
-                connection.close();
-            }
         }
     }
 
     @Override
-    public MongoFuture<Void> executeAsync() {
+    public MongoFuture<Void> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
         final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
@@ -67,9 +57,6 @@ public class KillCursorProtocol implements Protocol<Void> {
             @Override
             public void onResult(final Void result, final MongoException e) {
                 buffer.close();
-                if (closeConnection) {
-                    connection.close();
-                }
                 retVal.init(result, e);
             }
         });

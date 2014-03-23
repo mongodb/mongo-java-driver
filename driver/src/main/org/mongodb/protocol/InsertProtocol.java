@@ -41,19 +41,17 @@ public class InsertProtocol<T> extends WriteProtocol {
     private final Encoder<T> encoder;
 
     public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<InsertRequest<T>> insertRequestList,
-                          final Encoder<T> encoder, final ServerDescription serverDescription,
-                          final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                          final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }
 
     @Override
-    public WriteResult execute() {
+    public WriteResult execute(final Connection connection, final ServerDescription serverDescription) {
         LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequestList.size(),
-                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+                            getNamespace(), connection.getId(), connection.getServerAddress()));
+        WriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Insert completed");
         return writeResult;
     }

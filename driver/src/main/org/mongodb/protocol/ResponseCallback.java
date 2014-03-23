@@ -18,24 +18,22 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 
 abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
-    private final Connection connection;
+    private final ServerAddress serverAddress;
     private final long requestId;
-    private final boolean closeConnection;
 
-    public ResponseCallback(final long requestId, final Connection connection, final boolean closeConnection) {
-        this.connection = connection;
+    public ResponseCallback(final long requestId, final ServerAddress serverAddress) {
+        this.serverAddress = serverAddress;
         this.requestId = requestId;
-        this.closeConnection = closeConnection;
     }
 
-    protected Connection getConnection() {
-        return connection;
+    protected ServerAddress getServerAddress() {
+        return serverAddress;
     }
 
     protected long getRequestId() {
@@ -48,14 +46,10 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
             throw new MongoInternalException("Callback should not be invoked more than once", null);
         }
         closed = true;
-        boolean done;
         if (responseBuffers != null) {
-            done = callCallback(responseBuffers, e);
+            callCallback(responseBuffers, e);
         } else {
-            done = callCallback(null, e);
-        }
-        if (done && closeConnection) {
-            connection.close();
+            callCallback(null, e);
         }
     }
 

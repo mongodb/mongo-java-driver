@@ -34,6 +34,7 @@ import org.mongodb.session.Session;
 
 import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
 import static org.mongodb.operation.CommandReadPreferenceHelper.isQuery;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.getConnectionAsync;
 
 public class CommandOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
@@ -65,8 +66,7 @@ public class CommandOperation implements AsyncOperation<CommandResult>, Operatio
     public CommandResult execute(final Session session) {
         ServerConnectionProviderOptions options = getServerConnectionProviderOptions();
         ServerConnectionProvider provider = session.createServerConnectionProvider(options);
-        return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
-                                   provider.getServerDescription(), provider.getConnection(), true).execute();
+        return executeProtocol(new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder), provider);
     }
 
     @Override
@@ -76,9 +76,8 @@ public class CommandOperation implements AsyncOperation<CommandResult>, Operatio
         .register(new SingleResultCallback<ServerDescriptionConnectionPair>() {
             @Override
             public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
-                new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder,
-                                    pair.getServerDescription(), pair.getConnection(), true)
-                .executeAsync()
+                new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder)
+                .executeAsync(pair.getConnection(), pair.getServerDescription())
                 .register(new SessionClosingSingleResultCallback<CommandResult>(retVal));
             }
         });

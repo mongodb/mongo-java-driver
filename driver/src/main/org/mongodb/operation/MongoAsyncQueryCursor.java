@@ -84,10 +84,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                                        if (isExhaust()) {
                                            exhaustConnection = connection;
                                        }
-                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder,
-                                                            provider.getServerDescription(), connection, !isExhaust())
-                                           .executeAsync()
-                                           .register(new QueryResultSingleResultCallback());
+                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder)
+                                       .executeAsync(connection, provider.getServerDescription())
+                                       .register(new QueryResultSingleResultCallback(connection));
                                    }
                                }
                            });
@@ -98,7 +97,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private void close(final int responseTo) {
-        if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
+        if (isExhaust()) {
             handleExhaustCleanup(responseTo);
         } else {
             block.done();
@@ -111,18 +110,27 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     private void handleExhaustCleanup(final int responseTo) {
         new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo, exhaustConnection)
-            .executeAsync()
-            .register(new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final MongoException e) {
-                    block.done();
-                }
-            });
+        .executeAsync(exhaustConnection, serverConnectionProvider.getServerDescription())
+        .register(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                block.done();
+            }
+        });
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
+        private final Connection connection;
+
+        public QueryResultSingleResultCallback(final Connection connection) {
+            this.connection = connection;
+        }
+
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
+            if (!isExhaust()) {
+                connection.close();
+            }
             if (e != null) {
                 close(0);
                 return;
@@ -146,13 +154,15 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 breakEarly = true;
                 LOGGER.error(e1.getMessage(), e1);
             }
-            
+
             if (result.getCursor() == null || breakEarly) {
                 close(result.getRequestId());
             } else {
                 // get more results
                 if (find.getOptions().getFlags().contains(QueryFlag.Exhaust)) {
-                    new GetMoreReceiveProtocol<T>(decoder, result.getRequestId(), exhaustConnection).executeAsync().register(this);
+                    new GetMoreReceiveProtocol<T>(decoder, result.getRequestId())
+                    .executeAsync(exhaustConnection, serverConnectionProvider.getServerDescription())
+                    .register(this);
                 } else {
                     serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                         @Override
@@ -163,12 +173,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                                 new GetMoreProtocol<T>(namespace,
                                                        new GetMore(result.getCursor(), find.getLimit(), find.getBatchSize(),
                                                                    numFetchedSoFar),
-                                                       decoder,
-                                                       serverConnectionProvider.getServerDescription(),
-                                                       connection,
-                                                       true)
-                                    .executeAsync()
-                                    .register(QueryResultSingleResultCallback.this);
+                                                       decoder)
+                                .executeAsync(connection, serverConnectionProvider.getServerDescription())
+                                .register(new QueryResultSingleResultCallback(connection));
                             }
                         }
                     });

@@ -23,8 +23,9 @@ import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
+
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
@@ -48,9 +49,8 @@ public class DropCollectionOperation implements Operation<CommandResult> {
     @Override
     public CommandResult execute(final Session session) {
         try {
-            ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-            return new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec,
-                                       provider.getServerDescription(), provider.getConnection(), true).execute();
+            return executeProtocol(new CommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec),
+                                   session);
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptionsWhenDroppingACollection(e);
         }

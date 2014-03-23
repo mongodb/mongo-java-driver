@@ -28,7 +28,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
@@ -44,7 +43,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.getConnectionAsync;
+import static org.mongodb.operation.OperationHelper.getPrimaryServerConnectionProvider;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
@@ -72,18 +73,15 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
 
     @Override
     public WriteResult execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        Connection connection = provider.getConnection();
+        ServerConnectionProvider provider = getPrimaryServerConnectionProvider(session);
         try {
             if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider.getServerDescription())) {
-                return translateBulkWriteResult(getCommandProtocol(provider.getServerDescription(), connection).execute());
+                return translateBulkWriteResult(executeProtocol(getCommandProtocol(), provider));
             } else {
-                return getWriteProtocol(provider.getServerDescription(), connection).execute();
+                return executeProtocol(getWriteProtocol(), provider);
             }
         } catch (BulkWriteException e) {
             throw convertBulkWriteException(e);
-        } finally {
-            connection.close();
         }
     }
 
@@ -102,7 +100,7 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
                     //                        protocolFuture = getCommandProtocol(pair.getServerDescription(),
                     // pair.getConnection()).executeAsync();
                     //                    } else {
-                    protocolFuture = getWriteProtocol(pair.getServerDescription(), pair.getConnection()).executeAsync();
+                    protocolFuture = getWriteProtocol().executeAsync(pair.getConnection(), pair.getServerDescription());
                     //                    }
                     protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal));
                 }
@@ -115,9 +113,9 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
         return namespace;
     }
 
-    protected abstract WriteProtocol getWriteProtocol(ServerDescription serverDescription, Connection connection);
+    protected abstract WriteProtocol getWriteProtocol();
 
-    protected abstract WriteCommandProtocol getCommandProtocol(ServerDescription serverDescription, Connection connection);
+    protected abstract WriteCommandProtocol getCommandProtocol();
 
     private boolean serverSupportsWriteCommands(final ServerDescription serverDescription) {
         return serverDescription.getVersion().compareTo(new ServerVersion(2, 6)) >= 0;

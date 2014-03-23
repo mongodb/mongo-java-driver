@@ -47,9 +47,7 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final Session session) {
-        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace,
-                                                                                        find,
-                                                                                        queryEncoder,
-                                                                                        resultDecoder,
-                                                                                        session), null); }
+        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace, find, queryEncoder, resultDecoder,
+                                                                                        session), null);
+    }
 }

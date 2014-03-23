@@ -26,6 +26,7 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterSettings;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerAddressSelector;
@@ -802,9 +803,13 @@ public class Mongo {
                 ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false,
                                                                                               new ServerAddressSelector(cur.getAddress()));
                 ServerConnectionProvider provider = session.createServerConnectionProvider(options);
-                new KillCursorProtocol(new KillCursor(cur), provider.getServerDescription(), provider.getConnection(),
-                                       true).execute();
-
+                Connection connection = provider.getConnection();
+                try {
+                    new KillCursorProtocol(new KillCursor(cur)
+                    ).execute(connection, provider.getServerDescription());
+                } finally {
+                    connection.close();
+                }
             }
         } finally {
             session.close();

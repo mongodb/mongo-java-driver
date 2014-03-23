@@ -18,8 +18,6 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
@@ -27,9 +25,8 @@ class GenericWriteProtocol extends WriteProtocol {
     private final RequestMessage requestMessage;
 
     public GenericWriteProtocol(final MongoNamespace namespace, final RequestMessage requestMessage, final boolean ordered,
-                                final WriteConcern writeConcern, final ServerDescription serverDescription, final Connection connection,
-                                final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                                final WriteConcern writeConcern) {
+        super(namespace, ordered, writeConcern);
         this.requestMessage = requestMessage;
     }
 

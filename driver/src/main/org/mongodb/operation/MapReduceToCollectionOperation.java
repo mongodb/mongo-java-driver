@@ -24,11 +24,11 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will be
@@ -49,8 +49,9 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
-     * @param namespace      the database and collection to perform the map reduce on
-     * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
+     *
+     * @param namespace the database and collection to perform the map reduce on
+     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
      */
     public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce) {
         super();
@@ -65,16 +66,14 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
     /**
      * Executing this will return a cursor with your results in.
      *
-     * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      * @param session
+     * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
     public MapReduceStatistics execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
-                                                          provider.getServerDescription(), provider.getConnection(),
-                                                          true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec),
+                                                      session);
+
         serverUsed = commandResult.getAddress();
         return new MapReduceIntoCollectionStatistics(commandResult);
     }

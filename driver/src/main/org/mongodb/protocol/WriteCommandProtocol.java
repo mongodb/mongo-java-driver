@@ -36,8 +36,6 @@ import org.mongodb.protocol.message.BaseWriteCommandMessage;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
-import java.util.List;
-
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException;
@@ -48,69 +46,55 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
 
-    public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+    public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
     }
 
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    public BulkWriteResult execute() {
-        try {
-            BaseWriteCommandMessage message = createRequestMessage();
-            BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(serverDescription.getAddress(), ordered,
-                                                                                       writeConcern);
-            int batchNum = 0;
-            int currentRangeStartIndex = 0;
-            do {
-                batchNum++;
-                BaseWriteCommandMessage nextMessage = sendMessage(message, batchNum);
-                int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
-                IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-                CommandResult commandResult = receiveMessage(message);
+    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+        BaseWriteCommandMessage message = createRequestMessage(serverDescription);
+        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(serverDescription.getAddress(), ordered, writeConcern);
+        int batchNum = 0;
+        int currentRangeStartIndex = 0;
+        do {
+            batchNum++;
+            BaseWriteCommandMessage nextMessage = sendMessage(connection, message, batchNum);
+            int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
+            IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+            CommandResult commandResult = receiveMessage(connection, message);
 
-                if (nextMessage != null || batchNum > 1) {
-                    getLogger().debug(format("Received response for batch %d", batchNum));
-                }
-
-                if (hasError(commandResult)) {
-                    bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), commandResult), indexMap);
-                } else {
-                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), commandResult), indexMap);
-                }
-                currentRangeStartIndex += itemCount;
-                message = nextMessage;
-            } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
-
-            return bulkWriteBatchCombiner.getResult();
-        } finally {
-            if (closeConnection) {
-                connection.close();
+            if (nextMessage != null || batchNum > 1) {
+                getLogger().debug(format("Received response for batch %d", batchNum));
             }
-        }
+
+            if (hasError(commandResult)) {
+                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), commandResult), indexMap);
+            } else {
+                bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), commandResult), indexMap);
+            }
+            currentRangeStartIndex += itemCount;
+            message = nextMessage;
+        } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
+
+        return bulkWriteBatchCombiner.getResult();
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> executeAsync() {
+    public MongoFuture<BulkWriteResult> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         throw new UnsupportedOperationException();  // TODO!!!!!!!!!!!!!!!!
     }
 
     protected abstract WriteRequest.Type getType();
 
-    protected abstract BaseWriteCommandMessage createRequestMessage();
+    protected abstract BaseWriteCommandMessage createRequestMessage(final ServerDescription serverDescription);
 
-    private BaseWriteCommandMessage sendMessage(final BaseWriteCommandMessage message, final int batchNum) {
+    private BaseWriteCommandMessage sendMessage(final Connection connection, final BaseWriteCommandMessage message, final int batchNum) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
@@ -124,7 +108,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         }
     }
 
-    private CommandResult receiveMessage(final RequestMessage message) {
+    private CommandResult receiveMessage(final Connection connection, final RequestMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
@@ -144,16 +128,6 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     public MongoNamespace getNamespace() {
         return namespace;
     }
-
-    public ServerDescription getServerDescription() {
-        return serverDescription;
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
-
-    protected abstract List<WriteRequest> getRequests();
 
     protected abstract org.mongodb.diagnostics.logging.Logger getLogger();
 

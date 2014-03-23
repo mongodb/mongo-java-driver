@@ -42,20 +42,18 @@ public class ReplaceProtocol<T> extends WriteProtocol {
     private final Encoder<T> encoder;
 
     public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<ReplaceRequest<T>> replaceRequests,
-                           final Encoder<Document> queryEncoder, final Encoder<T> encoder, final ServerDescription serverDescription,
-                           final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                           final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.replaceRequests = replaceRequests;
         this.queryEncoder = queryEncoder;
         this.encoder = encoder;
     }
 
     @Override
-    public WriteResult execute() {
-        LOGGER.debug(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                            getConnection().getServerAddress()));
-        WriteResult writeResult = super.execute();
+    public WriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
+                            connection.getServerAddress()));
+        WriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Replace completed");
         return writeResult;
     }

@@ -27,6 +27,7 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCollectionQueryDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -58,23 +59,18 @@ public class UpdateUserOperation implements Operation<Void> {
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "updateUser"),
                                                               new DocumentCodec(),
-                                                              new DocumentCodec(),
-                                                              serverConnectionProvider.getServerDescription(),
-                                                              serverConnectionProvider.getConnection(), true);
-        commandProtocol.execute();
+                                                              new DocumentCodec());
+        executeProtocol(commandProtocol, serverConnectionProvider);
     }
 
     @SuppressWarnings("unchecked")
     private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        new ReplaceProtocol<Document>(new MongoNamespace(user.getCredential().getSource(), "system.users"),
-                                      true, WriteConcern.ACKNOWLEDGED,
-                                      asList(new ReplaceRequest<Document>(
-                                                                  asCollectionQueryDocument(user),
-                                                                   asCollectionDocument(user))),
-                                      new DocumentCodec(),
-                                      new DocumentCodec(),
-                                      serverConnectionProvider.getServerDescription(),
-                                      serverConnectionProvider.getConnection(),
-                                      true).execute();
+        executeProtocol(new ReplaceProtocol<Document>(new MongoNamespace(user.getCredential().getSource(), "system.users"),
+                                                      true, WriteConcern.ACKNOWLEDGED,
+                                                      asList(new ReplaceRequest<Document>(asCollectionQueryDocument(user),
+                                                                                          asCollectionDocument(user))),
+                                                      new DocumentCodec(),
+                                                      new DocumentCodec()),
+                        serverConnectionProvider);
     }
 }

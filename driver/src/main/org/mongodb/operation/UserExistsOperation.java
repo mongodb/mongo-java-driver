@@ -30,6 +30,7 @@ import org.mongodb.session.Session;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * An operation to determine if a user exists.
@@ -57,25 +58,19 @@ public class UserExistsOperation implements Operation<Boolean> {
     }
 
     private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        CommandResult commandResult = new CommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
-                                                              new DocumentCodec(),
-                                                              serverConnectionProvider.getServerDescription(),
-                                                              serverConnectionProvider.getConnection(), true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(database, new Document("usersInfo", userName),
+                                                                          new DocumentCodec(), new DocumentCodec()),
+                                                      serverConnectionProvider);
+
         return !commandResult.getResponse().get("users", List.class).isEmpty();
     }
 
     private Boolean executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        QueryResult<Document> result = new QueryProtocol<Document>(namespace,
-                                                                   new Find(new Document("user", userName)),
-                                                                   codec,
-                                                                   codec,
-                                                                   serverConnectionProvider.getServerDescription(),
-                                                                   serverConnectionProvider.getConnection(),
-                                                                   true)
-                                           .execute();
+        QueryResult<Document> result = executeProtocol(new QueryProtocol<Document>(namespace, new Find(new Document("user", userName)),
+                                                                                   codec, codec),
+                                                       serverConnectionProvider);
         return !result.getResults().isEmpty();
     }
 }

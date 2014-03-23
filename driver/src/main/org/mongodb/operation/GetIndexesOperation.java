@@ -45,8 +45,12 @@ public class GetIndexesOperation implements Operation<List<Document>> {
         List<Document> retVal = new ArrayList<Document>();
         MongoCursor<Document> cursor = new MongoQueryCursor<Document>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
                                                                       new DocumentCodec(), session);
-        while (cursor.hasNext()) {
-            retVal.add(cursor.next());
+        try {
+            while (cursor.hasNext()) {
+                retVal.add(cursor.next());
+            }
+        } finally {
+            cursor.close();
         }
         return retVal;
     }

@@ -45,19 +45,18 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
 
     public ReplaceCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                   final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
-                                  final Encoder<T> encoder, final ServerDescription serverDescription, final Connection connection,
-                                  final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                                  final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replaces", replaceRequests);
         this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
     }
 
     @Override
-    public BulkWriteResult execute() {
-        LOGGER.debug(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), getConnection().getId(),
-                            getConnection().getServerAddress()));
-        BulkWriteResult writeResult = super.execute();
+    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Replacing document in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
+                            connection.getServerAddress()));
+        BulkWriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Replace  completed");
         return writeResult;
     }
@@ -68,20 +67,14 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected ReplaceCommandMessage<T> createRequestMessage() {
+    protected ReplaceCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
         return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder,
-                                            getMessageSettings(getServerDescription()));
+                                            getMessageSettings(serverDescription));
     }
 
     @Override
     protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    protected List<WriteRequest> getRequests() {
-        return (List) replaceRequests;
     }
 
 }

@@ -26,12 +26,12 @@ import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -79,11 +79,9 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
-        ServerConnectionProvider provider = session.createServerConnectionProvider(getServerConnectionProviderOptions());
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, mapReduceResultDecoder,
-                                                          provider.getServerDescription(), provider.getConnection(),
-                                                          true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(),
+                                                                          command, commandCodec, mapReduceResultDecoder),
+                                                      readPreference, session);
 
         return new MapReduceInlineResultsCursor<T>(commandResult);
     }

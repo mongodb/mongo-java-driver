@@ -23,10 +23,11 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import java.util.List;
+
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
@@ -61,11 +62,9 @@ public class GroupOperation implements Operation<MongoCursor<Document>> {
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<Document> execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getConnectionProvider(readPreference, session);
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), commandDocument,
-                                                          new DocumentCodec(), new DocumentCodec(),
-                                                          provider.getServerDescription(), provider.getConnection(), true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), commandDocument,
+                                                                          new DocumentCodec(), new DocumentCodec()),
+                                                      readPreference, session);
 
         return new InlineMongoCursor<Document>(commandResult, (List<Document>) commandResult.getResponse().get("retval"));
     }

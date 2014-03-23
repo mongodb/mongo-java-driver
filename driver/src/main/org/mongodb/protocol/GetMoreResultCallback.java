@@ -21,8 +21,8 @@ import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.ServerCursor;
-import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.message.ReplyMessage;
 
@@ -32,8 +32,8 @@ class GetMoreResultCallback<T> extends ResponseCallback {
     private final long cursorId;
 
     public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
-                                 final long cursorId, final long requestId, final Connection connection, final boolean closeConnection) {
-        super(requestId, connection, closeConnection);
+                                 final long cursorId, final long requestId, final ServerAddress serverAddress) {
+        super(requestId, serverAddress);
         this.callback = callback;
         this.decoder = decoder;
         this.cursorId = cursorId;
@@ -47,10 +47,9 @@ class GetMoreResultCallback<T> extends ResponseCallback {
             if (e != null) {
                 throw e;
             } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getConnection().getServerAddress()));
+                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getServerAddress()));
             } else {
-                result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
-                                            getConnection().getServerAddress());
+                result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
             }
         } catch (MongoException me) {
             exceptionResult = me;

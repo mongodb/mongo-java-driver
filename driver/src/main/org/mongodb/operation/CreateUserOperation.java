@@ -28,6 +28,7 @@ import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
 
@@ -45,7 +46,8 @@ public class CreateUserOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        ServerConnectionProvider serverConnectionProvider = OperationHelper.getPrimaryServerConnectionProvider(session);
+        ServerConnectionProvider serverConnectionProvider =
+        OperationHelper.getPrimaryServerConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {
@@ -56,20 +58,16 @@ public class CreateUserOperation implements Operation<Void> {
 
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
-                                                              new DocumentCodec(),
-                                                              new DocumentCodec(),
-                                                              serverConnectionProvider.getServerDescription(),
-                                                              serverConnectionProvider.getConnection(), true);
-        commandProtocol.execute();
+                                                              new DocumentCodec(), new DocumentCodec());
+        executeProtocol(commandProtocol, serverConnectionProvider);
     }
 
     @SuppressWarnings("unchecked")
     private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                     asList(new InsertRequest<Document>(asCollectionDocument(user))),
-                                     new DocumentCodec(),
-                                     serverConnectionProvider.getServerDescription(),
-                                     serverConnectionProvider.getConnection(), true).execute();
+        executeProtocol(new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                     asList(new InsertRequest<Document>(asCollectionDocument(user))),
+                                                     new DocumentCodec()),
+                        serverConnectionProvider);
     }
 }

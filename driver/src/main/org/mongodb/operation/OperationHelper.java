@@ -21,6 +21,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.protocol.Protocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
@@ -80,5 +81,22 @@ final class OperationHelper {
     static ServerConnectionProvider getConnectionProvider(final ReadPreference readPreference, final Session session) {
         ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
         return session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
+    }
+
+    static <T> T executeProtocol(final Protocol<T> protocol, final ServerConnectionProvider provider) {
+        Connection connection = provider.getConnection();
+        try {
+            return protocol.execute(connection, provider.getServerDescription());
+        } finally {
+            connection.close();
+        }
+    }
+
+    static <T> T executeProtocol(final Protocol<T> protocol, final Session session) {
+        return executeProtocol(protocol, getPrimaryServerConnectionProvider(session));
+    }
+
+    static <T> T executeProtocol(final Protocol<T> protocol, final ReadPreference readPreference, final Session session) {
+        return executeProtocol(protocol, getConnectionProvider(readPreference, session));
     }
 }

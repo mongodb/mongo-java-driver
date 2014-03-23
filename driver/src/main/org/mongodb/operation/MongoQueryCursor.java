@@ -65,9 +65,15 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
         Connection connection = provider.getConnection();
         exhaustConnection = isExhaust() ? connection : null;
-        QueryProtocol<T> operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder,
-                                                          provider.getServerDescription(), connection, !isExhaust());
-        currentResult = operation.execute();
+        QueryProtocol<T> operation;
+        try {
+            operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder);
+            currentResult = operation.execute(connection, provider.getServerDescription());
+        } finally {
+            if (!isExhaust()) {
+                connection.close();
+            }
+        }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -82,8 +88,14 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         if (isExhaust()) {
             discardRemainingGetMoreResponses();
         } else if (currentResult.getCursor() != null && !limitReached()) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor()),
-                                   provider.getServerDescription(), getConnection(), !isExhaust()).execute();
+            Connection connection = getConnection();
+            try {
+                new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection, provider.getServerDescription());
+            } finally {
+                if (!isExhaust()) {
+                    connection.close();
+                }
+            }
         }
         if (exhaustConnection != null) {
             exhaustConnection.close();
@@ -113,7 +125,8 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
             }
         }
 
-        return false;    }
+        return false;
+    }
 
     @Override
     public T next() {
@@ -176,17 +189,17 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void getMore() {
         if (isExhaust()) {
-            currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId(),
-                                                          getConnection())
-                                .execute();
+            currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId())
+                            .execute(getConnection(), provider.getServerDescription());
         } else {
-            currentResult = new GetMoreProtocol<T>(namespace,
-                                                   new GetMore(currentResult.getCursor(), find.getLimit(), find.getBatchSize(), nextCount),
-                                                   decoder,
-                                                   provider.getServerDescription(),
-                                                   getConnection(),
-                                                   true)
-                                .execute();
+            Connection connection = getConnection();
+            try {
+                currentResult = new GetMoreProtocol<T>(namespace, new GetMore(currentResult.getCursor(), find.getLimit(),
+                                                                              find.getBatchSize(), nextCount), decoder)
+                                .execute(connection, provider.getServerDescription());
+            } finally {
+                connection.close();
+            }
         }
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
@@ -209,8 +222,14 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursorIfLimitReached() {
         if (limitReached()) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor()), provider.getServerDescription(),
-                                   provider.getConnection(), !isExhaust()).execute();
+            Connection connection = getConnection();
+            try {
+                new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection, provider.getServerDescription());
+            } finally {
+                if (!isExhaust()) {
+                    connection.close();
+                }
+            }
         }
     }
 
@@ -224,8 +243,8 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private void discardRemainingGetMoreResponses() {
-        new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(),
-                                   getConnection()).execute();
+        new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(), getConnection())
+        .execute(getConnection(), provider.getServerDescription());
     }
 
     private boolean isExhaust() {

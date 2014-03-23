@@ -36,25 +36,23 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private boolean ordered;
     private final WriteConcern writeConcern;
-    private final ServerDescription serverDescription;
     private final Connection connection;
-    private final boolean closeConnection;
+    private final ServerDescription serverDescription;
 
     // CHECKSTYLE:OFF
     public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<Document> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
-                               final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+                               final Connection connection, final ServerDescription serverDescription) {
         // CHECKSTYLE:ON
-        super(decoder, requestId, connection, closeConnection);
+        super(decoder, requestId, serverDescription.getAddress());
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
-        this.serverDescription = serverDescription;
         this.connection = connection;
-        this.closeConnection = closeConnection;
+        this.serverDescription = serverDescription;
     }
 
     @Override
@@ -66,13 +64,8 @@ class WriteResultCallback extends CommandResultBaseCallback {
             try {
                 WriteResult writeResult = ProtocolHelper.getWriteResult(commandResult);
                 if (nextMessage != null) {
-                    MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace,
-                                                                                  nextMessage,
-                                                                                  ordered,
-                                                                                  writeConcern,
-                                                                                  serverDescription,
-                                                                                  connection,
-                                                                                  closeConnection).executeAsync();
+                    MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
+                                                         .executeAsync(connection, serverDescription);
                     newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
                     done = false;
                 } else {

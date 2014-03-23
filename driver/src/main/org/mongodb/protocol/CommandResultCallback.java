@@ -20,15 +20,15 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
-import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 
 class CommandResultCallback extends CommandResultBaseCallback {
     private final SingleResultCallback<CommandResult> callback;
 
     public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<Document> decoder,
-                                 final long requestId, final Connection connection, final boolean closeConnection) {
-        super(decoder, requestId, connection, closeConnection);
+                                 final long requestId, final ServerAddress serverAddress) {
+        super(decoder, requestId, serverAddress);
         this.callback = callback;
     }
 

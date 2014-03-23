@@ -23,7 +23,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static java.lang.String.format;
@@ -31,6 +30,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 public class FindAndUpdateOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
@@ -48,10 +48,10 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
     @Override
     public T execute(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
-                                                          commandEncoder, resultDecoder,
-                                                          provider.getServerDescription(), provider.getConnection(), true).execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
+                                                                          commandEncoder, resultDecoder),
+                                                      session
+                                                     );
         return (T) commandResult.getResponse().get("value");
     }
 

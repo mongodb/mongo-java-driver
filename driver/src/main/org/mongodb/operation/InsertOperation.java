@@ -20,8 +20,6 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.InsertCommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
@@ -43,16 +41,13 @@ public class InsertOperation<T> extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder,
-                                     serverDescription, connection, true);
+    protected WriteProtocol getWriteProtocol() {
+        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol(final ServerDescription serverDescription, final Connection connection) {
-        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(),
-                                            insertRequestList, encoder, serverDescription,
-                                            connection, true);
+    protected WriteCommandProtocol getCommandProtocol() {
+        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
     }
 
     @Override

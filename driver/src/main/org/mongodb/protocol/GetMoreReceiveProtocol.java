@@ -20,6 +20,7 @@ import org.mongodb.Decoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.ReplyMessage;
@@ -28,15 +29,13 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
 
     private final Decoder<T> resultDecoder;
     private final int responseTo;
-    private final Connection connection;
 
-    public GetMoreReceiveProtocol(final Decoder<T> resultDecoder, final int responseTo, final Connection connection) {
+    public GetMoreReceiveProtocol(final Decoder<T> resultDecoder, final int responseTo) {
         this.resultDecoder = resultDecoder;
         this.responseTo = responseTo;
-        this.connection = connection;
     }
 
-    public QueryResult<T> execute() {
+    public QueryResult<T> execute(final Connection connection, final ServerDescription serverDescription) {
         ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
         try {
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
@@ -45,14 +44,11 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
         }
     }
 
-    public MongoFuture<QueryResult<T>> executeAsync() {
+    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
-                                                                                resultDecoder,
-                                                                                0,
-                                                                                responseTo,
-                                                                                connection,
-                                                                                false));
+                                                                                resultDecoder, 0, responseTo,
+                                                                                connection.getServerAddress()));
 
         return retVal;
     }

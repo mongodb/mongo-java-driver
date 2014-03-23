@@ -21,10 +21,10 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Executing this operation will rename the given collection to the new name.  If the new name is the same as an existing collection and
@@ -65,10 +65,7 @@ public class RenameCollectionOperation implements Operation<CommandResult> {
      */
     @Override
     public CommandResult execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        return new CommandProtocol("admin", createCommand(), commandCodec, commandCodec,
-                                   provider.getServerDescription(), provider.getConnection(), true)
-                   .execute();
+        return executeProtocol(new CommandProtocol("admin", createCommand(), commandCodec, commandCodec), session);
     }
 
     private Document createCommand() {

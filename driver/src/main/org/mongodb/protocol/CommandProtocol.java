@@ -47,38 +47,25 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final Document command;
     private final Decoder<Document> commandResultDecoder;
     private final Encoder<Document> commandEncoder;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
 
     public CommandProtocol(final String database, final Document command, final Encoder<Document> commandEncoder,
-                           final Decoder<Document> commandResultDecoder, final ServerDescription serverDescription,
-                           final Connection connection, final boolean closeConnection) {
+                           final Decoder<Document> commandResultDecoder) {
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
         this.commandEncoder = commandEncoder;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
     }
 
-    public CommandResult execute() {
-        try {
-            LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
-                                command.keySet().iterator().next(), command.values().iterator().next(),
-                                namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-            CommandResult commandResult = receiveMessage(sendMessage().getId());
-            LOGGER.debug("Command execution complete");
-            return commandResult;
-        } finally {
-            if (closeConnection) {
-                connection.close();
-            }
-        }
+    public CommandResult execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
+                            command.keySet().iterator().next(), command.values().iterator().next(),
+                            namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
+        CommandResult commandResult = receiveMessage(connection, sendMessage(connection, serverDescription).getId());
+        LOGGER.debug("Command execution complete");
+        return commandResult;
     }
 
-    private CommandMessage sendMessage() {
+    private CommandMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
@@ -91,7 +78,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    private CommandResult receiveMessage(final int messageId) {
+    private CommandResult receiveMessage(final Connection connection, final int messageId) {
         ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
             ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, commandResultDecoder, messageId);
@@ -101,7 +88,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    public MongoFuture<CommandResult> executeAsync() {
+    public MongoFuture<CommandResult> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
@@ -112,8 +99,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal),
                                                                           commandResultDecoder,
                                                                           message.getId(),
-                                                                          connection,
-                                                                          closeConnection);
+                                                                          connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(),
                                     message.getId(),
                                     new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal, receiveCallback));

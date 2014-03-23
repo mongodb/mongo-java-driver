@@ -22,10 +22,11 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import java.util.List;
+
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
@@ -62,11 +63,9 @@ public class DistinctOperation implements Operation<MongoCursor<String>> {
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<String> execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getCommandDocument(),
-                                                          new DocumentCodec(), new DocumentCodec(),
-                                                          provider.getServerDescription(), provider.getConnection(), true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), getCommandDocument(),
+                                                                          new DocumentCodec(), new DocumentCodec()),
+                                                      session);
 
         return new InlineMongoCursor<String>(commandResult, (List<String>) commandResult.getResponse().get("values"));
     }

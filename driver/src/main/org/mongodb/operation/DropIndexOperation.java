@@ -23,8 +23,9 @@ import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
+
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 public class DropIndexOperation implements Operation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -38,10 +39,9 @@ public class DropIndexOperation implements Operation<CommandResult> {
 
     @Override
     public CommandResult execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
         try {
-            return new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec,
-                                       provider.getServerDescription(), provider.getConnection(), true).execute();
+            return executeProtocol(new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec),
+                                   session);
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptions(e);
         }

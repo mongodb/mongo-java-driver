@@ -20,6 +20,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 
@@ -34,11 +35,11 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         this.connection = connection;
     }
 
-    public Void execute() {
+    public Void execute(final Connection connection, final ServerDescription serverDescription) {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
-            ResponseBuffers responseBuffers = connection.receiveMessage(curResponseTo);
+            ResponseBuffers responseBuffers = this.connection.receiveMessage(curResponseTo);
             try {
                 curCursorId = responseBuffers.getReplyHeader().getCursorId();
                 curResponseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -49,13 +50,13 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         return null;
     }
 
-    public MongoFuture<Void> executeAsync() {
+    public MongoFuture<Void> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (cursorId == 0) {
             retVal.init(null, null);
         } else {
-            connection.receiveMessageAsync(responseTo, new DiscardCallback(retVal));
+            this.connection.receiveMessageAsync(responseTo, new DiscardCallback(retVal));
         }
 
         return retVal;

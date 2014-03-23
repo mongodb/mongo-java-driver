@@ -23,12 +23,12 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 public class FindAndRemoveOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
@@ -45,11 +45,9 @@ public class FindAndRemoveOperation<T> implements Operation<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
-        CommandResult commandResult = new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                                          commandEncoder, resultDecoder,
-                                                          provider.getServerDescription(), provider.getConnection(), true)
-                                          .execute();
+        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
+                                                                          commandEncoder, resultDecoder),
+                                                      session);
         return (T) commandResult.getResponse().get("value");
     }
 

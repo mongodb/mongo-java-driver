@@ -288,21 +288,19 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         @SuppressWarnings("unchecked")
         BulkWriteResult executeReplaces(final List<ReplaceRequest<T>> replaceRequests, final ServerConnectionProvider provider,
                                         final Connection connection) {
-            return new RunExecutor(provider) {
+            return new RunExecutor(provider, connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new ReplaceProtocol<T>(namespace,
                                                   ordered, writeConcern,
                                                   asList(replaceRequests.get(index)),
                                                   new DocumentCodec(),
-                                                  encoder,
-                                                  provider.getServerDescription(),
-                                                  connection,
-                                                  false);
+                                                  encoder
+                    );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder,
-                                                         provider.getServerDescription(), connection, false);
+                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder
+                    );
                 }
 
                 @Override
@@ -315,15 +313,15 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
 
         BulkWriteResult executeRemoves(final List<RemoveRequest> removeRequests, final ServerConnectionProvider provider,
                                        final Connection connection) {
-            return new RunExecutor(provider) {
+            return new RunExecutor(provider, connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index)), new DocumentCodec(),
-                                              provider.getServerDescription(), connection, false);
+                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index)), new DocumentCodec()
+                    );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests, new DocumentCodec(),
-                                                     provider.getServerDescription(), connection, false);
+                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests, new DocumentCodec()
+                    );
                 }
 
                 @Override
@@ -337,15 +335,15 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         @SuppressWarnings("unchecked")
         BulkWriteResult executeInserts(final List<InsertRequest<T>> insertRequests, final ServerConnectionProvider provider,
                                        final Connection connection) {
-            return new RunExecutor(provider) {
+            return new RunExecutor(provider, connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder,
-                                                 provider.getServerDescription(), connection, false);
+                    return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder
+                    );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests, encoder,
-                                                        provider.getServerDescription(), connection, false);
+                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests, encoder
+                    );
                 }
 
                 @Override
@@ -363,15 +361,15 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
 
         BulkWriteResult executeUpdates(final List<UpdateRequest> updates, final ServerConnectionProvider provider,
                                        final Connection connection) {
-            return new RunExecutor(provider) {
+            return new RunExecutor(provider, connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec(),
-                                              provider.getServerDescription(), connection, false);
+                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec()
+                    );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec(),
-                                                     provider.getServerDescription(), connection, false);
+                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec()
+                    );
                 }
 
                 @Override
@@ -384,9 +382,11 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
 
         private abstract class RunExecutor {
             private final ServerConnectionProvider provider;
+            private final Connection connection;
 
-            RunExecutor(final ServerConnectionProvider provider) {
+            RunExecutor(final ServerConnectionProvider provider, final Connection connection) {
                 this.provider = provider;
+                this.connection = connection;
             }
 
             abstract WriteProtocol getWriteProtocol(final int write);
@@ -401,7 +401,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
 
             BulkWriteResult execute() {
                 if (shouldUseWriteCommands(provider)) {
-                    return getWriteCommandProtocol().execute();
+                    return getWriteCommandProtocol().execute(connection, provider.getServerDescription());
                 } else {
                     BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
                                                                                                ordered, writeConcern);
@@ -410,7 +410,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
                         indexMap = indexMap.add(0, i);
                         WriteProtocol writeProtocol = getWriteProtocol(i);
                         try {
-                            WriteResult writeResult = writeProtocol.execute();
+                            WriteResult writeResult = writeProtocol.execute(connection, provider.getServerDescription());
                             if (writeResult.wasAcknowledged()) {
                                 bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
                             }

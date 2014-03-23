@@ -29,6 +29,7 @@ import org.mongodb.session.Session;
 import java.util.Arrays;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 
 /**
  * An operation to remove a user.
@@ -59,10 +60,8 @@ public class DropUserOperation implements Operation<Void> {
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         CommandProtocol commandProtocol = new CommandProtocol(database, asCommandDocument(),
                                                               new DocumentCodec(),
-                                                              new DocumentCodec(),
-                                                              serverConnectionProvider.getServerDescription(),
-                                                              serverConnectionProvider.getConnection(), true);
-        commandProtocol.execute();
+                                                              new DocumentCodec());
+        executeProtocol(commandProtocol, serverConnectionProvider);
     }
 
     private Document asCommandDocument() {
@@ -72,12 +71,10 @@ public class DropUserOperation implements Operation<Void> {
     private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        new DeleteProtocol(namespace,
-                           true, WriteConcern.ACKNOWLEDGED,
-                           Arrays.asList(new RemoveRequest(new Document("user", userName))),
-                           codec,
-                           serverConnectionProvider.getServerDescription(),
-                           serverConnectionProvider.getConnection(),
-                           true).execute();
+        executeProtocol(new DeleteProtocol(namespace,
+                                           true, WriteConcern.ACKNOWLEDGED,
+                                           Arrays.asList(new RemoveRequest(new Document("user", userName))),
+                                           codec),
+                        serverConnectionProvider);
     }
 }

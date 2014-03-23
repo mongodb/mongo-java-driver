@@ -46,37 +46,24 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     private final GetMore getMore;
     private final Decoder<T> resultDecoder;
-    private final ServerDescription serverDescription;
-    private final Connection connection;
-    private final boolean closeConnection;
     private final MongoNamespace namespace;
 
-    public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder,
-                           final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
+    public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.getMore = getMore;
         this.resultDecoder = resultDecoder;
-        this.serverDescription = serverDescription;
-        this.connection = connection;
-        this.closeConnection = closeConnection;
     }
 
     @Override
-    public QueryResult<T> execute() {
-        try {
-            LOGGER.debug(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
-                                getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
-            QueryResult<T> queryResult = receiveMessage(sendMessage());
-            LOGGER.debug("Get-more completed");
-            return queryResult;
-        } finally {
-            if (closeConnection) {
-                connection.close();
-            }
-        }
+    public QueryResult<T> execute(final Connection connection, final ServerDescription serverDescription) {
+        LOGGER.debug(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
+                            getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
+        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection, serverDescription));
+        LOGGER.debug("Get-more completed");
+        return queryResult;
     }
 
-    public MongoFuture<QueryResult<T>> executeAsync() {
+    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
@@ -84,19 +71,18 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         encodeMessageToBuffer(message, buffer);
         GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                                 resultDecoder,
-                                                                                getMore.getServerCursor()
-                                                                                       .getId(),
+                                                                                getMore.getServerCursor().getId(),
                                                                                 message.getId(),
-                                                                                connection,
-                                                                                closeConnection);
+                                                                                connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                                    message.getId(),
-                                    new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal, receiveCallback));
+                                         message.getId(),
+                                         new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                                                                                 receiveCallback));
         return retVal;
     }
 
 
-    private GetMoreMessage sendMessage() {
+    private GetMoreMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
             GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
@@ -108,7 +94,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         }
     }
 
-    private QueryResult<T> receiveMessage(final GetMoreMessage message) {
+    private QueryResult<T> receiveMessage(final Connection connection, final GetMoreMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {

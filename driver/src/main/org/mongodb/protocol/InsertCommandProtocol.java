@@ -42,18 +42,17 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     private final Encoder<T> encoder;
 
     public InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<InsertRequest<T>> insertRequests, final Encoder<T> encoder,
-                                 final ServerDescription serverDescription, final Connection connection, final boolean closeConnection) {
-        super(namespace, ordered, writeConcern, serverDescription, connection, closeConnection);
+                                 final List<InsertRequest<T>> insertRequests, final Encoder<T> encoder) {
+        super(namespace, ordered, writeConcern);
         this.insertRequests = insertRequests;
         this.encoder = encoder;
     }
 
     @Override
-    public BulkWriteResult execute() {
+    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
         LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
-                            getNamespace(), getConnection().getId(), getConnection().getServerAddress()));
-        BulkWriteResult writeResult = super.execute();
+                            getNamespace(), connection.getId(), connection.getServerAddress()));
+        BulkWriteResult writeResult = super.execute(connection, serverDescription);
         LOGGER.debug("Insert completed");
         return writeResult;
     }
@@ -64,20 +63,14 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected InsertCommandMessage<T> createRequestMessage() {
+    protected InsertCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
         return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, new DocumentCodec(),
-                                           encoder, getMessageSettings(getServerDescription()));
+                                           encoder, getMessageSettings(serverDescription));
     }
 
     @Override
     protected org.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    protected List<WriteRequest> getRequests() {
-        return (List) insertRequests;
     }
 
 }
