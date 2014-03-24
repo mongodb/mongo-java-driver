@@ -19,7 +19,11 @@ package com.mongodb
 import org.bson.types.ObjectId
 import spock.lang.Unroll
 
-import static com.mongodb.Fixture.*
+import static com.mongodb.Fixture.isReplicaSet
+import static com.mongodb.Fixture.isServerStartedWithJournalingDisabled
+import static com.mongodb.Fixture.isSharded
+import static com.mongodb.Fixture.isStandalone
+import static com.mongodb.Fixture.serverIsAtLeastVersion
 import static com.mongodb.WriteRequest.Type.INSERT
 import static com.mongodb.WriteRequest.Type.REMOVE
 import static com.mongodb.WriteRequest.Type.REPLACE
@@ -362,6 +366,23 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         result == new AcknowledgedBulkWriteResult(REPLACE, 1, expectedModifiedCount(1), [])
         collection.count() == 1
     }
+
+    def 'when two update documents together exceed 16MB, the documents are still updated'() {
+        given:
+        def operation = collection.initializeOrderedBulkOperation()
+        operation.find(new BasicDBObject('_id', 1))
+                 .update(new BasicDBObject('$set', new BasicDBObject('x', new byte[1024 * 1024 * 8])));
+        operation.find(new BasicDBObject('_id', 2))
+                 .update(new BasicDBObject('$set', new BasicDBObject('x', new byte[1024 * 1024 * 8])));
+
+        when:
+        def result = operation.execute()
+
+        then:
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [])
+        collection.count() == 0
+    }
+
 
     def 'should handle multi-length runs of ordered insert, update, replace, and remove'() {
         given:
