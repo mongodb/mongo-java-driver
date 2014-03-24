@@ -39,11 +39,30 @@ public class NettyStreamFactory implements StreamFactory {
     private final EventLoopGroup eventLoopGroup;
     private final ByteBufAllocator allocator;
 
-    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
-        this.allocator = PooledByteBufAllocator.DEFAULT;
+    /**
+     * Construct a new instance of the factory.
+     *
+     * @param settings the socket settings
+     * @param sslSettings the SSL settings
+     * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
+     * @param allocator the allocator to use for ByteBuf instances
+     */
+    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings, final NioEventLoopGroup eventLoopGroup,
+                              final ByteBufAllocator allocator) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
-        this.eventLoopGroup = new NioEventLoopGroup();
+        this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
+        this.allocator = notNull("allocator", allocator);
+    }
+
+    /**
+     * Construct a new instance of the factory with a default allocator and event loop group.
+     *
+     * @param settings the socket settings
+     * @param sslSettings the SSL settings
+     */
+    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
+        this(settings, sslSettings, new NioEventLoopGroup(), PooledByteBufAllocator.DEFAULT);
     }
 
     @Override
