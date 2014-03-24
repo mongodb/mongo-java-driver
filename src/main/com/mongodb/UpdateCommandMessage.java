@@ -46,8 +46,12 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             writer.encodeDocument(getCommandEncoder(), update.getQuery());
             writer.writeName("u");
             writer.encodeDocument(encoder, update.getUpdateDocument());
-            writer.writeBoolean("multi", update.isMulti());
-            writer.writeBoolean("upsert", update.isUpsert());
+            if (update.isMulti()) {
+                writer.writeBoolean("multi", update.isMulti());
+            }
+            if (update.isUpsert()) {
+                writer.writeBoolean("upsert", update.isUpsert());
+            }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
