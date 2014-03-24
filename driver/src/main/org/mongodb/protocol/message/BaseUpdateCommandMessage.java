@@ -50,8 +50,12 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             getCommandEncoder().encode(writer, update.getFilter());
             writer.writeName("u");
             writeUpdate(writer, update);
-            writer.writeBoolean("multi", update.isMulti());
-            writer.writeBoolean("upsert", update.isUpsert());
+            if (update.isMulti()) {
+                writer.writeBoolean("multi", update.isMulti());
+            }
+            if (update.isUpsert()) {
+                writer.writeBoolean("upsert", update.isUpsert());
+            }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
