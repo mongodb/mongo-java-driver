@@ -55,7 +55,7 @@ public class GridFS {
     /**
      * File's chunk size
      */
-    public static final int DEFAULT_CHUNKSIZE = 256 * 1024;
+    public static final int DEFAULT_CHUNKSIZE = 255 * 1024;
     /**
      * File's max chunk size
      *
