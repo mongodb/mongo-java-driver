@@ -532,6 +532,23 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'should insert all documents when the number of inserts is larger than the match write batch size '(boolean ordered) {
+        given:
+        def operation = initializeBulkOperation(ordered)
+        (0..1001).each {
+            operation.insert(new BasicDBObject('_id', it))
+        }
+
+        when:
+        operation.execute()
+
+        then:
+        collection.count == 1002
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'should throw correct BulkWriteException when the number of writes is larger than the match write batch size '(boolean ordered) {
         given:
         def operation = initializeBulkOperation(ordered)
