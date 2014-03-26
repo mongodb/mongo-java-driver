@@ -54,7 +54,7 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new UpdateCommandMessage(getWriteNamespace(), getWriteConcern(), updates.subList(i, updates.size()),
                                                        getCommandEncoder(), encoder, getSettings());

@@ -372,7 +372,7 @@ class DBCollectionImpl extends DBCollection {
 
         BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern, list,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
-                                                                   getMessageSettings(port.getAddress()));
+                                                                   getMessageSettings(port));
         return writeWithCommandProtocol(port, INSERT, message, writeConcern);
     }
 
@@ -392,7 +392,7 @@ class DBCollectionImpl extends DBCollection {
                                                       final DBEncoder encoder, final DBPort port) {
         BaseWriteCommandMessage message = new DeleteCommandMessage(getNamespace(), writeConcern, removeList,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
-                                                                   getMessageSettings(port.getAddress()));
+                                                                   getMessageSettings(port));
         return writeWithCommandProtocol(port, REMOVE, message, writeConcern);
     }
 
@@ -402,7 +402,7 @@ class DBCollectionImpl extends DBCollection {
                                                       final DBEncoder encoder, final DBPort port) {
         BaseWriteCommandMessage message = new UpdateCommandMessage(getNamespace(), writeConcern, updates,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
-                                                                   getMessageSettings(port.getAddress()));
+                                                                   getMessageSettings(port));
         return writeWithCommandProtocol(port, UPDATE, message, writeConcern);
     }
 
@@ -438,11 +438,17 @@ class DBCollectionImpl extends DBCollection {
                db.getConnector().getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
-    private MessageSettings getMessageSettings(final ServerAddress address) {
-        ServerDescription serverDescription = db.getConnector().getServerDescription(address);
-        return MessageSettings.builder().maxDocumentSize(serverDescription.getMaxDocumentSize()).maxMessageSize(serverDescription
-                                                                                                                .getMaxMessageSize())
+    private MessageSettings getMessageSettings(final DBPort port) {
+        ServerDescription serverDescription = db.getConnector().getServerDescription(port.getAddress());
+        return MessageSettings.builder()
+                              .maxDocumentSize(serverDescription.getMaxDocumentSize())
+                              .maxMessageSize(serverDescription.getMaxMessageSize())
+                              .maxWriteBatchSize(serverDescription.getMaxWriteBatchSize())
                               .build();
+    }
+
+    private int getMaxWriteBatchSize(final DBPort port) {
+        return db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
     }
 
     private MongoNamespace getNamespace() {
@@ -551,7 +557,7 @@ class DBCollectionImpl extends DBCollection {
             this.writeRequests = writeRequests;
             this.writeConcern = writeConcern.continueOnError(false);
             this.encoder = encoder;
-            this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
+            this.maxBatchWriteSize = getMaxWriteBatchSize(port);
         }
 
         @Override
@@ -605,7 +611,7 @@ class DBCollectionImpl extends DBCollection {
             this.writeRequests = writeRequests;
             this.writeConcern = writeConcern.continueOnError(true);
             this.encoder = encoder;
-            this.maxBatchWriteSize = db.getConnector().getServerDescription(port.getAddress()).getMaxWriteBatchSize();
+            this.maxBatchWriteSize = getMaxWriteBatchSize(port);
         }
 
         @Override

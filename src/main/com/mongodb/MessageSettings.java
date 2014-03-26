@@ -22,9 +22,11 @@ import org.bson.util.annotations.Immutable;
 final class MessageSettings {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 1000;
 
     private final int maxDocumentSize;
     private final int maxMessageSize;
+    private final int maxWriteBatchSize;
 
     public static Builder builder() {
         return new Builder();
@@ -33,6 +35,7 @@ final class MessageSettings {
     static final class Builder {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+        private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
 
         public MessageSettings build() {
             return new MessageSettings(this);
@@ -48,6 +51,12 @@ final class MessageSettings {
             this.maxMessageSize = maxMessageSize;
             return this;
         }
+
+        public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
+            this.maxWriteBatchSize = maxWriteBatchSize;
+            return this;
+        }
+
         // CHECKSTYLE:ON
     }
 
@@ -59,8 +68,13 @@ final class MessageSettings {
         return maxMessageSize;
     }
 
+    public int getMaxWriteBatchSize() {
+        return maxWriteBatchSize;
+    }
+
     MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
+        this.maxWriteBatchSize = builder.maxWriteBatchSize;
     }
 }

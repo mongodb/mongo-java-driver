@@ -43,10 +43,9 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
         for (int i = 0; i < documents.size(); i++) {
             writer.mark();
             writer.encodeDocument(encoder, documents.get(i));
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new InsertCommandMessage(getWriteNamespace(), getWriteConcern(),
-                                                       documents.subList(i, documents.size()),
+                nextMessage = new InsertCommandMessage(getWriteNamespace(), getWriteConcern(), documents.subList(i, documents.size()),
                                                        getCommandEncoder(), encoder, getSettings());
                 break;
             }
