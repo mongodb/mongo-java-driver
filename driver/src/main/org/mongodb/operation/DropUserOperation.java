@@ -29,7 +29,6 @@ import org.mongodb.session.Session;
 
 import java.util.Arrays;
 
-import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -52,7 +51,7 @@ public class DropUserOperation extends BaseOperation<Void> {
     public Void execute() {
         ServerConnectionProvider serverConnectionProvider =
         getPrimaryServerConnectionProvider();
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
+        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {
             executeCollectionBasedProtocol(serverConnectionProvider);

@@ -49,7 +49,7 @@ public class UpdateUserOperation extends BaseOperation<Void> {
     @SuppressWarnings("unchecked")
     public Void execute() {
         ServerConnectionProvider serverConnectionProvider = getPrimaryServerConnectionProvider();
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
+        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {
             executeCollectionBasedProtocol(serverConnectionProvider);

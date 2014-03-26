@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -48,6 +49,16 @@ public class ServerVersion implements Comparable<ServerVersion> {
         notNull("versionList", versionList);
         isTrue("version array has three elements", versionList.size() == 3);
         this.versionList = Collections.unmodifiableList(new ArrayList<Integer>(versionList));
+    }
+
+    /**
+     * Constructs a new instance with the given major and minor versions and a patch version of 0.
+     *
+     * @param majorVersion the major version
+     * @param minorVersion the minor version
+     */
+    public ServerVersion(final int majorVersion, final int minorVersion) {
+        this(asList(majorVersion, minorVersion, 0));
     }
 
     /**

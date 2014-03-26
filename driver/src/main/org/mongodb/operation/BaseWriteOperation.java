@@ -126,7 +126,7 @@ public abstract class BaseWriteOperation extends BaseOperation<WriteResult> impl
     protected abstract WriteCommandProtocol getCommandProtocol(ServerDescription serverDescription, Connection connection);
 
     private boolean serverSupportsWriteCommands(final ServerDescription serverDescription) {
-        return serverDescription.getVersion().compareTo(new ServerVersion(Arrays.asList(2, 5, 4))) >= 0;
+        return serverDescription.getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
     // TODO: This is duplicated in ProtocolHelper, but I don't want it to be public

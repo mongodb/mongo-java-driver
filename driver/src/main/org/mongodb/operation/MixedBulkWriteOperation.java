@@ -141,7 +141,7 @@ public class MixedBulkWriteOperation<T> extends BaseOperation<BulkWriteResult> {
     }
 
     private boolean serverSupportsWriteCommands(final ServerConnectionProvider provider) {
-        return provider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
+        return provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
     private Iterable<Run> getRunGenerator(final ServerDescription serverDescription) {

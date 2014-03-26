@@ -30,7 +30,6 @@ import org.mongodb.session.Session;
 
 import java.util.List;
 
-import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -53,7 +52,7 @@ public class UserExistsOperation extends BaseOperation<Boolean> {
     @Override
     public Boolean execute() {
         ServerConnectionProvider provider = getPrimaryServerConnectionProvider();
-        if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 3))) >= 0) {
+        if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             return executeCommandBasedProtocol(provider);
         } else {
             return executeCollectionBasedProtocol(provider);

@@ -46,7 +46,7 @@ public class CreateIndexesOperation extends BaseOperation<Void> {
 
     @Override
     public Void execute() {
-        if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0) {
+        if (getPrimaryServerConnectionProvider().getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
                 executeCommandBasedProtocol();
             } catch (MongoCommandFailureException e) {
