@@ -87,9 +87,19 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
     protected abstract BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
                                                               final BSONBinaryWriter writer);
 
-    protected boolean maximumCommandDocumentSizeExceeded(final OutputBuffer buffer, final int commandStartPosition) {
-        // Subtract 2 to account for the trailing 0x0 at the end of the enclosing array and command document
-        return buffer.getPosition() - commandStartPosition > getSettings().getMaxDocumentSize() + HEADROOM - 2;
+    protected boolean exceedsLimits(final int batchLength, final int batchItemCount) {
+        return (exceedsBatchLengthLimit(batchLength, batchItemCount) || exceedsBatchItemCountLimit(batchItemCount));
+    }
+
+    // make a special exception for a command with only a single item added to it.  It's allowed to exceed maximum document size so that
+    // it's possible to, say, send a replacement document that is itself 16MB, which would push the size of the containing command
+    // document to be greater than the maximum document size.
+    private boolean exceedsBatchLengthLimit(final int batchLength, final int batchItemCount) {
+        return batchLength > getSettings().getMaxDocumentSize() && batchItemCount > 1;
+    }
+
+    private boolean exceedsBatchItemCountLimit(final int batchItemCount) {
+        return batchItemCount > getSettings().getMaxWriteBatchSize();
     }
 
     public abstract int getItemCount();

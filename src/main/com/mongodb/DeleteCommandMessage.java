@@ -51,7 +51,7 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeInt32("limit", remove.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(), getWriteConcern(), deletes.subList(i, deletes.size()),
                                                        getCommandEncoder(), queryEncoder, getSettings());

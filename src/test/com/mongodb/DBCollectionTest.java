@@ -21,6 +21,7 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +48,17 @@ public class DBCollectionTest extends TestCase {
         DBObject inserted1 = BasicDBObjectBuilder.start().add("x",1).add("y",2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start().add("x",3).add("y",3).get();
         c.insert(inserted1,inserted2);
+    }
+
+    @Test
+    public void testLargeMultiInsert() {
+        List<DBObject> documents = new ArrayList<DBObject>();
+        for (int i = 0; i < 1001; i++) {
+            documents.add(new BasicDBObject());
+        }
+
+        collection.insert(documents);
+        assertEquals(1001, collection.count());
     }
 
     @Test
