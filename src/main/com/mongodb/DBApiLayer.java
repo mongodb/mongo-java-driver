@@ -25,8 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
-import static java.util.Arrays.asList;
-
 /**
  * Concrete extension of abstract {@code DB} class.
  *
@@ -198,7 +196,7 @@ public class DBApiLayer extends DB {
     }
 
     private boolean useUserCommands(final DBPort port) {
-        return _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 4))) >= 0;
+        return _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
     void addDeadCursor(final DeadCursor deadCursor) {

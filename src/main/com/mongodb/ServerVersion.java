@@ -17,10 +17,10 @@
 package com.mongodb;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.bson.util.Assertions.isTrue;
 import static org.bson.util.Assertions.notNull;
 
@@ -34,7 +34,7 @@ class ServerVersion implements Comparable<ServerVersion> {
      * Creates a server version which will compare as less than all other valid versions
      */
     public ServerVersion() {
-        this.versionList = Collections.unmodifiableList(Arrays.asList(0, 0, 0));
+        this.versionList = Collections.unmodifiableList(asList(0, 0, 0));
     }
 
     /**
@@ -46,6 +46,16 @@ class ServerVersion implements Comparable<ServerVersion> {
         notNull("versionList", versionList);
         isTrue("version array has three elements", versionList.size() == 3);
         this.versionList = Collections.unmodifiableList(new ArrayList<Integer>(versionList));
+    }
+
+    /**
+     * Constructs a new instance with the given major and minor versions and a patch version of 0.
+     *
+     * @param majorVersion the major version
+     * @param minorVersion the minor version
+     */
+    public ServerVersion(final int majorVersion, final int minorVersion) {
+        this(asList(majorVersion, minorVersion, 0));
     }
 
     /**
