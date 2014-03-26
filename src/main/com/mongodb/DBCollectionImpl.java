@@ -335,7 +335,7 @@ class DBCollectionImpl extends DBCollection {
             index.putAll(options);
             index.put("key", keys);
 
-            if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0) {
+            if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
                 BasicDBObject createIndexes = new BasicDBObject("createIndexes", getName());
 
                 BasicDBList list = new BasicDBList();
@@ -435,7 +435,7 @@ class DBCollectionImpl extends DBCollection {
 
     private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
         return concern.callGetLastError() &&
-               db.getConnector().getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 5, 5))) >= 0;
+               db.getConnector().getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
     private MessageSettings getMessageSettings(final ServerAddress address) {
