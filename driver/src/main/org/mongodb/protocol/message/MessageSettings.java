@@ -16,12 +16,17 @@
 
 package org.mongodb.protocol.message;
 
+import org.mongodb.annotations.Immutable;
+
+@Immutable
 public final class MessageSettings {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 1000;
 
     private final int maxDocumentSize;
     private final int maxMessageSize;
+    private final int maxWriteBatchSize;
 
     public static Builder builder() {
         return new Builder();
@@ -30,6 +35,7 @@ public final class MessageSettings {
     public static final class Builder {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+        private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
 
         public MessageSettings build() {
             return new MessageSettings(this);
@@ -45,6 +51,12 @@ public final class MessageSettings {
             this.maxMessageSize = maxMessageSize;
             return this;
         }
+
+        public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
+            this.maxWriteBatchSize = maxWriteBatchSize;
+            return this;
+        }
+
         // CHECKSTYLE:ON
     }
 
@@ -56,8 +68,13 @@ public final class MessageSettings {
         return maxMessageSize;
     }
 
-    MessageSettings(final Builder builder) {
+    public int getMaxWriteBatchSize() {
+        return maxWriteBatchSize;
+    }
+
+    private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
+        this.maxWriteBatchSize = builder.maxWriteBatchSize;
     }
 }

@@ -83,8 +83,8 @@ final class ProtocolHelper {
     static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
         return MessageSettings.builder()
                               .maxDocumentSize(serverDescription.getMaxDocumentSize())
-                              .maxMessageSize(serverDescription
-                                              .getMaxMessageSize())
+                              .maxMessageSize(serverDescription.getMaxMessageSize())
+                              .maxWriteBatchSize(serverDescription.getMaxWriteBatchSize())
                               .build();
     }
 

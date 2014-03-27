@@ -24,6 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
 
+import java.util.Collections;
 import java.util.List;
 
 public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
@@ -43,6 +44,10 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         return insertRequestList.size();
     }
 
+    public List<InsertRequest<T>> getRequests() {
+        return Collections.unmodifiableList(insertRequestList);
+    }
+
     protected String getCommandName() {
         return "insert";
     }
@@ -55,7 +60,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         for (int i = 0; i < insertRequestList.size(); i++) {
             writer.mark();
             encoder.encode(writer, insertRequestList.get(i).getDocument());
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),
                                                           insertRequestList.subList(i, insertRequestList .size()),

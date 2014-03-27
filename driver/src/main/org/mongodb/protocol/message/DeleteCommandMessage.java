@@ -1,5 +1,4 @@
 /*
-
  * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.RemoveRequest;
 
+import java.util.Collections;
 import java.util.List;
 
 public class DeleteCommandMessage extends BaseWriteCommandMessage {
@@ -40,6 +40,10 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     @Override
     public int getItemCount() {
         return deletes.size();
+    }
+
+    public List<RemoveRequest> getRequests() {
+        return Collections.unmodifiableList(deletes);
     }
 
     @Override
@@ -62,7 +66,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(),
                                                        isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),

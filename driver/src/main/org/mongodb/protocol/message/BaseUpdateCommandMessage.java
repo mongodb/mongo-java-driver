@@ -24,6 +24,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.BaseUpdateRequest;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> extends BaseWriteCommandMessage {
@@ -34,6 +35,10 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
                                     final MessageSettings settings) {
         super(writeNamespace, ordered, writeConcern, commandEncoder, settings);
         this.updates = updates;
+    }
+
+    public List<T> getRequests() {
+        return Collections.unmodifiableList(updates);
     }
 
     @Override
@@ -58,7 +63,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (maximumCommandDocumentSizeExceeded(buffer, commandStartPosition)) {
+            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = createNextMessage(updates.subList(i, updates.size()));
                 break;

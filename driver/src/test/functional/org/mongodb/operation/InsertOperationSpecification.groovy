@@ -16,20 +16,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.operation
 
 import org.junit.Test
@@ -70,6 +56,22 @@ class InsertOperationSpecification extends FunctionalSpecification {
         then:
         asList(insert.getDocument()) == collection.find().into([])
     }
+
+    @Test
+    public void 'should insert a large number of documents'() {
+        given:
+        List<Document> documents = new ArrayList<Document>();
+        for (int i = 0; i < 1001; i++) {
+            documents.add(new Document());
+        }
+
+        when:
+        collection.insert(documents);
+
+        then:
+        collection.find().count() == 1001
+    }
+
 
     def 'should insert multiple documents'() {
         given:
