@@ -26,7 +26,7 @@ import org.bson.types.ObjectId;
 @Deprecated
 public class DBPointer extends DBRefBase {
     
-    static final boolean D = Boolean.getBoolean( "DEBUG.DBPOINTER" );
+    private static final long serialVersionUID = -1977838613745447826L;
 
     /**
      *  CTOR used for testing BSON encoding.  Otherwise
@@ -41,7 +41,7 @@ public class DBPointer extends DBRefBase {
     }
 
     DBPointer( DBObject parent , String fieldName , DB db , String ns , ObjectId id ){
-        super(db, ns, (Object)id);
+        super(db, ns, id);
     
         _parent = parent;
         _fieldName = fieldName;
