@@ -574,6 +574,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      * @deprecated use {@link #createIndex(DBObject, com.mongodb.DBObject)} the encoder is not used.
      */
+    @Deprecated
     public abstract void createIndex(DBObject keys, DBObject options, DBEncoder encoder);
 
     /**
