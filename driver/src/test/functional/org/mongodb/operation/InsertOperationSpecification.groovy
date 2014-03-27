@@ -57,10 +57,9 @@ class InsertOperationSpecification extends FunctionalSpecification {
         asList(insert.getDocument()) == collection.find().into([])
     }
 
-    @Test
-    public void 'should insert a large number of documents'() {
+    def 'should insert a large number of documents'() {
         given:
-        List<Document> documents = new ArrayList<Document>();
+        def documents = []
         for (int i = 0; i < 1001; i++) {
             documents.add(new Document());
         }
