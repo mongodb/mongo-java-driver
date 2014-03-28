@@ -31,6 +31,8 @@ import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.ServerSettings;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.SocketStreamFactory;
+import org.mongodb.session.ClusterSession;
+import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -40,6 +42,7 @@ import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isAuthenticated;
+import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
@@ -66,13 +69,14 @@ public class UserOperationTest extends DatabaseTestCase {
         // given:
         new CreateUserOperation(readOnlyUser).execute(getSession());
         Cluster cluster = createCluster(readOnlyUser);
+        Session session = new ClusterSession(cluster, getExecutor());
 
         // when:
         try {
             new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec()
-            ).execute(getSession());
+            ).execute(session);
             fail("should have thrown");
         } catch (MongoException e) {
             // all good
@@ -93,18 +97,20 @@ public class UserOperationTest extends DatabaseTestCase {
         new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
+        Session session = new ClusterSession(cluster, getExecutor());
+
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                           true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec()
-            ).execute(getSession());
+            ).execute(session);
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
                                                        new DocumentCodec()
             )
-                                    .execute(getSession()));
+                                    .execute(session));
         } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
@@ -120,11 +126,13 @@ public class UserOperationTest extends DatabaseTestCase {
         new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
+        Session session = new ClusterSession(cluster, getExecutor());
+
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()).execute(getSession());
+                                          new DocumentCodec()).execute(session);
             fail("Should have thrown");
         } catch (MongoException e) {
             // all good
@@ -145,12 +153,14 @@ public class UserOperationTest extends DatabaseTestCase {
         new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
+        Session session = new ClusterSession(cluster, getExecutor());
+
         try {
             // when
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                              new Find(),
                                              new DocumentCodec()
-            ).execute(getSession());
+            ).execute(session);
             // then
             assertEquals(0, result);
         } finally {
