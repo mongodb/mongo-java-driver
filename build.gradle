@@ -65,6 +65,10 @@ configure(subprojects.findAll { it.name != 'util' }) {
         provided.extendsFrom(compile)
     }
 
+    javadoc {
+        classpath += configurations.provided
+    }
+
     sourceSets {
         main { java.srcDirs = ['src/main'] }
         test { java.srcDirs = ['src/test'] }
