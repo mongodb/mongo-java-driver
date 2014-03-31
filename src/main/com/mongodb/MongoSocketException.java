@@ -19,7 +19,9 @@ package com.mongodb;
 import java.io.IOException;
 
 /**
- * Subclass of {@link MongoException} representing a network-related exception
+ * Subclass of {@link MongoException} representing a network-related exception.
+ *
+ * @since 2.12
  */
 public class MongoSocketException extends MongoException {
 
