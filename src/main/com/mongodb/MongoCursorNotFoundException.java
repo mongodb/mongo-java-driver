@@ -18,6 +18,8 @@ package com.mongodb;
 
 /**
  * Subclass of {@link MongoException} representing a cursor-not-found exception.
+ *
+ * @since 2.12
  */
 public class MongoCursorNotFoundException extends MongoException {
 
