@@ -75,11 +75,7 @@ public abstract class BaseCluster implements Cluster {
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
             long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (true) {
-                if (!curDescription.isCompatibleWithDriver()) {
-                    throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of "
-                                                                      + "the servers to which it is connected: %s", curDescription),
-                                                               curDescription);
-                }
+                throwIfIncompatible(curDescription);
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
                     if (server != null) {
@@ -88,8 +84,8 @@ public abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionException(format("Unable to connect to any server in cluster %s that satisfies "
-                                                                          + "the selector %s", curDescription, serverSelector));
+                    throw new MongoServerSelectionException(format("Unable to connect to any server in cluster %s that matches %s",
+                                                                   curDescription, serverSelector));
                 }
 
                 long timeout = endTime - System.nanoTime();
@@ -98,16 +94,15 @@ public abstract class BaseCluster implements Cluster {
                                    serverSelector, curDescription, MILLISECONDS.convert(timeout, NANOSECONDS)));
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
-                    throw new MongoTimeoutException(format("Timed out while waiting for a server that satisfies the selector: %s "
-                                                           + "after %d ms", serverSelector, MILLISECONDS.convert(timeout, NANOSECONDS)));
+                    throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
+                                                           serverSelector, MILLISECONDS.convert(timeout, NANOSECONDS)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
                 serverDescriptions = serverSelector.choose(curDescription);
             }
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting for a server that satisfies server selector %s ",
-                                                       serverSelector), e);
+            throw new MongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
         }
     }
 
@@ -131,15 +126,15 @@ public abstract class BaseCluster implements Cluster {
                                    MILLISECONDS.convert(timeout, NANOSECONDS)));
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
-                    throw new MongoTimeoutException(format("Timed out while waiting for the cluster description after waiting %d %s",
-                                                           timeout, NANOSECONDS));
+                    throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
+                                                           MILLISECONDS.convert(timeout, NANOSECONDS)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
             }
             return curDescription;
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting for the cluster description"), e);
+            throw new MongoInterruptedException(format("Interrupted while waiting to connect"), e);
         }
     }
 
@@ -205,6 +200,14 @@ public abstract class BaseCluster implements Cluster {
         ClusterableServer server = serverFactory.create(serverAddress);
         server.addChangeListener(serverStateListener);
         return server;
+    }
+
+    private void throwIfIncompatible(final ClusterDescription curDescription) {
+        if (!curDescription.isCompatibleWithDriver()) {
+            throw new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of "
+                                                              + "the servers to which it is connected: %s", curDescription),
+                                                       curDescription);
+        }
     }
 
     private static final class WrappedServer implements Server {
