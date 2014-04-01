@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class StickyHAShardedClusterServerSelector implements ServerSelector {
-    private ServerAddress stickyMongos;
+class MongosHAServerSelector implements ServerSelector {
+    private ServerAddress stickTo;
     private Set<ServerAddress> consideredServers = new HashSet<ServerAddress>();
 
     @Override
@@ -36,9 +36,9 @@ class StickyHAShardedClusterServerSelector implements ServerSelector {
         Set<ServerAddress> okServers = getOkServers(clusterDescription);
 
         synchronized (this) {
-            if (!consideredServers.containsAll(okServers) || !okServers.contains(stickyMongos)) {
-                if (stickyMongos != null && !okServers.contains(stickyMongos)) {
-                    stickyMongos = null;
+            if (!consideredServers.containsAll(okServers) || !okServers.contains(stickTo)) {
+                if (stickTo != null && !okServers.contains(stickTo)) {
+                    stickTo = null;
                     consideredServers.clear();
                 }
                 ServerDescription fastestServer = null;
@@ -48,22 +48,22 @@ class StickyHAShardedClusterServerSelector implements ServerSelector {
                     }
                 }
                 if (fastestServer != null) {
-                    stickyMongos = fastestServer.getAddress();
+                    stickTo = fastestServer.getAddress();
                     consideredServers.addAll(okServers);
                 }
             }
-            if (stickyMongos == null) {
+            if (stickTo == null) {
                 return Collections.emptyList();
             } else {
-                return Arrays.asList(clusterDescription.getByServerAddress(stickyMongos));
+                return Arrays.asList(clusterDescription.getByServerAddress(stickTo));
             }
         }
     }
 
     @Override
     public String toString() {
-        return "StickyHAShardedClusterServerSelector{"
-               + "stickyMongos=" + stickyMongos
+        return "MongosHAServerSelector{"
+               + (stickTo == null ? "" : "stickTo=" + stickTo)
                + '}';
     }
 
