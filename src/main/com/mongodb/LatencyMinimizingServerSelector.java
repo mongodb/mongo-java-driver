@@ -21,14 +21,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 class LatencyMinimizingServerSelector implements ServerSelector {
 
-    private final long acceptableLatencyDifference;
-    private final TimeUnit timeUnit;
+    private final long acceptableLatencyDifferenceNanos;
 
     LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
-        this.acceptableLatencyDifference = acceptableLatencyDifference;
-        this.timeUnit = timeUnit;
+        this.acceptableLatencyDifferenceNanos = NANOSECONDS.convert(acceptableLatencyDifference, timeUnit);
     }
 
     @Override
@@ -39,8 +40,7 @@ class LatencyMinimizingServerSelector implements ServerSelector {
     @Override
     public String toString() {
         return "LatencyMinimizingServerSelector{"
-               + "acceptableLatencyDifference=" + acceptableLatencyDifference
-               + ", timeUnit=" + timeUnit
+               + "acceptableLatencyDifference=" + MILLISECONDS.convert(acceptableLatencyDifferenceNanos, NANOSECONDS) + " ms"
                + '}';
     }
 
@@ -64,7 +64,7 @@ class LatencyMinimizingServerSelector implements ServerSelector {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() - TimeUnit.NANOSECONDS.convert(acceptableLatencyDifference, timeUnit) <= bestPingTime) {
+            if (cur.getAveragePingTimeNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }

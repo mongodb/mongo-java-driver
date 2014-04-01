@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.util.Assertions.isTrue;
 import static org.bson.util.Assertions.notNull;
@@ -76,27 +77,24 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionException(
-                                                                  format("Unable to connect to any server that satisfies the selector " +
-                                                                         "%s", serverSelector));
+                    throw new MongoServerSelectionException(format("Unable to connect to any server that matches %s", serverSelector));
                 }
 
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                   serverSelector, curDescription, TimeUnit.MILLISECONDS.convert(timeout, NANOSECONDS)));
+                                   serverSelector, curDescription, MILLISECONDS.convert(timeout, NANOSECONDS)));
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
-                    throw new MongoTimeoutException(format("Timed out while waiting for a server that satisfies the selector: %s "
-                                                           + "after  %d %s", serverSelector, timeout, NANOSECONDS));
+                    throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
+                                                           serverSelector, MILLISECONDS.convert(timeout, NANOSECONDS)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
                 serverDescriptions = serverSelector.choose(curDescription);
             }
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting for a server that satisfies server selector %s ",
-                                                       serverSelector), e);
+            throw new MongoInterruptedException(format("Interrupted while waiting for a server that matches %s ", serverSelector), e);
         }
     }
 
@@ -117,18 +115,18 @@ abstract class BaseCluster implements Cluster {
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                   TimeUnit.MILLISECONDS.convert(timeout, NANOSECONDS)));
+                                   MILLISECONDS.convert(timeout, NANOSECONDS)));
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
-                    throw new MongoTimeoutException(format("Timed out while waiting for the cluster description after waiting %d %s",
-                                                           timeout, NANOSECONDS));
+                    throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
+                                                           MILLISECONDS.convert(timeout, NANOSECONDS)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
             }
             return curDescription;
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting for the cluster description"), e);
+            throw new MongoInterruptedException(format("Interrupted while waiting to connect"), e);
         }
     }
 

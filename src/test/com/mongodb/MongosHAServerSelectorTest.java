@@ -34,16 +34,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 
 
-public class StickyHAShardedClusterServerSelectorTest {
+public class MongosHAServerSelectorTest {
 
-    private StickyHAShardedClusterServerSelector selector;
+    private MongosHAServerSelector selector;
     private ServerDescription first;
     private ServerDescription secondConnecting;
     private ServerDescription secondConnected;
 
     @Before
     public void setUp() throws UnknownHostException {
-        selector = new StickyHAShardedClusterServerSelector();
+        selector = new MongosHAServerSelector();
         first = ServerDescription.builder()
                                                    .state(Connected)
                                                    .address(new ServerAddress())

@@ -562,7 +562,7 @@ public class DBTCPConnector implements DBConnector {
         if (prefixedServerSelector == null) {
             ClusterDescription clusterDescription = getClusterDescription();
             if (clusterDescription.getConnectionMode() == Multiple && clusterDescription.getType() == Sharded) {
-                prefixedServerSelector = new StickyHAShardedClusterServerSelector();
+                prefixedServerSelector = new MongosHAServerSelector();
             } else {
                 prefixedServerSelector = new NoOpServerSelector();
             }

@@ -43,8 +43,8 @@ class CompositeServerSelector implements ServerSelector {
 
     @Override
     public String toString() {
-        return "CompositeServerSelector{"
-               + "serverSelectors=" + serverSelectors
-               + '}';
+            return "{"
+                   + "serverSelectors=" + serverSelectors
+                   + '}';
     }
 }
