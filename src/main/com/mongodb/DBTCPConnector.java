@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +30,7 @@ import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterConnectionMode.Single;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ClusterType.Sharded;
+import static com.mongodb.ClusterType.Unknown;
 import static com.mongodb.MongoAuthority.Type.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
@@ -52,7 +52,10 @@ public class DBTCPConnector implements DBConnector {
 
     private final MyPort _myPort = new MyPort();
 
-    private ServerSelector prefixedServerSelector;
+    private final ClusterConnectionMode connectionMode;
+
+    private ClusterType type = ClusterType.Unknown;
+    private MongosHAServerSelector mongosHAServerSelector;
 
     /**
      * @param mongo the Mongo instance
@@ -60,6 +63,8 @@ public class DBTCPConnector implements DBConnector {
      */
     public DBTCPConnector( Mongo mongo  ) {
         _mongo = mongo;
+        connectionMode = _mongo.getAuthority().getType() == Set || _mongo.getMongoOptions().getRequiredReplicaSetName() != null ?
+                         Multiple : Single;
     }
 
     public void start() {
@@ -76,8 +81,7 @@ public class DBTCPConnector implements DBConnector {
         Clusters.create(clusterId,
                         ClusterSettings.builder()
                                        .hosts(_mongo.getAuthority().getServerAddresses())
-                                       .mode(_mongo.getAuthority().getType() == Set || options.getRequiredReplicaSetName() != null ?
-                                             Multiple : Single)
+                                       .mode(connectionMode)
                                        .requiredReplicaSetName(_mongo.getMongoOptions().getRequiredReplicaSetName())
                                        .build(),
                         ServerSettings.builder()
@@ -326,7 +330,7 @@ public class DBTCPConnector implements DBConnector {
     public ServerAddress getAddress() {
         isTrue("open", !_closed);
         ClusterDescription clusterDescription = getClusterDescription();
-        if (clusterDescription.getConnectionMode() == Single) {
+        if (connectionMode == Single) {
             return clusterDescription.getAny().get(0).getAddress();
         }
         if (clusterDescription.getPrimaries().isEmpty()) {
@@ -362,16 +366,13 @@ public class DBTCPConnector implements DBConnector {
 
     public ReplicaSetStatus getReplicaSetStatus() {
         isTrue("open", !_closed);
-        ClusterDescription description = getClusterDescription();
-        return description.getType() == ReplicaSet &&
-               description.getConnectionMode() == Multiple
-               ? new ReplicaSetStatus(description) : null;
+        return getType() == ReplicaSet && connectionMode == Multiple ? new ReplicaSetStatus(getClusterDescription()) : null;
     }
 
     // This call can block if it's not yet known.
     boolean isMongosConnection() {
         isTrue("open", !_closed);
-        return getClusterDescription().getType() == Sharded;
+        return getType() == Sharded;
     }
 
     public String getConnectPoint(){
@@ -393,8 +394,7 @@ public class DBTCPConnector implements DBConnector {
         if (readPreference.equals(ReadPreference.primary())) {
             return false;
         }
-        ClusterDescription description = getClusterDescription();
-        return description.getConnectionMode() == Multiple && description.getType() == ReplicaSet;
+        return connectionMode == Multiple && getType() == ReplicaSet;
     }
 
     private ClusterDescription getClusterDescription() {
@@ -501,7 +501,7 @@ public class DBTCPConnector implements DBConnector {
             if ( getPinnedRequestPortForThread() != null )
                 return;
 
-            setPinnedRequestPortForThread(getConnection(new ReadPreferenceServerSelector(ReadPreference.primary())));
+            setPinnedRequestPortForThread(getConnection(createServerSelector(ReadPreference.primary())));
         }
 
         private DBPort getConnection(final ServerSelector serverSelector) {
@@ -551,23 +551,37 @@ public class DBTCPConnector implements DBConnector {
         private final ThreadLocal<PinnedRequestStatus> pinnedRequestStatusThreadLocal = new ThreadLocal<PinnedRequestStatus>();
     }
 
-    private ServerSelector createServerSelector(final ReadPreference readPref) {
-        return new CompositeServerSelector(Arrays.asList(getPrefixedServerSelector(),
-                                                        new ReadPreferenceServerSelector(readPref),
-                                                        new LatencyMinimizingServerSelector(_mongo.getMongoOptions()
-                                                                                            .acceptableLatencyDifferenceMS, MILLISECONDS)));
+    private ServerSelector createServerSelector(final ReadPreference readPreference) {
+        if (connectionMode == Multiple) {
+            List<ServerSelector> serverSelectorList = new ArrayList<ServerSelector>();
+            if (getType() == Sharded) {
+                serverSelectorList.add(getMongosHAServerSelector());
+            } else if (getType() == ReplicaSet) {
+                serverSelectorList.add(new ReadPreferenceServerSelector(readPreference));
+            } else {
+                serverSelectorList.add(new AnyServerSelector());
+            }
+            serverSelectorList.add(new LatencyMinimizingServerSelector(_mongo.getMongoOptions().acceptableLatencyDifferenceMS,
+                                                                       MILLISECONDS));
+            return new CompositeServerSelector(serverSelectorList);
+        } else {
+            return new AnyServerSelector();
+        }
     }
 
-    private synchronized ServerSelector getPrefixedServerSelector() {
-        if (prefixedServerSelector == null) {
-            ClusterDescription clusterDescription = getClusterDescription();
-            if (clusterDescription.getConnectionMode() == Multiple && clusterDescription.getType() == Sharded) {
-                prefixedServerSelector = new MongosHAServerSelector();
-            } else {
-                prefixedServerSelector = new NoOpServerSelector();
-            }
+    private synchronized ClusterType getType() {
+        if (type == Unknown) {
+            type = getClusterDescription().getType();
         }
-        return prefixedServerSelector;
+        return type;
+    }
+
+    // There needs to be just one instance of this because it's stateful between requests
+    private synchronized MongosHAServerSelector getMongosHAServerSelector() {
+        if (mongosHAServerSelector == null) {
+            mongosHAServerSelector = new MongosHAServerSelector();
+        }
+        return mongosHAServerSelector;
     }
 
     static class PinnedRequestStatus {
