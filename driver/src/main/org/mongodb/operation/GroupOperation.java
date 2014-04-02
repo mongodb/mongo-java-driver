@@ -64,7 +64,7 @@ public class GroupOperation implements Operation<MongoCursor<Document>> {
         CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
                                                                     new DocumentCodec(), readPreference, session);
 
-        return new InlineMongoCursor<Document>(commandResult, (List<Document>) commandResult.getResponse().get("retval"));
+        return new InlineMongoCursor<Document>(commandResult.getAddress(), (List<Document>) commandResult.getResponse().get("retval"));
     }
 
     private Document asCommandDocument() {

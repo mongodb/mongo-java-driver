@@ -60,7 +60,7 @@ public class DistinctOperation implements Operation<MongoCursor<String>> {
         CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
                                                                     new DocumentCodec(), find.getReadPreference(), session);
 
-        return new InlineMongoCursor<String>(commandResult, (List<String>) commandResult.getResponse().get("values"));
+        return new InlineMongoCursor<String>(commandResult.getAddress(), (List<String>) commandResult.getResponse().get("values"));
     }
 
     private Document asCommandDocument() {

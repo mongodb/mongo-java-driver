@@ -19,6 +19,7 @@ package org.mongodb;
 import org.bson.types.Code;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.AsyncOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
@@ -28,7 +29,6 @@ import org.mongodb.operation.FindAndReplace;
 import org.mongodb.operation.FindAndReplaceOperation;
 import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
-import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
@@ -639,9 +639,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            Document document = new Document("aggregate", getNamespace().getCollectionName()).append("pipeline", pipeline);
-            CommandResult commandResult = getDatabase().executeCommand(document, null);
-            return new InlineMongoCursor<T>(commandResult, (List<T>) commandResult.getResponse().get("result"));
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build(),
+                                                     options.getReadPreference()));
         }
 
         @Override

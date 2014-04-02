@@ -50,7 +50,7 @@ public class AggregateOperation<T> extends AggregateBaseOperation<T> implements 
     public MongoCursor<T> execute(final Session session) {
         CommandResult result = sendAndReceiveMessage(session);
         if (getOptions().getOutputMode() == AggregationOptions.OutputMode.INLINE) {
-            return new InlineMongoCursor<T>(result, (List<T>) result.getResponse().get("result"));
+            return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
         } else {
             return new AggregationCursor<T>(getOptions(), getNamespace(), getDecoder(),
                                             getConnectionProvider(getReadPreference(), session), receiveMessage(result));
