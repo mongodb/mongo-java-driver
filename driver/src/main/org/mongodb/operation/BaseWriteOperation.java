@@ -102,7 +102,7 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
                     //                    } else {
                     protocolFuture = getWriteProtocol().executeAsync(pair.getConnection(), pair.getServerDescription());
                     //                    }
-                    protocolFuture.register(new SessionClosingSingleResultCallback<WriteResult>(retVal));
+                    protocolFuture.register(new ConnectionClosingSingleResultCallback<WriteResult>(retVal, pair.getConnection()));
                 }
             }
         });

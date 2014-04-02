@@ -78,7 +78,7 @@ public class CommandOperation implements AsyncOperation<CommandResult>, Operatio
             public void onResult(final ServerDescriptionConnectionPair pair, final MongoException e) {
                 new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder)
                 .executeAsync(pair.getConnection(), pair.getServerDescription())
-                .register(new SessionClosingSingleResultCallback<CommandResult>(retVal));
+                .register(new ConnectionClosingSingleResultCallback<CommandResult>(retVal, pair.getConnection()));
             }
         });
         return retVal;

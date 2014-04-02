@@ -17,17 +17,24 @@
 package org.mongodb.operation;
 
 import org.mongodb.MongoException;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 
-class SessionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
+class ConnectionClosingSingleResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultFuture<T> retVal;
+    private final Connection connection;
 
-    public SessionClosingSingleResultCallback(final SingleResultFuture<T> retVal) {
+    public ConnectionClosingSingleResultCallback(final SingleResultFuture<T> retVal, final Connection connection) {
         this.retVal = retVal;
+        this.connection = connection;
     }
 
     @Override
     public void onResult(final T result, final MongoException e) {
-        retVal.init(result, e);
+        try {
+            retVal.init(result, e);
+        } finally {
+            connection.close();
+        }
     }
 }

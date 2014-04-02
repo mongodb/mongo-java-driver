@@ -172,7 +172,7 @@ public class PinnedSession implements Session {
 
         @Override
         public MongoFuture<Connection> getConnectionAsync() {
-            return new SingleResultFuture<Connection>(connection, null);
+            return new SingleResultFuture<Connection>(getConnection(), null);
         }
     }
 }
