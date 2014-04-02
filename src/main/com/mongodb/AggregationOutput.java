@@ -16,11 +16,12 @@
 
 package com.mongodb;
 
+@SuppressWarnings("deprecation")
 public class AggregationOutput {
 
     /**
      * returns an iterator to the results of the aggregation
-     * @return
+     * @return the results of the aggregation
      */
     public Iterable<DBObject> results() {
         return _resultSet;
@@ -28,42 +29,53 @@ public class AggregationOutput {
     
     /**
      * returns the command result of the aggregation
-     * @return
+     * @return the command result
+     *
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public CommandResult getCommandResult(){
         return _commandResult;
     }
 
     /**
      * returns the original aggregation command
-     * @return
+     * @return the command
+     *
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public DBObject getCommand() {
         return _cmd;
     }
 
     /**
      * returns the address of the server used to execute the aggregation
-     * @return
+     * @return the server which executed the aggregation
+     *
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public ServerAddress getServerUsed() {
         return _commandResult.getServerUsed();
     }
 
     /**
-     * string representation of the aggregation command
+     * Constructs a new instance
+     *
+     * @param command the aggregation command
+     * @param commandResult the aggregation command result
+     *
+     * @deprecated there is no replacement for this constructor
      */
-    public String toString(){
-        return _commandResult.toString();
-    }
-   
     @SuppressWarnings("unchecked")
-    public AggregationOutput(DBObject cmd, CommandResult raw) {
-        _commandResult = raw;
-        _cmd = cmd;
+    @Deprecated
+    public AggregationOutput(DBObject command, CommandResult commandResult) {
+        _commandResult = commandResult;
+        _cmd = command;
         
-        if(raw.containsField("result"))
-            _resultSet = (Iterable<DBObject>) raw.get( "result" );
+        if(commandResult.containsField("result"))
+            _resultSet = (Iterable<DBObject>) commandResult.get( "result" );
         else 
             throw new IllegalArgumentException("result undefined");
     }
