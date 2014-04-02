@@ -256,6 +256,10 @@ members:
   - setRootObject(java.lang.Object)                             # JAVA-901
 
   com.mongodb.AggregationOutput:
+  - getCommandResult()
+  - getCommand()
+  - getServerUsed()
+  - AggregationOutput(com.mongodb.DBObject, com.mongodb.CommandResult)
   - _commandResult                                              # JAVA-925 Deprecate protected fields in com.mongodb.AggregationOutput
   - _cmd                                                        # JAVA-925
   - _resultSet
