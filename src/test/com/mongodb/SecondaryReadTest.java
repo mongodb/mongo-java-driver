@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.util.TestCase;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class SecondaryReadTest extends TestCase {
      * Assert that the percentage of reads to each secondary does not deviate by more than 1 %
      */
     @Test
+    @Ignore
     public void testSecondaryReadBalance() throws Exception {
         if (!isReplicaSet(cleanupMongo)) {
             return;
