@@ -23,70 +23,58 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.CountOperation;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.InsertRequest;
-import org.mongodb.session.PinnedSession;
+import org.mongodb.MongoClient;
+import org.mongodb.MongoCollection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getCluster;
-import static org.mongodb.Fixture.getExecutor;
-import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.getMongoClient;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
+
 
 @Category({Async.class, Slow.class})
 public class AsyncBatchInsertTest extends DatabaseTestCase {
 
-    private List<InsertRequest<Document>> insertRequestList;
+    private List<Document> insertDocumentList;
 
     @Before
     public void setUp() {
         byte[] hugeByteArray = new byte[1024 * 100];
 
-        insertRequestList = new ArrayList<InsertRequest<Document>>();
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
-        insertRequestList.add(new InsertRequest<Document>(new Document("bytes", hugeByteArray)));
+        insertDocumentList = new ArrayList<Document>();
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
+        insertDocumentList.add(new Document("bytes", hugeByteArray));
 
         super.setUp();
     }
 
     @Test
     public void testBatchInsert() throws ExecutionException, InterruptedException {
-        new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
-                                      insertRequestList,
-                                      new DocumentCodec())
-        .executeAsync(getSession()).get();
-        assertEquals(insertRequestList.size(), collection.find().count());
+        collection.withWriteConcern(ACKNOWLEDGED).asyncInsert(insertDocumentList).get();
+        assertEquals(insertDocumentList.size(), collection.find().count());
     }
 
-    // To make the assertion work for unacknowledged writes, have to bind to a single connection
     @Test
     public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
-        PinnedSession session = new PinnedSession(getCluster(), getExecutor());
-        try {
-            InsertOperation<Document> insertOperation = new InsertOperation<Document>(collection.getNamespace(), true, UNACKNOWLEDGED,
-                                                                                      insertRequestList,
-                                                                                      new DocumentCodec()
-            );
-            insertOperation.executeAsync(session).get();
-            long count = new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec())
-                         .execute(session);
-            assertEquals(insertRequestList.size(), count);
-        } finally {
-            session.close();
-        }
+        final MongoClient client = getMongoClient();
+        Long count = client.withConnection(new Callable<Long>() {
+            public Long call() {
+                MongoCollection<Document> collection = client.getDatabase(getDatabaseName()).getCollection(getCollectionName());
+                collection.withWriteConcern(UNACKNOWLEDGED).asyncInsert(insertDocumentList).get();
+                return collection.find().asyncCount().get();
+            }
+        });
+        assertEquals(count.intValue(), insertDocumentList.size());
     }
 }

@@ -20,6 +20,7 @@ import category.Async;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -36,4 +37,24 @@ public class MongoAsyncWriteTest extends DatabaseTestCase {
         assertNotNull(result);
         assertEquals(collection.find().getOne(), document);
     }
+
+    @Test
+    public void testManyInsertsAsync() throws ExecutionException, InterruptedException {
+        int numberOfInserts = 500;
+        ArrayList<MongoFuture<WriteResult>> futures = new ArrayList<MongoFuture<WriteResult>>();
+
+        for (int i = 0; i < numberOfInserts; i++) {
+            Document doc = new Document();
+            doc.put("_id", i);
+            doc.put("field", "Some value");
+            futures.add(collection.asyncInsert(doc));
+        }
+
+        for (MongoFuture<WriteResult> future : futures) {
+            future.get();
+        }
+
+        assertEquals(collection.find().asyncCount().get().intValue(), numberOfInserts);
+    }
+
 }

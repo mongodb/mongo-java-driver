@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import java.util.List;
+
 /**
  * Asynchronous write operations.
  *
@@ -23,5 +25,10 @@ package org.mongodb;
  * @since 3.0
  */
 public interface MongoAsyncWritableView<T> {
+
+    MongoFuture<WriteResult> asyncInsert(T document);
+
+    MongoFuture<WriteResult> asyncInsert(List<T> documents);
+
     MongoFuture<WriteResult> asyncReplace(T replacement);
 }
