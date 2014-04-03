@@ -17,43 +17,57 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.protocol.QueryProtocol;
+import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 
 public class GetIndexesOperation implements Operation<List<Document>> {
-    private final Encoder<Document> simpleDocumentEncoder = new DocumentCodec();
-    private final MongoNamespace indexesNamespace;
-    private final Find queryForCollectionNamespace;
+    private final MongoNamespace collectionNamespace;
 
     public GetIndexesOperation(final MongoNamespace collectionNamespace) {
-        notNull("collectionNamespace", collectionNamespace);
-        this.indexesNamespace = new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
-        this.queryForCollectionNamespace = new Find(new Document("ns", collectionNamespace.getFullName())).readPreference(primary());
+        this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
     }
 
     @Override
     public List<Document> execute(final Session session) {
-        List<Document> retVal = new ArrayList<Document>();
-        MongoCursor<Document> cursor = new MongoQueryCursor<Document>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
+        QueryResult<Document> queryResult =
+        executeProtocol(new QueryProtocol<Document>(getIndexNamespace(), getQueryFlags(), 0, 0, asQueryDocument(), null,
+                                                    new DocumentCodec(), new DocumentCodec()),
+                        session);
+        MongoCursor<Document> cursor = new MongoQueryCursor<Document>(getIndexNamespace(), queryResult, getQueryFlags(), 0, 0,
                                                                       new DocumentCodec(),
                                                                       getPrimaryConnectionProvider(session));
         try {
+            List<Document> retVal = new ArrayList<Document>();
             while (cursor.hasNext()) {
                 retVal.add(cursor.next());
             }
+            return retVal;
         } finally {
             cursor.close();
         }
-        return retVal;
+    }
+
+    private EnumSet<QueryFlag> getQueryFlags() {
+        return EnumSet.noneOf(QueryFlag.class);
+    }
+
+    private Document asQueryDocument() {
+        return new Document("ns", collectionNamespace.getFullName());
+    }
+
+    private MongoNamespace getIndexNamespace() {
+        return new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
     }
 }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb.operation
 
 import category.Slow
@@ -31,302 +25,308 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.QueryOptions
 import org.mongodb.ServerCursor
+import org.mongodb.codecs.DocumentCodec
 import org.mongodb.protocol.GetMoreProtocol
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.KillCursorProtocol
-import org.mongodb.selector.PrimaryServerSelector
+import org.mongodb.protocol.QueryProtocol
+import org.mongodb.protocol.QueryResult
 import org.mongodb.session.ServerConnectionProvider
-import org.mongodb.session.ServerConnectionProviderOptions
 
 import java.util.concurrent.CountDownLatch
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 import static org.mongodb.Fixture.getSession
+import static org.mongodb.ReadPreference.primary
 
 class MongoQueryCursorSpecification extends FunctionalSpecification {
-    private MongoQueryCursor<Document> cursor;
+    private ServerConnectionProvider connectionProvider
+    private MongoQueryCursor<Document> cursor
 
     def setup() {
         for (int i = 0; i < 10; i++) {
-            collection.insert(new Document('_id', i));
+            collection.insert(new Document('_id', i))
         }
+        connectionProvider = OperationHelper.getConnectionProvider(primary(), getSession())
     }
 
     def cleanup() {
         if (cursor != null) {
-            cursor.close();
+            cursor.close()
         }
     }
 
     def 'server cursor should not be null'() {
+        given:
+        def firstBatch = executeQuery(2)
+
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                new Find().batchSize(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(),
-                                                getConnectionProvider());
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                connectionProvider)
 
         then:
-        cursor.getServerCursor() != null;
+        cursor.getServerCursor() != null
     }
 
     def 'test server address'() {
+        given:
+        def firstBatch = executeQuery()
+
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                new Find(),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(),
-                                                getConnectionProvider());
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                connectionProvider)
         then:
-        cursor.getServerCursor() == null;
-        cursor.getServerAddress() != null;
-    }
-
-    def 'should be able to retrieve the original find criteria from the cursor'() {
-        when:
-        Find find = new Find().batchSize(2);
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), find,
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
-
-        then:
-        cursor.getCriteria() == find;
+        cursor.getServerAddress() != null
     }
 
     def 'should get Exceptions for operations on the cursor after closing'() {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery()
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                connectionProvider)
 
         when:
-        cursor.close();
-        cursor.close();
+        cursor.close()
+        cursor.close()
 
         and:
-        cursor.next();
+        cursor.next()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        cursor.hasNext();
+        cursor.hasNext()
 
         then:
         thrown(IllegalStateException)
 
         when:
-        cursor.getServerCursor();
+        cursor.getServerCursor()
 
         then:
         thrown(IllegalStateException)
     }
 
     def 'should throw an Exception when going off the end'() {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery(1)
 
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 2, 0, new DocumentCodec(),
+                                                connectionProvider)
         when:
-        cursor.next();
-        cursor.next();
-        cursor.next();
+        cursor.next()
+        cursor.next()
+        cursor.next()
 
         then:
-        thrown(NoSuchElementException);
+        thrown(NoSuchElementException)
     }
 
     def 'test normal exhaustion'() {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find(),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery()
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                connectionProvider)
 
         when:
-        int i = 0;
+        int i = 0
         while (cursor.hasNext()) {
-            cursor.next();
-            i++;
+            cursor.next()
+            i++
         }
 
         then:
-        i == 10;
+        i == 10
     }
 
     def 'test limit exhaustion'() {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery(5)
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 0, new DocumentCodec(),
+                                                connectionProvider)
 
         when:
-        int i = 0;
+        int i = 0
         while (cursor.hasNext()) {
-            cursor.next();
-            i++;
+            cursor.next()
+            i++
         }
 
         then:
-        i == 5;
+        i == 5
     }
 
     def 'test remove'() {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery()
+
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                connectionProvider)
 
         when:
-        cursor.remove();
+        cursor.remove()
 
         then:
         thrown(UnsupportedOperationException)
     }
 
-    def 'test to string'() {
-        when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
-
-        then:
-        cursor.toString().startsWith('MongoQueryCursor');
-    }
-
     def 'test sizes and num get mores'() {
-        when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
-
-        then:
-        cursor.getNumGetMores() == 0;
-        cursor.getSizes().size() == 1;
-        cursor.getSizes().get(0) == 2;
+        given:
+        def firstBatch = executeQuery(2)
 
         when:
-        cursor.next();
-        cursor.next();
-        cursor.next();
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
 
         then:
-        cursor.getNumGetMores() == 1;
-        cursor.getSizes().size() == 2;
-        cursor.getSizes().get(1) == 2;
+        cursor.getNumGetMores() == 0
+        cursor.getSizes().size() == 1
+        cursor.getSizes().get(0) == 2
 
         when:
-        cursor.next();
-        cursor.next();
+        cursor.next()
+        cursor.next()
+        cursor.next()
 
         then:
-        cursor.getNumGetMores() == 2;
-        cursor.getSizes().size() == 3;
-        cursor.getSizes().get(2) == 2;
+        cursor.getNumGetMores() == 1
+        cursor.getSizes().size() == 2
+        cursor.getSizes().get(1) == 2
+
+        when:
+        cursor.next()
+        cursor.next()
+
+        then:
+        cursor.getNumGetMores() == 2
+        cursor.getSizes().size() == 3
+        cursor.getSizes().get(2) == 2
     }
 
     @Category(Slow)
     def 'test tailable'() {
-        collection.tools().drop();
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+        collection.tools().drop()
+        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collection.insert(new Document('_id', 1).append('ts', new BSONTimestamp(5, 0)));
+        collection.insert(new Document('_id', 1).append('ts', new BSONTimestamp(5, 0)))
+        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2, EnumSet.of(QueryFlag.Tailable))
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .filter(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))))
-                .batchSize(2)
-                .addFlags(EnumSet.of(QueryFlag.Tailable)),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.of(QueryFlag.Tailable), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
 
         then:
-        cursor.hasNext();
-        cursor.next().get('_id') == 1;
+        cursor.hasNext()
+        cursor.next().get('_id') == 1
 
         when:
         new Thread(new Runnable() {
             @Override
             void run() {
                 try {
-                    Thread.sleep(500);
-                    collection.insert(new Document('_id', 2).append('ts', new BSONTimestamp(6, 0)));
+                    Thread.sleep(500)
+                    collection.insert(new Document('_id', 2).append('ts', new BSONTimestamp(6, 0)))
                 } catch (ignored) {
                     // all good
                 }
             }
-        }).start();
+        }).start()
 
         // Note: this test is racy.
         // The sleep above does not guarantee that we're testing what we're trying to, which is the loop in the hasNext() method.
         then:
         cursor.hasNext()
-        cursor.next().get('_id') == 2;
+        cursor.next().get('_id') == 2
     }
 
     @Category(Slow)
     def 'test tailable interrupt'() throws InterruptedException {
-        collection.tools().drop();
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000));
+        collection.tools().drop()
+        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collection.insert(new Document('_id', 1));
+        collection.insert(new Document('_id', 1))
+
+        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2, EnumSet.of(QueryFlag.Tailable))
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2).addFlags(EnumSet.of(QueryFlag.Tailable)),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.of(QueryFlag.Tailable), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
 
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(1)
         //TODO: there might be a more Groovy-y way to do this, may be no need to hack into an array?
-        List<Boolean> success = [];
+        List<Boolean> success = []
         Thread t = new Thread(new Runnable() {
             @Override
             void run() {
                 try {
-                    cursor.next();
-                    cursor.next();
+                    cursor.next()
+                    cursor.next()
                 } catch (ignored) {
-                    success.add(true);
+                    success.add(true)
                 } finally {
-                    latch.countDown();
+                    latch.countDown()
                 }
             }
-        });
-        t.start();
-        Thread.sleep(1000);  // Note: this is racy, as where the interrupted exception is actually thrown from depends on timing.
-        t.interrupt();
-        latch.await();
+        })
+        t.start()
+        Thread.sleep(1000)  // Note: this is racy, as where the interrupted exception is actually thrown from depends on timing.
+        t.interrupt()
+        latch.await()
 
         then:
-        !success.isEmpty();
+        !success.isEmpty()
     }
 
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().limit(5),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery(5)
 
-        ServerCursor serverCursor = cursor.getServerCursor();
-        Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 0, new DocumentCodec(),
+                                                connectionProvider)
+
+        ServerCursor serverCursor = cursor.getServerCursor()
+        Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
 
         when:
-        makeAdditionalGetMoreCall(serverCursor);
+        makeAdditionalGetMoreCall(serverCursor)
 
         then:
         thrown(MongoCursorNotFoundException)
     }
 
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(3).limit(5),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        given:
+        def firstBatch = executeQuery(3)
 
-        ServerCursor serverCursor = cursor.getServerCursor();
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 3, new DocumentCodec(),
+                                                connectionProvider)
+        ServerCursor serverCursor = cursor.getServerCursor()
 
-        cursor.next();
-        cursor.next();
-        cursor.next();
-        cursor.next();
+        cursor.next()
+        cursor.next()
+        cursor.next()
+        cursor.next()
 
-        Thread.sleep(1000); //Note: waiting for some time for killCursor operation to be performed on a server.
+        Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
         when:
-        makeAdditionalGetMoreCall(serverCursor);
+        makeAdditionalGetMoreCall(serverCursor)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -334,98 +334,120 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
     def 'test limit with get more'() {
         when:
-        List<Document> list = [];
-        collection.find().withQueryOptions(new QueryOptions().batchSize(2)).limit(5).into(list);
+        List<Document> list = []
+        collection.find().withQueryOptions(new QueryOptions().batchSize(2)).limit(5).into(list)
 
         then:
-        list.size() == 5;
+        list.size() == 5
     }
 
     def 'test limit with large documents'() {
         char[] array = 'x' * 16000
-        String bigString = new String(array);
+        String bigString = new String(array)
 
         for (int i = 11; i < 1000; i++) {
-            collection.insert(new Document('_id', i).append('s', bigString));
+            collection.insert(new Document('_id', i).append('s', bigString))
         }
 
         when:
-        List<Document> list = [];
-        collection.find().limit(300).into(list);
+        List<Document> list = []
+        collection.find().limit(300).into(list)
 
         then:
-        list.size() == 300;
+        list.size() == 300
     }
 
     def 'test normal loop with get more'() {
+        given:
+        def firstBatch = executeQuery(2)
+
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .batchSize(2).order(new Document('_id', 1)),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
+
         then:
-        int i = 0;
+        int i = 0
         while (cursor.hasNext()) {
-            Document cur = cursor.next();
-            i++;
-            cur.get('_id') == i;
+            Document cur = cursor.next()
+            i++
+            cur.get('_id') == i
         }
-        i == 10;
-        !cursor.hasNext();
+        i == 10
+        !cursor.hasNext()
     }
 
     def 'test next without has next with get more'() {
+        given:
+        def firstBatch = executeQuery(2)
+
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find()
-                .batchSize(2).order(new Document('_id', 1)),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
 
         then:
         for (int i = 0; i < 10; i++) {
-            Document cur = cursor.next();
-            cur.get('_id') == i;
+            cursor.next()
         }
-        !cursor.hasNext();
-        !cursor.hasNext();
+        !cursor.hasNext()
+        !cursor.hasNext()
 
         when:
-        cursor.next();
+        cursor.next()
 
         then:
-        thrown(NoSuchElementException);
+        thrown(NoSuchElementException)
     }
 
     def 'should throw cursor not found exception'() {
+        given:
+        def firstBatch = executeQuery(2)
+
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(), new Find().batchSize(2),
-                                                collection.getOptions().getDocumentCodec(),
-                                                collection.getCodec(), getConnectionProvider());
-        new KillCursorProtocol(new KillCursor(cursor.getServerCursor()))
-                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription);
-        cursor.next();
-        cursor.next();
+        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                connectionProvider)
+
+        def connection = connectionProvider.getConnection()
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection, connectionProvider.serverDescription)
+        connection.close()
+        cursor.next()
+        cursor.next()
         then:
         try {
-            cursor.next();
+            cursor.next()
         } catch (MongoCursorNotFoundException e) {
-            assertEquals(cursor.getServerCursor(), e.getCursor());
+            assertEquals(cursor.getServerCursor(), e.getCursor())
         } catch (ignored) {
-            fail();
+            fail()
         }
     }
 
-    private static ServerConnectionProvider getConnectionProvider() {
-        getSession().createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()))
+    private QueryResult<Document> executeQuery() {
+        executeQuery(0)
     }
 
+    private QueryResult<Document> executeQuery(int numToReturn) {
+        executeQuery(new Document(), numToReturn, EnumSet.noneOf(QueryFlag))
+    }
+
+    private QueryResult<Document> executeQuery(Document query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
+        def connection = connectionProvider.getConnection()
+        try {
+            new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
+                                        new DocumentCodec(), new DocumentCodec())
+                    .execute(connection, connectionProvider.getServerDescription())
+        } finally {
+            connection.close()
+        }
+    }
 
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         new GetMoreProtocol<Document>(collection.getNamespace(),
                                       new GetMore(serverCursor, 1, 1, 1),
-                                      collection.getOptions().getDocumentCodec()
-        )
-                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription);
+                                      collection.getOptions().getDocumentCodec())
+                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription)
     }
 
 }

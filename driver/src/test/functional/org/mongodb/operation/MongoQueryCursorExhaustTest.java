@@ -22,15 +22,15 @@ import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
-import org.mongodb.ReadPreference;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.protocol.QueryProtocol;
+import org.mongodb.protocol.QueryResult;
 import org.mongodb.selector.PrimaryServerSelector;
-import org.mongodb.selector.ReadPreferenceServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
@@ -38,19 +38,21 @@ import org.mongodb.session.Session;
 import java.util.EnumSet;
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
-import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isSharded;
+import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.QueryFlag.Exhaust;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     private final byte[] bytes = new byte[10000];
+    private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
+    private QueryResult<Document> firstBatch;
+    private ServerConnectionProvider connectionProvider;
+    private Connection exhaustConnection;
 
     @Before
     public void setUp() {
@@ -59,58 +61,58 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         for (int i = 0; i < 1000; i++) {
             collection.insert(new Document("_id", i).append("bytes", bytes));
         }
+
+        connectionProvider = OperationHelper.getConnectionProvider(primary(), getSession());
+        exhaustConnection = connectionProvider.getConnection();
+        firstBatch =
+        new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
+                                                    new DocumentCodec(), new DocumentCodec())
+        .execute(exhaustConnection, connectionProvider.getServerDescription());
+
     }
+
 
     @Test
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
-        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                                           new Find().addFlags(EnumSet.of(Exhaust)),
-                                                                           collection.getOptions().getDocumentCodec(),
-                                                                           collection.getCodec(),
-                                                                           getConnectionProvider(getSession())
-        );
+
+        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, exhaustFlag, 0, 0,
+                                                                           new DocumentCodec(), exhaustConnection,
+                                                                           connectionProvider.getServerDescription());
 
         int count = 0;
         while (cursor.hasNext()) {
             cursor.next();
             count++;
         }
+        cursor.close();
         assertEquals(1000, count);
     }
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
         assumeFalse(isSharded());
-        Server server = getCluster().selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS);
-        Connection connection = server.getConnection();
         try {
-            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(server.getDescription(), connection);
-
-            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                                               new Find().addFlags(EnumSet.of(Exhaust)),
-                                                                               collection.getOptions().getDocumentCodec(),
-                                                                               collection.getCodec(),
-                                                                               getConnectionProvider(singleConnectionSession));
+            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(connectionProvider.getServerDescription(),
+                                                                                          exhaustConnection);
+            ServerConnectionProvider singleConnectionProvider =
+            singleConnectionSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
+            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, exhaustFlag, 0, 0,
+                                                                               new DocumentCodec(),
+                                                                               singleConnectionProvider.getConnection(),
+                                                                               singleConnectionProvider.getServerDescription());
 
             cursor.next();
             cursor.close();
 
-            cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                    new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
-                                                    collection.getOptions().getDocumentCodec(),
-                                                    collection.getCodec(),
-                                                    getConnectionProvider(singleConnectionSession));
-            assertEquals(new Document("_id", 999), cursor.next());
+            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
+                                        new DocumentCodec(), new DocumentCodec())
+            .execute(singleConnectionProvider.getConnection(), singleConnectionProvider.getServerDescription());
 
             singleConnectionSession.connection.close();
         } finally {
-            connection.close();
+            exhaustConnection.close();
         }
-    }
-
-    private ServerConnectionProvider getConnectionProvider(final Session session) {
-        return session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
     }
 
     private static class SingleConnectionSession implements Session {

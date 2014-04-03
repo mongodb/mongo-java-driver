@@ -22,9 +22,10 @@
 
 
 
+
+
 package org.mongodb.operation
 
-import org.mongodb.AsyncBlock
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
@@ -76,24 +77,13 @@ class QueryOperationSpecification extends FunctionalSpecification {
         given:
         def find = new Find().maxTime(1, SECONDS)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
-        def runCalled = false
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.executeAsync(session).get().start(new AsyncBlock<Document>() {
-            @Override
-            void done() {
-            }
-
-            @Override
-            void apply(final Document t) {
-                runCalled = true
-            }
-        })
+        queryOperation.executeAsync(session).get();
 
         then:
-        !runCalled
-        // thrown(MongoExecutionTimeoutException)  TODO: enable this when MongoAsyncCursor is able to indicate exceptions
+        thrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()

@@ -27,6 +27,7 @@ import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -68,7 +69,8 @@ public class UserExistsOperation implements Operation<Boolean> {
     private Boolean executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        QueryResult<Document> result = executeProtocol(new QueryProtocol<Document>(namespace, new Find(new Document("user", userName)),
+        QueryResult<Document> result = executeProtocol(new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
+                                                                                   new Document("user", userName), null,
                                                                                    codec, codec),
                                                        serverConnectionProvider);
         return !result.getResults().isEmpty();

@@ -18,6 +18,8 @@
 
 
 
+
+
 package org.mongodb.protocol
 
 import org.mongodb.BulkWriteException
@@ -65,9 +67,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         then:
         result.insertedCount == 1
         result.upserts == []
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(document), new DocumentCodec(), new DocumentCodec())
-                .execute(connection, server.description)
-        res.results.get(0) == document
+        collection.find(document).one == document
     }
 
     def 'should insert documents'() {
@@ -79,9 +79,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         protocol.execute(connection, server.description)
 
         then:
-        QueryResult res = new QueryProtocol(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec())
-                .execute(connection, server.description)
-        res.results.size() == 2
+        collection.find().count() == 2
     }
 
     def 'should throw exception'() {

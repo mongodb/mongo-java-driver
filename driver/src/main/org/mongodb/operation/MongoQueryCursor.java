@@ -17,20 +17,18 @@
 package org.mongodb.operation;
 
 import org.mongodb.Decoder;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
-import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
 
@@ -43,34 +41,45 @@ import java.util.NoSuchElementException;
 
 @NotThreadSafe
 class MongoQueryCursor<T> implements MongoCursor<T> {
-    private final Find find;
     private final Connection exhaustConnection;
     private final MongoNamespace namespace;
+    private final int limit;
+    private final int batchSize;
+    private final EnumSet<QueryFlag> queryFlags;
     private final Decoder<T> decoder;
     private final ServerConnectionProvider provider;
+    private final ServerDescription serverDescription;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
     private final List<Integer> sizes = new ArrayList<Integer>();
     private boolean closed;
 
-    public MongoQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final ServerConnectionProvider provider) {
+    // For normal queries
+    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
+                            final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider) {
+        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, provider, null, null);
+    }
+
+    // For exhaust queries
+    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
+                            final int limit, final int batchSize, final Decoder<T> decoder, final Connection exhaustConnection,
+                            final ServerDescription serverDescription) {
+        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
+    }
+
+    private MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
+                            final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider,
+                            final Connection exhaustConnection, final ServerDescription serverDescription) {
         this.namespace = namespace;
+        this.limit = limit;
+        this.batchSize = batchSize;
+        this.queryFlags = queryFlags;
         this.decoder = decoder;
-        this.find = find;
         this.provider = provider;
-        Connection connection = provider.getConnection();
-        exhaustConnection = isExhaust() ? connection : null;
-        QueryProtocol<T> operation;
-        try {
-            operation = new QueryProtocol<T>(namespace, find, queryEncoder, decoder);
-            currentResult = operation.execute(connection, provider.getServerDescription());
-        } finally {
-            if (!isExhaust()) {
-                connection.close();
-            }
-        }
+        this.exhaustConnection = exhaustConnection;
+        this.currentResult = firstBatch;
+        this.serverDescription = serverDescription != null ? serverDescription : provider.getServerDescription();
         currentIterator = currentResult.getResults().iterator();
         sizes.add(currentResult.getResults().size());
         killCursorIfLimitReached();
@@ -111,7 +120,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
             return true;
         }
 
-        if (find.getLimit() > 0 && nextCount >= find.getLimit()) {
+        if (limit > 0 && nextCount >= limit) {
             return false;
         }
 
@@ -175,25 +184,16 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         return Collections.unmodifiableList(sizes);
     }
 
-    /**
-     * Gets the criteria for this query
-     *
-     * @return the criteria
-     */
-    public Find getCriteria() {
-        return new Find(find);
-    }
-
     private void getMore() {
         if (isExhaust()) {
             currentResult = new GetMoreReceiveProtocol<T>(decoder, currentResult.getRequestId())
-                            .execute(getConnection(), provider.getServerDescription());
+                            .execute(getConnection(), serverDescription);
         } else {
             Connection connection = getConnection();
             try {
-                currentResult = new GetMoreProtocol<T>(namespace, new GetMore(currentResult.getCursor(), find.getLimit(),
-                                                                              find.getBatchSize(), nextCount), decoder)
-                                .execute(connection, provider.getServerDescription());
+                currentResult = new GetMoreProtocol<T>(namespace, new GetMore(currentResult.getCursor(), limit, batchSize, nextCount),
+                                                       decoder)
+                                .execute(connection, serverDescription);
             } finally {
                 connection.close();
             }
@@ -208,11 +208,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         throw new UnsupportedOperationException("MongoCursor does not support remove");
     }
 
-    @Override
-    public String toString() {
-        return "MongoQueryCursor{namespace=" + namespace + ", find=" + find + ", cursor=" + currentResult.getCursor() + '}';
-    }
-
     ServerConnectionProvider getServerConnectionProvider() {
         return provider;
     }
@@ -221,7 +216,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         if (limitReached()) {
             Connection connection = getConnection();
             try {
-                new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection, provider.getServerDescription());
+                new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection, serverDescription);
             } finally {
                 if (!isExhaust()) {
                     connection.close();
@@ -231,21 +226,20 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private boolean limitReached() {
-        return currentResult.getCursor() != null && find.getLimit() > 0
-               && find.getLimit() - (nextCount + currentResult.getResults().size()) <= 0;
-    }
-
-    private boolean isTailableAwait() {
-        return find.getOptions().getFlags().containsAll(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData));
+        return currentResult.getCursor() != null
+               && limit > 0
+               && limit - (nextCount + currentResult.getResults().size()) <= 0;
     }
 
     private void discardRemainingGetMoreResponses() {
-        new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId(), getConnection())
-        .execute(getConnection(), provider.getServerDescription());
+        if (currentResult.getCursor() != null) {
+            new GetMoreDiscardProtocol(currentResult.getCursor().getId(), currentResult.getRequestId())
+            .execute(getConnection(), serverDescription);
+        }
     }
 
     private boolean isExhaust() {
-        return find.getOptions().getFlags().contains(QueryFlag.Exhaust);
+        return queryFlags.contains(QueryFlag.Exhaust);
     }
 
     private Connection getConnection() {
@@ -255,5 +249,4 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
             return provider.getConnection();
         }
     }
-
 }

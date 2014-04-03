@@ -19,88 +19,31 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.operation.Find;
+import org.mongodb.operation.QueryFlag;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import java.util.EnumSet;
 
 public class QueryMessage extends BaseQueryMessage {
-    private final Find find;
     private final Encoder<Document> encoder;
+    private final Document queryDocument;
+    private final Document fields;
 
-    public QueryMessage(final String collectionName, final Find find, final Encoder<Document> encoder,
-                        final MessageSettings settings) {
-        super(collectionName, settings);
-        this.find = find;
+    public QueryMessage(final String collectionName, final EnumSet<QueryFlag> queryFlags, final int skip,
+                        final int numberToReturn, final Document queryDocument,
+                        final Document fields, final Encoder<Document> encoder, final MessageSettings settings) {
+        super(collectionName, queryFlags, skip, numberToReturn, settings);
+        this.queryDocument = queryDocument;
+        this.fields = fields;
         this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeQueryPrologue(find, buffer);
-        addDocument(getQueryDocument(), encoder, buffer);
-        if (find.getFields() != null) {
-            addDocument(find.getFields(), encoder, buffer);
+        writeQueryPrologue(buffer);
+        addDocument(queryDocument, encoder, buffer);
+        if (fields != null) {
+            addDocument(fields, encoder, buffer);
         }
         return null;
     }
-
-    private Document getQueryDocument() {
-        Document document = new Document();
-        document.put("$query", find.getFilter());
-        if (find.getOrder() != null && !find.getOrder().isEmpty()) {
-            document.put("$orderby", find.getOrder());
-        }
-        if (find.isSnapshotMode()) {
-            document.put("$snapshot", true);
-        }
-        if (find.isExplain()) {
-            document.put("$explain", true);
-        }
-        // TODO: only to mongos according to spec
-        if (find.getReadPreference() != null) {
-            document.put("$readPreference", find.getReadPreference().toDocument());
-        }
-
-        if (find.getHint() != null) {
-            document.put("$hint", find.getHint().getValue());
-        }
-
-        if (find.getOptions().getComment() != null) {
-            document.put("$comment", find.getOptions().getComment());
-        }
-
-        if (find.getOptions().getMax() != null) {
-            document.put("$max", find.getOptions().getMax());
-        }
-
-        if (find.getOptions().getMin() != null) {
-            document.put("$min", find.getOptions().getMin());
-        }
-
-        if (find.getOptions().isReturnKey()) {
-            document.put("$returnKey", true);
-        }
-
-        if (find.getOptions().isShowDiskLoc()) {
-            document.put("$showDiskLoc", true);
-        }
-
-        if (find.getOptions().isSnapshot()) {
-            document.put("$snapshot", true);
-        }
-
-        long maxTime = find.getOptions().getMaxTime(MILLISECONDS);
-        if (maxTime != 0) {
-            document.put("$maxTimeMS", maxTime);
-        }
-
-        int maxScan = find.getOptions().getMaxScan();
-        if (maxScan > 0) {
-            document.put("$maxScan", maxScan);
-        }
-
-        // TODO: special
-        return document;
-    }
-
 }

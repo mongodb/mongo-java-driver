@@ -28,11 +28,13 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
-import org.mongodb.operation.Find;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.QueryMessage;
 import org.mongodb.protocol.message.ReplyMessage;
+
+import java.util.EnumSet;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
@@ -43,15 +45,25 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
 
-    private final Find find;
+    private final EnumSet<QueryFlag> queryFlags;
+    private final int skip;
+    private final int numberToReturn;
+    private final Document queryDocument;
+    private final Document fields;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
-    public QueryProtocol(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
+    public QueryProtocol(final MongoNamespace namespace, final EnumSet<QueryFlag> queryFlags, final int skip,
+                         final int numberToReturn, final Document queryDocument,
+                         final Document fields, final Encoder<Document> queryEncoder,
                          final Decoder<T> resultDecoder) {
         this.namespace = namespace;
-        this.find = find;
+        this.queryFlags = queryFlags;
+        this.skip = skip;
+        this.numberToReturn = numberToReturn;
+        this.queryDocument = queryDocument;
+        this.fields = fields;
         this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
     }
@@ -69,26 +81,28 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
-        QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder,
-                                                getMessageSettings(serverDescription));
+        QueryMessage message = createQueryMessage(serverDescription);
         encodeMessageToBuffer(message, buffer);
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                             resultDecoder,
                                                                             message.getId(),
                                                                             connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(),
-                                         message.getId(),
-                                         new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
-                                                                                 receiveCallback)
-                                        );
+                                    message.getId(),
+                                    new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
+                                                                            receiveCallback));
         return retVal;
+    }
 
+    private QueryMessage createQueryMessage(final ServerDescription serverDescription) {
+        return new QueryMessage(namespace.getFullName(), queryFlags, skip, numberToReturn, queryDocument, fields, queryEncoder,
+                                                    getMessageSettings(serverDescription));
     }
 
     private QueryMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
         PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
         try {
-            QueryMessage message = new QueryMessage(namespace.getFullName(), find, queryEncoder, getMessageSettings(serverDescription));
+            QueryMessage message = createQueryMessage(serverDescription);
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
