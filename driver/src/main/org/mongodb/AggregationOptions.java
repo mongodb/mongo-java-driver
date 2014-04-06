@@ -81,6 +81,42 @@ public class AggregationOptions {
         return "AggregationOptions{" + "batchSize=" + batchSize + ", allowDiskUse=" + allowDiskUse + ", outputMode=" + outputMode + '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AggregationOptions that = (AggregationOptions) o;
+
+        if (maxTimeMS != that.maxTimeMS) {
+            return false;
+        }
+        if (allowDiskUse != null ? !allowDiskUse.equals(that.allowDiskUse) : that.allowDiskUse != null) {
+            return false;
+        }
+        if (batchSize != null ? !batchSize.equals(that.batchSize) : that.batchSize != null) {
+            return false;
+        }
+        if (outputMode != that.outputMode) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = batchSize != null ? batchSize.hashCode() : 0;
+        result = 31 * result + (allowDiskUse != null ? allowDiskUse.hashCode() : 0);
+        result = 31 * result + outputMode.hashCode();
+        result = 31 * result + (int) (maxTimeMS ^ (maxTimeMS >>> 32));
+        return result;
+    }
+
     public static class Builder {
 
         private Integer batchSize;
