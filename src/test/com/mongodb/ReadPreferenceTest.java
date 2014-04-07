@@ -28,6 +28,7 @@ import java.util.List;
 import static com.mongodb.ClusterConnectionMode.Multiple;
 import static com.mongodb.ClusterType.ReplicaSet;
 import static com.mongodb.ServerConnectionState.Connected;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -53,35 +54,42 @@ public class ReadPreferenceTest {
         final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
         primary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27017))
-                                   .averagePingTime(acceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                   .averagePingTime(acceptablePingTime * 1000000L, NANOSECONDS)
                                    .ok(true)
                                    .type(ServerType.ReplicaSetPrimary)
                                    .tags(tags1)
                                    .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27018))
-                                     .averagePingTime(bestPingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                     .averagePingTime(bestPingTime * 1000000L, NANOSECONDS)
                                      .ok(true)
                                      .type(ServerType.ReplicaSetSecondary)
                                      .tags(tags2)
                                      .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27019))
-                                          .averagePingTime(unacceptablePingTime * 1000000L, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                          .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
                                           .ok(true)
                                           .type(ServerType.ReplicaSetSecondary)
                                           .tags(tags3)
                                           .maxDocumentSize(FOUR_MEG)
                                           .build();
+        ServerDescription uninitiatedMember = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27020))
+                                                               .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
+                                                               .ok(true)
+                                                               .type(ServerType.ReplicaSetOther)
+                                                               .maxDocumentSize(FOUR_MEG)
+                                                               .build();
 
         final List<ServerDescription> nodeList = new ArrayList<ServerDescription>();
         nodeList.add(primary);
         nodeList.add(secondary);
         nodeList.add(otherSecondary);
+        nodeList.add(uninitiatedMember);
 
         set = new ClusterDescription(Multiple, ReplicaSet, nodeList);
-        setNoPrimary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(secondary, otherSecondary));
-        setNoSecondary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(primary));
+        setNoPrimary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(secondary, otherSecondary, uninitiatedMember));
+        setNoSecondary = new ClusterDescription(Multiple, ReplicaSet, Arrays.asList(primary, uninitiatedMember));
     }
 
 
@@ -119,7 +127,7 @@ public class ReadPreferenceTest {
         //        List<Map<String, String>> tagsList3 = Arrays.asList(Collections.singletonMap("foo", "1"));
         //        List<Map<String, String>> tagsList4 = Arrays.asList(Collections.<String, String>singletonMap("foo", "1"));
 
-        ReadPreference pref = ReadPreference.secondary(new BasicDBObject("foo", "1"),  new BasicDBObject("bar", "2"));
+        ReadPreference pref = ReadPreference.secondary(new BasicDBObject("foo", "1"), new BasicDBObject("bar", "2"));
         assertTrue(pref.toString().startsWith("secondary"));
 
         candidates = ReadPreference.secondary().choose(set);

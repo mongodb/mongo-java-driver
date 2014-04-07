@@ -141,12 +141,20 @@ class ClusterDescription {
     public List<ServerDescription> getAny() {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isOk();
+            }
+        });
+    }
+
+    public List<ServerDescription> getAnyPrimaryOrSecondary() {
+        return getServersByPredicate(new Predicate() {
+            public boolean apply(final ServerDescription serverDescription) {
                 return serverDescription.isPrimary() || serverDescription.isSecondary();
             }
         });
     }
 
-    public List<ServerDescription> getAny(final Tags tags) {
+    public List<ServerDescription> getAnyPrimaryOrSecondary(final Tags tags) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
                 return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tags);

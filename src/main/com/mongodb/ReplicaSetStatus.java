@@ -32,7 +32,7 @@ public class ReplicaSetStatus {
     }
 
     public String getName() {
-        final List<ServerDescription> any = clusterDescription.getAny();
+        final List<ServerDescription> any = clusterDescription.getAnyPrimaryOrSecondary();
         return any.isEmpty() ? null : any.get(0).getSetName();
     }
 

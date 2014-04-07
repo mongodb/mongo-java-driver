@@ -198,12 +198,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         @Override
         List<ServerDescription> getServers(final ClusterDescription clusterDescription) {
-            return clusterDescription.getAny();
+            return clusterDescription.getAnyPrimaryOrSecondary();
         }
 
         @Override
         List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final Tags tags) {
-            return clusterDescription.getAny(tags);
+            return clusterDescription.getAnyPrimaryOrSecondary(tags);
         }
     }
 
