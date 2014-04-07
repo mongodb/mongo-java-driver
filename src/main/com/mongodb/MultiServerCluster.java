@@ -152,6 +152,11 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
+        if (newDescription.getHosts().isEmpty()) {
+            LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
+            return;
+        }
+
         if (replicaSetName == null) {
             replicaSetName = newDescription.getSetName();
         }

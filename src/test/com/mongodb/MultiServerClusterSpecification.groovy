@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package com.mongodb
 
 import spock.lang.Specification
@@ -27,6 +23,7 @@ import static com.mongodb.ClusterType.ReplicaSet
 import static com.mongodb.ClusterType.Sharded
 import static com.mongodb.ServerConnectionState.Connected
 import static com.mongodb.ServerConnectionState.Connecting
+import static com.mongodb.ServerType.ReplicaSetOther
 import static com.mongodb.ServerType.ReplicaSetPrimary
 import static com.mongodb.ServerType.ReplicaSetSecondary
 import static com.mongodb.ServerType.ShardRouter
@@ -114,6 +111,20 @@ class MultiServerClusterSpecification extends Specification {
             type == ReplicaSet
             all == getServerDescriptions(firstServer)
         }
+    }
+
+    def 'should ignore an empty list of hosts when type is replica set'() {
+        given:
+        def cluster = new MultiServerCluster(
+                CLUSTER_ID, ClusterSettings.builder().requiredClusterType(ReplicaSet).hosts([firstServer, secondServer]).build(), factory,
+                CLUSTER_LISTENER)
+
+        when:
+        sendNotification(secondServer, ReplicaSetOther, [], null)  // null replica set name
+
+        then:
+        getClusterDescription(cluster).type == ReplicaSet
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
     }
 
     def 'should remove a server of the wrong type when type is sharded'() {
