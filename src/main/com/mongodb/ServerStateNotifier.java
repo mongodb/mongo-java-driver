@@ -31,6 +31,7 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @ThreadSafe
+@SuppressWarnings("deprecation")
 class ServerStateNotifier implements Runnable {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
@@ -43,7 +44,7 @@ class ServerStateNotifier implements Runnable {
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
-    DBPort connection;
+    private DBPort connection;
 
     ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
                         final SocketSettings socketSettings, final Mongo mongo) {
@@ -68,21 +69,20 @@ class ServerStateNotifier implements Runnable {
                 connection = new DBPort(serverAddress, null, getOptions(), 0);
             }
             try {
-                LOGGER.fine(format("Checking status of %s", serverAddress));
-                long startNanoTime = System.nanoTime();
-                final CommandResult isMasterResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("ismaster", 1));
-                count++;
-                elapsedNanosSum += System.nanoTime() - startNanoTime;
-
-                final CommandResult buildInfoResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1));
-                serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
+                serverDescription = lookupServerDescription();
             } catch (IOException e) {
-                if (!isClosed) {
+                // in case the connection has been reset since the last run, do one retry immediately before reporting that the server is
+                // down
+                count = 0;
+                elapsedNanosSum = 0;
+                connection.close(); // generating a warning in IDEA about possible NPE, but I don't think it can happen
+                connection = new DBPort(serverAddress, null, getOptions(), 0);
+                try {
+                    serverDescription = lookupServerDescription();
+                } catch (IOException e1) {
                     connection.close();
                     connection = null;
-                    count = 0;
-                    elapsedNanosSum = 0;
-                    throw e;
+                    throw e1;
                 }
             }
         } catch (Throwable t) {
@@ -98,8 +98,7 @@ class ServerStateNotifier implements Runnable {
                     if (throwable != null) {
                         LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
                                    throwable);
-                    }
-                    else {
+                    } else {
                         LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
                     }
                 }
@@ -124,6 +123,17 @@ class ServerStateNotifier implements Runnable {
         options.setSocketTimeout(socketSettings.getReadTimeout(MILLISECONDS));
         options.setSocketFactory(socketSettings.getSocketFactory());
         return options;
+    }
+
+    private ServerDescription lookupServerDescription() throws IOException {
+        LOGGER.fine(format("Checking status of %s", serverAddress));
+        long startNanoTime = System.nanoTime();
+        final CommandResult isMasterResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("ismaster", 1));
+        count++;
+        elapsedNanosSum += System.nanoTime() - startNanoTime;
+
+        final CommandResult buildInfoResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1));
+        return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
     }
 
     @SuppressWarnings("unchecked")
@@ -159,8 +169,7 @@ class ServerStateNotifier implements Runnable {
     private Set<String> listToSet(final List<String> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptySet();
-        }
-        else {
+        } else {
             return new HashSet<String>(list);
         }
     }
