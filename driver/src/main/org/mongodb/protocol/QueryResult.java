@@ -16,9 +16,6 @@
 
 package org.mongodb.protocol;
 
-
-import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.message.ReplyMessage;
@@ -27,41 +24,24 @@ import java.util.List;
 
 public class QueryResult<T> {
     private final List<T> results;
-    private final ServerCursor serverCursor;
+    private final long cursorId;
     private final ServerAddress serverAddress;
     private final int requestId;
 
-    public QueryResult(final ReplyMessage<T> replyMessage, final ServerAddress address) {
-        if (replyMessage.getReplyHeader().getCursorId() != 0) {
-            serverCursor = new ServerCursor(replyMessage.getReplyHeader().getCursorId(), address);
-        } else {
-            serverCursor = null;
-        }
-        serverAddress = address;
-        results = replyMessage.getDocuments();
-        requestId = replyMessage.getReplyHeader().getRequestId();
+    public QueryResult(final List<T> results, final long cursorId, final ServerAddress serverAddress, final int requestId) {
+        this.results = results;
+        this.cursorId = cursorId;
+        this.serverAddress = serverAddress;
+        this.requestId = requestId;
     }
 
-    @SuppressWarnings("unchecked")
-    public QueryResult(final CommandResult result, final ServerAddress address) {
-        Document cursor = (Document) result.getResponse().get("cursor");
-        if (cursor != null) {
-            if (cursor.getLong("id") != 0) {
-                serverCursor = new ServerCursor(cursor.getLong("id"), address);
-            } else {
-                serverCursor = null;
-            }
-            results = (List<T>) cursor.get("firstBatch");
-        } else {
-            serverCursor = null;
-            results = (List<T>) result.getResponse().get("result");
-        }
-        serverAddress = address;
-        requestId = 0;
+    QueryResult(final ReplyMessage<T> replyMessage, final ServerAddress address) {
+        this(replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address,
+             replyMessage.getReplyHeader().getRequestId());
     }
 
     public ServerCursor getCursor() {
-        return serverCursor;
+        return cursorId == 0 ? null : new ServerCursor(cursorId, serverAddress);
     }
 
     public List<T> getResults() {
