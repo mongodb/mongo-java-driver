@@ -24,11 +24,9 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
 
 import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -40,12 +38,6 @@ public class ReadPreferenceServerSelectorTest {
 
         assertEquals(ReadPreference.primary(), selector.getReadPreference());
 
-        assertEquals(new ReadPreferenceServerSelector(ReadPreference.primary()), selector);
-        assertNotEquals(new ReadPreferenceServerSelector(ReadPreference.secondary()), selector);
-        assertNotEquals(new Object(), selector);
-
-        assertEquals(new ReadPreferenceServerSelector(ReadPreference.primary()).hashCode(), selector.hashCode());
-
         assertEquals("ReadPreferenceServerSelector{readPreference=primary}", selector.toString());
 
         ServerDescription primary = ServerDescription.builder()
@@ -54,36 +46,13 @@ public class ReadPreferenceServerSelectorTest {
                                                      .ok(true)
                                                      .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .build();
-        assertEquals(asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary))));
-    }
-
-    @Test
-    public void testChaining() throws UnknownHostException {
-        ReadPreferenceServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.secondary());
-        ServerDescription primary = ServerDescription.builder()
+        ServerDescription secondary = ServerDescription.builder()
                                                      .state(CONNECTED)
                                                      .address(new ServerAddress())
                                                      .ok(true)
-                                                     .type(ServerType.REPLICA_SET_PRIMARY)
-                                                     .averagePingTime(1, TimeUnit.MILLISECONDS)
+                                                     .type(ServerType.REPLICA_SET_SECONDARY)
                                                      .build();
-        ServerDescription secondaryOne = ServerDescription.builder()
-                                                          .state(CONNECTED)
-                                                          .address(new ServerAddress("localhost:27018"))
-                                                          .ok(true)
-                                                          .type(ServerType.REPLICA_SET_SECONDARY)
-                                                          .averagePingTime(2, TimeUnit.MILLISECONDS)
-                                                          .build();
-        ServerDescription secondaryTwo = ServerDescription.builder()
-                                                          .state(CONNECTED)
-                                                          .address(new ServerAddress("localhost:27019"))
-                                                          .ok(true)
-                                                          .type(ServerType.REPLICA_SET_SECONDARY)
-                                                          .averagePingTime(20, TimeUnit.MILLISECONDS)
-                                                          .build();
-        assertEquals(asList(secondaryOne), selector.choose(new ClusterDescription(MULTIPLE,
-                                                                                  REPLICA_SET,
-                                                                                  asList(primary, secondaryOne, secondaryTwo))));
-
+        assertEquals(asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary, secondary))));
     }
 }
+

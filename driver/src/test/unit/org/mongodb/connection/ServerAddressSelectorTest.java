@@ -22,7 +22,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
@@ -33,15 +32,9 @@ public class ServerAddressSelectorTest {
     public void testAll() throws UnknownHostException {
         ServerAddressSelector selector = new ServerAddressSelector(new ServerAddress("localhost:27018"));
 
-        assertEquals(new ServerAddressSelector(new ServerAddress("localhost:27018")), selector);
-        assertNotEquals(new ServerAddressSelector(new ServerAddress()), selector);
-        assertNotEquals(new Object(), selector);
-
         assertTrue(selector.toString().startsWith("ServerAddressSelector"));
 
         assertEquals(selector.getServerAddress(), selector.getServerAddress());
-
-        assertEquals(selector.getServerAddress().hashCode(), selector.hashCode());
 
         ServerDescription primary = ServerDescription.builder()
                                                      .state(CONNECTED)

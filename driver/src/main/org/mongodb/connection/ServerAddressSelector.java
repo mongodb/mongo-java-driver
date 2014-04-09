@@ -16,17 +16,39 @@
 
 package org.mongodb.connection;
 
+import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerSelector;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
+/**
+ * A server selector that chooses a server that matches the server address.
+ *
+ * @since 3.0
+ */
 public class ServerAddressSelector implements ServerSelector {
     private final ServerAddress serverAddress;
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param serverAddress the server address
+     */
     public ServerAddressSelector(final ServerAddress serverAddress) {
-        this.serverAddress = serverAddress;
+        this.serverAddress = notNull("serverAddress", serverAddress);
     }
 
+    /**
+     * Gets the server address.
+     *
+     * @return the server address
+     */
     public ServerAddress getServerAddress() {
         return serverAddress;
     }
@@ -37,29 +59,6 @@ public class ServerAddressSelector implements ServerSelector {
             return Arrays.asList(clusterDescription.getByServerAddress(serverAddress));
         }
         return Collections.emptyList();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ServerAddressSelector that = (ServerAddressSelector) o;
-
-        if (!serverAddress.equals(that.serverAddress)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return serverAddress.hashCode();
     }
 
     @Override

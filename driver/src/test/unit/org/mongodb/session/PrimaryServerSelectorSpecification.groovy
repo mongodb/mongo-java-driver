@@ -40,17 +40,6 @@ class PrimaryServerSelectorSpecification extends Specification {
     private static final ServerDescription PRIMARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_PRIMARY).build()
     private static final ServerDescription SECONDARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_SECONDARY).build()
 
-    def 'test constructor'() throws UnknownHostException {
-        given:
-        PrimaryServerSelector selector = new PrimaryServerSelector();
-
-        expect:
-        selector == new PrimaryServerSelector()
-        selector != new Object()
-        selector.toString() == 'PrimaryServerSelector'
-        selector.hashCode() == 0
-    }
-
     @Unroll
     def 'PrimaryServerSelector will choose primary server for #clusterDescription'() throws UnknownHostException {
         expect:

@@ -25,18 +25,36 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
+/**
+ * A server selector that accepts only servers within the given ping-time latency difference from the faster of the servers.
+ *
+ * @since 3.0
+ */
 public class LatencyMinimizingServerSelector implements ServerSelector {
 
-    private final long acceptableLatencyDifference;
-    private final TimeUnit timeUnit;
+    private final long acceptableLatencyDifferenceNanos;
 
-    public LatencyMinimizingServerSelector() {
-        this(15, TimeUnit.MILLISECONDS);
+    /**
+     *
+     * @param acceptableLatencyDifference the maximum difference in ping-time latency between the fastest ping time and the slowest of
+     *                                    the chosen servers
+     * @param timeUnit the time unit of the acceptableLatencyDifference
+     */
+    public LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
+        this.acceptableLatencyDifferenceNanos = NANOSECONDS.convert(acceptableLatencyDifference, timeUnit);
     }
 
-    public LatencyMinimizingServerSelector(final long acceptableLatencyDifference, final TimeUnit timeUnit) {
-        this.acceptableLatencyDifference = acceptableLatencyDifference;
-        this.timeUnit = timeUnit;
+    /**
+     * Gets the acceptable latency difference.
+     *
+     * @param timeUnit the time unit to get it in.
+     * @return the acceptable latency difference in the specified time unit
+     */
+    public long getAcceptableLatencyDifference(final TimeUnit timeUnit) {
+        return timeUnit.convert(acceptableLatencyDifferenceNanos, NANOSECONDS);
     }
 
     @Override
@@ -44,6 +62,12 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
         return getServersWithAcceptableLatencyDifference(clusterDescription.getAll(), getBestPingTimeNanos(clusterDescription.getAll()));
     }
 
+    @Override
+    public String toString() {
+        return "LatencyMinimizingServerSelector{"
+               + "acceptableLatencyDifference=" + MILLISECONDS.convert(acceptableLatencyDifferenceNanos, NANOSECONDS) + " ms"
+               + '}';
+    }
 
     private long getBestPingTimeNanos(final Set<ServerDescription> members) {
         long bestPingTime = Long.MAX_VALUE;
@@ -65,7 +89,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() - TimeUnit.NANOSECONDS.convert(acceptableLatencyDifference, timeUnit) <= bestPingTime) {
+            if (cur.getAveragePingTimeNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }

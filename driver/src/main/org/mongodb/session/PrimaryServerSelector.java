@@ -18,36 +18,20 @@ package org.mongodb.session;
 
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerSelector;
 
 import java.util.List;
 
-public final class PrimaryServerSelector extends ChainingServerSelector {
-
-    public PrimaryServerSelector() {
-        super(new LatencyMinimizingServerSelector());
-    }
+/**
+ * A server selector that chooses servers that are primaries.
+ *
+ * @since 3.0
+ */
+public final class PrimaryServerSelector implements ServerSelector {
 
     @Override
-    protected List<ServerDescription> chooseStep(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
         return clusterDescription.getPrimaries();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
     }
 
     @Override
