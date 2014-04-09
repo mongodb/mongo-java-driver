@@ -22,16 +22,21 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.codecs.Codecs;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static org.bson.BSONType.ARRAY;
 import static org.bson.BSONType.DOCUMENT;
 import static org.bson.BSONType.END_OF_DOCUMENT;
 
 class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
-    private static final String FIELD_CONTAINING_PAYLOAD = "value";
     private final Decoder<T> payloadDecoder;
     private final Codecs codecs;
+    private final String fieldContainingPayload;
 
-    CommandResultWithPayloadDecoder(final Decoder<T> payloadDecoder) {
+    CommandResultWithPayloadDecoder(final Decoder<T> payloadDecoder, final String fieldContainingPayload) {
         this.payloadDecoder = payloadDecoder;
+        this.fieldContainingPayload = fieldContainingPayload;
         this.codecs = Codecs.createDefault();
     }
 
@@ -43,8 +48,20 @@ class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
         while (reader.readBSONType() != END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             BSONType bsonType = reader.getCurrentBSONType();
-            if (bsonType.equals(DOCUMENT) && fieldName.equals(FIELD_CONTAINING_PAYLOAD)) {
-                document.put(fieldName, payloadDecoder.decode(reader));
+            if (fieldName.equals(fieldContainingPayload)) {
+                if (bsonType.equals(DOCUMENT)) {
+                    document.put(fieldName, payloadDecoder.decode(reader));
+                } else if (bsonType.equals(ARRAY)) {
+                    reader.readStartArray();
+                    Collection<T> collection = new ArrayList<T>();
+                    while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                        collection.add(payloadDecoder.decode(reader));
+                    }
+                    reader.readEndArray();
+                    document.put(fieldName, collection);
+                } else {
+                    document.put(fieldName, codecs.decode(reader));
+                }
             } else {
                 document.put(fieldName, codecs.decode(reader));
             }
@@ -53,3 +70,4 @@ class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
         return document;
     }
 }
+

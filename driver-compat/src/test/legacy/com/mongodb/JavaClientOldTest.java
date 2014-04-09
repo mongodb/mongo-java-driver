@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.clusterIsType;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
@@ -80,12 +79,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assertNotNull(barResult);
         assertEquals(1, barResult.get("docsPerName"));
         assertEquals(2, barResult.get("countPerName"));
-
-        DBObject aggregationCommand = out.getCommand();
-        assertNotNull(aggregationCommand);
-        assertEquals(collection.getName(), aggregationCommand.get("aggregate"));
-        assertNotNull(aggregationCommand.get("pipeline"));
-    }
+   }
 
     @Test
     public void testAggregationCursor() {
@@ -228,7 +222,6 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .hasNext());
         assertEquals(database.getCollection("aggCollection")
             .count(), 2);
-        assertEquals(getPrimary(), out.getCommandResult().getServerUsed().toNew());
     }
 
     @Test

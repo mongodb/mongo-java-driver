@@ -34,6 +34,7 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
+import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.BaseWriteOperation;
 import org.mongodb.operation.CountOperation;
@@ -50,7 +51,6 @@ import org.mongodb.operation.FindAndUpdate;
 import org.mongodb.operation.FindAndUpdateOperation;
 import org.mongodb.operation.GetIndexesOperation;
 import org.mongodb.operation.GroupOperation;
-import org.mongodb.operation.InlineMongoCursor;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
@@ -75,6 +75,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.DBObjects.toDBList;
@@ -687,8 +688,7 @@ public class DBCollection {
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
-        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec
-        ));
+        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec));
 
         return cursor.hasNext() ? cursor.next() : null;
     }
@@ -1213,25 +1213,17 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
+    @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
-        AggregationOptions options = AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build();
-
-        List<Document> stages = preparePipeline(pipeline);
-
-        AggregateOperation<Document> operation =
-        new AggregateOperation<Document>(getNamespace(),
-                                         preparePipeline(pipeline),
-                                         getDocumentCodec(),
-                                         options.toNew(),
-                                         coerceReadPreference(readPreference,
-                                                              stages.get(stages.size() - 1).getString("$out") != null)
-                                         .toNew()
-        );
-
-        MongoCursor<Document> cursor = execute(operation);
-
-        org.mongodb.CommandResult commandResult = ((InlineMongoCursor) cursor).getCommandResult();
-        return new AggregationOutput(toDBObject(operation.getCommand()), new CommandResult(commandResult));
+        MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), preparePipeline(pipeline), objectCodec,
+                                                                                AggregationOptions.builder().outputMode(INLINE).build()
+                                                                                                  .toNew(),
+                                                                                readPreference.toNew()));
+        List<DBObject> results = new ArrayList<DBObject>();
+        while (cursor.hasNext()) {
+            results.add(cursor.next());
+        }
+        return new AggregationOutput(results);
     }
 
     /**
@@ -1243,7 +1235,7 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
-    public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options) {
+    public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
     }
 
@@ -1257,8 +1249,7 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
-    public Cursor aggregate(final List<DBObject> pipeline, final com.mongodb.AggregationOptions options,
-                            final ReadPreference readPreference) {
+    public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference) {
         if (options == null) {
             throw new IllegalArgumentException("options can not be null");
         }
@@ -1295,13 +1286,8 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        List<Document> stages = preparePipeline(pipeline);
-
-        return new CommandResult(new AggregateOperation<Document>(getNamespace(),
-                                                                  stages,
-                                                                  getDocumentCodec(),
-                                                                  options.toNew(),
-                                                                  getReadPreference().toNew()).explain(getSession())); // TODO: proxy this
+        return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew(),
+                                                                       getReadPreference().toNew())));
     }
 
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
