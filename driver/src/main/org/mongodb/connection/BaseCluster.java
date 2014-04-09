@@ -24,6 +24,7 @@ import org.mongodb.event.ClusterDescriptionChangedEvent;
 import org.mongodb.event.ClusterEvent;
 import org.mongodb.event.ClusterListener;
 import org.mongodb.selector.ServerSelector;
+import org.mongodb.selector.CompositeServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
@@ -73,7 +75,8 @@ public abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            List<ServerDescription> serverDescriptions = serverSelector.select(curDescription);
+            ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
+            List<ServerDescription> serverDescriptions = compositeServerSelector.select(curDescription);
             long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (true) {
                 throwIfIncompatible(curDescription);
@@ -100,10 +103,18 @@ public abstract class BaseCluster implements Cluster {
                 }
                 currentPhase = phase.get();
                 curDescription = description;
-                serverDescriptions = serverSelector.select(curDescription);
+                serverDescriptions = compositeServerSelector.select(curDescription);
             }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
+        }
+    }
+
+    private ServerSelector getCompositeServerSelector(final ServerSelector serverSelector) {
+        if (settings.getServerSelector() == null) {
+            return serverSelector;
+        } else {
+            return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector()));
         }
     }
 

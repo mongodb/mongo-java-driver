@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import org.mongodb.annotations.Immutable;
+import org.mongodb.selector.ServerSelector;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,7 @@ public final class ClusterSettings {
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
+    private final ServerSelector serverSelector;
 
     public static Builder builder() {
         return new Builder();
@@ -48,6 +50,7 @@ public final class ClusterSettings {
         private ClusterConnectionMode mode = ClusterConnectionMode.MULTIPLE;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
+        private ServerSelector serverSelector;
 
         private Builder() {
         }
@@ -100,6 +103,17 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets the final server selector for the cluster to apply before selecting a server
+         *
+         * @param serverSelector the server selector to apply as the final selector.
+         * @return this
+         */
+        public Builder serverSelector(final ServerSelector serverSelector) {
+            this.serverSelector = serverSelector;
+            return this;
+        }
+
+        /**
          * Build the settings from the builder.
          *
          * @return the cluster settings
@@ -146,40 +160,15 @@ public final class ClusterSettings {
         return requiredReplicaSetName;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ClusterSettings that = (ClusterSettings) o;
-
-        if (!hosts.equals(that.hosts)) {
-            return false;
-        }
-        if (mode != that.mode) {
-            return false;
-        }
-        if (requiredClusterType != that.requiredClusterType) {
-            return false;
-        }
-        if (requiredReplicaSetName != null
-            ? !requiredReplicaSetName.equals(that.requiredReplicaSetName) : that.requiredReplicaSetName != null) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hosts.hashCode();
-        result = 31 * result + mode.hashCode();
-        result = 31 * result + requiredClusterType.hashCode();
-        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
-        return result;
+    /**
+     * Gets the {@code ServerSelector} that will be uses as the final server selector that is applied in calls to
+     * {@code Cluster.selectServer}.
+     *
+     * @return the server selector, which may be null
+     * @see Cluster#selectServer(ServerSelector, long, java.util.concurrent.TimeUnit)
+     */
+    public ServerSelector getServerSelector() {
+        return serverSelector;
     }
 
     @Override
@@ -189,6 +178,7 @@ public final class ClusterSettings {
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
+               + ", serverSelector='" + serverSelector + '\''
                + '}';
     }
 
@@ -226,5 +216,6 @@ public final class ClusterSettings {
         mode = builder.mode;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
+        serverSelector = builder.serverSelector;
     }
 }

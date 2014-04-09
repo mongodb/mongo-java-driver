@@ -16,25 +16,32 @@
 
 
 
+
+
 package org.mongodb.connection
 
+import org.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 
 class ClusterSettingsSpecification extends Specification {
     def 'should set all properties'() {
         def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
+        def serverSelector = new PrimaryServerSelector()
         when:
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
                                       .requiredClusterType(ClusterType.REPLICA_SET)
-                                      .requiredReplicaSetName('foo').build();
+                                      .requiredReplicaSetName('foo')
+                                      .serverSelector(serverSelector)
+                                      .build();
 
         then:
         settings.hosts == hosts
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
+        settings.serverSelector == serverSelector
     }
 
     def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {
