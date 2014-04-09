@@ -38,7 +38,7 @@ import org.mongodb.connection.MongoSecurityException
 import org.mongodb.connection.ServerSettings
 import org.mongodb.connection.SocketSettings
 import org.mongodb.connection.SocketStreamFactory
-import org.mongodb.session.PrimaryServerSelector
+import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS

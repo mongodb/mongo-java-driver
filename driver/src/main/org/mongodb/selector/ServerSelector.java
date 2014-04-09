@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.selector;
 
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 

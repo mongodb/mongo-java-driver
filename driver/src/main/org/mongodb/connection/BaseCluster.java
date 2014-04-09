@@ -23,6 +23,7 @@ import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterDescriptionChangedEvent;
 import org.mongodb.event.ClusterEvent;
 import org.mongodb.event.ClusterListener;
+import org.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;

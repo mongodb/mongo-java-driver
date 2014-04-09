@@ -24,7 +24,7 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.AsyncBlock;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.session.PrimaryServerSelector;
+import org.mongodb.selector.PrimaryServerSelector;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerConnectionProvider;

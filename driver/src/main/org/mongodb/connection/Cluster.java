@@ -17,6 +17,8 @@
 package org.mongodb.connection;
 
 
+import org.mongodb.selector.ServerSelector;
+
 import java.util.concurrent.TimeUnit;
 
 public interface Cluster {

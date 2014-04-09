@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.session;
+package org.mongodb.selector;
 
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;

@@ -29,7 +29,7 @@ import org.mongodb.operation.CountOperation
 import org.mongodb.operation.Find
 import org.mongodb.operation.InsertRequest
 import org.mongodb.operation.UpdateRequest
-import org.mongodb.session.PrimaryServerSelector
+import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS

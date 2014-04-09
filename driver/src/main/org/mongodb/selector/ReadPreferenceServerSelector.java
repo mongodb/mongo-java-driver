@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.operation;
+package org.mongodb.selector;
 
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
 
 import java.util.List;
 

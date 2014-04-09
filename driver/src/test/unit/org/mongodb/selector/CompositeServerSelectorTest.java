@@ -21,9 +21,6 @@ import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
-import org.mongodb.operation.ReadPreferenceServerSelector;
-import org.mongodb.session.LatencyMinimizingServerSelector;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;

@@ -16,7 +16,7 @@
 
 package org.mongodb.session;
 
-import org.mongodb.connection.ServerSelector;
+import org.mongodb.selector.ServerSelector;
 
 import java.util.concurrent.TimeUnit;
 

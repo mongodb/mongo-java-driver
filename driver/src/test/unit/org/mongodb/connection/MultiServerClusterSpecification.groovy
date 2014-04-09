@@ -18,7 +18,7 @@ package org.mongodb.connection
 
 import org.mongodb.event.ClusterEvent
 import org.mongodb.event.ClusterListener
-import org.mongodb.session.PrimaryServerSelector
+import org.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS

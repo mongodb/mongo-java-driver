@@ -34,7 +34,7 @@ import org.mongodb.ServerCursor
 import org.mongodb.protocol.GetMoreProtocol
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.KillCursorProtocol
-import org.mongodb.session.PrimaryServerSelector
+import org.mongodb.selector.PrimaryServerSelector
 import org.mongodb.session.ServerConnectionProvider
 import org.mongodb.session.ServerConnectionProviderOptions
 

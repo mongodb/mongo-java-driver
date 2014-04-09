@@ -23,7 +23,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.operation.ReadPreferenceServerSelector;
+import org.mongodb.selector.ReadPreferenceServerSelector;
+import org.mongodb.selector.PrimaryServerSelector;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getCluster;

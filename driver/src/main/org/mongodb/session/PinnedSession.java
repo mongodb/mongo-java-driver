@@ -24,8 +24,9 @@ import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
+import org.mongodb.selector.ServerSelector;
 import org.mongodb.operation.SingleResultFuture;
+import org.mongodb.selector.PrimaryServerSelector;
 
 import java.util.concurrent.Executor;
 

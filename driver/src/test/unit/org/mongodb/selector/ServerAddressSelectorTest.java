@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package org.mongodb.selector;
 
 import org.junit.Test;
+import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerType;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;

@@ -18,7 +18,6 @@ package org.mongodb.selector;
 
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;
