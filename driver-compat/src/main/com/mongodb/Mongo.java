@@ -29,7 +29,6 @@ import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.PowerOfTwoBufferPool;
-import org.mongodb.connection.ServerAddressSelector;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
@@ -37,6 +36,11 @@ import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
+import org.mongodb.selector.CompositeServerSelector;
+import org.mongodb.selector.LatencyMinimizingServerSelector;
+import org.mongodb.selector.MongosHAServerSelector;
+import org.mongodb.selector.ServerAddressSelector;
+import org.mongodb.selector.ServerSelector;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerConnectionProvider;
@@ -45,7 +49,6 @@ import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -60,7 +63,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
@@ -228,7 +233,7 @@ public class Mongo {
      */
     @Deprecated
     public Mongo(final ServerAddress left, final ServerAddress right) {
-        this(Arrays.asList(left, right), createLegacyOptions());
+        this(asList(left, right), createLegacyOptions());
     }
 
     /**
@@ -246,7 +251,7 @@ public class Mongo {
     public Mongo(final ServerAddress left, final ServerAddress right,
                  @SuppressWarnings("deprecation")
                  final MongoOptions options) {
-        this(Arrays.asList(left, right), options.toClientOptions());
+        this(asList(left, right), options.toClientOptions());
     }
 
     /**
@@ -325,7 +330,7 @@ public class Mongo {
     Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
         this(createCluster(mongoURI),
              mongoURI.getOptions(),
-             mongoURI.getCredentials() != null ? Arrays.asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
+             mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
@@ -669,7 +674,7 @@ public class Mongo {
     private static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
-                                               ? Arrays.asList(mongoURI.getCredentials())
+                                               ? asList(mongoURI.getCredentials())
                                                : null;
 
         if (mongoURI.getHosts().size() == 1) {
@@ -689,6 +694,7 @@ public class Mongo {
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .serverSelector(createServerSelector())
                                             .build(),
                              credentialsList, options);
     }
@@ -697,11 +703,11 @@ public class Mongo {
                                          final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder()
                                             .mode(getSingleServerClusterMode(options.toNew()))
-                                            .hosts(Arrays.asList(serverAddress.toNew()))
+                                            .hosts(asList(serverAddress.toNew()))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .serverSelector(createServerSelector())
                                             .build(),
-                             credentialsList, options
-                            );
+                             credentialsList, options);
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
@@ -713,7 +719,8 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSocketFactory()),
                                                   createNewCredentialList(credentialsList),
-                                                  null, new JMXConnectionPoolListener(), null);
+                                                  null, new JMXConnectionPoolListener(), null
+                                                 );
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
@@ -722,6 +729,10 @@ public class Mongo {
             retVal.add(cur.toNew());
         }
         return retVal;
+    }
+
+    private static ServerSelector createServerSelector() {
+        return new CompositeServerSelector(asList(new MongosHAServerSelector(), new LatencyMinimizingServerSelector(15, MILLISECONDS)));
     }
 
     Cluster getCluster() {
