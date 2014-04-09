@@ -65,7 +65,7 @@ public class LatencyMinimizingServerSelectorTest {
                                                             .build();
         assertEquals(Arrays.asList(primary, secondaryOne, secondaryThree),
                      selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
-                                                            Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree)))
+                                                            Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree))));
     }
 
     @Test

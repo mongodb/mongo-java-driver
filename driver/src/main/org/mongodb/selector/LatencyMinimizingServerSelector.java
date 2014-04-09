@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 
 /**
  * A server selector that accepts only servers within the given ping-time latency difference from the faster of the servers.
@@ -58,7 +59,12 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        return getServersWithAcceptableLatencyDifference(clusterDescription.getAll(), getBestPingTimeNanos(clusterDescription.getAll()));
+        if (clusterDescription.getConnectionMode() != MULTIPLE) {
+            return clusterDescription.getAny();
+        } else {
+            return getServersWithAcceptableLatencyDifference(clusterDescription.getAny(),
+                                                             getBestPingTimeNanos(clusterDescription.getAll()));
+        }
     }
 
     @Override
@@ -81,7 +87,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
         return bestPingTime;
     }
 
-    private List<ServerDescription> getServersWithAcceptableLatencyDifference(final Set<ServerDescription> servers,
+    private List<ServerDescription> getServersWithAcceptableLatencyDifference(final List<ServerDescription> servers,
                                                                               final long bestPingTime) {
         List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
         for (final ServerDescription cur : servers) {
