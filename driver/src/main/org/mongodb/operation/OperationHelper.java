@@ -16,71 +16,59 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
+import org.mongodb.Decoder;
+import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
+import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerSelector;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.Protocol;
 import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import static org.mongodb.assertions.Assertions.notNull;
+
 final class OperationHelper {
-
-    static MongoFuture<ServerDescriptionConnectionPair> getConnectionAsync(final Session session,
-                                                                           final ServerConnectionProviderOptions
-                                                                               serverConnectionProviderOptions) {
-        final SingleResultFuture<ServerDescriptionConnectionPair> retVal = new SingleResultFuture<ServerDescriptionConnectionPair>();
-        session.createServerConnectionProviderAsync(serverConnectionProviderOptions)
-               .register(new SingleResultCallback<ServerConnectionProvider>() {
-                   @Override
-                   public void onResult(final ServerConnectionProvider provider, final MongoException e) {
-                       if (e != null) {
-                           retVal.init(null, e);
-                       } else {
-                           provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                               @Override
-                               public void onResult(final Connection connection, final MongoException e) {
-                                   if (e != null) {
-                                       retVal.init(null, e);
-                                   } else {
-                                       retVal.init(new ServerDescriptionConnectionPair(provider.getServerDescription(), connection), null);
-                                   }
-                               }
-                           });
-                       }
-                   }
-               });
-        return retVal;
-    }
-
-    private OperationHelper() {
-    }
 
     /**
      * Use this method to get a ServerConnectionProvider that doesn't rely on specified read preferences.  Used by Operations like commands
      * which always run against the primary.
      *
+     * @param session        the session
      * @return a ServerConnectionProvider initialised with a PrimaryServerSelector
-     * @param session
      */
-    static ServerConnectionProvider getPrimaryServerConnectionProvider(final Session session) {
-        return session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+    static ServerConnectionProvider getPrimaryConnectionProvider(final Session session) {
+        notNull("session", session);
+        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false, new PrimaryServerSelector());
+        return session.createServerConnectionProvider(options);
     }
 
-    /**
-     * Use this method to get a provider that works based upon a given readPreference.  According to the implementation of
-     * ReadPreferenceServerSelector, if readPreference is null, primary will be used by default.
-     *
-     * @param readPreference the requested ReadPreference for this operation
-     * @param session
-     * @return a ServerConnectionProvider initialised with a ReadPreferenceServerSelector
-     */
+    static MongoFuture<ServerConnectionProvider> getPrimaryConnectionProviderAsync(final Session session) {
+        notNull("session", session);
+        return session.createServerConnectionProviderAsync(new ServerConnectionProviderOptions(false, new PrimaryServerSelector()));
+    }
+
     static ServerConnectionProvider getConnectionProvider(final ReadPreference readPreference, final Session session) {
-        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
+        notNull("readPreference", readPreference);
+        notNull("session", session);
+        ServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
         return session.createServerConnectionProvider(new ServerConnectionProviderOptions(false, serverSelector));
+    }
+
+    static MongoFuture<ServerConnectionProvider> getConnectionProviderAsync(final ReadPreference readPreference, final Session session) {
+        notNull("readPreference", readPreference);
+        notNull("session", session);
+        ServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
+        return session.createServerConnectionProviderAsync(new ServerConnectionProviderOptions(false, serverSelector));
     }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final ServerConnectionProvider provider) {
@@ -93,10 +81,133 @@ final class OperationHelper {
     }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final Session session) {
-        return executeProtocol(protocol, getPrimaryServerConnectionProvider(session));
+        return executeProtocol(protocol, getPrimaryConnectionProvider(session));
     }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final ReadPreference readPreference, final Session session) {
         return executeProtocol(protocol, getConnectionProvider(readPreference, session));
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final Encoder<Document> commandEncoder,
+                                                       final Decoder<Document> commandResultDecoder, final ReadPreference readPreference,
+                                                       final Session session) {
+        ServerConnectionProvider connectionProvider = getConnectionProvider(readPreference, session);
+        return executeProtocol(new CommandProtocol(namespace.getDatabaseName(),
+                                                   command,
+                                                   commandEncoder, commandResultDecoder),
+                               connectionProvider);
+    }
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final Session session) {
+        SingleResultFuture<T> future = new SingleResultFuture<T>();
+        getPrimaryConnectionProviderAsync(session)
+        .register(new ProtocolExecutingCallback<T>(protocol, future));
+        return future;
+    }
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final ReadPreference readPreference, final Session session) {
+        SingleResultFuture<T> future = new SingleResultFuture<T>();
+        getConnectionProviderAsync(readPreference, session)
+        .register(new ProtocolExecutingCallback<T>(protocol, future));
+        return future;
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final ReadPreference readPreference,
+                                                                         final Session session) {
+        SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
+        getConnectionProviderAsync(readPreference, session)
+        .register(new CommandProtocolExecutingCallback(namespace, command, commandEncoder, commandResultDecoder, readPreference, future));
+        return future;
+    }
+
+    private static class ProtocolExecutingCallback<T> extends AbstractProtocolExecutingCallback<T> {
+        private final Protocol<T> protocol;
+
+        public ProtocolExecutingCallback(final Protocol<T> protocol, final SingleResultFuture<T> retVal) {
+            super(retVal);
+            this.protocol = protocol;
+        }
+
+        @Override
+        protected Protocol<T> getProtocol(final ServerDescription serverDescription) {
+            return protocol;
+        }
+    }
+
+    private static class CommandProtocolExecutingCallback extends AbstractProtocolExecutingCallback<CommandResult> {
+        private final MongoNamespace namespace;
+        private final Document command;
+        private final Encoder<Document> commandEncoder;
+        private final Decoder<Document> commandResultDecoder;
+        private final ReadPreference readPreference;
+
+        public CommandProtocolExecutingCallback(final MongoNamespace namespace, final Document command,
+                                                final Encoder<Document> commandEncoder,
+                                                final Decoder<Document> commandResultDecoder,
+                                                final ReadPreference readPreference,
+                                                final SingleResultFuture<CommandResult> retVal) {
+            super(retVal);
+            this.namespace = namespace;
+            this.command = command;
+            this.commandEncoder = commandEncoder;
+            this.commandResultDecoder = commandResultDecoder;
+            this.readPreference = readPreference;
+        }
+
+        @Override
+        protected Protocol<CommandResult> getProtocol(final ServerDescription serverDescription) {
+            return new CommandProtocol(namespace.getDatabaseName(), command,
+                                       commandEncoder, commandResultDecoder);
+        }
+    }
+
+    private abstract static class AbstractProtocolExecutingCallback<T> implements SingleResultCallback<ServerConnectionProvider> {
+        private final SingleResultFuture<T> retVal;
+
+        public AbstractProtocolExecutingCallback(final SingleResultFuture<T> retVal) {
+            this.retVal = retVal;
+        }
+
+        @Override
+        public void onResult(final ServerConnectionProvider provider, final MongoException e) {
+            if (e != null) {
+                retVal.init(null, e);
+            } else {
+                provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                    @Override
+                    public void onResult(final Connection connection, final MongoException e) {
+                        if (e != null) {
+                            retVal.init(null, e);
+                        } else {
+                            getProtocol(provider.getServerDescription())
+                            .executeAsync(connection, provider.getServerDescription())
+                            .register(new SingleResultCallback<T>() {
+                                @Override
+                                public void onResult(final T result, final MongoException e) {
+                                    try {
+                                        if (e != null) {
+                                            retVal.init(null, e);
+                                        } else {
+                                            retVal.init(result, null);
+                                        }
+                                    } finally {
+                                        connection.close();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        protected abstract Protocol<T> getProtocol(final ServerDescription serverDescription);
+    }
+
+    private OperationHelper() {
     }
 }

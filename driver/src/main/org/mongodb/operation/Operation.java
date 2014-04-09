@@ -28,7 +28,7 @@ public interface Operation<T> {
      * General execute which can return anything of type T
      *
      * @return T, the results of the execution
-     * @param session
+     * @param session the session to execute in the context of
      */
     T execute(final Session session);
 }

@@ -29,8 +29,7 @@ import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
 /**
  * Help for managing read preferences for commands.
  */
-// TODO: Move me
-public final class CommandReadPreferenceHelper {
+final class CommandReadPreferenceHelper {
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
 
     static {

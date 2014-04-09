@@ -28,6 +28,7 @@ import java.util.List;
 
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 
 public class GetIndexesOperation implements Operation<List<Document>> {
     private final Encoder<Document> simpleDocumentEncoder = new DocumentCodec();
@@ -44,7 +45,8 @@ public class GetIndexesOperation implements Operation<List<Document>> {
     public List<Document> execute(final Session session) {
         List<Document> retVal = new ArrayList<Document>();
         MongoCursor<Document> cursor = new MongoQueryCursor<Document>(indexesNamespace, queryForCollectionNamespace, simpleDocumentEncoder,
-                                                                      new DocumentCodec(), session);
+                                                                      new DocumentCodec(),
+                                                                      getPrimaryConnectionProvider(session));
         try {
             while (cursor.hasNext()) {
                 retVal.add(cursor.next());

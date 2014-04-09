@@ -28,6 +28,7 @@ import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCollectionQueryDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -47,7 +48,7 @@ public class UpdateUserOperation implements Operation<Void> {
     @Override
     @SuppressWarnings("unchecked")
     public Void execute(final Session session) {
-        ServerConnectionProvider serverConnectionProvider = OperationHelper.getPrimaryServerConnectionProvider(session);
+        ServerConnectionProvider serverConnectionProvider = getPrimaryConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {

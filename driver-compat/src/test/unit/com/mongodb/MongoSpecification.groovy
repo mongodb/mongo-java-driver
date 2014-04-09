@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import spock.lang.Subject
 class MongoSpecification extends Specification {
     private final ClusterDescription clusterDescription = Mock()
     private final Cluster cluster = Mock() {
-        getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> clusterDescription
+        getDescription(_, _) >> clusterDescription
     }
 
     @Subject

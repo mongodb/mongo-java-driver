@@ -40,7 +40,7 @@ public class FindAndReplaceOperation<T> implements Operation<T> {
                                    final Encoder<T> payloadEncoder) {
         this.namespace = namespace;
         this.findAndReplace = findAndReplace;
-        resultDecoder = new CommandResultWithPayloadDecoder<T>(payloadDecoder);
+        resultDecoder = new CommandResultWithPayloadDecoder<T>(payloadDecoder, "value");
         commandEncoder = new CommandWithPayloadEncoder<T>("update", payloadEncoder);
     }
 

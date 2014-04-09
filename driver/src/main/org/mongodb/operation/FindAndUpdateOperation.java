@@ -41,7 +41,7 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
     public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate<T> findAndUpdate, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndUpdate = findAndUpdate;
-        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
+        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
     }
 
     @SuppressWarnings("unchecked")
@@ -50,8 +50,7 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
         CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
                                                                           commandEncoder, resultDecoder),
-                                                      session
-                                                     );
+                                                      session);
         return (T) commandResult.getResponse().get("value");
     }
 

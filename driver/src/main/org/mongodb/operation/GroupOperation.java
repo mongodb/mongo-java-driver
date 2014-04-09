@@ -22,12 +22,11 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
@@ -38,7 +37,7 @@ import static org.mongodb.operation.OperationHelper.executeProtocol;
  */
 public class GroupOperation implements Operation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
-    private final Document commandDocument;
+    private final Group group;
     private final ReadPreference readPreference;
 
     /**
@@ -49,7 +48,7 @@ public class GroupOperation implements Operation<MongoCursor<Document>> {
      */
     public GroupOperation(final MongoNamespace namespace, final Group group, final ReadPreference readPreference) {
         this.namespace = namespace;
-        this.commandDocument = createCommandDocument(namespace, group);
+        this.group = group;
         this.readPreference = readPreference;
     }
 
@@ -57,37 +56,36 @@ public class GroupOperation implements Operation<MongoCursor<Document>> {
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
-     * @param session
+     * @param session the session
      */
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<Document> execute(final Session session) {
-        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), commandDocument,
-                                                                          new DocumentCodec(), new DocumentCodec()),
-                                                      readPreference, session);
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
+                                                                    new DocumentCodec(), readPreference, session);
 
         return new InlineMongoCursor<Document>(commandResult, (List<Document>) commandResult.getResponse().get("retval"));
     }
 
-    private Document createCommandDocument(final MongoNamespace namespace, final Group commandDocument) {
+    private Document asCommandDocument() {
 
         Document document = new Document("ns", namespace.getCollectionName());
 
-        if (commandDocument.getKey() != null) {
-            document.put("key", commandDocument.getKey());
+        if (group.getKey() != null) {
+            document.put("key", group.getKey());
         } else {
-            document.put("keyf", commandDocument.getKeyFunction());
+            document.put("keyf", group.getKeyFunction());
         }
 
-        document.put("initial", commandDocument.getInitial());
-        document.put("$reduce", commandDocument.getReduceFunction());
+        document.put("initial", group.getInitial());
+        document.put("$reduce", group.getReduceFunction());
 
-        if (commandDocument.getFinalizeFunction() != null) {
-            document.put("finalize", commandDocument.getFinalizeFunction());
+        if (group.getFinalizeFunction() != null) {
+            document.put("finalize", group.getFinalizeFunction());
         }
 
-        if (commandDocument.getFilter() != null) {
-            document.put("cond", commandDocument.getFilter());
+        if (group.getFilter() != null) {
+            document.put("cond", group.getFilter());
         }
 
         return new Document("group", document);

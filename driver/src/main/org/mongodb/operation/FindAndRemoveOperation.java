@@ -39,7 +39,7 @@ public class FindAndRemoveOperation<T> implements Operation<T> {
     public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndRemove = findAndRemove;
-        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder);
+        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
     }
 
     @SuppressWarnings("unchecked")

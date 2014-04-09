@@ -33,8 +33,6 @@ import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,12 +55,11 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     public MongoQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                            final Decoder<T> decoder, final Session session) {
+                            final Decoder<T> decoder, final ServerConnectionProvider provider) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.find = find;
-        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
-        provider = session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, serverSelector));
+        this.provider = provider;
         Connection connection = provider.getConnection();
         exhaustConnection = isExhaust() ? connection : null;
         QueryProtocol<T> operation;

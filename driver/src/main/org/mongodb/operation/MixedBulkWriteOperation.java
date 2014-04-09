@@ -57,6 +57,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.isTrueArgument;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
@@ -102,7 +103,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
      */
     @Override
     public BulkWriteResult execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
+        ServerConnectionProvider provider = getPrimaryConnectionProvider(session);
         Connection connection = provider.getConnection();
         try {
             BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),

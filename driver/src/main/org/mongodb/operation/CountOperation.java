@@ -24,11 +24,11 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
 public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     private final DocumentCodec commandEncoder = new DocumentCodec();
@@ -43,21 +43,20 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     }
 
     public Long execute(final Session session) {
-        return getCount(executeProtocol(new CommandProtocol(namespace.getDatabaseName(), asDocument(), commandEncoder, codec),
-                                        find.getReadPreference(), session));
+        return getCount(executeWrappedCommandProtocol(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session));
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final Session session) {
         final SingleResultFuture<Long> retVal = new SingleResultFuture<Long>();
-        new CommandOperation(namespace.getDatabaseName(), asDocument(), find.getReadPreference(), codec, commandEncoder)
-        .executeAsync(session).register(new SingleResultCallback<CommandResult>() {
+        executeWrappedCommandProtocolAsync(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session)
+        .register(new SingleResultCallback<CommandResult>() {
             @Override
-            public void onResult(final CommandResult commandResult, final MongoException e) {
+            public void onResult(final CommandResult result, final MongoException e) {
                 if (e != null) {
                     retVal.init(null, e);
                 } else {
-                    retVal.init(getCount(commandResult), null);
+                    retVal.init(getCount(result), null);
                 }
             }
         });
@@ -79,7 +78,6 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
         if (find.getOptions().getMaxTime(MILLISECONDS) > 0) {
             document.put("maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
         }
-
         return document;
     }
 

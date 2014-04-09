@@ -29,6 +29,7 @@ import org.mongodb.connection.Server;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.session.PrimaryServerSelector;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
@@ -66,7 +67,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                            new Find().addFlags(EnumSet.of(Exhaust)),
                                                                            collection.getOptions().getDocumentCodec(),
                                                                            collection.getCodec(),
-                                                                           getSession()
+                                                                           getConnectionProvider(getSession())
         );
 
         int count = 0;
@@ -89,8 +90,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                                new Find().addFlags(EnumSet.of(Exhaust)),
                                                                                collection.getOptions().getDocumentCodec(),
                                                                                collection.getCodec(),
-                                                                               singleConnectionSession
-            );
+                                                                               getConnectionProvider(singleConnectionSession));
 
             cursor.next();
             cursor.close();
@@ -99,14 +99,17 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                     new Find().limit(1).select(new Document("_id", 1)).order(new Document("_id", -1)),
                                                     collection.getOptions().getDocumentCodec(),
                                                     collection.getCodec(),
-                                                    singleConnectionSession
-            );
+                                                    getConnectionProvider(singleConnectionSession));
             assertEquals(new Document("_id", 999), cursor.next());
 
             singleConnectionSession.connection.close();
         } finally {
             connection.close();
         }
+    }
+
+    private ServerConnectionProvider getConnectionProvider(final Session session) {
+        return session.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
     }
 
     private static class SingleConnectionSession implements Session {

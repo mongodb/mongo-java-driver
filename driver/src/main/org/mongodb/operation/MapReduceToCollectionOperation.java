@@ -54,7 +54,6 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
      * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
      */
     public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce) {
-        super();
         if (mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with map reduce operations that put the results into a "
                                                + "collection.  Invalid MapReduce: " + mapReduce);

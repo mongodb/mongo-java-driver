@@ -25,13 +25,11 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -52,6 +50,7 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
+     *
      * @param namespace      the database and collection to perform the map reduce on
      * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
      * @param decoder        the decoder to use for decoding the documents in the results of the map-reduce operation
@@ -59,7 +58,6 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder, final ReadPreference readPreference) {
-        super();
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
@@ -73,20 +71,15 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     /**
      * Executing this will return a cursor with your results and the statistics in.
      *
+     * @param session the session
      * @return a MapReduceCursor that can be iterated over to find all the results of the Map Reduce operation.
-     * @param session
      */
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
-        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(),
-                                                                          command, commandCodec, mapReduceResultDecoder),
-                                                      readPreference, session);
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace, command, commandCodec, mapReduceResultDecoder,
+                                                                    readPreference, session);
 
         return new MapReduceInlineResultsCursor<T>(commandResult);
-    }
-
-    private ServerConnectionProviderOptions getServerConnectionProviderOptions() {
-        return new ServerConnectionProviderOptions(true, new ReadPreferenceServerSelector(readPreference));
     }
 }

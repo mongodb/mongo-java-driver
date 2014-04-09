@@ -21,12 +21,11 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
@@ -44,9 +43,10 @@ public class DistinctOperation implements Operation<MongoCursor<String>> {
 
     /**
      * This operation will return the results of the query with no duplicate entries for the selected field.
-     * @param namespace      the database and collection to run the query against
-     * @param fieldName      the field that needs to be distinct
-     * @param find           the query criteria
+     *
+     * @param namespace the database and collection to run the query against
+     * @param fieldName the field that needs to be distinct
+     * @param find      the query criteria
      */
     public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Find find) {
         this.namespace = namespace;
@@ -54,23 +54,16 @@ public class DistinctOperation implements Operation<MongoCursor<String>> {
         this.find = find;
     }
 
-    /**
-     * Returns all the values for the field without duplicates
-     *
-     * @return a cursor of Strings
-     * @param session
-     */
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<String> execute(final Session session) {
-        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), getCommandDocument(),
-                                                                          new DocumentCodec(), new DocumentCodec()),
-                                                      session);
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
+                                                                    new DocumentCodec(), find.getReadPreference(), session);
 
         return new InlineMongoCursor<String>(commandResult, (List<String>) commandResult.getResponse().get("values"));
     }
 
-    private Document getCommandDocument() {
+    private Document asCommandDocument() {
         Document cmd = new Document("distinct", namespace.getCollectionName());
         cmd.put("key", fieldName);
         if (find.getFilter() != null) {

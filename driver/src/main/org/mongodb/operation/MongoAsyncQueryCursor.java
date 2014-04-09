@@ -34,8 +34,6 @@ import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
-import org.mongodb.session.Session;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
@@ -46,7 +44,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> decoder;
-    private final Session session;
     private ServerConnectionProvider serverConnectionProvider;
     private Connection exhaustConnection;
     private long numFetchedSoFar;
@@ -54,46 +51,32 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private AsyncBlock<? super T> block;
 
     public MongoAsyncQueryCursor(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                                 final Decoder<T> decoder, final Session session) {
+                                 final Decoder<T> decoder, final ServerConnectionProvider serverConnectionProvider) {
         this.namespace = namespace;
         this.find = find;
         this.queryEncoder = queryEncoder;
         this.decoder = decoder;
-        this.session = session;
+        this.serverConnectionProvider = serverConnectionProvider;
     }
 
     @Override
     public void start(final AsyncBlock<? super T> aBlock) {
         this.block = aBlock;
-        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(find.getReadPreference());
-        ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(true, serverSelector);
-        session.createServerConnectionProviderAsync(options)
-               .register(new SingleResultCallback<ServerConnectionProvider>() {
-                   @Override
-                   public void onResult(final ServerConnectionProvider provider, final MongoException e) {
-                       if (e != null) {
-                           close(0);
-                       } else {
-                           serverConnectionProvider = provider;
-                           provider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                               @Override
-                               public void onResult(final Connection connection, final MongoException e) {
-                                   if (e != null) {
-                                       close(0);
-                                   } else {
-                                       if (isExhaust()) {
-                                           exhaustConnection = connection;
-                                       }
-                                       new QueryProtocol<T>(namespace, find, queryEncoder, decoder)
-                                       .executeAsync(connection, provider.getServerDescription())
-                                       .register(new QueryResultSingleResultCallback(connection));
-                                   }
-                               }
-                           });
-                       }
-
-                   }
-               });
+        serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+            @Override
+            public void onResult(final Connection connection, final MongoException e) {
+                if (e != null) {
+                    close(0);
+                } else {
+                    if (isExhaust()) {
+                        exhaustConnection = connection;
+                    }
+                    new QueryProtocol<T>(namespace, find, queryEncoder, decoder)
+                    .executeAsync(connection, serverConnectionProvider.getServerDescription())
+                    .register(new QueryResultSingleResultCallback(connection));
+                }
+            }
+        });
     }
 
     private void close(final int responseTo) {

@@ -49,7 +49,7 @@ public class UserExistsOperation implements Operation<Boolean> {
 
     @Override
     public Boolean execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryServerConnectionProvider(session);
+        ServerConnectionProvider provider = OperationHelper.getPrimaryConnectionProvider(session);
         if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             return executeCommandBasedProtocol(provider);
         } else {

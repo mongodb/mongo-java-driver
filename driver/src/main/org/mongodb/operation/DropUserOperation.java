@@ -26,10 +26,10 @@ import org.mongodb.protocol.DeleteProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
-import java.util.Arrays;
-
+import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 
 /**
  * An operation to remove a user.
@@ -47,8 +47,7 @@ public class DropUserOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        ServerConnectionProvider serverConnectionProvider =
-        OperationHelper.getPrimaryServerConnectionProvider(session);
+        ServerConnectionProvider serverConnectionProvider = getPrimaryConnectionProvider(session);
         if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             executeCommandBasedProtocol(serverConnectionProvider);
         } else {
@@ -71,10 +70,8 @@ public class DropUserOperation implements Operation<Void> {
     private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        executeProtocol(new DeleteProtocol(namespace,
-                                           true, WriteConcern.ACKNOWLEDGED,
-                                           Arrays.asList(new RemoveRequest(new Document("user", userName))),
-                                           codec),
+        executeProtocol(new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                           asList(new RemoveRequest(new Document("user", userName))), codec),
                         serverConnectionProvider);
     }
 }

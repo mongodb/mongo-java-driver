@@ -21,8 +21,6 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.operation.CommandOperation;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
@@ -77,8 +75,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
         ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
-        return client.execute(new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec,
-                                                   client.getCluster().getDescription(10, SECONDS)));
+        return client.execute(new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec));
     }
 
     @Override

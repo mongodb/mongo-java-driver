@@ -21,11 +21,16 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.getConnectionProvider;
+import static org.mongodb.operation.OperationHelper.getConnectionProviderAsync;
 
 public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, Operation<MongoCursor<T>> {
     private final Find find;
@@ -43,11 +48,24 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
 
     @Override
     public MongoCursor<T> execute(final Session session) {
-        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, session);
+        return new MongoQueryCursor<T>(namespace, find, queryEncoder, resultDecoder,
+                                       getConnectionProvider(find.getReadPreference(), session));
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final Session session) {
-        return new SingleResultFuture<MongoAsyncCursor<T>>(new MongoAsyncQueryCursor<T>(namespace, find, queryEncoder, resultDecoder,
-                                                                                        session), null);
+        final SingleResultFuture<MongoAsyncCursor<T>> retVal = new SingleResultFuture<MongoAsyncCursor<T>>();
+
+        getConnectionProviderAsync(find.getReadPreference(), session)
+        .register(new SingleResultCallback<ServerConnectionProvider>() {
+            @Override
+            public void onResult(final ServerConnectionProvider result, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                } else {
+                    retVal.init(new MongoAsyncQueryCursor<T>(namespace, find, queryEncoder, resultDecoder, result), null);
+                }
+            }
+        });
+        return retVal;
     }
 }

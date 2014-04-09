@@ -33,7 +33,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.getPrimaryServerConnectionProvider;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 
 public class CreateIndexesOperation implements Operation<Void> {
     private final List<Index> indexes;
@@ -46,7 +46,8 @@ public class CreateIndexesOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        if (getPrimaryServerConnectionProvider(session).getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
+        if (getPrimaryConnectionProvider(session).getServerDescription().getVersion()
+                                                                 .compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
                 executeCommandBasedProtocol(session);
             } catch (MongoCommandFailureException e) {
@@ -70,7 +71,7 @@ public class CreateIndexesOperation implements Operation<Void> {
             executeProtocol(new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                                          asList(new InsertRequest<Document>(toDocument(index))),
                                                          new DocumentCodec()),
-                            getPrimaryServerConnectionProvider(session));
+                            getPrimaryConnectionProvider(session));
         }
     }
 
@@ -87,7 +88,7 @@ public class CreateIndexesOperation implements Operation<Void> {
         executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command,
                                             new DocumentCodec(),
                                             new DocumentCodec()),
-                        getPrimaryServerConnectionProvider(session));
+                        getPrimaryConnectionProvider(session));
     }
 
     private Document toDocument(final Index index) {

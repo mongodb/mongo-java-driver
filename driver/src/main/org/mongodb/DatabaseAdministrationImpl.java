@@ -25,8 +25,6 @@ import org.mongodb.operation.RenameCollectionOperation;
 import java.util.HashSet;
 import java.util.Set;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
  * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
@@ -47,8 +45,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     @Override
     public void drop() {
         //TODO: should inspect the CommandResult to make sure it went OK
-        client.execute(new CommandOperation(databaseName, DROP_DATABASE, null, commandCodec, commandCodec,
-                                            client.getCluster().getDescription(10, SECONDS)));
+        client.execute(new CommandOperation(databaseName, DROP_DATABASE, ReadPreference.primary(), commandCodec, commandCodec));
     }
 
     @Override
@@ -76,23 +73,20 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        CommandResult commandResult = client.execute(new CommandOperation(databaseName, createCollectionOptions.asDocument(), null,
-                                                                          commandCodec, commandCodec,
-                                                                          client.getCluster().getDescription(10, SECONDS)
+        CommandResult commandResult = client.execute(new CommandOperation(databaseName, createCollectionOptions.asDocument(),
+                                                                          ReadPreference.primary(), commandCodec, commandCodec
         ));
         ErrorHandling.handleErrors(commandResult);
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName,
-                                                     false));
+        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        client.execute(new RenameCollectionOperation(
-                                                    databaseName, oldCollectionName, newCollectionName, dropTarget));
+        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
     }
 
 }

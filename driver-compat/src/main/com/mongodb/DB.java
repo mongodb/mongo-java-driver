@@ -19,14 +19,12 @@ package com.mongodb;
 import org.mongodb.Codec;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ClusterDescription;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.DropUserOperation;
@@ -41,7 +39,6 @@ import org.mongodb.session.Session;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
@@ -205,7 +202,7 @@ public class DB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        executeCommand(new Document("dropDatabase", 1), null);
+        executeCommand(new Document("dropDatabase", 1), org.mongodb.ReadPreference.primary());
     }
 
     /**
@@ -374,21 +371,12 @@ public class DB {
      * @since 2.12
      */
     public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
-        Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
-        org.mongodb.CommandResult result;
         try {
-            result = new CommandOperation(getName(),
-                                          document,
-                                          readPreference.toNew(),
-                                          commandCodec,
-                                          commandCodec,
-                                          getClusterDescription()).execute(getMongo().getSession());
-        } catch (MongoCommandFailureException ex) {  // TODO: Rather not catch this here.
-            result = ex.getCommandResult();
-        } catch (org.mongodb.MongoException ex) {
-            throw mapException(ex);
+            Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
+            return new CommandResult(executeCommand(document, readPreference.toNew()));
+        } catch (CommandFailureException ex) {
+            return ex.getCommandResult();
         }
-        return new CommandResult(result);
     }
 
     /**
@@ -601,16 +589,7 @@ public class DB {
     }
 
     org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
-        return getMongo().execute(new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec,
-                                                       getClusterDescription()));
-    }
-
-    ClusterDescription getClusterDescription() {
-        try {
-            return getCluster().getDescription(10, TimeUnit.SECONDS);
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return getMongo().execute(new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec));
     }
 
     Bytes.OptionHolder getOptionHolder() {

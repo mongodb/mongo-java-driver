@@ -20,55 +20,40 @@ import org.mongodb.ReadPreference;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerSelector;
-import org.mongodb.session.ChainingServerSelector;
-import org.mongodb.session.LatencyMinimizingServerSelector;
 
 import java.util.List;
 
-public class ReadPreferenceServerSelector extends ChainingServerSelector {
+import static org.mongodb.assertions.Assertions.notNull;
+
+/**
+ * A server selector that chooses based on a read preference.
+ *
+ * @since 3.0
+ */
+public class ReadPreferenceServerSelector implements ServerSelector {
     private final ReadPreference readPreference;
 
+    /**
+     * Gets the read preference.
+     *
+     * @param readPreference the read preference
+     */
     public ReadPreferenceServerSelector(final ReadPreference readPreference) {
-        this(readPreference, new LatencyMinimizingServerSelector());
+        this.readPreference = notNull("readPreference", readPreference);
     }
 
-    public ReadPreferenceServerSelector(final ReadPreference readPreference, final ServerSelector chainedSelector) {
-        super(chainedSelector);
-        // TODO: this is hiding bugs:
-        // notNull("readPreference", readPreference);
-        this.readPreference = readPreference == null ? ReadPreference.primary() : readPreference;
-    }
-
+    /**
+     * Gets the read preference.
+     *
+     * @return the read preference
+     */
     public ReadPreference getReadPreference() {
         return readPreference;
     }
 
     @Override
-    protected List<ServerDescription> chooseStep(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
         return readPreference.choose(clusterDescription);
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ReadPreferenceServerSelector that = (ReadPreferenceServerSelector) o;
-
-        if (!readPreference.equals(that.readPreference)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return readPreference.hashCode();
     }
 
     @Override

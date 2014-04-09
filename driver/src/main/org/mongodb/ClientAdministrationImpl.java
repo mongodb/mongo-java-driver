@@ -21,7 +21,6 @@ import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
@@ -42,9 +41,9 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        CommandResult pingResult = client.execute(new CommandOperation(ADMIN_DATABASE, PING_COMMAND, null, commandCodec, commandCodec,
-                                                                       client.getCluster().getDescription(10, TimeUnit.SECONDS)
-        ));
+        CommandResult pingResult = client.execute(new CommandOperation(ADMIN_DATABASE, PING_COMMAND,
+                                                                       client.getOptions().getReadPreference(),
+                                                                       commandCodec, commandCodec));
 
         return (Double) pingResult.getResponse().get("ok");
     }
