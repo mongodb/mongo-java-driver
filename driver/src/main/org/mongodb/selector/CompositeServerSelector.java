@@ -59,11 +59,11 @@ public final class CompositeServerSelector implements ServerSelector {
     }
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         ClusterDescription curClusterDescription = clusterDescription;
         List<ServerDescription> choices = null;
         for (ServerSelector cur : serverSelectors) {
-            choices = cur.choose(curClusterDescription);
+            choices = cur.select(curClusterDescription);
             curClusterDescription = new ClusterDescription(clusterDescription.getConnectionMode(), clusterDescription.getType(), choices);
         }
 

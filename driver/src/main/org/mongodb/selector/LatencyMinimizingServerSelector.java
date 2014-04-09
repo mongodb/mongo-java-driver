@@ -57,7 +57,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
     }
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         return getServersWithAcceptableLatencyDifference(clusterDescription.getAll(), getBestPingTimeNanos(clusterDescription.getAll()));
     }
 

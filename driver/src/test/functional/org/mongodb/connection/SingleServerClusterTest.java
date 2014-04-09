@@ -70,7 +70,7 @@ public class SingleServerClusterTest {
     public void shouldGetServerWithOkDescription() throws InterruptedException {
         Server server = cluster.selectServer(new ServerSelector() {
             @Override
-            public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 return clusterDescription.getPrimaries();
             }
         }, 1, TimeUnit.SECONDS);

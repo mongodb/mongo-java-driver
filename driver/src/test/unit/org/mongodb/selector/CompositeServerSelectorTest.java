@@ -72,7 +72,7 @@ public class CompositeServerSelectorTest {
     public void shouldApplyServerSelectorsInOrder() {
         selector = new CompositeServerSelector(asList(new ReadPreferenceServerSelector(secondary()),
                                                       new LatencyMinimizingServerSelector(15, MILLISECONDS)));
-        assertEquals(selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third))), asList(second, third));
+        assertEquals(selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third))), asList(second, third));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class CompositeServerSelectorTest {
         new CompositeServerSelector(asList(new ReadPreferenceServerSelector(secondary()),
                                            new LatencyMinimizingServerSelector(15, MILLISECONDS)));
         selector = new CompositeServerSelector(Arrays.<ServerSelector>asList(composedSelector));
-        assertEquals(selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third))), asList(second, third));
+        assertEquals(selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third))), asList(second, third));
 
     }
 }

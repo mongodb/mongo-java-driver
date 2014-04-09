@@ -29,7 +29,7 @@ import java.util.List;
 public final class PrimaryServerSelector implements ServerSelector {
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         return clusterDescription.getPrimaries();
     }
 

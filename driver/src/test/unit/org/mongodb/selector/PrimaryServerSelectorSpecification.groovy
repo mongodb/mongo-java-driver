@@ -40,7 +40,7 @@ class PrimaryServerSelectorSpecification extends Specification {
     def 'PrimaryServerSelector will choose primary server for #clusterDescription'() throws UnknownHostException {
         expect:
         PrimaryServerSelector selector = new PrimaryServerSelector()
-        expectedServerList == selector.choose(clusterDescription)
+        expectedServerList == selector.select(clusterDescription)
 
         where:
         expectedServerList | clusterDescription

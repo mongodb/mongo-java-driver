@@ -52,7 +52,7 @@ public class ReadPreferenceServerSelectorTest {
                                                      .ok(true)
                                                      .type(ServerType.REPLICA_SET_SECONDARY)
                                                      .build();
-        assertEquals(asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary, secondary))));
+        assertEquals(asList(primary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary, secondary))));
     }
 }
 

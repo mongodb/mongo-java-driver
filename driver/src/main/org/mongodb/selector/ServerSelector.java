@@ -33,5 +33,5 @@ import java.util.List;
  */
 @ThreadSafe
 public interface ServerSelector {
-    List<ServerDescription> choose(ClusterDescription clusterDescription);
+    List<ServerDescription> select(ClusterDescription clusterDescription);
 }

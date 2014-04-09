@@ -51,7 +51,7 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     }
 
     @Override
-    public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+    public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         return readPreference.choose(clusterDescription);
     }
 

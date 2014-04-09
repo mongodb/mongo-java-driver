@@ -64,7 +64,7 @@ public class LatencyMinimizingServerSelectorTest {
                                                             .averagePingTime(30, TimeUnit.MILLISECONDS)
                                                             .build();
         assertEquals(Arrays.asList(primary, secondaryOne, secondaryThree),
-                     selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
+                     selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                             Arrays.asList(primary, secondaryOne, secondaryTwo, secondaryThree)))
     }
 
@@ -85,7 +85,7 @@ public class LatencyMinimizingServerSelectorTest {
                                                           .type(ServerType.REPLICA_SET_SECONDARY)
                                                           .averagePingTime(11, TimeUnit.NANOSECONDS)
                                                           .build();
-        assertEquals(Arrays.asList(primary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
+        assertEquals(Arrays.asList(primary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                                                     Arrays.asList(primary, secondaryOne))));
     }
 }

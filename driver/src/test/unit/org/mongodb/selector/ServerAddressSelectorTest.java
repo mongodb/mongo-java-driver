@@ -52,7 +52,7 @@ public class ServerAddressSelectorTest {
                                                        .ok(true)
                                                        .type(ServerType.REPLICA_SET_SECONDARY)
                                                        .build();
-        assertEquals(Arrays.asList(secondary), selector.choose(new ClusterDescription(MULTIPLE, REPLICA_SET,
+        assertEquals(Arrays.asList(secondary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                                                       Arrays.asList(primary, secondary))));
     }
 }

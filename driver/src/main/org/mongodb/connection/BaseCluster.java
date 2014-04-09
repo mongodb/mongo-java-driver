@@ -73,7 +73,7 @@ public abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
+            List<ServerDescription> serverDescriptions = serverSelector.select(curDescription);
             long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (true) {
                 throwIfIncompatible(curDescription);
@@ -100,7 +100,7 @@ public abstract class BaseCluster implements Cluster {
                 }
                 currentPhase = phase.get();
                 curDescription = description;
-                serverDescriptions = serverSelector.choose(curDescription);
+                serverDescriptions = serverSelector.select(curDescription);
             }
         } catch (InterruptedException e) {
             throw new MongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
