@@ -36,6 +36,7 @@ import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 
 final class OperationHelper {
 
@@ -94,7 +95,7 @@ final class OperationHelper {
                                                        final Session session) {
         ServerConnectionProvider connectionProvider = getConnectionProvider(readPreference, session);
         return executeProtocol(new CommandProtocol(namespace.getDatabaseName(),
-                                                   command,
+                                                   wrapCommand(command, readPreference, connectionProvider.getServerDescription()),
                                                    commandEncoder, commandResultDecoder),
                                connectionProvider);
     }
@@ -122,6 +123,16 @@ final class OperationHelper {
         getConnectionProviderAsync(readPreference, session)
         .register(new CommandProtocolExecutingCallback(namespace, command, commandEncoder, commandResultDecoder, readPreference, future));
         return future;
+    }
+
+
+    private static Document wrapCommand(final Document command, final ReadPreference readPreference,
+                                        final ServerDescription serverDescription) {
+        if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(ReadPreference.primary())) {
+            return new Document("$query", command).append("$readPreference", readPreference.toDocument());
+        } else {
+            return command;
+        }
     }
 
     private static class ProtocolExecutingCallback<T> extends AbstractProtocolExecutingCallback<T> {
@@ -160,7 +171,7 @@ final class OperationHelper {
 
         @Override
         protected Protocol<CommandResult> getProtocol(final ServerDescription serverDescription) {
-            return new CommandProtocol(namespace.getDatabaseName(), command,
+            return new CommandProtocol(namespace.getDatabaseName(), wrapCommand(command, readPreference, serverDescription),
                                        commandEncoder, commandResultDecoder);
         }
     }
