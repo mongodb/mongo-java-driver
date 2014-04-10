@@ -418,7 +418,7 @@ public class Mongo {
 
     private ClusterDescription getClusterDescription() {
         try {
-            return cluster.getDescription(10, TimeUnit.SECONDS);
+            return cluster.getDescription(options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
         } catch (org.mongodb.MongoException e) {
             //TODO: test this
             throw mapException(e);
