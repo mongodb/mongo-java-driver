@@ -71,7 +71,10 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
 
         @Override
         public void onResult(final ResponseBuffers result, final MongoException e) {
-            if (result.getReplyHeader().getCursorId() == 0) {
+            if (e != null) {
+                future.init(null, e);
+            } else if (result.getReplyHeader().getCursorId() == 0) {
+                result.close();
                 future.init(null, null);
             } else {
                 connection.receiveMessageAsync(responseTo, this);
