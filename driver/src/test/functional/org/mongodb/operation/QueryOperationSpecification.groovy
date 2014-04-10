@@ -193,6 +193,6 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
 
         expect:
-        queryOperation.execute(getSession())  // if it didn't throw, the query was executed
+        queryOperation.execute(getSession()) != null // if it didn't throw, the query was executed
     }
 }
