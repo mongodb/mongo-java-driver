@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
@@ -75,7 +76,12 @@ public final class Fixture {
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getCluster().getDescription(10, SECONDS).getAny().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        ClusterDescription clusterDescription = getCluster().getDescription(10, SECONDS);
+        List<ServerDescription> serverDescriptions = clusterDescription.getAny();
+        if (serverDescriptions.isEmpty()) {
+            throw new RuntimeException("There are no servers available in " + clusterDescription);
+        }
+        return serverDescriptions.get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     static class ShutdownHook extends Thread {
