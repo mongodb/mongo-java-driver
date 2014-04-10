@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.operation
-
 import category.Slow
 import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
@@ -222,11 +221,12 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
 
         collection.insert(new Document('_id', 1).append('ts', new BSONTimestamp(5, 0)))
-        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2, EnumSet.of(QueryFlag.Tailable))
+        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2,
+                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.of(QueryFlag.Tailable), 0, 2, new DocumentCodec(),
+                                                firstBatch, EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -260,11 +260,12 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         collection.insert(new Document('_id', 1))
 
-        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2, EnumSet.of(QueryFlag.Tailable))
+        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new BSONTimestamp(5, 0))), 2,
+                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.of(QueryFlag.Tailable), 0, 2, new DocumentCodec(),
+                                                firstBatch, EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         CountDownLatch latch = new CountDownLatch(1)
