@@ -22,10 +22,9 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 public class DropIndexOperation implements Operation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -40,8 +39,7 @@ public class DropIndexOperation implements Operation<CommandResult> {
     @Override
     public CommandResult execute(final Session session) {
         try {
-            return executeProtocol(new CommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec),
-                                   session);
+            return executeWrappedCommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, session);
         } catch (MongoCommandFailureException e) {
             return ignoreNamespaceNotFoundExceptions(e);
         }

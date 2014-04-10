@@ -29,10 +29,13 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.ReplyMessage;
+
+import java.util.EnumSet;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
@@ -47,9 +50,11 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final Document command;
     private final Decoder<Document> commandResultDecoder;
     private final Encoder<Document> commandEncoder;
+    private final EnumSet<QueryFlag> queryFlags;
 
-    public CommandProtocol(final String database, final Document command, final Encoder<Document> commandEncoder,
-                           final Decoder<Document> commandResultDecoder) {
+    public CommandProtocol(final String database, final Document command, final EnumSet<QueryFlag> queryFlags,
+                           final Encoder<Document> commandEncoder, final Decoder<Document> commandResultDecoder) {
+        this.queryFlags = queryFlags;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
@@ -68,7 +73,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private CommandMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
                                                         getMessageSettings(serverDescription));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
@@ -92,7 +97,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, commandEncoder,
+        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
                                                     getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
 

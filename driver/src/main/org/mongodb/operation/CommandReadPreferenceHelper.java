@@ -69,9 +69,7 @@ final class CommandReadPreferenceHelper {
             return readPreference;
         }
 
-        boolean primaryRequired = isPrimaryRequired(commandDocument);
-
-        if (primaryRequired) {
+        if (isPrimaryRequired(commandDocument)) {
             return ReadPreference.primary();
         } else {
             return readPreference;

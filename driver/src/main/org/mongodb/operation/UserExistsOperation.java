@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
@@ -32,6 +31,7 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * An operation to determine if a user exists.
@@ -59,9 +59,8 @@ public class UserExistsOperation implements Operation<Boolean> {
     }
 
     private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        CommandResult commandResult = executeProtocol(new CommandProtocol(database, new Document("usersInfo", userName),
-                                                                          new DocumentCodec(), new DocumentCodec()),
-                                                      serverConnectionProvider);
+        CommandResult commandResult = executeWrappedCommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
+                                                                    new DocumentCodec(), serverConnectionProvider);
 
         return !commandResult.getResponse().get("users", List.class).isEmpty();
     }

@@ -21,7 +21,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -29,6 +28,7 @@ import org.mongodb.session.Session;
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -57,9 +57,8 @@ public class CreateUserOperation implements Operation<Void> {
     }
 
     private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        CommandProtocol commandProtocol = new CommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
-                                                              new DocumentCodec(), new DocumentCodec());
-        executeProtocol(commandProtocol, serverConnectionProvider);
+        executeWrappedCommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
+                                      new DocumentCodec(), new DocumentCodec(), serverConnectionProvider);
     }
 
     @SuppressWarnings("unchecked")

@@ -16,13 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import static java.lang.String.format;
@@ -30,7 +28,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 public class FindAndUpdateOperation<T> implements Operation<T> {
     private final MongoNamespace namespace;
@@ -48,10 +46,9 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
     @Override
     public T execute(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(),
-                                                                          commandEncoder, resultDecoder),
-                                                      session);
-        return (T) commandResult.getResponse().get("value");
+        return (T) executeWrappedCommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(), commandEncoder, resultDecoder,
+                                                 session)
+                   .getResponse().get("value");
     }
 
     private void validateUpdateDocumentToEnsureItHasUpdateOperators(final Document value) {

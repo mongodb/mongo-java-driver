@@ -24,8 +24,8 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
+import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 
 public class CreateIndexesOperation implements Operation<Void> {
@@ -46,10 +47,10 @@ public class CreateIndexesOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        if (getPrimaryConnectionProvider(session).getServerDescription().getVersion()
-                                                                 .compareTo(new ServerVersion(2, 6)) >= 0) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (connectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
-                executeCommandBasedProtocol(session);
+                executeCommandBasedProtocol(connectionProvider);
             } catch (MongoCommandFailureException e) {
                 if (e.getErrorCode() == 11000) {
                     throw new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
@@ -58,25 +59,25 @@ public class CreateIndexesOperation implements Operation<Void> {
                 }
             }
         } else {
-            executeCollectionBasedProtocol(session);
+            executeCollectionBasedProtocol(connectionProvider);
         }
         return null;
 
     }
 
     @SuppressWarnings("unchecked")
-    private void executeCollectionBasedProtocol(final Session session) {
+    private void executeCollectionBasedProtocol(final ServerConnectionProvider connectionProvider) {
         MongoNamespace systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
         for (Index index : indexes) {
             executeProtocol(new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                                          asList(new InsertRequest<Document>(toDocument(index))),
                                                          new DocumentCodec()),
-                            getPrimaryConnectionProvider(session));
+                            connectionProvider);
         }
     }
 
 
-    private void executeCommandBasedProtocol(final Session session) {
+    private void executeCommandBasedProtocol(final ServerConnectionProvider connectionProvider) {
         Document command = new Document("createIndexes", namespace.getCollectionName());
         List<Document> list = new ArrayList<Document>();
         for (Index index : indexes) {
@@ -85,10 +86,7 @@ public class CreateIndexesOperation implements Operation<Void> {
         command.append("indexes", list);
 
 
-        executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command,
-                                            new DocumentCodec(),
-                                            new DocumentCodec()),
-                        getPrimaryConnectionProvider(session));
+        executeWrappedCommandProtocol(namespace.getDatabaseName(), command, new DocumentCodec(), new DocumentCodec(), connectionProvider);
     }
 
     private Document toDocument(final Index index) {

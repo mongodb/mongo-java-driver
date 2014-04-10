@@ -32,6 +32,7 @@ import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionMessageReceivedEvent;
 import org.mongodb.event.ConnectionMessagesSentEvent;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.KillCursorsMessage;
@@ -39,6 +40,7 @@ import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
@@ -97,7 +99,9 @@ public class InternalStreamConnectionTest {
                                                                            listener);
         OutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
-                                                    new Document("ismaster", 1), new DocumentCodec(), MessageSettings.builder().build());
+                                                    new Document("ismaster", 1),
+                                                    EnumSet.noneOf(QueryFlag.class),
+                                                    new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);
 
         // when

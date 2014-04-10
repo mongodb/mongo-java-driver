@@ -20,14 +20,13 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
@@ -43,9 +42,8 @@ public class GetDatabaseNamesOperation implements Operation<List<String>> {
      */
     @Override
     public List<String> execute(final Session session) {
-        CommandResult listDatabasesResult = executeProtocol(new CommandProtocol("admin", new Document("listDatabases", 1), commandCodec,
-                                                                                commandCodec),
-                                                            session);
+        CommandResult listDatabasesResult = executeWrappedCommandProtocol("admin", new Document("listDatabases", 1), commandCodec,
+                                                                          commandCodec, session);
 
         @SuppressWarnings("unchecked")
         List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");

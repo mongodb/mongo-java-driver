@@ -77,7 +77,8 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace, command, commandCodec, mapReduceResultDecoder,
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace, command,
+                                                                    commandCodec, mapReduceResultDecoder,
                                                                     readPreference, session);
 
         return new MapReduceInlineResultsCursor<T>(commandResult);

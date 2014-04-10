@@ -22,9 +22,12 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoNamespace;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplyMessage;
+
+import java.util.EnumSet;
 
 import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
@@ -41,7 +44,7 @@ final class CommandHelper {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                        command, codec, MessageSettings.builder().build());
+                                                        command, EnumSet.noneOf(QueryFlag.class), codec, MessageSettings.builder().build());
             message.encode(buffer);
             internalConnection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;

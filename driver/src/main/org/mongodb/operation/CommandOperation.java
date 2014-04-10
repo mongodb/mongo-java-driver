@@ -22,12 +22,11 @@ import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.ReadPreference;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.CommandReadPreferenceHelper.isQuery;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
 public class CommandOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
     private final Encoder<Document> commandEncoder;
@@ -48,22 +47,18 @@ public class CommandOperation implements AsyncOperation<CommandResult>, Operatio
     @Override
     public CommandResult execute(final Session session) {
         if (isQuery(commandDocument)) {
-            return executeProtocol(asCommandProtocol(), readPreference, session);
+            return executeWrappedCommandProtocol(database, commandDocument, commandEncoder, commandDecoder, readPreference, session);
         } else {
-            return executeProtocol(asCommandProtocol(), session);
+            return executeWrappedCommandProtocol(database, commandDocument, commandEncoder, commandDecoder, session);
         }
     }
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final Session session) {
         if (isQuery(commandDocument)) {
-            return executeProtocolAsync(asCommandProtocol(), readPreference, session);
+            return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, readPreference, session);
         } else {
-            return executeProtocolAsync(asCommandProtocol(), session);
+            return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, session);
         }
-    }
-
-    private CommandProtocol asCommandProtocol() {
-        return new CommandProtocol(database, commandDocument, commandEncoder, commandDecoder);
     }
 }

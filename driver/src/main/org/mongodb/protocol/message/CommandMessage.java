@@ -19,23 +19,28 @@ package org.mongodb.protocol.message;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.operation.QueryFlag;
+
+import java.util.EnumSet;
 
 import static org.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 
 public class CommandMessage extends RequestMessage {
+    private final EnumSet<QueryFlag> queryFlags;
     private final Encoder<Document> encoder;
     private final Document command;
 
-    public CommandMessage(final String collectionName, final Document command, final Encoder<Document> encoder,
-                          final MessageSettings settings) {
+    public CommandMessage(final String collectionName, final Document command, final EnumSet<QueryFlag> queryFlags,
+                          final Encoder<Document> encoder, final MessageSettings settings) {
         super(collectionName, OP_QUERY, settings);
+        this.queryFlags = queryFlags;
         this.encoder = encoder;
         this.command = command;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        buffer.writeInt(0);
+        buffer.writeInt(QueryFlag.fromSet(queryFlags));
         buffer.writeCString(getCollectionName());
 
         buffer.writeInt(0);

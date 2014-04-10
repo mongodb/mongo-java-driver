@@ -18,13 +18,15 @@
 
 
 
-package org.mongodb.connection
 
+
+package org.mongodb.connection
 import org.mongodb.Document
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.event.ConnectionListener
+import org.mongodb.operation.QueryFlag
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.message.CommandMessage
 import org.mongodb.protocol.message.KillCursorsMessage
@@ -88,7 +90,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
         def buffer = new ByteBufferOutputBuffer(connection)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
-                                         new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build());
+                                         new Document('ismaster', 1), EnumSet.noneOf(QueryFlag), new DocumentCodec(),
+                                         MessageSettings.builder().build());
         message.encode(buffer);
 
         when:

@@ -28,11 +28,14 @@ import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.logging.Logger;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.CommandMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
+
+import java.util.EnumSet;
 
 import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
@@ -65,7 +68,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
                                                                     createGetLastErrorCommandDocument(),
-                                                                    new DocumentCodec(),
+                                                                    EnumSet.noneOf(QueryFlag.class), new DocumentCodec(),
                                                                     getMessageSettings(serverDescription));
             encodeMessageToBuffer(getLastErrorMessage, buffer);
             connection.sendMessageAsync(buffer.getByteBuffers(), getLastErrorMessage.getId(),
@@ -110,8 +113,8 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
-                                                         createGetLastErrorCommandDocument(), new DocumentCodec(),
-                                                         getMessageSettings(serverDescription)
+                                                         createGetLastErrorCommandDocument(), EnumSet.noneOf(QueryFlag.class),
+                                                         new DocumentCodec(), getMessageSettings(serverDescription)
                 );
                 getLastErrorMessage.encode(buffer);
                 lastMessage = getLastErrorMessage;

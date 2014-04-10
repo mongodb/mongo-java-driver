@@ -20,11 +20,10 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Executing this operation will rename the given collection to the new name.  If the new name is the same as an existing collection and
@@ -65,7 +64,7 @@ public class RenameCollectionOperation implements Operation<CommandResult> {
      */
     @Override
     public CommandResult execute(final Session session) {
-        return executeProtocol(new CommandProtocol("admin", createCommand(), commandCodec, commandCodec), session);
+        return executeWrappedCommandProtocol("admin", createCommand(), commandCodec, commandCodec, session);
     }
 
     private Document createCommand() {

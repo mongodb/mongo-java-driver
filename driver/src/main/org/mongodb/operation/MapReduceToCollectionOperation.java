@@ -23,12 +23,11 @@ import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will be
@@ -70,9 +69,8 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
      */
     @Override
     public MapReduceStatistics execute(final Session session) {
-        CommandResult commandResult = executeProtocol(new CommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec),
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
                                                       session);
-
         serverUsed = commandResult.getAddress();
         return new MapReduceIntoCollectionStatistics(commandResult);
     }
