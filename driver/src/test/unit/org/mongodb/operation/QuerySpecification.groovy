@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,16 @@ class QuerySpecification extends Specification {
         query.getFlags() == flags
 
         where:
-        query                                                                           | flags
-        new Find()                                                                      | EnumSet.noneOf(QueryFlag)
-        new Find().addFlags(EnumSet.of(Tailable))                                       | EnumSet.of(Tailable, AwaitData)
-        new Find().addFlags(EnumSet.of(SlaveOk))                                        | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                              | EnumSet.of(Tailable, AwaitData, SlaveOk)
-        new Find().flags(EnumSet.of(Exhaust))                                           | EnumSet.of(Exhaust)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust))   | EnumSet.of(Exhaust)
+        query                                                                             | flags
+        new Find()                                                                        | EnumSet.noneOf(QueryFlag)
+        new Find().addFlags(EnumSet.of(Tailable))                                         | EnumSet.of(Tailable, AwaitData)
+        new Find().addFlags(EnumSet.of(SlaveOk))                                          | EnumSet.of(SlaveOk)
+        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                                | EnumSet.of(Tailable, AwaitData, SlaveOk)
+        new Find().flags(EnumSet.of(Exhaust))                                             | EnumSet.of(Exhaust)
+        new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust))     | EnumSet.of(Exhaust)
+        new Find().readPreference(ReadPreference.secondary())                             | EnumSet.of(SlaveOk)
+        new Find().readPreference(ReadPreference.primary())                               | EnumSet.noneOf(QueryFlag)
+        new Find().flags(EnumSet.of(Tailable)).readPreference(ReadPreference.secondary()) | EnumSet.of(SlaveOk, Tailable)
     }
 
     def 'should throw an exception if options given are null'() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.mongodb.ReadPreference;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
+import static org.mongodb.assertions.Assertions.notNull;
 
 public abstract class Query {
     private ReadPreference readPreference;
@@ -45,7 +46,7 @@ public abstract class Query {
 
     //CHECKSTYLE:OFF
     public Query readPreference(final ReadPreference readPreference) {
-        this.readPreference = readPreference;
+        this.readPreference = notNull("readPreference", readPreference);
         return this;
     }
 
@@ -100,7 +101,7 @@ public abstract class Query {
 
 
     public EnumSet<QueryFlag> getFlags() {
-        if (readPreference != null && readPreference.isSlaveOk()) {
+        if (readPreference.isSlaveOk()) {
             EnumSet<QueryFlag> retVal = EnumSet.copyOf(flags);
             retVal.add(QueryFlag.SlaveOk);
             return retVal;

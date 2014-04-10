@@ -24,6 +24,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -31,6 +33,7 @@ import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.MongoExecutionTimeoutException
+import org.mongodb.ReadPreference
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
@@ -181,5 +184,13 @@ class QueryOperationSpecification extends FunctionalSpecification {
         then:
         found
     }
-    
+
+    def 'should read from a secondary'() {
+        assumeTrue(Fixture.isDiscoverableReplicaSet())
+        def find = new Find().readPreference(ReadPreference.secondary())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+
+        expect:
+        queryOperation.execute(getSession()).hasNext()  // if it didn't throw, the query was executed
+    }
 }
