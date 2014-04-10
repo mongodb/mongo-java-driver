@@ -42,6 +42,7 @@ import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.clusterIsType;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
+import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
@@ -88,21 +89,21 @@ public class JavaClientOldTest extends DatabaseTestCase {
         List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
-            .batchSize(1)
-            .outputMode(AggregationOptions.OutputMode.CURSOR)
-            .allowDiskUse(true)
-            .build());
+                                           .batchSize(1)
+                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
+                                           .allowDiskUse(true)
+                                           .build());
 
         verify(pipeline, AggregationOptions.builder()
-            .batchSize(1)
-            .outputMode(AggregationOptions.OutputMode.INLINE)
-            .allowDiskUse(true)
-            .build());
+                                           .batchSize(1)
+                                           .outputMode(AggregationOptions.OutputMode.INLINE)
+                                           .allowDiskUse(true)
+                                           .build());
 
         verify(pipeline, AggregationOptions.builder()
-            .batchSize(1)
-            .outputMode(AggregationOptions.OutputMode.CURSOR)
-            .build());
+                                           .batchSize(1)
+                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
+                                           .build());
     }
 
     @Test
@@ -112,14 +113,14 @@ public class JavaClientOldTest extends DatabaseTestCase {
         database.getCollection(aggCollection)
             .drop();
         assertEquals(0, database.getCollection(aggCollection)
-            .count());
+                                .count());
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
 
         AggregationOutput out = collection.aggregate(pipeline);
         assertFalse(out.results()
-            .iterator()
-            .hasNext());
+                       .iterator()
+                       .hasNext());
         assertEquals(2, database.getCollection(aggCollection)
             .count());
     }
@@ -131,13 +132,13 @@ public class JavaClientOldTest extends DatabaseTestCase {
         database.getCollection(aggCollection)
             .drop();
         Assert.assertEquals(0, database.getCollection(aggCollection)
-            .count());
+                                       .count());
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
-            .outputMode(AggregationOptions.OutputMode.CURSOR)
-            .build());
+                                           .outputMode(AggregationOptions.OutputMode.CURSOR)
+                                           .build());
         assertEquals(2, database.getCollection(aggCollection)
             .count());
     }
@@ -161,7 +162,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
     @Test
     @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
-        assumeTrue(clusterIsType(REPLICA_SET));
+        assumeTrue(isDiscoverableReplicaSet());
 
         ServerAddress primary = new ServerAddress("localhost");
         ServerAddress secondary = new ServerAddress("localhost", 27018);
@@ -221,7 +222,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .iterator()
             .hasNext());
         assertEquals(database.getCollection("aggCollection")
-            .count(), 2);
+                             .count(), 2);
     }
 
     @Test
@@ -234,8 +235,8 @@ public class JavaClientOldTest extends DatabaseTestCase {
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build());
         assertTrue(out.keySet()
-            .iterator()
-            .hasNext());
+                      .iterator()
+                      .hasNext());
     }
 
     @Test(expected = IllegalArgumentException.class)

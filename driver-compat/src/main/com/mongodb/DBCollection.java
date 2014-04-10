@@ -1215,15 +1215,18 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
-        MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), preparePipeline(pipeline), objectCodec,
-                                                                                AggregationOptions.builder().outputMode(INLINE).build()
-                                                                                                  .toNew(),
-                                                                                readPreference.toNew()));
-        List<DBObject> results = new ArrayList<DBObject>();
-        while (cursor.hasNext()) {
-            results.add(cursor.next());
+        Cursor cursor = aggregate(pipeline, AggregationOptions.builder().outputMode(INLINE).build(), readPreference, false);
+
+        if (cursor == null) {
+            return new AggregationOutput(Collections.<DBObject>emptyList());
+        } else {
+            List<DBObject> results = new ArrayList<DBObject>();
+            while (cursor.hasNext()) {
+                results.add(cursor.next());
+            }
+            return new AggregationOutput(results);
+
         }
-        return new AggregationOutput(results);
     }
 
     /**
@@ -1250,6 +1253,11 @@ public class DBCollection {
      * @mongodb.server.release 2.2
      */
     public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference) {
+        return aggregate(pipeline, options, readPreference, true);
+    }
+
+    private Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+                             final boolean returnCursorForOutCollection) {
         if (options == null) {
             throw new IllegalArgumentException("options can not be null");
         }
@@ -1264,7 +1272,11 @@ public class DBCollection {
                                                                                 options.toNew(),
                                                                                 activeReadPreference.toNew()));
         if (outCollection != null) {
-            return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
+            if (returnCursorForOutCollection) {
+                return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
+            } else {
+                return null;
+            }
         } else {
             return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
                 @Override
