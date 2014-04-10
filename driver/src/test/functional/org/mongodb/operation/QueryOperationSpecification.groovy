@@ -26,6 +26,8 @@
 
 
 
+
+
 package org.mongodb.operation
 
 import org.mongodb.Document
@@ -191,6 +193,6 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
 
         expect:
-        queryOperation.execute(getSession()).hasNext()  // if it didn't throw, the query was executed
+        queryOperation.execute(getSession())  // if it didn't throw, the query was executed
     }
 }
