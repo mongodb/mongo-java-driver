@@ -18,16 +18,12 @@
 package org.mongodb;
 
 
-import org.mongodb.operation.QueryFlag;
-
-import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 public class QueryOptions {
-    private final EnumSet<QueryFlag> queryFlags = EnumSet.noneOf(QueryFlag.class);
     private int batchSize;
     private int maxScan;
     private long maxTimeMS;
@@ -45,8 +41,6 @@ public class QueryOptions {
     }
 
     public QueryOptions(final QueryOptions from) {
-        queryFlags.clear();
-        queryFlags.addAll(from.queryFlags);
         batchSize = from.batchSize;
         maxScan = from.maxScan;
         maxTimeMS = from.maxTimeMS;
@@ -62,10 +56,6 @@ public class QueryOptions {
         returnKey = from.returnKey;
         showDiskLoc = from.showDiskLoc;
         snapshot = from.snapshot;
-    }
-
-    public EnumSet<QueryFlag> getFlags() {
-        return queryFlags;
     }
 
     public int getBatchSize() {
@@ -120,11 +110,6 @@ public class QueryOptions {
         return snapshot;
     }
 
-    public QueryOptions addFlags(final EnumSet<QueryFlag> flags) {
-        queryFlags.addAll(flags);
-        return this;
-    }
-
     // CHECKSTYLE:OFF
 
     public QueryOptions batchSize(final int batchSize) {
@@ -139,12 +124,6 @@ public class QueryOptions {
 
     public QueryOptions explain() {
         explain = true;
-        return this;
-    }
-
-    public QueryOptions flags(final EnumSet<QueryFlag> flags) {
-        queryFlags.clear();
-        queryFlags.addAll(flags);
         return this;
     }
 
@@ -253,17 +232,13 @@ public class QueryOptions {
         if (min != null ? !min.equals(that.min) : that.min != null) {
             return false;
         }
-        if (queryFlags != null ? !queryFlags.equals(that.queryFlags) : that.queryFlags != null) {
-            return false;
-        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = queryFlags != null ? queryFlags.hashCode() : 0;
-        result = 31 * result + batchSize;
+        int result = 31 * batchSize;
         result = 31 * result + maxScan;
         result = 31 * result + (int) (maxTimeMS ^ (maxTimeMS >>> 32));
         result = 31 * result + (min != null ? min.hashCode() : 0);
@@ -281,7 +256,6 @@ public class QueryOptions {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("QueryOptions{");
-        sb.append("queryFlags=").append(queryFlags);
         sb.append(", batchSize=").append(batchSize);
         sb.append(", maxScan=").append(maxScan);
         sb.append(", maxTimeMS=").append(maxTimeMS);

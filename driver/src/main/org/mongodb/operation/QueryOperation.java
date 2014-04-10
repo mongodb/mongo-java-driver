@@ -62,10 +62,10 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
                                                                                                             connectionProvider
                                                                                                             .getServerDescription());
             if (isExhaustCursor()) {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getOptions().getFlags(), find.getLimit(), find.getBatchSize(),
+                return new MongoQueryCursor<T>(namespace, queryResult, find.getFlags(), find.getLimit(), find.getBatchSize(),
                                                resultDecoder, connection, connectionProvider.getServerDescription());
             } else {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getOptions().getFlags(), find.getLimit(), find.getBatchSize(),
+                return new MongoQueryCursor<T>(namespace, queryResult, find.getFlags(), find.getLimit(), find.getBatchSize(),
                                                resultDecoder, connectionProvider);
             }
         } finally {
@@ -96,33 +96,17 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
                                         if (e != null) {
                                             future.init(null, e);
                                         } else {
-                                            MongoAsyncQueryCursor<T> cursor;
-                                            if (isExhaustCursor()) {
-                                                cursor = new MongoAsyncQueryCursor<T>(namespace,
+                                            MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
                                                                                       queryResult,
-                                                                                      find.getOptions().getFlags(),
-                                                                                      find.getLimit(),
-                                                                                      find.getBatchSize(),
-                                                                                      resultDecoder,
-                                                                                      connection,
-                                                                                      connectionProvider
-                                                                                      .getServerDescription()
-                                                );
-                                            } else {
-                                                cursor = new MongoAsyncQueryCursor<T>(namespace,
-                                                                                      queryResult,
-                                                                                      find.getOptions().getFlags(),
+                                                                                      find.getFlags(),
                                                                                       find.getLimit(),
                                                                                       find.getBatchSize(),
                                                                                       resultDecoder,
                                                                                       connectionProvider);
-                                            }
                                             future.init(cursor, null);
                                         }
                                     } finally {
-                                        if (!isExhaustCursor()) {
                                             connection.close();
-                                        }
                                     }
                                 }
                             });
@@ -135,7 +119,7 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
     }
 
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription) {
-        return new QueryProtocol<T>(namespace, find.getOptions().getFlags(), find.getSkip(),
+        return new QueryProtocol<T>(namespace, find.getFlags(), find.getSkip(),
                                     find.getNumberToReturn(), asDocument(serverDescription),
                                     find.getFields(), queryEncoder, resultDecoder);
     }
@@ -200,6 +184,6 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
     }
 
     private boolean isExhaustCursor() {
-        return find.getOptions().getFlags().contains(QueryFlag.Exhaust);
+        return find.getFlags().contains(QueryFlag.Exhaust);
     }
 }

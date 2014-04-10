@@ -30,6 +30,7 @@ public abstract class Query {
     private int skip;
     private int limit;
     private QueryOptions options = new QueryOptions();
+    private EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
 
     public Query() {
     }
@@ -39,6 +40,7 @@ public abstract class Query {
         skip = from.skip;
         limit = from.limit;
         options = new QueryOptions(from.options);
+        flags = EnumSet.copyOf(from.flags);
     }
 
     //CHECKSTYLE:OFF
@@ -69,7 +71,7 @@ public abstract class Query {
         if (flags.contains(QueryFlag.Tailable)) {
             flags.add(QueryFlag.AwaitData);
         }
-        this.options.addFlags(flags);
+        this.flags.addAll(flags);
         return this;
     }
 
@@ -77,7 +79,8 @@ public abstract class Query {
         if (flags == null) {
             throw new IllegalArgumentException();
         }
-        this.options.flags(flags);
+        this.flags.clear();
+        this.flags.addAll(flags);
         return this;
     }
 
@@ -98,11 +101,11 @@ public abstract class Query {
 
     public EnumSet<QueryFlag> getFlags() {
         if (readPreference != null && readPreference.isSlaveOk()) {
-            EnumSet<QueryFlag> retVal = EnumSet.copyOf(options.getFlags());
+            EnumSet<QueryFlag> retVal = EnumSet.copyOf(flags);
             retVal.add(QueryFlag.SlaveOk);
             return retVal;
         } else {
-            return options.getFlags();
+            return flags;
         }
     }
 
