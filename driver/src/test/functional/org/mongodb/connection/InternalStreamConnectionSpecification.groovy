@@ -16,6 +16,8 @@
 
 
 
+
+
 package org.mongodb.connection
 
 import org.mongodb.Document
@@ -69,7 +71,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def listener = Mock(ConnectionListener)
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
-        def buffer = new PooledByteBufferOutputBuffer(connection);
+        def buffer = new ByteBufferOutputBuffer(connection);
         def message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())), MessageSettings.builder().build());
         message.encode(buffer);
 
@@ -84,7 +86,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def listener = Mock(ConnectionListener)
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
-        def buffer = new PooledByteBufferOutputBuffer(connection)
+        def buffer = new ByteBufferOutputBuffer(connection)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
                                          new Document('ismaster', 1), new DocumentCodec(), MessageSettings.builder().build());
         message.encode(buffer);

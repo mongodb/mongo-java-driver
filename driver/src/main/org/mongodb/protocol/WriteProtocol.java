@@ -23,8 +23,8 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.logging.Logger;
@@ -58,7 +58,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     public MongoFuture<WriteResult> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         RequestMessage requestMessage = createRequestMessage(getMessageSettings(serverDescription));
         RequestMessage nextMessage = encodeMessageToBuffer(requestMessage, buffer);
         if (writeConcern.isAcknowledged()) {
@@ -91,7 +91,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
 
 
     private CommandMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             RequestMessage lastMessage = createRequestMessage(getMessageSettings(serverDescription));
             RequestMessage nextMessage = lastMessage.encode(buffer);

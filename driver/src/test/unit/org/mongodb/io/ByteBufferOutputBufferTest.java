@@ -19,7 +19,7 @@ package org.mongodb.io;
 import org.bson.BSONSerializationException;
 import org.junit.Test;
 import org.mongodb.SimpleBufferProvider;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,12 +30,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class PooledByteBufferOutputBufferTest {
+public class ByteBufferOutputBufferTest {
     private final Random random = new Random();
 
     @Test
     public void testBackpatch() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         buf.writeInt(0);
         byte[] randomBytes = getRandomBytes(10000);
         buf.write(randomBytes, 0, 10000);
@@ -52,7 +52,7 @@ public class PooledByteBufferOutputBufferTest {
 
     @Test
     public void testTruncate() throws IOException {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         byte[] randomBytes = getRandomBytes(10000);
 
         buf.writeInt(0);
@@ -83,13 +83,13 @@ public class PooledByteBufferOutputBufferTest {
 
     @Test(expected = BSONSerializationException.class)
     public void nullCharacterInCStringShouldThrowSerializationException() {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         buf.writeCString("hell\u0000world");
     }
 
     @Test
     public void nullCharacterInStringShouldNotThrowSerializationException() {
-        PooledByteBufferOutputBuffer buf = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         buf.writeString("h\u0000i");
         assertArrayEquals(new byte[] {4, 0, 0, 0, 'h', 0, 'i', 0}, buf.toByteArray());
     }

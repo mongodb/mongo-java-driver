@@ -27,8 +27,8 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.EncoderRegistry;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.WriteRequest;
@@ -95,7 +95,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     protected abstract BaseWriteCommandMessage createRequestMessage(final ServerDescription serverDescription);
 
     private BaseWriteCommandMessage sendMessage(final Connection connection, final BaseWriteCommandMessage message, final int batchNum) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {

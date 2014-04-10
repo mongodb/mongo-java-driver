@@ -22,8 +22,8 @@ import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -80,7 +80,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         QueryMessage message = createQueryMessage(serverDescription);
         encodeMessageToBuffer(message, buffer);
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
@@ -100,7 +100,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             QueryMessage message = createQueryMessage(serverDescription);
             message.encode(buffer);

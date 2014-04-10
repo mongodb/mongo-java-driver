@@ -20,7 +20,7 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.mongodb.Decoder;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,7 +38,7 @@ class DBDecoderAdapter implements Decoder<DBObject> {
 
     @Override
     public DBObject decode(final BSONReader reader) {
-        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
+        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             binaryWriter.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream =

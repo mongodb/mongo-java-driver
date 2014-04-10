@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class PooledByteBufferOutputBuffer extends OutputBuffer {
+public class ByteBufferOutputBuffer extends OutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     public static final int MAX_BUFFER_SIZE = 1 << 24;
@@ -36,7 +36,7 @@ public class PooledByteBufferOutputBuffer extends OutputBuffer {
     private int curBufferIndex = 0;
     private int position = 0;
 
-    public PooledByteBufferOutputBuffer(final BufferProvider bufferProvider) {
+    public ByteBufferOutputBuffer(final BufferProvider bufferProvider) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 

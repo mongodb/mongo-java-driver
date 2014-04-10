@@ -26,7 +26,7 @@ import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
 
     @Override
     public BSONDocumentBuffer decode(final BSONReader reader) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new PooledByteBufferOutputBuffer(bufferProvider), true);
+        BSONBinaryWriter writer = new BSONBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());

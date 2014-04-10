@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.SimpleBufferProvider;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNull;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 public class MaxMessageSizeTest {
-    private PooledByteBufferOutputBuffer buffer;
+    private ByteBufferOutputBuffer buffer;
     private InsertMessage<Document> message;
 
     @Before
@@ -46,7 +46,7 @@ public class MaxMessageSizeTest {
                                                             new InsertRequest<Document>(new Document("bytes", new byte[2048])),
                                                             new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
                                               new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
-        buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
     }
 
     @After

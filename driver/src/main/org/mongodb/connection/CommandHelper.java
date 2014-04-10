@@ -38,7 +38,7 @@ final class CommandHelper {
 
     private static CommandMessage sendMessage(final String database, final Document command, final Codec<Document> codec,
                                               final InternalConnection internalConnection) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(internalConnection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                         command, codec, MessageSettings.builder().build());

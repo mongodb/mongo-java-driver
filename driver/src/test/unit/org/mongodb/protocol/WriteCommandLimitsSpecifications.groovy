@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.protocol
 
 import org.mongodb.Document
@@ -21,7 +23,7 @@ import org.mongodb.MongoNamespace
 import org.mongodb.SimpleBufferProvider
 import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.connection.PooledByteBufferOutputBuffer
+import org.mongodb.connection.ByteBufferOutputBuffer
 import org.mongodb.operation.InsertRequest
 import org.mongodb.operation.RemoveRequest
 import org.mongodb.operation.ReplaceRequest
@@ -39,7 +41,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             inserts.add(new InsertRequest(new Document()))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
                                                new DocumentCodec(), new DocumentCodec(),
                                                MessageSettings.builder().maxWriteBatchSize(3).build());
@@ -59,7 +61,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             inserts.add(new InsertRequest(new Document('_id', it)))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
                                                new DocumentCodec(), new DocumentCodec(),
                                                MessageSettings.builder().maxDocumentSize(113).build());
@@ -79,7 +81,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             deletes.add(new RemoveRequest(new Document()))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
                                                new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
 
@@ -98,7 +100,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             deletes.add(new RemoveRequest(new Document('_id', it)))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
                                                new DocumentCodec(), MessageSettings.builder().maxDocumentSize(187).build());
 
@@ -117,7 +119,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             replaces.add(new ReplaceRequest(new Document('_id', it), new Document()))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
                                                 new DocumentCodec(), new DocumentCodec(),
                                                 MessageSettings.builder().maxWriteBatchSize(3).build());
@@ -137,7 +139,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             replaces.add(new ReplaceRequest(new Document('_id', it), new Document()))
         }
 
-        def buffer = new PooledByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
                                                 new DocumentCodec(), new DocumentCodec(),
                                                 MessageSettings.builder().maxDocumentSize(175).build());

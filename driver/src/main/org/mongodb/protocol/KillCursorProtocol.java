@@ -18,8 +18,8 @@ package org.mongodb.protocol;
 
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
@@ -36,7 +36,7 @@ public class KillCursorProtocol implements Protocol<Void> {
 
     @Override
     public Void execute(final Connection connection, final ServerDescription serverDescription) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
             message.encode(buffer);
@@ -50,7 +50,7 @@ public class KillCursorProtocol implements Protocol<Void> {
     @Override
     public MongoFuture<Void> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        final PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        final ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(serverDescription));
         message.encode(buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {

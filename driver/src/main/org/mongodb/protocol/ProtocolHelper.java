@@ -25,7 +25,7 @@ import org.mongodb.MongoExecutionTimeoutException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.message.MessageSettings;
@@ -88,7 +88,7 @@ final class ProtocolHelper {
                               .build();
     }
 
-    static RequestMessage encodeMessageToBuffer(final RequestMessage message, final PooledByteBufferOutputBuffer buffer) {
+    static RequestMessage encodeMessageToBuffer(final RequestMessage message, final ByteBufferOutputBuffer buffer) {
         try {
             return message.encode(buffer);
         } catch (RuntimeException e) {

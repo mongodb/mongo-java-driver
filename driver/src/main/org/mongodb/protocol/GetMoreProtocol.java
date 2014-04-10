@@ -23,8 +23,8 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.PooledByteBufferOutputBuffer;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
@@ -66,7 +66,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
         encodeMessageToBuffer(message, buffer);
         GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
@@ -83,7 +83,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
 
     private GetMoreMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
-        PooledByteBufferOutputBuffer buffer = new PooledByteBufferOutputBuffer(connection);
+        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
             message.encode(buffer);
