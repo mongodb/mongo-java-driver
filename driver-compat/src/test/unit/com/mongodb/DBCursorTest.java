@@ -342,7 +342,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
         // when
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .comment(expectedComment);
+                              .comment(expectedComment);
         while (cursor.hasNext()) {
             cursor.next();
         }
@@ -350,7 +350,7 @@ public class DBCursorTest extends DatabaseTestCase {
         // then
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
-        assertEquals(expectedComment, ((DBObject)profileCollection.findOne().get("query")).get("$comment"));
+        assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query")).get("$comment"));
     }
 
     @Test
