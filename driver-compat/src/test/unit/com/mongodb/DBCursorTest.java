@@ -335,12 +335,22 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testComment() {
+    public void testSettingACommentInsertsCommentIntoProfileCollectionWhenProfilingIsTurnedOn() {
+        // given
+        database.command(new BasicDBObject("profile", 2));
+        String expectedComment = "test comment";
+
+        // when
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$comment", "test comment");
+            .comment(expectedComment);
         while (cursor.hasNext()) {
             cursor.next();
         }
+
+        // then
+        DBCollection profileCollection = database.getCollection("system.profile");
+        assertEquals(1, profileCollection.count());
+        assertEquals(expectedComment, ((DBObject)profileCollection.findOne().get("query")).get("$comment"));
     }
 
     @Test
