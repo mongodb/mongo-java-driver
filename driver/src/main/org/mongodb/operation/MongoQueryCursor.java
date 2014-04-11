@@ -34,7 +34,6 @@ import org.mongodb.session.ServerConnectionProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -45,7 +44,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private final MongoNamespace namespace;
     private final int limit;
     private final int batchSize;
-    private final EnumSet<QueryFlag> queryFlags;
     private final Decoder<T> decoder;
     private final ServerConnectionProvider provider;
     private final ServerDescription serverDescription;
@@ -56,25 +54,23 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private boolean closed;
 
     // For normal queries
-    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                            final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider) {
-        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, provider, null, null);
+    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+                     final Decoder<T> decoder, final ServerConnectionProvider provider) {
+        this(namespace, firstBatch, limit, batchSize, decoder, provider, null, null);
     }
 
     // For exhaust queries
-    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                            final int limit, final int batchSize, final Decoder<T> decoder, final Connection exhaustConnection,
-                            final ServerDescription serverDescription) {
-        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
+    MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch,  final int limit, final int batchSize,
+                     final Decoder<T> decoder, final Connection exhaustConnection, final ServerDescription serverDescription) {
+        this(namespace, firstBatch, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
     }
 
-    private MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                            final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider,
-                            final Connection exhaustConnection, final ServerDescription serverDescription) {
+    private MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch,
+                             final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider,
+                             final Connection exhaustConnection, final ServerDescription serverDescription) {
         this.namespace = namespace;
         this.limit = limit;
         this.batchSize = batchSize;
-        this.queryFlags = queryFlags;
         this.decoder = decoder;
         this.provider = provider;
         this.exhaustConnection = exhaustConnection;
@@ -239,7 +235,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private boolean isExhaust() {
-        return queryFlags.contains(QueryFlag.Exhaust);
+        return exhaustConnection != null;
     }
 
     private Connection getConnection() {

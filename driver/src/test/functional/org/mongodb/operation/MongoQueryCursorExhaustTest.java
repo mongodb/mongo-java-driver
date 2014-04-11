@@ -76,7 +76,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
 
-        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, exhaustFlag, 0, 0,
+        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
                                                                            new DocumentCodec(), exhaustConnection,
                                                                            connectionProvider.getServerDescription());
 
@@ -97,7 +97,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                                                                           exhaustConnection);
             ServerConnectionProvider singleConnectionProvider =
             singleConnectionSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
-            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, exhaustFlag, 0, 0,
+            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
                                                                                new DocumentCodec(),
                                                                                singleConnectionProvider.getConnection(),
                                                                                singleConnectionProvider.getServerDescription());

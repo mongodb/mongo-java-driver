@@ -89,7 +89,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testBlockRun() throws InterruptedException {
         QueryResult<Document> firstBatch = executeQuery();
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, EnumSet.noneOf(QueryFlag.class), 0, 2, new DocumentCodec(),
+                                            firstBatch, 0, 2, new DocumentCodec(),
                                             connectionProvider)
         .start(new TestBlock());
         latch.await();
@@ -100,7 +100,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testLimit() throws InterruptedException {
         QueryResult<Document> firstBatch = executeQuery();
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, EnumSet.noneOf(QueryFlag.class), 100, 0, new DocumentCodec(),
+                                            firstBatch, 100, 0, new DocumentCodec(),
                                             connectionProvider)
         .start(new TestBlock());
 
@@ -116,7 +116,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                         2, EnumSet.of(Exhaust),
                                                         connection);
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, EnumSet.of(Exhaust), 0, 2, new DocumentCodec(),
+                                            firstBatch, 0, 2, new DocumentCodec(),
                                             connection, connectionProvider.getServerDescription())
         .start(new TestBlock());
 
@@ -131,7 +131,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, EnumSet.of(Exhaust), 5, 2, new DocumentCodec(),
+                                            firstBatch, 5, 2, new DocumentCodec(),
                                             connection, connectionProvider.getServerDescription())
         .start(new TestBlock());
 
@@ -151,7 +151,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.of(Exhaust), 5, 2, new DocumentCodec(),
+                                                firstBatch, 5, 2, new DocumentCodec(),
                                                 connection, connectionProvider.getServerDescription())
             .start(new TestBlock(1));
 
@@ -183,7 +183,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
                 TestBlock block = new TestBlock(1);
                 new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                                    firstBatch, EnumSet.of(Exhaust), 5, 2, new DocumentCodec(),
+                                                    firstBatch, 5, 2, new DocumentCodec(),
                                                     connection, connectionProvider.getServerDescription())
                 .start(block);
 

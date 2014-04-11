@@ -62,10 +62,10 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
                                                                                                             connectionProvider
                                                                                                             .getServerDescription());
             if (isExhaustCursor()) {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getFlags(), find.getLimit(), find.getBatchSize(),
+                return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
                                                resultDecoder, connection, connectionProvider.getServerDescription());
             } else {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getFlags(), find.getLimit(), find.getBatchSize(),
+                return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
                                                resultDecoder, connectionProvider);
             }
         } finally {
@@ -98,7 +98,6 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
                                         } else {
                                             MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
                                                                                       queryResult,
-                                                                                      find.getFlags(),
                                                                                       find.getLimit(),
                                                                                       find.getBatchSize(),
                                                                                       resultDecoder,

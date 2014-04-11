@@ -26,7 +26,6 @@ import org.mongodb.ReadPreference;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.Session;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.operation.OperationHelper.getConnectionProvider;
@@ -51,7 +50,7 @@ public class AggregateOperation<T> extends AggregateBaseOperation<T> implements 
             return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
         } else {
             int batchSize = getOptions().getBatchSize() == null ? 0 : getOptions().getBatchSize();
-            return new MongoQueryCursor<T>(getNamespace(), createQueryResult(result), EnumSet.noneOf(QueryFlag.class), 0,
+            return new MongoQueryCursor<T>(getNamespace(), createQueryResult(result), 0,
                                            batchSize, getDecoder(),
                                            getConnectionProvider(getReadPreference(), session));
         }

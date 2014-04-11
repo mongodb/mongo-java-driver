@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 package org.mongodb.operation
 import category.Slow
 import org.bson.types.BSONTimestamp
@@ -62,7 +64,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -75,7 +77,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionProvider)
         then:
         cursor.getServerAddress() != null
@@ -86,7 +88,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery()
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         when:
@@ -117,7 +119,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(1)
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 2, 0, new DocumentCodec(),
+                                                firstBatch, 2, 0, new DocumentCodec(),
                                                 connectionProvider)
         when:
         cursor.next()
@@ -133,7 +135,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery()
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         when:
@@ -152,7 +154,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(5)
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 0, new DocumentCodec(),
+                                                firstBatch, 5, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         when:
@@ -171,7 +173,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery()
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 0, new DocumentCodec(),
+                                                firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         when:
@@ -187,7 +189,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -226,7 +228,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -265,7 +267,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         CountDownLatch latch = new CountDownLatch(1)
@@ -298,7 +300,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(5)
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 0, new DocumentCodec(),
+                                                firstBatch, 5, 0, new DocumentCodec(),
                                                 connectionProvider)
 
         ServerCursor serverCursor = cursor.getServerCursor()
@@ -316,7 +318,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(3)
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 5, 3, new DocumentCodec(),
+                                                firstBatch, 5, 3, new DocumentCodec(),
                                                 connectionProvider)
         ServerCursor serverCursor = cursor.getServerCursor()
 
@@ -364,7 +366,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -384,7 +386,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         then:
@@ -407,7 +409,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, EnumSet.noneOf(QueryFlag), 0, 2, new DocumentCodec(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionProvider)
 
         def connection = connectionProvider.getConnection()

@@ -33,8 +33,6 @@ import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.ServerConnectionProvider;
 
-import java.util.EnumSet;
-
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
@@ -42,7 +40,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     private final MongoNamespace namespace;
     private final QueryResult<T> firstBatch;
-    private final EnumSet<QueryFlag> queryFlags;
     private final int limit;
     private final int batchSize;
     private final Decoder<T> decoder;
@@ -54,24 +51,22 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private AsyncBlock<? super T> block;
 
     // For normal queries
-    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                          final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider) {
-        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, provider, null, null);
+    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+                          final Decoder<T> decoder, final ServerConnectionProvider provider) {
+        this(namespace, firstBatch, limit, batchSize, decoder, provider, null, null);
     }
 
     // For exhaust queries
-    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                          final int limit, final int batchSize, final Decoder<T> decoder, final Connection exhaustConnection,
-                          final ServerDescription serverDescription) {
-        this(namespace, firstBatch, queryFlags, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
+    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch,  final int limit, final int batchSize,
+                          final Decoder<T> decoder, final Connection exhaustConnection, final ServerDescription serverDescription) {
+        this(namespace, firstBatch, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
     }
 
-    private MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final EnumSet<QueryFlag> queryFlags,
-                                  final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider,
+    private MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+                                  final Decoder<T> decoder, final ServerConnectionProvider provider,
                                   final Connection exhaustConnection, final ServerDescription serverDescription) {
         this.namespace = namespace;
         this.firstBatch = firstBatch;
-        this.queryFlags = queryFlags;
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = decoder;
@@ -95,7 +90,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private boolean isExhaust() {
-        return queryFlags.contains(QueryFlag.Exhaust);
+        return exhaustConnection != null;
     }
 
     private void handleExhaustCleanup(final int responseTo) {
@@ -153,7 +148,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 close(result.getRequestId());
             } else {
                 // get more results
-                if (queryFlags.contains(QueryFlag.Exhaust)) {
+                if (isExhaust()) {
                     new GetMoreReceiveProtocol<T>(decoder, result.getRequestId())
                     .executeAsync(exhaustConnection, serverDescription)
                     .register(this);

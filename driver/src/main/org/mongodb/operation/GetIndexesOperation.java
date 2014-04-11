@@ -42,10 +42,10 @@ public class GetIndexesOperation implements Operation<List<Document>> {
     @Override
     public List<Document> execute(final Session session) {
         QueryResult<Document> queryResult =
-        executeProtocol(new QueryProtocol<Document>(getIndexNamespace(), getQueryFlags(), 0, 0, asQueryDocument(), null,
+        executeProtocol(new QueryProtocol<Document>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(), null,
                                                     new DocumentCodec(), new DocumentCodec()),
                         session);
-        MongoCursor<Document> cursor = new MongoQueryCursor<Document>(getIndexNamespace(), queryResult, getQueryFlags(), 0, 0,
+        MongoCursor<Document> cursor = new MongoQueryCursor<Document>(getIndexNamespace(), queryResult, 0, 0,
                                                                       new DocumentCodec(),
                                                                       getPrimaryConnectionProvider(session));
         try {
@@ -57,10 +57,6 @@ public class GetIndexesOperation implements Operation<List<Document>> {
         } finally {
             cursor.close();
         }
-    }
-
-    private EnumSet<QueryFlag> getQueryFlags() {
-        return EnumSet.noneOf(QueryFlag.class);
     }
 
     private Document asQueryDocument() {
