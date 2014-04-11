@@ -24,7 +24,6 @@ import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -45,8 +44,8 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     private final Document command;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
-    private final MapReduceCommandResultCodec<T> mapReduceResultDecoder;
     private final Codec<Document> commandCodec = new DocumentCodec();
+    private final Decoder<T> decoder;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
@@ -58,13 +57,13 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder, final ReadPreference readPreference) {
+        this.decoder = decoder;
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
         }
         this.namespace = notNull("namespace", namespace);
         this.readPreference = readPreference;
-        this.mapReduceResultDecoder = new MapReduceCommandResultCodec<T>(PrimitiveCodecs.createDefault(), decoder);
         this.command = createMapReduce(namespace.getCollectionName(), mapReduce);
     }
 
@@ -78,7 +77,8 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
         CommandResult commandResult = executeWrappedCommandProtocol(namespace, command,
-                                                                    commandCodec, mapReduceResultDecoder,
+                                                                    commandCodec,
+                                                                    new CommandResultWithPayloadDecoder<T>(decoder, "results"),
                                                                     readPreference, session);
 
         return new MapReduceInlineResultsCursor<T>(commandResult);

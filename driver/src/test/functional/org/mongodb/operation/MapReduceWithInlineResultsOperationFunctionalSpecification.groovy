@@ -18,14 +18,14 @@
 
 
 
-package org.mongodb.operation
 
+
+package org.mongodb.operation
 import org.bson.types.Code
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCursor
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.codecs.PrimitiveCodecs
 
 import static org.hamcrest.CoreMatchers.not
 import static org.hamcrest.Matchers.hasKey
@@ -46,8 +46,8 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         MapReduce mapReduce = new MapReduce(new Code('function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }'),
                       new Code('function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
 
-        def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary())
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, new DocumentCodec(),
+                                                                                                primary())
 
         when:
         MongoCursor<Document> results = operation.execute(getSession())
@@ -63,8 +63,8 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
                                                      '{ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
         mapReduce.verbose();
 
-        def codec = new MapReduceCommandResultCodec<Document>(PrimitiveCodecs.createDefault(), new DocumentCodec())
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, codec, primary())
+        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce,
+                                                                                                new DocumentCodec(), primary())
 
 
         when:
