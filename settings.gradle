@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver', 'driver-compat'
+include 'util','bson', 'driver', 'async-driver', 'driver-compat'
