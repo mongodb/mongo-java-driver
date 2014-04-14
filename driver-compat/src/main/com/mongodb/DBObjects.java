@@ -27,6 +27,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,33 +94,52 @@ final class DBObjects {
 
     private static void fill(final DBObject obj, final Document document) {
         if (obj != null) {
+            Container container = new Container() {
+                public void addToCollection(final String key, final Object value) {
+                    document.put(key, value);
+                }
+            };
             for (final String key : obj.keySet()) {
                 Object value = obj.get(key);
-                convertType(obj, document, key, value);
+                convertType(container, key, value);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static void convertType(final DBObject obj, final Map<String, Object> document, final String key, final Object value) {
+    private static void convertType(final Container document, final String key, final Object value) {
         if (value instanceof List) {
-            document.put(key, value);
+            final List<Object> newList = new ArrayList<Object>();
+            Container listContainer = new Container() {
+                public void addToCollection(final String key, final Object value) {
+                    newList.add(value);
+                }
+            };
+            for (final Object item : (List) value) {
+                convertType(listContainer, key, item);
+            }
+            document.addToCollection(key, newList);
         } else if (value instanceof DBRef) {
             DBRef ref = (DBRef) value;
-            document.put(key, ref.toNew());
+            document.addToCollection(key, ref.toNew());
         } else if (value instanceof BSONObject) {
             Document nestedDocument = new Document();
             fill((DBObject) value, nestedDocument);
-            document.put(key, nestedDocument);
+            document.addToCollection(key, nestedDocument);
         } else if (value instanceof Map) {
-            Map<String, Object> map = (Map) obj.get(key);
-            HashMap<String, Object> newMap = new HashMap<String, Object>();
+            Map<String, Object> map = (Map) value;
+            final HashMap<String, Object> newMap = new HashMap<String, Object>();
+            Container mapContainer = new Container() {
+                public void addToCollection(final String key, final Object value) {
+                    newMap.put(key, value);
+                }
+            };
             for (final Object mapKey : map.keySet()) {
-                convertType(obj, newMap, mapKey.toString(), map.get(mapKey));
+                convertType(mapContainer, mapKey.toString(), map.get(mapKey));
             }
-            document.put(key, newMap);
+            document.addToCollection(key, newMap);
         } else {
-            document.put(key, value);
+            document.addToCollection(key, value);
         }
     }
 
@@ -163,4 +183,8 @@ final class DBObjects {
     }
 
     private DBObjects() { }
+
+    private interface Container {
+        void addToCollection(final String key, final Object value);
+    }
 }

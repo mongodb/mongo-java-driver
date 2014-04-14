@@ -19,7 +19,9 @@ package com.mongodb;
 import org.junit.Test;
 import org.mongodb.Document;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
@@ -177,6 +179,23 @@ public class DBObjectsTest {
     }
 
     @Test
+    public void shouldConvertCompatDBRefsIntoNewDBRefsEvenWhenNestedInsideAList() {
+        // Given
+        BasicDBObject dbObject = new BasicDBObject();
+        List<DBRef> list = new ArrayList<DBRef>();
+        list.add(new DBRef(null, "db.coll", "the value"));
+        dbObject.put("list", list);
+
+        // When
+        Document actualDocument = DBObjects.toDocument(dbObject);
+
+        // Then
+        Object convertedObject = ((List) actualDocument.get("list")).get(0);
+        assertTrue("This should be an instance of the new DBRef: " + convertedObject.getClass(),
+                   convertedObject instanceof org.mongodb.DBRef);
+    }
+
+    @Test
     public void shouldConvertObjectsInsideMaps() {
         // Given
         BasicDBObject dbObject = new BasicDBObject();
@@ -189,6 +208,22 @@ public class DBObjectsTest {
 
         // Then
         Object convertedObject = ((Map) document.get("theMap")).get("nestedObject");
+        assertTrue("Object should have been converted to Document: " + convertedObject.getClass(), convertedObject instanceof Document);
+    }
+
+    @Test
+    public void shouldConvertObjectsInsideLists() {
+        // Given
+        BasicDBObject dbObject = new BasicDBObject();
+        List<Object> list = new ArrayList<Object>();
+        list.add(new BasicDBObject("key", "value"));
+        dbObject.put("theList", list);
+
+        // When
+        Document document = DBObjects.toDocument(dbObject);
+
+        // Then
+        Object convertedObject = ((List) document.get("theList")).get(0);
         assertTrue("Object should have been converted to Document: " + convertedObject.getClass(), convertedObject instanceof Document);
     }
 
