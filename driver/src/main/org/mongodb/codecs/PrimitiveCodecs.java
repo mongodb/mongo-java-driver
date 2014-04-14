@@ -106,6 +106,7 @@ public class PrimitiveCodecs implements Codec<Object> {
                .minKeyCodec(new MinKeyCodec())
                .maxKeyCodec(new MaxKeyCodec())
                .javascriptCodec(new CodeCodec())
+               .undefinedCodec(new UndefinedCodec())
                .nullCodec(new NullCodec())
                .otherEncoder(new FloatCodec())
                .otherEncoder(new ShortCodec())
@@ -212,6 +213,11 @@ public class PrimitiveCodecs implements Codec<Object> {
 
         public Builder nullCodec(final Codec codec) {
             registerCodec(BSONType.NULL, codec);
+            return this;
+        }
+
+        public Builder undefinedCodec(final UndefinedCodec undefinedCodec) {
+            registerCodec(BSONType.UNDEFINED, undefinedCodec);
             return this;
         }
 

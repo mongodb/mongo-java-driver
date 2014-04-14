@@ -38,6 +38,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -178,6 +179,16 @@ public class DBTest extends DatabaseTestCase {
                       + "var doc = db.myCollection.findOne( { name : b } );\n"
                       + "}";
         database.eval(code, 1);
+    }
+
+    @Test
+    public void shouldInsertDocumentsUsingEval() {
+        // when
+        Object eval = database.eval("db." + collectionName + ".insert({name: 'Bob'})");
+
+        // then
+        assertThat(eval, is(notNullValue()));
+        assertThat(collection.find(new BasicDBObject("name", "Bob")).count(), is(1));
     }
 
     @Test
