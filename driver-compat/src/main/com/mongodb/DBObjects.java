@@ -27,6 +27,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,16 +95,31 @@ final class DBObjects {
         if (obj != null) {
             for (final String key : obj.keySet()) {
                 Object value = obj.get(key);
-                if (value instanceof List) {
-                    document.put(key, value);
-                } else if (value instanceof BSONObject) {
-                    Document nestedDocument = new Document();
-                    fill((DBObject) value, nestedDocument);
-                    document.put(key, nestedDocument);
-                } else {
-                    document.put(key, obj.get(key));
-                }
+                convertType(obj, document, key, value);
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void convertType(final DBObject obj, final Map<String, Object> document, final String key, final Object value) {
+        if (value instanceof List) {
+            document.put(key, value);
+        } else if (value instanceof DBRef) {
+            DBRef ref = (DBRef) value;
+            document.put(key, ref.toNew());
+        } else if (value instanceof BSONObject) {
+            Document nestedDocument = new Document();
+            fill((DBObject) value, nestedDocument);
+            document.put(key, nestedDocument);
+        } else if (value instanceof Map) {
+            Map<String, Object> map = (Map) obj.get(key);
+            HashMap<String, Object> newMap = new HashMap<String, Object>();
+            for (final Object mapKey : map.keySet()) {
+                convertType(obj, newMap, mapKey.toString(), map.get(mapKey));
+            }
+            document.put(key, newMap);
+        } else {
+            document.put(key, value);
         }
     }
 

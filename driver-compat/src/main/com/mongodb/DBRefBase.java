@@ -116,6 +116,10 @@ public class DBRefBase implements Serializable {
         return true;
     }
 
+    DBRef toNew() {
+        return proxied;
+    }
+
     @Override
     public int hashCode() {
         return proxied.hashCode();

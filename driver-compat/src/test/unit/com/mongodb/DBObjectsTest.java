@@ -19,9 +19,13 @@ package com.mongodb;
 import org.junit.Test;
 import org.mongodb.Document;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class DBObjectsTest {
     @Test
@@ -137,6 +141,58 @@ public class DBObjectsTest {
         assertThat(actualDBObject, is(expectedDBObject));
     }
 
+    @Test
+    public void shouldConvertCompatDBRefsIntoNewDBRefs() {
+        // Given
+        BasicDBObject dbObject = new BasicDBObject();
+        String keyName = "link";
+        String id = "referenceID";
+        String namespace = "db.coll";
+        dbObject.put(keyName, new DBRef(null, namespace, id));
+
+        // When
+        Document actualDocument = DBObjects.toDocument(dbObject);
+
+        // Then
+        assertTrue("This should be an instance of the new DBRef", actualDocument.get(keyName) instanceof org.mongodb.DBRef);
+        assertThat(((org.mongodb.DBRef) actualDocument.get(keyName)).getRef(), is(namespace));
+        assertThat(((org.mongodb.DBRef) actualDocument.get(keyName)).getId().toString(), is(id));
+    }
+
+    @Test
+    public void shouldConvertCompatDBRefsIntoNewDBRefsEvenWhenNestedInsideAMap() {
+        // Given
+        BasicDBObject dbObject = new BasicDBObject();
+        HashMap<String, DBRef> map = new HashMap<String, DBRef>();
+        String keyName = "link";
+        map.put(keyName, new DBRef(null, "db.coll", "the value"));
+        dbObject.put("map", map);
+
+        // When
+        Document actualDocument = DBObjects.toDocument(dbObject);
+
+        // Then
+        assertTrue("This should be an instance of the new DBRef", ((Map) actualDocument.get("map")).get(keyName)
+                                                                  instanceof org.mongodb.DBRef);
+    }
+
+    @Test
+    public void shouldConvertObjectsInsideMaps() {
+        // Given
+        BasicDBObject dbObject = new BasicDBObject();
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("nestedObject", new BasicDBObject("key", "value"));
+        dbObject.put("theMap", map);
+
+        // When
+        Document document = DBObjects.toDocument(dbObject);
+
+        // Then
+        Object convertedObject = ((Map) document.get("theMap")).get("nestedObject");
+        assertTrue("Object should have been converted to Document: " + convertedObject.getClass(), convertedObject instanceof Document);
+    }
+
+    //TODO: map new DBRefs to old - difficult, as old ones have a DB inside them
     //TODO: tests around recursive structures
 
     private BasicDBObject createBasicDBObject() {
