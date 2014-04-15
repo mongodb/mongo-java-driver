@@ -31,12 +31,38 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class DBCollectionTest extends TestCase {
+
+    @Test
+    public void shouldCreateIdOnInsertIfThereIsNone() {
+        BasicDBObject document = new BasicDBObject();
+        collection.insert(document);
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void shouldPreserveNullIdOnInsert() {
+        BasicDBObject document = new BasicDBObject("_id", null);
+        collection.insert(document);
+        assertNull(document.get("_id"));
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void saveShouldUpdateAnExistingDocumentWithNullId() {
+        BasicDBObject document = new BasicDBObject("_id", null);
+        collection.insert(document);
+        document.put("x", 1);
+        collection.save(document);
+        assertNull(document.get("_id"));
+        assertEquals(document, collection.findOne());
+    }
 
     @Test
     public void testMultiInsert() {

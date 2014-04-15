@@ -905,16 +905,13 @@ public abstract class DBCollection {
      * @return the modified object {@code o}
      */
     public Object apply( DBObject jo , boolean ensureID ){
-
-        Object id = jo.get( "_id" );
-        if ( ensureID && id == null ){
-            id = ObjectId.get();
-            jo.put( "_id" , id );
+        if ( ensureID && !jo.containsField("_id") ){
+            jo.put( "_id" , ObjectId.get() );
         }
 
         doapply( jo );
 
-        return id;
+        return jo.get("_id");
     }
 
     /**
@@ -957,22 +954,20 @@ public abstract class DBCollection {
 
         Object id = jo.get( "_id" );
 
-        if ( id == null || ( id instanceof ObjectId && ((ObjectId)id).isNew() ) ){
-            if ( id != null && id instanceof ObjectId )
-                ((ObjectId)id).notNew();
-            if ( concern == null )
-            	return insert( jo );
-            else
-            	return insert( jo, concern );
+        if ((id == null && !jo.containsField("_id")) || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
+            if (concern == null) {
+                return insert(jo);
+            } else {
+                return insert(jo, concern);
+            }
         }
 
-        DBObject q = new BasicDBObject();
-        q.put( "_id" , id );
-        if ( concern == null )
-        	return update( q , jo , true , false );
-        else
-        	return update( q , jo , true , false , concern );
-
+        DBObject q = new BasicDBObject("_id" , id);
+        if (concern == null) {
+            return update(q, jo, true, false);
+        } else {
+            return update(q, jo, true, false, concern);
+        }
     }
 
     // ---- DB COMMANDS ----
