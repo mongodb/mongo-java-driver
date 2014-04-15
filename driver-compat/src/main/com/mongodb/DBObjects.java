@@ -116,7 +116,7 @@ final class DBObjects {
                 }
             };
             for (final Object item : (List) value) {
-                convertType(listContainer, key, item);
+                convertType(listContainer, null, item);
             }
             document.addToCollection(key, newList);
         } else if (value instanceof DBRef) {
