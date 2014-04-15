@@ -16,26 +16,24 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.AsyncBlock;
+import org.mongodb.Block;
 import org.mongodb.Decoder;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoInternalException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.QueryResult;
 
 // TODO: kill cursor on early breakout
-// TODO: Report errors in callback
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
-    private static final Logger LOGGER = Loggers.getLogger("operation");
 
     private final MongoNamespace namespace;
     private final QueryResult<T> firstBatch;
@@ -46,7 +44,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
-    private AsyncBlock<? super T> block;
 
     // For normal queries
     MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
@@ -79,20 +76,18 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     @Override
-    public void start(final AsyncBlock<? super T> block) {
-        this.block = block;
-        new QueryResultSingleResultCallback(null).onResult(firstBatch, null);
+    public MongoFuture<Void> forEach(final Block<? super T> block) {
+        SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+        new QueryResultSingleResultCallback(block, retVal).onResult(firstBatch, null);
+        return retVal;
     }
 
-    private void close(final int responseTo) {
+    private void close(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
         if (isExhaust()) {
-            handleExhaustCleanup(responseTo);
+            handleExhaustCleanup(responseTo, future, e);
         } else {
-            try {
-                block.done();
-            } finally {
-                releaseConnectionSource();
-            }
+            releaseConnectionSource();
+            future.init(null, e);
         }
     }
 
@@ -100,18 +95,15 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         return exhaustConnection != null;
     }
 
-    private void handleExhaustCleanup(final int responseTo) {
+    private void handleExhaustCleanup(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
         new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo)
         .executeAsync(exhaustConnection)
         .register(new SingleResultCallback<Void>() {
             @Override
-            public void onResult(final Void result, final MongoException e) {
-                try {
-                    block.done();
-                } finally {
-                    exhaustConnection.release();
-                    releaseConnectionSource();
-                }
+            public void onResult(final Void result, final MongoException exhaustException) {
+                exhaustConnection.release();
+                releaseConnectionSource();
+                future.init(null, e);
             }
         });
     }
@@ -123,10 +115,19 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
+        private final SingleResultFuture<Void> future;
         private final Connection connection;
+        private final Block<? super T> block;
 
-        public QueryResultSingleResultCallback(final Connection connection) {
+        public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future,
+                                               final Connection connection) {
+            this.block = block;
+            this.future = future;
             this.connection = connection;
+        }
+
+        public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future) {
+            this(block, future, null);
         }
 
         @Override
@@ -135,14 +136,14 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 connection.release();
             }
             if (e != null) {
-                close(0);
+                close(0, future, e);
                 return;
             }
 
             cursor = result.getCursor();
 
             boolean breakEarly = false;
-
+            MongoException exceptionFromApply = null;
             try {
                 for (final T cur : result.getResults()) {
                     numFetchedSoFar++;
@@ -153,13 +154,13 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                     block.apply(cur);
 
                 }
-            } catch (Exception e1) {
+            } catch (Throwable e1) {
                 breakEarly = true;
-                LOGGER.error(e1.getMessage(), e1);
+                exceptionFromApply = new MongoInternalException("Exception thrown by client while iterating over cursor", e1);
             }
 
             if (result.getCursor() == null || breakEarly) {
-                close(result.getRequestId());
+                close(result.getRequestId(), future, exceptionFromApply);
             } else {
                 // get more results
                 if (isExhaust()) {
@@ -171,12 +172,12 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                         @Override
                         public void onResult(final Connection connection, final MongoException e) {
                             if (e != null) {
-                                close(0);
+                                close(0, future, e);
                             } else {
                                 new GetMoreProtocol<T>(namespace, new GetMore(result.getCursor(), limit, batchSize, numFetchedSoFar),
                                                        decoder)
                                 .executeAsync(connection)
-                                .register(new QueryResultSingleResultCallback(connection));
+                                .register(new QueryResultSingleResultCallback(block, future, connection));
                             }
                         }
                     });

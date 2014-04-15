@@ -21,7 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.AsyncBlock;
+import org.mongodb.Block;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.binding.AsyncClusterBinding;
@@ -36,13 +36,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getAsyncBinding;
 import static org.mongodb.Fixture.getAsyncCluster;
@@ -53,7 +53,6 @@ import static org.mongodb.operation.QueryFlag.Exhaust;
 @Category(Async.class)
 public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
-    private CountDownLatch latch;
     private List<Document> documentList;
     private List<Document> documentResultList;
     private AsyncReadBinding binding;
@@ -62,7 +61,6 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        latch = new CountDownLatch(1);
         documentResultList = new ArrayList<Document>();
 
         documentList = new ArrayList<Document>();
@@ -87,8 +85,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 0, 2, new DocumentCodec(),
                                             source)
-        .start(new TestBlock());
-        latch.await();
+        .forEach(new TestBlock()).get();
         assertEquals(documentList, documentResultList);
     }
 
@@ -98,9 +95,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 100, 0, new DocumentCodec(),
                                             source)
-        .start(new TestBlock());
+        .forEach(new TestBlock()).get();
 
-        latch.await();
         assertThat(documentResultList, is(documentList.subList(0, 100)));
     }
 
@@ -115,9 +111,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connection)
-            .start(new TestBlock());
+            .forEach(new TestBlock()).get();
 
-            latch.await();
             assertThat(documentResultList, is(documentList));
         } finally {
             connection.release();
@@ -134,9 +129,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 5, 2, new DocumentCodec(),
                                                 connection)
-            .start(new TestBlock());
+            .forEach(new TestBlock()).get();
 
-            latch.await();
             assertThat(documentResultList, is(documentList.subList(0, 5)));
         } finally {
             connection.release();
@@ -153,11 +147,13 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         try {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
-            new MongoAsyncQueryCursor<Document>(collection.getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
-            .start(new TestBlock(1));
-
-            latch.await();
-            assertThat(documentResultList, is(documentList.subList(0, 1)));
+            try {
+                new MongoAsyncQueryCursor<Document>(collection.getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
+                .forEach(new TestBlock(1)).get();
+                fail();
+            } catch (Exception e) {
+                assertThat(documentResultList, is(documentList.subList(0, 1)));
+            }
 
             firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection);
             assertEquals(Arrays.asList(new Document("_id", 0)), firstBatch.getResults());
@@ -177,13 +173,16 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
             TestBlock block = new TestBlock(1);
-            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, 5, 2, new DocumentCodec(),
-                                                connection)
-            .start(block);
+            try {
+                new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                    firstBatch, 5, 2, new DocumentCodec(),
+                                                    connection)
+                .forEach(block).get();
+                fail();
+            } catch (Exception e) {
+                assertEquals(1, block.getIterations());
+            }
 
-            latch.await();
-            assertEquals(1, block.getIterations());
         } finally {
             connection.release();
             source.release();
@@ -214,27 +213,16 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                .execute(connection);
     }
 
-    private final class TestBlock implements AsyncBlock<Document> {
+    private final class TestBlock implements Block<Document> {
         private final int count;
         private int iterations;
-        private final CountDownLatch latch;
 
         private TestBlock() {
             this(Integer.MAX_VALUE);
         }
 
         private TestBlock(final int count) {
-            this(count, MongoAsyncQueryCursorTest.this.latch);
-        }
-
-        private TestBlock(final int count, final CountDownLatch latch) {
             this.count = count;
-            this.latch = latch;
-        }
-
-        @Override
-        public void done() {
-            latch.countDown();
         }
 
         @Override

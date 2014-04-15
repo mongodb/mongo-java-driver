@@ -17,12 +17,9 @@
 package org.mongodb.operation
 import category.Async
 import org.junit.experimental.categories.Category
-import org.mongodb.AsyncBlock
+import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoAsyncCursor
-import org.mongodb.MongoException
-import org.mongodb.connection.SingleResultCallback
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -55,30 +52,19 @@ class DistinctOperationSpecification extends FunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find())
-        def result = new SingleResultFuture<List<String>>()
-        op.executeAsync(getAsyncBinding()).register(new SingleResultCallback<MongoAsyncCursor<String>>() {
+        List<Document> docList = []
+        def cursor = op.executeAsync(getAsyncBinding()).get()
+        cursor.forEach(new Block<String>() {
             @Override
-            void onResult(final MongoAsyncCursor<String> cursor, final MongoException e) {
-                cursor.start(new AsyncBlock<String>() {
-                    List<Document> docList = []
-
-                    @Override
-                    void done() {
-                        result.init(docList, null)
-                    }
-
-                    @Override
-                    void apply(final String value) {
-                        if (value != null) {
-                            docList += value
-                        }
-                    }
-                })
+            void apply(final String value) {
+                if (value != null) {
+                    docList += value
+                }
             }
-        })
+        }).get()
 
         then:
-        result.get().toList().sort() == ['Pete', 'Sam']
+        docList.sort() == ['Pete', 'Sam']
     }
 
     def 'should be able to distinct by name with find'() {
@@ -106,30 +92,19 @@ class DistinctOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(pete, sam, pete2)
 
         when:
+        List<Document> docList = []
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new Document('age', 25)))
-        def result = new SingleResultFuture<List<Document>>()
-        op.executeAsync(getAsyncBinding()).register(new SingleResultCallback<MongoAsyncCursor<String>>() {
+        def cursor = op.executeAsync(getAsyncBinding()).get()
+        cursor.forEach(new Block<String>() {
             @Override
-            void onResult(final MongoAsyncCursor<String> cursor, final MongoException e) {
-                cursor.start(new AsyncBlock<String>() {
-                    List<Document> docList = []
-
-                    @Override
-                    void done() {
-                        result.init(docList, null)
-                    }
-
-                    @Override
-                    void apply(final String value) {
-                        if (value != null) {
-                            docList += value
-                        }
-                    }
-                })
+            void apply(final String value) {
+                if (value != null) {
+                    docList += value
+                }
             }
-        })
+        }).get()
 
         then:
-        result.get().toList().sort() == ['Pete']
+        docList == ['Pete']
     }
 }

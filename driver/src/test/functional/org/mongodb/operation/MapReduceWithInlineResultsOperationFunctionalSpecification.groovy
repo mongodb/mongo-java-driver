@@ -19,15 +19,11 @@ package org.mongodb.operation
 import category.Async
 import org.bson.types.Code
 import org.junit.experimental.categories.Category
-import org.mongodb.AsyncBlock
+import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MapReduceAsyncCursor
 import org.mongodb.MapReduceCursor
-import org.mongodb.MongoException
-import org.mongodb.MongoFuture
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.connection.SingleResultCallback
 import org.mongodb.test.CollectionHelper
 
 import static org.mongodb.Fixture.getAsyncBinding
@@ -66,31 +62,18 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
 
         when:
-        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getAsyncBinding())
-        def result = new SingleResultFuture<List<Document>>()
-        results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
+        List<Document> docList = []
+        operation.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
             @Override
-            void onResult(final MapReduceAsyncCursor<Document> cursor, final MongoException e) {
-                cursor.start(new AsyncBlock<Document>() {
-                    List<Document> docList = []
-
-                    @Override
-                    void done() {
-                        result.init(docList, null)
-                    }
-
-                    @Override
-                    void apply(final Document value) {
-                        if (value != null) {
-                            docList += value
-                        }
-                    }
-                })
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
             }
-        })
+        }).get()
 
         then:
-        result.get().iterator().toList() == expectedResults
+        docList.iterator().toList() == expectedResults
     }
 
 }

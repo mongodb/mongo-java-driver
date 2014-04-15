@@ -16,8 +16,10 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.AsyncBlock;
+import org.mongodb.Block;
 import org.mongodb.MongoAsyncCursor;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoInternalException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +31,18 @@ class InlineMongoAsyncCursor<T> implements MongoAsyncCursor<T> {
         iterator = results.iterator();
     }
 
-    public void close() {
+    @Override
+    public MongoFuture<Void> forEach(final Block<? super T> block) {
+        SingleResultFuture<Void> future = new SingleResultFuture<Void>();
+        try {
+            while (hasNext()) {
+                block.apply(next());
+            }
+            future.init(null, null);
+        } catch (Exception e) {
+            future.init(null, new MongoInternalException("Exception thrown by user callback", e));
+        }
+        return future;
     }
 
     private boolean hasNext() {
@@ -38,13 +51,5 @@ class InlineMongoAsyncCursor<T> implements MongoAsyncCursor<T> {
 
     private T next() {
         return iterator.next();
-    }
-
-    @Override
-    public void start(final AsyncBlock<? super T> block) {
-        while (hasNext()) {
-            block.apply(next());
-        }
-        block.done();
     }
 }

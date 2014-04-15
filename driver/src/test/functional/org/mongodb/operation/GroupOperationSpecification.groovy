@@ -15,16 +15,12 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import org.bson.types.Code
 import org.junit.experimental.categories.Category
-import org.mongodb.AsyncBlock
+import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoAsyncCursor
-import org.mongodb.MongoException
-import org.mongodb.connection.SingleResultCallback
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -61,29 +57,17 @@ class GroupOperationSpecification extends FunctionalSpecification {
 
         when:
         GroupOperation op = new GroupOperation(getNamespace(), group)
-        def result = new SingleResultFuture<List<Document>>()
-        op.executeAsync(getAsyncBinding()).register(new SingleResultCallback<MongoAsyncCursor<Document>>() {
-            @Override
-            void onResult(final MongoAsyncCursor<Document> cursor, final MongoException e) {
-                cursor.start(new AsyncBlock<Document>() {
-                    List<Document> docList = []
-
-                    @Override
-                    void done() {
-                        result.init(docList, null)
-                    }
-
-                    @Override
-                    void apply(final Document value) {
-                        if (value != null) {
-                            docList += value
-                        }
-                    }
-                })
+        List<Document> docList = []
+        op.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
+           @Override
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
             }
-        })
+        }).get()
 
         then:
-        result.get().iterator()*.getString('name') containsAll(['Pete', 'Sam'])
+        docList.iterator()*.getString('name') containsAll(['Pete', 'Sam'])
     }
 }

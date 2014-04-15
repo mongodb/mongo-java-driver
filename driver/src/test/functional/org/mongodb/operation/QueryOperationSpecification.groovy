@@ -15,10 +15,9 @@
  */
 
 package org.mongodb.operation
-
-import org.junit.experimental.categories.Category;
 import category.Async
-import org.mongodb.AsyncBlock
+import org.junit.experimental.categories.Category
+import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
@@ -27,8 +26,6 @@ import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.ReadPreference
 import org.mongodb.binding.ClusterBinding
 import org.mongodb.codecs.DocumentCodec
-
-import java.util.concurrent.CountDownLatch
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -226,22 +223,15 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec())
 
         when:
-        def latch = new CountDownLatch(1)
         def count = 0;
 
         def cursor = queryOperation.executeAsync(getAsyncBinding())
-        cursor.get().start(new AsyncBlock<Document>() {
-            @Override
-            void done() {
-                latch.countDown()
-            }
-
+        cursor.get().forEach(new Block<Document>() {
             @Override
             void apply(final Document document) {
                 count++;
             }
-        })
-        latch.await(5, SECONDS)
+        }).get()
 
         then:
         count == 500
@@ -257,22 +247,15 @@ class QueryOperationSpecification extends FunctionalSpecification {
                                                           new DocumentCodec())
 
         when:
-        def latch = new CountDownLatch(1)
         def count = 0;
 
         def cursor = queryOperation.executeAsync(getAsyncBinding())
-        cursor.get().start(new AsyncBlock<Document>() {
-            @Override
-            void done() {
-                latch.countDown()
-            }
-
+        cursor.get().forEach(new Block<Document>() {
             @Override
             void apply(final Document document) {
                 count++;
             }
-        })
-        latch.await(5, SECONDS)
+        }).get()
 
         then:
         count == 500

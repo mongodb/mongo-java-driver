@@ -16,6 +16,19 @@
 
 package org.mongodb;
 
+/**
+ * An asynchronous cursor of documents.
+ *
+ * @param <T> the document type
+ *
+ * @since 3.0
+ */
 public interface MongoAsyncCursor<T> {
-    void start(final AsyncBlock<? super T> block);
+    /**
+     * Asynchronously iterate through the cursor results.
+     *
+     * @param block the block to execute for each document
+     * @return A future that indicates when iteration is complete
+     */
+    MongoFuture<Void> forEach(Block<? super T> block);
 }

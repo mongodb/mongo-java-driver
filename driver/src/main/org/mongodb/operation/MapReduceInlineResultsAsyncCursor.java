@@ -16,13 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.AsyncBlock;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.connection.ServerAddress;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -32,27 +30,13 @@ import java.util.List;
  * @param <T> the type of document to return in the results.
  * @since 3.0
  */
-class MapReduceInlineResultsAsyncCursor<T> implements MapReduceAsyncCursor<T> {
+class MapReduceInlineResultsAsyncCursor<T> extends InlineMongoAsyncCursor<T> implements MapReduceAsyncCursor<T> {
     private final CommandResult commandResult;
-    private final List<T> results;
-    private final Iterator<T> iterator;
 
     @SuppressWarnings("unchecked")
     MapReduceInlineResultsAsyncCursor(final CommandResult result) {
+        super((List<T>) result.getResponse().get("results"));
         commandResult = result;
-        this.results = (List<T>) commandResult.getResponse().get("results");
-        iterator = this.results.iterator();
-    }
-
-    public void close() {
-    }
-
-    private boolean hasNext() {
-        return iterator.hasNext();
-    }
-
-    private T next() {
-        return iterator.next();
     }
 
     public ServerAddress getServerAddress() {
@@ -77,13 +61,5 @@ class MapReduceInlineResultsAsyncCursor<T> implements MapReduceAsyncCursor<T> {
     @Override
     public int getDuration() {
         return commandResult.getResponse().getInteger("timeMillis");
-    }
-
-    @Override
-    public void start(final AsyncBlock<? super T> block) {
-        while (hasNext()) {
-            block.apply(next());
-        }
-        block.done();
     }
 }

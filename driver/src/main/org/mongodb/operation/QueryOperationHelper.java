@@ -1,6 +1,6 @@
 package org.mongodb.operation;
 
-import org.mongodb.AsyncBlock;
+import org.mongodb.Block;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Function;
@@ -21,7 +21,6 @@ import org.mongodb.protocol.QueryResult;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Collections.unmodifiableList;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
@@ -70,7 +69,7 @@ final class QueryOperationHelper {
                     retVal.add(value);
                 }
             }
-            return unmodifiableList(retVal);
+            return retVal;
         } finally {
             cursor.close();
         }
@@ -130,24 +129,21 @@ final class QueryOperationHelper {
             if (e != null) {
                 future.init(null, e);
             } else {
-                MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
-                                                                               result,
-                                                                               0, 0, decoder,
-                                                                               connectionSource);
-
                 final List<V> results = new ArrayList<V>();
-                cursor.start(new AsyncBlock<T>() {
-
-                    @Override
-                    public void done() {
-                        future.init(unmodifiableList(results), null);
-                    }
-
-                    @Override
+                new MongoAsyncQueryCursor<T>(namespace, result, 0, 0, decoder, connectionSource).forEach(new Block<T>() {
                     public void apply(final T v) {
                         V value = block.apply(v);
                         if (value != null) {
                             results.add(value);
+                        }
+                    }
+                }).register(new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final MongoException e) {
+                        if (e != null) {
+                            future.init(null, e);
+                        } else {
+                            future.init(results, null);
                         }
                     }
                 });
