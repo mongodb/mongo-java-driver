@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results()
- * method, or by interacting directly with the collection the results were input into.
+ * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
+ * by interacting directly with the collection the results were input into.
  */
 public class MapReduceOutput {
 
@@ -130,18 +130,18 @@ public class MapReduceOutput {
     }
 
     /**
-     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation
-     * (i.e . the results were returned directly from calling the map reduce) this will return null.
+     * Get the name of the collection that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
      *
      * @return the name of the collection that the map reduce results are stored in
      */
     public final String getCollectionName() {
-        return collection.getName();
+        return collection == null ? null : collection.getName();
     }
 
     /**
-     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation
-     * (i.e . the results were returned directly from calling the map reduce) this will return null.
+     * Get the name of the database that the results of the map reduce were saved into.  If the map reduce was an inline operation (i.e .
+     * the results were returned directly from calling the map reduce) this will return null.
      *
      * @return the name of the database that holds the collection that the map reduce results are stored in
      */

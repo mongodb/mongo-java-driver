@@ -59,6 +59,21 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         collectionName == expectedCollectionName
     }
 
+    def 'should return null for the name of the collection if it is inline'() {
+        given:
+        MapReduceCursor mongoCursor = Mock();
+
+        @Subject
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
+                                                              new org.mongodb.connection.ServerAddress());
+
+        when:
+        def collectionName = mapReduceOutput.getCollectionName();
+
+        then:
+        collectionName == null
+    }
+
     def 'should return the name of the database the results are contained in if it is not inline'() {
         given:
         def expectedDatabaseName = databaseName
