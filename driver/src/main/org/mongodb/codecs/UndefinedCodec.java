@@ -29,6 +29,7 @@ import org.mongodb.Codec;
  * The undefined type is deprecated (see the spec).
  *
  * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
+ * @see org.bson.BSONType#UNDEFINED
  * @since 3.0
  */
 public class UndefinedCodec implements Codec<Undefined> {

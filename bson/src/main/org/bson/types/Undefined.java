@@ -17,10 +17,12 @@
 package org.bson.types;
 
 /**
- * Represents the BSON Undefined type - since this type is deprecated, and can't effectively be writter to or read from the protocol,
- * this type is simply a placeholder.
+ * Represents the value associated with the BSON Undefined type.  All values of this type are identical.  Note that this type has been
+ * deprecated in the BSON specification.
+ * <p/>
  *
  * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
+ * @see org.bson.BSONType#UNDEFINED
  * @since 3.0
  */
 public class Undefined {
