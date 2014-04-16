@@ -18,22 +18,33 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
+import org.bson.types.Undefined;
 import org.mongodb.Codec;
 
-public class UndefinedCodec implements Codec<Object> {
+/**
+ * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BSONWriter, but ignore the
+ * value, and on decoding it will read the type off the BSONReader and return an Undefined type, which simply represents a placeholder for
+ * the undefined value.
+ * <p/>
+ * The undefined type is deprecated (see the spec).
+ *
+ * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
+ * @since 3.0
+ */
+public class UndefinedCodec implements Codec<Undefined> {
     @Override
-    public Object decode(final BSONReader reader) {
+    public Undefined decode(final BSONReader reader) {
         reader.readUndefined();
-        return null;
+        return new Undefined();
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
+    public void encode(final BSONWriter bsonWriter, final Undefined value) {
         bsonWriter.writeUndefined();
     }
 
     @Override
-    public Class<Object> getEncoderClass() {
-        return null;
+    public Class<Undefined> getEncoderClass() {
+        return Undefined.class;
     }
 }
