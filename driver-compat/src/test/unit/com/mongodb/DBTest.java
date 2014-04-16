@@ -184,10 +184,9 @@ public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldInsertDocumentsUsingEval() {
         // when
-        Object eval = database.eval("db." + collectionName + ".insert({name: 'Bob'})");
+        database.eval("db." + collectionName + ".insert({name: 'Bob'})");
 
         // then
-        assertThat(eval, is(notNullValue()));
         assertThat(collection.find(new BasicDBObject("name", "Bob")).count(), is(1));
     }
 
