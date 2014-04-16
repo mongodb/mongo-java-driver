@@ -602,12 +602,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     void _fill( int n ){
         _checkType( CursorType.ARRAY );
-        try {
-            while ( n >= _all.size() && _hasNext() )
-                _next();
-        } finally {
-            this.close();
-        }
+        while ( n >= _all.size() && _hasNext() )
+            _next();
     }
 
     /**
@@ -653,16 +649,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public int itcount(){
-        try {
-            int n = 0;
-            while ( this.hasNext() ){
-                this.next();
-                n++;
-            }
-            return n;
-        } finally {
-            this.close();
+        int n = 0;
+        while ( this.hasNext() ){
+            this.next();
+            n++;
         }
+        return n;
     }
 
     /**
