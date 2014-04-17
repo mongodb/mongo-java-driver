@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
@@ -31,14 +32,19 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * An operation to determine if a user exists.
  *
  * @since 3.0
  */
-public class UserExistsOperation implements Operation<Boolean> {
+public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<Boolean> {
 
     private final String database;
     private final String userName;
@@ -47,31 +53,58 @@ public class UserExistsOperation implements Operation<Boolean> {
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
-
     @Override
     public Boolean execute(final Session session) {
-        ServerConnectionProvider provider = OperationHelper.getPrimaryConnectionProvider(session);
-        if (provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
-            return executeCommandBasedProtocol(provider);
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            CommandResult result = executeWrappedCommandProtocol(database, new Document("usersInfo", userName),
+                                                                        new DocumentCodec(), new DocumentCodec(), connectionProvider);
+            return transformResult(result, transformCommandResult());
         } else {
-            return executeCollectionBasedProtocol(provider);
+            QueryResult<Document> result = executeProtocol(getCollectionBasedProtocol(), connectionProvider);
+            return transformResult(result, transformQueryResult());
         }
     }
 
-    private Boolean executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        CommandResult commandResult = executeWrappedCommandProtocol(database, new Document("usersInfo", userName), new DocumentCodec(),
-                                                                    new DocumentCodec(), serverConnectionProvider);
-
-        return !commandResult.getResponse().get("users", List.class).isEmpty();
+    @Override
+    public MongoFuture<Boolean> executeAsync(final Session session) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database,
+                                                                                   new Document("usersInfo", userName),
+                                                                                   new DocumentCodec(),
+                                                                                   new DocumentCodec(),
+                                                                                   connectionProvider);
+            return transformResult(result, transformCommandResult());
+        } else {
+            MongoFuture<QueryResult<Document>> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
+            return transformResult(result, transformQueryResult());
+        }
     }
 
-    private Boolean executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private TransformBlock<CommandResult, Boolean> transformCommandResult() {
+        return new TransformBlock<CommandResult, Boolean>() {
+            @Override
+            public Boolean apply(final CommandResult commandResult) {
+                return !commandResult.getResponse().get("users", List.class).isEmpty();
+            }
+        };
+    }
+
+    private TransformBlock<QueryResult<Document>, Boolean> transformQueryResult() {
+        return new TransformBlock<QueryResult<Document>, Boolean>() {
+            @Override
+            public Boolean apply(final QueryResult<Document> queryResult) {
+                return !queryResult.getResults().isEmpty();
+            }
+        };
+    }
+
+    private QueryProtocol<Document> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
-        QueryResult<Document> result = executeProtocol(new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
-                                                                                   new Document("user", userName), null,
-                                                                                   codec, codec),
-                                                       serverConnectionProvider);
-        return !result.getResults().isEmpty();
+        return new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
+                new Document("user", userName), null, codec, codec);
     }
+
 }

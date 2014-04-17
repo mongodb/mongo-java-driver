@@ -16,9 +16,12 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.DeleteProtocol;
@@ -28,15 +31,19 @@ import org.mongodb.session.Session;
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
+import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 
 /**
  * An operation to remove a user.
  *
  * @since 3.0
  */
-public class DropUserOperation implements Operation<Void> {
+public class DropUserOperation implements AsyncOperation<Void>, Operation<Void>  {
     private final String database;
     private final String userName;
 
@@ -47,28 +54,37 @@ public class DropUserOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        ServerConnectionProvider serverConnectionProvider = getPrimaryConnectionProvider(session);
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
-            executeCommandBasedProtocol(serverConnectionProvider);
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            executeWrappedCommandProtocol(database, new Document("dropUser", userName),
+                                          new DocumentCodec(), new DocumentCodec(), connectionProvider);
         } else {
-            executeCollectionBasedProtocol(serverConnectionProvider);
+            executeProtocol(getCollectionBasedProtocol(), connectionProvider);
         }
         return null;
     }
 
-    private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        executeWrappedCommandProtocol(database, asCommandDocument(), new DocumentCodec(), new DocumentCodec(), serverConnectionProvider);
+    @Override
+    public MongoFuture<Void> executeAsync(final Session session) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database,
+                                                                                   new Document("dropUser", userName),
+                                                                                   new DocumentCodec(),
+                                                                                   new DocumentCodec(),
+                                                                                   connectionProvider);
+            return ignoreResult(result);
+        } else {
+            MongoFuture<WriteResult> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
+            return ignoreResult(result);
+        }
     }
 
-    private Document asCommandDocument() {
-        return new Document("dropUser", userName);
-    }
-
-    private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    DeleteProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
-        DocumentCodec codec = new DocumentCodec();
-        executeProtocol(new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                           asList(new RemoveRequest(new Document("user", userName))), codec),
-                        serverConnectionProvider);
+        return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                asList(new RemoveRequest(new Document("user", userName))),
+                new DocumentCodec());
     }
+
 }

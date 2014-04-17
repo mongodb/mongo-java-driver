@@ -311,6 +311,42 @@ final class OperationHelper {
         }
     }
 
+    private static EnumSet<QueryFlag> getQueryFlags(final ReadPreference readPreference) {
+        if (readPreference.isSlaveOk()) {
+            return EnumSet.of(QueryFlag.SlaveOk);
+        } else {
+            return EnumSet.noneOf(QueryFlag.class);
+        }
+    }
+
+    static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
+        return transformResult(future, new TransformBlock<T, Void>() {
+            @Override
+            public Void apply(final T t) {
+                return null;
+            }
+        });
+    }
+
+    static <T, V> V transformResult(final T result, final TransformBlock<T, V> block) {
+        return block.apply(result);
+    }
+
+    static <T, V> MongoFuture<V> transformResult(final MongoFuture<T> future, final TransformBlock<T, V> block) {
+        final SingleResultFuture<V> retVal = new SingleResultFuture<V>();
+        future.register(new SingleResultCallback<T>() {
+            @Override
+            public void onResult(final T result, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                } else {
+                    retVal.init(block.apply(result), null);
+                }
+            }
+        });
+        return retVal;
+    }
+
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
                                                            final MongoNamespace namespace, final Decoder<T> decoder) {
         final SingleResultFuture<List<T>> retVal = new SingleResultFuture<List<T>>();
@@ -332,14 +368,6 @@ final class OperationHelper {
                 }
             });
         return retVal;
-    }
-
-    private static EnumSet<QueryFlag> getQueryFlags(final ReadPreference readPreference) {
-        if (readPreference.isSlaveOk()) {
-            return EnumSet.of(QueryFlag.SlaveOk);
-        } else {
-            return EnumSet.noneOf(QueryFlag.class);
-        }
     }
 
     private static class QueryResultToListCallback<T> implements SingleResultCallback<QueryResult<T>> {
