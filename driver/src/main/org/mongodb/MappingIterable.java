@@ -16,10 +16,6 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
-
 import java.util.Collection;
 
 class MappingIterable<U, V> implements MongoIterable<V> {
@@ -61,41 +57,5 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
         return new MappingIterable<V, W>(this, newMap);
-    }
-
-    @Override
-    public void asyncForEach(final AsyncBlock<? super V> block) {
-        iterable.asyncForEach(new AsyncBlock<U>() {
-            @Override
-            public void done() {
-                block.done();
-            }
-
-            @Override
-            public void apply(final U u) {
-                block.apply(mapper.apply(u));
-            }
-        });
-    }
-
-    @Override
-    public <A extends Collection<? super V>> MongoFuture<A> asyncInto(final A target) {
-        SingleResultFuture<A> future = new SingleResultFuture<A>();
-        asyncInto(target, new SingleResultFutureCallback<A>(future));
-        return future;
-    }
-
-    private <A extends Collection<? super V>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
-        asyncForEach(new AsyncBlock<V>() {
-            @Override
-            public void done() {
-                callback.onResult(target, null);
-            }
-
-            @Override
-            public void apply(final V v) {
-                target.add(v);
-            }
-        });
     }
 }

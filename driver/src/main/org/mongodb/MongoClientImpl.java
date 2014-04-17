@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.connection.Cluster;
-import org.mongodb.operation.AsyncOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
@@ -119,9 +118,5 @@ class MongoClientImpl implements MongoClient {
 
     <V> V execute(final Operation<V> operation) {
         return operation.execute(getSession());
-    }
-
-    <V> MongoFuture<V> executeAsync(final AsyncOperation<V> operation) {
-        return operation.executeAsync(getSession());
     }
 }
